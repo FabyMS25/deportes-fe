@@ -30,14 +30,15 @@ import { SharedModule } from "../shared/shared.module";
 import { WidgetModule } from '../shared/widget/widget.module';
 import { ToastsContainer } from './dashboards/dashboard/toasts-container.component';
 import { DashboardsModule } from "./dashboards/dashboards.module";
-import { AppsModule } from "./apps/apps.module";
 import { FeatherModule } from 'angular-feather';
 import { allIcons } from 'angular-feather/icons';
 import { ErrorsModule } from '../account/errors/errors.module';
+import { DetailsComponent } from './details/details.component';
 
 
 @NgModule({
   declarations: [
+    DetailsComponent
   ],
   imports: [
     CommonModule,
@@ -56,7 +57,6 @@ import { ErrorsModule } from '../account/errors/errors.module';
     SlickCarouselModule,
     LightboxModule,
     DashboardsModule,
-    AppsModule,
 
     ErrorsModule,
     

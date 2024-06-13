@@ -26,11 +26,7 @@ import { EffectsModule } from '@ngrx/effects';
 import { AuthenticationEffects } from './store/Authentication/authentication.effects';
 import { EcommerceEffects } from './store/Ecommerce/ecommerce_effect';
 import { ProjectEffects } from './store/Project/project_effect';
-import { TaskEffects } from './store/Task/task_effect';
-import { CRMEffects } from './store/CRM/crm_effect';
-import { CryptoEffects } from './store/Crypto/crypto_effect';
 import { InvoiceEffects } from './store/Invoice/invoice_effect';
-import { TicketEffects } from './store/Ticket/ticket_effect';
 import { FileManagerEffects } from './store/File Manager/filemanager_effect';
 import { TodoEffects } from './store/Todo/todo_effect';
 import { ApplicationEffects } from './store/Jobs/jobs_effect';
@@ -76,11 +72,7 @@ export function createTranslateLoader(http: HttpClient): any {
       AuthenticationEffects,
       EcommerceEffects,
       ProjectEffects,
-      TaskEffects,
-      CRMEffects,
-      CryptoEffects,
       InvoiceEffects,
-      TicketEffects,
       FileManagerEffects,
       TodoEffects,
       ApplicationEffects,

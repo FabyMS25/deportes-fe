@@ -13,12 +13,14 @@ import { ngxCsv } from 'ngx-csv/ngx-csv';
 // Sweet Alert
 import Swal from 'sweetalert2';
 
-import { addCompany, deleteCompany, fetchCrmCompanyData, updateCompany } from 'src/app/store/CRM/crm_action';
-import { selectCRMLoading, selectCompanyData } from 'src/app/store/CRM/crm_selector';
+// import { addCompany, deleteCompany, fetchCrmCompanyData, updateCompany } from 'src/app/store/CRM/crm_action';
+// import { selectCRMLoading, selectCompanyData } from 'src/app/store/CRM/crm_selector';
 import { cloneDeep } from 'lodash';
 import { RootReducerState } from 'src/app/store';
 import { Store } from '@ngrx/store';
 import { PaginationService } from 'src/app/core/services/pagination.service';
+import { AuthenticationService } from 'src/app/core/services/auth.service';
+import { Employees } from 'src/app/core/data/employees';
 @Component({
   selector: 'app-companies',
   templateUrl: './companies.component.html',
@@ -45,17 +47,24 @@ export class CompaniesComponent {
   searchResults: any;
   searchTerm: any;
 
-  constructor(private modalService: NgbModal, public service: PaginationService, private formBuilder: UntypedFormBuilder,
+  canActivate:string[];
+  listaItems:any[]=[];
+  canchasList:any[]= Employees;
+  constructor(private modalService: NgbModal,
+    private authService: AuthenticationService, public service: PaginationService, private formBuilder: UntypedFormBuilder,
     private store: Store<{ data: RootReducerState }>) {
+      this.canActivate = this.authService.hasPermissionModulo('Canchas');
   }
 
   ngOnInit(): void {
-    /**
-    * BreadCrumb
-    */
     this.breadCrumbItems = [
       { label: 'CRM' },
       { label: 'Companies', active: true }
+    ];
+    this.listaItems = [
+      {name: 'Nombre', prop: 'nombreCompleto'},
+      {name: 'Unidad',prop: 'unidad'},
+      {name: 'Rol', prop: 'rol', tag:true},
     ];
 
     /**
@@ -78,18 +87,18 @@ export class CompaniesComponent {
     /**
      * fetches data
      */
-    this.store.dispatch(fetchCrmCompanyData());
-    this.store.select(selectCRMLoading).subscribe((data) => {
-      if (data == false) {
-        document.getElementById('elmLoader')?.classList.add('d-none');
-      }
-    });
+    // this.store.dispatch(fetchCrmCompanyData());
+    // this.store.select(selectCRMLoading).subscribe((data) => {
+    //   if (data == false) {
+    //     document.getElementById('elmLoader')?.classList.add('d-none');
+    //   }
+    // });
 
-    this.store.select(selectCompanyData).subscribe((data) => {
-      this.company = data;
-      this.allcompany = cloneDeep(data);
-      this.company = this.service.changePage(this.allcompany)
-    });
+    // this.store.select(selectCompanyData).subscribe((data) => {
+    //   this.company = data;
+    //   this.allcompany = cloneDeep(data);
+    //   this.company = this.service.changePage(this.allcompany)
+    // });
   }
 
   changePage() {
@@ -152,14 +161,14 @@ export class CompaniesComponent {
       if (this.companiesForm.get('_id')?.value) {
 
         const updatedData = this.companiesForm.value;
-        this.store.dispatch(updateCompany({ updatedData }));
+        // this.store.dispatch(updateCompany({ updatedData }));
         this.modalService.dismissAll();
       }
       else {
         const contactId = (this.allcompany.length + 1).toString();
         this.companiesForm.controls['_id'].setValue(contactId);
         const newData = this.companiesForm.value;
-        this.store.dispatch(addCompany({ newData }));
+        // this.store.dispatch(addCompany({ newData }));
         let timerInterval: any;
         Swal.fire({
           title: 'Company inserted successfully!',
@@ -241,9 +250,9 @@ export class CompaniesComponent {
   // Delete Data
   deleteData(id: any) {
     if (id) {
-      this.store.dispatch(deleteCompany({ id: this.deleteId.toString() }));
+      // this.store.dispatch(deleteCompany({ id: this.deleteId.toString() }));
     } else {
-      this.store.dispatch(deleteCompany({ id: this.checkedValGet.toString() }));
+      // this.store.dispatch(deleteCompany({ id: this.checkedValGet.toString() }));
     }
     this.deleteId = '';
     this.masterSelected = false;

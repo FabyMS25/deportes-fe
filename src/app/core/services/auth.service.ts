@@ -13,7 +13,7 @@ import { AuthUserService } from './api-users/auth.service';
 import { PermissionUserService } from './api-users/permission-user.service';
 
 import { UserRol } from 'src/app/core/constants/UserRol';
-import { User } from '../models/auth.models';
+import { Contribuyente } from '../models/contribuyente.models';
 const AUTH_API = GlobalComponent.AUTH_API;
 
 const httpOptions = {
@@ -28,7 +28,7 @@ const httpOptions = {
  */
 export class AuthenticationService {
 
-    user!: User;
+    user!: any;
     currentUserValue: any;
 
     private currentUserSubject: any;//BehaviorSubject<User>;
@@ -214,6 +214,15 @@ export class AuthenticationService {
     //       }
     //   });
     // }
+
+    
+    hasPermissionModulo(modulo: string): string[] {
+      const menuString = localStorage.getItem('menu');
+      const menu: any[] = menuString ? JSON.parse(menuString) : null;
+      const permissions = menu.filter(permission => permission.nombreMenu === modulo);
+      return permissions.map(permission => permission.accion);
+    }
+
 
     public getAvatar(): string{    
       let avatar="default-profile1.png";

@@ -35,6 +35,12 @@ export class ReservasComponent implements OnInit {
   status: any = '';
   type: any = '';
 
+
+  listaItems:any[]=[];
+  usuariosList:any[]=[];
+  funcionarioSelected!:any;
+  
+
   constructor(public service: PaginationService,
     public formBuilder: UntypedFormBuilder,
     private store: Store<{ data: RootReducerState }>,
@@ -42,13 +48,22 @@ export class ReservasComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    /**
-* BreadCrumb
-*/
     this.breadCrumbItems = [
       { label: 'Jobs' },
       { label: 'Application', active: true }
     ];
+
+    this.listaItems = [
+      {name: 'Codigo', prop: 'codigo', show:true},
+      {name: 'Fecha',prop: 'fechaCreado', date:true},
+      {name: 'Persona', prop: 'personaJuridica'},
+      // {name: 'Descripcion',prop: 'descripcion'},
+      {name: 'Unidad',prop: 'unidadDto.nombre'},
+      {name: 'Titulo',prop: 'titulo'},
+      {name: 'Estado', prop: 'estadoReclamo', tag:true},
+    ];
+
+
 
     // Validation
     this.applicationData = this.formBuilder.group({

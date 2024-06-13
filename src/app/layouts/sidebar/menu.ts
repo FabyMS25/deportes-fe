@@ -135,40 +135,6 @@ export const MENU: MenuItem[] = [
         ]
       },
       {
-        orden: 12,
-        nombreMenu: 'MENUITEMS.APPS.LIST.TASK',
-        permisoPadreDto: 10,
-        isCollapsed: true,
-        permisoHijoListDto: [
-          {
-            orden: 1,
-            nombreMenu: 'MENUITEMS.APPS.LIST.LISTVIEW',
-            ruta: '/tasks/list-view',
-            permisoPadreDto: 12
-          },
-          {
-            orden: 1,
-            nombreMenu: 'MENUITEMS.APPS.LIST.TASKDETAILS',
-            ruta: '/tasks/details',
-            permisoPadreDto: 12
-          }
-        ]
-      },
-      {
-        orden: 13,
-        nombreMenu: 'MENUITEMS.APPS.LIST.CRYPTO',
-        permisoPadreDto: 10,
-        isCollapsed: true,
-        permisoHijoListDto: [
-          {
-            orden: 1,
-            nombreMenu: 'MENUITEMS.APPS.LIST.MYWALLET',
-            ruta: '/crypto/orders',
-            permisoPadreDto: 13
-          },
-        ]
-      },
-      {
         orden: 14,
         nombreMenu: 'MENUITEMS.APPS.LIST.INVOICES',
         permisoPadreDto: 10,
@@ -191,26 +157,6 @@ export const MENU: MenuItem[] = [
             nombreMenu: 'MENUITEMS.APPS.LIST.CREATEINVOICE',
             ruta: '/invoices/create',
             permisoPadreDto: 14
-          }
-        ]
-      },
-      {
-        orden: 15,
-        nombreMenu: 'MENUITEMS.APPS.LIST.SUPPORTTICKETS',
-        permisoPadreDto: 10,
-        isCollapsed: true,
-        permisoHijoListDto: [
-          {
-            orden: 1,
-            nombreMenu: 'MENUITEMS.APPS.LIST.LISTVIEW',
-            ruta: '/tickets/list',
-            permisoPadreDto: 15
-          },
-          {
-            orden: 2,
-            nombreMenu: 'MENUITEMS.APPS.LIST.TICKETDETAILS',
-            ruta: '/tickets/details',
-            permisoPadreDto: 15
           }
         ]
       },

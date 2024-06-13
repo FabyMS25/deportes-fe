@@ -43,13 +43,14 @@
                     <div class="col-md-4">
                         <div class="search-box">
                             <input type="text" name="searchTerm" class="form-control"
-                                placeholder="Search for contact..." [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
+                                placeholder="Buscar..." [(ngModel)]="searchTerm" 
+                                (ngModelChange)="performSearch()">
                             <i class="ri-search-line search-icon"></i>
                         </div>
                     </div>
                     <div class="col-md-auto ms-auto">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="text-muted text-nowrap">Sort by: </span>
+                            <span class="text-muted text-nowrap">Filtrar por: </span>
                             <select class="form-control mb-0" data-choices data-choices-search-false
                                 id="choices-single-default" (click)="SortFilter();">
                                 <option value="Dname">Name</option>
@@ -61,135 +62,18 @@
                 </div>
             </div>
             <div class="card-body">
-                <div>
-                    <div class="table-responsive table-card mb-2 table-nowrap">
-                        <table class="table">
-                            <thead>
-                                <tr class="bg-light">
-                                    <th scope="col" style="width: 50px;">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="checkAll" value="option"
-                                                [(ngModel)]="masterSelected" (change)="checkUncheckAll($event)">
-                                        </div>
-                                    </th>
-                                    <th class="sort" (click)="onSort('name')">Name</th>
-                                    <th class="sort" (click)="onSort('company')">Company
-                                    </th>
-                                    <th class="sort" (click)="onSort('email')">Email ID
-                                    </th>
-                                    <th class="sort" (click)="onSort('phone')">Phone No
-                                    </th>
-                                    <th class="sort" (click)="onSort('score')">Lead Score
-                                    </th>
-                                    <th class="sort" (click)="onSort('tags')">Tags</th>
-                                    <th class="sort" (click)="onSort('date')">Last
-                                        Contacted</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for (data of contacts | sortBy:sortBy:sortField; track $index) {
-                                    <tr id="c_{{data._id}}">
-                                    <th scope="row">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="checkAll"
-                                                value="{{data._id}}" (change)="onCheckboxChange($event)"
-                                                [(ngModel)]="data.state">
-                                        </div>
-                                    </th>
-                                    <td class="name">
-                                        <div class="d-flex align-items-center">
-                                            <div class="flex-shrink-0"><img src="assets/images/users/{{data.image_src}}"
-                                                    alt="" class="avatar-xs rounded-circle"></div>
-                                            <div class="flex-grow-1 ms-2 name">{{data.name}}</div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <ngb-highlight [result]="data.company" [term]="searchTerm">
-                                        </ngb-highlight>
-                                    </td>
-                                    <td>
-                                        <ngb-highlight [result]="data.email" [term]="searchTerm">
-                                        </ngb-highlight>
-                                    </td>
-                                    <td>
-                                        <ngb-highlight [result]="data.phone" [term]="searchTerm">
-                                        </ngb-highlight>
-                                    </td>
-                                    <td>
-                                        <ngb-highlight [result]="data.lead_score" [term]="searchTerm">
-                                        </ngb-highlight>
-                                    </td>
-                                    <td class="tags">
-                                        <div class="d-flex gap-1">
-                                            @for(tag of data.tags;track $index){
-                                            <span class="badge bg-primary-subtle text-primary"
-                                                >{{tag}}</span>
-                                            }
-                                        </div>
-                                    </td>
-                                    <td class="date">{{data.last_contacted | date :'longDate'}}</td>
-                                    <td>
-                                        <ul class="list-inline hstack gap-2 mb-0">
-                                            <li class="list-inline-item edit" ngbTooltip="Call" placement="top">
-                                                <a href="javascript:void(0);" class="text-muted d-inline-block">
-                                                    <i class="ri-phone-line fs-16"></i>
-                                                </a>
-                                            </li>
-                                            <li class="list-inline-item edit" ngbTooltip="Message" placement="top">
-                                                <a href="javascript:void(0);" class="text-muted d-inline-block">
-                                                    <i class="ri-question-answer-line fs-16"></i>
-                                                </a>
-                                            </li>
-                                            <li class="list-inline-item">
-                                                <div class="dropdown" ngbDropdown>
-                                                    <button class="btn btn-soft-secondary btn-sm dropdown arrow-none"
-                                                        type="button" data-bs-toggle="dropdown" aria-expanded="false"
-                                                        ngbDropdownToggle>
-                                                        <i class="ri-more-fill align-middle"></i>
-                                                    </button>
-                                                    <ul class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
-                                                        <li><a class="dropdown-item" href="javascript:void(0);"
-                                                                (click)="viewDataGet($index)"><i
-                                                                    class="ri-eye-fill align-bottom me-2 text-muted float-start"></i>
-                                                                View</a></li>
-                                                        <li><a class="dropdown-item edit-item-btn"
-                                                                data-bs-toggle="modal"
-                                                                (click)="editDataGet($index,content)"><i
-                                                                    class="ri-pencil-fill align-bottom me-2 text-muted float-start"></i>
-                                                                Edit</a></li>
-                                                        <li>
-                                                            <a class="dropdown-item remove-item-btn"
-                                                                data-bs-toggle="modal"
-                                                                (click)="confirm(deleteModel,data._id)">
-                                                                <i
-                                                                    class="ri-delete-bin-fill align-bottom me-2 text-muted float-start"></i>
-                                                                Delete
-                                                            </a>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </td>
-                                </tr>
-                            }
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="d-flex justify-content-end mt-3">
-                        <!-- Pagination -->
-                        <ngb-pagination [collectionSize]="allcontacts?.length" [(page)]="service.page" [pageSize]="service.pageSize" (pageChange)="changePage()">
-                        </ngb-pagination>
-                        <!-- End Pagination -->
-                        <div id="elmLoader">
-                            <div class="spinner-border text-primary avatar-sm" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+                <app-data-table
+                    [listaItems]="listaItems"
+                    [content]="funcionariosList"
+                    [sortField]="''"
+                    [show]="canActivate.includes('VER')"
+                    [edit]="canActivate.includes('ACTUALIZAR')"
+                    [delete]="canActivate.includes('ELIMINAR')"
+                    (showItemEmitter)="viewDataGet($event)"
+                    (editItemEmitter)="editDataGet($event,content)"
+                    (deleteItemEmitter)="deleteData($event)"              
+                >
+                </app-data-table>  
                 <!-- Contacts Create Model -->
                 <ng-template #content role="document" let-modal>
                     <div class="modal-header bg-info-subtle  p-3">

@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 // Component pages
 import { DashboardComponent } from "./dashboards/dashboard/dashboard.component";
+import { DetailsComponent } from './details/details.component';
 
 const routes: Routes = [
     {
@@ -20,21 +21,14 @@ const routes: Routes = [
     {
       path: 'taxpayers', loadChildren: () => import('./taxpayers/taxpayers.module').then(m => m.TaxpayersModule)
     },
+    {
+      path: "reservations/details",
+      component: DetailsComponent
+    },
+
 
     {
-      path: 'apps', loadChildren: () => import('./apps/apps.module').then(m => m.AppsModule)
-    },
-    {
-      path: 'tasks', loadChildren: () => import('./tasks/tasks.module').then(m => m.TasksModule)
-    },
-    {
-      path: 'crypto', loadChildren: () => import('./crypto/crypto.module').then(m => m.CryptoModule)
-    },
-    {
       path: 'invoices', loadChildren: () => import('./invoices/invoices.module').then(m => m.InvoicesModule)
-    },
-    {
-      path: 'tickets', loadChildren: () => import('./tickets/tickets.module').then(m => m.TicketsModule)
     },
     {
       path: 'pages', loadChildren: () => import('./extrapages/extraspages.module').then(m => m.ExtraspagesModule)

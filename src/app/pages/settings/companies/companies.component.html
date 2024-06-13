@@ -9,8 +9,9 @@
                 <div class="d-flex align-items-center flex-wrap gap-2">
                     <div class="flex-grow-1">
                         <button class="btn btn-secondary add-btn" data-bs-toggle="modal" data-bs-target="#showModal"
-                            (click)="openModal(content)"><i class="ri-add-fill me-1 align-bottom"></i> Add
-                            Company</button>
+                            (click)="openModal(content)">
+                            <i class="ri-add-fill me-1 align-bottom"></i> Agregar
+                        </button>
                     </div>
                     <div class="flex-shrink-0">
                         <div class="hstack text-nowrap gap-2" ngbDropdown>
@@ -48,7 +49,7 @@
                     </div>
                     <div class="col-md-auto ms-auto">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="text-muted text-nowrap">Sort by: </span>
+                            <span class="text-muted text-nowrap">Filtrar por: </span>
                             <select class="form-control mb-0" data-choices data-choices-search-false
                                 id="choices-single-default" (click)="SortFilter();">
                                 <option value="Downer">Owner</option>
@@ -60,108 +61,18 @@
                 </div>
             </div>
             <div class="card-body">
-                <div>
-                    <div class="table-responsive table-card mb-2">
-                        <table class="table">
-                            <thead>
-                                <tr class="bg-light">
-                                    <th scope="col" style="width: 50px;">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="checkAll" value="option" [(ngModel)]="masterSelected" (change)="checkUncheckAll($event)">
-                                        </div>
-                                    </th>
-                                    <th class="sort" (click)="onSort('name')">Company Name
-                                    </th>
-                                    <th class="sort" (click)="onSort('owner')">Owner</th>
-                                    <th class="sort" (click)="onSort('industry_type')">
-                                        Industry Type</th>
-                                    <th class="sort" (click)="onSort('star_value')">Rating
-                                    </th>
-                                    <th class="sort" (click)="onSort('location')">Location
-                                    </th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for(data of company | sortBy:sortBy:sortField;track $index){
-                                <!-- <tr *ngFor="let data of company | sortBy:sortBy:sortField" id="c_{{data._id}}"> -->
-                                    <tr id="c_{{data._id}}">
-                                    <th scope="row">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="checkAll"
-                                                value="{{data._id}}" [(ngModel)]="data.state"
-                                                (change)="onCheckboxChange($event)">
-                                        </div>
-                                    </th>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="flex-shrink-0">
-                                                <img src="assets/images/{{data.image_src}}" alt=""
-                                                    class="avatar-xxs rounded-circle image_src">
-                                            </div>
-                                            <div class="flex-grow-1 ms-2 name">{{data.name}}</div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <ngb-highlight [result]="data.owner" [term]="searchTerm">
-                                        </ngb-highlight>
-                                    </td>
-                                    <td>
-                                        <ngb-highlight [result]="data.industry_type" [term]="searchTerm">
-                                        </ngb-highlight>
-                                    </td>
-                                    <td><span class="star_value">{{data.star_value}} </span> <i
-                                            class="ri-star-fill text-warning align-bottom"></i></td>
-                                    <td>
-                                        <ngb-highlight [result]="data.location" [term]="searchTerm">
-                                        </ngb-highlight>
-                                    </td>
-                                    <td>
-                                        <ul class="list-inline hstack gap-2 mb-0">
-                                            <li class="list-inline-item edit" ngbTooltip="Call" placement="top">
-                                                <a href="javascript:void(0);" class="text-muted d-inline-block">
-                                                    <i class="ri-phone-line fs-16"></i>
-                                                </a>
-                                            </li>
-                                            <li class="list-inline-item edit" ngbTooltip="Message" placement="top">
-                                                <a href="javascript:void(0);" class="text-muted d-inline-block">
-                                                    <i class="ri-question-answer-line fs-16"></i>
-                                                </a>
-                                            </li>
-                                            <li class="list-inline-item" ngbTooltip="View" placement="top">
-                                                <a href="javascript:void(0);" (click)="viewDataGet($index)"><i
-                                                        class="ri-eye-fill align-bottom text-muted"></i></a>
-                                            </li>
-                                            <li class="list-inline-item" ngbTooltip="Edit" placement="top">
-                                                <a class="edit-item-btn" data-bs-toggle="modal"
-                                                    (click)="editDataGet($index,content)"><i
-                                                        class="ri-pencil-fill align-bottom text-muted"></i></a>
-                                            </li>
-                                            <li class="list-inline-item me-0" ngbTooltip="Delete" placement="top">
-                                                <a class="remove-item-btn" data-bs-toggle="modal"
-                                                    (click)="confirm(deleteModel,data._id)">
-                                                    <i class="ri-delete-bin-fill align-bottom text-muted"></i>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </td>
-                                </tr>
-                            }
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="d-flex justify-content-end mt-3">
-                        <!-- Pagination -->
-                        <ngb-pagination [collectionSize]="allcompany?.length" [(page)]="service.page" [pageSize]="service.pageSize" (pageChange)="changePage()">
-                        </ngb-pagination>
-                        <!-- End Pagination -->
-                    </div>
-                    <div id="elmLoader">
-                        <div class="spinner-border text-primary avatar-sm" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                </div>
+                <app-data-table
+                    [listaItems]="listaItems"
+                    [content]="canchasList"
+                    [sortField]="''"
+                    [show]="canActivate.includes('VER')"
+                    [edit]="canActivate.includes('EDITAR')"
+                    [delete]="canActivate.includes('ELIMINAR')"
+                    (showItemEmitter)="viewDataGet($event)"
+                    (editItemEmitter)="editDataGet($event,content)"
+                    (deleteItemEmitter)="deleteData($event)"              
+                >
+                </app-data-table>  
 
                 <!-- Companies Model -->
                 <ng-template #content role="document" let-modal>

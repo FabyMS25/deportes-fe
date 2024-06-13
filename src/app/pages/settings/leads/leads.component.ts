@@ -14,8 +14,6 @@ import Swal from 'sweetalert2';
 
 import { RootReducerState } from 'src/app/store';
 import { Store } from '@ngrx/store';
-import { addLead, deleteLead, fetchCrmLeadData, updateLead } from 'src/app/store/CRM/crm_action';
-import { selectCRMLoading, selectLeadData } from 'src/app/store/CRM/crm_selector';
 import { cloneDeep } from 'lodash';
 import { PaginationService } from 'src/app/core/services/pagination.service';
 
@@ -83,18 +81,18 @@ export class LeadsComponent {
     /**
      * fetches data
      */
-    this.store.dispatch(fetchCrmLeadData());
-    this.store.select(selectCRMLoading).subscribe((data) => {
-      if (data == false) {
-        document.getElementById('elmLoader')?.classList.add('d-none');
-      }
-    });
+    // this.store.dispatch(fetchCrmLeadData());
+    // this.store.select(selectCRMLoading).subscribe((data) => {
+    //   if (data == false) {
+    //     document.getElementById('elmLoader')?.classList.add('d-none');
+    //   }
+    // });
 
-    this.store.select(selectLeadData).subscribe((data) => {
-      this.leads = data;
-      this.allleads = cloneDeep(data);
-      this.leads = this.service.changePage(this.allleads)
-    });
+    // this.store.select(selectLeadData).subscribe((data) => {
+    //   this.leads = data;
+    //   this.allleads = cloneDeep(data);
+    //   this.leads = this.service.changePage(this.allleads)
+    // });
 
   }
 
@@ -141,14 +139,14 @@ export class LeadsComponent {
     if (this.leadsForm.valid) {
       if (this.leadsForm.get('_id')?.value) {
         const updatedData = this.leadsForm.value;
-        this.store.dispatch(updateLead({ updatedData }));
+        // this.store.dispatch(updateLead({ updatedData }));
         this.modalService.dismissAll();
       }
       else {
         const contactId = (this.allleads.length + 1).toString();
         this.leadsForm.controls['_id'].setValue(contactId);
         const newData = this.leadsForm.value;
-        this.store.dispatch(addLead({ newData }));
+        // this.store.dispatch(addLead({ newData }));
         let timerInterval: any;
         Swal.fire({
           title: 'Leads inserted successfully!',
@@ -206,9 +204,9 @@ export class LeadsComponent {
   // Delete Data
   deleteData(id: any) {
     if (id) {
-      this.store.dispatch(deleteLead({ id: this.deleteId.toString() }));
+      // this.store.dispatch(deleteLead({ id: this.deleteId.toString() }));
     } else {
-      this.store.dispatch(deleteLead({ id: this.checkedValGet.toString() }));
+      // this.store.dispatch(deleteLead({ id: this.checkedValGet.toString() }));
     }
     this.deleteId = '';
     this.masterSelected = false;

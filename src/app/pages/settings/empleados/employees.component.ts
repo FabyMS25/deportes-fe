@@ -18,10 +18,12 @@ import Swal from 'sweetalert2';
 
 import { Store } from '@ngrx/store';
 import { RootReducerState } from 'src/app/store';
-import { addContact, deleteContact, fetchCrmContactData, updateContact } from 'src/app/store/CRM/crm_action';
-import { selectCRMLoading, selectContactData } from 'src/app/store/CRM/crm_selector';
+// import { addContact, deleteContact, fetchCrmContactData, updateContact } from 'src/app/store/CRM/crm_action';
+// import { selectCRMLoading, selectContactData } from 'src/app/store/CRM/crm_selector';
 import { cloneDeep } from 'lodash';
 import { PaginationService } from 'src/app/core/services/pagination.service';
+import { AuthenticationService } from 'src/app/core/services/auth.service';
+import { Employees } from 'src/app/core/data/employees';
 
 @Component({
   selector: 'app-employees',
@@ -42,28 +44,40 @@ export class EmployeesComponent implements OnInit {
   checkedList: any;
 
   // Api Data
-  content?: any;
-  contacts?: any;
   econtent?: any;
   url = GlobalComponent.API_URL;
-  allcontacts: any;
+  allcontent: any;
   searchTerm: any;
   searchResults: any;
 
+
+  
+  canActivate:string[];
+  listaItems:any[]=[];
+  // userRol =UserRol;
+  funcionariosList:any[]= Employees;
+  temp: any[] = [];
+  funcionarioSelected!:any;
+  // loading:boolean=false;
+
   constructor(private modalService: NgbModal,
+    private authService: AuthenticationService,
     public service: PaginationService,
     private formBuilder: UntypedFormBuilder,
     private store: Store<{ data: RootReducerState }>,
     private datePipe: DatePipe) {
+      this.canActivate = this.authService.hasPermissionModulo('Empleados');
   }
 
   ngOnInit(): void {
-    /**
-    * BreadCrumb
-    */
     this.breadCrumbItems = [
-      { label: 'CRM' },
-      { label: 'Contacts', active: true }
+      { label: 'Administración' },
+      { label: 'Empleados', active: true }
+    ];
+    this.listaItems = [
+      {name: 'Nombre', prop: 'nombreCompleto', avatar:true},
+      {name: 'Unidad',prop: 'unidad'},
+      {name: 'Rol', prop: 'rol', tag:true},
     ];
 
     /**
@@ -86,33 +100,33 @@ export class EmployeesComponent implements OnInit {
     /**
      * fetches data
      */
-    this.store.dispatch(fetchCrmContactData());
-    this.store.select(selectCRMLoading).subscribe((data) => {
-      if (data == false) {
-        document.getElementById('elmLoader')?.classList.add('d-none');
-      }
-    });
+    // this.store.dispatch(fetchCrmContactData());
+    // this.store.select(selectCRMLoading).subscribe((data) => {
+    //   if (data == false) {
+    //     document.getElementById('elmLoader')?.classList.add('d-none');
+    //   }
+    // });
 
-    this.store.select(selectContactData).subscribe((data) => {
-      this.contacts = data;
-      this.allcontacts = cloneDeep(data);
-      this.contacts = this.service.changePage(this.allcontacts)
-    });
+    // this.store.select(selectContactData).subscribe((data) => {
+    //   this.funcionariosList = data;
+    //   this.allcontent = cloneDeep(data);
+    //   this.funcionariosList = this.service.changePage(this.allcontent)
+    // });
 
   }
 
   changePage() {
-    this.contacts = this.service.changePage(this.allcontacts)
+    this.funcionariosList = this.service.changePage(this.allcontent)
   }
 
   // Search Data
   performSearch(): void {
-    this.searchResults = this.allcontacts.filter((item: any) => {
+    this.searchResults = this.allcontent.filter((item: any) => {
       return (
         item.name.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
-    this.contacts = this.service.changePage(this.searchResults)
+    this.funcionariosList = this.service.changePage(this.searchResults)
   }
 
   /**
@@ -156,14 +170,14 @@ export class EmployeesComponent implements OnInit {
     if (this.contactsForm.valid) {
       if (this.contactsForm.get('_id')?.value) {
         const updatedData = this.contactsForm.value;
-        this.store.dispatch(updateContact({ updatedData }));
+        // this.store.dispatch(updateContact({ updatedData }));
         this.modalService.dismissAll();
       }
       else {
-        const contactId = (this.allcontacts.length + 1).toString();
+        const contactId = (this.allcontent.length + 1).toString();
         this.contactsForm.controls['_id'].setValue(contactId);
         const newData = this.contactsForm.value;
-        this.store.dispatch(addContact({ newData }));
+        // this.store.dispatch(addContact({ newData }));
         this.modalService.dismissAll();
         let timerInterval: any;
         Swal.fire({
@@ -198,7 +212,7 @@ export class EmployeesComponent implements OnInit {
     var updateBtn = document.getElementById('add-btn') as HTMLAreaElement;
     updateBtn.innerHTML = "Update";
 
-    this.econtent = this.allcontacts[id];
+    this.econtent = this.allcontent[id];
     var img_data = document.getElementById('customer-img') as HTMLImageElement;
     img_data.src = 'assets/images/users/' + this.econtent.image_src
     this.contactsForm.controls['name'].setValue(this.econtent.name);
@@ -219,7 +233,7 @@ export class EmployeesComponent implements OnInit {
    * @param content modal content
    */
   viewDataGet(id: any) {
-    this.econtent = this.allcontacts[id];
+    this.econtent = this.allcontent[id];
     var img_data = document.querySelector('.contact-details img') as HTMLImageElement;
     img_data.src = 'assets/images/users/' + this.econtent.image_src;
     (document.querySelector('.contact-details h5') as HTMLImageElement).innerHTML = this.econtent.name;
@@ -238,12 +252,12 @@ export class EmployeesComponent implements OnInit {
 
   // The master checkbox will check/ uncheck all items
   checkUncheckAll(ev: any) {
-    this.contacts.forEach((x: { state: any; }) => x.state = ev.target.checked)
+    this.funcionariosList.forEach((x: { state: any; }) => x.state = ev.target.checked)
     var checkedVal: any[] = [];
     var result
-    for (var i = 0; i < this.contacts.length; i++) {
-      if (this.contacts[i].state == true) {
-        result = this.contacts[i];
+    for (var i = 0; i < this.funcionariosList.length; i++) {
+      if (this.funcionariosList[i].state == true) {
+        result = this.funcionariosList[i];
         checkedVal.push(result);
       }
     }
@@ -252,7 +266,7 @@ export class EmployeesComponent implements OnInit {
 
   }
   isAllChecked() {
-    return this.content.every((_: { state: any; }) => _.state);
+    return this.funcionariosList.every((_: { state: any; }) => _.state);
   }
 
   /**
@@ -273,7 +287,7 @@ export class EmployeesComponent implements OnInit {
       noDownload: false,
       headers: ["Id", "Image src", "Name", "Company", "Designation", "Email", "Phone", "Tags", "Lead Score", "Last Contacted"]
     };
-    new ngxCsv(this.content, "Contact", orders);
+    new ngxCsv(this.funcionariosList, "Contact", orders);
   }
 
   // Select Checkbox value Get
@@ -282,9 +296,9 @@ export class EmployeesComponent implements OnInit {
     checkArray.push(new UntypedFormControl(e.target.value));
     var checkedVal: any[] = [];
     var result
-    for (var i = 0; i < this.contacts.length; i++) {
-      if (this.contacts[i].state == true) {
-        result = this.contacts[i];
+    for (var i = 0; i < this.funcionariosList.length; i++) {
+      if (this.funcionariosList[i].state == true) {
+        result = this.funcionariosList[i];
         checkedVal.push(result);
       }
     }
@@ -304,9 +318,9 @@ export class EmployeesComponent implements OnInit {
   // Delete Data
   deleteData(id: any) {
     if (id) {
-      this.store.dispatch(deleteContact({ id: this.deleteId.toString() }));
+      // this.store.dispatch(deleteContact({ id: this.deleteId.toString() }));
     } else {
-      this.store.dispatch(deleteContact({ id: this.checkedValGet.toString() }));
+      // this.store.dispatch(deleteContact({ id: this.checkedValGet.toString() }));
     }
     this.deleteId = '';
     this.masterSelected = false;
@@ -350,10 +364,6 @@ export class EmployeesComponent implements OnInit {
     }
   }
 
-  // Sort data
-  onSort(column: any) {
-    this.contacts = this.service.onSort(column, this.contacts)
-  }
 
 
 

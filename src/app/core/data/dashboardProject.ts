@@ -1,4 +1,3 @@
-import { ChartOptions } from "src/app/store/Crypto/crypto_model";
 
 /**
  * Stat Counder Data

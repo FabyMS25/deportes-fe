@@ -1,4 +1,4 @@
-import { ChartOptions } from "src/app/store/Crypto/crypto_model";
+// import { any } from "src/app/store/Crypto/crypto_model";
 /**
  * Best Selling
  */
@@ -225,7 +225,7 @@ const statData = [{
 /**
  * BitCoin Chart
  */
- const cryptoBitcoinChart: ChartOptions = {
+ const cryptoBitcoinChart: any = {
   series: [{
     name: "Bitcoin",
     data: [85, 68, 35, 90, 8, 11, 26, 54]
@@ -264,7 +264,7 @@ const statData = [{
 /**
  * Lite Coin Chart
  */
- const cryptolitecoinChart: ChartOptions = {
+ const cryptolitecoinChart: any = {
   series: [{
     name: "Litecoin",
     data: [25, 50, 41, 87, 12, 36, 9, 54]
@@ -303,7 +303,7 @@ const statData = [{
 /**
  * Eatherreum Chart
  */
- const cryptoEatherreumChart: ChartOptions = {
+ const cryptoEatherreumChart: any = {
   series: [{
     name: "Ethereum",
     data: [36, 21, 65, 22, 35, 50, 29, 44]
@@ -342,7 +342,7 @@ const statData = [{
 /**
  * Binance Chart
  */
- const cryptoBinanceChart: ChartOptions = {
+ const cryptoBinanceChart: any = {
   series: [{
     name: "Binance",
     data: [30, 58, 29, 89, 12, 36, 9, 54]
@@ -381,7 +381,7 @@ const statData = [{
 /**
  * Dash Chart
  */
- const cryptoDashChart: ChartOptions = {
+ const cryptoDashChart: any = {
   series: [{
     name: "Dash",
     data: [24, 68, 39, 86, 29, 42, 11, 58]
@@ -420,7 +420,7 @@ const statData = [{
 /**
  * Tether Chart
  */
- const cryptoTetherChart: ChartOptions = {
+ const cryptoTetherChart: any = {
   series: [{
     name: "Dash",
     data: [13, 76, 12, 85, 25, 60, 9, 54]
@@ -459,7 +459,7 @@ const statData = [{
 /**
  * NEO Chart
  */
- const cryptoNeoChart: ChartOptions = {
+ const cryptoNeoChart: any = {
   series: [{
     name: "Neo",
     data: [9, 66, 41, 89, 12, 36, 25, 54]

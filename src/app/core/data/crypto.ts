@@ -1,4 +1,4 @@
-import { ChartOptions } from "src/app/store/Crypto/crypto_model";
+// import { ChartOptions } from "src/app/store/Crypto/crypto_model";
 
 const Market = [
     {
@@ -644,7 +644,7 @@ const Transactions = [
 /**
  * BitCoin Chart
  */
- const BitcoinChart: ChartOptions = {
+ const BitcoinChart: any = {
   series: [{
     name: "Bitcoin",
     data: [85, 68, 35, 90, 8, 11, 26, 54]
@@ -683,7 +683,7 @@ const Transactions = [
 /**
  * Lite Coin Chart
  */
- const litecoinChart: ChartOptions = {
+ const litecoinChart: any = {
   series: [{
     name: "Litecoin",
     data: [25, 50, 41, 87, 12, 36, 9, 54]
@@ -722,7 +722,7 @@ const Transactions = [
 /**
  * Eatherreum Chart
  */
- const EatherreumChart: ChartOptions = {
+ const EatherreumChart: any = {
   series: [{
     name: "Ethereum",
     data: [36, 21, 65, 22, 35, 50, 29, 44]
@@ -761,7 +761,7 @@ const Transactions = [
 /**
  * Binance Chart
  */
- const BinanceChart: ChartOptions = {
+ const BinanceChart: any = {
   series: [{
     name: "Binance",
     data: [30, 58, 29, 89, 12, 36, 9, 54]
@@ -800,7 +800,7 @@ const Transactions = [
 /**
  * Dash Chart
  */
- const DashChart: ChartOptions = {
+ const DashChart: any = {
   series: [{
     name: "Dash",
     data: [24, 68, 39, 86, 29, 42, 11, 58]
@@ -839,7 +839,7 @@ const Transactions = [
 /**
  * Tether Chart
  */
- const TetherChart: ChartOptions = {
+ const TetherChart: any = {
   series: [{
     name: "Dash",
     data: [13, 76, 12, 85, 25, 60, 9, 54]
@@ -878,7 +878,7 @@ const Transactions = [
 /**
  * NEO Chart
  */
- const NeoChart: ChartOptions = {
+ const NeoChart: any = {
   series: [{
     name: "Neo",
     data: [9, 66, 41, 89, 12, 36, 25, 54]
