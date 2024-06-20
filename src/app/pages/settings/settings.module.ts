@@ -18,7 +18,7 @@ import { SettingsRoutingModule } from './settings-routing.module';
 import { SharedModule } from '../../shared/shared.module';
 import { EmployeesComponent } from './empleados/employees.component';
 import { CompaniesComponent } from './companies/companies.component';
-import { LeadsComponent } from './leads/leads.component';
+import { DeportesComponent } from './deportes/deportes.component';
 import { SortByCrmPipe } from "../settings/sort-by.pipe";
 
 import {DatePipe} from '@angular/common';
@@ -28,7 +28,7 @@ import { ModalComponent } from './companies/modal/modal.component';
   declarations: [
     EmployeesComponent,
     CompaniesComponent,
-    LeadsComponent,
+    DeportesComponent,
     SortByCrmPipe,
     ModalComponent
   ],

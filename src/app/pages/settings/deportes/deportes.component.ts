@@ -7,32 +7,31 @@ import { UntypedFormBuilder, UntypedFormGroup, FormArray, Validators } from '@an
 // Date Format
 import { DatePipe } from '@angular/common';
 
-import { restApiService } from "../../../core/services/rest-api.service";
-
 // Sweet Alert
 import Swal from 'sweetalert2';
 
 import { RootReducerState } from 'src/app/store';
 import { Store } from '@ngrx/store';
-import { cloneDeep } from 'lodash';
 import { PaginationService } from 'src/app/core/services/pagination.service';
+import { Deporte } from 'src/app/core/models/deporte.model';
 
 
 @Component({
-  selector: 'app-leads',
-  templateUrl: './leads.component.html',
-  styleUrls: ['./leads.component.scss']
+  selector: 'app-deportes',
+  templateUrl: './deportes.component.html',
+  styleUrls: ['./deportes.component.scss']
 })
 /**
  * Leads Component
  */
-export class LeadsComponent {
+export class DeportesComponent {
 
   // bread crumb items
   breadCrumbItems!: Array<{}>;
+  title="Deportes";
   submitted = false;
-  leadsForm!: UntypedFormGroup;
-  CustomersData!: any;
+  contentForm!: UntypedFormGroup;
+  deporteData!: Deporte;
   masterSelected!: boolean;
   checkedList: any;
 
@@ -45,6 +44,9 @@ export class LeadsComponent {
   allleads: any;
   searchResults: any;
   searchTerm: any;
+
+  listaItems:any[]=[];
+  List:any[]=[];
 
   constructor(private modalService: NgbModal,
     public service: PaginationService,
@@ -59,23 +61,22 @@ export class LeadsComponent {
     * BreadCrumb
     */
     this.breadCrumbItems = [
-      { label: 'CRM' },
-      { label: 'Leads', active: true }
+      { label: 'Administracion' },
+      { label: this.title, active: true }
     ];
 
+    this.listaItems = [
+      {name: 'Nombre', prop: 'nombre'},
+      {name: 'Estado', prop: 'estado'},
+      {name: 'Canchas',prop: 'canchas'},
+    ];
     /**
      * Form Validation
      */
-    this.leadsForm = this.formBuilder.group({
-      image_src: ['avatar-8.jpg'],
-      _id: [''],
-      name: ['', [Validators.required]],
-      company: ['', [Validators.required]],
-      score: ['', [Validators.required]],
-      phone: ['', [Validators.required]],
-      location: ['', [Validators.required]],
-      tags: ['', [Validators.required]],
-      date: ['', [Validators.required]]
+    this.contentForm = this.formBuilder.group({
+      uuid: [''],
+      estado:[''],
+      nombre: ['', [Validators.required]]
     });
 
     /**
@@ -111,7 +112,7 @@ export class LeadsComponent {
    * Form data get
    */
   get form() {
-    return this.leadsForm.controls;
+    return this.contentForm.controls;
   }
 
   // File Upload
@@ -120,7 +121,7 @@ export class LeadsComponent {
     let fileList: any = (event.target as HTMLInputElement);
     let file: File = fileList.files[0];
     document.getElementById('')
-    this.leadsForm.patchValue({
+    this.contentForm.patchValue({
       // image_src: file.name
       image_src: 'avatar-8.jpg'
     });
@@ -136,16 +137,16 @@ export class LeadsComponent {
   * Save user
   */
   saveUser() {
-    if (this.leadsForm.valid) {
-      if (this.leadsForm.get('_id')?.value) {
-        const updatedData = this.leadsForm.value;
+    if (this.contentForm.valid) {
+      if (this.contentForm.get('_id')?.value) {
+        const updatedData = this.contentForm.value;
         // this.store.dispatch(updateLead({ updatedData }));
         this.modalService.dismissAll();
       }
       else {
         const contactId = (this.allleads.length + 1).toString();
-        this.leadsForm.controls['_id'].setValue(contactId);
-        const newData = this.leadsForm.value;
+        this.contentForm.controls['_id'].setValue(contactId);
+        const newData = this.contentForm.value;
         // this.store.dispatch(addLead({ newData }));
         let timerInterval: any;
         Swal.fire({
@@ -163,7 +164,7 @@ export class LeadsComponent {
       }
     }
     this.modalService.dismissAll();
-    this.leadsForm.reset();
+    this.contentForm.reset();
     this.submitted = true
   }
 
@@ -182,15 +183,15 @@ export class LeadsComponent {
     this.econtent = this.allleads[id];
     var img_data = document.getElementById('lead-img') as HTMLImageElement;
     img_data.src = 'assets/images/users/' + this.econtent.image_src
-    this.leadsForm.controls['name'].setValue(this.econtent.name);
-    this.leadsForm.controls['company'].setValue(this.econtent.company);
-    this.leadsForm.controls['score'].setValue(this.econtent.score);
-    this.leadsForm.controls['phone'].setValue(this.econtent.phone);
-    this.leadsForm.controls['location'].setValue(this.econtent.location);
-    this.leadsForm.controls['tags'].setValue(this.econtent.tags);
-    this.leadsForm.controls['date'].setValue(this.econtent.date);
-    this.leadsForm.controls['_id'].setValue(this.econtent._id);
-    this.leadsForm.controls['image_src'].setValue(this.econtent.image_src);
+    this.contentForm.controls['name'].setValue(this.econtent.name);
+    this.contentForm.controls['company'].setValue(this.econtent.company);
+    this.contentForm.controls['score'].setValue(this.econtent.score);
+    this.contentForm.controls['phone'].setValue(this.econtent.phone);
+    this.contentForm.controls['location'].setValue(this.econtent.location);
+    this.contentForm.controls['tags'].setValue(this.econtent.tags);
+    this.contentForm.controls['date'].setValue(this.econtent.date);
+    this.contentForm.controls['_id'].setValue(this.econtent._id);
+    this.contentForm.controls['image_src'].setValue(this.econtent.image_src);
   }
   /**
    * Delete model

@@ -46,126 +46,25 @@
                 </div>
             </div>
             <div class="card-body">
-                <div>
-                    <div class="table-responsive table-card">
-                        <table class="table">
-                            <thead>
-                                <tr class="bg-light text-muted">
-                                    <th scope="col" style="width: 50px;">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="checkAll" value="option"
-                                                [(ngModel)]="masterSelected" (change)="checkUncheckAll($event)">
-                                        </div>
-                                    </th>
-                                    <th class="sort" (click)="onSort('name')">Name</th>
-                                    <th class="sort" (click)="onSort('name')">Company</th>
-                                    <th class="sort" (click)="onSort('score')">Leads Score</th>
-                                    <th class="sort" (click)="onSort('phone')">Phone</th>
-                                    <th class="sort" (click)="onSort('location')">Location</th>
-                                    <th class="sort" (click)="onSort('tags')">Tags</th>
-                                    <th class="sort" (click)="onSort('date')">Create Date</th>
-                                    <th class="sort">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for(data of leads;track $index){
-                                <tr id="l_{{data._id}}">
-                                    <th scope="row">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="checkAll"
-                                                value="{{data._id}}" [(ngModel)]="data.state"
-                                                (change)="onCheckboxChange($event)">
-                                        </div>
-                                    </th>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="flex-shrink-0">
-                                                <img src="assets/images/users/{{data.image_src}}" alt=""
-                                                    class="avatar-xxs rounded-circle image_src object-fit-cover">
-                                            </div>
-                                            <div class="flex-grow-1 ms-2 name">{{data.name}}</div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <ngb-highlight [result]="data.company" [term]="searchTerm">
-                                        </ngb-highlight>
-                                    </td>
-                                    <td>
-                                        <ngb-highlight [result]="data.score" [term]="searchTerm">
-                                        </ngb-highlight>
-                                    </td>
-                                    <td>
-                                        <ngb-highlight [result]="data.phone" [term]="searchTerm">
-                                        </ngb-highlight>
-                                    </td>
-                                    <td>
-                                        <ngb-highlight [result]="data.location" [term]="searchTerm">
-                                        </ngb-highlight>
-                                    </td>
-                                    <td class="tags">
-                                        <div class="d-flex gap-1">
-                                            @for(tag of data.tags;track $index){
-                                            <span class="badge bg-primary-subtle text-primary">{{tag}}</span>
-                                            }
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <ngb-highlight [result]="data.date | date :'longDate'"
-                                            [term]="searchTerm"></ngb-highlight>
-                                    </td>
-                                    <td>
-                                        <ul class="list-inline hstack gap-2 mb-0">
-                                            <li class="list-inline-item edit" ngbTooltip="Call" placement="top">
-                                                <a href="javascript:void(0);" class="text-muted d-inline-block">
-                                                    <i class="ri-phone-line fs-16"></i>
-                                                </a>
-                                            </li>
-                                            <li class="list-inline-item edit" ngbTooltip="Message" placement="top">
-                                                <a href="javascript:void(0);" class="text-muted d-inline-block">
-                                                    <i class="ri-question-answer-line fs-16"></i>
-                                                </a>
-                                            </li>
-                                            <li class="list-inline-item" ngbTooltip="View" placement="top">
-                                                <a href="javascript:void(0);"><i
-                                                        class="ri-eye-fill align-bottom text-muted"></i></a>
-                                            </li>
-                                            <li class="list-inline-item" ngbTooltip="Edit" placement="top">
-                                                <a class="edit-item-btn" data-bs-toggle="modal"
-                                                    (click)="editDataGet($index,content)"><i
-                                                        class="ri-pencil-fill align-bottom text-muted"></i></a>
-                                            </li>
-                                            <li class="list-inline-item me-0" ngbTooltip="Delete" placement="top">
-                                                <a class="remove-item-btn" data-bs-toggle="modal"
-                                                    (click)="confirm(deleteModel,data._id)">
-                                                    <i class="ri-delete-bin-fill align-bottom text-muted"></i>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </td>
-                                </tr>
-                            }
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="d-flex justify-content-end mt-3">
-                        <!-- Pagination -->
-                        <ngb-pagination [collectionSize]="allleads?.length" [(page)]="service.page" [pageSize]="service.pageSize" (pageChange)="changePage()">
-                        </ngb-pagination>
-                        <!-- End Pagination -->
-                    </div>
-                    <div id="elmLoader">
-                        <div class="spinner-border text-primary avatar-sm" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                </div>
+                <app-data-table
+                    [listaItems]="listaItems"
+                    [content]="List"
+                    [sortField]="''"
+                    [show]="true"
+                    [edit]="true"
+                    [delete]="true"
+                    (showItemEmitter)="openModal($event)"
+                    (editItemEmitter)="editDataGet($event,content)"
+                    (deleteItemEmitter)="deleteData($event)"              
+                >
+                </app-data-table>  
                 <ng-template #content role="document" let-modal>
                     <div class="modal-header bg-light p-3">
                         <h5 class="modal-title" id="exampleModalLabel">Add Lead</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
                             id="close-modal" (click)="modal.dismiss('Cross click')"></button>
                     </div>
-                    <form (ngSubmit)="saveUser()" [formGroup]="leadsForm" class="tablelist-form" autocomplete="off">
+                    <form (ngSubmit)="saveUser()" [formGroup]="contentForm" class="tablelist-form" autocomplete="off">
                         <div class="modal-body">
                             <input type="hidden" name="id" formControlName="_id" />
                             <div class="row g-3">
