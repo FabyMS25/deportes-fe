@@ -5,8 +5,8 @@
 export const environment = {
   production: false,
   apiLoginUrl: 'http://181.177.143.185:8080/api',
-  backendUrl: "http://localhost:8081/api",
-  // backendUrl:'http://181.177.143.187:8081/api',
+  // backendUrl: "http://localhost:8081/api",
+  backendUrl: "http://181.177.143.185:8081/api",
 
 };
 

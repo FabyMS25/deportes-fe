@@ -22,13 +22,15 @@ import { LeadsComponent } from './leads/leads.component';
 import { SortByCrmPipe } from "../settings/sort-by.pipe";
 
 import {DatePipe} from '@angular/common';
+import { ModalComponent } from './companies/modal/modal.component';
 
 @NgModule({
   declarations: [
     EmployeesComponent,
     CompaniesComponent,
     LeadsComponent,
-    SortByCrmPipe
+    SortByCrmPipe,
+    ModalComponent
   ],
   imports: [
     CommonModule,
