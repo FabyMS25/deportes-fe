@@ -13,7 +13,7 @@ export class DataTableComponent {
 
   @Input() listaItems!: any[];
   @Input() content!: any[];
-  // @Input() sortField!: any;
+  @Input() sortField!: any;
   @Input() show!: boolean;
   @Input() doc!:boolean;
   @Input() edit!: boolean;
@@ -144,7 +144,6 @@ changePage() {
   /**
    * ******* to sort ******* 
    */
-  sortField: any;
   sortBy: any
   SortFilter() {
     this.sortField = (document.getElementById("choices-single-default") as HTMLInputElement).value;

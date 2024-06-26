@@ -80,8 +80,8 @@ export const MENU: MenuItem[] = [
       },
       {
         orden: 3,
-        nombreMenu: 'MENUITEMS.APPS.LIST.LEADS',
-        ruta: '/settings/leads',
+        nombreMenu: 'ADMINISTRATION.CATEGORIES',
+        ruta: '/settings/categories',
         permisoPadreDto: 5
       }
     ]
@@ -100,8 +100,8 @@ export const MENU: MenuItem[] = [
   },
   {
     orden: 3,
-    nombreMenu: 'MENUITEMS.APPS.LIST.LEADS',
-    ruta: '/settings/leads',
+    nombreMenu: 'ADMINISTRATION.CATEGORIES',
+    ruta: '/settings/categories',
     permisoPadreDto: 5
   },
       

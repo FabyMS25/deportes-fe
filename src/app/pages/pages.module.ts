@@ -28,17 +28,18 @@ import lottie from 'lottie-web';
 import { PagesRoutingModule } from "./pages-routing.module";
 import { SharedModule } from "../shared/shared.module";
 import { WidgetModule } from '../shared/widget/widget.module';
-import { ToastsContainer } from './dashboards/dashboard/toasts-container.component';
 import { DashboardsModule } from "./dashboards/dashboards.module";
 import { FeatherModule } from 'angular-feather';
 import { allIcons } from 'angular-feather/icons';
 import { ErrorsModule } from '../account/errors/errors.module';
 import { DetailsComponent } from './details/details.component';
+import { CommentsComponent } from './details/comments/comments.component';
 
 
 @NgModule({
   declarations: [
-    DetailsComponent
+    DetailsComponent,
+    CommentsComponent
   ],
   imports: [
     CommonModule,

@@ -19,8 +19,9 @@
 
   "ADMINISTRATION": {
       "TEXT": "Administration",
-      "COMPANIES": "Companies",
-      "EMPLOYEES": "Employees"
+      "FIELDS": "Fields",
+      "EMPLOYEES": "Employees",
+      "CATEGORIES": "Categories"
   },
 
 

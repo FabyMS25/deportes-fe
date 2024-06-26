@@ -9,27 +9,27 @@ import { EncargadoCancha } from '../../models/encargado-cancha';
 })
 export class EncargadoCanchaService {
 
-    apiUrl = environment.backendUrl + '/designacion-funcionario';
+    apiUrl = environment.backendUrl + '/encargado';
 
 
   constructor(private http: HttpClient) { }
 
   getAll(): Observable<EncargadoCancha[]> {
-    return this.http.get<EncargadoCancha[]>(`${this.apiUrl}/EncargadoCanchas`);
+    return this.http.get<EncargadoCancha[]>(`${this.apiUrl}`);
   }
 
   getByUuid(uuid: String): Observable<EncargadoCancha> {
-    return this.http.get<EncargadoCancha>(`${this.apiUrl}/uuid/${uuid}`)
+    return this.http.get<EncargadoCancha>(`${this.apiUrl}/${uuid}`)
   }
 
   save(data: EncargadoCancha): Observable<EncargadoCancha> {
-    return this.http.post<EncargadoCancha>(`${this.apiUrl}/create`, data);
+    return this.http.post<EncargadoCancha>(`${this.apiUrl}`, data);
   }
 
   update(data: EncargadoCancha): Observable<EncargadoCancha> {
-    return this.http.put<EncargadoCancha>(`${this.apiUrl}/update`, data);
+    return this.http.put<EncargadoCancha>(`${this.apiUrl}`, data);
   }
   delete(uuid: String) {
-    return this.http.delete(`${this.apiUrl}/delete/${uuid}`);
+    return this.http.delete(`${this.apiUrl}/${uuid}`);
   }
 }

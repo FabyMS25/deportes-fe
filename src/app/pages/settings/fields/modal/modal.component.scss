@@ -1,0 +1,37 @@
+/* Custom styles for ng-select dropdown */
+.ng-select .ng-dropdown-panel {
+    background-color: white !important; /* Set background color to white */
+  }
+  
+  .ng-select .ng-dropdown-panel .ng-option {
+    background-color: white; /* Set individual option background to white */
+  }
+  
+  .ng-select .ng-dropdown-panel .ng-option:hover {
+    background-color: #f1f1f1; /* Optional: Set hover color for options */
+  }
+  
+  :host ::ng-deep .ng-select .ng-dropdown-panel {
+    background-color: white !important; /* Set background color to white */
+  }
+  
+  :host ::ng-deep .ng-select .ng-dropdown-panel .ng-option {
+    background-color: white; /* Set individual option background to white */
+  }
+  
+  :host ::ng-deep .ng-select .ng-dropdown-panel .ng-option:hover {
+    background-color: #f1f1f1; /* Optional: Set hover color for options */
+  }
+  
+  :host ::ng-deep .ng-select .ng-dropdown-panel {
+    background-color: white !important; /* Set background color to white */
+  }
+  
+  :host ::ng-deep .ng-select .ng-dropdown-panel .ng-option {
+    background-color: white; /* Set individual option background to white */
+  }
+  
+  :host ::ng-deep .ng-select .ng-dropdown-panel .ng-option:hover {
+    background-color: #f1f1f1; /* Optional: Set hover color for options */
+  }
+  

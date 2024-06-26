@@ -1,27 +1,188 @@
 <!-- Start Breadcrumbs -->
-<app-breadcrumbs title="Task Details" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+<app-breadcrumbs title="Reservas" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
 <!-- End Breadcrumbs -->
 
+
 <div class="row">
-    <div class="col-xxl-3">
-        <div class="card">
-            <div class="card-body text-center">
-                <h6 class="card-title mb-3 flex-grow-1 text-start">Time Tracking</h6>
-                <div class="mb-2">
-                    <lord-icon src="https://cdn.lordicon.com/kbtmbyzy.json" trigger="loop"
-                        colors="primary:#687cfe,secondary:#ff7f5d" style="width:90px;height:90px">
-                    </lord-icon>
-                </div>
-                <h3 class="mb-1">9 hrs 13 min</h3>
-                <h5 class="fs-14 mb-4">Profile Page Structure</h5>
-                <div class="hstack gap-2 justify-content-center">
-                    <button class="btn btn-danger btn-sm"><i class="ri-stop-circle-line align-bottom me-1"></i>
-                        Stop</button>
-                    <button class="btn btn-primary btn-sm"><i class="ri-play-circle-line align-bottom me-1"></i>
-                        Start</button>
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="text-muted">
+                    <h6 class="mb-3 fw-semibold text-uppercase">Cancha: </h6>
+                    <p></p>
                 </div>
             </div>
-        </div><!--end card-->
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-xl-8">
+                    <div class="card card-height-100">
+                        <div class="card-header align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">Detalles de Cancha</h4>
+                            <div class="d-flex gap-1">
+                            </div>
+                        </div><!-- end card header -->
+            
+                        <div class="card-body">
+                            <h6 class="mb-3 fw-semibold text-uppercase">Categorias de Deportes </h6>
+                            <ul class="list-unstyled vstack gap-3 mb-0">
+                                <li>
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <label class="form-label" for="productTask">Techado: </label>
+                                        </div>
+                                        <div class="flex-grow-1 ms-2 mb-1">
+                                            <!-- <h6 class="mb-1"><a routerLink="/pages/profile" class="text-body"></a></h6> -->
+                                            <p class="text-muted mb-0">Es Techado</p>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <label class="form-label" for="productTask">Superficie: </label>
+                                        </div>
+                                        <div class="flex-grow-1 ms-2 mb-1">
+                                            <p class="text-muted mb-0"></p>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <label class="form-label" for="productTask">Distrito: </label>
+                                        </div>
+                                        <div class="flex-grow-1 ms-2 mb-1">
+                                            <p class="text-muted mb-0"></p>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                            <!-- <ul class=" ps-3 list-unstyled vstack gap-2">
+                                <li>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="" id="dashboardTask" checked>
+                                        <label class="form-check-label" for="dashboardTask">
+                                            Dashboards : Ecommerce, Analytics, Project,etc.
+                                        </label>
+                                    </div>
+                                </li>
+                            </ul> -->
+            
+                            <div class="pt-3 border-top border-top-dashed mt-4">
+                                <h6 class="mb-3 fw-semibold text-uppercase">Categorias de Deportes</h6>
+                                <div class="hstack flex-wrap gap-2 fs-15">
+                                    <div class="badge fw-medium bg-info-subtle text-info">UI/UX</div>
+                                    <div class="badge fw-medium bg-info-subtle text-info">Dashboard</div>
+                                    <div class="badge fw-medium bg-info-subtle text-info">Design</div>
+                                </div>
+                            </div>
+                        </div><!-- end card body -->
+                    </div><!-- end card -->
+                </div><!-- end col -->
+            
+                <div class="col-xl-4">
+                    <!-- card -->
+                    <div class="card card-height-100">
+                        <div class="card-header align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">Ubicación </h4>
+                            <!-- <div class="flex-shrink-0">
+                                <button type="button" class="btn btn-soft-primary btn-sm">
+                                    Export Report
+                                </button>
+                            </div> -->
+                        </div><!-- end card header -->
+                        <!-- card body -->
+                        <div class="card-body">
+                            
+                            <div id="map" style="width: 100%; height: 269px;"></div>
+            
+                            <!-- <div id="sales-by-locations" leaflet style="height: 269px;" [leafletOptions]="options" [leafletLayers]="layers"></div> -->
+            
+                            <div class="px-2 py-2 mt-1">
+                                <p class="mb-1">Latitud <span class="float-end">75%</span></p>
+                                <p class="mt-3 mb-1">Longitud <span class="float-end">47%</span></p>
+                                <p class="mt-3 mb-1">Dirección <span class="float-end">82%</span></p>
+                                <div class="progress mt-2" style="height: 6px;">
+                                    <div class="progress-bar progress-bar-striped bg-primary" role="progressbar" style="width: 82%" aria-valuenow="82" aria-valuemin="0" aria-valuemax="82">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- end card body -->
+                    </div>
+                    <!-- end card -->
+                </div>
+            </div>            
+        </div>
+    </div><!--end card-->
+    <!-- end col -->
+</div>
+
+<div class="row">
+    <div class="col-xxl-3"><div class="card">
+        <div class="card-body text-center">
+          <h6 class="card-title mb-3 flex-grow-1 text-start">Hora</h6>
+          <div class="mb-2">
+            <lord-icon src="https://cdn.lordicon.com/kbtmbyzy.json" trigger="loop"
+                       colors="primary:#687cfe,secondary:#ff7f5d" style="width:90px;height:90px">
+            </lord-icon>
+          </div>
+          <h3 class="mb-1">{{ currentTime }}</h3>
+          <h5 class="fs-14 mb-4">Hora Actual</h5>
+          <div class="hstack gap-2 justify-content-center">
+            <button class="btn btn-danger btn-sm"><i class="ri-stop-circle-line align-bottom me-1"></i>
+              Stop</button>
+            <button class="btn btn-primary btn-sm"><i class="ri-play-circle-line align-bottom me-1"></i>
+              Start</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex mb-3">
+                <h6 class="card-title mb-0 flex-grow-1">Encargado</h6>
+                <div class="flex-shrink-0">
+                    <button type="button" class="btn btn-soft-danger btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#inviteMembersModal" (click)="openModal(content)"><i
+                            class="ri-share-line me-1 align-bottom"></i> Ver</button>
+                </div>
+            </div>
+            <ul class="list-unstyled vstack gap-3 mb-0">
+                <li>
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <img src="assets/images/users/avatar-10.jpg" alt="" class="avatar-xs rounded-circle">
+                        </div>
+                        <div class="flex-grow-1 ms-2">
+                            <h6 class="mb-1"><a routerLink="/pages/profile" class="text-body">Tonya Noble</a></h6>
+                            <p class="text-muted mb-0">Full Stack Developer</p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="dropdown" ngbDropdown>
+                                <button class="btn btn-icon btn-sm fs-16 text-muted dropdown arrow-none d-block"
+                                    type="button" data-bs-toggle="dropdown" aria-expanded="false" ngbDropdownToggle>
+                                    <i class="ri-more-fill"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
+                                    <li><a class="dropdown-item" href="javascript:void(0);"><i
+                                                class="ri-eye-fill text-muted me-2 align-bottom float-start"></i>View</a>
+                                    </li>
+                                    <li><a class="dropdown-item" href="javascript:void(0);"><i
+                                                class="ri-star-fill text-muted me-2 align-bottom float-start"></i>Favourite</a>
+                                    </li>
+                                    <li><a class="dropdown-item" href="javascript:void(0);"><i
+                                                class="ri-delete-bin-5-fill text-muted me-2 align-bottom float-start"></i>Delete</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div><!--end card-->
         <div class="card mb-3">
             <div class="card-body">
                 <div class="mb-4">
@@ -64,112 +225,6 @@
                         </tbody>
                     </table><!--end table-->
                 </div>
-            </div>
-        </div><!--end card-->
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="d-flex mb-3">
-                    <h6 class="card-title mb-0 flex-grow-1">Assigned To</h6>
-                    <div class="flex-shrink-0">
-                        <button type="button" class="btn btn-soft-danger btn-sm" data-bs-toggle="modal"
-                            data-bs-target="#inviteMembersModal" (click)="openModal(content)"><i
-                                class="ri-share-line me-1 align-bottom"></i> Assigned Member</button>
-                    </div>
-                </div>
-                <ul class="list-unstyled vstack gap-3 mb-0">
-                    <li>
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <img src="assets/images/users/avatar-10.jpg" alt="" class="avatar-xs rounded-circle">
-                            </div>
-                            <div class="flex-grow-1 ms-2">
-                                <h6 class="mb-1"><a routerLink="/pages/profile" class="text-body">Tonya Noble</a></h6>
-                                <p class="text-muted mb-0">Full Stack Developer</p>
-                            </div>
-                            <div class="flex-shrink-0">
-                                <div class="dropdown" ngbDropdown>
-                                    <button class="btn btn-icon btn-sm fs-16 text-muted dropdown arrow-none d-block"
-                                        type="button" data-bs-toggle="dropdown" aria-expanded="false" ngbDropdownToggle>
-                                        <i class="ri-more-fill"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
-                                        <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                    class="ri-eye-fill text-muted me-2 align-bottom float-start"></i>View</a>
-                                        </li>
-                                        <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                    class="ri-star-fill text-muted me-2 align-bottom float-start"></i>Favourite</a>
-                                        </li>
-                                        <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                    class="ri-delete-bin-5-fill text-muted me-2 align-bottom float-start"></i>Delete</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                    <li>
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <img src="assets/images/users/avatar-8.jpg" alt="" class="avatar-xs rounded-circle">
-                            </div>
-                            <div class="flex-grow-1 ms-2">
-                                <h6 class="mb-1"><a routerLink="/pages/profile" class="text-body">Thomas Taylor</a>
-                                </h6>
-                                <p class="text-muted mb-0">UI/UX Designer</p>
-                            </div>
-                            <div class="flex-shrink-0">
-                                <div class="dropdown" ngbDropdown>
-                                    <button class="btn btn-icon btn-sm fs-16 text-muted dropdown arrow-none d-block"
-                                        type="button" data-bs-toggle="dropdown" aria-expanded="false" ngbDropdownToggle>
-                                        <i class="ri-more-fill"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
-                                        <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                    class="ri-eye-fill text-muted me-2 align-bottom float-start"></i>View</a>
-                                        </li>
-                                        <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                    class="ri-star-fill text-muted me-2 align-bottom float-start"></i>Favourite</a>
-                                        </li>
-                                        <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                    class="ri-delete-bin-5-fill text-muted me-2 align-bottom float-start"></i>Delete</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                    <li>
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <img src="assets/images/users/avatar-2.jpg" alt="" class="avatar-xs rounded-circle">
-                            </div>
-                            <div class="flex-grow-1 ms-2">
-                                <h6 class="mb-1"><a routerLink="/pages/profile" class="text-body">Nancy Martino</a>
-                                </h6>
-                                <p class="text-muted mb-0">Web Designer</p>
-                            </div>
-                            <div class="flex-shrink-0">
-                                <div class="dropdown" ngbDropdown>
-                                    <button class="btn btn-icon btn-sm fs-16 text-muted dropdown arrow-none d-block"
-                                        type="button" data-bs-toggle="dropdown" aria-expanded="false" ngbDropdownToggle>
-                                        <i class="ri-more-fill"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
-                                        <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                    class="ri-eye-fill text-muted me-2 align-bottom float-start"></i>View</a>
-                                        </li>
-                                        <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                    class="ri-star-fill text-muted me-2 align-bottom float-start"></i>Favourite</a>
-                                        </li>
-                                        <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                    class="ri-delete-bin-5-fill text-muted me-2 align-bottom float-start"></i>Delete</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
             </div>
         </div><!--end card-->
         <div class="card">
@@ -297,467 +352,93 @@
         </div><!--end card-->
     </div><!---end col-->
     <div class="col-xxl-9">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted">
-                    <h6 class="mb-3 fw-semibold text-uppercase">Summary</h6>
-                    <p>It will be as simple as occidental in fact, it will be Occidental. To an English person, it will
-                        seem like simplified English, as a skeptical Cambridge friend of mine told me what Occidental
-                        is. The European languages are members of the same family. Their separate existence is a myth.
-                        For science, music, sport, etc, Europe uses the same vocabulary. The languages only differ in
-                        their grammar, their pronunciation and their most common words.</p>
-
-                    <h6 class="mb-3 fw-semibold text-uppercase">Sub-tasks</h6>
-                    <ul class=" ps-3 list-unstyled vstack gap-2">
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="" id="productTask">
-                                <label class="form-check-label" for="productTask">
-                                    Product Design, Figma (Software), Prototype
-                                </label>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="" id="dashboardTask" checked>
-                                <label class="form-check-label" for="dashboardTask">
-                                    Dashboards : Ecommerce, Analytics, Project,etc.
-                                </label>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="" id="calenderTask">
-                                <label class="form-check-label" for="calenderTask">
-                                    Create calendar, chat and email app pages
-                                </label>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="" id="authenticationTask">
-                                <label class="form-check-label" for="authenticationTask">
-                                    Add authentication pages
-                                </label>
-                            </div>
-                        </li>
-                    </ul>
-
-                    <div class="pt-3 border-top border-top-dashed mt-4">
-                        <h6 class="mb-3 fw-semibold text-uppercase">Tasks Tags</h6>
-                        <div class="hstack flex-wrap gap-2 fs-15">
-                            <div class="badge fw-medium bg-info-subtle text-info">UI/UX</div>
-                            <div class="badge fw-medium bg-info-subtle text-info">Dashboard</div>
-                            <div class="badge fw-medium bg-info-subtle text-info">Design</div>
+            <div class="card card-height-100">
+                <div class="card-header ">
+                    <h4 class="">Escoger Fecha y Hora de Reserva</h4>
+                </div><!-- end cardheader -->
+                <div class="card-body pt-0 row">
+                    <div class="col-xxl-6">
+                        <div class="card-header border-0">
+                            <h6 class="text-uppercase fw-semibold text-muted">Fecha</h6>
+                        </div><!-- end cardheader -->
+                        <div class="upcoming-scheduled">
+                            <input type="text" class="form-control" mwlFlatpickr [altInput]="true" [convertModelValue]="true"
+                                [inline]="true">
                         </div>
                     </div>
-                </div>
-            </div>
-        </div><!--end card-->
+                    <div class="col-xxl-6">
+                        <h6 class="text-uppercase fw-semibold mt-4 mb-3 text-muted">Horas Reservadas:</h6>
+                        <div class="mini-stats-wid d-flex align-items-center mt-3">
+                            <div class="flex-shrink-0 avatar-sm">
+                                <span class="mini-stat-icon avatar-title rounded-circle text-success bg-success-subtle fs-4">
+                                    09
+                                </span>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">Development planning</h6>
+                                <p class="text-muted mb-0">iTest Factory </p>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <p class="text-muted mb-0">9:20 <span class="text-uppercase">am</span></p>
+                            </div>
+                        </div><!-- end -->
+                        <div class="mini-stats-wid d-flex align-items-center mt-3">
+                            <div class="flex-shrink-0 avatar-sm">
+                                <span class="mini-stat-icon avatar-title rounded-circle text-success bg-success-subtle fs-4">
+                                    12
+                                </span>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">Design new UI and check sales</h6>
+                                <p class="text-muted mb-0">Meta4Systems</p>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <p class="text-muted mb-0">11:30 <span class="text-uppercase">am</span></p>
+                            </div>
+                        </div><!-- end -->
+                        <div class="mini-stats-wid d-flex align-items-center mt-3">
+                            <div class="flex-shrink-0 avatar-sm">
+                                <span class="mini-stat-icon avatar-title rounded-circle text-success bg-success-subtle fs-4">
+                                    25
+                                </span>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">Weekly catch-up </h6>
+                                <p class="text-muted mb-0">Nesta Technologies</p>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <p class="text-muted mb-0">02:00 <span class="text-uppercase">pm</span></p>
+                            </div>
+                        </div><!-- end -->
+                        <div class="mini-stats-wid d-flex align-items-center mt-3">
+                            <div class="flex-shrink-0 avatar-sm">
+                                <span class="mini-stat-icon avatar-title rounded-circle text-success bg-success-subtle fs-4">
+                                    27
+                                </span>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">James Bangs (Client) Meeting</h6>
+                                <p class="text-muted mb-0">Nesta Technologies</p>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <p class="text-muted mb-0">03:45 <span class="text-uppercase">pm</span></p>
+                            </div>
+                        </div><!-- end -->
+        
+                        <div class="mt-3 text-center">
+                            <a href="javascript:void(0);" class="text-muted text-decoration-underline">View all Events</a>
+                        </div>
+                    </div>    
+                </div><!-- end cardbody -->
+            </div><!-- end card -->
+        <!-- <app-comments-custom></app-comments-custom> -->
         <div class="card">
             <div class="card-header">
                 <div>
-
-                    <ul ngbNav #customNav="ngbNav" [activeId]="1"
-                        class="nav nav-tabs-custom rounded card-header-tabs border-bottom-0" role="tablist">
-                        <li [ngbNavItem]="1" class="nav-item">
-                            <a ngbNavLink class="nav-link" data-bs-toggle="tab" role="tab">
-                                Comments (5)
-                            </a>
-                            <ng-template ngbNavContent>
-                                <h5 class="card-title mb-4">Comments</h5>
-                                <ngx-simplebar style="height: 508px;" class="px-3 mx-n3 mb-2">
-                                    <div class="d-flex mb-4">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/users/avatar-7.jpg" alt=""
-                                                class="avatar-xs rounded-circle" />
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h5 class="fs-14"><a routerLink="/pages/profile" class="text-body">Joseph
-                                                    Parker</a> <small class="text-muted">20 Dec 2021 - 05:47AM</small>
-                                            </h5>
-                                            <p class="text-muted">I am getting message from customers that when they
-                                                place order always get error message .</p>
-                                            <a href="javascript: void(0);" class="badge text-muted bg-light"><i
-                                                    class="mdi mdi-reply"></i> Reply</a>
-                                            <div class="d-flex mt-4">
-                                                <div class="flex-shrink-0">
-                                                    <img src="assets/images/users/avatar-10.jpg" alt=""
-                                                        class="avatar-xs rounded-circle" />
-                                                </div>
-                                                <div class="flex-grow-1 ms-3">
-                                                    <h5 class="fs-14"><a routerLink="/pages/profile"
-                                                            class="text-body">Tonya Noble</a>
-                                                        <small class="text-muted">22 Dec 2021 - 02:32PM</small>
-                                                    </h5>
-                                                    <p class="text-muted">Please be sure to check your Spam mailbox to
-                                                        see if your email filters have identified the email from Dell as
-                                                        spam.</p>
-                                                    <a href="javascript: void(0);" class="badge text-muted bg-light"><i
-                                                            class="mdi mdi-reply"></i> Reply</a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex mb-4">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/users/avatar-8.jpg" alt=""
-                                                class="avatar-xs rounded-circle" />
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h5 class="fs-14"><a routerLink="/pages/profile" class="text-body">Thomas
-                                                    Taylor</a> <small class="text-muted">24 Dec 2021 - 05:20PM</small>
-                                            </h5>
-                                            <p class="text-muted">If you have further questions, please contact Customer
-                                                Support from the “Action Menu” on your <a href="javascript:void(0);"
-                                                    class="text-decoration-underline">Online Order Support</a>.</p>
-                                            <a href="javascript: void(0);" class="badge text-muted bg-light"><i
-                                                    class="mdi mdi-reply"></i> Reply</a>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/users/avatar-10.jpg" alt=""
-                                                class="avatar-xs rounded-circle" />
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h5 class="fs-14"><a routerLink="/pages/profile" class="text-body">Tonya
-                                                    Noble</a> <small class="text-muted">26 min ago</small></h5>
-                                            <p class="text-muted">Your <a href="javascript:void(0)"
-                                                    class="text-decoration-underline">Online Order Support</a> provides
-                                                you with the most current status of your order. To help manage your
-                                                order refer to the “Action Menu” to initiate return, contact Customer
-                                                Support and more.</p>
-                                            <div class="row g-2 mb-3">
-                                                <div class="col-lg-1 col-sm-2 col-6">
-                                                    <img src="assets/images/small/img-4.jpg" alt=""
-                                                        class="img-fluid rounded">
-                                                </div>
-                                                <div class="col-lg-1 col-sm-2 col-6">
-                                                    <img src="assets/images/small/img-5.jpg" alt=""
-                                                        class="img-fluid rounded">
-                                                </div>
-                                            </div>
-                                            <a href="javascript: void(0);" class="badge text-muted bg-light"><i
-                                                    class="mdi mdi-reply"></i> Reply</a>
-                                            <div class="d-flex mt-4">
-                                                <div class="flex-shrink-0">
-                                                    <img src="assets/images/users/avatar-6.jpg" alt=""
-                                                        class="avatar-xs rounded-circle" />
-                                                </div>
-                                                <div class="flex-grow-1 ms-3">
-                                                    <h5 class="fs-13"><a routerLink="/pages/profile">Nancy Martino</a>
-                                                        <small class="text-muted">8 sec ago</small>
-                                                    </h5>
-                                                    <p class="text-muted">Other shipping methods are available at
-                                                        checkout if you want your purchase delivered faster.</p>
-                                                    <a href="javascript: void(0);" class="badge text-muted bg-light"><i
-                                                            class="mdi mdi-reply"></i> Reply</a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </ngx-simplebar>
-                                <form class="mt-4">
-                                    <div class="row g-3">
-                                        <div class="col-lg-12">
-                                            <label for="exampleFormControlTextarea1" class="form-label">Leave a
-                                                Comments</label>
-                                            <textarea class="form-control bg-light border-light"
-                                                id="exampleFormControlTextarea1" rows="3"
-                                                placeholder="Enter comments"></textarea>
-                                        </div><!--end col-->
-                                        <div class="col-12 text-end">
-                                            <button type="button"
-                                                class="btn btn-ghost-secondary btn-icon waves-effect me-1"><i
-                                                    class="ri-attachment-line fs-16"></i></button>
-                                            <a href="javascript:void(0);" class="btn btn-primary">Post Comments</a>
-                                        </div>
-                                    </div><!--end row-->
-                                </form>
-                            </ng-template>
-                        </li>
-                        <li [ngbNavItem]="2" class="nav-item">
-                            <a ngbNavLink class="nav-link" data-bs-toggle="tab" role="tab">
-                                Attachments File (4)
-                            </a>
-                            <ng-template ngbNavContent>
-                                <div class="table-responsive table-card">
-                                    <table class="table table-borderless align-middle mb-0">
-                                        <thead class="table-light text-muted">
-                                            <tr>
-                                                <th scope="col">File Name</th>
-                                                <th scope="col">Type</th>
-                                                <th scope="col">Size</th>
-                                                <th scope="col">Upload Date</th>
-                                                <th scope="col">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="avatar-sm">
-                                                            <div
-                                                                class="avatar-title bg-primary-subtle text-primary rounded fs-20">
-                                                                <i class="ri-file-zip-fill"></i>
-                                                            </div>
-                                                        </div>
-                                                        <div class="ms-3 flex-grow-1">
-                                                            <h6 class="fs-15 mb-0"><a href="javascript:void(0)">App
-                                                                    pages.zip</a></h6>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>Zip File</td>
-                                                <td>2.22 MB</td>
-                                                <td>21 Dec, 2021</td>
-                                                <td>
-                                                    <div class="dropdown" ngbDropdown>
-                                                        <a href="javascript:void(0);"
-                                                            class="btn btn-light btn-md arrow-none"
-                                                            id="dropdownMenuLink1" data-bs-toggle="dropdown"
-                                                            aria-expanded="true" ngbDropdownToggle>
-                                                            <i class="ri-equalizer-fill"></i>
-                                                        </a>
-                                                        <ul class="dropdown-menu dropdown-menu-end"
-                                                            aria-labelledby="dropdownMenuLink1"
-                                                            data-popper-placement="bottom-end"
-                                                            style="position: absolute; inset: 0px 0px auto auto; margin: 0px; transform: translate(0px, 23px);"
-                                                            ngbDropdownMenu>
-                                                            <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                                        class="ri-eye-fill me-2 align-middle text-muted float-start"></i>View</a>
-                                                            </li>
-                                                            <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                                        class="ri-download-2-fill me-2 align-middle text-muted float-start"></i>Download</a>
-                                                            </li>
-                                                            <li class="dropdown-divider"></li>
-                                                            <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                                        class="ri-delete-bin-5-line me-2 align-middle text-muted float-start"></i>Delete</a>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="avatar-sm">
-                                                            <div
-                                                                class="avatar-title bg-danger-subtle text-danger rounded fs-20">
-                                                                <i class="ri-file-pdf-fill"></i>
-                                                            </div>
-                                                        </div>
-                                                        <div class="ms-3 flex-grow-1">
-                                                            <h6 class="fs-15 mb-0"><a href="javascript:void(0);">Velzon
-                                                                    admin.ppt</a></h6>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>PPT File</td>
-                                                <td>2.24 MB</td>
-                                                <td>25 Dec, 2021</td>
-                                                <td>
-                                                    <div class="dropdown" ngbDropdown>
-                                                        <a href="javascript:void(0);"
-                                                            class="btn btn-light btn-md arrow-none"
-                                                            id="dropdownMenuLink2" data-bs-toggle="dropdown"
-                                                            aria-expanded="true" ngbDropdownToggle>
-                                                            <i class="ri-equalizer-fill"></i>
-                                                        </a>
-                                                        <ul class="dropdown-menu dropdown-menu-end"
-                                                            aria-labelledby="dropdownMenuLink2"
-                                                            data-popper-placement="bottom-end"
-                                                            style="position: absolute; inset: 0px 0px auto auto; margin: 0px; transform: translate(0px, 23px);"
-                                                            ngbDropdownMenu>
-                                                            <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                                        class="ri-eye-fill me-2 align-middle text-muted float-start"></i>View</a>
-                                                            </li>
-                                                            <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                                        class="ri-download-2-fill me-2 align-middle text-muted float-start"></i>Download</a>
-                                                            </li>
-                                                            <li class="dropdown-divider"></li>
-                                                            <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                                        class="ri-delete-bin-5-line me-2 align-middle text-muted float-start"></i>Delete</a>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="avatar-sm">
-                                                            <div
-                                                                class="avatar-title bg-info-subtle  text-info rounded fs-20">
-                                                                <i class="ri-folder-line"></i>
-                                                            </div>
-                                                        </div>
-                                                        <div class="ms-3 flex-grow-1">
-                                                            <h6 class="fs-15 mb-0"><a
-                                                                    href="javascript:void(0);">Images.zip</a></h6>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>ZIP File</td>
-                                                <td>1.02 MB</td>
-                                                <td>28 Dec, 2021</td>
-                                                <td>
-                                                    <div class="dropdown" ngbDropdown>
-                                                        <a href="javascript:void(0);"
-                                                            class="btn btn-light btn-md arrow-none"
-                                                            id="dropdownMenuLink3" data-bs-toggle="dropdown"
-                                                            aria-expanded="true" ngbDropdownToggle>
-                                                            <i class="ri-equalizer-fill"></i>
-                                                        </a>
-                                                        <ul class="dropdown-menu dropdown-menu-end"
-                                                            aria-labelledby="dropdownMenuLink3"
-                                                            data-popper-placement="bottom-end"
-                                                            style="position: absolute; inset: 0px 0px auto auto; margin: 0px; transform: translate(0px, 23px);"
-                                                            ngbDropdownMenu>
-                                                            <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                                        class="ri-eye-fill me-2 align-middle float-start"></i>View</a>
-                                                            </li>
-                                                            <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                                        class="ri-download-2-fill me-2 align-middle float-start"></i>Download</a>
-                                                            </li>
-                                                            <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                                        class="ri-delete-bin-5-line me-2 align-middle float-start"></i>Delete</a>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="avatar-sm">
-                                                            <div
-                                                                class="avatar-title bg-danger-subtle text-danger rounded fs-20">
-                                                                <i class="ri-image-2-fill"></i>
-                                                            </div>
-                                                        </div>
-                                                        <div class="ms-3 flex-grow-1">
-                                                            <h6 class="fs-15 mb-0"><a
-                                                                    href="javascript:void(0);">Bg-pattern.png</a></h6>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>PNG File</td>
-                                                <td>879 KB</td>
-                                                <td>02 Nov 2021</td>
-                                                <td>
-                                                    <div class="dropdown" ngbDropdown>
-                                                        <a href="javascript:void(0);"
-                                                            class="btn btn-light btn-md arrow-none"
-                                                            id="dropdownMenuLink4" data-bs-toggle="dropdown"
-                                                            aria-expanded="true" ngbDropdownToggle>
-                                                            <i class="ri-equalizer-fill"></i>
-                                                        </a>
-                                                        <ul class="dropdown-menu dropdown-menu-end"
-                                                            aria-labelledby="dropdownMenuLink4"
-                                                            data-popper-placement="bottom-end"
-                                                            style="position: absolute; inset: 0px 0px auto auto; margin: 0px; transform: translate(0px, 23px);"
-                                                            ngbDropdownMenu>
-                                                            <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                                        class="ri-eye-fill me-2 align-middle float-start"></i>View</a>
-                                                            </li>
-                                                            <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                                        class="ri-download-2-fill me-2 align-middle float-start"></i>Download</a>
-                                                            </li>
-                                                            <li><a class="dropdown-item" href="javascript:void(0);"><i
-                                                                        class="ri-delete-bin-5-line me-2 align-middle float-start"></i>Delete</a>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table><!--end table-->
-                                </div>
-                            </ng-template>
-                        </li>
-                        <li [ngbNavItem]="3" class="nav-item">
-                            <a ngbNavLink class="nav-link" data-bs-toggle="tab" role="tab">
-                                Time Entries (9 hrs 13 min)
-                            </a>
-                            <ng-template ngbNavContent>
-                                <h6 class="card-title mb-4 pb-2">Time Entries</h6>
-                                <div class="table-responsive table-card">
-                                    <table class="table align-middle mb-0">
-                                        <thead class="table-light text-muted">
-                                            <tr>
-                                                <th scope="col">Member</th>
-                                                <th scope="col">Date</th>
-                                                <th scope="col">Duration</th>
-                                                <th scope="col">Timer Idle</th>
-                                                <th scope="col">Tasks Title</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <th scope="row">
-                                                    <div class="d-flex align-items-center">
-                                                        <img src="assets/images/users/avatar-8.jpg" alt=""
-                                                            class="rounded-circle avatar-xxs">
-                                                        <div class="flex-grow-1 ms-2">
-                                                            <a routerLink="/pages/profile"
-                                                                class="fw-medium text-body">Thomas
-                                                                Taylor</a>
-                                                        </div>
-                                                    </div>
-                                                </th>
-                                                <td>02 Jan, 2022</td>
-                                                <td>3 hrs 12 min</td>
-                                                <td>05 min</td>
-                                                <td>Apps Pages</td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <img src="assets/images/users/avatar-10.jpg" alt=""
-                                                            class="rounded-circle avatar-xxs">
-                                                        <div class="flex-grow-1 ms-2">
-                                                            <a routerLink="/pages/profile"
-                                                                class="fw-medium text-body">Tonya
-                                                                Noble</a>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>28 Dec, 2021</td>
-                                                <td>1 hrs 35 min</td>
-                                                <td>-</td>
-                                                <td>Profile Page Design</td>
-                                            </tr>
-                                            <tr>
-                                                <th scope="row">
-                                                    <div class="d-flex align-items-center">
-                                                        <img src="assets/images/users/avatar-10.jpg" alt=""
-                                                            class="rounded-circle avatar-xxs">
-                                                        <div class="flex-grow-1 ms-2">
-                                                            <a routerLink="/pages/profile"
-                                                                class="fw-medium text-body">Tonya
-                                                                Noble</a>
-                                                        </div>
-                                                    </div>
-                                                </th>
-                                                <td>27 Dec, 2021</td>
-                                                <td>4 hrs 26 min</td>
-                                                <td>03 min</td>
-                                                <td>Ecommerce Dashboard</td>
-                                            </tr>
-                                        </tbody>
-                                    </table><!--end table-->
-                                </div>
-                            </ng-template>
-                        </li>
-                    </ul>
                 </div>
             </div>
             <div class="card-body">
-                <div class="tab-content">
-                    <div [ngbNavOutlet]="customNav"></div>
-                </div>
+                
             </div>
         </div><!--end card-->
     </div><!--end col-->

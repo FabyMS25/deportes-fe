@@ -1,0 +1,164 @@
+<div class="modal-header bg-info-subtle  p-3">
+    <h5 class="modal-title" class="tablelist-form" autocomplete="off" *ngIf="accion === ''" ngbAutofocus>Agregar Encargado</h5>
+    <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>Editar Datos de Encargado</h5>
+    <button type="button"
+        class="btn-close"
+        data-dismiss="modal" aria-label="Cerrar"
+        [disabled]="submitted"
+        (click)="closeModal()">
+    </button>
+</div>
+
+
+<form (ngSubmit)="saveData()" class="tablelist-form" autocomplete="off" [formGroup]="contentForm">
+    <div class="modal-body">
+        <div class="row g-3">
+            <div class="col-lg-12">
+                <input type="hidden" name="uuid" value="" formControlName="uuid" />
+                <div class="text-center">
+                    <div class="position-relative d-inline-block">
+                        <div class="position-absolute bottom-0 end-0">
+                            <label for="company-logo-input" class="mb-0" data-bs-toggle="tooltip"
+                                data-bs-placement="right" title="Select Image">
+                                <div class="avatar-xs cursor-pointer">
+                                    <div
+                                        class="avatar-title bg-light border rounded-circle text-muted">
+                                        <i class="ri-image-fill"></i>
+                                    </div>
+                                </div>
+                            </label>
+                            <input class="form-control d-none" id="company-logo-input" type="file"
+                                accept="image/png, image/gif, image/jpeg"
+                                (change)="fileChange($event)">
+                        </div>
+                        <div class="avatar-lg p-1">
+                            <div class="avatar-title bg-light rounded-circle">
+                                <img src="assets/images/users/multi-user.jpg" id="companylogo-img"
+                                    class="avatar-md rounded-circle object-fit-cover" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-12">
+                <div class="mb-3" >
+                    <label for="uuidUsuario" class="form-label">Usuario</label>
+                    <select class="form-control mb-0" data-choices data-choices-search-false
+                        id="uuidUsuario" formControlName="uuidUsuario" required
+                        (change)="onUserSelectHandler($event)"
+                        [ngClass]="{ 'is-invalid': submitted && form['uuidUsuario'].errors }"> 
+                        <option [value]="''" disabled>Seleccione opcion</option>
+                        @for (user of usersList; track $index) {
+                        <option  [value]="user.uuid" >
+                           {{user.username}} - {{user.designacionFuncionarioDto.personaDto.fullName}}
+                        </option>
+                        }
+                    </select>
+                    @if(submitted && form['uuidUsuario'].errors){ 
+                    <div class="invalid-feedback"
+                        align="left">
+                        @if(form['uuidUsuario'].errors['required']){ 
+                        <div>Debe seleccionar un Usuario</div>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-12">
+                <div class="mb-3" >
+                    <label for="uuidCancha" class="form-label">Cancha</label>
+                    <select class="form-control mb-0" data-choices data-choices-search-false
+                        id="uuidCancha" formControlName="uuidCancha" required
+                        (change)="onUserSelectHandler($event)"
+                        [ngClass]="{ 'is-invalid': submitted && form['uuidCancha'].errors }"> 
+                        <option [value]="''" disabled>Seleccione opcion</option>
+                        @for (item of canchasList; track $index) {
+                        <option  [value]="item.uuid" >
+                            {{item.nombre}}
+                        </option>
+                        }
+                    </select>
+                    @if(submitted && form['canchaDto'].errors){ 
+                    <div class="invalid-feedback"
+                        align="left">
+                        @if(form['canchaDto'].errors['required']){ 
+                            <div>El campo es requerido </div>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div>
+                    <label for="fechaInicio-field" class="form-label">Fecha Inicio</label>
+                    <input type="date" id="fechaInicio-field" class="form-control"
+                        placeholder="Es fechaInicio" required formControlName="fechaInicio"
+                        [ngClass]="{ 'is-invalid': submitted && form['fechaInicio'].errors }" />
+                    @if(submitted && form['fechaInicio'].errors){ 
+                    <div class="invalid-feedback"
+                        align="left">
+                        @if(form['fechaInicio'].errors['required']){ 
+                        <div>Debe seleccionar la Fecha de Arjudicación </div>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div>
+                    <label for="fechaFin-field" class="form-label">fecha Fin</label>
+                    <input type="date" id="fechaFin-field" class="form-control"
+                        placeholder="Es fechaFin" required formControlName="fechaFin"
+                        [ngClass]="{ 'is-invalid': submitted && form['fechaFin'].errors }" />
+                    @if(submitted && form['fechaFin'].errors){ 
+                    <div class="invalid-feedback"
+                        align="left">
+                        @if(form['fechaFin'].errors['required']){ 
+                        <div>El campo es requerido </div>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-6">
+              <div>
+                <label for="horaEntrada-field" class="form-label">Hora Entrada</label>
+                <input class="form-control flatpickr-input" type="text" mwlFlatpickr
+                       [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
+                       placeholder="Ingresar hora inicio" formControlName="horaEntrada">
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div>
+                <label for="horaSalida-field" class="form-label">Hora Salida</label>
+                <input class="form-control flatpickr-input" type="text" mwlFlatpickr
+                       [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
+                       placeholder="Ingresar hora final" formControlName="horaSalida"
+                       [ngClass]="{ 'is-invalid': submitted && form['horaSalida'].errors }" />
+                   @if(submitted && form['horaSalida'].errors){ 
+                   <div class="invalid-feedback"
+                       align="left">
+                       @if(form['horaSalida'].errors['required']){ 
+                        <div>El campo es requerido </div>
+                       }
+                   </div>
+                   }
+              </div>
+            </div>  
+            <div class="col-lg-6">
+                <div>
+                    <label for="telefono-field" class="form-label">Telefono</label>
+                    <input type="da" id="telefono-field" class="form-control"
+                        placeholder="Es telefono" formControlName="telefono" />
+                </div>
+            </div>    
+        </div>
+    </div>
+    <div class="modal-footer">
+        <div class="hstack gap-2 justify-content-end">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                (click)="closeModal()">Cerrar</button>
+            <button type="submit" class="btn btn-success" id="add-btn">Agregar</button>
+        </div>
+    </div>
+</form>

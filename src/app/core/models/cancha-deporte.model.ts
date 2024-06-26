@@ -2,6 +2,6 @@ export interface CanchaDeporte {
   uuid?: string;
   estado?:string;
 
-  uuidDeporte:string;
-  uuidCancha:string;
+  deporteDto:{uuid:string};
+  canchasDto:{uuid:string};
 }

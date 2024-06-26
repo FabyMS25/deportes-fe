@@ -17,6 +17,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { defineElement } from '@lordicon/element';
 import Lottie from 'lottie-web';
+import { LeafletComponent } from './map/leaflet.component';
 
 
 
@@ -28,6 +29,7 @@ import Lottie from 'lottie-web';
     LandingScrollspyDirective,
 
     DataTableComponent,
+    LeafletComponent
   ],
   imports: [
     CommonModule,

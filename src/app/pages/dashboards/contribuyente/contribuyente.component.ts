@@ -136,4 +136,6 @@ export class ContribuyenteComponent implements OnInit {
   //   polygon([[51.509, -0.08], [51.503, -0.06], [51.51, -0.047],], { color: "#405189", fillColor: "#405189" }).bindPopup("I am a polygon."),
   //   marker([51.5, -0.09]).bindPopup("<b>Hello world!</b><br />I am a popup.")
   // ];
+
+  
 }

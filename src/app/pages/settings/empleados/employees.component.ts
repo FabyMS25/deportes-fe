@@ -24,6 +24,10 @@ import { cloneDeep } from 'lodash';
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { Employees } from 'src/app/core/data/employees';
+import { EncargadoCanchaService } from 'src/app/core/services/api/encargado-cancha.service';
+import { ModalEmployeeComponent } from './modal/modalEmployee.component';
+import { UserService } from 'src/app/core/services/api-users/users.service';
+import { UserRol } from 'src/app/core/constants/UserRol';
 
 @Component({
   selector: 'app-employees',
@@ -39,10 +43,11 @@ export class EmployeesComponent implements OnInit {
   // bread crumb items
   breadCrumbItems!: Array<{}>;
   submitted = false;
-  contactsForm!: UntypedFormGroup;
+  contentForm!: UntypedFormGroup;
   masterSelected!: boolean;
   checkedList: any;
 
+  userRol =UserRol;
   // Api Data
   econtent?: any;
   url = GlobalComponent.API_URL;
@@ -55,13 +60,18 @@ export class EmployeesComponent implements OnInit {
   canActivate:string[];
   listaItems:any[]=[];
   // userRol =UserRol;
-  funcionariosList:any[]= Employees;
+  userList:any;
+  employeesList:any[]= [];//Employees;
   temp: any[] = [];
   funcionarioSelected!:any;
   // loading:boolean=false;
 
+
   constructor(private modalService: NgbModal,
     private authService: AuthenticationService,
+    private usersService: UserService,
+    private employeesService: EncargadoCanchaService,
+
     public service: PaginationService,
     private formBuilder: UntypedFormBuilder,
     private store: Store<{ data: RootReducerState }>,
@@ -76,47 +86,21 @@ export class EmployeesComponent implements OnInit {
     ];
     this.listaItems = [
       {name: 'Nombre', prop: 'nombreCompleto', avatar:true},
-      {name: 'Unidad',prop: 'unidad'},
-      {name: 'Rol', prop: 'rol', tag:true},
+      {name: 'Cancha',prop: 'canchasDto.nombre'},
+      {name: 'Telefono', prop: 'telefono'},
     ];
 
-    /**
-     * Form Validation
-     */
-    this.contactsForm = this.formBuilder.group({
-      image_src: [''],
-      _id: [''],
-      name: ['', [Validators.required]],
-      company: ['', [Validators.required]],
-      designation: ['', [Validators.required]],
-      email: ['', [Validators.required]],
-      phone: ['', [Validators.required]],
-      lead_score: ['', [Validators.required]],
-      tags: ['', [Validators.required]],
-      last_contacted: ['', [Validators.required]],
-      subItem: this.formBuilder.array([]),
-    });
-
-    /**
-     * fetches data
-     */
-    // this.store.dispatch(fetchCrmContactData());
-    // this.store.select(selectCRMLoading).subscribe((data) => {
-    //   if (data == false) {
-    //     document.getElementById('elmLoader')?.classList.add('d-none');
-    //   }
-    // });
-
-    // this.store.select(selectContactData).subscribe((data) => {
-    //   this.funcionariosList = data;
-    //   this.allcontent = cloneDeep(data);
-    //   this.funcionariosList = this.service.changePage(this.allcontent)
-    // });
-
+    this.loadData();
+  }
+  
+  private async loadData() {
+    await this.getUsers();
+    await this.getEmployees();
   }
 
+
   changePage() {
-    this.funcionariosList = this.service.changePage(this.allcontent)
+    this.employeesList = this.service.changePage(this.allcontent)
   }
 
   // Search Data
@@ -126,23 +110,31 @@ export class EmployeesComponent implements OnInit {
         item.name.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
-    this.funcionariosList = this.service.changePage(this.searchResults)
+    this.employeesList = this.service.changePage(this.searchResults)
   }
 
   /**
    * Open modal
    * @param content modal content
    */
-  openModal(content: any) {
-    this.submitted = false;
-    this.modalService.open(content, { size: 'md', centered: true });
+
+  public openModal(row: any, accion: string, size: string) {
+    const modalRef = this.modalService.open(ModalEmployeeComponent, {
+        backdrop: 'static',
+        size:size
+    });
+    modalRef.componentInstance.row = row;
+    modalRef.componentInstance.accion = accion;
+    modalRef.componentInstance.listaItems.subscribe(() => {
+    this.loadData();
+    });
   }
 
   /**
   * Form data get
   */
   get form() {
-    return this.contactsForm.controls;
+    return this.contentForm.controls;
   }
 
   // File Upload
@@ -151,7 +143,7 @@ export class EmployeesComponent implements OnInit {
     let fileList: any = (event.target as HTMLInputElement);
     let file: File = fileList.files[0];
     document.getElementById('')
-    this.contactsForm.patchValue({
+    this.contentForm.patchValue({
       // image_src: file.name
       image_src: 'avatar-8.jpg'
     });
@@ -164,100 +156,21 @@ export class EmployeesComponent implements OnInit {
   }
 
   /**
-  * Save user
-  */
-  saveUser() {
-    if (this.contactsForm.valid) {
-      if (this.contactsForm.get('_id')?.value) {
-        const updatedData = this.contactsForm.value;
-        // this.store.dispatch(updateContact({ updatedData }));
-        this.modalService.dismissAll();
-      }
-      else {
-        const contactId = (this.allcontent.length + 1).toString();
-        this.contactsForm.controls['_id'].setValue(contactId);
-        const newData = this.contactsForm.value;
-        // this.store.dispatch(addContact({ newData }));
-        this.modalService.dismissAll();
-        let timerInterval: any;
-        Swal.fire({
-          title: 'Contact inserted successfully!',
-          icon: 'success',
-          timer: 2000,
-          timerProgressBar: true,
-          willClose: () => {
-            clearInterval(timerInterval);
-          },
-        }).then((result) => {
-          if (result.dismiss === Swal.DismissReason.timer) {
-          }
-        });
-      }
-    }
-    setTimeout(() => {
-      this.contactsForm.reset();
-    }, 2000);
-    this.submitted = true
-  }
-
-  /**
-   * Open Edit modal
-   * @param content modal content
-   */
-  editDataGet(id: any, content: any) {
-    this.submitted = false;
-    this.modalService.open(content, { size: 'md', centered: true });
-    var modelTitle = document.querySelector('.modal-title') as HTMLAreaElement;
-    modelTitle.innerHTML = 'Edit Contact';
-    var updateBtn = document.getElementById('add-btn') as HTMLAreaElement;
-    updateBtn.innerHTML = "Update";
-
-    this.econtent = this.allcontent[id];
-    var img_data = document.getElementById('customer-img') as HTMLImageElement;
-    img_data.src = 'assets/images/users/' + this.econtent.image_src
-    this.contactsForm.controls['name'].setValue(this.econtent.name);
-    this.contactsForm.controls['company'].setValue(this.econtent.company);
-    this.contactsForm.controls['designation'].setValue(this.econtent.designation);
-    this.contactsForm.controls['email'].setValue(this.econtent.email);
-    this.contactsForm.controls['phone'].setValue(this.econtent.phone);
-    this.contactsForm.controls['lead_score'].setValue(this.econtent.lead_score);
-    this.contactsForm.controls['tags'].setValue(this.econtent.tags);
-    this.contactsForm.controls['last_contacted'].setValue(this.econtent.last_contacted);
-    this.contactsForm.controls['_id'].setValue(this.econtent._id);
-    this.contactsForm.controls['image_src'].setValue(this.econtent.image_src);
-
-  }
-
-  /**
    * View Data Get
    * @param content modal content
    */
-  viewDataGet(id: any) {
-    this.econtent = this.allcontent[id];
-    var img_data = document.querySelector('.contact-details img') as HTMLImageElement;
-    img_data.src = 'assets/images/users/' + this.econtent.image_src;
-    (document.querySelector('.contact-details h5') as HTMLImageElement).innerHTML = this.econtent.name;
-    (document.querySelector('.contact-details p') as HTMLImageElement).innerHTML = this.econtent.company;
-    (document.querySelector('.designation') as HTMLImageElement).innerHTML = this.econtent.designation;
-    (document.querySelector('.email') as HTMLImageElement).innerHTML = this.econtent.email;
-    (document.querySelector('.phone') as HTMLImageElement).innerHTML = this.econtent.phone;
-    (document.querySelector('.l_score') as HTMLImageElement).innerHTML = this.econtent.lead_score;
-    (document.querySelector('.tags-list .d-flex') as HTMLImageElement).innerHTML = '';
-    this.econtent.tags.forEach((item: any) => {
-      (document.querySelector('.tags-list .d-flex') as HTMLImageElement).innerHTML += `<span class="badge bg-primary-subtle text-primary">` + item + `</span>`;
-    });
-    var date: any = document.querySelector('.contacted_date') as HTMLImageElement;
-    date.innerHTML = this.datePipe.transform(new Date(this.econtent.last_contacted), "MMMM d, y");
+  viewDataGet(data: any) {
+    this.funcionarioSelected=data
   }
 
   // The master checkbox will check/ uncheck all items
   checkUncheckAll(ev: any) {
-    this.funcionariosList.forEach((x: { state: any; }) => x.state = ev.target.checked)
+    this.employeesList.forEach((x: { state: any; }) => x.state = ev.target.checked)
     var checkedVal: any[] = [];
     var result
-    for (var i = 0; i < this.funcionariosList.length; i++) {
-      if (this.funcionariosList[i].state == true) {
-        result = this.funcionariosList[i];
+    for (var i = 0; i < this.employeesList.length; i++) {
+      if (this.employeesList[i].state == true) {
+        result = this.employeesList[i];
         checkedVal.push(result);
       }
     }
@@ -266,7 +179,7 @@ export class EmployeesComponent implements OnInit {
 
   }
   isAllChecked() {
-    return this.funcionariosList.every((_: { state: any; }) => _.state);
+    return this.employeesList.every((_: { state: any; }) => _.state);
   }
 
   /**
@@ -282,23 +195,23 @@ export class EmployeesComponent implements OnInit {
       decimalseparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Contact Data',
+      title: 'Lista de Encargados',
       useBom: true,
       noDownload: false,
-      headers: ["Id", "Image src", "Name", "Company", "Designation", "Email", "Phone", "Tags", "Lead Score", "Last Contacted"]
+      headers: ["uuid", "userUuid", "Hora Entrado", "Hora Salida","Telefono", "Estado", "Cancha", "Nombre Completo","avatar"]
     };
-    new ngxCsv(this.funcionariosList, "Contact", orders);
+    new ngxCsv(this.employeesList, "Encargados", orders);
   }
 
   // Select Checkbox value Get
   onCheckboxChange(e: any) {
-    const checkArray: UntypedFormArray = this.contactsForm.get('subItem') as UntypedFormArray;
+    const checkArray: UntypedFormArray = this.contentForm.get('subItem') as UntypedFormArray;
     checkArray.push(new UntypedFormControl(e.target.value));
     var checkedVal: any[] = [];
     var result
-    for (var i = 0; i < this.funcionariosList.length; i++) {
-      if (this.funcionariosList[i].state == true) {
-        result = this.funcionariosList[i];
+    for (var i = 0; i < this.employeesList.length; i++) {
+      if (this.employeesList[i].state == true) {
+        result = this.employeesList[i];
         checkedVal.push(result);
       }
     }
@@ -365,6 +278,54 @@ export class EmployeesComponent implements OnInit {
   }
 
 
+  /* API Services */
+  private getUsers(){
+    this.usersService.getAllUsers().subscribe((data)=>{
+      this.userList = data;
+    })
+  }
+  private getEmployees(): void {
+    setTimeout(() => {
+      this.employeesService.getAll().subscribe({
+        next: (data: any) => {
+          if (data.status === 'OK') {
+            this.employeesList = data.payload.map((employee: any) => ({
+              ...employee,
+              nombreCompleto: this.getFullName(employee),
+              avatar: this.getAvatar(employee)
+            }));
+            this.temp = this.employeesList;
+            if (this.employeesList.length > 0) {
+              this.funcionarioSelected = this.employeesList[0];
+            }
+          } else {
+            Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb' });
+          }
+        },
+        error: () => {
+          Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
+        }
+      });
+      document.getElementById('elmLoader')?.classList.add('d-none');
+    }, 1200);
+  }
 
+  private getFullName(employee: any): string {
+    const user = this.userList.find((user: any) => user.uuid === employee.userUuid);
+    return user ? user.designacionFuncionarioDto.personaDto.fullName : '';
+  }
 
+  private getAvatar(employee: any): string {
+    let avatar = '';
+    const user = this.userList.find((user: any) => user.uuid === employee.userUuid);
+    const foundItem = this.userRol.find(item => item.tipo === 1);
+    if (foundItem) {
+      avatar = foundItem.avatarM;
+      if (user && user.designacionFuncionarioDto.personaDto.sexo === 'F') {
+        avatar = foundItem.avatarF;
+      }
+    }
+    return avatar;
+  }
+  
 }

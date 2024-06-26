@@ -1,7 +1,7 @@
-import { Component, QueryList, ViewChildren } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { Component, QueryList, TemplateRef, ViewChildren } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Observable } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import { UntypedFormBuilder, UntypedFormGroup, FormArray, Validators } from '@angular/forms';
 
 // Rest Api Service
@@ -24,16 +24,17 @@ import { Employees } from 'src/app/core/data/employees';
 import { CanchaService } from 'src/app/core/services/api/canchas.service';
 import { Cancha } from 'src/app/core/models/cancha.model';
 import { ModalComponent } from './modal/modal.component';
+import { DeportesService } from 'src/app/core/services/api/deporte.sservice';
 @Component({
-  selector: 'app-companies',
-  templateUrl: './companies.component.html',
-  styleUrls: ['./companies.component.scss']
+  selector: 'app-fields',
+  templateUrl: './fields.component.html',
+  styleUrls: ['./fields.component.scss']
 })
 
 /**
  * Companies Component
  */
-export class CompaniesComponent {
+export class FieldsComponent {
   title="Canchas";
   // bread crumb items
   breadCrumbItems!: Array<{}>;
@@ -53,9 +54,18 @@ export class CompaniesComponent {
   canActivate:string[];
   listaItems:any[]=[];
   canchasList:any[]=[];
+
+  categoryList:any[]=[];
+  temp:any[]=[];
+  
+  dataSelected!:Cancha;
   constructor(private modalService: NgbModal,
     private fieldsService: CanchaService,
-    private authService: AuthenticationService, public service: PaginationService, private formBuilder: UntypedFormBuilder,
+    private deportesService: DeportesService,
+    private authService: AuthenticationService, 
+    private offcanvasService: NgbOffcanvas,
+    private datePipe: DatePipe,
+    public service: PaginationService, private formBuilder: UntypedFormBuilder,
     private store: Store<{ data: RootReducerState }>) {
       this.canActivate = this.authService.hasPermissionModulo(this.title);
   }
@@ -69,40 +79,13 @@ export class CompaniesComponent {
       {name: 'Nombre', prop: 'nombre'},
       {name: 'Distrito',prop: 'distrito'},
       {name: 'Tarifa', prop: 'totalxhora'},
+      {name: 'Categoria(s)', prop: 'totalxhora'},
     ];
-
-    /**
-     * Form Validation
-     */
-    this.fieldsForm = this.formBuilder.group({
-      uuid: [''],
-      image_src: ['brands/dribbble.png'],
-      nombre: ['', [Validators.required]],
-      techado: ['', [Validators.required]],
-      superficie: ['', [Validators.required]],
-      distrito: ['', [Validators.required]],
-      totalxhora: ['', [Validators.required]],
-      ubicacion: ['', [Validators.required]],
-      latitud: ['', [Validators.required]],
-      longitud: ['', [Validators.required]]
-    });
-
     /**
      * fetches data
      */
+    this.getDeportes();
     this.getFields()
-    // this.store.dispatch(fetchCrmCompanyData());
-    // this.store.select(selectCRMLoading).subscribe((data) => {
-    //   if (data == false) {
-    //     document.getElementById('elmLoader')?.classList.add('d-none');
-    //   }
-    // });
-
-    // this.store.select(selectCompanyData).subscribe((data) => {
-    //   this.company = data;
-    //   this.allcompany = cloneDeep(data);
-    //   this.company = this.service.changePage(this.allcompany)
-    // });
   }
 
   changePage() {
@@ -123,26 +106,38 @@ export class CompaniesComponent {
     this.company = this.service.onSort(column, this.company)
   }
 
+  // Filtering
+  isstatus?: any
+  leads:any
+  SearchData() {
+    var date = document.getElementById("isDate") as HTMLInputElement;
+    var dateVal = date.value ? this.datePipe.transform(new Date(date.value), "yyyy-MM-dd") : '';
+
+    if (dateVal != '') {
+      this.leads = this.temp.filter((order: any) => {
+        return this.datePipe.transform(new Date(order.date), "yyyy-MM-dd") == dateVal;
+      });
+    }
+    else {
+      this.leads = this.categoryList;
+    }
+  }
   /**
    * Open modal
    * @param content modal content
    */
-  // openModal(content: any) {
-  //   this.submitted = false;
-  //   this.modalService.open(content, { size: 'lg', centered: true });
-  // }
   public openModal(row: Cancha | undefined, accion: string, size: string) {
     const modalRef = this.modalService.open(ModalComponent, {
         backdrop: 'static',
         size:size
     });
     modalRef.componentInstance.row = row;
-    // modalRef.componentInstance.itemsList = this.canchasList;
+    modalRef.componentInstance.categoryList = this.categoryList;
     modalRef.componentInstance.accion = accion;
     modalRef.componentInstance.listaItems.subscribe(() => {
     this.getFields();
     });
-}
+  }
   /**
    * Form data get
    */
@@ -150,107 +145,18 @@ export class CompaniesComponent {
     return this.fieldsForm.controls;
   }
 
-  // File Upload
-  imageURL: string | undefined;
-  fileChange(event: any) {
-    let fileList: any = (event.target as HTMLInputElement);
-    let file: File = fileList.files[0];
-    document.getElementById('')
-    this.fieldsForm.patchValue({
-      // image_src: file.name
-      image_src: 'brands/dribbble.png'
-    });
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.imageURL = reader.result as string;
-      (document.getElementById('companylogo-img') as HTMLImageElement).src = this.imageURL;
-    }
-    reader.readAsDataURL(file)
+  //  Filter Offcanvas Set
+  openEnd(content: TemplateRef<any>) {
+    this.offcanvasService.open(content, { position: 'end' });
   }
-
-  /**
-  * Save user
-  */
-  saveUser() {
-    if (this.fieldsForm.valid) {
-      if (this.fieldsForm.get('_id')?.value) {
-
-        const updatedData = this.fieldsForm.value;
-        // this.store.dispatch(updateCompany({ updatedData }));
-        this.modalService.dismissAll();
-      }
-      else {
-        const contactId = (this.allcompany.length + 1).toString();
-        this.fieldsForm.controls['_id'].setValue(contactId);
-        const newData = this.fieldsForm.value;
-        // this.store.dispatch(addCompany({ newData }));
-        let timerInterval: any;
-        Swal.fire({
-          title: 'Company inserted successfully!',
-          icon: 'success',
-          timer: 2000,
-          timerProgressBar: true,
-          willClose: () => {
-            clearInterval(timerInterval);
-          },
-        }).then((result) => {
-          if (result.dismiss === Swal.DismissReason.timer) {
-          }
-        });
-      }
-    }
-    this.modalService.dismissAll();
-    this.fieldsForm.reset();
-    this.submitted = true
-  }
-
   /**
    * View Data Get
    * @param content modal content
    */
-  viewDataGet(id: any) {
-    this.econtent = this.allcompany[id];
-    var img_data = document.querySelector('.company-details img') as HTMLImageElement;
-    img_data.src = 'assets/images/' + this.econtent.image_src;
-    (document.querySelector('.company-details h5') as HTMLImageElement).innerHTML = this.econtent.name;
-    (document.querySelector('.company-details p') as HTMLImageElement).innerHTML = this.econtent.owner;
-    (document.querySelector('.industry_type') as HTMLImageElement).innerHTML = this.econtent.industry_type;
-    (document.querySelector('.location') as HTMLImageElement).innerHTML = this.econtent.location;
-    (document.querySelector('.employee') as HTMLImageElement).innerHTML = this.econtent.employee;
-    (document.querySelector('.rating') as HTMLImageElement).innerHTML = this.econtent.star_value;
-    (document.querySelector('.website') as HTMLImageElement).innerHTML = this.econtent.website;
-    (document.querySelector('.email') as HTMLImageElement).innerHTML = this.econtent.contact_email;
-    (document.querySelector('.since') as HTMLImageElement).innerHTML = this.econtent.since;
+  viewDataGet(data: any) {
+    this.dataSelected=data
   }
 
-  /**
-   * Open Edit modal
-   * @param content modal content
-   */
-  editDataGet(id: any, content: any) {
-    this.submitted = false;
-    this.modalService.open(content, { size: 'lg', centered: true });
-    var modelTitle = document.querySelector('.modal-title') as HTMLAreaElement;
-    // modelTitle.innerHTML = 'Edit Company';
-    var updateBtn = document.getElementById('add-btn') as HTMLAreaElement;
-    updateBtn.innerHTML = "Update";
-
-    this.econtent = this.allcompany[id];
-    var img_data = document.getElementById('companylogo-img') as HTMLImageElement;
-    img_data.src = 'assets/images/' + this.econtent.image_src
-
-    this.fieldsForm.controls['nombre'].setValue(this.econtent.name);
-    this.fieldsForm.controls['owner'].setValue(this.econtent.owner);
-    this.fieldsForm.controls['industry_type'].setValue(this.econtent.industry_type);
-    this.fieldsForm.controls['star_value'].setValue(this.econtent.star_value);
-    this.fieldsForm.controls['location'].setValue(this.econtent.location);
-    this.fieldsForm.controls['employee'].setValue(this.econtent.employee);
-    this.fieldsForm.controls['website'].setValue(this.econtent.website);
-    this.fieldsForm.controls['contact_email'].setValue(this.econtent.contact_email);
-    this.fieldsForm.controls['since'].setValue(this.econtent.since);
-    this.fieldsForm.controls['_id'].setValue(this.econtent._id);
-
-  }
 
 
   /**
@@ -346,7 +252,9 @@ export class CompaniesComponent {
   // Sort filter
   sortField: any;
   sortBy: any
-  SortFilter() {
+  SortFilter(event: Event) {
+    const selectedValue = (event.target as HTMLSelectElement).value;
+    console.log('Selected value:', selectedValue);
     this.sortField = (document.getElementById("choices-single-default") as HTMLInputElement).value;
     if (this.sortField[0] == 'D') {
       this.sortBy = 'asc';
@@ -355,15 +263,29 @@ export class CompaniesComponent {
   }
 
   /* API Services */
+  private getDeportes(){
+    this.deportesService.getAll().subscribe({
+        next: (data: any) => {
+          if (data['status'] === 'OK') {
+            this.categoryList = data.payload;
+            this.temp = data.payload;
+          }
+        }
+      });
+  }
   private getFields(){
     this.fieldsService.getAll().subscribe({
       next: (data: any) => {
         if (data['status'] === 'OK') {
           this.canchasList = data.payload;
+          if (this.canchasList) {
+              this.dataSelected = this.canchasList[0];
+          }
+        }else{
+          Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
         }
       },
       error: (error) => {
-        // this.toastr.error('No se pudo recuperar los registros');
         Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb', });
       }
     });

@@ -1,5 +1,5 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule , DatePipe} from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbPaginationModule, NgbTypeaheadModule, NgbTooltipModule, NgbDropdownModule, NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 
@@ -17,20 +17,21 @@ import lottie from 'lottie-web';
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SharedModule } from '../../shared/shared.module';
 import { EmployeesComponent } from './empleados/employees.component';
-import { CompaniesComponent } from './companies/companies.component';
-import { DeportesComponent } from './deportes/deportes.component';
+import { DeportesComponent } from './categories/deportes.component';
 import { SortByCrmPipe } from "../settings/sort-by.pipe";
 
-import {DatePipe} from '@angular/common';
-import { ModalComponent } from './companies/modal/modal.component';
+import { FieldsComponent } from './fields/fields.component';
+import { ModalComponent } from './fields/modal/modal.component';
+import { ModalEmployeeComponent } from './empleados/modal/modalEmployee.component';
 
 @NgModule({
   declarations: [
     EmployeesComponent,
-    CompaniesComponent,
+    FieldsComponent,
     DeportesComponent,
     SortByCrmPipe,
-    ModalComponent
+    ModalComponent,
+    ModalEmployeeComponent
   ],
   imports: [
     CommonModule,

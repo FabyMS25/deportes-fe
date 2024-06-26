@@ -3,8 +3,8 @@ import { Routes, RouterModule } from '@angular/router';
 
 // Component pages
 import { EmployeesComponent } from "./empleados/employees.component";
-import { CompaniesComponent } from "./companies/companies.component";
-import { DeportesComponent } from "./deportes/deportes.component";
+import { DeportesComponent } from "./categories/deportes.component";
+import { FieldsComponent } from './fields/fields.component';
 
 const routes: Routes = [
   {
@@ -13,10 +13,10 @@ const routes: Routes = [
   },
   {
     path: "fields",
-    component: CompaniesComponent
+    component: FieldsComponent
   },
   {
-    path: "leads",
+    path: "categories",
     component: DeportesComponent
   }
 

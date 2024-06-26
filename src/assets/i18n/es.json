@@ -19,8 +19,9 @@
   },
   "ADMINISTRATION": {
       "TEXT": "Administration",
-      "COMPANIES": "Companies",
-      "EMPLOYEES": "Employees"
+      "FIELDS": "Canchas",
+      "EMPLOYEES": "Employees",
+      "CATEGORIES": "Categorias"
   },
 
 

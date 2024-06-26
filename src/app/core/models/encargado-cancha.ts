@@ -2,10 +2,10 @@ import { Cancha } from "./cancha.model";
 
 export interface  EncargadoCancha{
 
-    uuid: String;
-    estado:boolean;
+    uuid?: String;
+    estado?:boolean;
 
-    uuidUsuario: String;
+    userUuid: String;
 
     fechaInicio?: Date;
     fechaFin?:Date;
@@ -14,7 +14,7 @@ export interface  EncargadoCancha{
     horaSalida: string; // "HH:mm:ss"
     // nombreCompleto: string;
     telefono?:string;
-    canchaDto: Cancha;
+    canchasDto: Cancha;
 
   }
   
