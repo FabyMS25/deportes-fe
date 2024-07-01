@@ -63,8 +63,10 @@
             </div>
             <div class="card-body">
                 <app-data-table
+                    [loading]="loading"
                     [listaItems]="listaItems"
                     [content]="employeesList"
+                    [allcontent]="employeesList"
                     [sortField]="''"
                     [show]="canActivate.includes('VER')"
                     [edit]="canActivate.includes('ACTUALIZAR')"
@@ -74,10 +76,6 @@
                     (deleteItemEmitter)="deleteData($event)"              
                 >
                 </app-data-table>  
-                <!-- Contacts Create Model -->
-                <ng-template #content role="document" let-modal>
-                </ng-template>
-
             </div>
         </div>
         <!--end card-->

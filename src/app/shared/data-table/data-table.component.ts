@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { Observable } from 'rxjs';
 // import { PaginationInstance } from 'ngx-pagination';
 import { DatePipe } from '@angular/common';
@@ -11,57 +11,53 @@ import { PaginationService } from 'src/app/core/services/pagination.service';
 })
 export class DataTableComponent {
 
+  @Input() loading: boolean = true;
   @Input() listaItems!: any[];
   @Input() content!: any[];
+  @Input() allcontent!: any[];
   @Input() sortField!: any;
   @Input() show!: boolean;
-  @Input() doc!:boolean;
   @Input() edit!: boolean;
   @Input() delete!: boolean;
-  @Input() map!: boolean;
+
+  @Input() telf!:boolean;
+  @Input() comment!: boolean;
 
   @Output() showItemEmitter = new EventEmitter();
   @Output() editItemEmitter = new EventEmitter();
   @Output() deleteItemEmitter = new EventEmitter();
-  @Output() mapItemEmitter = new EventEmitter();
-  @Output() docItemEmitter = new EventEmitter();
+  // @Output() mapItemEmitter = new EventEmitter();
+  // @Output() docItemEmitter = new EventEmitter();
   
-  @Input() validate!: boolean;
-  @Input() reject!: boolean;
 
   masterSelected!: boolean;
-  allcontent: any;
+  // allcontent: any;
 
-  constructor( public service: PaginationService){
-    this.allcontent = this.content;}
-  getContentForPage(): any[] {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = Math.min(startIndex + this.itemsPerPage, this.content.length);
-    return this.content.slice(startIndex, endIndex);
-    
-}
-changePage() {
-  this.content = this.service.changePage(this.allcontent)
-}
-  public editItem(item: any) {
-    this.editItemEmitter.emit(item);
+  constructor( public service: PaginationService){}
+  
+  ngOnChanges() {
+      this.content = this.service.changePage(this.allcontent,this.itemsPerPage)
   }
 
   public showItem(item: any) {
     this.showItemEmitter.emit(item);
   }
+  public editItem(item: any) {
+    this.editItemEmitter.emit(item);
+  }
+
 
   public deleteItem(item: any) {
     this.deleteItemEmitter.emit(item);
   }
 
-  public mapItem(item: any) {
-    this.mapItemEmitter.emit(item);
-  }  
+  // public mapItem(item: any) {
+  //   this.mapItemEmitter.emit(item);
+  // }  
  
-  public docItem(item: any) {
-    this.docItemEmitter.emit(item);
-  }
+  // public docItem(item: any) {
+  //   this.docItemEmitter.emit(item);
+  // }
   
   // Select Checkbox value Get
   onCheckboxChange(e: any) {
@@ -104,20 +100,13 @@ changePage() {
     if(item.name==='Estado'){
       return this.ponerEstado(value)
     }
-    if(item.name==='Persona'){
-      if(value){
-        return "Juridica"
-      }
-      return "Natural"
-    }
     return value;
   }
   /* state for reclamos */
-  ponerEstado(i: number)
+  ponerEstado(i: boolean)
   {
-      if (i===1) return "Recibido";
-      else if (i===2) return "Validado";
-            else return "Rechazado";
+      if (i) return "Activo";
+      else return "Bloqueado";
   }
   formatDate(data: any): string |null{
     var date = new Date(data);
@@ -134,12 +123,12 @@ changePage() {
   searchTerm: any;
   searchResults: any;
   performSearch(): void {
-    this.searchResults = this.content.filter((item: any) => {
+    this.searchResults = this.allcontent.filter((item: any) => {
       return (
         item.name.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
-    this.content = this.service.changePage(this.searchResults)
+    this.content = this.service.changePage(this.searchResults,this.itemsPerPage)
   }
   /**
    * ******* to sort ******* 
@@ -165,21 +154,14 @@ changePage() {
   /**
    * ******* pagination *******
    */
-  currentPage = 1;
-  itemsPerPage: number = 5; 
-  tableSizes = [5,10,15];
-  calculateTotalPages():number {
-    return Math.ceil(this.content.length / this.itemsPerPage);
+  changePage() {
+    this.content = this.service.changePage(this.allcontent,this.itemsPerPage)
   }
+
+  itemsPerPage: number = this.service.pageSize; 
+  tableSizes:number[]= [8,10,15,20];
   public onTableSizeChange(event:any): void {
-    this.itemsPerPage = event.target.value;
-    this.currentPage = 1;
-  }
-  getPageNumbers(): number[] {
-    const totalPages = Math.ceil(this.content.length / this.itemsPerPage);
-    return Array.from({ length: totalPages }, (_, index) => index + 1);
-  }
-  getMinValue(a: number, b: number): number {
-    return Math.min(a, b);
+    this.itemsPerPage = Number(event.target.value);
+    this.content = this.service.changePage(this.allcontent,this.itemsPerPage)
   }
 }

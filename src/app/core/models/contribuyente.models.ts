@@ -1,6 +1,6 @@
 export class Contribuyente {
   uuid?: number;
-  username?: string;
+  userName?: string;
   password?: string;
   nombre?: string;
   apPaterno?: string;
@@ -10,6 +10,6 @@ export class Contribuyente {
   ciExpedido?: string;
   sexo?: string;
   direccion?: string;
-  nroCelular?: string;
-  correoElectronico?: string;
+  celular?: string;
+  correo?: string;
 }

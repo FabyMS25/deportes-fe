@@ -1,42 +1,81 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { circle, latLng, tileLayer } from 'leaflet';
 
 import * as L from 'leaflet';
+import { SlickCarouselComponent } from 'ngx-slick-carousel';
+import { Cancha } from 'src/app/core/models/cancha.model';
+import { DeportesService } from 'src/app/core/services/api/deporte.sservice';
+import Swal from 'sweetalert2';
 @Component({
   selector: 'app-details',
   templateUrl: './details.component.html',
   styleUrls: ['./details.component.scss']
 })
 
-/**
- * Details Component
- */
-export class DetailsComponent implements OnInit {
+export class DetailsComponent implements OnInit  {
 
-  // bread crumb items
   breadCrumbItems!: Array<{}>;
+  private timerId:any;
   submitted = false;
   currentTime!: string;
-  private timerId: any;
+  
+  uuid='';
+  dataField!:Cancha;
+  categoryList:any[]=[];
+  constructor(private modalService: NgbModal,
+    private deportesService: DeportesService,
+    private route: ActivatedRoute ) { }
 
-   map!: L.Map;
-  main!: L.TileLayer;
-  // map:any;
-  constructor(private modalService: NgbModal) { }
-
+    @ViewChild('slickModal') slickModal!: SlickCarouselComponent;
+    imagesList=['assets/images/fields/img-1.png','assets/images/fields/img-2.png',
+      'assets/images/fields/img-3.png','assets/images/fields/img-4.png']
+  /**
+ * Swiper setting
+ */
+  config = {
+    infinite: true,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    arrows: false
+  };
+    slidesConfig = {
+      // Configuration options for the ngx-slick-carousel
+      infinite: true,
+      slidesToShow: 4,
+      slidesToScroll: 1,
+      autoplay: true,
+    }
   ngOnInit(): void {
      this.breadCrumbItems = [
       { label: 'Canchas' },
       { label: 'Reservas', active: true }
     ];
+    this.getDeportes();
+    
+    // this.route.params.subscribe(params => {
+    //   this.uuid = params['uuid'];
+    //   // this.getAdjuntos(this.uuid);
+    // });
+    // this.canActivate = history.state.canActivate;
+    this.dataField = history.state.data;
+    console.log(this.dataField)
+    if(this.dataField){
+      this.initMap(this.dataField.latitud, this.dataField.longitud); 
+    }      
+
     this.updateTime();
     this.timerId = setInterval(() => this.updateTime(), 1000);
-    this.initMap(-17.387307611639038, -66.29626036201263);    
   }
 
-  private initMap(lat:number,long:number): void {
-    this.main = L.tileLayer(
+  map:any; 
+  private initMap(lat:any,long:any) {
+    if (this.map) {
+      this.map.remove();
+    }  
+    const main = L.tileLayer(
       "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoidGhlbWVzYnJhbmQiLCJhIjoiY2xmbmc3bTV4MGw1ejNzbnJqOWpubzhnciJ9.DNkdZVKLnQ6I9NOz7EED-w",
       {
         maxZoom: 23,
@@ -55,10 +94,10 @@ export class DetailsComponent implements OnInit {
         radius: 30,
       }
     );
-    this.map = L.map('map', {
+    this.map = L.map('mapa', {
       center: [lat, long],
       zoom: 16,
-      layers: [this.main, field]
+      layers: [main, field]
     });
   }
 
@@ -75,4 +114,33 @@ export class DetailsComponent implements OnInit {
     this.submitted = false;
     this.modalService.open(content, { size: 'md', centered: true });
   }
+
+  slickChange(event: any) {
+    const swiper = document.querySelectorAll('.swiperlist')
+  }
+
+  slidePreview(id: any, event: any) {
+    const swiper = document.querySelectorAll('.swiperlist')
+    swiper.forEach((el: any) => {
+      el.classList.remove('swiper-slide-thumb-active')
+    })
+    event.target.closest('.swiperlist').classList.add('swiper-slide-thumb-active')
+    this.slickModal.slickGoTo(id)
+  }
+  
+    /* API Services */
+    private getDeportes(){
+      this.deportesService.getAll().subscribe({
+          next: (data: any) => {
+            if (data['status'] === 'OK') {
+              this.categoryList = data.payload;
+            }else{
+              Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
+            }
+          },
+          error: (error) => {
+            Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
+          }
+        });
+    }
 }

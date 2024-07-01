@@ -13,6 +13,9 @@ import { selectJobsData, selectJobsLoading } from 'src/app/store/Jobs/jobs_selec
 import { cloneDeep } from 'lodash';
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { application } from 'src/app/core/data';
+import { AuthenticationService } from 'src/app/core/services/auth.service';
+import { ReservaService } from 'src/app/core/services/api/reserva.service';
+import { ModalComponent } from '../modal/modal.component';
 
 @Component({
   selector: 'app-reservas',
@@ -21,6 +24,7 @@ import { application } from 'src/app/core/data';
 })
 export class ReservasComponent implements OnInit {
 
+  title='Reservas';
   // bread crumb items
   breadCrumbItems!: Array<{}>;
   applications: any ;
@@ -36,65 +40,42 @@ export class ReservasComponent implements OnInit {
   type: any = '';
 
 
-  listaItems:any[]=[];
   usuariosList:any[]=[];
   funcionarioSelected!:any;
   
+  canActivate:string[];
+  listaItems:any[]=[];
+  reservasList:any[]=[];
+  temp:any[]=[];
 
   constructor(public service: PaginationService,
     public formBuilder: UntypedFormBuilder,
+    private authService: AuthenticationService,
+    private reservasService: ReservaService,
     private store: Store<{ data: RootReducerState }>,
     public modalService: NgbModal) {
+      this.canActivate = this.authService.hasPermissionModulo(this.title);
   }
 
   ngOnInit(): void {
     this.breadCrumbItems = [
-      { label: 'Jobs' },
-      { label: 'Application', active: true }
+      { label: '' },
+      { label: this.title, active: true }
     ];
 
     this.listaItems = [
-      {name: 'Codigo', prop: 'codigo', show:true},
-      {name: 'Fecha',prop: 'fechaCreado', date:true},
-      {name: 'Persona', prop: 'personaJuridica'},
-      // {name: 'Descripcion',prop: 'descripcion'},
-      {name: 'Unidad',prop: 'unidadDto.nombre'},
-      {name: 'Titulo',prop: 'titulo'},
-      {name: 'Estado', prop: 'estadoReclamo', tag:true},
+      {name: 'Codigo', prop: 'codigo'},
+      {name: 'Fecha',prop: 'fechaReserva', date:true},
+      {name: 'Contribuyente', prop: 'contribuyenteDto.nombre'},
+      {name: 'Cancha',prop: 'canchasDto.nombre'},
+      {name: 'Hora',prop: 'horaEntrada'},
+      {name: 'Estado', prop: 'estado', tag:true},
     ];
+    this.getReservas();
 
-
-
-    // Validation
-    this.applicationData = this.formBuilder.group({
-      id: [''],
-      name: ['', [Validators.required]],
-      date: ['', [Validators.required]],
-      type: ['', [Validators.required]],
-      designation: ['', [Validators.required]],
-      contacts: ['', [Validators.required]],
-      status: ['', [Validators.required]]
-    });
-
-    // Fetch Data
-    this.store.dispatch(fetchApplicationData());
-    this.store.select(selectJobsLoading).subscribe((data) => {
-      if (data == false) {
-        document.getElementById('elmLoader')?.classList.add('d-none');
-      }
-    });
-
-    this.store.select(selectJobsData).subscribe((data) => {
-      this.applications = data;
-      this.allapplications = cloneDeep(data);
-      this.applications = this.service.changePage(this.allapplications)
-    });
+    
   }
 
-   // Pagination
-   changePage() {
-    this.applications = this.service.changePage(this.allapplications)
-  }
 
   // Filter
   statusFilter() {
@@ -103,7 +84,7 @@ export class ReservasComponent implements OnInit {
         return app.status === this.status;
       });
     } else {
-      this.applications = this.service.changePage(this.allapplications)
+      this.applications = this.service.changePage(this.allapplications,8)
     }
   }
 
@@ -113,7 +94,7 @@ export class ReservasComponent implements OnInit {
         return app.type === this.type;
       });
     } else {
-      this.applications = this.service.changePage(this.allapplications)
+      this.applications = this.service.changePage(this.allapplications,8)
     }
   }
 
@@ -124,148 +105,61 @@ export class ReservasComponent implements OnInit {
         item.name.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
-    this.applications = this.service.changePage(this.searchResults)
+    this.applications = this.service.changePage(this.searchResults,8)
   }
 
   onNavChange(changeEvent: NgbNavChangeEvent) {
+
     if (changeEvent.nextId === 1) {
-      this.applications = this.service.changePage(this.allapplications)
+      this.reservasList = this.temp;
+      // this.applications = this.service.changePage(this.allapplications,8)
     }
     if (changeEvent.nextId === 2) {
-      this.applications = this.allapplications.filter((app:any) => app.status == 'New');
+      this.reservasList = this.temp.filter((item:any) => item.status == 'Nuevo');
     }
     if (changeEvent.nextId === 3) {
-      this.applications = this.allapplications.filter((app:any) => app.status == 'Pending');
+      this.reservasList = this.temp.filter((item:any) => item.status == 'Pending');
     }
     if (changeEvent.nextId === 4) {
-      this.applications = this.allapplications.filter((app:any) => app.status == 'Approved');
+      this.reservasList = this.temp.filter((item:any) => item.status == 'Vencido');
     }
     if (changeEvent.nextId === 5) {
-      this.applications = this.allapplications.filter((app:any) => app.status == 'Rejected');
+      this.reservasList = this.temp.filter((item:any) => item.status == 'Rechazado');
     }
   }
 
-  // Check Box Checked Value Get
-  checkedValGet: any[] = [];
-  // The master checkbox will check/ uncheck all items
-  checkUncheckAll(ev: any) {
-    this.applications.forEach((x: { state: any; }) => x.state = ev.target.checked)
-    var checkedVal: any[] = [];
-    var result
-    for (var i = 0; i < this.applications.length; i++) {
-      if (this.applications[i].state == true) {
-        result = this.applications[i].id;
-        checkedVal.push(result);
-      }
-    }
-    this.checkedValGet = checkedVal
-    checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
-
-  }
-  isAllChecked() {
-    return this.applications.every((_: { state: any; }) => _.state);
-  }
-
-  // Select Checkbox value Get
-  onCheckboxChange(e: any) {
-    var checkedVal: any[] = [];
-    var result
-    for (var i = 0; i < this.applications.length; i++) {
-      if (this.applications[i].state == true) {
-        result = this.applications[i].id;
-        checkedVal.push(result);
-      }
-    }
-    this.checkedValGet = checkedVal
-    checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
-  }
+  // activeFilter='';
+  // selectedState: string = '';
+  // applyFilterStatus(selectedState: string): void {
+  //   this.activeFilter = selectedState;
+  //   if (selectedState === '') {
+  //     this.reservasList = this.temp;
+  //   } else {
+  //     const filteredDataList = this.temp.filter(item => {
+  //       return (
+  //         item.estadoContrato === selectedState 
+  //       );
+  //     });
+  //     this.reservasList= filteredDataList
+  //   }
+  // } 
 
   // Open add Model
-  openModel(content: any) {
-    this.modalService.open(content, { size: 'md', centered: true });
-  }
-
-  // File Upload
-  imageURL: string | undefined;
-  fileChange(event: any) {
-    let fileList: any = (event.target as HTMLInputElement);
-    let file: File = fileList.files[0];
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.imageURL = reader.result as string;
-      document.querySelectorAll('#companylogo-img').forEach((element: any) => {
-        element.src = this.imageURL;
-      });
-    }
-    reader.readAsDataURL(file)
-  }
-
-  /**
-  * Open modal
-  * @param content modal content
-  */
-  singleData: any;
-  editorder(content: any, id: any) {
-    this.singleData = this.applications[id];
-    this.submitted = false;
-    this.modalService.open(content, { size: ' md', centered: true })
-    var modelTitle = document.querySelector('.modal-title') as HTMLAreaElement;
-    modelTitle.innerHTML = 'Edit Application';
-    var updatebtn = document.getElementById('add-btn') as HTMLAreaElement
-    updatebtn.innerHTML = "Update";
-    document.querySelectorAll('#companylogo-img').forEach((element: any) => {
-      element.src = this.singleData.img;
+  // openModel(content: any) {
+  //   this.modalService.open(content, { size: 'md', centered: true });
+  // }
+  public openModel(content: any | undefined, accion: string, size: string) {
+    const modalRef = this.modalService.open(ModalComponent, {
+        backdrop: 'static',
+        size:size
     });
-    this.applicationData.controls['id'].setValue(this.singleData.id);
-    this.applicationData.controls['name'].setValue(this.singleData.name);
-    this.applicationData.controls['designation'].setValue(this.singleData.designation);
-    this.applicationData.controls['date'].setValue(this.singleData.date);
-    this.applicationData.controls['contacts'].setValue(this.singleData.contacts);
-    this.applicationData.controls['type'].setValue(this.singleData.type);
-    this.applicationData.controls['status'].setValue(this.singleData.status);
+    modalRef.componentInstance.row = content;
+    modalRef.componentInstance.accion = accion;
+    modalRef.componentInstance.listaItems.subscribe(() => {
+      this.getReservas();
+    });
   }
 
-  /**
-* Returns form
-*/
-  get form() {
-    return this.applicationData.controls;
-  }
-
-  createapplication() {
-    if (this.applicationData.valid) {
-      if (this.applicationData.get('id')?.value) {
-        const updatedData = { img: this.singleData.img, ...this.applicationData.value };
-        this.store.dispatch(updateApplication({ updatedData }));
-        this.modalService.dismissAll();
-      } else {
-        const name = this.applicationData.get('name')?.value;
-        const designation = this.applicationData.get('designation')?.value;
-        const contacts = this.applicationData.get('contacts')?.value;
-        const img = "/assets/images/brands/slack.png";
-        const date = '26 Sep, 2022';
-        const status = this.applicationData.get('status')?.value;
-        const type = this.applicationData.get('type')?.value;
-        const newData = {
-          id: this.applications.length + 1,
-          img,
-          name,
-          designation,
-          date,
-          contacts,
-          type,
-          status
-        };
-        this.store.dispatch(addApplication({ newData }));
-        this.modalService.dismissAll()
-      }
-    }
-    this.modalService.dismissAll();
-    setTimeout(() => {
-      this.applicationData.reset();
-    }, 2000);
-    this.submitted = true
-  }
 
   /**
    * Delete Model Open
@@ -281,7 +175,7 @@ export class ReservasComponent implements OnInit {
     if (id) {
       this.store.dispatch(deleteApplication({ id: this.deleteId.toString() }));
     } else {
-      this.store.dispatch(deleteApplication({ id: this.checkedValGet.toString() }));
+      // this.store.dispatch(deleteApplication({ id: this.checkedValGet.toString() }));
     }
     this.masterSelected = false;
     this.deleteId = '';
@@ -300,8 +194,23 @@ export class ReservasComponent implements OnInit {
     });
   }
 
-  // Sort Data
-  onSort(column: any) {
-    this.applications = this.service.onSort(column, this.allapplications)
+  /* API Services */
+  loading: boolean = true;
+  private getReservas() {
+    this.reservasService.getAll().subscribe({
+      next: (data: any) => {
+        this.loading = false;
+        if (data['status'] === 'OK') {
+          this.reservasList = data.payload;
+          this.temp = data.payload;
+        } else {
+          Swal.fire({ text: data.status, confirmButtonColor: '#299cdb' });
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+      }
+    });
   }
+
 }

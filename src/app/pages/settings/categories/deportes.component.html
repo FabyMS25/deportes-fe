@@ -42,8 +42,10 @@
             </div>
             <div class="card-body">
                 <app-data-table
+                    [loading]="loading"
                     [listaItems]="listaItems"
                     [content]="categoryList"
+                    [allcontent]="categoryList"
                     [sortField]="''"
                     [show]="canActivate.includes('VER')"
                     [edit]="canActivate.includes('ACTUALIZAR')"
@@ -55,7 +57,8 @@
                 </app-data-table>  
                 <ng-template #content role="document" let-modal>
                     <div class="modal-header bg-light p-3">
-                        <h5 class="modal-title" id="exampleModalLabel">Agregar Categoria</h5>
+                        <h5 class="modal-title" class="tablelist-form" autocomplete="off" *ngIf="accion === ''" ngbAutofocus>Agregar Categoria</h5>
+                        <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>Editar Datos Categoria</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
                             id="close-modal" (click)="closeModal()"></button>
                     </div>

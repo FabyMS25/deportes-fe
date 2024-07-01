@@ -1,8 +1,8 @@
 <div>
     <div class="table-responsive table-card mb-2 table-nowrap">
         <table class="table">
-            <thead>
-                <tr class="bg-light">
+            <thead class="table-light">
+                <tr>
                     <th scope="col" style="width: 50px;">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="checkAll" value="option"
@@ -18,10 +18,8 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- @for (data of content | sortBy:sortBy:sortField; track $index) { -->
                 @for (data of content; track $index) {
                     <tr id="c_{{data.uuid}}">                    
-            <!-- <tr *ngFor="let data of getContentForPage() " id="c_{{data.uuid}}">                         -->
                         <th scope="row">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="checkAll"
@@ -31,23 +29,16 @@
                         </th>
                         @for (item of listaItems; track $index) {                                  
                             @if(item.tag) {
-                                <td class="tags">
-                                    <div class="d-flex gap-1">
-                                        <!-- <span class="badge bg-primary-subtle text-primary">
-                                            {{tag}}
-                                        </span> -->                                            
-                                        <ng-container *ngIf="getPropertyValue(data, item) as value">
-                                            <span class="badge text-uppercase"
-                                              [ngClass]="{
-                                                'bg-warning-subtle text-warning': value === 'Rechazado',
-                                                'bg-success-subtle text-success': value === 'Validado',
-                                                'bg-secondary-subtle text-secondary': value === 'Recibido',
-                                                'bg-info-subtle text-info': value !== 'Rechazado' && value !== 'Validado' && value !== 'Recibido'
-                                              }">
-                                              {{ value }}
-                                            </span>
-                                          </ng-container>
-                                    </div>
+                                <!-- 'bg-warning-subtle text-warning': value === 'Rechazado',
+                                    'bg-secondary-subtle text-secondary': value === 'Recibido',
+                                    'bg-info-subtle text-info': value !== 'Rechazado' && value !== 'Validado' && value !== 'Recibido'
+                                -->
+                                <td class="status" *ngIf="getPropertyValue(data, item) as value">
+                                    <span class="badge text-uppercase"
+                                        [ngClass]=" { 'bg-success-subtle text-success': value === 'Activo', 
+                                        'bg-danger-subtle text-danger': value === 'Bloqueado' }">
+                                        {{value}}
+                                    </span>
                                 </td>                                    
                             }@else {  
                                 <td class="name">
@@ -56,54 +47,62 @@
                                     <ng-container *ngIf="getPropertyValue(data, item) as value">
                                         <a (click)="showItem(data)">{{value}}</a>
                                     </ng-container>                                    
-                                    <!-- <td class="date">{{data.last_contacted | date :'longDate'}}</td> -->
                                 </td>
+                                <!-- <td class="date">{{data.last_contacted | date :'longDate'}}</td> -->
+                                        <!-- <ngb-highlight [result]="data.date | date :'longDate'"
+                                        [term]="searchTerm"></ngb-highlight> -->
                             }
                         }
                         <td>
                             <ul class="list-inline hstack gap-2 mb-0">
-                                <!-- <li class="list-inline-item edit" ngbTooltip="Call" placement="top">
+                                <li *ngIf="show" class="list-inline-item" ngbTooltip="Ver" placement="top">
+                                    <a class="" (click)="showItem(data)">
+                                        <i class="ri-eye-fill align-bottom me-2 float-start"></i>
+                                    </a>
+                                </li>                                                        
+                                <li *ngIf="edit" class="list-inline-item edit" ngbTooltip="Editar" placement="top">
+                                    <a href="javascript:void(0);" data-bs-toggle="modal"
+                                        class="text-primary d-inline-block edit-item-btn"
+                                        (click)="editItem(data)">
+                                        <i class="ri-pencil-fill fs-16"></i>
+                                    </a>
+                                </li>
+                                <li *ngIf="delete" class="list-inline-item me-0" ngbTooltip="Eliminar" placement="top">
+                                    <a class="text-danger d-inline-block remove-item-btn"
+                                        data-bs-toggle="modal" data-bs-toggle="modal"
+                                        (click)="deleteItem(data)">
+                                        <i class="ri-delete-bin-5-fill fs-16"></i>
+                                    </a>
+                                </li>
+                                <li *ngIf="telf" class="list-inline-item edit" ngbTooltip="Call" placement="top">
                                     <a href="javascript:void(0);" class="text-muted d-inline-block">
                                         <i class="ri-phone-line fs-16"></i>
                                     </a>
                                 </li>
-                                <li class="list-inline-item edit" ngbTooltip="Message" placement="top">
-                                    <a href="https://api.whatsapp.com/send?phone=+59172248669&text=MENSAJE DESDE SISTEMA DE ODECO" 
+                                <li *ngIf="comment" class="list-inline-item edit" ngbTooltip="Message" placement="top">
+                                    <a href="https://api.whatsapp.com/send?phone=+59172248669&text=MENSAJE DESDE SISTEMA DE DEPORTES" 
                                         class="text-muted d-inline-block">
                                         <i class="ri-question-answer-line fs-16"></i>
                                     </a>
-                                </li> -->
-                                <!-- <li class="list-inline-item"> -->
-                                    <!-- <div class="dropdown" ngbDropdown> -->
-                                        <!-- <button class="btn btn-soft-secondary btn-sm dropdown arrow-none"
+                                </li>
+                                <!-- <li class="list-inline-item">
+                                    <div class="dropdown" ngbDropdown>
+                                        <button class="btn btn-soft-secondary btn-sm dropdown arrow-none"
                                             type="button" data-bs-toggle="dropdown" aria-expanded="false"
                                             ngbDropdownToggle>
                                             <i class="ri-more-fill align-middle"></i>
-                                        </button> -->
-                                        <!-- <ul class="dropdown-menu dropdown-menu-end" ngbDropdownMenu> -->
-                                            <li *ngIf="show">
-                                                <a class="" (click)="showItem(data)">
-                                                    <i class="ri-eye-fill align-bottom me-2 text-muted float-start"></i>
-                                                    <!-- Ver -->
-                                                </a>
-                                            </li>                                                        
-                                            <li *ngIf="edit">
-                                                <a class=" edit-item-btn" data-bs-toggle="modal"
-                                                    (click)="editItem(data)">
-                                                    <i class="ri-pencil-fill align-bottom me-2 text-muted float-start"></i>
-                                                    <!-- Editar -->
-                                                </a>
-                                            </li>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
                                             <li *ngIf="delete">                                                            
                                                 <a class=" remove-item-btn"  data-bs-toggle="modal"
                                                     (click)="deleteItem(data)">
                                                     <i class="ri-delete-bin-fill align-bottom me-2 text-muted float-start"></i>
-                                                    <!-- Eliminar -->
+                                                    Eliminar
                                                 </a>
                                             </li>
-                                        <!-- </ul> -->
-                                    <!-- </div> -->
-                                <!-- </li> -->
+                                        </ul>
+                                    </div>
+                                </li> -->
                             </ul>
                         </td>                    
                     </tr>    
@@ -111,69 +110,58 @@
             </tbody>            
         </table>                    
     </div>
+    <!-- Loading Spinner -->
+    <div id="elmLoader" *ngIf="loading">
+      <div class="spinner-border text-primary avatar-sm" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  
+    <!-- No Results Found -->
+    <div class="noresult" *ngIf="!loading && content.length === 0">
+      <div class="text-center">
+        <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop" colors="primary:#405189,secondary:#0ab39c" style="width:75px;height:75px">
+        </lord-icon>
+        <h5 class="mt-2">Lo Sentimos! No Se encontró ningún Dato </h5>
+        <p class="text-muted">No encontramos datos para mostrar</p>
+      </div>
+    </div>
 
-        <div class="d-flex justify-content-end mt-3">
-            <!-- Pagination -->
-            <ngb-pagination [collectionSize]="allcontent?.length" [(page)]="service.page" [pageSize]="service.pageSize" (pageChange)="changePage()">
-            </ngb-pagination>
-            <!-- End Pagination -->
-            <!-- <div id="elmLoader">
-                <div class="spinner-border text-primary avatar-sm" role="status">
-                    <span class="visually-hidden">Cargando...</span>
-                </div>
-            </div> -->
-        </div>
-        <!-- <div class="row justify-content-md-between align-items-md-center" >        
-            <div class="col col-sm-1" *ngIf="content && content.length>0">                        
-                <div class="text-sm-left float-sm-end listjs-pagination">        
-                    <div class="col-md-auto ms-auto">                
-                        <div class="d-flex align-items-center gap-2">
-                            <select class="form-control mb-0" (change)="onTableSizeChange($event)">
-                                <option *ngFor="let size of tableSizes" [value]="size">                
-                                    {{ size}}
-                                </option>                
-                            </select>             
-                        </div>                
-                    </div>
-                </div>
+    <div class="row align-items-md-center mt-3">
+        <div class="col col-xxl-1" *ngIf="content && content.length>0">                        
+            <div class="text-sm-left float-start listjs-pagination">     
+                    <div class="d-flex">
+                        <select class="form-control mb-0" (change)="onTableSizeChange($event)">
+                            <option *ngFor="let size of tableSizes" [value]="size">                
+                                {{size}}
+                            </option>                
+                        </select>             
+                    </div>      
             </div>
-            <div class="col col-sm-5" *ngIf="content && content.length>0">
-                <div class="dataTables_info mb-2" id="tickets-table_info" role="status" aria-live="polite">
-                    <span style="color:slategray">
-                        Registros del {{ (currentPage - 1) * itemsPerPage + 1 }} 
-                        al {{ getMinValue(currentPage * itemsPerPage, content.length) }} 
-                        de un total de {{ content.length }} registros
-                    </span>
-                </div>            
-            </div>    -->
-                
-            <!-- Pagination -->
-            <!-- <div class="col col-sm-6">
-                <div class="text-sm-right float-sm-end"  *ngIf="content && content.length>0">
-                    <ul class="pagination">
-                        <li class="page-item" [class.disabled]="currentPage === 1">
-                            <a class="page-link" (click)="currentPage = 1">&laquo;</a>
-                        </li>
-                        <li class="page-item" [class.disabled]="currentPage === 1">
-                            <a class="page-link"  (click)="currentPage = currentPage - 1">&lsaquo;</a>
-                        </li>
-                        <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
-                            <a class="page-link" (click)="currentPage = page">{{ page }}</a>
-                        </li>
-                        <li class="page-item" [class.disabled]="currentPage ===  calculateTotalPages()">
-                            <a class="page-link"  (click)="currentPage = currentPage + 1">&rsaquo;</a>
-                        </li>
-                        <li class="page-item" [class.disabled]="currentPage === calculateTotalPages()">
-                            <a class="page-link"  (click)="currentPage = 2">&raquo;</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>                  -->
-            <!-- End Pagination -->
-            <!-- <div id="elmLoader">
-                <div class="spinner-border text-primary avatar-sm" role="status">
-                    <span class="visually-hidden">Cargando...</span>
-                </div>
-            </div> -->
-        <!-- </div> -->
+        </div>
+        <div class="col col-xxl-5" *ngIf="content && content.length>0">
+            <div class="dataTables_info mb-2" id="tickets-table_info" role="status" aria-live="polite">
+                <span style="color:slategray">
+                    {{service.endIndex}} Registros, de un total de {{ allcontent.length }}
+                </span>
+            </div>            
+        </div> 
+        <!-- Pagination -->
+        <div class="col col-xxl-6">
+            <div class="text-sm-right float-sm-end listjs-pagination">
+                <ngb-pagination 
+                    [collectionSize]="allcontent.length" 
+                    [(page)]="service.page" 
+                    [pageSize]="itemsPerPage" 
+                    (pageChange)="changePage()">
+                </ngb-pagination>
+            </div>
+        </div>
+        <!-- End Pagination -->
+    </div>      
+    <div id="elmLoader" *ngIf="!content">
+        <div class="spinner-border text-primary avatar-sm" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
 </div>

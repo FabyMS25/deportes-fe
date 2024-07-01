@@ -36,9 +36,6 @@ const routes: Routes = [
     {
       path: 'charts', loadChildren: () => import('./charts/charts.module').then(m => m.ChartsModule)
     },
-    {
-      path: 'marletplace', loadChildren: () => import('./nft-marketplace/nft-marketplace.module').then(m => m.NftMarketplaceModule)
-    },
 ];
 
 @NgModule({

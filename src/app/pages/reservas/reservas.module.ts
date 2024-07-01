@@ -26,10 +26,12 @@ import { NgSelectModule } from '@ng-select/ng-select';
 // Load Icon
 import { defineElement } from "@lordicon/element";
 import lottie from 'lottie-web';
+import { ModalComponent } from './modal/modal.component';
 
 @NgModule({
   declarations: [
-    ReservasComponent
+    ReservasComponent,
+    ModalComponent
   ],
   imports: [
     CommonModule,

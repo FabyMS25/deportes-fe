@@ -53,7 +53,6 @@ export class EmployeesComponent implements OnInit {
   url = GlobalComponent.API_URL;
   allcontent: any;
   searchTerm: any;
-  searchResults: any;
 
 
   
@@ -93,24 +92,20 @@ export class EmployeesComponent implements OnInit {
     this.loadData();
   }
   
+  loading: boolean = true;
   private async loadData() {
     await this.getUsers();
     await this.getEmployees();
   }
 
-
-  changePage() {
-    this.employeesList = this.service.changePage(this.allcontent)
-  }
-
   // Search Data
   performSearch(): void {
-    this.searchResults = this.allcontent.filter((item: any) => {
+    this.employeesList = this.temp.filter((item: any) => {
       return (
-        item.name.toLowerCase().includes(this.searchTerm.toLowerCase())
+        item.nombreCompleto.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.canchasDto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
-    this.employeesList = this.service.changePage(this.searchResults)
   }
 
   /**
@@ -288,6 +283,7 @@ export class EmployeesComponent implements OnInit {
     setTimeout(() => {
       this.employeesService.getAll().subscribe({
         next: (data: any) => {
+          this.loading = false;
           if (data.status === 'OK') {
             this.employeesList = data.payload.map((employee: any) => ({
               ...employee,
@@ -303,6 +299,7 @@ export class EmployeesComponent implements OnInit {
           }
         },
         error: () => {
+          this.loading = false;
           Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
         }
       });

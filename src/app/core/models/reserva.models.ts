@@ -6,14 +6,14 @@ import { Pago } from "./pago.model";
   uuid?: String;
   estado?:boolean;
 
+  // codigo:string;
   fechaReserva: Date;
   totalPago:number;   
   horaEntrada:string;
   horaSalida:string;
-
   
-  canchaDto:Cancha;
+  canchasDto:Cancha;
   contribuyenteDto:Contribuyente;
-  pagoDto?:Pago
+  pagosDto?:Pago
   
 }

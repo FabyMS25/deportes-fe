@@ -85,12 +85,6 @@ export class ModalEmployeeComponent {
         }
     });
 }
-  public closeModal() {
-    this.accion = '';
-    this.contentForm.enable();
-    this.modalService.dismissAll();
-    this.contentForm.reset();
-  }
 
   // File Upload
   imageURL: string | undefined;
@@ -190,6 +184,12 @@ export class ModalEmployeeComponent {
       })
   }
   
+  public closeModal() {
+    this.accion = '';
+    this.contentForm.enable();
+    this.modalService.dismissAll();
+    this.contentForm.reset();
+  }
   private notify(message: any, type: any): void {
     let timerInterval: any;
     Swal.fire({

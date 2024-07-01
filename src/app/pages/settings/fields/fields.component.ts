@@ -44,18 +44,12 @@ export class FieldsComponent {
   masterSelected!: boolean;
   checkedList: any;
 
-  // Api Data
-  company?: any;
-  econtent?: any;
-  allcompany: any;
-  searchResults: any;
   searchTerm: any;
 
   canActivate:string[];
+  categoryList:any[]=[];
   listaItems:any[]=[];
   canchasList:any[]=[];
-
-  categoryList:any[]=[];
   temp:any[]=[];
   
   dataSelected!:Cancha;
@@ -64,9 +58,7 @@ export class FieldsComponent {
     private deportesService: DeportesService,
     private authService: AuthenticationService, 
     private offcanvasService: NgbOffcanvas,
-    private datePipe: DatePipe,
-    public service: PaginationService, private formBuilder: UntypedFormBuilder,
-    private store: Store<{ data: RootReducerState }>) {
+    private datePipe: DatePipe,) {
       this.canActivate = this.authService.hasPermissionModulo(this.title);
   }
 
@@ -88,23 +80,19 @@ export class FieldsComponent {
     this.getFields()
   }
 
-  changePage() {
-    this.company = this.service.changePage(this.allcompany)
-  }
+  // changePage() {
+  //   this.company = this.service.changePage(this.allcompany)
+  // }
 
   // Search Data
   performSearch(): void {
-    this.searchResults = this.allcompany.filter((item: any) => {
+    this.canchasList = this.temp.filter((item: any) => {
       return (
-        item.name.toLowerCase().includes(this.searchTerm.toLowerCase())
+        item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
-    this.company = this.service.changePage(this.searchResults)
   }
 
-  onSort(column: any) {
-    this.company = this.service.onSort(column, this.company)
-  }
 
   // Filtering
   isstatus?: any
@@ -204,12 +192,12 @@ export class FieldsComponent {
 
   // The master checkbox will check/ uncheck all items
   checkUncheckAll(ev: any) {
-    this.company.forEach((x: { state: any; }) => x.state = ev.target.checked)
+    this.canchasList.forEach((x: { state: any; }) => x.state = ev.target.checked)
     var checkedVal: any[] = [];
     var result
-    for (var i = 0; i < this.company.length; i++) {
-      if (this.company[i].state == true) {
-        result = this.company[i];
+    for (var i = 0; i < this.canchasList.length; i++) {
+      if (this.canchasList[i].state == true) {
+        result = this.canchasList[i];
         checkedVal.push(result);
       }
     }
@@ -222,9 +210,9 @@ export class FieldsComponent {
   onCheckboxChange(e: any) {
     var checkedVal: any[] = [];
     var result
-    for (var i = 0; i < this.company.length; i++) {
-      if (this.company[i].state == true) {
-        result = this.company[i];
+    for (var i = 0; i < this.canchasList.length; i++) {
+      if (this.canchasList[i].state == true) {
+        result = this.canchasList[i];
         checkedVal.push(result);
       }
     }
@@ -234,18 +222,18 @@ export class FieldsComponent {
 
   // Csv File Export
   csvFileExport() {
-    var orders = {
+    var data = {
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalseparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Company Data',
+      title: 'Lista de Canchas',
       useBom: true,
       noDownload: false,
-      headers: ["Id", "Name", "Owner", "Industry Type", "Star Value", "Location", "Employee", "Website", "Contact Email", "Since", "Image src"]
+      headers: ["Uuid", "Techado", "Superficie", "Dirección", "Distrito", "Tarifa", "Latitud", "Longitud", "Nombre", "Estado"]
     };
-    new ngxCsv(this.allcompany, "Company", orders);
+    new ngxCsv(this.canchasList, "Lista de Canchas", data);
   }
 
 
@@ -268,16 +256,18 @@ export class FieldsComponent {
         next: (data: any) => {
           if (data['status'] === 'OK') {
             this.categoryList = data.payload;
-            this.temp = data.payload;
           }
         }
       });
   }
+  loading: boolean = true;
   private getFields(){
     this.fieldsService.getAll().subscribe({
       next: (data: any) => {
+        this.loading = false;
         if (data['status'] === 'OK') {
           this.canchasList = data.payload;
+          this.temp = data.payload;
           if (this.canchasList) {
               this.dataSelected = this.canchasList[0];
           }
@@ -286,6 +276,7 @@ export class FieldsComponent {
         }
       },
       error: (error) => {
+        this.loading = false;
         Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb', });
       }
     });

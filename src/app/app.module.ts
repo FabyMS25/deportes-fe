@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { LOCALE_ID, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
 // search module
@@ -37,6 +37,10 @@ export function createTranslateLoader(http: HttpClient): any {
   return new TranslateHttpLoader(http, 'assets/i18n/', '.json');
 }
 
+import localeEs from '@angular/common/locales/es';
+import { registerLocaleData } from '@angular/common';
+
+registerLocaleData(localeEs, 'es');
 // if (environment.defaultauth === 'firebase') {
 //   initFirebaseBackend(environment.firebaseConfig);
 // } else {
@@ -79,6 +83,7 @@ export function createTranslateLoader(http: HttpClient): any {
       ApikeyEffects]),
   ],
   providers: [
+    { provide: LOCALE_ID, useValue: 'es' },
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
     // { provide: HTTP_INTERCEPTORS, useClass: FakeBackendInterceptor, multi: true },

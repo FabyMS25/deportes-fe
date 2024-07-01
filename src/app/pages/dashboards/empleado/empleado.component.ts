@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { CalendarOptions, EventApi, EventClickArg, EventInput } from '@fullcalendar/core';
 import interactionPlugin, { Draggable } from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -15,6 +15,7 @@ import Swal from 'sweetalert2';
 import esLocale from '@fullcalendar/core/locales/es';
 
 import { calendarEvents, category, createEventId } from 'src/app/core/data/calendar';
+import { ReservaService } from 'src/app/core/services/api/reserva.service';
 @Component({
     selector: 'app-empleado',
     templateUrl: './empleado.component.html',
@@ -47,25 +48,40 @@ export class EmpleadoComponent implements OnInit {
   filterEvents: any = [];
   allcalendarEvents: any;
 
-  constructor(private formBuilder: UntypedFormBuilder, private modalService: NgbModal, private restApiService: restApiService) { }
+  constructor(private formBuilder: UntypedFormBuilder, private modalService: NgbModal,
+    private reservasService: ReservaService
+  ) {
+  }
 
 
     ngOnInit(): void {
         this.breadCrumbItems = [
             { label: 'Dashboards' },
-            { label: 'Contribuyente', active: true }
+            { label: 'Empleado', active: true }
         ];
         
 
     // Validation
     this.formData = this.formBuilder.group({
-        title: ['', [Validators.required]],
-        category: ['', [Validators.required]],
-        location: ['', [Validators.required]],
-        description: ['', [Validators.required]],
-        date: ['', Validators.required],
-        start: ['', Validators.required],
-        end: ['', Validators.required]
+        // nombre: ['', [Validators.required]],
+        // category: ['', [Validators.required]],
+        // location: ['', [Validators.required]],
+        // description: ['', [Validators.required]],
+        // date: ['', Validators.required],
+        // start: ['', Validators.required],
+        // end: ['', Validators.required],
+
+        
+        uuid: [''],
+        // codigo: ['', [Validators.required]],
+        fechaReserva: ['', [Validators.required]],
+        horaEntrada: ['', [Validators.required]],
+        horaSalida: ['', [Validators.required]],
+        totalPago: [0, [Validators.required]],
+        pagossDto: [null],
+        // status: ['', [Validators.required]]
+        canchasDto: new FormControl(),
+        contribuyenteDto: new FormControl(),
       });
   
       this._fetchData();
@@ -81,21 +97,52 @@ export class EmpleadoComponent implements OnInit {
     this.category = category;
     // Calender Event Data
 
-    console.log('calendarEvents', calendarEvents)
-    this.restApiService.getCalendarData().subscribe(
-      data => {
+    // console.log('calendarEvents', calendarEvents)
+    // this.restApiService.getCalendarData().subscribe(
+    //   data => {
+    //     console.log(data)
 
-        const users = JSON.parse(data);
-        // console.log('users', users.data)
-        // this.calendarEvents = users.data;
-        this.calendarOptions.initialEvents = this.calendarEvents.map(
-          (evt: any) => {
-            return { date: evt.start, title: evt.title, className: evt.className, location: evt.location, description: evt.description }
-          })
-      });
-    this.calendarEvents = calendarEvents;
+    //     const users = JSON.parse(data);
+    //     // console.log('users', users.data)
+    //     // this.calendarEvents = users.data;
+    //     this.calendarOptions.initialEvents = this.calendarEvents.map(
+    //       (evt: any) => {
+    //         return { date: evt.start, title: evt.title, className: evt.className, location: evt.location, description: evt.description }
+    //       })
+    //   });
+    
+    this.reservasService.getAll().subscribe({
+      next: (data: any) => {
+        if (data['status'] === 'OK') {
+          const reservasList = data.payload;
+          // this.temp = data.payload;
+          this.calendarEvents = reservasList.map(
+            (evt: any) => {
+              return { date: evt.fechaReserva, title: evt.canchasDto.nombre, className: evt.className, 
+                  location: evt.canchasDto.ubicacion, description: evt.horaEntrada +" - "+evt.horaSalida 
+                }
+            })
+        } else {
+          Swal.fire({ text: data.status, confirmButtonColor: '#299cdb' });
+        }
+      }
+    });
+    
+    // this.calendarEvents = calendarEvents;
   }
-
+  temp=[]
+  private getReservas() {
+    this.reservasService.getAll().subscribe({
+      next: (data: any) => {
+        if (data['status'] === 'OK') {
+          // this.reservasList = data.payload;
+          this.temp = data.payload;
+        } else {
+          Swal.fire({ text: data.status, confirmButtonColor: '#299cdb' });
+        }
+      }
+    });
+  }
 
   /***
  * Calender Set
@@ -108,7 +155,7 @@ export class EmpleadoComponent implements OnInit {
       left: 'prev,next today'
     },
     initialView: 'dayGridMonth',
-    initialEvents: this.calendarEvents || calendarEvents,
+    initialEvents: this.calendarEvents,
     themeSystem: "bootstrap",
     weekends: true,
     droppable: true,
@@ -185,7 +232,7 @@ export class EmpleadoComponent implements OnInit {
     }, 100);
 
     this.formData = this.formBuilder.group({
-      title: clickInfo.event.title,
+      nombre: clickInfo.event.title,
       category: clickInfo.event.classNames[0],
       location: clickInfo.event.extendedProps['location'],
       description: clickInfo.event.extendedProps['description'],
@@ -227,7 +274,7 @@ export class EmpleadoComponent implements OnInit {
      */
   closeEventModal() {
     this.formData = this.formBuilder.group({
-      title: '',
+      nombre: '',
       className: '',
       location: '',
       description: '',
@@ -275,7 +322,7 @@ export class EmpleadoComponent implements OnInit {
     if (document.querySelector('#btn-save-event')?.innerHTML == 'Add Event') {
       if (this.formData.valid) {
         const className = this.formData.get('category')!.value;
-        const title = this.formData.get('title')!.value;
+        const nombre = this.formData.get('nombre')!.value;
         const location = this.formData.get('location')!.value;
         const description = this.formData.get('description')!.value
         const date = this.formData.get('date')!.value
@@ -296,7 +343,7 @@ export class EmpleadoComponent implements OnInit {
 
         calendarApi.addEvent({
           id: createEventId(),
-          title,
+          nombre,
           date,
           start,
           end,
@@ -306,7 +353,7 @@ export class EmpleadoComponent implements OnInit {
         });
         this.position();
         this.formData = this.formBuilder.group({
-          title: '',
+          nombre: '',
           category: '',
           location: '',
           description: '',
@@ -349,7 +396,7 @@ export class EmpleadoComponent implements OnInit {
    */
   editEventSave() {
 
-    const editTitle = this.formData.get('title')!.value;
+    const editTitle = this.formData.get('nombre')!.value;
     const editCategory = this.formData.get('category')!.value;
     const editdate = this.formData.get('date')!.value;
     const editstart = this.formData.get('date')!.value;
@@ -361,7 +408,7 @@ export class EmpleadoComponent implements OnInit {
       (x) => x.id + '' === this.editEvent.id + ''
     );
 
-    this.editEvent.setProp('title', editTitle);
+    this.editEvent.setProp('nombre', editTitle);
     this.editEvent.setProp('classNames', editCategory);
     this.editEvent.setProp('date', editdate);
     this.editEvent.setProp('start', editdate);
@@ -379,7 +426,7 @@ export class EmpleadoComponent implements OnInit {
     };
     this.Editposition();
     this.formData = this.formBuilder.group({
-      title: '',
+      nombre: '',
       category: '',
       location: '',
       description: '',

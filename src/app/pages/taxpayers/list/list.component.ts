@@ -19,6 +19,9 @@ import { addCustomer, deleteCustomer, fetchCustomerListData, updateCustomer } fr
 import { selectCustomerData, selectDataLoading } from 'src/app/store/Ecommerce/ecommerce_selector';
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { cloneDeep } from 'lodash';
+import { AuthenticationService } from 'src/app/core/services/auth.service';
+import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
+import { ModalComponent } from '../modal/modal.component';
 
 @Component({
   selector: 'app-list',
@@ -30,25 +33,28 @@ import { cloneDeep } from 'lodash';
  * Customers Component
  */
 export class ListComponent {
+  title="Contribuyentes";
 
   // bread crumb items
   breadCrumbItems!: Array<{}>;
   submitted = false;
-  customerForm!: UntypedFormGroup;
   masterSelected!: boolean;
   checkedList: any;
-  content?: any;
-  customers?: any;
 
-  // Table data
-  customerList: any;
   searchTerm: any;
   filterDate: any;
   status: any = '';
-  searchResults: any;
+  
+  canActivate:string[];
+  listaItems:any[]=[];
+  contribuyentesList:any[]=[];
+  temp:any[]=[];
 
-  constructor(private modalService: NgbModal, public service: PaginationService, private formBuilder: UntypedFormBuilder,
-    private store: Store<{ data: RootReducerState }>) {
+  constructor(private modalService: NgbModal, 
+     private authService: AuthenticationService,
+     private contribuyentesService: ContribuyentesService,
+  ) {
+      this.canActivate = this.authService.hasPermissionModulo(this.title);
   }
 
   ngOnInit(): void {
@@ -56,69 +62,51 @@ export class ListComponent {
     * BreadCrumb
     */
     this.breadCrumbItems = [
-      { label: 'Ecommerce' },
-      { label: 'Customers', active: true }
+      { label: '' },
+      { label: this.title, active: true }
+    ];
+    this.listaItems = [
+      {name: 'Nombre', prop: 'nombre'},
+      {name: 'Nro Carnet',prop: 'nroCarnet'},
+      {name: 'Celular', prop: 'celular'},
+      {name: 'Estado', prop: 'state',tag:true},
     ];
 
-    /**
-    * Form Validation
-    */
-    this.customerForm = this.formBuilder.group({
-      ids: [''],
-      customer: ['', [Validators.required]],
-      email: ['', [Validators.required]],
-      phone: ['', [Validators.required]],
-      date: ['', [Validators.required]],
-      status: ['', [Validators.required]]
-    });
-
-    /**
-    * fetches data
-    */
-    this.store.dispatch(fetchCustomerListData());
-    this.store.select(selectDataLoading).subscribe((data) => {
-      if (data == false) {
-        document.getElementById('elmLoader')?.classList.add('d-none');
-      }
-    });
-
-    this.store.select(selectCustomerData).subscribe((data) => {
-      this.customers = data;
-      this.customerList = cloneDeep(data);
-      this.customers = this.service.changePage(this.customerList)
-    });
+    this.getTaxpayers();
   }
 
-  changePage() {
-    this.customers = this.service.changePage(this.customerList)
-  }
 
-  onSort(column: any) {
-    // resetting other headers
-    this.customers = this.service.onSort(column, this.customers)
+  /**
+   * View Data Get
+   * @param content modal content
+   */
+  viewDataGet(data: any) {
+    // this.dataSelected=data
   }
 
   // Search Data
   performSearch(): void {
-    this.searchResults = this.customerList.filter((item: any) => {
+    this.contribuyentesList = this.temp.filter((item: any) => {
       return (
-        item.customer.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.email.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.status.toLowerCase().includes(this.searchTerm.toLowerCase())
+        item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.apPaterno.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.apMaterno.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.nroCarnet.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.correo.toLowerCase().includes(this.searchTerm.toLowerCase())
+        // item.status.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
-    this.customers = this.service.changePage(this.searchResults)
   }
 
   dateFilter() {
-    this.customers = this.customerList.filter((customer: any) => new Date(customer.date) >= new Date(Object.values(this.dateFilter)[0]) && new Date(customer.date) <= new Date(Object.values(this.dateFilter)[1]));
+    this.contribuyentesList = this.temp.filter((item: any) => new Date(item.date) >= new Date(Object.values(this.dateFilter)[0]) && new Date(item.date) <= new Date(Object.values(this.dateFilter)[1]));
   }
 
   statusFilter() {
     if (this.status != '') {
-      this.customers = this.customerList.filter((customer: any) => customer.status == this.status);
+      this.contribuyentesList = this.temp.filter((customer: any) => customer.status == this.status);
     } else {
-      this.customers = this.customerList
+      this.contribuyentesList = this.temp
     }
   }
 
@@ -134,9 +122,9 @@ export class ListComponent {
   // Delete Data
   deleteData(id: any) {
     if (id) {
-      this.store.dispatch(deleteCustomer({ id: this.deleteId.toString() }));
+      // this.store.dispatch(deleteCustomer({ id: this.deleteId.toString() }));
     } else {
-      this.store.dispatch(deleteCustomer({ id: this.checkedValGet.toString() }));
+      // this.store.dispatch(deleteCustomer({ id: this.checkedValGet.toString() }));
     }
     this.deleteId = ''
     this.masterSelected = false
@@ -166,125 +154,54 @@ export class ListComponent {
   }
 
   /**
-* Open modal
-* @param content modal content
-*/
-  openModal(content: any) {
-    this.submitted = false;
-    this.modalService.open(content, { size: 'md', centered: true });
-  }
-
-  /**
-   * Form data get
-   */
-  get form() {
-    return this.customerForm.controls;
-  }
-
-  /**
- * Save user
- */
-  saveUser() {
-    if (this.customerForm.valid) {
-      if (this.customerForm.get('_id')?.value) {
-        const updatedData = this.customerForm.value;
-        this.store.dispatch(updateCustomer({ updatedData }));
-        this.modalService.dismissAll();
-      }
-      else {
-        const custId = (this.customerList.length + 1).toString();
-        this.customerForm.controls['_id'].setValue(custId);
-        const newData = this.customerForm.value;
-        this.store.dispatch(addCustomer({ newData }));
-        this.modalService.dismissAll();
-        let timerInterval: any;
-        Swal.fire({
-          title: 'Customers inserted successfully!',
-          icon: 'success',
-          timer: 2000,
-          timerProgressBar: true,
-          willClose: () => {
-            clearInterval(timerInterval);
-          },
-        }).then((result) => {
-          /* Read more about handling dismissals below */
-          if (result.dismiss === Swal.DismissReason.timer) {
-          }
-        });
-      }
-    }
-    setTimeout(() => {
-      this.customerForm.reset();
-    }, 2000);
-    this.submitted = true
-  }
-
-  // The master checkbox will check/ uncheck all items
-  checkUncheckAll(ev: any) {
-    this.customers.forEach((x: { state: any; }) => x.state = ev.target.checked)
-    var checkedVal: any[] = [];
-    var result
-    for (var i = 0; i < this.customers.length; i++) {
-      if (this.customers[i].state == true) {
-        result = this.customers[i];
-        checkedVal.push(result);
-      }
-    }
-    this.checkedValGet = checkedVal
-    checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
-  }
-
-  // Select Checkbox value Get
-  onCheckboxChange(e: any) {
-    var checkedVal: any[] = [];
-    var result
-    for (var i = 0; i < this.customers.length; i++) {
-      if (this.customers[i].state == true) {
-        result = this.customers[i];
-        checkedVal.push(result);
-      }
-    }
-    this.checkedValGet = checkedVal
-    checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
-  }
-
-  /**
-   * Open Edit modal
-   * @param content modal content
-   */
-  econtent?: any;
-  editDataGet(id: any, content: any) {
-   this.submitted = false;
-    this.modalService.open(content, { size: 'md', centered: true });
-
-    var modelTitle = document.querySelector('.modal-title') as HTMLAreaElement;
-    modelTitle.innerHTML = 'Edit Customer';
-    var updateBtn = document.getElementById('add-btn') as HTMLAreaElement;
-    updateBtn.innerHTML = "Update";
-    this.econtent = this.customerList[id];
-    this.customerForm.controls['customer'].setValue(this.econtent.customer);
-    this.customerForm.controls['email'].setValue(this.econtent.email);
-    this.customerForm.controls['phone'].setValue(this.econtent.phone);
-    this.customerForm.controls['date'].setValue(this.econtent.date);
-    this.customerForm.controls['status'].setValue(this.econtent.status);
-    this.customerForm.controls['_id'].setValue(this.econtent._id);
-
+  * Open modal
+  * @param content modal content
+  */
+  public openModal(content: any | undefined, accion: string, size: string) {
+    const modalRef = this.modalService.open(ModalComponent, {
+        backdrop: 'static',
+        size:size
+    });
+    modalRef.componentInstance.row = content;
+    modalRef.componentInstance.accion = accion;
+    modalRef.componentInstance.listaItems.subscribe(() => {
+      this.getTaxpayers();
+    });
   }
 
   // Csv File Export
   csvFileExport() {
-    var customer = {
+    var data = {
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalseparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Customer Data',
+      title: 'Lista de Contribuyentes',
       useBom: true,
       noDownload: false,
-      headers: ["id", "customer Id", "customer", "email", "phone", "date", "status"]
+      headers: ["uuid", "Usuario","Contraseña","Nombre", "Apellido Paterno", "Apellido Materno", "Nro Carnet","Nro NIT","Expedido","Sexo","Dirección","email", "celular", "date", "status"]
     };
-    new ngxCsv(this.customers, "customers", customer);
+    new ngxCsv(this.contribuyentesList, "contribuyentes", data);
   }
 
+  
+  /* API Services */
+  loading: boolean = true;
+  private getTaxpayers(){
+    this.contribuyentesService.getAll().subscribe({
+      next: (data: any) => {
+        this.loading = false;
+        if (data['status'] === 'OK') {
+          this.contribuyentesList = data.payload;
+          this.temp = data.payload;
+        }else{
+          Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+      }
+    });
+  }
 }

@@ -1,5 +1,5 @@
 // pagination.service.ts
-import { Injectable } from '@angular/core';
+import { Injectable, Input } from '@angular/core';
 
 @Injectable({
     providedIn: 'root',
@@ -12,9 +12,9 @@ export class PaginationService {
     endIndex: number = 9;
 
     // Pagination
-    changePage(alldata: any[]) {
-        const startItem = (this.page - 1) * this.pageSize + 1;
-        const endItem = (this.page - 1) * this.pageSize + this.pageSize;
+    changePage(alldata: any[], pageSize:number) {
+        const startItem = (this.page - 1) * pageSize + 1;
+        const endItem = (this.page - 1) * pageSize + pageSize;
         this.endIndex = endItem;
         if (this.endIndex > alldata.length) {
             this.endIndex = alldata.length;

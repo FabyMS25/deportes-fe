@@ -9,8 +9,7 @@
             <div class="col-xl-12">
                 <div class="card card-h-100">
                     <div class="card-body">
-                        <!-- <full-calendar [options]="calendarOptions" [events]="this.calendarEvents"></full-calendar> -->
-                        <full-calendar [options]="calendarOptions"></full-calendar>
+                        <full-calendar [options]="calendarOptions" [events]="this.calendarEvents"></full-calendar>
                     </div>
                 </div>
             </div><!-- end col -->
@@ -24,14 +23,14 @@
             <div id="event-modal">
                 <div class="modal-content border-0">
                     <div class="modal-header p-3 bg-info-subtle">
-                        <h5 class="modal-title" id="modal-title">Add Event</h5>
+                        <h5 class="modal-title" id="modal-title">Agregar Reserva</h5>
                         <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
                     </div>
                     <div class="modal-body p-4">
                         <form [formGroup]="formData" (ngSubmit)="saveEvent()" class="needs-validation" name="event-form" id="form-event" novalidate>
                             @if(isEditMode){
                                 <div class="text-end">
-                                    <a href="javascript:void(0);" class="btn btn-sm btn-soft-primary" id="edit-event-btn" data-id="edit-event" (click)="showeditEvent()" role="button">Edit</a>
+                                    <a href="javascript:void(0);" class="btn btn-sm btn-soft-primary" id="edit-event-btn" data-id="edit-event" (click)="showeditEvent()" role="button">Editar</a>
                                 </div>
                             }
                             @if(editEvent){
@@ -84,8 +83,8 @@
                                 <div class="col-12">
                                     <div class="mb-3">
                                         <label class="form-label">Event Name</label>
-                                        <input class="form-control" placeholder="Enter event name" type="text" formControlName="title" name="title" id="event-title" required value="">
-                                        <div class="invalid-feedback">Please provide a valid event name</div>
+                                        <input class="form-control" placeholder="Ingresar Nombre" type="text" formControlName="nombre" name="nombre" id="event-nombre" required value="">
+                                        <div class="invalid-feedback">Ingresar un Nombre Valido</div>
                                     </div>
                                 </div>
                                 <!--end col-->

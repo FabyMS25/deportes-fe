@@ -44,7 +44,7 @@
                     <div class="col-md-3">
                         <div class="search-box">
                             <input type="text" name="searchTerm" class="form-control"
-                                placeholder="Buscar por Nobre..." [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
+                                placeholder="Buscar por Nombre..." [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
                             <i class="ri-search-line search-icon"></i>
                         </div>
                     </div>
@@ -64,8 +64,10 @@
             </div>
             <div class="card-body">
                 <app-data-table
+                    [loading]="loading"
                     [listaItems]="listaItems"
                     [content]="canchasList"
+                    [allcontent]="canchasList"
                     [sortField]="searchTerm"
                     [show]="canActivate.includes('VER')"
                     [edit]="canActivate.includes('ACTUALIZAR')"
@@ -74,8 +76,7 @@
                     (editItemEmitter)="openModal($event,'edit','lg')"
                     (deleteItemEmitter)="deleteData($event)"              
                 >
-                </app-data-table>  
-
+                </app-data-table> 
             </div>
         </div>
         <!--end card-->
@@ -88,7 +89,7 @@
                 <div class="position-relative d-inline-block">
                     <div class="avatar-md">
                         <div class="avatar-title bg-light rounded-circle">
-                            <img src="assets/images/brands/mail_chimp.png" alt=""
+                            <img src="assets/images/brands/dribbble.png" alt=""
                                 class="avatar-sm rounded-circle object-fit-cover">
                         </div>
                     </div>

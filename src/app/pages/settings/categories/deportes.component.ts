@@ -92,26 +92,15 @@ export class DeportesComponent {
      * fetches data
      */
     this.getDeportes();
-    // this.store.dispatch(fetchCrmLeadData());
-    // this.store.select(selectCRMLoading).subscribe((data) => {
-    //   if (data == false) {
-    //     document.getElementById('elmLoader')?.classList.add('d-none');
-    //   }
-    // });
-
-    // this.store.select(selectLeadData).subscribe((data) => {
-    //   this.leads = data;
-    //   this.allleads = cloneDeep(data);
-    //   this.leads = this.service.changePage(this.allleads)
-    // });
-
   }
 
   /**
    * Open modal
    * @param content modal content
    */
+  accion='';
   openModal(data:any,content: any,accion:string) {
+    this.accion=accion;
     if(data){
       this.formDataSet(data);
       if(accion==='show'){
@@ -136,43 +125,6 @@ export class DeportesComponent {
   }
 
 
-
-  // The master checkbox will check/ uncheck all items
-  checkUncheckAll(ev: any) {
-    this.leads.forEach((x: { state: any; }) => x.state = ev.target.checked)
-    var checkedVal: any[] = [];
-    var result
-    for (var i = 0; i < this.leads.length; i++) {
-      if (this.leads[i].state == true) {
-        result = this.leads[i];
-        checkedVal.push(result);
-      }
-    }
-    this.checkedValGet = checkedVal
-    checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
-
-  }
-
-  // Select Checkbox value Get
-  onCheckboxChange(e: any) {
-    var checkedVal: any[] = [];
-    var result
-    for (var i = 0; i < this.leads.length; i++) {
-      if (this.leads[i].state == true) {
-        result = this.leads[i];
-        checkedVal.push(result);
-      }
-    }
-    this.checkedValGet = checkedVal
-    checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
-  }
-
-
-
-  changePage() {
-    this.leads = this.service.changePage(this.categoryList)
-  }
-
   // Search Data
   performSearch(): void {
     this.categoryList = this.temp.filter((item: any) => {
@@ -180,17 +132,14 @@ export class DeportesComponent {
         item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
-    this.leads = this.service.changePage(this.categoryList)
-  }
-
-  onSort(column: any) {
-    this.leads = this.service.onSort(column, this.leads)
   }
 
   /* API Services */
+  loading: boolean = true;
   private getDeportes(){
     this.deportesService.getAll().subscribe({
         next: (data: any) => {
+          this.loading = false;
           if (data['status'] === 'OK') {
             this.categoryList = data.payload;
             this.temp = this.categoryList
@@ -199,6 +148,7 @@ export class DeportesComponent {
           }
         },
         error: (error) => {
+          this.loading = false;
           Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
         }
       });
@@ -207,7 +157,7 @@ export class DeportesComponent {
   /**
   * Save
   */
-    saveData() {
+  saveData() {
       this.submitted = true;
       if (this.contentForm.valid) {
         this.contentForm.enable()

@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 
 // Component pages
-import { ListComponent } from "./list/list.component";
+import { ListComponent } from "./cards-row/list.component";
 import { DetailsComponent } from "./details/details.component";
 import { CreateComponent } from "./create/create.component";
 

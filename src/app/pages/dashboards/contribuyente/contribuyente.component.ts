@@ -4,6 +4,9 @@ import { Router } from '@angular/router';
 // import { latLng, tileLayer, circle, polygon, marker, icon } from 'leaflet';
 
 import * as L from 'leaflet';
+import { CanchaService } from 'src/app/core/services/api/canchas.service';
+import { DeportesService } from 'src/app/core/services/api/deporte.sservice';
+import Swal from 'sweetalert2';
 @Component({
     selector: 'app-contribuyente',
     templateUrl: './contribuyente.component.html',
@@ -14,6 +17,11 @@ export class ContribuyenteComponent implements OnInit {
 
     // bread crumb items
     breadCrumbItems!: Array<{}>;
+    categoryList:any[]=[];
+    canchasList:any[]=[];
+    temp:any=[]
+
+
     map:any;
     layerControl:any;
     icon= L.icon({
@@ -24,18 +32,21 @@ export class ContribuyenteComponent implements OnInit {
       shadowSize: [41, 41]
     })
  
-    constructor(private router: Router) {}
+    constructor(private router: Router,
+      private deportesService: DeportesService,
+      private fieldsService: CanchaService
+    ) {}
 
     ngOnInit(): void {
         this.breadCrumbItems = [
             { label: 'Dashboards' },
-            { label: 'Enpleado', active: true }
+            { label: 'Contribuyente', active: true }
         ];
-        
+        this.getDeportes();
+        this.getFields();
         this.setMaps();
-        this.setMarkers();
-
-        this.configDefaultMap();
+        // this.setMarkers();
+        // this.configDefaultMap();
     }
       
   
@@ -96,21 +107,38 @@ export class ContribuyenteComponent implements OnInit {
     }
     
     mainList:any=[];
-    private setMarkers(){      
+    private setMarkers(){   
+      let listFields:any[]=[]   
+      this.canchasList.forEach(element => {
+        const field = L.marker([element.latitud, element.longitud], { icon: this.icon });
+
+        const popupContent = document.createElement('div');
+        popupContent.innerHTML = `
+          <b>${element.nombre}</b><br />
+          <b>Superficie: </b>${element.superficie}<br />
+          <b>Techado: </b>${element.techado}<br />
+          <b>Ubicación: </b>${element.ubicacion}<br />
+          <br>
+          <button class="btn btn-secondary">
+            <i class="ri-edit-box-line align-bottom"></i> Realizar reserva
+          </button>
+        `;
+        const button = popupContent.querySelector('button');
+        if (button) {
+          button.addEventListener('click', () => this.handleButtonClick(element));
+        }
+        field.bindPopup(popupContent);
+        listFields.push(field);      
+      });
+      this.mainList = L.layerGroup(listFields);
+      
       const field = L.marker([-17.387307611639038, -66.29626036201263], { icon: this.icon });
       const stadium1 = L.marker([-17.39185128319654, -66.27510257300892],{icon:this.icon}).bindPopup("<b>Estadio de Quillacollo</b><br />I am a popup.");
       const stadium2 = L.marker([-17.45723608999351, -66.35638454666658],{icon:this.icon}).bindPopup('Estadio de Sipe Sipe.');
       const col1 = L.marker([-17.40778033504033, -66.28931060434014],{icon:this.icon}).bindPopup('Coliseo PoliDeportivo Quillacollo "Evo Morales"');
       const col2 = L.marker([-17.39821984789503, -66.28245117735644],{icon:this.icon}).bindPopup('Coliseo Max Fernandez.'); 
-      field.bindPopup(`
-        <b>Cancha Chulumani</b><br />I am a popup.
-        <br>
-        
-        <button onclick="handleButtonClick()" class="btn btn-secondary">
-          <i class="ri-edit-box-line align-bottom"></i> Realizar reserva
-        </button>
-      ` );
-      this.mainList = L.layerGroup([field]);
+
+      // this.mainList = L.layerGroup([field]);
       let stadiumsList = L.layerGroup([stadium1,stadium2]);
       let colList = L.layerGroup([col1,col2]); 
       
@@ -119,23 +147,45 @@ export class ContribuyenteComponent implements OnInit {
         "Estadios": stadiumsList,
         "Coliseos": colList
       };
-      // this.layerControl.addOverlay(colList, "Coliseos");    
-      
-    // Attach the global function to the window object
-    (window as any).handleButtonClick = this.handleButtonClick.bind(this);
+      // this.layerControl.addOverlay(colList, "Coliseos");   
+      (window as any).handleButtonClick = this.handleButtonClick.bind(this);
+      this.configDefaultMap();
     }
 
-    handleButtonClick():void {
-      this.router.navigate(['/reservations/details']);
+    handleButtonClick(data:any):void {
+      this.router.navigate(['/reservations/details'], { state: { data: data } });// , data.uuid // ,canActivate: this.canActivate
     }
 
-
-
-  // popupLayers = [
-  //   circle([51.508, -0.11], { color: "#f06548", fillColor: "#f06548", radius: 500 }).bindPopup("I am a circle."),
-  //   polygon([[51.509, -0.08], [51.503, -0.06], [51.51, -0.047],], { color: "#405189", fillColor: "#405189" }).bindPopup("I am a polygon."),
-  //   marker([51.5, -0.09]).bindPopup("<b>Hello world!</b><br />I am a popup.")
-  // ];
-
-  
+    /* API Services */
+    private getDeportes(){
+      this.deportesService.getAll().subscribe({
+          next: (data: any) => {
+            if (data['status'] === 'OK') {
+              this.categoryList = data.payload;
+            }else{
+              Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
+            }
+          },
+          error: (error) => {
+            Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
+          }
+        });
+    }
+    
+    private getFields(){
+      this.fieldsService.getAll().subscribe({
+        next: (data: any) => {
+          if (data['status'] === 'OK') {
+            this.canchasList = data.payload;
+            this.temp = data.payload;
+            this.setMarkers()
+          }else{
+            Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
+          }
+        },
+        error: (error) => {
+          Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb', });
+        }
+      });
+    }
 }

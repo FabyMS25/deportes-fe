@@ -34,12 +34,14 @@ import { allIcons } from 'angular-feather/icons';
 import { ErrorsModule } from '../account/errors/errors.module';
 import { DetailsComponent } from './details/details.component';
 import { CommentsComponent } from './details/comments/comments.component';
+import { ModalComponent } from './taxpayers/modal/modal.component';
 
 
 @NgModule({
   declarations: [
     DetailsComponent,
-    CommentsComponent
+    CommentsComponent,
+    ModalComponent
   ],
   imports: [
     CommonModule,

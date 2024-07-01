@@ -1,0 +1,176 @@
+
+
+<div id="event-modal">
+    <div class="modal-content border-0">
+        <div class="modal-header bg-info-subtle  p-3">
+        <!-- <div class="modal-header bg-light p-3"> -->
+            <h5 class="modal-title" *ngIf="accion === ''" ngbAutofocus>Agregar Reserva</h5>
+            <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>Editar Reserva</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="closeModal()" id="close-modal"></button>
+        </div>
+
+        <div class="modal-body p-4">
+            <form [formGroup]="contentForm" (ngSubmit)="saveData()" class="needs-validation" name="event-form" id="form-event" >
+                @if(accion==='show'){
+                    <div class="text-end">
+                        <a href="javascript:void(0);" class="btn btn-sm btn-soft-primary" id="edit-event-btn" data-id="edit-event" (click)="showeditEvent()" role="button">Editar</a>
+                    </div>
+                }
+                @if(row){
+                <div class="event-details">
+                    <div class="d-flex mb-2">
+                        <div class="flex-grow-1 d-flex align-items-center">
+                            <div class="flex-shrink-0 me-3">
+                                <i class="ri-calendar-event-line text-muted fs-lg"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="d-block fw-semibold mb-0" id="event-start-date-tag">{{row.fechaReserva | date: 'dd MMMM,yyyy'}}</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="ri-time-line text-muted fs-lg"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            @if(row){
+                                <h6 class="d-block fw-semibold mb-0">
+                                    <span id="event-timepicker1-tag"></span> {{row.horaEntrada }} - {{row.horaSalida }} <span id="event-timepicker2-tag"></span>
+                                </h6>
+                            }@else{
+                                <h6 class="d-block fw-semibold mb-0">
+                                    <span id="event-timepicker1-tag"></span> - <span id="event-timepicker2-tag"></span>
+                                </h6>
+                            }
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="ri-map-pin-line text-muted fs-lg"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="d-block fw-semibold mb-0"> <span id="event-location-tag">{{row.canchasDto.ubicacion}}</span></h6>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="ri-discuss-line text-muted fs-lg"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="d-block text-muted mb-0" id="event-description-tag">{{row.canchasDto.nombre}}</p>
+                        </div>
+                    </div>
+                </div>
+                }
+
+                <div class="row event-form">
+                    <div class="mb-3 d-none" id="modal-id">
+                        <label for="uuid" class="form-label">UUID</label>
+                        <input type="hidden" id="uuid" class="form-control" placeholder="UUID" formControlName="uuid" readonly />
+                    </div>        
+                    <div class="mb-3">
+                        <div>
+                            <label for="cancha-field" class="form-label">Cancha</label>
+                            <ng-select 
+                                [items]="canchasList" bindLabel="nombre" bindValue="uuid"
+                                formControlName="uuidCancha"
+                                placeholder="Seleccione una Cancha" 
+                                [ngClass]="{'is-invalid': submitted && form['uuidCancha'].errors }">
+                            </ng-select>
+                            @if(submitted && form['uuidCancha'].errors){ 
+                            <div class="invalid-feedback"  align="left">
+                                @if(form['uuidCancha'].errors['required']){ 
+                                <div>Debe seleccionar una Opcion
+                                </div>
+                                }
+                            </div>
+                            }                
+                        </div>
+                    </div>            
+                    <div class="mb-3">
+                        <div>
+                            <label for="contribuyente-field" class="form-label">Contribuyente</label>
+                            <ng-select 
+                                [items]="contribuyentesList" bindLabel="nombre" bindValue="uuid"
+                                formControlName="uuidContribuyente"
+                                placeholder="Seleccione un Contribuyente" 
+                                [ngClass]="{'is-invalid': submitted && form['uuidContribuyente'].errors }">
+                            </ng-select>
+                            @if(submitted && form['uuidContribuyente'].errors){ 
+                            <div class="invalid-feedback"  align="left">
+                                @if(form['uuidContribuyente'].errors['required']){ 
+                                <div>Debe seleccionar una Opcion
+                                </div>
+                                }
+                            </div>
+                            }  
+                        </div>
+                    </div>            
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div>
+                                <label for="totalPago-field" class="form-label">Total</label>
+                                <input type="number" id="totalPago-field" class="form-control" placeholder="" formControlName="totalPago" required />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div>
+                                <label for="status-input" class="form-label">Estado</label>
+                                <select class="form-control" data-trigger name="status-input" id="status-input" formControlName="status">
+                                    <option value="">Status</option>
+                                    <option value="Approved">Approved</option>
+                                    <option value="New">New</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Rejected">Rejected</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>        
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label for="fechaReserva-field" class="form-label">Fecha Reserva</label>
+                            <div class="input-group">
+                                <input type="text" id="fechaReserva-field" class="form-control flatpickr flatpickr-input" mwlFlatpickr 
+                                [altInput]="true" altFormat="d/m/Y" [convertModelValue]="true" formControlName="fechaReserva" 
+                                placeholder="Seleccionar Fecha" readonly required>
+                                <span class="input-group-text"><i class="ri-calendar-event-line"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12" id="event-time">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Hora Entrada</label>
+                                    <div class="input-group">
+                                        <input id="horaEntrada" type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'" 
+                                        formControlName="horaEntrada" class="form-control flatpickr flatpickr-input" placeholder="Hora Entrada" readonly>
+                                        <span class="input-group-text"><i class="ri-time-line"></i></span>
+                                    </div>
+                                </div>
+                            </div><!--end col-->
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Hora Salida</label>
+                                    <div class="input-group">
+                                        <input id="horaSalida" type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'" 
+                                        formControlName="horaSalida" class="form-control flatpickr flatpickr-input" placeholder="Hora Salida" readonly>
+                                        <span class="input-group-text"><i class="ri-time-line"></i></span>
+                                    </div>
+                                </div>
+                            </div><!--END col-->
+                        </div><!--end row-->
+                    </div>
+                </div>
+                <!--end row-->
+                <div class="hstack gap-2 justify-content-end">
+                    <button type="button" class="btn btn-soft-danger" id="btn-delete-event" (click)="deleteEventData()">
+                        <i class="ri-close-line align-bottom"></i> Eliminar
+                    </button>
+                    <button type="button" class="btn btn-light" id="btn-cancel-event" (click)="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="btn-save-event">Guardar</button>  
+                </div>
+            </form>
+        </div>
+    </div> <!-- end modal-content-->
+</div> 

@@ -38,7 +38,7 @@ var y = date.getFullYear();
 const calendarEvents: EventInput[] = [
     {
         id: createEventId(),
-        title: "All Day Event 1",
+        nombre: "Reserva de Estadium",
         start: new Date(y, m, 1),
         className: "bg-primary-subtle",
         location: "San Francisco, US",
@@ -51,12 +51,12 @@ const calendarEvents: EventInput[] = [
     },
     {
         id: createEventId(),
-        title: "Visit Online Course",
+        nombre: "Visit Online Course",
         start: new Date(y, m, d - 5),
         end: new Date(y, m, d - 2),
         allDay: false,
         className: "bg-warning-subtle",
-        location: "San Francisco, US",
+        location: "Estadio Municipal de Quillacollo",
         extendedProps: {
             department: "Long Event",
         },
@@ -65,7 +65,7 @@ const calendarEvents: EventInput[] = [
     },
     {
         id: createEventId(),
-        title: "Client Meeting with Alexis",
+        nombre: "Client Meeting with Alexis",
         start: new Date(y, m, d + 22, 20, 0),
         end: new Date(y, m, d + 23, 16, 0),
         allDay: false,
@@ -79,7 +79,7 @@ const calendarEvents: EventInput[] = [
     },
     {
         id: createEventId(),
-        title: "Repeating Event",
+        nombre: "Repeating Event",
         start: new Date(y, m, d + 4, 16, 0),
         end: new Date(y, m, d + 8, 16, 0),
         allDay: false,
@@ -93,7 +93,7 @@ const calendarEvents: EventInput[] = [
     },
     {
         id: createEventId(),
-        title: "Meeting With Designer",
+        nombre: "Meeting With Designer",
         start: new Date(y, m, d, 12, 30),
         allDay: false,
         className: "bg-success-subtle",
@@ -105,7 +105,7 @@ const calendarEvents: EventInput[] = [
     },
     {
         id: createEventId(),
-        title: "Weekly Strategy Planning",
+        nombre: "Weekly Strategy Planning",
         start: new Date(y, m, d + 9),
         end: new Date(y, m, d + 11),
         allDay: false,
@@ -118,7 +118,7 @@ const calendarEvents: EventInput[] = [
     },
     {
         id: createEventId(),
-        title: "Birthday Party",
+        nombre: "Birthday Party",
         start: new Date(y, m, d + 1, 19, 0),
         allDay: false,
         className: "bg-success-subtle",
@@ -131,7 +131,7 @@ const calendarEvents: EventInput[] = [
     },
     {
         id: createEventId(),
-        title: "Click for Google",
+        nombre: "Click for Google",
         start: new Date(y, m, 28),
         end: new Date(y, m, 29),
         url: "http://google.com/",
@@ -139,7 +139,7 @@ const calendarEvents: EventInput[] = [
     },
     {
         id: createEventId(),
-        title: "Velzon Project Discussion with Team",
+        nombre: "Velzon Project Discussion with Team",
         start: new Date(y, m, d + 23, 20, 0),
         end: new Date(y, m, d + 23, 16, 0),
         allDay: false,

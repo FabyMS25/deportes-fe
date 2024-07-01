@@ -1,0 +1,152 @@
+
+<div class="modal-header bg-light p-3">
+    <h5 class="modal-title" id="exampleModalLabel">Agregar Contribuyente</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+        id="close-modal" (click)="closeModal()"></button>
+</div>
+<form (ngSubmit)="saveData()" [formGroup]="contentForm" class="tablelist-form" autocomplete="off">
+    <div class="modal-body">
+        <div class="row g-3">
+        <input type="hidden" name="uuid" value="" formControlName="uuid" />
+        <div class="col-lg-6">
+            <label for="userName-field" class="form-label">Usuario</label>
+            <input type="text" id="userName-field" class="form-control" placeholder="Usuario"
+                required formControlName="userName"
+                [ngClass]="{ 'is-invalid': submitted && form['userName'].errors }" />
+            <div class="invalid-feedback">El campo es requerido.</div>
+        </div>
+        <div class="col-lg-6">
+            <label for="password-field" class="form-label">Contraseña</label>
+            <input type="text" id="password-field" class="form-control" placeholder="Contraseña"
+                formControlName="password"
+                [ngClass]="{ 'is-invalid': submitted && form['password'].errors }" />
+            <div class="invalid-feedback">El campo es requerido.</div>
+        </div>
+        <div class="col-lg-12">
+            <label for="nombre-field" class="form-label">Nombre</label>
+            <input type="text" id="nombre-field" class="form-control" placeholder="Ingresar Nombre"
+                required formControlName="nombre"
+                [ngClass]="{ 'is-invalid': submitted && form['nombre'].errors }" />
+            <div class="invalid-feedback">El campo es requerido.</div>
+        </div>
+        <div class="col-lg-6">
+            <label for="apPaterno-field" class="form-label">Apellido Paterno</label>
+            <input type="text" id="apPaterno-field" class="form-control" placeholder="Apellido Paterno"
+                required formControlName="apPaterno"
+                [ngClass]="{ 'is-invalid': submitted && form['apPaterno'].errors }" />
+            <div class="invalid-feedback">El campo es requerido.</div>
+        </div>
+        <div class="col-lg-6">
+            <label for="apMaterno-field" class="form-label">Apellido Materno</label>
+            <input type="text" id="apMaterno-field" class="form-control" placeholder="Apellido Materno"
+                formControlName="apMaterno"
+                [ngClass]="{ 'is-invalid': submitted && form['apMaterno'].errors }" />
+            <div class="invalid-feedback">El campo es requerido.</div>
+        </div>
+        <div class="col-lg-4">
+            <label for="nroCarnet-field" class="form-label">Carnet</label>
+            <input type="text" id="nroCarnet-field" class="form-control" placeholder="Ingresar Carnet"
+                formControlName="nroCarnet"
+                [ngClass]="{ 'is-invalid': submitted && form['nroCarnet'].errors }" />
+            <div class="invalid-feedback">El campo es requerido.</div>
+        </div>
+        <div class="col-lg-2">
+            <label for="ciExpedido-field" class="form-label">Expedido</label>
+            <select class="form-select" aria-label="ciExpedido"
+                 [ngClass]="{'is-invalid': submitted && form['ciExpedido'].errors }">
+                <option selected disabled class="text-muted">Expedido</option>
+                @for (item of cityAcronym ; track $index) {
+                    <option value="item.id">{{item.descripcion}}</option>
+                }
+            </select>
+            @if(submitted && form['ciExpedido'].errors){ 
+            <div class="invalid-feedback"  align="left">
+                @if(form['ciExpedido'].errors['required']){ 
+                <div>Debe ingresar el Expedido
+                </div>
+                }
+            </div>
+            }
+            <!-- <div class="invalid-feedback">El campo es requerido.</div> -->
+        </div>
+        <div class="col-lg-6">
+            <label for="nroNit-field" class="form-label">NIT</label>
+            <input type="text" id="nroNit-field" class="form-control" placeholder="Ingresar NIT"
+                formControlName="nroNit"
+                [ngClass]="{ 'is-invalid': submitted && form['nroNit'].errors }" />
+            <div class="invalid-feedback">El campo es requerido.</div>
+        </div>
+        <div class="col-lg-6">
+            <label for="sexo-field" class="form-label">Sexo</label>
+            <select class="form-select" aria-label="sexo"
+                 [ngClass]="{'is-invalid': submitted && form['sexo'].errors }">
+                <option selected disabled class="text-muted">Sexo</option>
+                <option value="F">Femenino</option>
+                <option value="M">Masculino</option>
+            </select>
+            @if(submitted && form['sexo'].errors){ 
+            <div class="invalid-feedback"  align="left">
+                @if(form['sexo'].errors['required']){ 
+                <div>El campo es requerido
+                </div>
+                }
+            </div>
+            }
+        </div>
+        <div class="col-lg-6">
+            <label for="direccion-field" class="form-label">Dirección</label>
+            <input type="text" id="direccion-field" class="form-control" placeholder="Ingresar NIT"
+                formControlName="direccion"
+                [ngClass]="{ 'is-invalid': submitted && form['direccion'].errors }" />
+            <div class="invalid-feedback">El campo es requerido.</div>
+        </div>
+
+        <div class="col-lg-6">
+            <label for="correo-field" class="form-label">Correo</label>
+            <input type="correo" id="correo-field" class="form-control" placeholder="Ingrese un  correo"
+                formControlName="correo"
+                [ngClass]="{ 'is-invalid': submitted && form['correo'].errors }" />
+            <div class="invalid-feedback">Debe Ingresar un correo.</div>
+        </div>
+
+        <div class="col-lg-6">
+            <label for="celular-field" class="form-label">Celular</label>
+            <input type="text" id="celular-field" class="form-control" placeholder="Ingresar no. celular"
+                mask="000-000-0000" formControlName="celular"/>
+        </div>
+
+        <!-- <div class="mb-3">
+            <label for="date-field" class="form-label">Joining Date</label>
+            <input class="form-control flatpickr-input" type="text" mwlFlatpickr [altInput]="true"
+                [convertModelValue]="true" formControlName="date"
+                [ngClass]="{ 'is-invalid': submitted && form['date'].errors }">
+            <div class="invalid-feedback">Please select a date.</div>
+        </div>
+
+        <div>
+            <label for="status-field" class="form-label">Status</label>
+            <select class="form-control" data-trigger name="status-field" id="status-field" required
+                formControlName="status"
+                [ngClass]="{ 'is-invalid': submitted && form['status'].errors }">
+                <option value="">Status</option>
+                <option value="Active">Activo</option>
+                <option value="Block">Bloqueado</option>
+            </select>
+            @if(submitted && form['status'].errors){
+            <div class="invalid-feedback" align="left">
+                @if(form['status'].errors['required']){
+                <div>Status is required</div>
+                }
+            </div>
+            }
+        </div> -->
+        </div>
+    </div>
+    <div class="modal-footer">
+        <div class="hstack gap-2 justify-content-end">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                (click)="closeModal()">Cancelar</button>
+            <button type="submit" class="btn btn-success" id="add-btn">Agregar</button>
+        </div>
+    </div>
+</form>
