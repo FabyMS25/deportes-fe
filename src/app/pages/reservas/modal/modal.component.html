@@ -4,9 +4,9 @@
     <div class="modal-content border-0">
         <div class="modal-header bg-info-subtle  p-3">
         <!-- <div class="modal-header bg-light p-3"> -->
-            <h5 class="modal-title" *ngIf="accion === ''" ngbAutofocus>Agregar Reserva</h5>
-            <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>Editar Reserva</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="closeModal()" id="close-modal"></button>
+            <h5 class="modal-title" id="modal-title">Agregar Reserva</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" 
+                (click)="closeModal()" id="close-modal"></button>
         </div>
 
         <div class="modal-body p-4">
@@ -57,7 +57,7 @@
                             <i class="ri-discuss-line text-muted fs-lg"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <p class="d-block text-muted mb-0" id="event-description-tag">{{row.canchasDto.nombre}}</p>
+                            <p class="d-block text-muted mb-0" id="event-description-tag">{{row.contribuyenteDto.nombre}}</p>
                         </div>
                     </div>
                 </div>
@@ -73,8 +73,9 @@
                             <label for="cancha-field" class="form-label">Cancha</label>
                             <ng-select 
                                 [items]="canchasList" bindLabel="nombre" bindValue="uuid"
-                                formControlName="uuidCancha"
+                                formControlName="uuidCancha" 
                                 placeholder="Seleccione una Cancha" 
+                                [disabled]="form['uuidCancha'].disabled"
                                 [ngClass]="{'is-invalid': submitted && form['uuidCancha'].errors }">
                             </ng-select>
                             @if(submitted && form['uuidCancha'].errors){ 
@@ -94,6 +95,7 @@
                                 [items]="contribuyentesList" bindLabel="nombre" bindValue="uuid"
                                 formControlName="uuidContribuyente"
                                 placeholder="Seleccione un Contribuyente" 
+                                [disabled]="form['uuidContribuyente'].disabled"
                                 [ngClass]="{'is-invalid': submitted && form['uuidContribuyente'].errors }">
                             </ng-select>
                             @if(submitted && form['uuidContribuyente'].errors){ 
@@ -106,14 +108,14 @@
                             }  
                         </div>
                     </div>            
-                    <div class="row mb-3">
-                        <div class="col-md-6">
+                    <div class="mb-3">
+                        <!-- <div class="col-md-6"> -->
                             <div>
                                 <label for="totalPago-field" class="form-label">Total</label>
                                 <input type="number" id="totalPago-field" class="form-control" placeholder="" formControlName="totalPago" required />
                             </div>
-                        </div>
-                        <div class="col-md-6">
+                        <!-- </div> -->
+                        <!-- <div class="col-md-6">
                             <div>
                                 <label for="status-input" class="form-label">Estado</label>
                                 <select class="form-control" data-trigger name="status-input" id="status-input" formControlName="status">
@@ -124,7 +126,7 @@
                                     <option value="Rejected">Rejected</option>
                                 </select>
                             </div>
-                        </div>
+                        </div> -->
                     </div>        
                     <div class="col-12">
                         <div class="mb-3">

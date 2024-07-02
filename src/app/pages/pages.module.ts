@@ -4,7 +4,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
   NgbToastModule, NgbProgressbarModule,
   NgbTooltipModule,
-  NgbNavModule
+  NgbNavModule,
+  NgbCollapseModule
 } from '@ng-bootstrap/ng-bootstrap';
 
 import { FlatpickrModule } from 'angularx-flatpickr';
@@ -69,7 +70,8 @@ import { ModalComponent } from './taxpayers/modal/modal.component';
     // FlatpickrModule,
     // NgSelectModule,
     // NgbPaginationModule,
-    NgbNavModule
+    NgbNavModule,
+    NgbCollapseModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

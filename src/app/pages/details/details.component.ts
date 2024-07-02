@@ -8,6 +8,9 @@ import { SlickCarouselComponent } from 'ngx-slick-carousel';
 import { Cancha } from 'src/app/core/models/cancha.model';
 import { DeportesService } from 'src/app/core/services/api/deporte.sservice';
 import Swal from 'sweetalert2';
+import { ModalComponent } from '../reservas/modal/modal.component';
+import { CanchaHorariosService } from 'src/app/core/services/api/cancha-horarios.service';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 @Component({
   selector: 'app-details',
   templateUrl: './details.component.html',
@@ -17,6 +20,8 @@ import Swal from 'sweetalert2';
 export class DetailsComponent implements OnInit  {
 
   breadCrumbItems!: Array<{}>;
+  
+  today: Date = new Date();
   private timerId:any;
   submitted = false;
   currentTime!: string;
@@ -24,8 +29,13 @@ export class DetailsComponent implements OnInit  {
   uuid='';
   dataField!:Cancha;
   categoryList:any[]=[];
+  InvoiceForm!: UntypedFormGroup;
+  public FCollapsed = true;
+  public CCollapsed = true;
   constructor(private modalService: NgbModal,
+    private formBuilder: UntypedFormBuilder,
     private deportesService: DeportesService,
+    private horariosService: CanchaHorariosService,
     private route: ActivatedRoute ) { }
 
     @ViewChild('slickModal') slickModal!: SlickCarouselComponent;
@@ -54,6 +64,7 @@ export class DetailsComponent implements OnInit  {
       { label: 'Reservas', active: true }
     ];
     this.getDeportes();
+    this.getHorarios();
     
     // this.route.params.subscribe(params => {
     //   this.uuid = params['uuid'];
@@ -68,8 +79,31 @@ export class DetailsComponent implements OnInit  {
 
     this.updateTime();
     this.timerId = setInterval(() => this.updateTime(), 1000);
+    
+    /**
+     * Form Validation
+     */
+    this.InvoiceForm = this.formBuilder.group({
+      uuid: [''],
+      fechaReserva: ['', [Validators.required]],
+      horaEntrada: ['', [Validators.required]],
+      horaSalida: ['', [Validators.required]],
+      totalPago: [0, [Validators.required]],
+      // pagossDto: [null],
+      // status: ['', [Validators.required]]
+      // uuidCancha: [{ value: this.cancha, disabled: !!this.cancha }, [Validators.required]],
+      // canchasDto: new FormControl(),
+      // uuidContribuyente: [{ value: this.contribuyente, disabled: !!this.contribuyente }, [Validators.required]],
+      // contribuyenteDto: new FormControl(),
+      observacion: ['', [Validators.required]],
+      check: [false, [Validators.required]],
+      // totalPago: [0, [Validators.required]],
+    });
   }
 
+  get form() {
+    return this.InvoiceForm.controls;
+  }
   map:any; 
   private initMap(lat:any,long:any) {
     if (this.map) {
@@ -106,11 +140,21 @@ export class DetailsComponent implements OnInit  {
     this.currentTime = now.toLocaleTimeString();
   }
 
+  public openModal(content: any | undefined, accion: string) {
+    const modalRef = this.modalService.open(ModalComponent, {
+        backdrop: 'static',
+        size:''
+    });
+    modalRef.componentInstance.row = content;
+    modalRef.componentInstance.cancha = this.dataField.uuid;
+    modalRef.componentInstance.contribuyente = '';
+    modalRef.componentInstance.accion = accion;
+  }
   /**
    * Open modal
    * @param content modal content
    */
-   openModal(content: any) {
+   openEmployeeModal(content: any) {
     this.submitted = false;
     this.modalService.open(content, { size: 'md', centered: true });
   }
@@ -142,5 +186,18 @@ export class DetailsComponent implements OnInit  {
             Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
           }
         });
+    }
+
+    saveData(){
+
+    }
+
+    horariosList=[];
+    getHorarios(){
+      this.horariosService.getAll().subscribe({
+        next:(value:any) =>{
+            this.horariosList = value.payload
+        },
+      })
     }
 }

@@ -144,11 +144,7 @@ export class ReservasComponent implements OnInit {
   //   }
   // } 
 
-  // Open add Model
-  // openModel(content: any) {
-  //   this.modalService.open(content, { size: 'md', centered: true });
-  // }
-  public openModel(content: any | undefined, accion: string, size: string) {
+  public openModal(content: any | undefined, accion: string, size: string) {
     const modalRef = this.modalService.open(ModalComponent, {
         backdrop: 'static',
         size:size

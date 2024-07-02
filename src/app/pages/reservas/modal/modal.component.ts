@@ -17,6 +17,8 @@ export class ModalComponent {
 
   @Input() accion!: string;
   @Input() row!: Reserva;
+  @Input() cancha: any = '';
+  @Input() contribuyente: any = '';
   @Output() listaItems = new EventEmitter();
 
   contentForm!: UntypedFormGroup;
@@ -36,6 +38,10 @@ export class ModalComponent {
   ngOnInit(): void {
     this.getFields();
     this.getTaxpayers();
+    if(this.row){
+      this.cancha= this.row.canchasDto.uuid;
+      this.contribuyente = this.row.contribuyenteDto.uuid
+    }
     /**
      * Form Validation
      */
@@ -48,9 +54,9 @@ export class ModalComponent {
       totalPago: [0, [Validators.required]],
       pagossDto: [null],
       // status: ['', [Validators.required]]
-      uuidCancha: ['', [Validators.required]],
+      uuidCancha: [{ value: this.cancha, disabled: !!this.cancha }, [Validators.required]],
       canchasDto: new FormControl(),
-      uuidContribuyente: ['', [Validators.required]],
+      uuidContribuyente: [{ value: this.contribuyente, disabled: !!this.contribuyente }, [Validators.required]],
       contribuyenteDto: new FormControl(),
     });
     if(this.accion==='show'){
@@ -75,6 +81,10 @@ export class ModalComponent {
   }
   private formDataSet() {
     if (this.accion != '') {
+      setTimeout(() => {
+        var modaltitle = document.querySelector('.modal-title') as HTMLAreaElement;
+        modaltitle.innerHTML = "Reserva en: "+ this.row.canchasDto.nombre ||'';
+      }, 100);
         this.contentForm.patchValue({
             uuid:this.row.uuid,
             // codigo: this.row.codigo,
@@ -90,7 +100,6 @@ export class ModalComponent {
         });
     }
   }
-
 
   showeditEvent() {
     if (document.querySelector('#edit-event-btn')?.innerHTML == 'Cancelar') {
@@ -145,6 +154,7 @@ export class ModalComponent {
 addData(datos:Reserva){
   this.reservasService.save(datos).subscribe({
     next:(data:Reserva)=>{
+      this.position();
       this.submitted=false;
       this.notify('Datos Registrados exitosamente!','success'); 
       this.closeModal();
@@ -158,6 +168,7 @@ addData(datos:Reserva){
 updateData(datosUnit:Reserva) {
     this.reservasService.update(datosUnit).subscribe({
         next: (data: Reserva) => {
+          this.Editposition();
           this.submitted = false;
           this.closeModal();
           this.listaItems.emit();
@@ -219,6 +230,33 @@ updateData(datosUnit:Reserva) {
           Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
         }
       }
+    });
+  }
+
+  
+  /***
+  * Model Position Set
+  */
+  position() {
+    Swal.fire({
+      position: 'center',
+      icon: 'success',
+      title: 'Event has been saved',
+      showConfirmButton: false,
+      timer: 1000,
+    });
+  }
+
+  /***
+   * Model Edit Position Set
+   */
+  Editposition() {
+    Swal.fire({
+      position: 'center',
+      icon: 'success',
+      title: 'Event has been Updated',
+      showConfirmButton: false,
+      timer: 1000,
     });
   }
 }

@@ -46,7 +46,7 @@ import { ModalComponent } from './modal/modal.component';
     FlatpickrModule,
     NgSelectModule,
     NgbPaginationModule,
-    NgbNavModule
+    NgbNavModule,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

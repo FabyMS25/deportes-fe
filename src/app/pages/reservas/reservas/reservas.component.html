@@ -13,7 +13,7 @@
                     <h5 class="card-title mb-3 mb-md-0 flex-grow-1">Lista de Reservas</h5>
                     <div class="flex-shrink-0">
                         <div class="d-flex gap-1 flex-wrap">
-                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" id="create-btn" data-bs-target="#showModal" (click)="openModel(undefined,'','')"><i class="ri-add-line align-bottom me-1"></i>
+                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" id="create-btn" data-bs-target="#showModal" (click)="openModal(undefined,'','')"><i class="ri-add-line align-bottom me-1"></i>
                                 Agregar</button>
                             <button type="button" class="btn btn-secondary"><i class="ri-file-download-line align-bottom me-1"></i> Importar</button>
                             <button class="btn btn-soft-danger" id="remove-actions" (click)="confirm(deletemodal,'')"><i class="ri-delete-bin-2-line"></i></button>
@@ -151,8 +151,8 @@
                         [show]="canActivate.includes('VER')"
                         [edit]="canActivate.includes('ACTUALIZAR')"
                         [delete]="canActivate.includes('ELIMINAR')"
-                        (showItemEmitter)="openModel($event,'show','md')"
-                        (editItemEmitter)="openModel($event,'edit','md')"
+                        (showItemEmitter)="openModal($event,'show','md')"
+                        (editItemEmitter)="openModal($event,'edit','md')"
                         (deleteItemEmitter)="deleteData($event)"              
                     >
                     </app-data-table>        
