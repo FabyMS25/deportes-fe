@@ -1,4 +1,18 @@
 {
+  "Panel de Control": "لوحة التحكم",
+  "Dashboard de Admin": "لوحة التحكم",
+  "Dashboard de Empleado": "لوحة التحكم",
+  "Dashboard de Contribuyente": "لوحة التحكم",
+  "Administracion": "الإدارة",
+  "Reservas": "الحجوزات",
+  "Contribuyentes": "المساهمون",
+  "Reportes": "التقارير",
+  "Encargados": "المسؤولون",
+  "Complejos Deportivos": "المجمعات الرياضية",
+  "Categorias": "الفئات",
+  "Superficies": "الأسطح",
+
+
   "HEADER": {
     "MORE": {
       "TEXT": "أكثر"

@@ -5,13 +5,15 @@ import { FormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@an
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CanchaService } from 'src/app/core/services/api/canchas.service';
 import { Cancha } from 'src/app/core/models/cancha.model';
-import { Deporte } from 'src/app/core/models/deporte.model';
 import { LeafletComponent } from 'src/app/shared/map/leaflet.component';
 import { Horario } from 'src/app/core/models/horario.model';
-import { forEach } from 'lodash';
-import { CanchaDeportesService } from 'src/app/core/services/api/cancha-deportes.sservice';
+import { CanchaDeportesService } from 'src/app/core/services/api/cancha-deportes.service';
 import { CanchaHorariosService } from 'src/app/core/services/api/cancha-horarios.service';
 import { CanchaDeporte } from 'src/app/core/models/cancha-deporte.model';
+import { Districts } from 'src/app/core/constants/Distritos';
+import { Surfaces } from 'src/app/core/constants/Superficies';
+import { Ceiling } from 'src/app/core/constants/Techados';
+import { Categoria } from 'src/app/core/models/categoria.model';
 
 @Component({
   selector: 'app-modal',
@@ -22,32 +24,17 @@ export class ModalComponent {
   @Input() accion!: string;
   @Input() row!: Cancha;
   @Output() listaItems = new EventEmitter();
-  @Input() categoryList:Deporte[]=[];
+  @Input() categoryList:Categoria[]=[];
 
   placeholder='Seleccione una opción'
-  surfacesList = ['Césped artificial homologado', 'Césped sintético','Césped natural', 'Pavimento de superficie acrílica', 'Suelos de EPDM', 'Caucho','Polvo de ladrillo/Arcilla', 'Tierra batida','Arena'];
-  // surfacesList = [{name:'Césped artificial homologado'}, {name:'Césped sintético'},
-  //   {name:'Césped natural'}, {name:'Pavimento de superficie acrílica'}, {name:'Suelos de EPDM'}, 
-  //   {name:'Caucho'},{name:'Polvo de ladrillo/Arcilla'}, {name:'Tierra batida'},{name:'Arena'}];
-  distictList=[
-    {distrito:'Distrito 1'/* (Tacata) */, area:'Ámbito urbano', comprende: 'las zonas de Sapenco y Tacata.'},
-    {distrito:'Distrito 2',/* Piñami */ area:'Ámbito urbano', comprende: 'Iquircollo Central.'},
-    {distrito:'Distrito 3 (Santo Domingo)', area:'Ámbito urbano', comprende: 'los sectores Purgatorio, Cota, Santo Domingo y Sapenco.'},
-    {distrito:'Distrito 4 (La Chulla)', area:'Ámbito rural-urbano', conprende: 'las comunidades de Paucarpata, Illataco, La Chulla, Esmeralda e Ironcollo.'},
-    {distrito:'Distrito 5 (Pandoja - Piñami)', area:'Ámbito urbano-rural', comprende: 'las comunidades de Pandoja, Piñami, Pojpocollo, Barrio Minero y Esquilan.'},
-    {distrito:'Distrito 6 (Urkupiña)', area:'Ámbito rural-urbano', comprende: 'las comunidades de Caico Alto, Molle Molle, Cotapachi y Urkupiña.'},
-    {distrito:'Distrito 7 (Bella Vista)', area:'Ámbito rural', comprende: 'las comunidades de Potrero, Bella Vista, Falsuri y Marquina.'},
-    {distrito:'Distrito 8 (El Paso)', area:'Ámbito rural-urbano', comprende: 'Las comunidades de Chocaya, Molle Molle, Urinzaya, Aranzaya, Pihusi, Apote, Mosoj Rancho,Okhosuru, Pandoja, Chojñacollo, Khorapata, Callajchullpa, Llaukenquiri, Totorcahua, Águila Rancho y El Paso.'},
-    {distrito:'Distrito 9 (Misicuni)',area: 'Ámbito rural-cordillera', comprende: 'todas las comunidades situadas en la Cordillera, con escasa densidad poblacional y accesibilidad.'},
-    {distrito:'Distrito 10 (Ámbito urbano)'}
-  ]
-  dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+  ceilingList=Ceiling
+  surfacesList = Surfaces
+  distictList=Districts
+  dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'];
 
-submitted = false;
-masterSelected!: boolean;
-checkedList: any;
-
-// Api Data
+  submitted = false;
+  masterSelected!: boolean;
+  checkedList: any;
 
   fieldsForm!: UntypedFormGroup;
   multiDefaultOption='';

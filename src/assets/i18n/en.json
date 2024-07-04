@@ -6,32 +6,34 @@
   },
 
   "Panel de Control": "Dashboard",
+  "Dashboard de Admin": "Dashboard",
+  "Dashboard de Empleado": "Dashboard",
+  "Dashboard de Contribuyente": "Dashboard",
+  "Administracion": "Administration",
+  "Reservas": "Reservations",
+  "Contribuyentes": "Taxpayers",
+  "Reportes": "Reports",
+  "Encargados": "Employes",
+  "Complejos Deportivos": "Sport Fields",
+  "Categorias": "Categories",
+  "Superficies": "Surfaces",
+
+
+
   "DASHBOARDS": {
       "ADMIN": "Dashboard",
       "EMPLOYEE": "Dashboard",
       "TAXPAYER":"Dashboard"
   },
-  "RESERVATIONS": {
-      "TEXT": "Reservations",
-      "ORDERS": "Orders",
-      "CUSTOMERS": "Customers"
-  },
-
   "ADMINISTRATION": {
       "TEXT": "Administration",
       "FIELDS": "Fields",
       "EMPLOYEES": "Employees",
       "CATEGORIES": "Categories"
-  },
-
-
-  
+  },  
   "MENUITEMS": {
     "MENU": {
       "TEXT": "MENU"
-    },
-    "PAGES": {
-      "TEXT": "Pages"
     },
     "DASHBOARD": {
       "TEXT": "Dashboards",

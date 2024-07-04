@@ -11,14 +11,7 @@ import Swal from 'sweetalert2';
 import { DatePipe } from '@angular/common';
 
 // Rest Api Service
-import { restApiService } from "../../../core/services/rest-api.service";
-import { RootReducerState } from 'src/app/store';
 import { Store } from '@ngrx/store';
-import { deleteInvoice, fetchInvoiceListData } from 'src/app/store/Invoice/invoice_action';
-import { selectInvoiceData, selectInvoiceLoading } from 'src/app/store/Invoice/invoice_selector';
-import { cloneDeep } from 'lodash';
-import { PaginationService } from 'src/app/core/services/pagination.service';
-import { InvoiceListModel } from 'src/app/store/Invoice/invoice_model';
 
 @Component({
   selector: 'app-list',

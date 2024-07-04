@@ -24,13 +24,6 @@ import { rootReducer } from './store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { EffectsModule } from '@ngrx/effects';
 import { AuthenticationEffects } from './store/Authentication/authentication.effects';
-import { EcommerceEffects } from './store/Ecommerce/ecommerce_effect';
-import { ProjectEffects } from './store/Project/project_effect';
-import { InvoiceEffects } from './store/Invoice/invoice_effect';
-import { FileManagerEffects } from './store/File Manager/filemanager_effect';
-import { TodoEffects } from './store/Todo/todo_effect';
-import { ApplicationEffects } from './store/Jobs/jobs_effect';
-import { ApikeyEffects } from './store/APIKey/apikey_effect';
 import { AuthInterceptor } from './core/helpers/auth.interceptor';
 
 export function createTranslateLoader(http: HttpClient): any {
@@ -73,14 +66,7 @@ registerLocaleData(localeEs, 'es');
       logOnly: environment.production, // Restrict extension to log-only mode
     }),
     EffectsModule.forRoot([
-      AuthenticationEffects,
-      EcommerceEffects,
-      ProjectEffects,
-      InvoiceEffects,
-      FileManagerEffects,
-      TodoEffects,
-      ApplicationEffects,
-      ApikeyEffects]),
+      AuthenticationEffects]),
   ],
   providers: [
     { provide: LOCALE_ID, useValue: 'es' },

@@ -1,4 +1,18 @@
 {
+  "Panel de Control": "Панель управления",
+  "Dashboard de Admin": "Панель управления",
+  "Dashboard de Empleado": "Панель управления",
+  "Dashboard de Contribuyente": "Панель управления",
+  "Administracion": "Администрация",
+  "Reservas": "Бронирования",
+  "Contribuyentes": "Налогоплательщики",
+  "Reportes": "Отчеты",
+  "Encargados": "Ответственные",
+  "Complejos Deportivos": "Спортивные комплексы",
+  "Categorias": "Категории",
+  "Superficies": "Поверхности",
+
+
   "HEADER": {
     "MORE": {
       "TEXT": "Более"

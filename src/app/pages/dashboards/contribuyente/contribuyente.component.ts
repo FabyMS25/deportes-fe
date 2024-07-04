@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 
 import * as L from 'leaflet';
 import { CanchaService } from 'src/app/core/services/api/canchas.service';
-import { DeportesService } from 'src/app/core/services/api/deporte.sservice';
+import { DeportesService } from 'src/app/core/services/api/deporte.service';
 import Swal from 'sweetalert2';
 @Component({
     selector: 'app-contribuyente',

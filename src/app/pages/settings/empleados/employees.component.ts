@@ -10,7 +10,6 @@ import { DatePipe } from '@angular/common';
 import { ngxCsv } from 'ngx-csv/ngx-csv';
 
 // Rest Api Service
-import { restApiService } from "../../../core/services/rest-api.service";
 import { GlobalComponent } from '../../../global-component';
 
 // Sweet Alert
@@ -18,12 +17,8 @@ import Swal from 'sweetalert2';
 
 import { Store } from '@ngrx/store';
 import { RootReducerState } from 'src/app/store';
-// import { addContact, deleteContact, fetchCrmContactData, updateContact } from 'src/app/store/CRM/crm_action';
-// import { selectCRMLoading, selectContactData } from 'src/app/store/CRM/crm_selector';
-import { cloneDeep } from 'lodash';
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { Employees } from 'src/app/core/data/employees';
 import { EncargadoCanchaService } from 'src/app/core/services/api/encargado-cancha.service';
 import { ModalEmployeeComponent } from './modal/modalEmployee.component';
 import { UserService } from 'src/app/core/services/api-users/users.service';
@@ -39,7 +34,7 @@ import { UserRol } from 'src/app/core/constants/UserRol';
  * Contacts Component
  */
 export class EmployeesComponent implements OnInit {
-
+  title='Encargados'
   // bread crumb items
   breadCrumbItems!: Array<{}>;
   submitted = false;
@@ -70,12 +65,8 @@ export class EmployeesComponent implements OnInit {
     private authService: AuthenticationService,
     private usersService: UserService,
     private employeesService: EncargadoCanchaService,
-
-    public service: PaginationService,
-    private formBuilder: UntypedFormBuilder,
-    private store: Store<{ data: RootReducerState }>,
-    private datePipe: DatePipe) {
-      this.canActivate = this.authService.hasPermissionModulo('Empleados');
+  ) {
+      this.canActivate = this.authService.hasPermissionModulo(this.title);
   }
 
   ngOnInit(): void {

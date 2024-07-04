@@ -1,4 +1,18 @@
 {
+  "Panel de Control": "Steuerungstafel",
+  "Dashboard de Admin": "Steuerungstafel",
+  "Dashboard de Empleado": "Steuerungstafel",
+  "Dashboard de Contribuyente": "Steuerungstafel",
+  "Administracion": "Verwaltung",
+  "Reservas": "Reservierungen",
+  "Contribuyentes": "Steuerzahler",
+  "Reportes": "Berichte",
+  "Encargados": "Verantwortliche",
+  "Complejos Deportivos": "Sportanlagen",
+  "Categorias": "Kategorien",
+  "Superficies": "Oberflächen",
+
+
   "HEADER": {
     "MORE": {
       "TEXT": "Mehr"

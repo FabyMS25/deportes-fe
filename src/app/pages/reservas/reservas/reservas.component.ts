@@ -8,8 +8,6 @@ import { UntypedFormBuilder, Validators, UntypedFormGroup, UntypedFormArray, Abs
 import Swal from 'sweetalert2';
 import { RootReducerState } from 'src/app/store';
 import { Store } from '@ngrx/store';
-import { addApplication, deleteApplication, fetchApplicationData, updateApplication } from 'src/app/store/Jobs/jobs_action';
-import { selectJobsData, selectJobsLoading } from 'src/app/store/Jobs/jobs_selector';
 import { cloneDeep } from 'lodash';
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
@@ -168,7 +166,7 @@ export class ReservasComponent implements OnInit {
   // Delete Data
   deleteData(id: any) {
     if (id) {
-      this.store.dispatch(deleteApplication({ id: this.deleteId.toString() }));
+      // this.store.dispatch(deleteApplication({ id: this.deleteId.toString() }));
     } else {
       // this.store.dispatch(deleteApplication({ id: this.checkedValGet.toString() }));
     }

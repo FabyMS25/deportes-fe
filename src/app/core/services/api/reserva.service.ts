@@ -4,6 +4,9 @@ import { environment } from 'src/environments/environment';
 import { Reserva } from '../../models/reserva.models';
 import { Observable } from 'rxjs';
 
+
+import { GlobalComponent } from "../../../global-component";
+// GlobalComponent.API_URL + GlobalComponent.product,
 @Injectable({
   providedIn: 'root'
 })

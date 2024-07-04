@@ -13,9 +13,9 @@ import Swal from 'sweetalert2';
 import { RootReducerState } from 'src/app/store';
 import { Store } from '@ngrx/store';
 import { PaginationService } from 'src/app/core/services/pagination.service';
-import { Deporte } from 'src/app/core/models/deporte.model';
-import { DeportesService } from 'src/app/core/services/api/deporte.sservice';
+import { DeportesService } from 'src/app/core/services/api/deporte.service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
+import { Categoria } from 'src/app/core/models/categoria.model';
 
 
 @Component({
@@ -33,7 +33,7 @@ export class DeportesComponent {
   title="Categorias";
   submitted = false;
   contentForm!: UntypedFormGroup;
-  deporteData!: Deporte;
+  deporteData!: Categoria;
   masterSelected!: boolean;
   checkedList: any;
 
@@ -161,7 +161,7 @@ export class DeportesComponent {
       this.submitted = true;
       if (this.contentForm.valid) {
         this.contentForm.enable()
-        let datos: Deporte = {
+        let datos: Categoria = {
           nombre: this.contentForm.value.nombre,
         };
         if (this.contentForm.get('uuid')?.value) {
@@ -180,9 +180,9 @@ export class DeportesComponent {
       // this.submitted = true
     }
       
-  addData(datos:Deporte){
+  addData(datos:Categoria){
     this.deportesService.save(datos).subscribe({
-      next:(data:Deporte)=>{
+      next:(data:Categoria)=>{
         this.submitted=false;
         this.notify('Datos Registrados exitosamente!','success'); 
         this.closeModal();
@@ -194,9 +194,9 @@ export class DeportesComponent {
       }
     })
   }
-  updateData(datosUnit:Deporte) {
+  updateData(datosUnit:Categoria) {
       this.deportesService.update(datosUnit).subscribe({
-          next: (data: Deporte) => {
+          next: (data: Categoria) => {
             this.submitted = false;
             this.closeModal();
             this.getDeportes();

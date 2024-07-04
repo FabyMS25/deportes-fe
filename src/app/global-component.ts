@@ -1,22 +1,20 @@
 export const GlobalComponent = {
     // Api Calling
-    API_URL : 'https://api-node.themesbrand.website/',
-    // API_URL : 'http://127.0.0.1:3000/',
+    API_URL : 'http://127.0.0.1:3000/',
     headerToken : {'Authorization': `Bearer ${sessionStorage.getItem('token')}`},
 
     // Auth Api
-    AUTH_API:"https://api-node.themesbrand.website/auth/",
-    // AUTH_API:"http://127.0.0.1:3000/auth/",
+    AUTH_API:"http://127.0.0.1:3000/auth/",
 
-    
-    // Products Api
-    product:'apps/product',
-    productDelete:'apps/product/',
+    // Categories Api
+    cagtegorias:'/canchasDeporte',
+    // orderId:'apps/order/',
 
-    // Orders Api
-    order:'apps/order',
-    orderId:'apps/order/',
+    customer:'/horario',
 
-    // Customers Api
-    customer:'apps/customer',
+    canchas: '/canchas',
+    contribuyente: '/contribuyente',
+    encargado: '/encargado',
+    deporte: '/deportes',
+    reservas: '/reservas',
 }

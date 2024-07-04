@@ -43,8 +43,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxMaskDirective, NgxMaskPipe } from 'ngx-mask';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { ToastsContainer } from './dashboard/toasts-container.component';
-import { ListComponent } from '../invoices/cards-row/list.component';
-// import { ListComponent } from './cards-row/list.component';
+import { ListComponent } from './cards-row/list.component';
 
 @NgModule({
   declarations: [

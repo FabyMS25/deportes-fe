@@ -1,4 +1,17 @@
 {
+  "Panel de Control": "Pannello di Controllo",
+  "Dashboard de Admin": "Pannello di Controllo",
+  "Dashboard de Empleado": "Pannello di Controllo",
+  "Dashboard de Contribuyente": "Pannello di Controllo",
+  "Administracion": "Amministrazione",
+  "Reservas": "Prenotazioni",
+  "Contribuyentes": "Contribuenti",
+  "Reportes": "Report",
+  "Encargados": "Responsabili",
+  "Complejos Deportivos": "Complessi Sportivi",
+  "Categorias": "Categorie",
+  "Superficies": "Superfici",
+
   "HEADER": {
     "MORE": {
       "TEXT": "Di più"

@@ -17,7 +17,7 @@ export interface Cancha {
   canchaDeportesList?:any[];
   horarioList?:Horario[];
   
-  encargadoCanchaList?:EncargadoCancha[];
+  encargadoCanchaList?:EncargadoCancha;
   reservasList?:any[];
 
 }

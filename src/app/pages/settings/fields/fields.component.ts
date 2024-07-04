@@ -1,11 +1,7 @@
-import { Component, QueryList, TemplateRef, ViewChildren } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
-import { Observable } from 'rxjs';
+import { Component, TemplateRef } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { NgbModal, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
-import { UntypedFormBuilder, UntypedFormGroup, FormArray, Validators } from '@angular/forms';
-
-// Rest Api Service
-import { restApiService } from "../../../core/services/rest-api.service";
+import {  UntypedFormGroup } from '@angular/forms';
 
 // Csv File Export
 import { ngxCsv } from 'ngx-csv/ngx-csv';
@@ -13,18 +9,11 @@ import { ngxCsv } from 'ngx-csv/ngx-csv';
 // Sweet Alert
 import Swal from 'sweetalert2';
 
-// import { addCompany, deleteCompany, fetchCrmCompanyData, updateCompany } from 'src/app/store/CRM/crm_action';
-// import { selectCRMLoading, selectCompanyData } from 'src/app/store/CRM/crm_selector';
-import { cloneDeep } from 'lodash';
-import { RootReducerState } from 'src/app/store';
-import { Store } from '@ngrx/store';
-import { PaginationService } from 'src/app/core/services/pagination.service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { Employees } from 'src/app/core/data/employees';
 import { CanchaService } from 'src/app/core/services/api/canchas.service';
 import { Cancha } from 'src/app/core/models/cancha.model';
 import { ModalComponent } from './modal/modal.component';
-import { DeportesService } from 'src/app/core/services/api/deporte.sservice';
+import { DeportesService } from 'src/app/core/services/api/deporte.service';
 @Component({
   selector: 'app-fields',
   templateUrl: './fields.component.html',
@@ -35,7 +24,7 @@ import { DeportesService } from 'src/app/core/services/api/deporte.sservice';
  * Companies Component
  */
 export class FieldsComponent {
-  title="Canchas";
+  title="Complejos Deportivos";
   // bread crumb items
   breadCrumbItems!: Array<{}>;
   submitted = false;

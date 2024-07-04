@@ -5,9 +5,9 @@ import { HttpClient } from '@angular/common/http';
 
 /**Enviroments */
 import { environment } from 'src/environments/environment';
+import { Categoria } from '../../models/categoria.model';
 
 /**Models */
-import { Deporte } from '../../models/deporte.model';
 
 @Injectable({
   providedIn: 'root'
@@ -18,19 +18,19 @@ export class DeportesService {
 
   constructor(private http: HttpClient) { }
 
-  getAll(): Observable<Deporte[]> {
-    return this.http.get<Deporte[]>(`${this.apiUrl}`);
+  getAll(): Observable<Categoria[]> {
+    return this.http.get<Categoria[]>(`${this.apiUrl}`);
   }
 
-  getByUuid(uuid:string):Observable<Deporte>{
-    return this.http.get<Deporte>(`${this.apiUrl}/${uuid}`);
+  getByUuid(uuid:string):Observable<Categoria>{
+    return this.http.get<Categoria>(`${this.apiUrl}/${uuid}`);
   }
-  save(data: Deporte): Observable<Deporte> {    
-    return this.http.post<Deporte>(`${this.apiUrl}`, data);
+  save(data: Categoria): Observable<Categoria> {    
+    return this.http.post<Categoria>(`${this.apiUrl}`, data);
   }
 
-  update(data: Deporte): Observable<Deporte> {
-    return this.http.put<Deporte>(`${this.apiUrl}`, data);
+  update(data: Categoria): Observable<Categoria> {
+    return this.http.put<Categoria>(`${this.apiUrl}`, data);
   }
   delete(uuid: string) {
     return this.http.delete(`${this.apiUrl}/${uuid}`);

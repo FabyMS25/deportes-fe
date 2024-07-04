@@ -1,4 +1,17 @@
 {
+  "Panel de Control": "Panneau de Contrôle",
+  "Dashboard de Admin": "Panneau de Contrôle",
+  "Dashboard de Empleado": "Panneau de Contrôle",
+  "Dashboard de Contribuyente": "Panneau de Contrôle",
+  "Administracion": "Administration",
+  "Reservas": "Réservations",
+  "Contribuyentes": "Contribuables",
+  "Reportes": "Rapports",
+  "Encargados": "Responsables",
+  "Complejos Deportivos": "Complexes Sportifs",
+  "Categorias": "Catégories",
+
+
   "HEADER": {
     "MORE": {
       "TEXT": "Suite"

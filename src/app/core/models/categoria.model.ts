@@ -1,4 +1,4 @@
-export interface Deporte {
+export interface Categoria {
   uuid?: string;
   estado?:string;
 

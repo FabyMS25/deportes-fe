@@ -5,7 +5,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as L from 'leaflet';
 import { SlickCarouselComponent } from 'ngx-slick-carousel';
 import { Cancha } from 'src/app/core/models/cancha.model';
-import { DeportesService } from 'src/app/core/services/api/deporte.sservice';
+import { DeportesService } from 'src/app/core/services/api/deporte.service';
 import Swal from 'sweetalert2';
 import { ModalComponent } from '../reservas/modal/modal.component';
 import { CanchaHorariosService } from 'src/app/core/services/api/cancha-horarios.service';

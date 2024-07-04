@@ -12,7 +12,6 @@ import Swal from 'sweetalert2';
 
 import esLocale from '@fullcalendar/core/locales/es';
 
-import { calendarEvents, category, createEventId } from 'src/app/core/data/calendar';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { ModalComponent } from '../../reservas/modal/modal.component';
 @Component({

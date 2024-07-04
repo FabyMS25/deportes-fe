@@ -1,4 +1,18 @@
 {
+  "Panel de Control": "控制面板",
+  "Dashboard de Admin": "控制面板",
+  "Dashboard de Empleado": "控制面板",
+  "Dashboard de Contribuyente": "控制面板",
+  "Administracion": "管理",
+  "Reservas": "预订",
+  "Contribuyentes": "纳税人",
+  "Reportes": "报告",
+  "Encargados": "负责人",
+  "Complejos Deportivos": "运动场",
+  "Categorias": "类别",
+  "Superficies": "表面",
+
+
   "HEADER": {
     "MORE": {
       "TEXT": "更多的"
