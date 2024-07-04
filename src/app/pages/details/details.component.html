@@ -8,7 +8,8 @@
         <div class="card-header align-items-center d-flex">
             <h4 class="mb-0 flex-grow-1 text-uppercase">{{dataField.nombre}} </h4>
             <div class="flex-shrink-0">
-                <button type="button" class="btn btn-soft-primary btn-sm" (click)="openModal(undefined,'')">
+                <button type="button" class="btn btn-soft-primary btn-sm" [ngxScrollTo]="'invoice_form'">
+                <!-- (click)="openModal(undefined,'')"> -->
                     Realizar Reserva
                 </button>
             </div>
@@ -16,7 +17,7 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-xl-7">
-                    <div class="row">
+                    <div class="row pt-1 mt-1 mb-2">
                         <div class="col-lg-7 col-sm-6">
                             <h6 class="mb-3 fw-semibold text-uppercase">Detalles de Cancha</h6>
                             <div class="">
@@ -56,7 +57,7 @@
                             </div>    
                         </div>
                         <div class="col-lg-5 col-sm-6">
-                            <h6 class="mb-3 fw-semibold text-uppercase">Categorias de Deportes</h6>
+                            <h6 class="mb-3 fw-semibold text-uppercase">Categorías</h6>
                             <div class="hstack flex-wrap gap-2 fs-15">
                                 @for (item of categoryList; track $index) {
                                     <div class="badge bg-info-subtle text-info">{{item.nombre}}</div>
@@ -65,7 +66,7 @@
                         </div>
                     </div>
                     <div class="row pt-1 mt-1 mb-2">
-                        <div class="col-lg-4 col-sm-6">
+                        <div class="col-lg-5 col-sm-6">
                             <div class="p-2 border border-dashed rounded">
                                 <div class="d-flex align-items-center">
                                     <div class="avatar-sm me-2">
@@ -80,7 +81,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-8 col-sm-6">
+                        <div class="col-lg-7 col-sm-6">                              
                             <div class="p-2 border border-dashed rounded">
                                 <div class="d-flex align-items-center">
                                     <div class="avatar-sm me-2">
@@ -96,7 +97,7 @@
                             </div>
                         </div>
                     </div>          
-                    <div class="row pt-1 mt-1">
+                    <div class="row pt-1 mt-1 mb-2">
                         <!-- <div class="col-xxl-6">
                             <div class="card-header border-0">
                                 <h6 class="text-uppercase fw-semibold text-muted">Fecha</h6>
@@ -107,28 +108,29 @@
                             </div>
                         </div> -->
                         <h6 class="mb-3 fw-semibold text-uppercase">Horarios Disponibles (Hoy)</h6>
-                        <div class="mini-stats-wid d-flex align-items-center">
-                            <div class="flex-shrink-0 avatar-sm">
-                                <span class="mini-stat-icon avatar-title rounded-circle text-success bg-success-subtle fs-4">
-                                    
-                                </span>
+                        <div class="col-lg-6 col-sm-6">
+                            <h6>Mañana <span class="text-uppercase">(am)</span></h6>
+                            <div *ngFor="let horario of morningHorarios" class="align-items-center d-flex">
+                              <span class=" flex-grow-1">{{ horario }}</span>
+                              <div class="flex-shrink-0 p-1">
+                                <button type="button" class="btn btn-soft-primary btn-sm" [ngxScrollTo]="'invoice_form'"
+                                    (click)="reserve(horario.split(' - ')[0], horario.split(' - ')[1])">
+                                    Reservar
+                                </button>
+                              </div>
                             </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h6 class="mb-1">
-                                    9:00 <span class="text-uppercase">am</span>
-                                    - 10:00 <span class="text-uppercase">am</span>
-                                </h6>
-                                <p class="text-muted mb-0"></p>
-                            </div>
-                            <div class="flex-shrink-0">
-                                <button type="button" class="btn btn-soft-primary btn-sm">
+                        </div>
+                        <div class="col-lg-6 col-sm-6">
+                          <h6>Tarde <span class="text-uppercase">(pm)</span></h6>
+                          <div *ngFor="let horario of afternoonHorarios" class="align-items-center d-flex">
+                            <span class=" flex-grow-1">{{ horario }}</span>
+                            <div class="flex-shrink-0 p-1">
+                                <button type="button" class="btn btn-soft-primary btn-sm" [ngxScrollTo]="'invoice_form'"
+                                    (click)="reserve(horario.split(' - ')[0], horario.split(' - ')[1])">
                                     Reservar
                                 </button>
                             </div>
-                        </div>
-        
-                        <div class="mt-3 text-center">
-                            <a href="javascript:void(0);" class="text-muted text-decoration-underline">Ver todo</a>
+                          </div>
                         </div>
                     </div>
           
@@ -152,9 +154,355 @@
 
 
 <div class="row">
-    <!-- <div class="card">
-        <div class="card-body"> -->
-    <div class="col-xl-3 col-md-8 mx-auto">
+    <div class="col-xl-9">
+        <div class="card card-height-100">
+            <div class="card-header ">
+                <div class="mini-stats-wid d-flex align-items-center">
+                    <div class="flex-shrink-0 avatar-sm">
+                        <span class="mini-stat-icon avatar-title rounded-circle text-success bg-success-subtle fs-4">
+                            <img src="assets/images/logos/logo-sm.png"
+                                class="card-logo card-logo-dark user-profile-image img-fluid">                            
+                        </span>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h4 class="">Realizar Reserva</h4> 
+                    </div>
+                    <div class="flex-shrink-0">
+                        <!-- <label for="invoicenoInput">Tasa No</label>
+                        <input type="text" class="form-control bg-light border-0" id="invoicenoInput"
+                            placeholder="Invoice No" value="#VL25000355" readonly /> -->
+                    </div>
+                </div>       
+            </div>
+            <div class="card-body">
+                <div class="live-preview px-4">
+                    <div class="row">
+                        <div class="d-flex align-items-center">
+                            <div class=" flex-grow-1 d-flex gap-3">
+                                <label class="text-muted text-uppercase fw-semibold">
+                                    Cancha:
+                                </label>
+                                <p>{{dataField.nombre}}</p>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <button class="btn btn-light p-1 m-0" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="javascript:void(0);" aria-expanded="false" aria-controls="collapseWithicon2"
+                                    (click)="FieldCollapse.toggle()" [attr.aria-expanded]="!FCollapsed">
+                                    <i class="ri-arrow-down-s-fill"></i>
+                                </button>                                
+                            </div>
+                        </div>
+                        <div class="collapse show" id="collapseWithicon" #FieldCollapse="ngbCollapse"
+                            [(ngbCollapse)]="FCollapsed">
+                            <div class="card">
+                                <div class="card-body">
+                                    <ul class="list-unstyled vstack gap-3 mb-0">
+                                        <li>
+                                            <div class="d-flex ">
+                                                <div class="flex-shrink-0">
+                                                    <label class="form-label text-uppercase">Distrito: </label>
+                                                </div>
+                                                <div class="flex-grow-1 ms-2">
+                                                    <p class="text-muted mb-0">{{dataField.distrito}}</p>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex ">
+                                                <div class="flex-shrink-0">
+                                                    <label class="form-label text-uppercase">Techado: </label>
+                                                </div>
+                                                <div class="flex-grow-1 ms-2">
+                                                    <p class="text-muted mb-0">{{dataField.techado}}</p>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex ">
+                                                <div class="flex-shrink-0">
+                                                    <label class="form-label text-uppercase">Superficie: </label>
+                                                </div>
+                                                <div class="flex-grow-1 ms-2">
+                                                    <p class="text-muted mb-0">{{dataField.superficie}}</p>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex ">
+                                                <div class="flex-shrink-0">
+                                                    <label class="form-label text-uppercase">Ubicación: </label>
+                                                </div>
+                                                <div class="flex-grow-1 ms-2">
+                                                    <p class="text-muted mb-0">{{dataField.ubicacion}}</p>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class=" flex-grow-1 d-flex gap-3">
+                                <label class="text-muted text-uppercase fw-semibold">
+                                    Contribuyente:
+                                </label>
+                                <p>{{dataField.nombre}}</p>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <button class="btn btn-light p-1 m-0" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="javascript:void(0);" aria-expanded="false" aria-controls="collapseWithicon2"
+                                    (click)="CtbCollapse.toggle()" [attr.aria-expanded]="!CCollapsed">
+                                    <i class=" ri-arrow-down-s-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="collapse" id="collapseWithicon2" #CtbCollapse="ngbCollapse"
+                            [(ngbCollapse)]="CCollapsed">
+                            <div class="card">
+                                <div class="card-body">
+                                    <ul class="list-unstyled vstack gap-3 mb-0">
+                                        <li>
+                                            <div class="d-flex ">
+                                                <div class="flex-shrink-0">
+                                                    <label class="form-label text-uppercase">Distrito: </label>
+                                                </div>
+                                                <div class="flex-grow-1 ms-2">
+                                                    <p class="text-muted mb-0">{{dataField.distrito}}</p>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex ">
+                                                <div class="flex-shrink-0">
+                                                    <label class="form-label text-uppercase">Techado: </label>
+                                                </div>
+                                                <div class="flex-grow-1 ms-2">
+                                                    <p class="text-muted mb-0">{{dataField.techado}}</p>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex ">
+                                                <div class="flex-shrink-0">
+                                                    <label class="form-label text-uppercase">Superficie: </label>
+                                                </div>
+                                                <div class="flex-grow-1 ms-2">
+                                                    <p class="text-muted mb-0">{{dataField.superficie}}</p>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex ">
+                                                <div class="flex-shrink-0">
+                                                    <label class="form-label text-uppercase">Ubicación: </label>
+                                                </div>
+                                                <div class="flex-grow-1 ms-2">
+                                                    <p class="text-muted mb-0">{{dataField.ubicacion}}</p>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <form (ngSubmit)="saveData()" [formGroup]="InvoiceForm" id="invoice_form">
+                    <div class="card-body px-4">
+                        <div class="row g-3">
+                            <!-- <div class="col-lg-4 col-sm-6">
+                                <label for="tarifa">Tarifa</label>
+                                <input type="text" class="form-control bg-light border-0" id="tarifa"
+                                    value={{dataField.totalxhora}} readonly />
+                            </div>
+                            <div class="col-lg-8 col-sm-6"> -->
+                            <div class="d-flex gap-3">
+                                <label class="text-muted text-uppercase fw-semibold mt-2">
+                                    Fecha:
+                                </label>
+                                <div class="input-group">
+                                    <input type="text" id="fechaReserva-field" class="form-control  flatpickr flatpickr-input rounded-3" mwlFlatpickr
+                                           [altInput]="true" altFormat="d/m/Y" [convertModelValue]="true"
+                                           placeholder="Seleccionar Fecha" readonly required formControlName="fechaReserva">
+                                    <span class="input-group-text"><i class="ri-calendar-event-line"></i></span>
+                                </div>
+                            </div>                            
+                            <!-- <div class="col-lg-4 col-sm-6">
+                                <div>
+                                    <label class="form-label">Hora Entrada</label>
+                                    <div class="input-group">
+                                        <input id="horaEntrada" type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'" 
+                                        formControlName="horaEntrada" class="form-control bg-light border-0 flatpickr flatpickr-input" placeholder="Hora Entrada" readonly>
+                                        <span class="input-group-text bg-light border-0 "><i class="ri-time-line"></i></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-sm-6">
+                                <div>
+                                    <label class="form-label">Hora Salida</label>
+                                    <div class="input-group">
+                                        <input id="horaSalida" type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'" 
+                                        formControlName="horaSalida" class="form-control bg-light border-0  flatpickr flatpickr-input" placeholder="Hora Salida" readonly>
+                                        <span class="input-group-text bg-light border-0 "><i class="ri-time-line"></i></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-sm-6">
+                                <div>
+                                    <label for="totalPago">Total</label>
+                                    <input type="text" class="form-control bg-light border-0" id="totalPago"
+                                        placeholder="Bs. 0.00" readonly />
+                                </div>
+                            </div> -->
+                        </div>
+                    </div>
+                    <div class="card-body px-4">
+                        <div class="table-responsive">
+                            <table class="invoice-table table table-borderless table-nowrap mb-0">
+                                <thead class="align-middle">
+                                    <tr class="table-active">
+                                        <th scope="col">
+                                            <div class="d-flex currency-select input-light align-items-center">
+                                                Tarifa
+                                                <select class="form-select border-0 bg-light" data-choices
+                                                    data-choices-search-false id="choices-payment-currency"
+                                                    onchange="otherPayment()">
+                                                    <option value="Bs">(Bs.)</option>
+                                                    <option value="$" disabled>($)</option>
+                                                </select>
+                                            </div>
+                                        </th>
+                                        <th scope="col"><i class="ri-time-line"></i> Hora Entrada</th>
+                                        <th scope="col"><i class="ri-time-line"></i> Hora Salida</th>
+                                        <th scope="col"><i class="ri-timer-line"></i> Duracion</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="newlink">
+                                    <tr>
+                                        <td class="text-start">
+                                            <div class="mb-2">
+                                                <input type="text" class="form-control bg-light border-0" id="tarifa"
+                                                    value={{dataField.totalxhora}} readonly />
+                                            </div>
+                                        </td>
+                                        <td class="text-end">
+                                          <div class="input-group">
+                                            <input class="form-control flatpickr-input" type="text" mwlFlatpickr [inline]="true"
+                                                   [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
+                                                   id="horaEntrada" formControlName="horaEntrada">
+                                            <div *ngIf="InvoiceForm.get('horaEntrada')?.errors" class="text-danger">
+                                              Horario Invalido.
+                                            </div>
+                                          </div>
+                                        </td>
+                                        <td class="text-end">
+                                          <div class="input-group">
+                                            <input class="form-control flatpickr-input" type="text" mwlFlatpickr [inline]="true"
+                                                   [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
+                                                   id="horaSalida" formControlName="horaSalida">
+                                            <div *ngIf="InvoiceForm.get('horaSalida')?.errors" class="text-danger">
+                                              Horario Invalido.
+                                            </div>
+                                          </div>
+                                        </td>
+                                        <td class="text-center ">
+                                            <div class="mb-2">
+                                                <input class="form-control bg-light border-0" type="text"
+                                                       id="totalTime" formControlName="totalTime" readonly>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tbody>
+                                    <tr id="newForm" style="display: none;">
+                                        <td class="d-none" colspan="5">
+                                            <textarea class="form-control bg-light border-0" id="observacion" rows="3"
+                                                placeholder="Observacion" required formControlName="observacion"
+                                                [ngClass]="{ 'is-invalid': submitted && form['observacion'].errors }"></textarea></td>
+                                    </tr>
+                                    <tr class="border-top border-top-dashed mt-2">
+                                        <td colspan="2"></td>
+                                        <td colspan="2" class="p-0 mt-2">
+                                            <table class="table table-borderless table-sm table-nowrap align-middle mb-0">
+                                                <tbody>
+                                                    <!-- <tr>
+                                                        <th scope="row">Sub Total</th>
+                                                        <td style="width:150px;">
+                                                            <input type="text" class="form-control bg-light border-0"
+                                                                id="cart-subtotal" placeholder="Bs. 0.00" readonly />
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th scope="row">Tax (12.5%)</th>
+                                                        <td>
+                                                            <input type="text" class="form-control bg-light border-0"
+                                                                id="cart-tax" placeholder="Bs. 0.00" readonly />
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th scope="row">Descuento <small
+                                                                class="text-muted">()</small></th>
+                                                        <td>
+                                                            <input type="text" class="form-control bg-light border-0"
+                                                                id="cart-discount" placeholder="Bs. 0.00" readonly />
+                                                        </td>
+                                                    </tr> -->
+                                                    <tr class="border-top border-top-dashed">
+                                                        <th scope="row">Total Pago (Bs.): </th>
+                                                        <td>
+                                                            <input type="text" class="form-control bg-light border-0"
+                                                                   id="totalPago" formControlName="totalPago" readonly />
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table><!--end table-->
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table><!--end table-->
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-lg-6">
+                                <div class="">
+                                    <label for="observacion">Observaciones: </label>
+                                    <textarea class="form-control bg-light border-0" id="observacion" rows="2"
+                                        placeholder="Escribe alguna Observacion" formControlName="observacion"
+                                    ></textarea>
+                                </div>
+                            </div><!--end col-->
+                        </div><!--end row-->
+                        <div class="mt-4">
+                            <label for="exampleFormControlTextarea1"
+                                class="form-label text-muted text-uppercase fw-semibold">Terminos</label>
+                            <textarea class="form-control alert alert-info" id="exampleFormControlTextarea1"
+                                placeholder="Notes" rows="2"
+                                required> En calidad de contribuyente, y en cumplimiento a normariva vigente, declaro que los datos fueron revisados antes de su registro y asumiendo por mi parte, la responsabilidad por la exactitud de la presente declaracion 
+                            </textarea>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="check" name="check"
+                                 formControlName="check"
+                                [ngClass]="{ 'is-invalid': submitted && form['check'].errors }" />
+                            <label class="form-check-label" for="check">
+                                Acepto Todos los teminos
+                            </label>
+                            <a href="javascript:void(0);" class="text-muted text-decoration-underline">Ver Terminos</a>
+                        </div>
+                        <div class="hstack gap-2 justify-content-end d-print-none mt-4 flex-wrap">
+                            <button type="submit" class="btn btn-success">
+                                <!-- <i class="ri-printer-line align-bottom mx-1"></i> -->
+                                Generar Reserva</button>
+                            <!-- <a href="javascript:void(0);" class="btn btn-primary"><i
+                                    class="ri-download-2-line align-bottom mx-1"></i> Download Invoice</a>
+                            <a href="javascript:void(0);" class="btn btn-secondary"><i
+                                    class="ri-send-plane-fill align-bottom mx-1"></i> Send Invoice</a> -->
+                        </div>
+                    </div>
+                </form>
+            </div><!-- end cardbody -->
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mx-auto">
         <div class="sticky-side-div">
             <div class="card">
                 <div class="card-body text-center">
@@ -236,345 +584,6 @@
                 </div>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="col-xl-9">
-        <div class="card card-height-100">
-            <div class="card-header ">
-                <div class="mini-stats-wid d-flex align-items-center">
-                    <div class="flex-shrink-0 avatar-sm">
-                        <span class="mini-stat-icon avatar-title rounded-circle text-success bg-success-subtle fs-4">
-                            <img src="assets/images/logos/logo-sm.png"
-                                class="card-logo card-logo-dark user-profile-image img-fluid">                            
-                        </span>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h4 class="">Realizar Reserva</h4> 
-                    </div>
-                    <div class="flex-shrink-0">
-                        <!-- <label for="invoicenoInput">Tasa No</label>
-                        <input type="text" class="form-control bg-light border-0" id="invoicenoInput"
-                            placeholder="Invoice No" value="#VL25000355" readonly /> -->
-                    </div>
-                </div>       
-            </div>
-            <div class="card-body">
-                <div class="live-preview px-4">
-                    <div class="row">
-                        <div class="col-lg-6 d-flex align-items-center">
-                            <div class="flex-grow-1">
-                                <label class="text-muted text-uppercase fw-semibold">
-                                    Cancha:
-                                </label>
-                                <p>{{dataField.nombre}}</p>
-                            </div>
-                            <button class="btn btn-light" type="button" data-bs-toggle="collapse"
-                                data-bs-target="javascript:void(0);" aria-expanded="false" aria-controls="collapseWithicon2"
-                                (click)="FieldCollapse.toggle()" [attr.aria-expanded]="!FCollapsed">
-                                <i class="ri-arrow-down-s-fill"></i>
-                            </button>
-                        </div>
-                        <div class="col-lg-6 d-flex align-items-center">
-                            <div class="flex-grow-1 ms-3">
-                                <label class="text-muted text-uppercase fw-semibold">
-                                    Contribuyente:
-                                </label>
-                                <p>{{dataField.nombre}}</p>
-                            </div>
-                            <div class="flex-shrink-0">
-                                <button class="btn btn-light" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="javascript:void(0);" aria-expanded="false" aria-controls="collapseWithicon2"
-                                    (click)="CtbCollapse.toggle()" [attr.aria-expanded]="!CCollapsed">
-                                    <i class=" ri-arrow-down-s-fill"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="collapse show" id="collapseWithicon" #FieldCollapse="ngbCollapse"
-                            [(ngbCollapse)]="FCollapsed">
-                            <div class="card mb-0">
-                                <div class="card-body">
-                                    <ul class="list-unstyled vstack gap-3 mb-0">
-                                        <li>
-                                            <div class="d-flex ">
-                                                <div class="flex-shrink-0">
-                                                    <label class="form-label text-uppercase">Distrito: </label>
-                                                </div>
-                                                <div class="flex-grow-1 ms-2">
-                                                    <p class="text-muted mb-0">{{dataField.distrito}}</p>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="d-flex ">
-                                                <div class="flex-shrink-0">
-                                                    <label class="form-label text-uppercase">Techado: </label>
-                                                </div>
-                                                <div class="flex-grow-1 ms-2">
-                                                    <p class="text-muted mb-0">{{dataField.techado}}</p>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="d-flex ">
-                                                <div class="flex-shrink-0">
-                                                    <label class="form-label text-uppercase">Superficie: </label>
-                                                </div>
-                                                <div class="flex-grow-1 ms-2">
-                                                    <p class="text-muted mb-0">{{dataField.superficie}}</p>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="d-flex ">
-                                                <div class="flex-shrink-0">
-                                                    <label class="form-label text-uppercase">Ubicación: </label>
-                                                </div>
-                                                <div class="flex-grow-1 ms-2">
-                                                    <p class="text-muted mb-0">{{dataField.ubicacion}}</p>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="collapse" id="collapseWithicon2" #CtbCollapse="ngbCollapse"
-                            [(ngbCollapse)]="CCollapsed">
-                            <div class="card mb-0 mt-3">
-                                <div class="card-body">
-                                    <ul class="list-unstyled vstack gap-3 mb-0">
-                                        <li>
-                                            <div class="d-flex ">
-                                                <div class="flex-shrink-0">
-                                                    <label class="form-label text-uppercase">Distrito: </label>
-                                                </div>
-                                                <div class="flex-grow-1 ms-2">
-                                                    <p class="text-muted mb-0">{{dataField.distrito}}</p>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="d-flex ">
-                                                <div class="flex-shrink-0">
-                                                    <label class="form-label text-uppercase">Techado: </label>
-                                                </div>
-                                                <div class="flex-grow-1 ms-2">
-                                                    <p class="text-muted mb-0">{{dataField.techado}}</p>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="d-flex ">
-                                                <div class="flex-shrink-0">
-                                                    <label class="form-label text-uppercase">Superficie: </label>
-                                                </div>
-                                                <div class="flex-grow-1 ms-2">
-                                                    <p class="text-muted mb-0">{{dataField.superficie}}</p>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="d-flex ">
-                                                <div class="flex-shrink-0">
-                                                    <label class="form-label text-uppercase">Ubicación: </label>
-                                                </div>
-                                                <div class="flex-grow-1 ms-2">
-                                                    <p class="text-muted mb-0">{{dataField.ubicacion}}</p>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <form (ngSubmit)="saveData()" [formGroup]="InvoiceForm" id="invoice_form">
-                    <div class="card-body px-4">
-                        <div class="row g-3">
-                            <!-- <div class="col-lg-4 col-sm-6">
-                                <label for="tarifa">Tarifa</label>
-                                <input type="text" class="form-control bg-light border-0" id="tarifa"
-                                    value={{dataField.totalxhora}} readonly />
-                            </div>
-                            <div class="col-lg-8 col-sm-6"> -->
-                                <div>
-                                    <label for="date-field">Fecha</label>
-                                    <div class="input-group">
-                                        <input type="text" id="fechaReserva-field" class="form-control  flatpickr flatpickr-input rounded-3" mwlFlatpickr
-                                               [altInput]="true" altFormat="d/m/Y" [convertModelValue]="true"
-                                               placeholder="Seleccionar Fecha" readonly required formControlName="fechaReserva"
-                                               [ngModel]="today | date:'dd/MM/yyyy'">
-                                        <span class="input-group-text"><i class="ri-calendar-event-line"></i></span>
-                                    </div>
-                                    <!-- <input type="text" class="form-control bg-light border-0" id="date-field"
-                                        data-provider="flatpickr" data-time="true" placeholder="Select Date-time"> -->
-                                </div>
-                            
-                            <!-- <div class="col-lg-4 col-sm-6">
-                                <div>
-                                    <label class="form-label">Hora Entrada</label>
-                                    <div class="input-group">
-                                        <input id="horaEntrada" type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'" 
-                                        formControlName="horaEntrada" class="form-control bg-light border-0 flatpickr flatpickr-input" placeholder="Hora Entrada" readonly>
-                                        <span class="input-group-text bg-light border-0 "><i class="ri-time-line"></i></span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-4 col-sm-6">
-                                <div>
-                                    <label class="form-label">Hora Salida</label>
-                                    <div class="input-group">
-                                        <input id="horaSalida" type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'" 
-                                        formControlName="horaSalida" class="form-control bg-light border-0  flatpickr flatpickr-input" placeholder="Hora Salida" readonly>
-                                        <span class="input-group-text bg-light border-0 "><i class="ri-time-line"></i></span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-4 col-sm-6">
-                                <div>
-                                    <label for="totalPago">Total</label>
-                                    <input type="text" class="form-control bg-light border-0" id="totalPago"
-                                        placeholder="Bs. 0.00" readonly />
-                                </div>
-                            </div> -->
-                        </div>
-                    </div>
-                    <div class="card-body px-4">
-                        <div class="table-responsive">
-                            <table class="invoice-table table table-borderless table-nowrap mb-0">
-                                <thead class="align-middle">
-                                    <tr class="table-active">
-                                        <th scope="col">
-                                            <div class="d-flex currency-select input-light align-items-center">
-                                                Tarifa
-                                                <select class="form-select border-0 bg-light" data-choices
-                                                    data-choices-search-false id="choices-payment-currency"
-                                                    onchange="otherPayment()">
-                                                    <option value="Bs">(Bs.)</option>
-                                                    <option value="$">($)</option>
-                                                </select>
-                                            </div>
-                                        </th>
-                                        <th scope="col" style="width: 20px;"></th>
-                                        <th scope="col" style="width: 250px;"><i class="ri-time-line"></i> Hora Entrada</th>
-                                        <th scope="col" style="width: 250px;"><i class="ri-time-line"></i> Hora Salida</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="newlink">
-                                    <tr id="1" class="product">
-                                        <td class="text-start">
-                                            <div class="mb-2">
-                                                <input type="text" class="form-control bg-light border-0" id="tarifa"
-                                                    value={{dataField.totalxhora}} readonly />
-                                            </div>
-                                        </td>
-                                        <td class="">
-                                        </td>
-                                        <td class="text-end">
-                                            <div class="input-group">
-                                                <input class="form-control flatpickr-input" type="text" mwlFlatpickr [inline]="true" 
-                                                [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                                                id="horaEntrada" formControlName="horaEntrada" >
-                                                <!-- <span class="input-group-text"><i class="ri-time-line"></i></span> -->
-                                            </div>
-                                        </td>
-                                        <td class="text-end">
-                                            <div class="input-group">                                                
-                                                <input class="form-control flatpickr-input" type="text" mwlFlatpickr [inline]="true" 
-                                                [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                                                id="horaSalida" formControlName="horaSalida" readonly>
-                                                <!-- <span class="input-group-text bg-light border-0 "><i class="ri-time-line"></i></span> -->
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                                <tbody>
-                                    <tr id="newForm" style="display: none;">
-                                        <td class="d-none" colspan="5">
-                                            <textarea class="form-control bg-light border-0" id="observacion" rows="3"
-                                                placeholder="Observacion" required formControlName="observacion"
-                                                [ngClass]="{ 'is-invalid': submitted && form['observacion'].errors }"></textarea></td>
-                                    </tr>
-                                    <tr class="border-top border-top-dashed mt-2">
-                                        <td colspan="3"></td>
-                                        <td colspan="2" class="p-0 mt-2">
-                                            <table class="table table-borderless table-sm table-nowrap align-middle mb-0">
-                                                <tbody>
-                                                    <!-- <tr>
-                                                        <th scope="row">Sub Total</th>
-                                                        <td style="width:150px;">
-                                                            <input type="text" class="form-control bg-light border-0"
-                                                                id="cart-subtotal" placeholder="Bs. 0.00" readonly />
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th scope="row">Tax (12.5%)</th>
-                                                        <td>
-                                                            <input type="text" class="form-control bg-light border-0"
-                                                                id="cart-tax" placeholder="Bs. 0.00" readonly />
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th scope="row">Descuento <small
-                                                                class="text-muted">()</small></th>
-                                                        <td>
-                                                            <input type="text" class="form-control bg-light border-0"
-                                                                id="cart-discount" placeholder="Bs. 0.00" readonly />
-                                                        </td>
-                                                    </tr> -->
-                                                    <tr class="border-top border-top-dashed">
-                                                        <th scope="row">Total Pago</th>
-                                                        <td>
-                                                            <input type="text" class="form-control bg-light border-0"
-                                                                id="cart-total" placeholder="Bs. 0.00" readonly />
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table><!--end table-->
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table><!--end table-->
-                        </div>
-                        <div class="row mt-3">
-                            <div class="col-lg-6">
-                                <div class="mb-2">
-                                    <textarea class="form-control bg-light border-0" id="observacion" rows="2"
-                                        placeholder="Escribe alguna Observacion" formControlName="observacion"
-                                    ></textarea>
-                                </div>
-                            </div><!--end col-->
-                        </div><!--end row-->
-                        <div class="mt-4">
-                            <label for="exampleFormControlTextarea1"
-                                class="form-label text-muted text-uppercase fw-semibold">Terminos</label>
-                            <textarea class="form-control alert alert-info" id="exampleFormControlTextarea1"
-                                placeholder="Notes" rows="2"
-                                required> En calidad de contribuyente, y en cumplimiento a normariva vigente, declaro que los datos fueron revisados antes de su registro y asumiendo por mi parte, la responsabilidad por la exactitud de la presente declaracion 
-                            </textarea>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="check" name="check"
-                                onchange="billingFunction()" formControlName="check"
-                                [ngClass]="{ 'is-invalid': submitted && form['check'].errors }" />
-                            <label class="form-check-label" for="check">
-                                Acepto Todos los teminos
-                            </label>
-                            <a href="javascript:void(0);" class="text-muted text-decoration-underline">Ver Terminos</a>
-                        </div>
-                        <div class="hstack gap-2 justify-content-end d-print-none mt-4 flex-wrap">
-                            <button type="submit" class="btn btn-success">
-                                <!-- <i class="ri-printer-line align-bottom mx-1"></i> -->
-                                Generar Reserva</button>
-                            <!-- <a href="javascript:void(0);" class="btn btn-primary"><i
-                                    class="ri-download-2-line align-bottom mx-1"></i> Download Invoice</a>
-                            <a href="javascript:void(0);" class="btn btn-secondary"><i
-                                    class="ri-send-plane-fill align-bottom mx-1"></i> Send Invoice</a> -->
-                        </div>
-                    </div>
-                </form>
-            </div><!-- end cardbody -->
         </div>
     </div>
 </div>

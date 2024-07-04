@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { circle, latLng, tileLayer } from 'leaflet';
 
 import * as L from 'leaflet';
 import { SlickCarouselComponent } from 'ngx-slick-carousel';
@@ -10,18 +9,18 @@ import { DeportesService } from 'src/app/core/services/api/deporte.sservice';
 import Swal from 'sweetalert2';
 import { ModalComponent } from '../reservas/modal/modal.component';
 import { CanchaHorariosService } from 'src/app/core/services/api/cancha-horarios.service';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { debounceTime } from 'rxjs';
 @Component({
   selector: 'app-details',
   templateUrl: './details.component.html',
   styleUrls: ['./details.component.scss']
 })
 
+
 export class DetailsComponent implements OnInit  {
 
   breadCrumbItems!: Array<{}>;
-  
-  today: Date = new Date();
   private timerId:any;
   submitted = false;
   currentTime!: string;
@@ -32,6 +31,10 @@ export class DetailsComponent implements OnInit  {
   InvoiceForm!: UntypedFormGroup;
   public FCollapsed = true;
   public CCollapsed = true;
+
+  imagesList=['assets/images/fields/img-1.png','assets/images/fields/img-2.png',
+    'assets/images/fields/img-3.png','assets/images/fields/img-4.png']
+
   constructor(private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
     private deportesService: DeportesService,
@@ -39,8 +42,6 @@ export class DetailsComponent implements OnInit  {
     private route: ActivatedRoute ) { }
 
     @ViewChild('slickModal') slickModal!: SlickCarouselComponent;
-    imagesList=['assets/images/fields/img-1.png','assets/images/fields/img-2.png',
-      'assets/images/fields/img-3.png','assets/images/fields/img-4.png']
   /**
  * Swiper setting
  */
@@ -62,10 +63,7 @@ export class DetailsComponent implements OnInit  {
      this.breadCrumbItems = [
       { label: 'Canchas' },
       { label: 'Reservas', active: true }
-    ];
-    this.getDeportes();
-    this.getHorarios();
-    
+    ];    
     // this.route.params.subscribe(params => {
     //   this.uuid = params['uuid'];
     //   // this.getAdjuntos(this.uuid);
@@ -76,29 +74,142 @@ export class DetailsComponent implements OnInit  {
     if(this.dataField){
       this.initMap(this.dataField.latitud, this.dataField.longitud); 
     }      
-
     this.updateTime();
     this.timerId = setInterval(() => this.updateTime(), 1000);
     
+    this.getDeportes();
     /**
      * Form Validation
      */
     this.InvoiceForm = this.formBuilder.group({
       uuid: [''],
-      fechaReserva: ['', [Validators.required]],
-      horaEntrada: ['', [Validators.required]],
-      horaSalida: ['', [Validators.required]],
+      fechaReserva: [new Date(), [Validators.required]],
+      horaEntrada: [this.getAvailableHour('start'), [Validators.required, this.timeValidator.bind(this)]],
+      horaSalida: [this.getAvailableHour('end'), [Validators.required, this.timeValidator.bind(this)]],
       totalPago: [0, [Validators.required]],
-      // pagossDto: [null],
+      totalTime: [0, [Validators.required]],
       // status: ['', [Validators.required]]
       // uuidCancha: [{ value: this.cancha, disabled: !!this.cancha }, [Validators.required]],
       // canchasDto: new FormControl(),
       // uuidContribuyente: [{ value: this.contribuyente, disabled: !!this.contribuyente }, [Validators.required]],
       // contribuyenteDto: new FormControl(),
-      observacion: ['', [Validators.required]],
+      observacion: ['Reserva de Cancha Deportiva GAMQ', [Validators.required]],
       check: [false, [Validators.required]],
-      // totalPago: [0, [Validators.required]],
     });
+    this.InvoiceForm.get('fechaReserva')?.valueChanges.subscribe(() => {
+      this.generateHorarios();
+    });
+
+    this.generateHorarios();
+    this.InvoiceForm.valueChanges.pipe(debounceTime(300) 
+    ).subscribe(() => {
+        const { horaEntrada, horaSalida } = this.InvoiceForm.controls;
+        if (horaEntrada.valid && horaSalida.valid) {
+          this.calculateTotalTimeAndPago();
+        }
+    });
+  }
+
+  calculateTotalTimeAndPago() {
+    const horaEntrada = this.InvoiceForm.get('horaEntrada')?.value;
+    const horaSalida = this.InvoiceForm.get('horaSalida')?.value;
+    const tarifa = this.dataField.totalxhora || 0
+
+    if (horaEntrada && horaSalida) {
+      const [entradaHours, entradaMinutes] = horaEntrada.split(':').map(Number);
+      const [salidaHours, salidaMinutes] = horaSalida.split(':').map(Number);
+
+      const entradaDate = new Date();
+      entradaDate.setHours(entradaHours, entradaMinutes, 0);
+
+      const salidaDate = new Date();
+      salidaDate.setHours(salidaHours, salidaMinutes, 0);
+
+      const diffMs = salidaDate.getTime() - entradaDate.getTime();
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMinutes = Math.round((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+      const totalTime = `${this.pad(diffHours)}:${this.pad(diffMinutes)}`;
+      const totalPago = ((diffHours + diffMinutes / 60) * tarifa).toFixed(2);
+
+      this.InvoiceForm.patchValue({
+        totalTime,
+        totalPago
+      });
+    }
+  }
+
+  horariosAtencion = [
+    { horaInicio: '08:00', horaFin: '12:00', dia:"lunes", activo:true },
+    { horaInicio: '14:00', horaFin: '18:00' ,dia:"lunes", activo:true},
+    { horaInicio: '08:00', horaFin: '12:00', dia:"martes", activo:true },
+    { horaInicio: '14:00', horaFin: '18:00' ,dia:"martes", activo:true},
+    { horaInicio: '08:00', horaFin: '11:00', dia:"miércoles", activo:true },
+    { horaInicio: '13:00', horaFin: '16:00' ,dia:"miércoles", activo:true},
+    { horaInicio: '', horaFin: '', dia:"Sabado", activo:false },
+    { horaInicio: '', horaFin: '' ,dia:"Domingo", activo:false}
+  ];
+  getAvailableHour(type:string): string {
+    const now = new Date();
+    const currentDay = now.toLocaleString('es-ES', { weekday: 'long' });
+    const currentHour = now.getHours();
+    const currentMinutes = now.getMinutes();
+    const currentTime = `${this.pad(currentHour)}:${this.pad(currentMinutes)}`;
+
+    const horariosToday = this.horariosAtencion.filter(horario => horario.dia === currentDay && horario.activo);
+    console.log(horariosToday)
+    
+    if (type === 'start' && horariosToday.length) {
+      for (const horario of horariosToday) {
+          if (currentTime < horario.horaInicio) {
+            return horario.horaInicio;
+          }
+          if (currentTime >= horario.horaInicio && currentTime < horario.horaFin) {
+            return `${this.pad(currentHour + 1)}:00`;
+          }
+      }
+    } else if (type === 'end' && horariosToday.length) {
+      return horariosToday[horariosToday.length - 1].horaFin;
+    }
+
+    return horariosToday.length > 0 ? horariosToday[0].horaInicio : this.horariosAtencion[0].horaInicio;
+  }
+  morningHorarios: string[] = [];
+  afternoonHorarios: string[] = [];
+  horariosToday!:any[];
+  generateHorarios() {
+    const fechaReserva = this.InvoiceForm.get('fechaReserva')?.value;
+    const selectedDay = fechaReserva.toLocaleString('es-ES', { weekday: 'long' });
+
+    this.horariosToday = this.horariosAtencion.filter(horario => horario.dia === selectedDay && horario.activo);
+
+    this.morningHorarios = [];
+    this.afternoonHorarios = [];
+    for (const horario of this.horariosToday) {
+      const horaInicio = horario.horaInicio;
+      const horaFin = horario.horaFin;
+
+      for (let hour = this.getTime(horaInicio); hour < this.getTime(horaFin); hour++) {
+        const horarioStr = `${this.pad(hour)}:00 - ${this.pad(hour + 1)}:00`;
+        if (hour < 12) {
+          this.morningHorarios.push(horarioStr);
+        } else {
+          this.afternoonHorarios.push(horarioStr);
+        }
+      }
+    }
+  }
+
+  pad(num: number): string {
+    return num < 10 ? '0' + num : num.toString();
+  }
+
+  reserve(start: string, end:string) {
+    this.InvoiceForm.patchValue({
+      horaEntrada: start,
+      horaSalida: end
+    });
+    
   }
 
   get form() {
@@ -189,8 +300,13 @@ export class DetailsComponent implements OnInit  {
     }
 
     saveData(){
-
+      if (this.InvoiceForm.valid) {
+        
+      } else {
+        
+      }
     }
+
 
     horariosList=[];
     getHorarios(){
@@ -199,5 +315,43 @@ export class DetailsComponent implements OnInit  {
             this.horariosList = value.payload
         },
       })
+    }
+
+    
+    timeValidator(control: AbstractControl): ValidationErrors | null {
+      const time = control.value;
+      if (!time) return null;
+
+      // const fechaReserva = new Date();//this.InvoiceForm.get('fechaReserva')?.value || new Date();
+      // const selectedDay = fechaReserva.toLocaleString('es-ES', { weekday: 'long' });  
+      // const horariosToday = this.horariosAtencion.filter(horario => horario.dia === selectedDay && horario.activo);
+      
+      if (!this.horariosToday) return null;
+
+      const [hours, minutes] = time.split(':').map(Number);      
+
+      const start = this.getTime(this.horariosToday[0].horaInicio);
+      const end = this.getTime(this.horariosToday[0].horaFin);
+  
+      if (this.horariosToday.length > 1) {
+        const startT = this.getTime(this.horariosToday[1].horaInicio);
+        const endT = this.getTime(this.horariosToday[1].horaFin);  
+        if ((hours < start) || (hours > endT) ||
+            (hours > end && hours < startT) ||
+            (hours === end && minutes > 0) ||
+            (hours === endT && minutes > 0)
+        ) {
+          return { invalidTime: true };
+        }
+      } else {
+        if ((hours < start) || (hours > end) || (hours === end && minutes > 0)) {
+          return { invalidTime: true };
+        }
+      }
+      return null;
+    }
+    
+    getTime(time: string): number {
+      return parseInt(time.split(':')[0], 10);
     }
 }

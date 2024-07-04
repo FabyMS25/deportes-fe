@@ -25,14 +25,11 @@ const routes: Routes = [
       path: "reservations/details",
       component: DetailsComponent
     },
-
-
-    {
-      path: 'invoices', loadChildren: () => import('./invoices/invoices.module').then(m => m.InvoicesModule)
-    },
     {
       path: 'pages', loadChildren: () => import('./extrapages/extraspages.module').then(m => m.ExtraspagesModule)
     },
+
+    
     {
       path: 'charts', loadChildren: () => import('./charts/charts.module').then(m => m.ChartsModule)
     },

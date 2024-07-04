@@ -12,7 +12,6 @@ import { addApplication, deleteApplication, fetchApplicationData, updateApplicat
 import { selectJobsData, selectJobsLoading } from 'src/app/store/Jobs/jobs_selector';
 import { cloneDeep } from 'lodash';
 import { PaginationService } from 'src/app/core/services/pagination.service';
-import { application } from 'src/app/core/data';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { ModalComponent } from '../modal/modal.component';

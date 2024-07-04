@@ -15,8 +15,6 @@ import { ngxCsv } from 'ngx-csv/ngx-csv';
 
 import { Store } from '@ngrx/store';
 import { RootReducerState } from 'src/app/store';
-import { addCustomer, deleteCustomer, fetchCustomerListData, updateCustomer } from 'src/app/store/Ecommerce/ecommerce_action';
-import { selectCustomerData, selectDataLoading } from 'src/app/store/Ecommerce/ecommerce_selector';
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { cloneDeep } from 'lodash';
 import { AuthenticationService } from 'src/app/core/services/auth.service';

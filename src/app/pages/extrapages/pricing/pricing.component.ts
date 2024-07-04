@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
 import { MonthlyPlanModel, YearlyPlanModel, PricingModel, SimpleModel } from './pricing.model';
-import { MonthlyPlan, SimplePlan, YearlyPlan, pricingPlan } from 'src/app/core/data';
 
 @Component({
   selector: 'app-pricing',
@@ -38,10 +37,10 @@ export class PricingComponent implements OnInit {
 
   // Chat Data Fetch
   private _fetchData() {
-    this.MonthlyPlan = MonthlyPlan;
-    this.YearlyPlan = YearlyPlan;
-    this.pricingPlan = pricingPlan;
-    this.SimplePlan = SimplePlan;
+    // this.MonthlyPlan = MonthlyPlan;
+    // this.YearlyPlan = YearlyPlan;
+    // this.pricingPlan = pricingPlan;
+    // this.SimplePlan = SimplePlan;
   }
 
 }

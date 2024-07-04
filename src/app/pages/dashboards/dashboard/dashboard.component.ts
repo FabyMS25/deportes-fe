@@ -3,7 +3,7 @@ import { ToastService } from './toast-service';
 
 import { circle, latLng, tileLayer } from 'leaflet';
 
-import { BestSelling, Recentelling, TopSelling, nftfeaturedData, nftpopularData, nftrecentData, nfttopCollectionData, statData } from 'src/app/core/data';
+// import { BestSelling, Recentelling, TopSelling, nftfeaturedData, nftpopularData, nftrecentData, nfttopCollectionData, statData } from 'src/app/core/data';
 import { ChartType } from './dashboard.model';
 import { featuredModel, popularModel, recentModel, topCollectionModel } from './nft.model';
 import { interval, map } from 'rxjs';
@@ -371,15 +371,15 @@ export class DashboardComponent implements OnInit {
   * Fetches the data
   */
   private fetchData() {
-    this.BestSelling = BestSelling;
-    this.TopSelling = TopSelling;
-    this.RecentSelling = Recentelling;
-    this.statData = statData;
+    // this.BestSelling = BestSelling;
+    // this.TopSelling = TopSelling;
+    // this.RecentSelling = Recentelling;
+    // this.statData = statData;
     
-    this.featuredData = nftfeaturedData;
-    this.recentData = nftrecentData;
-    this.topCollectionData = nfttopCollectionData;
-    this.popularData = nftpopularData;
+    // this.featuredData = nftfeaturedData;
+    // this.recentData = nftrecentData;
+    // this.topCollectionData = nfttopCollectionData;
+    // this.popularData = nftpopularData;
   }
 
   /**

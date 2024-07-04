@@ -37,6 +37,9 @@ import { DetailsComponent } from './details/details.component';
 import { CommentsComponent } from './details/comments/comments.component';
 import { ModalComponent } from './taxpayers/modal/modal.component';
 
+// Scrollto
+import { ScrollToModule } from '@nicky-lenaers/ngx-scroll-to';
+
 
 @NgModule({
   declarations: [
@@ -71,7 +74,8 @@ import { ModalComponent } from './taxpayers/modal/modal.component';
     // NgSelectModule,
     // NgbPaginationModule,
     NgbNavModule,
-    NgbCollapseModule
+    NgbCollapseModule,
+    ScrollToModule.forRoot()
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

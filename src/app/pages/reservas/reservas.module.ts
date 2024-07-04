@@ -17,6 +17,7 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import { FeatherModule } from 'angular-feather';
 import { allIcons } from 'angular-feather/icons';
 
+import { ScrollToModule } from '@nicky-lenaers/ngx-scroll-to';
 
 // Flat Picker
 import { FlatpickrModule } from 'angularx-flatpickr';
@@ -47,6 +48,7 @@ import { ModalComponent } from './modal/modal.component';
     NgSelectModule,
     NgbPaginationModule,
     NgbNavModule,
+    ScrollToModule.forRoot()
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
