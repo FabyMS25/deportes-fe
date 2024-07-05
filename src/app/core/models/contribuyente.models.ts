@@ -2,6 +2,7 @@ export class Contribuyente {
   uuid?: number;
   userName?: string;
   password?: string;
+  codigoContribuyente?:string;
   nombre?: string;
   apPaterno?: string;
   apMaterno?: string;
@@ -12,4 +13,5 @@ export class Contribuyente {
   direccion?: string;
   celular?: string;
   correo?: string;
+  estadoUsuario?: string
 }

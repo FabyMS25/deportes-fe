@@ -3,4 +3,6 @@ export interface Categoria {
   estado?:string;
 
   nombre:string;
+  tipo?:string;
+
 }

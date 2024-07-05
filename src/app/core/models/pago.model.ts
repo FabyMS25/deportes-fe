@@ -1,13 +1,11 @@
-import { Cancha } from "./cancha.model";
-
 export interface  Pago{
 
     uuid: String;
     estado:boolean;
 
+    fechaPago: Date;  
     montoPago: number;
-    nroTasa: string; 
-    fechaPago?: Date;    
+    nroTasa: string;   
     estadoPago: string;
   }
   

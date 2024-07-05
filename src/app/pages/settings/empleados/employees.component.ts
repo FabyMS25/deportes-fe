@@ -15,14 +15,11 @@ import { GlobalComponent } from '../../../global-component';
 // Sweet Alert
 import Swal from 'sweetalert2';
 
-import { Store } from '@ngrx/store';
-import { RootReducerState } from 'src/app/store';
-import { PaginationService } from 'src/app/core/services/pagination.service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { EncargadoCanchaService } from 'src/app/core/services/api/encargado-cancha.service';
 import { ModalEmployeeComponent } from './modal/modalEmployee.component';
 import { UserService } from 'src/app/core/services/api-users/users.service';
 import { UserRol } from 'src/app/core/constants/UserRol';
+import { EncargadoService } from 'src/app/core/services/api/encargado.service';
 
 @Component({
   selector: 'app-employees',
@@ -64,7 +61,7 @@ export class EmployeesComponent implements OnInit {
   constructor(private modalService: NgbModal,
     private authService: AuthenticationService,
     private usersService: UserService,
-    private employeesService: EncargadoCanchaService,
+    private employeesService: EncargadoService,
   ) {
       this.canActivate = this.authService.hasPermissionModulo(this.title);
   }

@@ -4,13 +4,13 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 import * as L from 'leaflet';
 import { SlickCarouselComponent } from 'ngx-slick-carousel';
-import { Cancha } from 'src/app/core/models/cancha.model';
 import { DeportesService } from 'src/app/core/services/api/deporte.service';
 import Swal from 'sweetalert2';
 import { ModalComponent } from '../reservas/modal/modal.component';
 import { CanchaHorariosService } from 'src/app/core/services/api/cancha-horarios.service';
 import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { debounceTime } from 'rxjs';
+import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 @Component({
   selector: 'app-details',
   templateUrl: './details.component.html',
@@ -26,12 +26,13 @@ export class DetailsComponent implements OnInit  {
   currentTime!: string;
   
   uuid='';
-  dataField!:Cancha;
+  dataField!:campoDeportivo;
   categoryList:any[]=[];
   InvoiceForm!: UntypedFormGroup;
   public FCollapsed = true;
   public CCollapsed = true;
 
+  tarifa=0;
   imagesList=['assets/images/fields/img-1.png','assets/images/fields/img-2.png',
     'assets/images/fields/img-3.png','assets/images/fields/img-4.png']
 
@@ -72,7 +73,7 @@ export class DetailsComponent implements OnInit  {
     this.dataField = history.state.data;
     console.log(this.dataField)
     if(this.dataField){
-      this.initMap(this.dataField.latitud, this.dataField.longitud); 
+      this.initMap(this.dataField.complejoDto?.latitud, this.dataField.complejoDto?.longitud); 
     }      
     this.updateTime();
     this.timerId = setInterval(() => this.updateTime(), 1000);
@@ -113,7 +114,7 @@ export class DetailsComponent implements OnInit  {
   calculateTotalTimeAndPago() {
     const horaEntrada = this.InvoiceForm.get('horaEntrada')?.value;
     const horaSalida = this.InvoiceForm.get('horaSalida')?.value;
-    const tarifa = this.dataField.totalxhora || 0
+    const tarifa = 0;//this.dataField.tarifasList || 0
 
     if (horaEntrada && horaSalida) {
       const [entradaHours, entradaMinutes] = horaEntrada.split(':').map(Number);

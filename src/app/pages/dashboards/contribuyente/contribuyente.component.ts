@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 // import { latLng, tileLayer, circle, polygon, marker, icon } from 'leaflet';
 
 import * as L from 'leaflet';
-import { CanchaService } from 'src/app/core/services/api/canchas.service';
+import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { DeportesService } from 'src/app/core/services/api/deporte.service';
 import Swal from 'sweetalert2';
 @Component({
@@ -34,7 +34,7 @@ export class ContribuyenteComponent implements OnInit {
  
     constructor(private router: Router,
       private deportesService: DeportesService,
-      private fieldsService: CanchaService
+      private fieldsService: CamposDeportivoService
     ) {}
 
     ngOnInit(): void {

@@ -5,8 +5,8 @@ import { FormControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import Swal from 'sweetalert2';
-import { CanchaService } from 'src/app/core/services/api/canchas.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
+import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 
 @Component({
   selector: 'app-modal',
@@ -30,7 +30,7 @@ export class ModalComponent {
   constructor(private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
     private reservasService: ReservaService,
-    private canchasService:CanchaService,
+    private canchasService:CamposDeportivoService,
     private contribuyentesService: ContribuyentesService
   ) {}
 
@@ -83,7 +83,7 @@ export class ModalComponent {
     if (this.accion != '') {
       setTimeout(() => {
         var modaltitle = document.querySelector('.modal-title') as HTMLAreaElement;
-        modaltitle.innerHTML = "Reserva en: "+ this.row.canchasDto.nombre ||'';
+        modaltitle.innerHTML = "Reserva en: "+ this.row.canchasDto?.complejoDto?.nombre ||'';
       }, 100);
         this.contentForm.patchValue({
             uuid:this.row.uuid,
@@ -125,7 +125,7 @@ export class ModalComponent {
     this.submitted = true;
     if (this.contentForm.valid) {
       this.contentForm.enable()
-      let datos: Reserva = {
+      let datos: any = {
         // codigo: this.contentForm.value.codigo,
         fechaReserva: this.contentForm.value.fechaReserva,
         horaEntrada:this.contentForm.value.horaEntrada,

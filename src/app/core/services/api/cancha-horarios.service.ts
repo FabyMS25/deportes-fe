@@ -30,11 +30,11 @@ export class CanchaHorariosService {
     return this.http.get<Horario>(`${this.apiUrl}/${uuid}`);
   }
 
-  save(data: Horario): Observable<Horario> {  
+  save(data: any): Observable<Horario> {  
     return this.http.post<Horario>(`${this.apiUrl}`, data);
   }
 
-  update(data: Horario): Observable<Horario> {
+  update(data: any): Observable<Horario> {
     return this.http.put<Horario>(`${this.apiUrl}`, data);
   }
   delete(uuid: string) {

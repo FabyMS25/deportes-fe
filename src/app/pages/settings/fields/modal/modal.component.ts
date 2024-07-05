@@ -3,26 +3,26 @@ import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
 import { FormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { CanchaService } from 'src/app/core/services/api/canchas.service';
-import { Cancha } from 'src/app/core/models/cancha.model';
 import { LeafletComponent } from 'src/app/shared/map/leaflet.component';
 import { Horario } from 'src/app/core/models/horario.model';
 import { CanchaDeportesService } from 'src/app/core/services/api/cancha-deportes.service';
 import { CanchaHorariosService } from 'src/app/core/services/api/cancha-horarios.service';
-import { CanchaDeporte } from 'src/app/core/models/cancha-deporte.model';
 import { Districts } from 'src/app/core/constants/Distritos';
 import { Surfaces } from 'src/app/core/constants/Superficies';
 import { Ceiling } from 'src/app/core/constants/Techados';
 import { Categoria } from 'src/app/core/models/categoria.model';
+import { CanchaCategoria } from 'src/app/core/models/cancha-categoria.model';
+import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
+import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 
 @Component({
   selector: 'app-modal',
   templateUrl: './modal.component.html',
   styleUrl: './modal.component.scss'
 })
-export class ModalComponent {
+export class ModalFieldsComponent {
   @Input() accion!: string;
-  @Input() row!: Cancha;
+  @Input() row!: campoDeportivo;
   @Output() listaItems = new EventEmitter();
   @Input() categoryList:Categoria[]=[];
 
@@ -45,11 +45,10 @@ export class ModalComponent {
   canchasList:any[]=[];
 
   constructor(private modalService: NgbModal,
-    private canchaService: CanchaService,
+    private canchaService: CamposDeportivoService,
     private categoriesService: CanchaDeportesService,
     private horariosService: CanchaHorariosService,
     private formBuilder: UntypedFormBuilder,
-    // private store: Store<{ data: RootReducerState }>
   ) {
       
   }
@@ -61,15 +60,28 @@ export class ModalComponent {
     this.fieldsForm = this.formBuilder.group({
       uuid: [''],
       image_src: ['brands/dribbble.png'],
+
       nombre: ['', [Validators.required]],
-      tarifa: [0, [Validators.required]],
-      techado: ['', [Validators.required]],
-      superficie: [null, [Validators.required]],
+      techado: [null, [Validators.required]],
       distrito: [null, [Validators.required]],
       ubicacion: ['', [Validators.required]],
       latitud: ['', [Validators.required]],
       longitud: ['', [Validators.required]],
-      categorias: [[],[Validators.required]],
+
+      codigo: ['', [Validators.required]],
+      superficie: ['', [Validators.required]],
+      tipo: ['', [Validators.required]],
+      // categorias: [[],[Validators.required]],
+      // tarifa: [0, [Validators.required]],
+      tarifasCategorias : this.formBuilder.array([
+        this.formBuilder.group({
+          categorias: [[]],
+          costo: [0],
+          desde: [""],
+          hasta: [""],
+          allDay: [true],
+          descripcion: [""]
+        })]),
       horariosDeAtencion : this.formBuilder.array([
         this.formBuilder.group({
           dia: [""],
@@ -110,14 +122,13 @@ export class ModalComponent {
         this.fieldsForm.patchValue({
           uuid:this.row.uuid,
             image_src: [''],
-            nombre: this.row.nombre,
-            tarifa: this.row.totalxhora,
-            techado: this.row.techado,
+            codigo: this.row.codigo,
+            // tarifa: this.row.totalxhora,
             superficie: this.row.superficie,
-            ubicacion: this.row.ubicacion,
-            distrito: this.row.distrito,
-            latitud:this.row.latitud,
-            longitud:this.row.longitud,
+            tipo: this.row.tipo,
+            complejoDto: this.row.complejoDto,
+
+            tarifas:this.row.tarifasList,
             categorias:this.row.canchaDeportesList,
             horariosDeAtencion :this.row.horarioList
         });
@@ -166,16 +177,11 @@ export class ModalComponent {
     this.submitted = true;
     if (this.fieldsForm.valid) {
       this.fieldsForm.enable()
-      let datos: Cancha = {
-        // codigo:this.fieldsForm.value.codigo,
-        nombre: this.fieldsForm.value.nombre,
-        techado: this.fieldsForm.value.techado,
+      let datos: campoDeportivo = {
+        codigo: this.fieldsForm.value.codigo,
         superficie: this.fieldsForm.value.superficie,
-        ubicacion: this.fieldsForm.value.ubicacion,
-        distrito: this.fieldsForm.value.distrito,
-        totalxhora: this.fieldsForm.value.tarifa,
-        latitud: this.fieldsForm.value.latitud,
-        longitud: this.fieldsForm.value.longitud
+        tipo: this.fieldsForm.value.tipo,
+        // totalxhora: this.fieldsForm.value.tarifa,
       };
       if (this.fieldsForm.get('uuid')?.value) {
           datos.uuid = this.fieldsForm.value.uuid;
@@ -193,12 +199,12 @@ export class ModalComponent {
     // this.submitted = true
   }
   
-  private addData(datos:Cancha){
+  private addData(datos:campoDeportivo){
     this.canchaService.save(datos).subscribe({
       next:(data:any)=>{
         if (data['status'] === 'OK') {
           console.log("data saved", data)
-          this.saveCategories(data['payload'].uuid);
+          this.saveCategoriesTaxes(data['payload'].uuid);
           this.saveServiceHours(data['payload'].uuid); 
           this.submitted=false;
           this.modalService.dismissAll();
@@ -215,11 +221,11 @@ export class ModalComponent {
       }
     })
   }
-  private updateData(datos:Cancha) {
+  private updateData(datos:campoDeportivo) {
       this.canchaService.update(datos).subscribe({
-          next: (data: Cancha) => {
+          next: (data: campoDeportivo) => {
             const field=data;
-            this.saveCategories(data.uuid);
+            this.saveCategoriesTaxes(data.uuid);
             this.saveServiceHours(data.uuid);
             this.submitted = false;
             this.modalService.dismissAll();
@@ -235,17 +241,17 @@ export class ModalComponent {
           }
       })
   }
-  private saveCategories(uuid:string | undefined){
+  private saveCategoriesTaxes(uuid:string | undefined){
     if(uuid){
       
       const categories= this.fieldsForm.value.categorias
       categories.forEach((element:any) => {
-        let datos: CanchaDeporte = {
+        let datos: CanchaCategoria = {
           deporteDto:{uuid:element.uuid},
           canchasDto:{uuid:uuid}
         };
         this.categoriesService.save(datos).subscribe({
-          next:(data:CanchaDeporte)=>{
+          next:(data:CanchaCategoria)=>{
             
             this.notify('Categoria Registrada','success'); 
           },error:(error)=>{
@@ -277,55 +283,6 @@ export class ModalComponent {
       });
     }
   }
-
-  /**
-   * View Data Get
-   * @param content modal content
-   */
-  viewDataGet(id: any) {
-    // this.econtent = this.allcompany[id];
-    // var img_data = document.querySelector('.company-details img') as HTMLImageElement;
-    // img_data.src = 'assets/images/' + this.econtent.image_src;
-    // (document.querySelector('.company-details h5') as HTMLImageElement).innerHTML = this.econtent.name;
-    // (document.querySelector('.company-details p') as HTMLImageElement).innerHTML = this.econtent.owner;
-    // (document.querySelector('.industry_type') as HTMLImageElement).innerHTML = this.econtent.industry_type;
-    // (document.querySelector('.location') as HTMLImageElement).innerHTML = this.econtent.location;
-    // (document.querySelector('.employee') as HTMLImageElement).innerHTML = this.econtent.employee;
-    // (document.querySelector('.rating') as HTMLImageElement).innerHTML = this.econtent.star_value;
-    // (document.querySelector('.website') as HTMLImageElement).innerHTML = this.econtent.website;
-    // (document.querySelector('.email') as HTMLImageElement).innerHTML = this.econtent.contact_email;
-    // (document.querySelector('.since') as HTMLImageElement).innerHTML = this.econtent.since;
-  }
-
-  /**
-   * Open Edit modal
-   * @param content modal content
-   */
-  editDataGet(id: any, content: any) {
-    // this.submitted = false;
-    // this.modalService.open(content, { size: 'lg', centered: true });
-    // var modelTitle = document.querySelector('.modal-title') as HTMLAreaElement;
-    // // modelTitle.innerHTML = 'Edit Company';
-    // var updateBtn = document.getElementById('add-btn') as HTMLAreaElement;
-    // updateBtn.innerHTML = "Update";
-
-    // this.econtent = this.allcompany[id];
-    // var img_data = document.getElementById('companylogo-img') as HTMLImageElement;
-    // img_data.src = 'assets/images/' + this.econtent.image_src
-
-    // this.fieldsForm.controls['nombre'].setValue(this.econtent.name);
-    // this.fieldsForm.controls['owner'].setValue(this.econtent.owner);
-    // this.fieldsForm.controls['industry_type'].setValue(this.econtent.industry_type);
-    // this.fieldsForm.controls['star_value'].setValue(this.econtent.star_value);
-    // this.fieldsForm.controls['location'].setValue(this.econtent.location);
-    // this.fieldsForm.controls['employee'].setValue(this.econtent.employee);
-    // this.fieldsForm.controls['website'].setValue(this.econtent.website);
-    // this.fieldsForm.controls['contact_email'].setValue(this.econtent.contact_email);
-    // this.fieldsForm.controls['since'].setValue(this.econtent.since);
-    // this.fieldsForm.controls['_id'].setValue(this.econtent._id);
-
-  }
-
 
   /**
   * Delete model

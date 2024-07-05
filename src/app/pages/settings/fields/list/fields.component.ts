@@ -10,10 +10,10 @@ import { ngxCsv } from 'ngx-csv/ngx-csv';
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { CanchaService } from 'src/app/core/services/api/canchas.service';
-import { Cancha } from 'src/app/core/models/cancha.model';
-import { ModalComponent } from './modal/modal.component';
 import { DeportesService } from 'src/app/core/services/api/deporte.service';
+import { ModalFieldsComponent } from '../modal/modal.component';
+import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
+import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 @Component({
   selector: 'app-fields',
   templateUrl: './fields.component.html',
@@ -24,7 +24,7 @@ import { DeportesService } from 'src/app/core/services/api/deporte.service';
  * Companies Component
  */
 export class FieldsComponent {
-  title="Complejos Deportivos";
+  title="Campos Deportivos";
   // bread crumb items
   breadCrumbItems!: Array<{}>;
   submitted = false;
@@ -41,9 +41,9 @@ export class FieldsComponent {
   canchasList:any[]=[];
   temp:any[]=[];
   
-  dataSelected!:Cancha;
+  dataSelected!:campoDeportivo;
   constructor(private modalService: NgbModal,
-    private fieldsService: CanchaService,
+    private fieldsService: CamposDeportivoService,
     private deportesService: DeportesService,
     private authService: AuthenticationService, 
     private offcanvasService: NgbOffcanvas,
@@ -57,21 +57,18 @@ export class FieldsComponent {
       { label: this.title, active: true }
     ];
     this.listaItems = [
-      {name: 'Nombre', prop: 'nombre'},
-      {name: 'Distrito',prop: 'distrito'},
-      {name: 'Tarifa', prop: 'totalxhora'},
+      {name: 'Complejo', prop: 'complejoDto.nombre'},
+      {name: 'Superficie',prop: 'superficie'},
+      {name: 'tipo', prop: 'tipo'},
       {name: 'Categoria(s)', prop: 'totalxhora'},
     ];
     /**
      * fetches data
      */
-    this.getDeportes();
+    this.getCategories();
     this.getFields()
   }
 
-  // changePage() {
-  //   this.company = this.service.changePage(this.allcompany)
-  // }
 
   // Search Data
   performSearch(): void {
@@ -103,8 +100,8 @@ export class FieldsComponent {
    * Open modal
    * @param content modal content
    */
-  public openModal(row: Cancha | undefined, accion: string, size: string) {
-    const modalRef = this.modalService.open(ModalComponent, {
+  public openModal(row: campoDeportivo | undefined, accion: string, size: string) {
+    const modalRef = this.modalService.open(ModalFieldsComponent, {
         backdrop: 'static',
         size:size
     });
@@ -217,12 +214,12 @@ export class FieldsComponent {
       decimalseparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Lista de Canchas',
+      title: 'Lista de Campos Deportivos',
       useBom: true,
       noDownload: false,
       headers: ["Uuid", "Techado", "Superficie", "Dirección", "Distrito", "Tarifa", "Latitud", "Longitud", "Nombre", "Estado"]
     };
-    new ngxCsv(this.canchasList, "Lista de Canchas", data);
+    new ngxCsv(this.canchasList, "Lista de Campos Deportivos", data);
   }
 
 
@@ -240,7 +237,7 @@ export class FieldsComponent {
   }
 
   /* API Services */
-  private getDeportes(){
+  private getCategories(){
     this.deportesService.getAll().subscribe({
         next: (data: any) => {
           if (data['status'] === 'OK') {

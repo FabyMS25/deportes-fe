@@ -1,4 +1,4 @@
-export interface CanchaDeporte {
+export interface CanchaCategoria {
   uuid?: string;
   estado?:string;
 

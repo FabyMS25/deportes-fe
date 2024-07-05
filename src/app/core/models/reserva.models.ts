@@ -1,4 +1,4 @@
-import { Cancha } from "./cancha.model";
+import { campoDeportivo } from "./campoDeportivo.model";
 import { Contribuyente } from "./contribuyente.models";
 import { Pago } from "./pago.model";
 
@@ -8,11 +8,16 @@ import { Pago } from "./pago.model";
 
   // codigo:string;
   fechaReserva: Date;
-  totalPago:number;   
   horaEntrada:string;
   horaSalida:string;
+  totalPago:number;   
+  totalPesonas: number;
+
+  categoria?: string;
+  superficie?: string;
+  observacion?: string;
   
-  canchasDto:Cancha;
+  canchasDto:campoDeportivo;
   contribuyenteDto:Contribuyente;
   pagosDto?:Pago
   

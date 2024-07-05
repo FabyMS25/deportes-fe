@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 /**Models */
-import { Cancha } from '../../models/cancha.model';
+import { Complejo } from '../../models/complejo.model';
 
 
 const httpOptions = {
@@ -16,27 +16,27 @@ const httpOptions = {
 @Injectable({
   providedIn: 'root'
 })
-export class CanchaService {
+export class ComplejosService {
     apiUrl = environment.backendUrl + '/canchas';
 
 
   constructor(private http: HttpClient) { }
 
-  getAll(): Observable<Cancha[]> {
-    return this.http.get<Cancha[]>(`${this.apiUrl}`);
+  getAll(): Observable<Complejo[]> {
+    return this.http.get<Complejo[]>(`${this.apiUrl}`);
   }
 
-  getByUuid(uuid:string):Observable<Cancha>{
-    return this.http.get<Cancha>(`${this.apiUrl}/${uuid}`);
+  getByUuid(uuid:string):Observable<Complejo>{
+    return this.http.get<Complejo>(`${this.apiUrl}/${uuid}`);
   }
 
-  save(data: Cancha): Observable<Cancha> {  
+  save(data: Complejo): Observable<Complejo> {  
     // var headerToken = {'Authorization': `Bearer `+ window.sessionStorage.getItem('auth-token')};
-    return this.http.post<Cancha>(`${this.apiUrl}`, data);
+    return this.http.post<Complejo>(`${this.apiUrl}`, data);
   }
 
-  update(data: Cancha): Observable<Cancha> {
-    return this.http.put<Cancha>(`${this.apiUrl}`, data);
+  update(data: Complejo): Observable<Complejo> {
+    return this.http.put<Complejo>(`${this.apiUrl}`, data);
   }
   delete(uuid: string) {
     return this.http.delete(`${this.apiUrl}/${uuid}`);

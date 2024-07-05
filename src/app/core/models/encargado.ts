@@ -1,6 +1,6 @@
-import { Cancha } from "./cancha.model";
+import { Complejo } from "./complejo.model";
 
-export interface  EncargadoCancha{
+export interface  Encargado{
 
     uuid?: String;
     estado?:boolean;
@@ -12,9 +12,10 @@ export interface  EncargadoCancha{
     
     horaEntrada: string; // "HH:mm:ss"
     horaSalida: string; // "HH:mm:ss"
-    // nombreCompleto: string;
+    nombre?: string;
     telefono?:string;
-    canchasDto: Cancha;
+    // canchasDto: Cancha;
+    complejoDto: Complejo
 
   }
   

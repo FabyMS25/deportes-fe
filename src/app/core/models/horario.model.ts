@@ -1,4 +1,4 @@
-import { Cancha } from "./cancha.model";
+import { campoDeportivo } from "./campoDeportivo.model";
 
 export interface  Horario{
 
@@ -8,7 +8,8 @@ export interface  Horario{
     dia: String;
     horaInicio: string; // "HH:mm:ss"
     horaFin: string; // "HH:mm:ss"
+    activo?: boolean
 
-    canchasDto: Cancha;
+    canchasDto?: campoDeportivo;
   }
   

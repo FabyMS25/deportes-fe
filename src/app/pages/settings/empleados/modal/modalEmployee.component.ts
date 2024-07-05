@@ -1,12 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { EncargadoCancha } from 'src/app/core/models/encargado-cancha';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { EncargadoCanchaService } from 'src/app/core/services/api/encargado-cancha.service';
 import { FormControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { UserService } from 'src/app/core/services/api-users/users.service';
-import { CanchaService } from 'src/app/core/services/api/canchas.service';
+import { Encargado } from 'src/app/core/models/encargado';
+import { EncargadoService } from 'src/app/core/services/api/encargado.service';
+import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 
 @Component({
   selector: 'app-modalEmployee',
@@ -15,7 +14,7 @@ import { CanchaService } from 'src/app/core/services/api/canchas.service';
 })
 export class ModalEmployeeComponent {
   @Input() accion!: string;
-  @Input() row!: EncargadoCancha;
+  @Input() row!: Encargado;
   @Output() listaItems = new EventEmitter();
 
   contentForm!: UntypedFormGroup;
@@ -26,8 +25,8 @@ export class ModalEmployeeComponent {
 
   constructor(private modalService: NgbModal,
     private usuariosService: UserService,
-    private fieldsService: CanchaService,
-    private encargadoCanchaService: EncargadoCanchaService,
+    private complejosService: ComplejosService,
+    private encargadoCanchaService: EncargadoService,
     private formBuilder: UntypedFormBuilder,
   ) {}
 
@@ -71,8 +70,8 @@ export class ModalEmployeeComponent {
             horaEntrada: this.row.horaEntrada,
             horaSalida: this.row.horaSalida,
             telefono:this.row.telefono,
-            uuidCancha: this.row.canchasDto.uuid,
-            canchaDto:this.row.canchasDto
+            uuidCancha: this.row.complejoDto.uuid,
+            canchaDto:this.row.complejoDto
         });
     }
   }
@@ -113,7 +112,7 @@ export class ModalEmployeeComponent {
       });
   }
   private getFields(){
-    this.fieldsService.getAll().subscribe({
+    this.complejosService.getAll().subscribe({
       next: (data: any) => {
         if (data['status'] === 'OK') {
           this.canchasList = data.payload;
@@ -131,14 +130,14 @@ export class ModalEmployeeComponent {
     if (this.contentForm.valid) {
       this.contentForm.enable();
       
-      let datos: EncargadoCancha = {
+      let datos: Encargado = {
         userUuid: this.contentForm.value.uuidUsuario,
         fechaInicio: this.contentForm.value.fechaInicio,
         fechaFin: this.contentForm.value.fechaFin,
         horaEntrada: this.contentForm.value.horaEntrada,
         horaSalida: this.contentForm.value.horaSalida,
         telefono: this.contentForm.value.telefono,
-        canchasDto: { uuid: this.contentForm.value.uuidCancha },
+        complejoDto: { uuid: this.contentForm.value.uuidCancha },
       };
   
       if (this.contentForm.get('uuid')?.value) {
@@ -153,9 +152,9 @@ export class ModalEmployeeComponent {
   }
   
   
-  addData(datos:EncargadoCancha){
+  addData(datos:Encargado){
     this.encargadoCanchaService.save(datos).subscribe({
-      next:(data:EncargadoCancha)=>{
+      next:(data:Encargado)=>{
         this.submitted=false;
         this.notify('Datos Registrados exitosamente!','success'); 
         this.modalService.dismissAll();
@@ -167,9 +166,9 @@ export class ModalEmployeeComponent {
       }
     })
   }
-  updateData(datosUnit:EncargadoCancha) {
+  updateData(datosUnit:Encargado) {
       this.encargadoCanchaService.update(datosUnit).subscribe({
-          next: (data: EncargadoCancha) => {
+          next: (data: Encargado) => {
             this.submitted = false;
             this.modalService.dismissAll();
             this.listaItems.emit();

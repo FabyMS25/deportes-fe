@@ -20,17 +20,21 @@ import { EmployeesComponent } from './empleados/employees.component';
 import { DeportesComponent } from './categories/deportes.component';
 import { SortByCrmPipe } from "../settings/sort-by.pipe";
 
-import { FieldsComponent } from './fields/fields.component';
-import { ModalComponent } from './fields/modal/modal.component';
+import { FieldsComponent } from './fields/list/fields.component';
 import { ModalEmployeeComponent } from './empleados/modal/modalEmployee.component';
+import { FacilitiesComponent } from './facilities/list/facilities.component';
+import { ModalFacilitiesComponent } from './facilities/modal/modal.component';
+import { ModalFieldsComponent } from './fields/modal/modal.component';
 
 @NgModule({
   declarations: [
     EmployeesComponent,
     FieldsComponent,
+    FacilitiesComponent,
     DeportesComponent,
     SortByCrmPipe,
-    ModalComponent,
+    ModalFacilitiesComponent,
+    ModalFieldsComponent,
     ModalEmployeeComponent
   ],
   imports: [
