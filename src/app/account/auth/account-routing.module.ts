@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 
 // Component Pages
-import { RegisterComponent } from "./register/register.component";
+import { SignupComponent } from "./signup/signup.component";
 import { LoginComponent } from "./login/login.component";
 import { PassResetComponent } from './pass-reset/pass-reset.component';
 import { PassCreateComponent } from './pass-create/pass-create.component';
@@ -28,7 +28,7 @@ const routes: Routes = [
   },
   {
     path: "register",
-    component: RegisterComponent
+    component: SignupComponent
   },
   {
     path: "login",

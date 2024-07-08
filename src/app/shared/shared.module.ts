@@ -18,6 +18,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { defineElement } from '@lordicon/element';
 import Lottie from 'lottie-web';
 import { LeafletComponent } from './map/leaflet.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 
 
@@ -46,6 +47,7 @@ import { LeafletComponent } from './map/leaflet.component';
     NgbTooltipModule,
     FlatpickrModule,
     NgSelectModule,
+    TranslateModule,
 
     // NgbToastModule,
     // NgbProgressbarModule,

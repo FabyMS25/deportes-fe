@@ -4,7 +4,7 @@
  */
  const BestSelling = [
   {
-      image: "assets/images/products/img-1.png",
+      image: "assets/images/fields/img-1.png",
       pName: 'Branded T-Shirts',
       date: '24 Apr 2021',
       price: '29.00',
@@ -13,7 +13,7 @@
       amount: '1,798',
   },
   {
-    image: "assets/images/products/img-2.png",
+    image: "assets/images/fields/img-2.png",
     pName: 'Bentwood Chair',
     date: '19 Mar 2021',
     price: '85.20',
@@ -22,7 +22,7 @@
     amount: '2982',
   },
   {
-    image: "assets/images/products/img-3.png",
+    image: "assets/images/fields/img-3.png",
     pName: 'Borosil Paper Cup',
     date: '01 Mar 2021',
     price: '14.00',
@@ -31,7 +31,7 @@
     amount: '1120',
   },
   {
-    image: "assets/images/products/img-4.png",
+    image: "assets/images/fields/img-4.png",
     pName: 'One Seater Sofa',
     date: '11 Feb 2021',
     price: '127.50',
@@ -40,7 +40,7 @@
     amount: '7140',
   },
   {
-    image: "assets/images/products/img-5.png",
+    image: "assets/images/fields/img-5.png",
     pName: 'Stillbird Helmet',
     date: '17 Jan 2021',
     price: '54',

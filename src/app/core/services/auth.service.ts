@@ -141,7 +141,16 @@ export class AuthenticationService {
                   if (this.empleado || this.contribuyente || userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin)) {
                     this.isAuthenticated = true;
                     localStorage.setItem('currentUser', JSON.stringify(this.currentUserSubject));
+                    userPermissions.forEach((menu: any) => {
+                      if(!menu.permisoPadreDto){
+                        menu.isCollapsed = true
+                      }else{
+                        // menu.isCollapsed = false                        
+                      }
+                      
+                    });
                     localStorage.setItem('menu', JSON.stringify(userPermissions));
+                    console.log(userPermissions)
                     if(userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin)){                  
                         this.router.navigate(['/']).then(() => {
                           this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');

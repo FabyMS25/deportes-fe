@@ -1,32 +1,27 @@
-import { Component, QueryList, ViewChildren, TemplateRef } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
-import { Observable } from 'rxjs';
-import { NgbModal, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
-import { UntypedFormBuilder, UntypedFormGroup, FormArray, Validators } from '@angular/forms';
+import { Component } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { NgbModal} from '@ng-bootstrap/ng-bootstrap';
 
-// Date Format
-import { DatePipe } from '@angular/common';
 
 // Sweet Alert
 import Swal from 'sweetalert2';
+import { ngxCsv } from 'ngx-csv';
 
-import { RootReducerState } from 'src/app/store';
-import { Store } from '@ngrx/store';
-import { PaginationService } from 'src/app/core/services/pagination.service';
-import { DeportesService } from 'src/app/core/services/api/deporte.service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { Categoria } from 'src/app/core/models/categoria.model';
+import { CategoriasService } from 'src/app/core/services/api/categorias.service copy';
+import { TranslateService } from '@ngx-translate/core';
 
 
 @Component({
-  selector: 'app-deportes',
-  templateUrl: './deportes.component.html',
-  styleUrls: ['./deportes.component.scss']
+  selector: 'app-categorias',
+  templateUrl: './categorias.component.html',
+  styleUrls: ['./categorias.component.scss']
 })
 /**
  * Leads Component
  */
-export class DeportesComponent {
+export class CategoriasComponent {
 
   // bread crumb items
   breadCrumbItems!: Array<{}>;
@@ -34,16 +29,7 @@ export class DeportesComponent {
   submitted = false;
   contentForm!: UntypedFormGroup;
   deporteData!: Categoria;
-  masterSelected!: boolean;
   checkedList: any;
-
-  // Api Data
-  // content?: any;
-  leads?: any;
-  // econtent?: any;
-
-  closeResult: any;
-  allleads: any;
   searchResults: any;
   searchTerm: any;
 
@@ -51,17 +37,13 @@ export class DeportesComponent {
   categoryList:any[]=[];
   temp:any[]=[];
 
-
   canActivate:string[];
 
   constructor(private modalService: NgbModal,
     private authService: AuthenticationService,
-    private deportesService: DeportesService,
-    public service: PaginationService,
-    private formBuilder: UntypedFormBuilder,
-    private store: Store<{ data: RootReducerState }>,
-    private offcanvasService: NgbOffcanvas,
-    private datePipe: DatePipe) {
+    public translate: TranslateService,
+    private deportesService: CategoriasService,
+    private formBuilder: UntypedFormBuilder,) {      
       this.canActivate = this.authService.hasPermissionModulo(this.title);
   }
 
@@ -76,7 +58,7 @@ export class DeportesComponent {
 
     this.listaItems = [
       {name: 'Nombre', prop: 'nombre'},
-      {name: 'Estado', prop: 'estado'},
+      {name: 'Tipo', prop: 'tipo'},
       {name: 'Canchas',prop: 'canchas'},
     ];
     /**
@@ -261,6 +243,21 @@ export class DeportesComponent {
     this.checkedValGet = checkedVal;
   }
 
+  // Csv File Export
+  csvFileExport() {
+    var data = {
+      fieldSeparator: ',',
+      quoteStrings: '"',
+      decimalseparator: '.',
+      showLabels: true,
+      showTitle: true,
+      title: 'Lista de Categorias',
+      useBom: true,
+      noDownload: false,
+      headers: ["uuid", "Nombre","tipo", "status"]
+    };
+    new ngxCsv(this.categoryList, "Categorias", data);
+  }
   
   public closeModal() {
     // this.accion = '';

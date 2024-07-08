@@ -6,7 +6,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LeafletComponent } from 'src/app/shared/map/leaflet.component';
 import { Horario } from 'src/app/core/models/horario.model';
 import { CanchaDeportesService } from 'src/app/core/services/api/cancha-deportes.service';
-import { CanchaHorariosService } from 'src/app/core/services/api/cancha-horarios.service';
 import { Districts } from 'src/app/core/constants/Distritos';
 import { Surfaces } from 'src/app/core/constants/Superficies';
 import { Ceiling } from 'src/app/core/constants/Techados';
@@ -14,6 +13,7 @@ import { Categoria } from 'src/app/core/models/categoria.model';
 import { CanchaCategoria } from 'src/app/core/models/cancha-categoria.model';
 import { Complejo } from 'src/app/core/models/complejo.model';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { HorariosService } from 'src/app/core/services/api/horarios.service';
 
 @Component({
   selector: 'app-modal',
@@ -47,7 +47,7 @@ export class ModalFacilitiesComponent {
   constructor(private modalService: NgbModal,
     private complejosSevice: ComplejosService,
     private categoriesService: CanchaDeportesService,
-    private horariosService: CanchaHorariosService,
+    private horariosService: HorariosService,
     private formBuilder: UntypedFormBuilder,
     // private store: Store<{ data: RootReducerState }>
   ) {

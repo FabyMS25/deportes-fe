@@ -75,7 +75,7 @@ import { ScrollToModule } from '@nicky-lenaers/ngx-scroll-to';
     // NgbPaginationModule,
     NgbNavModule,
     NgbCollapseModule,
-    ScrollToModule.forRoot()
+    ScrollToModule.forRoot(),
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

@@ -8,9 +8,10 @@
             <div class="card-header">
                 <div class="d-flex align-items-center flex-wrap gap-2">
                     <div class="flex-grow-1">
-                        <button class="btn btn-secondary add-btn" data-bs-toggle="modal" data-bs-target="#showModal"
+                        <button type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal" 
                             (click)="openModal(undefined,'','lg')">
-                            <i class="ri-add-fill me-1 align-bottom"></i> Agregar
+                            <i class="ri-add-circle-line align-middle"></i> 
+                            {{"Agregar" | translate}}
                         </button>
                     </div>
                     <div class="flex-shrink-0">

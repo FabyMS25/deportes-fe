@@ -26,6 +26,7 @@ import { ExtraPagesRoutingModule } from './extrapages-routing.module';
 import { SharedModule } from '../../shared/shared.module';
 import { FaqsComponent } from './faqs/faqs.component';
 import { PricingComponent } from './pricing/pricing.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
   declarations: [
@@ -47,7 +48,8 @@ import { PricingComponent } from './pricing/pricing.component';
     ExtraPagesRoutingModule,
     SharedModule,
     FeatherModule.pick(allIcons),
-    NgPipesModule
+    NgPipesModule,
+    TranslateModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

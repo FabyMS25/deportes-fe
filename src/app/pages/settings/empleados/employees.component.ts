@@ -68,8 +68,8 @@ export class EmployeesComponent implements OnInit {
 
   ngOnInit(): void {
     this.breadCrumbItems = [
-      { label: 'Administración' },
-      { label: 'Empleados', active: true }
+      { label: 'Administracion' },
+      { label: this.title, active: true }
     ];
     this.listaItems = [
       {name: 'Nombre', prop: 'nombreCompleto', avatar:true},

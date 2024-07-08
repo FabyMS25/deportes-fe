@@ -28,6 +28,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { defineElement } from "@lordicon/element";
 import lottie from 'lottie-web';
 import { ModalComponent } from './modal/modal.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
   declarations: [
@@ -48,7 +49,8 @@ import { ModalComponent } from './modal/modal.component';
     NgSelectModule,
     NgbPaginationModule,
     NgbNavModule,
-    ScrollToModule.forRoot()
+    ScrollToModule.forRoot(),
+    TranslateModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

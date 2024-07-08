@@ -26,6 +26,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { ProfileComponent } from './profile/profile.component';
 import { SettingsComponent } from './settings/settings.component';
 import { ProfileRoutingModule } from './profile-routing.module';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
   declarations: [
@@ -47,7 +48,8 @@ import { ProfileRoutingModule } from './profile-routing.module';
     ProfileRoutingModule,
     SharedModule,
     FeatherModule.pick(allIcons),
-    NgPipesModule
+    NgPipesModule,
+    TranslateModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

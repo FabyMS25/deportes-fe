@@ -1,6 +1,6 @@
 const cartData = [
     {
-        image: 'assets/images/products/img-8.png',
+        image: 'assets/images/fields/img-8.png',
         name: 'Sweatshirt for Men (Pink)',
         color: 'Pink',
         size: 'M',
@@ -10,7 +10,7 @@ const cartData = [
         id:"1",
     },
     {
-        image: 'assets/images/products/img-7.png',
+        image: 'assets/images/fields/img-7.png',
         name: 'Noise NoiseFit Endure Smart Watch',
         color: 'Black',
         size: '32.5mm',
@@ -20,7 +20,7 @@ const cartData = [
         id:"2",
     },
     {
-        image: 'assets/images/products/img-3.png',
+        image: 'assets/images/fields/img-3.png',
         name: '350 ml Glass Grocery Container',
         color: 'White',
         size: '350 ml',

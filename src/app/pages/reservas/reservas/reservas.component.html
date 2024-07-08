@@ -13,9 +13,12 @@
                     <h5 class="card-title mb-3 mb-md-0 flex-grow-1">Lista de Reservas</h5>
                     <div class="flex-shrink-0">
                         <div class="d-flex gap-1 flex-wrap">
-                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" id="create-btn" data-bs-target="#showModal" (click)="openModal(undefined,'','')"><i class="ri-add-line align-bottom me-1"></i>
-                                Agregar</button>
-                            <button type="button" class="btn btn-secondary"><i class="ri-file-download-line align-bottom me-1"></i> Importar</button>
+                            <button type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal" 
+                                (click)="openModal(undefined,'','lg')">
+                                <i class="ri-add-circle-line align-middle"></i> 
+                                {{"Agregar" | translate}}
+                            </button>
+                            <button type="button" class="btn btn-soft-success"><i class="ri-file-download-line align-bottom me-1"></i> Importar</button>
                             <button class="btn btn-soft-danger" id="remove-actions" (click)="confirm(deletemodal,'')"><i class="ri-delete-bin-2-line"></i></button>
                         </div>
                     </div>
@@ -63,7 +66,7 @@
                     <!--end col-->
                     <div class="col-xxl-1 col-sm-4">
                         <div>
-                            <button type="button" class="btn btn-success w-100"> <i class="ri-equalizer-fill mx-1 align-bottom"></i>
+                            <button type="button" class="btn btn-primary w-100"> <i class="ri-equalizer-fill mx-1 align-bottom"></i>
                                 Filtrar
                             </button>
                         </div>

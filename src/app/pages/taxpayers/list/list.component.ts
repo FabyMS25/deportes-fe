@@ -12,11 +12,6 @@ import Swal from 'sweetalert2';
 // Csv File Export
 import { ngxCsv } from 'ngx-csv/ngx-csv';
 
-
-import { Store } from '@ngrx/store';
-import { RootReducerState } from 'src/app/store';
-import { PaginationService } from 'src/app/core/services/pagination.service';
-import { cloneDeep } from 'lodash';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { ModalComponent } from '../modal/modal.component';

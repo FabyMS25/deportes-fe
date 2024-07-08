@@ -13,7 +13,7 @@ import { Categoria } from '../../models/categoria.model';
   providedIn: 'root'
 })
 
-export class DeportesService {
+export class CategoriasService {
   apiUrl = environment.backendUrl + '/deportes';
 
   constructor(private http: HttpClient) { }

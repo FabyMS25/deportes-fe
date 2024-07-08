@@ -84,13 +84,13 @@
                   @if(hasItems(subitem)){
                   <a class="nav-link" href="javascript:void(0);" 
                     [attr.data-parent]="subitem.permisoPadreDto" data-bs-toggle="collapse" 
-                    [attr.aria-expanded]="!subitem.isCollapsed" (click)="toggleItem(subitem)">
+                    [attr.aria-expanded]="subitem.isCollapsed" (click)="toggleItem(subitem)">
                     {{ subitem.nombreMenu | translate}}
                     @if(subitem.badge){<span class="badge badge-pill {{subitem.badge.variant}}">
                       {{subitem.badge.text | translate}}</span>}
                   </a>
 
-                  <div class="collapse menu-dropdown sub-menu" #collapse="ngbCollapse" [(ngbCollapse)]="!subitem.isCollapsed">
+                  <div class="collapse menu-dropdown sub-menu" #collapse="ngbCollapse" [(ngbCollapse)]="subitem.isCollapsed">
                     <ul class="nav nav-sm flex-column" aria-expanded="false">
                       @for(subSubitem of getSubMenu(subitem.permisoHijoListDto); track $index){
                       <li class="nav-item">
@@ -131,6 +131,7 @@
                   }@else {
                   <a [routerLink]="subitem.ruta" class="nav-link" 
                     [attr.data-parent]="subitem.permisoPadreDto" (click)="updateActive($event)">
+                    <i class="{{ subitem.icono }} icon nav-icon" class=""></i>
                     {{ subitem.nombreMenu | translate}}
                     @if(subitem.badge){<span class="badge badge-pill {{subitem.badge.variant}}">
                       {{subitem.badge.text | translate}}</span>}

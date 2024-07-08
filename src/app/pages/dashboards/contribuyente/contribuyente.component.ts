@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 
 import * as L from 'leaflet';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
-import { DeportesService } from 'src/app/core/services/api/deporte.service';
+import { CategoriasService } from 'src/app/core/services/api/categorias.service copy';
 import Swal from 'sweetalert2';
 @Component({
     selector: 'app-contribuyente',
@@ -33,7 +33,7 @@ export class ContribuyenteComponent implements OnInit {
     })
  
     constructor(private router: Router,
-      private deportesService: DeportesService,
+      private categoriasService: CategoriasService,
       private fieldsService: CamposDeportivoService
     ) {}
 
@@ -158,7 +158,7 @@ export class ContribuyenteComponent implements OnInit {
 
     /* API Services */
     private getDeportes(){
-      this.deportesService.getAll().subscribe({
+      this.categoriasService.getAll().subscribe({
           next: (data: any) => {
             if (data['status'] === 'OK') {
               this.categoryList = data.payload;

@@ -1,19 +1,20 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import Swal from 'sweetalert2';
 import { FormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+
+import Swal from 'sweetalert2';
+
 import { LeafletComponent } from 'src/app/shared/map/leaflet.component';
-import { Horario } from 'src/app/core/models/horario.model';
-import { CanchaDeportesService } from 'src/app/core/services/api/cancha-deportes.service';
-import { CanchaHorariosService } from 'src/app/core/services/api/cancha-horarios.service';
 import { Districts } from 'src/app/core/constants/Distritos';
 import { Surfaces } from 'src/app/core/constants/Superficies';
 import { Ceiling } from 'src/app/core/constants/Techados';
 import { Categoria } from 'src/app/core/models/categoria.model';
+import { Horario } from 'src/app/core/models/horario.model';
+import { CanchaDeportesService } from 'src/app/core/services/api/cancha-deportes.service';
 import { CanchaCategoria } from 'src/app/core/models/cancha-categoria.model';
 import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
+import { HorariosService } from 'src/app/core/services/api/horarios.service';
 
 @Component({
   selector: 'app-modal',
@@ -47,7 +48,7 @@ export class ModalFieldsComponent {
   constructor(private modalService: NgbModal,
     private canchaService: CamposDeportivoService,
     private categoriesService: CanchaDeportesService,
-    private horariosService: CanchaHorariosService,
+    private horariosService: HorariosService,
     private formBuilder: UntypedFormBuilder,
   ) {
       

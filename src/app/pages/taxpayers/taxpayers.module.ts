@@ -26,6 +26,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { defineElement } from "@lordicon/element";
 import lottie from 'lottie-web';
 import { TaxpayersRoutingModule } from './taxpayers-routing.module';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
   declarations: [
@@ -44,7 +45,8 @@ import { TaxpayersRoutingModule } from './taxpayers-routing.module';
     FlatpickrModule,
     NgSelectModule,
     NgbPaginationModule,
-    NgbNavModule
+    NgbNavModule,
+    TranslateModule    
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

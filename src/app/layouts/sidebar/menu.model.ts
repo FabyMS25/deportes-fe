@@ -15,5 +15,5 @@ export interface MenuItem {
   isTitle?: boolean;
   badge?: any;
   isLayout?: boolean;
-  isCollapsed?: any;
+  isCollapsed?: boolean;
 }

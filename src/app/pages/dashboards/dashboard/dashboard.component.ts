@@ -21,6 +21,8 @@ export class DashboardComponent implements OnInit {
 
   // bread crumb items
   breadCrumbItems!: Array<{}>;
+  userData: any;
+
   analyticsChart!: ChartType;
   BestSelling: any;
   TopSelling: any;
@@ -77,9 +79,12 @@ export class DashboardComponent implements OnInit {
      * BreadCrumb
      */
     this.breadCrumbItems = [
-      { label: 'Dashboards' },
+      { label: '' },
       { label: 'Dashboard', active: true }
     ];
+    const userString = localStorage.getItem('currentUser');
+    this.userData =userString ? JSON.parse(userString) : null;
+
 
     if (sessionStorage.getItem('toast')) {
       this.toastService.show('Logged in Successfull.', { classname: 'bg-success text-center text-white', delay: 5000 });

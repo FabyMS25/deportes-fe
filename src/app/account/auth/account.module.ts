@@ -12,18 +12,18 @@ import { ToastsContainer } from './login/toasts-container.component';
 
 
 import { AccountRoutingModule } from './account-routing.module';
-import { RegisterComponent } from './register/register.component';
 import { LoginComponent } from './login/login.component';
 import { PassResetComponent } from './pass-reset/pass-reset.component';
 import { PassCreateComponent } from './pass-create/pass-create.component';
 import { LogoutComponent } from './logout/logout.component';
 import { SuccessMsgComponent } from './success-msg/success-msg.component';
 import { TwoStepComponent } from './twostep/twostep.component';
+import { SignupComponent } from './signup/signup.component';
 
 @NgModule({
   declarations: [
     LoginComponent,
-    RegisterComponent,
+    SignupComponent,
     PassResetComponent,
     PassCreateComponent,
     LogoutComponent,

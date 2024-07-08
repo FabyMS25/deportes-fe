@@ -10,10 +10,10 @@ import { ngxCsv } from 'ngx-csv/ngx-csv';
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { DeportesService } from 'src/app/core/services/api/deporte.service';
 import { ModalFieldsComponent } from '../modal/modal.component';
 import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
+import { CategoriasService } from 'src/app/core/services/api/categorias.service copy';
 @Component({
   selector: 'app-fields',
   templateUrl: './fields.component.html',
@@ -44,7 +44,7 @@ export class FieldsComponent {
   dataSelected!:campoDeportivo;
   constructor(private modalService: NgbModal,
     private fieldsService: CamposDeportivoService,
-    private deportesService: DeportesService,
+    private categoriasService: CategoriasService,
     private authService: AuthenticationService, 
     private offcanvasService: NgbOffcanvas,
     private datePipe: DatePipe,) {
@@ -238,7 +238,7 @@ export class FieldsComponent {
 
   /* API Services */
   private getCategories(){
-    this.deportesService.getAll().subscribe({
+    this.categoriasService.getAll().subscribe({
         next: (data: any) => {
           if (data['status'] === 'OK') {
             this.categoryList = data.payload;

@@ -1,16 +1,17 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
-import * as L from 'leaflet';
 import { SlickCarouselComponent } from 'ngx-slick-carousel';
-import { DeportesService } from 'src/app/core/services/api/deporte.service';
 import Swal from 'sweetalert2';
-import { ModalComponent } from '../reservas/modal/modal.component';
-import { CanchaHorariosService } from 'src/app/core/services/api/cancha-horarios.service';
-import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
+import * as L from 'leaflet';
 import { debounceTime } from 'rxjs';
+
+import { ModalComponent } from '../reservas/modal/modal.component';
 import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
+import { CategoriasService } from 'src/app/core/services/api/categorias.service copy';
+import { HorariosService } from 'src/app/core/services/api/horarios.service';
 @Component({
   selector: 'app-details',
   templateUrl: './details.component.html',
@@ -38,8 +39,8 @@ export class DetailsComponent implements OnInit  {
 
   constructor(private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
-    private deportesService: DeportesService,
-    private horariosService: CanchaHorariosService,
+    private categoriasService: CategoriasService,
+    private horariosService: HorariosService,
     private route: ActivatedRoute ) { }
 
     @ViewChild('slickModal') slickModal!: SlickCarouselComponent;
@@ -286,7 +287,7 @@ export class DetailsComponent implements OnInit  {
   
     /* API Services */
     private getDeportes(){
-      this.deportesService.getAll().subscribe({
+      this.categoriasService.getAll().subscribe({
           next: (data: any) => {
             if (data['status'] === 'OK') {
               this.categoryList = data.payload;

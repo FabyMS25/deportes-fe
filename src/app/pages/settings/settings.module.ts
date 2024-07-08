@@ -17,7 +17,7 @@ import lottie from 'lottie-web';
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SharedModule } from '../../shared/shared.module';
 import { EmployeesComponent } from './empleados/employees.component';
-import { DeportesComponent } from './categories/deportes.component';
+import { CategoriasComponent } from './categories/categorias.component';
 import { SortByCrmPipe } from "../settings/sort-by.pipe";
 
 import { FieldsComponent } from './fields/list/fields.component';
@@ -25,13 +25,16 @@ import { ModalEmployeeComponent } from './empleados/modal/modalEmployee.componen
 import { FacilitiesComponent } from './facilities/list/facilities.component';
 import { ModalFacilitiesComponent } from './facilities/modal/modal.component';
 import { ModalFieldsComponent } from './fields/modal/modal.component';
+import { AreasComponent } from './areas/areas.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
   declarations: [
     EmployeesComponent,
     FieldsComponent,
     FacilitiesComponent,
-    DeportesComponent,
+    CategoriasComponent,
+    AreasComponent,
     SortByCrmPipe,
     ModalFacilitiesComponent,
     ModalFieldsComponent,
@@ -49,7 +52,8 @@ import { ModalFieldsComponent } from './fields/modal/modal.component';
     FlatpickrModule,
     NgSelectModule,
     SettingsRoutingModule,
-    SharedModule
+    SharedModule,
+    TranslateModule,
   ],
   providers: [
     DatePipe

@@ -16,7 +16,7 @@ const httpOptions = {
 @Injectable({
   providedIn: 'root'
 })
-export class CanchaHorariosService {
+export class HorariosService {
     apiUrl = environment.backendUrl + '/horario';
 
 

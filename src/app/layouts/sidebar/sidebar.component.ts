@@ -75,14 +75,13 @@ export class SidebarComponent implements OnInit {
 
   toggleItem(item: any) {
     this.menuItems.forEach((menuItem: any) => {
-
-      if (menuItem == item) {
+      if (menuItem === item) {
         menuItem.isCollapsed = !menuItem.isCollapsed
       } else {
-        menuItem.isCollapsed = true
+        // menuItem.isCollapsed = true
       }
-      if (menuItem.subItems) {
-        menuItem.subItems.forEach((subItem: any) => {
+      if (menuItem.permisoHijoListDto) {
+        menuItem.permisoHijoListDto.forEach((subItem: any) => {
 
           if (subItem == item) {
             menuItem.isCollapsed = !menuItem.isCollapsed
@@ -90,8 +89,8 @@ export class SidebarComponent implements OnInit {
           } else {
             subItem.isCollapsed = true
           }
-          if (subItem.subItems) {
-            subItem.subItems.forEach((childitem: any) => {
+          if (subItem.permisoHijoListDto) {
+            subItem.permisoHijoListDto.forEach((childitem: any) => {
 
               if (childitem == item) {
                 childitem.isCollapsed = !childitem.isCollapsed
@@ -100,8 +99,8 @@ export class SidebarComponent implements OnInit {
               } else {
                 childitem.isCollapsed = true
               }
-              if (childitem.subItems) {
-                childitem.subItems.forEach((childrenitem: any) => {
+              if (childitem.permisoHijoListDto) {
+                childitem.permisoHijoListDto.forEach((childrenitem: any) => {
 
                   if (childrenitem == item) {
                     childrenitem.isCollapsed = false

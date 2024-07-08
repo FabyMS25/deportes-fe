@@ -1,0 +1,214 @@
+<div class="auth-page-wrapper pt-5">
+    <!-- auth page bg -->
+    <div class="auth-one-bg-position auth-one-bg"  id="auth-particles">
+        <div class="bg-overlay"></div>
+  
+        <div class="shape">
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1440 120">
+                <path d="M 0,36 C 144,53.6 432,123.2 720,124 C 1008,124.8 1296,56.8 1440,40L1440 140L0 140z"></path>
+            </svg>
+        </div>
+    </div>
+  
+    <!-- auth page content -->
+    <div class="auth-page-content">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="text-center mb-2 text-white-50">
+                        <div>
+                            <a href="/" class="d-inline-block auth-logo">
+                                <img src="assets/images/logos/LOGO-COMPUESTO-LARGO.png " alt="" height="50">
+                            </a>
+                        </div>
+                        <p class="mt-2 fs-15 fw-medium">Sistema de Reserva de Canchas Deportivas de GAMQ</p>
+                    </div>
+                </div>
+            </div>
+            <!-- end row -->
+  
+            <div class="row justify-content-center">
+                <div class="col-md-9 col-lg-7 col-xl-8">
+                    <div class="card mt-3">
+  
+                        <div class="card-body p-4">
+                            <div class="text-center ">
+                                <h5 class="text-primary">Crear Nueva cuenta</h5>
+                                <p class="text-muted">Registro de contribuyente</p>
+                            </div>
+                            <div class="p-2 mt-1">
+                                <form [formGroup]="SignupForm" (ngSubmit)="onSubmit()">
+                                    
+                                    <div class="mb-2">
+                                        <label for="nombre-field" class="form-label">Nombre</label>
+                                        <input type="text" id="nombre-field" class="form-control" placeholder="Ingresar Nombre"
+                                            required formControlName="nombre"
+                                            [ngClass]="{ 'is-invalid': submitted && f['nombre'].errors }" />
+                                        <div class="invalid-feedback">El campo es requerido.</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-lg-6">
+                                            <label for="apPaterno-field" class="form-label">Apellido Paterno</label>
+                                            <input type="text" id="apPaterno-field" class="form-control" placeholder="Apellido Paterno"
+                                                required formControlName="apPaterno"
+                                                [ngClass]="{ 'is-invalid': submitted && f['apPaterno'].errors }" />
+                                            <div class="invalid-feedback">El campo es requerido.</div>
+                                        </div>
+                                        <div class="col-lg-6">
+                                            <label for="apMaterno-field" class="form-label">Apellido Materno</label>
+                                            <input type="text" id="apMaterno-field" class="form-control" placeholder="Apellido Materno"
+                                                formControlName="apMaterno"
+                                                [ngClass]="{ 'is-invalid': submitted && f['apMaterno'].errors }" />
+                                            <div class="invalid-feedback">El campo es requerido.</div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-lg-6">
+                                            <label for="nroCarnet-field" class="form-label">Carnet</label>
+                                            <input type="text" id="nroCarnet-field" class="form-control" placeholder="Ingresar Carnet"
+                                                formControlName="nroCarnet"
+                                                [ngClass]="{ 'is-invalid': submitted && f['nroCarnet'].errors }" />
+                                            <div class="invalid-feedback">El campo es requerido.</div>
+                                        </div>
+                                        <div class="col-lg-6">
+                                            <label for="ciExpedido-field" class="form-label">Expedido</label>
+                                            <select class="form-select" aria-label="ciExpedido"
+                                                 [ngClass]="{'is-invalid': submitted && f['ciExpedido'].errors }">
+                                                <option selected disabled class="text-muted">Expedido</option>
+                                                @for (item of cityAcronym ; track $index) {
+                                                    <option [value]="item.id">{{item.descripcion}}</option>
+                                                }
+                                            </select>
+                                            @if(submitted && f['ciExpedido'].errors){ 
+                                            <div class="invalid-feedback"  align="left">
+                                                @if(f['ciExpedido'].errors['required']){ 
+                                                <div>Debe ingresar el Expedido
+                                                </div>
+                                                }
+                                            </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-lg-6">
+                                            <label for="nroNit-field" class="form-label">NIT</label>
+                                            <input type="text" id="nroNit-field" class="form-control" placeholder="Ingresar NIT"
+                                                formControlName="nroNit"
+                                                [ngClass]="{ 'is-invalid': submitted && f['nroNit'].errors }" />
+                                            <div class="invalid-feedback">El campo es requerido.</div>
+                                        </div>
+                                        <div class="col-lg-6">
+                                            <label for="sexo-field" class="form-label">Sexo</label>
+                                            <select class="form-select" aria-label="sexo"
+                                                 [ngClass]="{'is-invalid': submitted && f['sexo'].errors }">
+                                                <option selected disabled class="text-muted">Sexo</option>
+                                                <option value="F">Femenino</option>
+                                                <option value="M">Masculino</option>
+                                            </select>
+                                            @if(submitted && f['sexo'].errors){ 
+                                            <div class="invalid-feedback"  align="left">
+                                                @if(f['sexo'].errors['required']){ 
+                                                <div>El campo es requerido
+                                                </div>
+                                                }
+                                            </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="direccion-field" class="form-label">Dirección</label>
+                                        <input type="text" id="direccion-field" class="form-control" placeholder="Ingresar Dirección"
+                                            formControlName="direccion"
+                                            [ngClass]="{ 'is-invalid': submitted && f['direccion'].errors }" />
+                                        <div class="invalid-feedback">El campo es requerido.</div>
+                                    </div>                          
+                                    <div class="mb-2">
+                                        <label for="celular-field" class="form-label">Celular</label>
+                                        <input type="text" id="celular-field" class="form-control" placeholder="Ingresar Celular"
+                                            mask="000-000-0000" formControlName="celular"/>
+                                    </div>  
+                            
+                                    <div class="mb-2">
+                                        <label for="correo-field" class="form-label">Email <span class="text-danger">*</span></label>
+                                        <input type="correo" id="correo-field" class="form-control" placeholder="Ingrese un correo valido" 
+                                            required formControlName="correo"
+                                            [ngClass]="{ 'is-invalid': submitted && f['correo'].errors }" />
+                                        <div class="invalid-feedback">Debe Ingresar un correo.</div>
+                                    </div>  
+                                    <div class="mb-2">
+                                        <label for="username" class="form-label">Usuario <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="username" placeholder="Ingresar Usuario" required formControlName="username" 
+                                            [ngClass]="{ 'is-invalid': submitted && f['username'].errors }">
+                                        <div class="invalid-feedback">El campo es requerido.</div>
+                                    </div>  
+                                    <div class="mb-2">
+                                        <label for="password" class="form-label">Contraseña <span class="text-danger">*</span></label>
+                                        <div class="position-relative auth-pass-inputgroup">
+                                          <input [type]="fieldTextType ? 'text' : 'password'" class="form-control pe-5 password-input" 
+                                                placeholder="Ingresar Contraseña" id="password-input" aria-describedby="passwordInput" 
+                                                pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" required formControlName="password" 
+                                                [ngClass]="{ 'is-invalid': submitted && f['password'].errors }">
+                                          <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" 
+                                                type="button" id="password-addon"><i class="ri-eye-fill align-middle" 
+                                                [ngClass]="{'mdi-eye-off-outline': !fieldTextType, 'mdi-eye-outline': fieldTextType }" 
+                                                (click)="toggleFieldTextType()"></i></button>
+                                          <div class="invalid-feedback">
+                                              Porfavor ingrese su contraseña
+                                          </div>
+                                      </div>
+                                    </div>
+                                    <div class="mb-4">
+                                        <p class="mb-0 fs-12 text-muted fst-italic">
+                                            Al registrarte, aceptas los 
+                                            <a href="javascript:void(0);" class="text-primary text-decoration-underline fst-normal fw-medium">Términos de Uso</a> 
+                                            de GAMQ
+                                        </p>
+                                    </div>
+                                    
+                                    <div id="password-contain" class="p-3 bg-light mb-2 rounded">
+                                        <h5 class="fs-13">La contraseña debe contener:</h5>
+                                        <p id="pass-length" class="invalid fs-12 mb-2">Mínimo <b>8 caracteres</b></p>
+                                        <p id="pass-lower" class="invalid fs-12 mb-2">Al menos una <b>letra minúscula</b> (a-z)</p>
+                                        <p id="pass-upper" class="invalid fs-12 mb-2">Al menos una <b>letra mayúscula</b> (A-Z)</p>
+                                        <p id="pass-number" class="invalid fs-12 mb-0">Al menos un <b>número</b> (0-9)</p>
+                                    </div>
+                                    
+  
+                                    <div class="mt-4">
+                                        <button class="btn btn-secondary w-100" type="submit">Crear Cuenta</button>
+                                    </div>
+                                </form>  
+                            </div>
+                        </div>
+                        <!-- end card body -->
+                    </div>
+                    <!-- end card -->
+  
+                    <div class="mt-4 text-center">
+                        <p class="mb-0">Ya tienes una cuenta ? <a routerLink="/auth/login" class="fw-semibold text-primary text-decoration-underline"> Ingresar </a> </p>
+                    </div>
+  
+                </div>
+            </div>
+            <!-- end row -->
+        </div>
+        <!-- end container -->
+    </div>
+    <!-- end auth page content -->
+  
+    <!-- footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="text-center">
+                        <p class="mb-0 text-muted">&copy; {{year}} Velzon. Crafted with <i class="mdi mdi-heart text-danger"></i> by Themesbrand</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- end Footer -->
+  </div>
+  <!-- end auth-page-wrapper -->
+  

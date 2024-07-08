@@ -10,12 +10,12 @@ import { ngxCsv } from 'ngx-csv/ngx-csv';
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { DeportesService } from 'src/app/core/services/api/deporte.service';
 import { ModalFacilitiesComponent } from '../modal/modal.component';
 import { Complejo } from 'src/app/core/models/complejo.model';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { Districts } from 'src/app/core/constants/Distritos';
 import { Ceiling } from 'src/app/core/constants/Techados';
+import { CategoriasService } from 'src/app/core/services/api/categorias.service copy';
 @Component({
   selector: 'app-facilities',
   templateUrl: './facilities.component.html',
@@ -49,7 +49,7 @@ export class FacilitiesComponent {
   dataSelected!:Complejo;
   constructor(private modalService: NgbModal,
     private complejosService: ComplejosService,
-    private deportesService: DeportesService,
+    private categoriasService: CategoriasService,
     private authService: AuthenticationService, 
     private offcanvasService: NgbOffcanvas,
     private datePipe: DatePipe,) {
@@ -246,7 +246,7 @@ export class FacilitiesComponent {
 
   /* API Services */
   private getCategories(){
-    this.deportesService.getAll().subscribe({
+    this.categoriasService.getAll().subscribe({
         next: (data: any) => {
           if (data['status'] === 'OK') {
             this.categoryList = data.payload;

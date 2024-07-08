@@ -3,9 +3,10 @@ import { Routes, RouterModule } from '@angular/router';
 
 // Component pages
 import { EmployeesComponent } from "./empleados/employees.component";
-import { DeportesComponent } from "./categories/deportes.component";
+import { CategoriasComponent } from "./categories/categorias.component";
 import { FieldsComponent } from './fields/list/fields.component';
 import { FacilitiesComponent } from './facilities/list/facilities.component';
+import { AreasComponent } from './areas/areas.component';
 
 const routes: Routes = [
   {
@@ -22,7 +23,11 @@ const routes: Routes = [
   },
   {
     path: "categories",
-    component: DeportesComponent
+    component: CategoriasComponent
+  },
+  {
+    path: "area",
+    component: AreasComponent
   }
 
 ];
