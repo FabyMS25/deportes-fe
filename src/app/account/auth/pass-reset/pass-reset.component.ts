@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import Swal from 'sweetalert2';
+
+import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
 
 @Component({
   selector: 'app-pass-reset',
@@ -28,23 +31,71 @@ export class PassResetComponent implements OnInit {
      * Form Validatyion
      */
      this.passresetForm = this.formBuilder.group({
-      email: ['', [Validators.required]]
+      email: ['', [Validators.required, Validators.email]]
     });
   }
 
   // convenience getter for easy access to form fields
   get f() { return this.passresetForm.controls; }
 
+  
+  generateCode(): string {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+  }
+  generateToken($length = 32) {
+    // return bin2hex(random_bytes($length));
+  }
   /**
    * Form submit
    */
    onSubmit() {
     this.submitted = true;
-
-    // stop here if form is invalid
-    if (this.passresetForm.invalid) {
-      return;
+    if (this.passresetForm.valid) {
+      this.sendEmail(this.passresetForm.value.email,'')
     }
   }
+
+  sendEmail(email:string, name:string){
+    const codigo = this.generateCode();
+    const reply_to = email;  
+    const to_name = name;
+    
+    // const token = generateToken();
+    //storeToken($email, $token);
+    const resetLink = "http://localhost:4200/auth/pass-create?token=$token";
+    
+    emailjs.send("service_auth","template_m93u8sa",{
+        from_name: "GAMQ-DEPORTES",
+        to_name: to_name,
+        // message: "Un cambio de contraseña fue solicitado para el email: " + codigo,
+        message: resetLink,
+        reply_to: reply_to,
+      },'X9362U1QpUzthcHGT')
+      .then((response: EmailJSResponseStatus) => {
+        this.submitted = false;
+        this.notify("Un email fue enviado a "+email+" con las intrucciones para el cambio de contraseña", 'success');
+      }, (error) => {
+        this.submitted = false;
+        this.notify("No se pudo enviar correctamente el e-mail", 'error');
+      });
+    
+  }
+
+    /* repetitive functions */
+    private notify(message: string, type: 'success' | 'error' | 'warning' | 'info' | 'question') {
+      let timerInterval: any;
+      Swal.fire({
+        title: message,
+        icon: type,
+        timer: 2000,
+        timerProgressBar: true,
+        willClose: () => {
+          clearInterval(timerInterval);
+        },
+      }).then((result) => {
+        if (result.dismiss === Swal.DismissReason.timer) {
+        }
+      });
+    }
 
 }

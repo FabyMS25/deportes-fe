@@ -1,4 +1,4 @@
-const chatMessagesData = [
+const countriesData = [
     {
         "id": 1,
         "flagImg": "assets/images/flags/ac.svg",
@@ -1531,4 +1531,4 @@ const chatMessagesData = [
     }
 ]
 
-export { chatMessagesData };
+export { countriesData };

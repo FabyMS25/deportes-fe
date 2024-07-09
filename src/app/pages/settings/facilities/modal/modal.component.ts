@@ -205,7 +205,6 @@ export class ModalFacilitiesComponent {
 
         }else{
           this.notify(data.payload, 'error');
-
         }
       },error:(error)=>{
         this.notify(error, 'error');

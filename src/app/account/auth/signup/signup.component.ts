@@ -1,9 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { CityAcronym } from 'src/app/core/constants/Ciudades';
+import { UserStates } from 'src/app/core/constants/UserData';
 import { Contribuyente } from 'src/app/core/models/contribuyente.models';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import Swal from 'sweetalert2';
+
+import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
+import { MustMatch } from '../pass-create/must-match';
 
 @Component({
   selector: 'app-signup',
@@ -16,14 +20,14 @@ import Swal from 'sweetalert2';
  */
 export class SignupComponent implements OnInit {
 
-  // Login Form
   SignupForm!: UntypedFormGroup;
   submitted = false;
-  fieldTextType!: boolean;
-  // set the current year
+  passwordField!: boolean;
+  confirmField!: boolean;
   year: number = new Date().getFullYear();
   
   cityAcronym= CityAcronym
+  userState= UserStates
 
   constructor(private formBuilder: UntypedFormBuilder,
     private contribuyentesService: ContribuyentesService,
@@ -38,6 +42,8 @@ export class SignupComponent implements OnInit {
       nombre: ['', [Validators.required]],
       apPaterno: ['', [Validators.required]],
       apMaterno: [''],
+      codigoContribuyente: [''],
+      estadoUsuario: [''],
       sexo: [null],
       nroCarnet:['', [Validators.required]],
       nroNit:[''],
@@ -46,7 +52,10 @@ export class SignupComponent implements OnInit {
       celular:[''],
 
       username: ['', [Validators.required]],
-      password: ['', [Validators.required]],
+      password: ['', [Validators.required]], 
+      cpassword: ['', [Validators.required]],      
+    }, {
+      validator: MustMatch('password', 'cpassword')
     });
 
     // Password Validation set
@@ -115,11 +124,18 @@ export class SignupComponent implements OnInit {
   // convenience getter for easy access to form fields
   get f() { return this.SignupForm.controls; }
 
-  /**
+   /**
    * Password Hide/Show
    */
-   toggleFieldTextType() {
-    this.fieldTextType = !this.fieldTextType;
+   togglepasswordField() {
+    this.passwordField = !this.passwordField;
+  }
+
+  /**
+ * Password Hide/Show
+ */
+  toggleconfirmField() {
+    this.confirmField = !this.confirmField;
   }
 
   /* API requests */
@@ -129,12 +145,14 @@ export class SignupComponent implements OnInit {
    */
   onSubmit() {
     this.submitted = true;
-    this.submitted = true;
+    console.log(this.SignupForm)
     if (this.SignupForm.valid) {
       this.SignupForm.enable()
       let datos: Contribuyente = {
-        userName: this.SignupForm.value.userName,
+        userName: this.SignupForm.value.username,
         password: this.SignupForm.value.password,
+        codigoContribuyente: this.SignupForm.value.codigoContribuyente,
+        estadoUsuario: this.SignupForm.value.estadoUsuario,
         correo:this.SignupForm.value.correo,
         nombre: this.SignupForm.value.nombre,
         apPaterno: this.SignupForm.value.apPaterno,
@@ -160,9 +178,15 @@ export class SignupComponent implements OnInit {
     
   addData(datos:Contribuyente){
     this.contribuyentesService.save(datos).subscribe({
-      next:(data:Contribuyente)=>{
-        this.submitted=false;
-        this.notify('Datos Registrados exitosamente!','success'); 
+      next:(data:any)=>{
+        if (data['status'] === 'OK') {
+          this.SignupForm.reset();   
+          this.submitted=false;
+          this.notify('Datos Registrados exitosamente!','success');
+
+        }else{
+          this.notify(data.payload, 'error');
+        }
       },
       error: (error) => {
         this.notify('No se pudo Guardar los datos! '+error, 'error');

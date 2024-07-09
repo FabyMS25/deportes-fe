@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { MustMatch } from './must-match';
 
 @Component({
   selector: 'app-pass-create',
@@ -27,8 +28,10 @@ export class PassCreateComponent implements OnInit {
       */
       this.passresetForm = this.formBuilder.group({
        password: ['', [Validators.required]],
-       cpassword: ['', [Validators.required]]
-     });
+       cpassword: ['', [Validators.required]]       
+      }, {
+        validator: MustMatch('password', 'cpassword')
+      });
 
       // Password Validation set
       var myInput = document.getElementById("password-input") as HTMLInputElement;
@@ -93,7 +96,6 @@ export class PassCreateComponent implements OnInit {
 
    }
  
-   // convenience getter for easy access to form fields
    get f() { return this.passresetForm.controls; }
  
    /**
@@ -101,10 +103,10 @@ export class PassCreateComponent implements OnInit {
     */
     onSubmit() {
      this.submitted = true;
- 
-     // stop here if form is invalid
-     if (this.passresetForm.invalid) {
-       return;
+      console.log()
+
+     if (this.passresetForm.valid) {
+       console.log("is valid")
      }
    }
 

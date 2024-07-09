@@ -18,7 +18,7 @@ import Swal from 'sweetalert2';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ModalEmployeeComponent } from './modal/modalEmployee.component';
 import { UserService } from 'src/app/core/services/api-users/users.service';
-import { UserRol } from 'src/app/core/constants/UserRol';
+import { UserRol } from 'src/app/core/constants/UserData';
 import { EncargadoService } from 'src/app/core/services/api/encargado.service';
 
 @Component({

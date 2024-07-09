@@ -130,7 +130,7 @@ export class ModalEmployeeComponent {
     if (this.contentForm.valid) {
       this.contentForm.enable();
       
-      let datos: Encargado = {
+      let datos: any = {
         userUuid: this.contentForm.value.uuidUsuario,
         fechaInicio: this.contentForm.value.fechaInicio,
         fechaFin: this.contentForm.value.fechaFin,

@@ -27,7 +27,7 @@ const routes: Routes = [
     path: 'twostep', component:TwoStepComponent
   },
   {
-    path: "register",
+    path: "signup",
     component: SignupComponent
   },
   {

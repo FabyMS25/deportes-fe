@@ -12,7 +12,7 @@ import { TokenStorageService } from './token-storage.service';
 import { AuthUserService } from './api-users/auth.service';
 import { PermissionUserService } from './api-users/permission-user.service';
 
-import { UserRol } from 'src/app/core/constants/UserRol';
+import { UserRol } from 'src/app/core/constants/UserData';
 import { Contribuyente } from '../models/contribuyente.models';
 const AUTH_API = GlobalComponent.AUTH_API;
 

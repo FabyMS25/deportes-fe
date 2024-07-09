@@ -1,17 +1,17 @@
-export class Contribuyente {
+export interface Contribuyente {
   uuid?: number;
   userName?: string;
   password?: string;
   codigoContribuyente?:string;
-  nombre?: string;
-  apPaterno?: string;
+  estadoUsuario: string;
+  nombre: string;
+  apPaterno: string;
   apMaterno?: string;
-  nroCarnet?: string;
+  nroCarnet: string;
   nroNit?: string;
-  ciExpedido?: string;
-  sexo?: string;
+  ciExpedido: string;
+  sexo: string;
   direccion?: string;
   celular?: string;
-  correo?: string;
-  estadoUsuario?: string
+  correo: string;
 }
