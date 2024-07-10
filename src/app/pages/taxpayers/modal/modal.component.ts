@@ -79,8 +79,8 @@ export class ModalComponent {
     }
   }
   
-  generateCode(): number {
-    return Math.floor(1000 + Math.random() * 9000);
+  generateCode(): string {
+    return Math.floor(1000 + Math.random() * 9000).toString();
   }
   /**
   * Save

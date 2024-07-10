@@ -4,7 +4,7 @@ export interface Contribuyente {
   password?: string;
   codigoContribuyente?:string;
   estadoUsuario: string; // Pending, Active, Blocked, Closed 
-  verificationCode: number;
+  verificationCode?: string;
   nombre: string;
   apPaterno: string;
   apMaterno?: string;

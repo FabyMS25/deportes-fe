@@ -9,7 +9,7 @@ export const RegisterFailure = createAction('[Authentication] Register Failure',
 
 // login action
 export const login = createAction('[Authentication] Login', props<{ email: string, password: string }>());
-export const loginSuccess = createAction('[Authentication] Login Success', props<{ user: Contribuyente }>());
+export const loginSuccess = createAction('[Authentication] Login Success', props<{ user: any }>());
 export const loginFailure = createAction('[Authentication] Login Failure', props<{ error: string }>());
 
 // logout action

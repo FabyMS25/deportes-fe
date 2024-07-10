@@ -10,6 +10,7 @@ import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
 import { MustMatch } from '../pass-create/must-match';
 import { Router } from '@angular/router';
 import { UserDataService } from './user-data.service';
+import { RuatAuthService } from 'src/app/core/services/ruat/ruatAuth.service';
 
 @Component({
   selector: 'app-signup',
@@ -33,11 +34,13 @@ export class SignupComponent implements OnInit {
 
   constructor(private formBuilder: UntypedFormBuilder,
     private contribuyentesService: ContribuyentesService,
+    private ruatAuthService: RuatAuthService,
     private router: Router,
     private userDataService: UserDataService
   ) { }
 
   ngOnInit(): void {
+    this.authRuat()
     /**
      * Form Validatyion
      */
@@ -47,8 +50,8 @@ export class SignupComponent implements OnInit {
       apPaterno: ['', [Validators.required]],
       apMaterno: [''],
       codigoContribuyente: [''],
-      estadoUsuario: [''],
-      verificationCode:[null],
+      estadoUsuario: ['Pending'],
+      verificationCode:[''],
       sexo: ['', [Validators.required]],
       nroCarnet:['', [Validators.required]],
       nroNit:[''],
@@ -126,32 +129,25 @@ export class SignupComponent implements OnInit {
 
   }
 
-  // convenience getter for easy access to form fields
   get f() { return this.SignupForm.controls; }
-
    /**
    * Password Hide/Show
    */
    togglepasswordField() {
     this.passwordField = !this.passwordField;
   }
-
   /**
  * Password Hide/Show
  */
   toggleconfirmField() {
     this.confirmField = !this.confirmField;
   }
-
-  /* API requests */
   
   /**
    * Form submit
    */    
   onSubmit() {
-    this.submitted = true;
-    console.log(this.SignupForm);
-  
+    this.submitted = true;  
     if (this.SignupForm.valid) {
       const codigo = this.generateCode();
       this.SignupForm.enable();
@@ -183,7 +179,6 @@ export class SignupComponent implements OnInit {
         .catch(error => {
           this.userDataService.setTemporaryUserData(null);
         });
-        // this.addData(datos);
 
     } else {
       this.notify('Formulario Invalido!', 'error');
@@ -194,31 +189,9 @@ export class SignupComponent implements OnInit {
     }
   }
 
-  addData(datos:Contribuyente){
-    this.contribuyentesService.save(datos).subscribe({
-      next:(data:any)=>{
-        if (data['status'] === 'OK') {
-          this.SignupForm.reset();   
-          this.submitted=false;
-          this.notify('Sus Datos fueron registrados!','success');  
-          const user = data.payload;        
-          const link = `http://localhost:4200/auth/twostep?username=${user.userName}`;
-          this.sendEmail(user,link)       
-          // this.router.navigate(['/auth/twostep'], { queryParams: { uuid: user.uuid } });
-          this.router.navigate(['/auth/twostep'], { queryParams: { username: datos.userName } });
- 
-        }else{
-          this.notify(data.payload, 'error');
-        }
-      },
-      error: (error) => {
-        this.notify('No se pudo Guardar los datos! '+error, 'error');
-      }
-    })
-  }
   
-  generateCode(): number {
-    return Math.floor(1000 + Math.random() * 9000);
+  generateCode(): string {
+    return Math.floor(1000 + Math.random() * 9000).toString();
   }
 
   sendEmail(data: any, link: string): Promise<void> {
@@ -241,7 +214,7 @@ export class SignupComponent implements OnInit {
       .catch((error) => {
         this.submitted = false;
         this.notify("No se pudo enviar correctamente el e-mail", 'error');
-        throw error; // Re-throw the error so it can be caught in the calling function
+        throw error; 
       });
   }
 
@@ -259,6 +232,17 @@ export class SignupComponent implements OnInit {
       if (result.dismiss === Swal.DismissReason.timer) {
       }
     });
+  }
+  /* API REQUESTS */
+  private authRuat(){
+    this.ruatAuthService.authenticate().subscribe({
+      next:(data:any)=>{
+         console.log(data)
+      },
+      error: (error) => {
+        console.log(error)
+      }
+    })
   }
 
 }
