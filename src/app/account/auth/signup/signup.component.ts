@@ -8,6 +8,8 @@ import Swal from 'sweetalert2';
 
 import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
 import { MustMatch } from '../pass-create/must-match';
+import { Router } from '@angular/router';
+import { UserDataService } from './user-data.service';
 
 @Component({
   selector: 'app-signup',
@@ -31,6 +33,8 @@ export class SignupComponent implements OnInit {
 
   constructor(private formBuilder: UntypedFormBuilder,
     private contribuyentesService: ContribuyentesService,
+    private router: Router,
+    private userDataService: UserDataService
   ) { }
 
   ngOnInit(): void {
@@ -44,7 +48,8 @@ export class SignupComponent implements OnInit {
       apMaterno: [''],
       codigoContribuyente: [''],
       estadoUsuario: [''],
-      sexo: [null],
+      verificationCode:[null],
+      sexo: ['', [Validators.required]],
       nroCarnet:['', [Validators.required]],
       nroNit:[''],
       ciExpedido:['', [Validators.required]],
@@ -142,17 +147,21 @@ export class SignupComponent implements OnInit {
   
   /**
    * Form submit
-   */
+   */    
   onSubmit() {
     this.submitted = true;
-    console.log(this.SignupForm)
+    console.log(this.SignupForm);
+  
     if (this.SignupForm.valid) {
-      this.SignupForm.enable()
+      const codigo = this.generateCode();
+      this.SignupForm.enable();
+      
       let datos: Contribuyente = {
         userName: this.SignupForm.value.username,
         password: this.SignupForm.value.password,
         codigoContribuyente: this.SignupForm.value.codigoContribuyente,
         estadoUsuario: this.SignupForm.value.estadoUsuario,
+        verificationCode: codigo,
         correo:this.SignupForm.value.correo,
         nombre: this.SignupForm.value.nombre,
         apPaterno: this.SignupForm.value.apPaterno,
@@ -164,26 +173,40 @@ export class SignupComponent implements OnInit {
         direccion:this.SignupForm.value.direccion,
         celular:this.SignupForm.value.celular,
       };
-          this.addData(datos);
-      
-    }else {
-        this.notify('Formulario Invalido!', 'error');
-    }
+      // Store datos in the service
+      this.userDataService.setTemporaryUserData(datos);
+  
+      this.sendEmail(datos, '')
+        .then(() => {
+          this.router.navigate(['/auth/twostep'], { queryParams: { username: datos.userName } });
+        })
+        .catch(error => {
+          this.userDataService.setTemporaryUserData(null);
+        });
+        // this.addData(datos);
 
-    setTimeout(() => {
-      // this.contentForm.reset();
-    }, 2000);
-    // this.submitted = true
+    } else {
+      this.notify('Formulario Invalido!', 'error');
+      Object.keys(this.SignupForm.controls).forEach(key => {
+        const control = this.SignupForm.get(key);
+        control?.markAsTouched();
+      });
+    }
   }
-    
+
   addData(datos:Contribuyente){
     this.contribuyentesService.save(datos).subscribe({
       next:(data:any)=>{
         if (data['status'] === 'OK') {
           this.SignupForm.reset();   
           this.submitted=false;
-          this.notify('Datos Registrados exitosamente!','success');
-
+          this.notify('Sus Datos fueron registrados!','success');  
+          const user = data.payload;        
+          const link = `http://localhost:4200/auth/twostep?username=${user.userName}`;
+          this.sendEmail(user,link)       
+          // this.router.navigate(['/auth/twostep'], { queryParams: { uuid: user.uuid } });
+          this.router.navigate(['/auth/twostep'], { queryParams: { username: datos.userName } });
+ 
         }else{
           this.notify(data.payload, 'error');
         }
@@ -194,6 +217,34 @@ export class SignupComponent implements OnInit {
     })
   }
   
+  generateCode(): number {
+    return Math.floor(1000 + Math.random() * 9000);
+  }
+
+  sendEmail(data: any, link: string): Promise<void> {
+    const email = data.correo;
+    const name = data.nombre;
+    const codigo = data.verificationCode;
+  
+    return emailjs.send("service_auth", "template_6htavso", {
+      from_name: "GAMQ-DEPORTES",
+      to_name: name,
+      message: codigo,
+      // message: `Puedes ingresar al siguiente Link: ${link}`,
+      reply_to: email,
+    }, 'X9362U1QpUzthcHGT')
+      .then((response: EmailJSResponseStatus) => {
+        this.notify("Un email fue enviado a " + email + " con el codigo de confirmacion", 'success');
+        this.submitted = false;
+        this.SignupForm.reset();   
+      })
+      .catch((error) => {
+        this.submitted = false;
+        this.notify("No se pudo enviar correctamente el e-mail", 'error');
+        throw error; // Re-throw the error so it can be caught in the calling function
+      });
+  }
+
   private notify(message: any, type: any): void {
     let timerInterval: any;
     Swal.fire({

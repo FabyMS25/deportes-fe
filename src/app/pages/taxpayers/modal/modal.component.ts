@@ -78,7 +78,10 @@ export class ModalComponent {
         });
     }
   }
-
+  
+  generateCode(): number {
+    return Math.floor(1000 + Math.random() * 9000);
+  }
   /**
   * Save
   */
@@ -92,6 +95,7 @@ export class ModalComponent {
         password: this.contentForm.value.password,
         codigoContribuyente: this.contentForm.value.codigoContribuyente,
         estadoUsuario: this.contentForm.value.estadoUsuario,
+        verificationCode: this.contentForm.value.verificationCode,
         correo:this.contentForm.value.correo,
         nombre: this.contentForm.value.nombre,
         apPaterno: this.contentForm.value.apPaterno,
@@ -107,7 +111,8 @@ export class ModalComponent {
           datos.uuid=this.contentForm.value.uuid,
           this.updateData(datos);
       } else {
-          this.addData(datos);
+        datos.verificationCode= this.generateCode()
+        this.addData(datos);
       }
     }else {
         this.notify('Formulario Invalido!', 'error');

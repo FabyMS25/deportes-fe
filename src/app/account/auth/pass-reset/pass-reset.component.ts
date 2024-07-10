@@ -39,12 +39,11 @@ export class PassResetComponent implements OnInit {
   get f() { return this.passresetForm.controls; }
 
   
-  generateCode(): string {
+  generateToken(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
   }
-  generateToken($length = 32) {
     // return bin2hex(random_bytes($length));
-  }
+  
   /**
    * Form submit
    */
@@ -56,11 +55,9 @@ export class PassResetComponent implements OnInit {
   }
 
   sendEmail(email:string, name:string){
-    const codigo = this.generateCode();
     const reply_to = email;  
-    const to_name = name;
-    
-    // const token = generateToken();
+    const to_name = name;    
+    const token = this.generateToken();
     //storeToken($email, $token);
     const resetLink = "http://localhost:4200/auth/pass-create?token=$token";
     
@@ -77,8 +74,7 @@ export class PassResetComponent implements OnInit {
       }, (error) => {
         this.submitted = false;
         this.notify("No se pudo enviar correctamente el e-mail", 'error');
-      });
-    
+      });    
   }
 
     /* repetitive functions */

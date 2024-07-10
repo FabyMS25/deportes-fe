@@ -2,14 +2,13 @@ import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
-import { NgbToastModule } from '@ng-bootstrap/ng-bootstrap';
-
+import { NgbCarouselModule, NgbToastModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgOtpInputModule } from 'ng-otp-input';
 // Load Icons
 import { defineElement } from "@lordicon/element";
 import lottie from 'lottie-web';
 
 import { ToastsContainer } from './login/toasts-container.component';
-
 
 import { AccountRoutingModule } from './account-routing.module';
 import { LoginComponent } from './login/login.component';
@@ -35,8 +34,11 @@ import { SignupComponent } from './signup/signup.component';
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
+    NgbCarouselModule,
     NgbToastModule,
+    NgOtpInputModule,
     AccountRoutingModule,
+    // SigninModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

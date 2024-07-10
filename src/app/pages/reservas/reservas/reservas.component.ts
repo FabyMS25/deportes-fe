@@ -49,7 +49,6 @@ export class ReservasComponent implements OnInit {
     public formBuilder: UntypedFormBuilder,
     private authService: AuthenticationService,
     private reservasService: ReservaService,
-    private store: Store<{ data: RootReducerState }>,
     public modalService: NgbModal) {
       this.canActivate = this.authService.hasPermissionModulo(this.title);
   }

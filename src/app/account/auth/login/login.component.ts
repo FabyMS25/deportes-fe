@@ -34,7 +34,6 @@ export class LoginComponent implements OnInit {
     private formBuilder: UntypedFormBuilder,
     private authenticationService: AuthenticationService,
     private router: Router,
-    private route: ActivatedRoute,
     public toastService: ToastService) {
       // redirect to home if already logged in
       if (this.authenticationService.currentUserValue) {

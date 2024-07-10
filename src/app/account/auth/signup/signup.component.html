@@ -29,24 +29,24 @@
   
             <div class="row justify-content-center">
                 <div class="col-md-9 col-lg-7 col-xl-8">
-                    <div class="card mt-3">
+                    <div class="card mt-2">
   
                         <div class="card-body p-4">
                             <div class="text-center ">
                                 <h5 class="text-primary">Crear Nueva cuenta</h5>
                                 <p class="text-muted">Registro de contribuyente</p>
                             </div>
-                            <div class="p-2 mt-1">
+                            <div class="p-2">
                                 <form [formGroup]="SignupForm" (ngSubmit)="onSubmit()">
                                     
-                                    <div class="mb-2">
+                                    <div class="mt-2">
                                         <label for="nombre-field" class="form-label">Nombre  <span class="text-danger">*</span></label>
                                         <input type="text" id="nombre-field" class="form-control" placeholder="Ingresar Nombre"
                                             required formControlName="nombre"
                                             [ngClass]="{ 'is-invalid': submitted && f['nombre'].errors }" />
                                         <div class="invalid-feedback">El campo es requerido.</div>
                                     </div>
-                                    <div class="row mb-2">
+                                    <div class="row mt-2">
                                         <div class="col-lg-6">
                                             <label for="apPaterno-field" class="form-label">Apellido Paterno <span class="text-danger">*</span></label>
                                             <input type="text" id="apPaterno-field" class="form-control" placeholder="Apellido Paterno"
@@ -62,7 +62,7 @@
                                             <div class="invalid-feedback">El campo es requerido.</div>
                                         </div>
                                     </div>
-                                    <div class="row mb-2">
+                                    <div class="row mt-2">
                                         <div class="col-lg-6">
                                             <label for="nroCarnet-field" class="form-label">Carnet <span class="text-danger">*</span></label>
                                             <input type="text" id="nroCarnet-field" class="form-control" placeholder="Ingresar Carnet"
@@ -78,7 +78,7 @@
                                                 aria-label="ciExpedido"
                                                 formControlName="ciExpedido" 
                                                 [ngClass]="{'is-invalid': submitted && f['ciExpedido'].errors }">
-                                                <option selected disabled class="text-muted">Expedido</option>
+                                                <option [value]="''" disabled class="text-muted">Seleccionar una opcion</option>
                                                 <option *ngFor="let item of cityAcronym" [value]="item.id">
                                                     {{ item.descripcion }}
                                                 </option>
@@ -88,7 +88,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="row mb-2">
+                                    <div class="row mt-2">
                                         <div class="col-lg-6">
                                             <label for="nroNit-field" class="form-label">NIT</label>
                                             <input type="text" id="nroNit-field" class="form-control" placeholder="Ingresar NIT"
@@ -101,7 +101,7 @@
                                             <select class="form-select" aria-label="sexo"
                                                 formControlName="sexo" 
                                                 [ngClass]="{'is-invalid': submitted && f['sexo'].errors }">
-                                                <option selected disabled class="text-muted">Sexo</option>
+                                                <option [value]="''" disabled class="text-muted">Seleccionar una opcion</option>
                                                 <option value="F">Femenino</option>
                                                 <option value="M">Masculino</option>
                                             </select>
@@ -111,34 +111,35 @@
                                         </div>
                                         
                                     </div>
-                                    <div class="mb-2">
+                                    <div class="mt-2">
                                         <label for="direccion-field" class="form-label">Dirección</label>
                                         <input type="text" id="direccion-field" class="form-control" placeholder="Ingresar Dirección"
                                             formControlName="direccion"
                                             [ngClass]="{ 'is-invalid': submitted && f['direccion'].errors }" />
                                         <div class="invalid-feedback">El campo es requerido.</div>
                                     </div>                          
-                                    <div class="mb-2">
+                                    <div class="mt-2">
                                         <label for="celular-field" class="form-label">Celular</label>
                                         <input type="text" id="celular-field" class="form-control" placeholder="Ingresar Celular"
                                             mask="000-000-0000" formControlName="celular"/>
                                     </div>  
                             
-                                    <div class="mb-2">
+                                    <div class="mt-2">
                                         <label for="correo-field" class="form-label">Email <span class="text-danger">*</span></label>
                                         <input type="correo" id="correo-field" class="form-control" placeholder="Ingrese un correo valido" 
                                             required formControlName="correo"
                                             [ngClass]="{ 'is-invalid': submitted && f['correo'].errors }" />
                                         <div class="invalid-feedback">Debe Ingresar un correo.</div>
                                     </div>  
-                                    <div class="mb-2">
+                                    <div id="emailInput" class="form-text">Debe tener acceso al correo <b>Se le enviara el codigo de confirmación </b></div>
+                                    <div class="mt-2">
                                         <label for="username" class="form-label">Usuario <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" id="username" placeholder="Ingresar Usuario" required formControlName="username" 
                                             [ngClass]="{ 'is-invalid': submitted && f['username'].errors }">
                                         <div class="invalid-feedback">El campo es requerido.</div>
                                     </div>  
                                     
-                                    <div class="mb-2">
+                                    <div class="mt-2">
                                         <label class="form-label" for="password-input">Contraseña</label>
                                         <div class="position-relative auth-pass-inputgroup">
                                             <input [type]="passwordField ? 'text' : 'password'" class="form-control pe-5 password-input" placeholder="Ingresar contraseña" id="password-input" aria-describedby="passwordInput" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" required formControlName="password"
@@ -152,12 +153,11 @@
                                                     <span>Porfavor ingrese su contraseña</span>
                                                 }
                                             </div>
-                                            }
-                                            
+                                            }                                            
                                         </div>
                                         <div id="passwordInput" class="form-text">Debe tener un mínimo de <b>8 caracteres</b></div>
                                     </div>            
-                                    <div class="mb-2">
+                                    <div class="mt-2">
                                         <label class="form-label" for="confirm-password-input">Confirmar Contraseña</label>
                                         <div class="position-relative auth-pass-inputgroup mb-3">
                                             <input [type]="confirmField ? 'text' : 'password'" class="form-control pe-5 password-input" placeholder="Confirmar contraseña" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" id="confirm-password-input" required formControlName="cpassword"
@@ -172,14 +172,6 @@
                                             }
                                         </div>
                                     </div>
-
-                                    <div class="mb-4">
-                                        <p class="mb-0 fs-12 text-muted fst-italic">
-                                            Al registrarte, aceptas los 
-                                            <a href="javascript:void(0);" class="text-primary text-decoration-underline fst-normal fw-medium">Términos de Uso</a> 
-                                            de GAMQ
-                                        </p>
-                                    </div>
                                     
                                     <div id="password-contain" class="p-3 bg-light mb-2 rounded">
                                         <h5 class="fs-13">La contraseña debe contener:</h5>
@@ -189,6 +181,13 @@
                                         <p id="pass-number" class="invalid fs-12 mb-0">Al menos un <b>número</b> (0-9)</p>
                                     </div>
                                     
+                                    <div class="mb-4">
+                                        <p class="mb-0 fs-12 text-muted fst-italic">
+                                            Al registrarte, aceptas los 
+                                            <a href="javascript:void(0);" class="text-primary text-decoration-underline fst-normal fw-medium">Términos de Uso</a> 
+                                            del GAMQ
+                                        </p>
+                                    </div>
   
                                     <div class="mt-4">
                                         <button class="btn btn-secondary w-100" type="submit">Crear Cuenta</button>
