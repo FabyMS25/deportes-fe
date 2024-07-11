@@ -24,7 +24,8 @@ export class RuatAuthService {
       'usuario': username,
       'clave': password
     });
-
+    // const corsProxy = 'https://cors-anywhere.herokuapp.com/';
+    // return this.http.post<any>(`${corsProxy}${ruatUrl}/ServiciosRuatJEE-web/api/autentificacion`, { headers });
     return this.http.post<any>(`${ruatUrl}/ServiciosRuatJEE-web/api/autentificacion`, { headers });
   }
 
