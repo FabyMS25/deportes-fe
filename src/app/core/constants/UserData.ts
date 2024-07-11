@@ -18,27 +18,23 @@ const UserRol = [
 const UserStates = [
     {
         "id":0,
-        "state": "Pending",
+        "state": "Pendiente",
     },
     {
         "id": 1,
-        "state": "Active",
+        "state": "Activo",
     },
     {
         "id": 2,
-        "state": "Blocked",
+        "state": "Bloqueado",
     },
     {
         "id": 3,
-        "state": "Inactive",
+        "state": "Inactivo",
     },
     {
         "id": 4,
-        "state": "Closed",
-    },
-    {
-        "id": 5,
-        "state": "Password Reset Required",
+        "state": "Baja",
     },
     {
         "id": 6,
@@ -46,4 +42,35 @@ const UserStates = [
     }
 ]
 
-export{ UserRol , UserStates};
+const UserDocType = [
+    {
+        "type":"CI",
+        "description": "Carnet de Identidad",
+    },
+    {
+        "type": "CE",
+        "description": "Carnet de Extranjero",
+    }
+]
+
+
+const UserCivilStatus = [
+    {
+        "type":"SO",
+        "description": "Soltero(a)",
+    },
+    {
+        "type": "CA",
+        "description": "Casado(a)",
+    },
+    {
+        "type": "VI",
+        "description": "Ciudo(a)",
+    },
+    {
+        "type": "DI",
+        "description": "Divorciado(a)",
+    }
+]
+
+export{ UserRol , UserStates , UserCivilStatus, UserDocType};

@@ -20,4 +20,12 @@ export class ErrorInterceptor implements HttpInterceptor {
             return throwError(error);
         }))
     }
+    // intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    //     const modifiedReq = req.clone({
+    //       setHeaders: {
+    //         'X-Requested-With': 'XMLHttpRequest'
+    //       }
+    //     });
+    //     return next.handle(modifiedReq);
+    //   }
 }

@@ -9,7 +9,7 @@ import { ngxCsv } from 'ngx-csv';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { Categoria } from 'src/app/core/models/categoria.model';
-import { CategoriasService } from 'src/app/core/services/api/categorias.service copy';
+import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { TranslateService } from '@ngx-translate/core';
 
 

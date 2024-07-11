@@ -5,8 +5,9 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 import { GlobalComponent } from "../../../global-component";
-const ruatUrl = `${environment.apiRuatUrl}`;
 
+const ruatUrl = `${environment.apiRuatUrl}`;
+// const ruatUrl = 'https://cors-anywhere.herokuapp.com/https://verificacionjboss.ruat.gob.bo';
 @Injectable({
   providedIn: 'root'
 })
@@ -16,19 +17,35 @@ export class RuatAuthService {
     private http: HttpClient,
   ) { }
 
+  // authenticate(): Observable<any> {
+  //   const username=GlobalComponent.RUAT_usuario;
+  //   const password=GlobalComponent.RUAT_clave;
+  //   const headers = new HttpHeaders({
+  //     'Content-Type': 'application/json',
+  //     'usuario': username,
+  //     'clave': password
+  //   });
+  //   return this.http.post<any>(`${ruatUrl}/ServiciosRuatJEE-web/api/autentificacion`, { headers });
+  // }
+
   authenticate(): Observable<any> {
-    const username=GlobalComponent.RUAT_usuario;
-    const password=GlobalComponent.RUAT_clave;
+    const username = GlobalComponent.RUAT_usuario;
+    const password = GlobalComponent.RUAT_clave;
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
-      'usuario': username,
-      'clave': password
+      'Accept': 'application/json, text/plain, */*',
+      'Usuario': username,
+      'Clave': password
     });
-    // const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-    // return this.http.post<any>(`${corsProxy}${ruatUrl}/ServiciosRuatJEE-web/api/autentificacion`, { headers });
-    return this.http.post<any>(`${ruatUrl}/ServiciosRuatJEE-web/api/autentificacion`, { headers });
+    return this.http.post<any>(
+      `${ruatUrl}/ServiciosRuatJEE-web/api/autentificacion`, 
+      null, 
+      { 
+        headers: headers,
+        withCredentials: true
+      }
+    );
   }
-
   // constructor(private ruatService: RuatService) {}
 
   // onLogin(username: string, password: string) {

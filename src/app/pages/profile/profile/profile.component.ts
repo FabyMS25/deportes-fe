@@ -70,7 +70,7 @@ passwordData = {
   getAcronymCity(city: string): string {
     let acronym = '';
     CityAcronym.forEach(element => {
-      if (element['descripcion'] === city) {
+      if (element['description'] === city) {
         acronym = element['id'];
       }
     });

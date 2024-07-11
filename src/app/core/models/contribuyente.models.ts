@@ -1,18 +1,21 @@
 export interface Contribuyente {
   uuid?: number;
-  userName?: string;
-  password?: string;
+  userName: string;
+  password: string;
+  tipoContribuyente?:string;
   codigoContribuyente?:string;
-  estadoUsuario: string; // Pending, Active, Blocked, Closed 
-  verificationCode?: string;
+  estadoUsuario: string; 
+  verificationCode?: string; //no en bk
   nombre: string;
-  apPaterno: string;
-  apMaterno?: string;
-  nroCarnet: string;
+  apPaterno: string; //primerApellido
+  apMaterno?: string; //segundoApellido
+  fechaNacimiento: Date;
+  tipoDocumento: string;
+  nroCarnet: string; //nroDocumento
   nroNit?: string;
-  ciExpedido: string;
-  sexo: string;
-  direccion?: string;
-  celular?: string;
+  ciExpedido: string; //expedido
+  sexo: string; //genero
+  celular: string;
   correo: string;
+  direccion?: string;
 }

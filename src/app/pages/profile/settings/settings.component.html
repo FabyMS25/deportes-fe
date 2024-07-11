@@ -139,8 +139,8 @@
                                         <div class="mb-3">
                                             <label for="ciExpedido" class="form-label">Expedido</label>          
                                             <select class="form-select" required id="ciExpedito" name="ciExpedito" [(ngModel)]="persona.ciExpedito">
-                                                <option *ngFor="let ex of CityAcronym" [ngValue]="ex.descripcion">
-                                                {{ex.descripcion}}
+                                                <option *ngFor="let ex of CityAcronym" [ngValue]="ex.description">
+                                                {{ex.description}}
                                                 </option>
                                             </select>
                                             <div class="invalid-feedback">El campo es requerido.</div>

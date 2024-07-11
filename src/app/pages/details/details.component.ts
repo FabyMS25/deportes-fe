@@ -10,7 +10,7 @@ import { debounceTime } from 'rxjs';
 
 import { ModalComponent } from '../reservas/modal/modal.component';
 import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
-import { CategoriasService } from 'src/app/core/services/api/categorias.service copy';
+import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { HorariosService } from 'src/app/core/services/api/horarios.service';
 @Component({
   selector: 'app-details',

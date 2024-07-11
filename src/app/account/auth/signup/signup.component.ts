@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { CityAcronym } from 'src/app/core/constants/Ciudades';
-import { UserStates } from 'src/app/core/constants/UserData';
+import { UserStates , UserCivilStatus, UserDocType} from 'src/app/core/constants/UserData';
 import { Contribuyente } from 'src/app/core/models/contribuyente.models';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import Swal from 'sweetalert2';
@@ -18,6 +18,7 @@ import { RuatAuthService } from 'src/app/core/services/ruat/ruatAuth.service';
   styleUrls: ['./signup.component.scss']
 })
 
+
 /**
  * Signup Basic Component
  */
@@ -29,8 +30,13 @@ export class SignupComponent implements OnInit {
   confirmField!: boolean;
   year: number = new Date().getFullYear();
   
+  estadoCivil = UserCivilStatus
+  tipoDocs = UserDocType
   cityAcronym= CityAcronym
   userState= UserStates
+
+  usersList:any[]=[];
+  userExist=false;
 
   constructor(private formBuilder: UntypedFormBuilder,
     private contribuyentesService: ContribuyentesService,
@@ -40,32 +46,36 @@ export class SignupComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.authRuat()
+    // this.authRuat()
+    this.getUsers();
     /**
      * Form Validatyion
      */
      this.SignupForm = this.formBuilder.group({
-      correo: ['', [Validators.required]],
-      nombre: ['', [Validators.required]],
-      apPaterno: ['', [Validators.required]],
-      apMaterno: [''],
-      codigoContribuyente: [''],
-      estadoUsuario: ['Pending'],
-      verificationCode:[''],
-      sexo: ['', [Validators.required]],
-      nroCarnet:['', [Validators.required]],
-      nroNit:[''],
-      ciExpedido:['', [Validators.required]],
-      direccion:[''],
-      celular:[''],
-
+      uuid: [''],
       username: ['', [Validators.required]],
       password: ['', [Validators.required]], 
-      cpassword: ['', [Validators.required]],      
+      cpassword: ['', [Validators.required]], 
+      tipoContribuyente:['NA'],
+      codigoContribuyente:[''],
+      estadoUsuario:['Pendiente'],
+      verificationCode:[null],
+      nombre: ['', [Validators.required]],
+      primerApellido: ['', [Validators.required]],
+      segundoApellido: [''],
+      genero: [''],
+      fechaNacimiento: ['', [Validators.required]],
+      estadoCivil: [''],
+      tipoDocumento:['', [Validators.required]],
+      nroDocumento:['', [Validators.required]],
+      nroNit:[''],
+      expedido:[''],
+      celular:['', [Validators.required]],
+      correo: ['', [Validators.required]],
+      direccion:[''],
     }, {
       validator: MustMatch('password', 'cpassword')
     });
-
     // Password Validation set
     var myInput = document.getElementById("password-input") as HTMLInputElement;
     var letter = document.getElementById("pass-lower");
@@ -126,7 +136,45 @@ export class SignupComponent implements OnInit {
           length?.classList.add("invalid");
       }
     };
+  }
 
+
+  private initUserValidation(): void {
+    var myInput = document.getElementById("username-input") as HTMLInputElement;
+    var taken = document.getElementById("user-taken");
+
+      let input = document.getElementById("user-taken") as HTMLElement;
+      input.style.display = "none"
+
+    const list = this.usersList
+    myInput.onkeyup = function () {
+      const exist = list.some(user => user.userName === myInput.value);
+      // this.userExist = exist;
+      console.log(exist)
+      if (!exist) {
+        // let input = document.getElementById("user-taken") as HTMLElement;
+        input.style.display = "none"
+      } else {        
+        // let input = document.getElementById("user-taken") as HTMLElement;
+        input.style.display = "block"
+      }
+    };
+  
+    // if (!myInput || !usernameContain || !taken) {
+    //   console.error("One or more username validation elements not found");
+    //   return;
+    // }
+    // myInput.addEventListener('focus', () => usernameContain.style.display = "block");
+    // myInput.addEventListener('blur', () => usernameContain.style.display = "none");
+  
+    // myInput.addEventListener('input', () => {
+    //   const username = myInput;
+    //   const exists = this.usersList.some(user => user.userName === username);
+    //   // this.updateValidationClass(taken, !exists);
+    //     taken.classList.toggle("valid", !exists);
+    //     taken.classList.toggle("invalid", exists);
+    // });
+    
   }
 
   get f() { return this.SignupForm.controls; }
@@ -153,21 +201,25 @@ export class SignupComponent implements OnInit {
       this.SignupForm.enable();
       
       let datos: Contribuyente = {
+        uuid:this.SignupForm.value.uuid,
         userName: this.SignupForm.value.username,
         password: this.SignupForm.value.password,
+        tipoContribuyente: this.SignupForm.value.tipoContribuyente,
         codigoContribuyente: this.SignupForm.value.codigoContribuyente,
         estadoUsuario: this.SignupForm.value.estadoUsuario,
         verificationCode: codigo,
-        correo:this.SignupForm.value.correo,
         nombre: this.SignupForm.value.nombre,
-        apPaterno: this.SignupForm.value.apPaterno,
-        apMaterno: this.SignupForm.value.apMaterno,
-        sexo:this.SignupForm.value.sexo,
-        nroCarnet: this.SignupForm.value.nroCarnet,
-        ciExpedido:this.SignupForm.value.ciExpedido,
+        apPaterno: this.SignupForm.value.primerApellido,
+        apMaterno: this.SignupForm.value.segundoApellido,
+        sexo:this.SignupForm.value.genero,
+        fechaNacimiento: this.SignupForm.value.fechaNacimiento,
+        tipoDocumento: this.SignupForm.value.tipoDocumento,
+        nroCarnet: this.SignupForm.value.nroDocumento,
+        ciExpedido:this.SignupForm.value.expedido,
         nroNit:this.SignupForm.value.nroNit,
-        direccion:this.SignupForm.value.direccion,
         celular:this.SignupForm.value.celular,
+        correo:this.SignupForm.value.correo,
+        direccion:this.SignupForm.value.direccion,
       };
       // Store datos in the service
       this.userDataService.setTemporaryUserData(datos);
@@ -234,15 +286,53 @@ export class SignupComponent implements OnInit {
     });
   }
   /* API REQUESTS */
-  private authRuat(){
-    this.ruatAuthService.authenticate().subscribe({
-      next:(data:any)=>{
-         console.log(data)
-      },
-      error: (error) => {
-        console.log(error)
-      }
-    })
+  private getUsers() {
+    this.contribuyentesService.getAll().subscribe({
+        next: (data: any) => {
+          if (data['status'] === 'OK') {
+            this.usersList = data.payload;
+            this.initUserValidation();
+          }else{
+            Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
+          }
+        },
+        error: (error) => {
+          
+        }
+      });
   }
+  private authRuat() {
+  this.ruatAuthService.authenticate().subscribe({
+    next: (response: any) => {
+      console.log('Authentication successful:', response);
+      
+
+    },
+    error: (error: any) => {
+      console.error('Authentication error:', error);
+      
+      if (error.name === 'HttpErrorResponse') {
+        if (error.status === 0) {
+          console.error('CORS error or network issue:', error.message);
+        } else {
+          console.error(`Server returned error ${error.status}:`, error.error);
+        }
+        
+        // Log additional details that might be helpful
+        console.log('Error details:', {
+          headers: error.headers,
+          url: error.url,
+          type: error.type,
+          ok: error.ok
+        });
+      }
+      
+      // Handle authentication error here
+    },
+    complete: () => {
+      console.log('Authentication request completed');
+    }
+  });
+}
 
 }

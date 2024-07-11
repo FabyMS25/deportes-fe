@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 // import { User } from 'src/app/store/Authentication/auth.models';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { catchError, map } from 'rxjs/operators';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { GlobalComponent } from "../../global-component";
 import { Store } from '@ngrx/store';
 import { RegisterSuccess, loginFailure, loginSuccess, logout, logoutSuccess } from 'src/app/store/Authentication/authentication.actions';
@@ -13,8 +13,8 @@ import { AuthUserService } from './api-users/auth.service';
 import { PermissionUserService } from './api-users/permission-user.service';
 
 import { UserRol } from 'src/app/core/constants/UserData';
-import { Contribuyente } from '../models/contribuyente.models';
-const AUTH_API = GlobalComponent.AUTH_API;
+
+const AUTH_API = ""//GlobalComponent.AUTH_API;
 
 const httpOptions = {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })

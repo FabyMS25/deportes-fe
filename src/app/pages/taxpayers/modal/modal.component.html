@@ -56,7 +56,7 @@
                  [ngClass]="{'is-invalid': submitted && form['ciExpedido'].errors }">
                 <option selected disabled class="text-muted">Expedido</option>
                 @for (item of cityAcronym ; track $index) {
-                    <option value="item.id">{{item.descripcion}}</option>
+                    <option value="item.id">{{item.description}}</option>
                 }
             </select>
             @if(submitted && form['ciExpedido'].errors){ 

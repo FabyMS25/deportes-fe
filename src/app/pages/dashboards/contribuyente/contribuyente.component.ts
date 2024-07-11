@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 
 import * as L from 'leaflet';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
-import { CategoriasService } from 'src/app/core/services/api/categorias.service copy';
+import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import Swal from 'sweetalert2';
 @Component({
     selector: 'app-contribuyente',

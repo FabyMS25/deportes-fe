@@ -13,7 +13,7 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ModalFieldsComponent } from '../modal/modal.component';
 import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
-import { CategoriasService } from 'src/app/core/services/api/categorias.service copy';
+import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 @Component({
   selector: 'app-fields',
   templateUrl: './fields.component.html',

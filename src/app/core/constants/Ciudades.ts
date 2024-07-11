@@ -1,41 +1,55 @@
 const CityAcronym =
 [
     {
-        "id": "BN",
-        "descripcion": "BENI"
+        "id":"1",
+        "acromyn": "CH",
+        "description": "Chuquisaca"
     },
     {
-        "id": "CB",
-        "descripcion": "COCHABAMBA"
+        "id":"2",
+        "acromyn": "LP",
+        "description": "La Paz"
     },
     {
-        "id": "CH",
-        "descripcion": "CHUQUISACA"
+        "id":"3",
+        "acromyn": "CB",
+        "description": "Cochabamba"
     },
     {
-        "id": "LP",
-        "descripcion": "LA PAZ"
+        "id":"4",
+        "acromyn": "OR",
+        "description": "Oruro"
     },
     {
-        "id": "OR",
-        "descripcion": "ORURO"
+        "id":"5",
+        "acromyn": "PT",
+        "description": "Potosí"
     },
     {
-        "id": "PN",
-        "descripcion": "PANDO"
+        "id":"6",
+        "acromyn": "TJ",
+        "description": "Tarija"
     },
     {
-        "id": "PT",
-        "descripcion": "POTOSI"
+        "id":"7",
+        "acromyn": "SC",
+        "description": "Santa Cruz"
     },
     {
-        "id": "SC",
-        "descripcion": "SANTA CRUZ"
+        "id":"8",
+        "acromyn": "BN",
+        "description": "Beni"
     },
     {
-        "id": "TJ",
-        "descripcion": "TARIJA"
-    }
+        "id":"9",
+        "acromyn": "CB",
+        "description": "Cobija"
+    },
+    // {
+    //     "id":"9",
+    //     "acromyn": "PN",
+    //     "description": "PANDO"
+    // }
 ]
 
 export{ CityAcronym };
