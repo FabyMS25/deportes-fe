@@ -44,7 +44,7 @@ export class EmpleadoComponent implements OnInit {
   ngOnInit(): void {
       this.breadCrumbItems = [
           { label: 'Dashboards' },
-          { label: 'Empleado', active: true }
+          { label: 'Encargado', active: true }
       ];  
     this._fetchData();
   }

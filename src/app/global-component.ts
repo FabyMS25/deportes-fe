@@ -2,7 +2,8 @@ export const GlobalComponent = {
     // Api Calling
     API_URL : 'http://127.0.0.1:3000/',
     headerToken : {'Authorization': `Bearer ${sessionStorage.getItem('token')}`},
-
+    
+    RUAT_token : {'Authorization': `Bearer ${sessionStorage.getItem('token')}`},
     //Ruat Data Prueba
     RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
     RUAT_clave: "fIH1z30a1SpB",

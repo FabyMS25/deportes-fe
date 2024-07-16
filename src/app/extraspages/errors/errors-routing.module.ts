@@ -7,8 +7,6 @@ import { CoverComponent } from "./cover/cover.component";
 import { AltComponent } from "./alt/alt.component";
 import { Page500Component } from "./page500/page500.component";
 import { OfflineComponent } from "./offline/offline.component";
-import { ComingSoonComponent } from 'src/app/account/errors/coming-soon/coming-soon.component';
-import { MaintenanceComponent } from 'src/app/account/errors/maintenance/maintenance.component';
 
 const routes: Routes = [
   {
@@ -30,15 +28,6 @@ const routes: Routes = [
   {
     path: "offline",
     component: OfflineComponent
-  },
-  /* extrapages: */
-  {
-    path: "maintenance",
-    component:MaintenanceComponent
-  },
-  {
-    path: "coming-soon",
-    component:ComingSoonComponent
   }
 ];
 

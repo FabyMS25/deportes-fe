@@ -7,6 +7,11 @@ import * as L from 'leaflet';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import Swal from 'sweetalert2';
+// when the docs use an import:
+
+// import { OpenStreetMapProvider, GeoSearchControl, SearchControl } from 'leaflet-geosearch';
+import * as GeoSearch from 'leaflet-geosearch';
+
 @Component({
     selector: 'app-contribuyente',
     templateUrl: './contribuyente.component.html',
@@ -51,6 +56,8 @@ export class ContribuyenteComponent implements OnInit {
       
   
     configDefaultMap(){
+      
+      
       this.map = L.map('map', {
         zoom: 13,
         center: [-17.379564334907542, -66.28315805967586],
@@ -62,6 +69,24 @@ export class ContribuyenteComponent implements OnInit {
       this.map.on('click', (e:any) => {
         console.log(e.latlng);
       });
+      
+      const provider = new GeoSearch.OpenStreetMapProvider();
+      const searchControl = new (GeoSearch.GeoSearchControl as any)({
+        provider: provider,
+        style: 'bar',
+        showMarker: true,
+        showPopup: false,
+        autoClose: true,
+        retainZoomLevel: false,
+        animateZoom: true,
+        keepResult: false,
+        searchLabel: 'Buscar un direción',
+        classNames: {
+          container: 'custom-geosearch-control'
+        },
+        searchButtonHTML: '' // This removes the default search button
+      });
+      this.map.addControl(searchControl);
     }
 
      /**

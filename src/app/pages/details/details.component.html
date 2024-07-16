@@ -562,6 +562,51 @@
                     </ul>
                 </div>
             </div>
+            
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <h6 class="card-title mb-0 flex-grow-1">Lista de Encargados</h6>
+                    <a class="text-muted" routerLink="/marletplace/item-details">
+                        Ver Todo <i class="ri-arrow-right-line align-bottom"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive table-card">
+                        <ngx-simplebar style="max-height: 350px;">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item list-group-item-action">
+                                    <div class="d-flex align-items-center">
+                                        <img src="assets/images/users/avatar-10.jpg" alt="" class="avatar-xs object-fit-cover rounded-circle">
+                                        <div class="ms-3 flex-grow-1">
+                                            <a href="javascript:void(0);" class="stretched-link">
+                                                <h6 class="fs-14 mb-1">Herbert Stokes</h6>
+                                            </a>
+                                            <p class="mb-0 text-muted">&#64;herbert10</p>
+                                        </div>
+                                        <div>
+                                            <h6>174.36 ETH</h6>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="list-group-item list-group-item-action">
+                                    <div class="d-flex align-items-center">
+                                        <img src="assets/images/users/avatar-10.jpg" alt="" class="avatar-xs object-fit-cover rounded-circle">
+                                        <div class="ms-3 flex-grow-1">
+                                            <a href="javascript:void(0);" class="stretched-link">
+                                                <h6 class="fs-14 mb-1">Herbert Stokes</h6>
+                                            </a>
+                                            <p class="mb-0 text-muted">&#64;herbert10</p>
+                                        </div>
+                                        <div>
+                                            <h6>174.36 ETH</h6>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </ngx-simplebar>
+                    </div>
+                </div>
+            </div>
             <div class="card">
                 <div class="card-body">
                 <div class="product-img-slider" dir="ltr">
@@ -592,7 +637,7 @@
 <ng-template #content role="document" let-modal>
     <div class="modal-content border-0">
         <div class="modal-header p-3 bg-success-subtle">
-            <h5 class="modal-title" id="inviteMembersModalLabel">Team Members</h5>
+            <h5 class="modal-title" id="inviteMembersModalLabel">Contactos</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
                 (click)="modal.dismiss('Cross click')"></button>
         </div>

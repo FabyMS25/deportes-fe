@@ -12,8 +12,6 @@ import { CoverComponent } from './cover/cover.component';
 import { AltComponent } from './alt/alt.component';
 import { Page500Component } from './page500/page500.component';
 import { OfflineComponent } from './offline/offline.component';
-import { MaintenanceComponent } from './maintenance/maintenance.component';
-import { ComingSoonComponent } from './coming-soon/coming-soon.component';
 
 @NgModule({
   declarations: [
@@ -21,10 +19,7 @@ import { ComingSoonComponent } from './coming-soon/coming-soon.component';
     CoverComponent,
     AltComponent,
     Page500Component,
-    OfflineComponent,
-    /* extrapages: */
-    MaintenanceComponent,
-    ComingSoonComponent
+    OfflineComponent
     
   ],
   imports: [

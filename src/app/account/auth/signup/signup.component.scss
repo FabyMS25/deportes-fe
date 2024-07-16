@@ -1,0 +1,27 @@
+#username-contain {
+    display: none;
+
+    p {
+        padding-left: 13px;
+
+        &.valid {
+            color:#3cd188;
+
+            &::before {
+                position: relative;
+                left: -8px;
+                content: "✔";
+            }
+        }
+
+        &.invalid {
+            color: #f7666e;
+
+            &::before {
+                position: relative;
+                left: -8px;
+                content: "✖";
+            }
+        }
+    }
+}

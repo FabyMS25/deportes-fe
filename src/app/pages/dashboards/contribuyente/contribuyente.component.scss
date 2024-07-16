@@ -1,7 +1,27 @@
-.map-container{
-    height: 400;
-}
-#map{
+@import 'node_modules/leaflet-geosearch/dist/geosearch.css';
+// @import "~leaflet-geosearch/dist/geosearch.css";
+
+.custom-geosearch-control .geosearch-bar {
+    display:flex;
+    align-items: center;
+    padding-right: 0;
+  }
+  
+  .custom-geosearch-control .geosearch-input {
+    flex-grow: 1;
+    margin-right: 5px;
+  }
+  
+  .custom-geosearch-control .reset {
+    position: static;
+    margin: 0;
+    padding: 0 10px;
     height: 100%;
-    width: 100%;
-}
+    display: flex;
+    align-items: center;
+  }
+  
+  .custom-geosearch-control .reset svg {
+    width: 12px;
+    height: 12px;
+  }

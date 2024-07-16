@@ -11,6 +11,7 @@ import { MustMatch } from '../pass-create/must-match';
 import { Router } from '@angular/router';
 import { UserDataService } from './user-data.service';
 import { RuatAuthService } from 'src/app/core/services/ruat/ruatAuth.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-signup',
@@ -35,7 +36,7 @@ export class SignupComponent implements OnInit {
   cityAcronym= CityAcronym
   userState= UserStates
 
-  usersList:any[]=[];
+  usersList!:any[];
   userExist=false;
 
   constructor(private formBuilder: UntypedFormBuilder,
@@ -46,14 +47,14 @@ export class SignupComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    // this.authRuat()
-    this.getUsers();
+    this.authRuat()
+    this.getUsers(); // api rest to get userList
     /**
      * Form Validatyion
      */
      this.SignupForm = this.formBuilder.group({
       uuid: [''],
-      username: ['', [Validators.required]],
+      username: ['', [Validators.required, Validators.minLength(6),this.usernameFormatValidator], [this.usernameValidator.bind(this)]],
       password: ['', [Validators.required]], 
       cpassword: ['', [Validators.required]], 
       tipoContribuyente:['NA'],
@@ -76,27 +77,21 @@ export class SignupComponent implements OnInit {
     }, {
       validator: MustMatch('password', 'cpassword')
     });
-    // Password Validation set
+  // }
+  // // Password Validation set
+  // onPasswordFocus() {
     var myInput = document.getElementById("password-input") as HTMLInputElement;
     var letter = document.getElementById("pass-lower");
     var capital = document.getElementById("pass-upper");
     var number = document.getElementById("pass-number");
     var length = document.getElementById("pass-length");
-
     // When the user clicks on the password field, show the message box
+    let input = document.getElementById("password-contain") as HTMLElement;
     myInput.onfocus = function () {
-      let input = document.getElementById("password-contain") as HTMLElement;
       input.style.display = "block"
     };
-
-    // When the user clicks outside of the password field, hide the password-contain box
-    myInput.onblur = function () {
-      let input = document.getElementById("password-contain") as HTMLElement;
-      input.style.display = "none"
-    };
-
-    // When the user starts to type something inside the password field
     myInput.onkeyup = function () {
+      let isValid = true;
       // Validate lowercase letters
       var lowerCaseLetters = /[a-z]/g;
       if (myInput.value.match(lowerCaseLetters)) {
@@ -105,6 +100,7 @@ export class SignupComponent implements OnInit {
       } else {
           letter?.classList.remove("valid");
           letter?.classList.add("invalid");
+          isValid = false
       }
 
       // Validate capital letters
@@ -115,6 +111,7 @@ export class SignupComponent implements OnInit {
       } else {
           capital?.classList.remove("valid");
           capital?.classList.add("invalid");
+          isValid = false
       }
 
       // Validate numbers
@@ -125,6 +122,7 @@ export class SignupComponent implements OnInit {
       } else {
           number?.classList.remove("valid");
           number?.classList.add("invalid");
+          isValid = false
       }
 
       // Validate length
@@ -134,49 +132,90 @@ export class SignupComponent implements OnInit {
       } else {
           length?.classList.remove("valid");
           length?.classList.add("invalid");
+          isValid =false
+      }
+      if(isValid){          
+        myInput.onblur = function () {
+          // let input = document.getElementById("password-contain") as HTMLElement;
+          input.style.display = "none"
+        };
       }
     };
+
   }
 
-
-  private initUserValidation(): void {
-    var myInput = document.getElementById("username-input") as HTMLInputElement;
-    var taken = document.getElementById("user-taken");
-
-      let input = document.getElementById("user-taken") as HTMLElement;
-      input.style.display = "none"
-
-    const list = this.usersList
-    myInput.onkeyup = function () {
-      const exist = list.some(user => user.userName === myInput.value);
-      // this.userExist = exist;
-      console.log(exist)
-      if (!exist) {
-        // let input = document.getElementById("user-taken") as HTMLElement;
-        input.style.display = "none"
-      } else {        
-        // let input = document.getElementById("user-taken") as HTMLElement;
-        input.style.display = "block"
+  onUsernameFocus() {
+    var inputUser = document.getElementById("username-input") as HTMLInputElement;
+    var message = document.getElementById("user-taken");
+    var pattern = document.getElementById("user-pattern");
+    var uLength = document.getElementById("user-length");
+    let inputMsg = document.getElementById("username-contain") as HTMLElement;
+      // inputUser.onfocus = function () {
+        inputMsg.style.display = "block"
+      // };
+      inputUser.onkeyup = () => {        
+        var patternValue = /^[a-z0-9.]+$/;
+        if (inputUser.value.match(patternValue)) {
+            pattern?.classList.remove("invalid");
+            pattern?.classList.add("valid");
+        } else {
+            pattern?.classList.remove("valid");
+            pattern?.classList.add("invalid");
+        }
+        if (inputUser.value.length >= 6) {
+            uLength?.classList.remove("invalid");
+            uLength?.classList.add("valid");
+            
+            if (this.SignupForm.get('username')?.pending) {
+              message?.classList.remove("valid", "invalid");
+              message?.classList.add("pending");
+            } else if (this.SignupForm.get('username')?.hasError('usernameTaken')) {
+              message?.classList.remove("valid", "pending");
+              message?.classList.add("invalid");
+            } else{ 
+              message?.classList.remove("invalid", "pending");
+              message?.classList.add("valid");
+            }
+        } else {
+            uLength?.classList.remove("valid");
+            uLength?.classList.add("invalid");
+        }        
+      };
+  }
+  
+  onUsernameBlur() {
+      let inputMsg = document.getElementById("username-contain") as HTMLElement;
+      if (this.SignupForm.get('username')?.valid) {
+        inputMsg.style.display = "none";
       }
-    };
-  
-    // if (!myInput || !usernameContain || !taken) {
-    //   console.error("One or more username validation elements not found");
-    //   return;
-    // }
-    // myInput.addEventListener('focus', () => usernameContain.style.display = "block");
-    // myInput.addEventListener('blur', () => usernameContain.style.display = "none");
-  
-    // myInput.addEventListener('input', () => {
-    //   const username = myInput;
-    //   const exists = this.usersList.some(user => user.userName === username);
-    //   // this.updateValidationClass(taken, !exists);
-    //     taken.classList.toggle("valid", !exists);
-    //     taken.classList.toggle("invalid", exists);
-    // });
-    
   }
-
+  usernameValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (this.usersList) {
+          const isUsernameTaken = this.usersList.some(user => user.userName === control.value);
+          if (isUsernameTaken) {
+            resolve({ usernameTaken: true });
+          } else { resolve(null); }
+        } else {   resolve(null); }
+      }, 300); 
+    });
+  }
+  usernameFormatValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (!value) {
+      return null;
+    }
+    const lowercaseValue = value.toLowerCase();
+    const validFormat = /^[a-z0-9.]+$/.test(lowercaseValue);
+    if (!validFormat) {
+      return { invalidFormat: true };
+    }
+    if (value !== lowercaseValue) {
+      control.setValue(lowercaseValue, { emitEvent: false });
+    }
+    return null;
+  }
   get f() { return this.SignupForm.controls; }
    /**
    * Password Hide/Show
@@ -291,21 +330,18 @@ export class SignupComponent implements OnInit {
         next: (data: any) => {
           if (data['status'] === 'OK') {
             this.usersList = data.payload;
-            this.initUserValidation();
           }else{
             Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
           }
         },
-        error: (error) => {
-          
+        error: (error) => {         
         }
       });
   }
   private authRuat() {
   this.ruatAuthService.authenticate().subscribe({
     next: (response: any) => {
-      console.log('Authentication successful:', response);
-      
+      console.log('Authentication successful:', response);     
 
     },
     error: (error: any) => {

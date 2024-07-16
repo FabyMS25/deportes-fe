@@ -32,7 +32,6 @@ import { WidgetModule } from '../shared/widget/widget.module';
 import { DashboardsModule } from "./dashboards/dashboards.module";
 import { FeatherModule } from 'angular-feather';
 import { allIcons } from 'angular-feather/icons';
-import { ErrorsModule } from '../account/errors/errors.module';
 import { DetailsComponent } from './details/details.component';
 import { CommentsComponent } from './details/comments/comments.component';
 import { ModalComponent } from './taxpayers/modal/modal.component';
@@ -63,10 +62,7 @@ import { ScrollToModule } from '@nicky-lenaers/ngx-scroll-to';
     WidgetModule,
     SlickCarouselModule,
     LightboxModule,
-    DashboardsModule,
-
-    ErrorsModule,
-    
+    DashboardsModule,    
     FeatherModule.pick(allIcons),
     NgbTooltipModule,
     ReactiveFormsModule,

@@ -3,7 +3,8 @@ import { Routes, RouterModule } from '@angular/router';
 
 // Component pages
 import { FaqsComponent } from "./faqs/faqs.component";
-import { PricingComponent } from "./pricing/pricing.component";
+import { PrivacyPolicyComponent } from './privacy-policy/privacy-policy.component';
+import { TermsConditionComponent } from './terms-condition/terms-condition.component';
 
 const routes: Routes = [
   {
@@ -11,9 +12,13 @@ const routes: Routes = [
     component: FaqsComponent
   },
   {
-    path: 'terms',
-    component: PricingComponent
+    path: 'privacy-policy-in',
+    component: PrivacyPolicyComponent
   },
+  {
+    path: 'terms-condition-in',
+    component: TermsConditionComponent
+  }
 ];
 
 @NgModule({

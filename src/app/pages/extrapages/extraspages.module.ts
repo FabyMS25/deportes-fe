@@ -25,13 +25,15 @@ import lottie from 'lottie-web';
 import { ExtraPagesRoutingModule } from './extrapages-routing.module';
 import { SharedModule } from '../../shared/shared.module';
 import { FaqsComponent } from './faqs/faqs.component';
-import { PricingComponent } from './pricing/pricing.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { TermsConditionComponent } from './terms-condition/terms-condition.component';
+import { PrivacyPolicyComponent } from './privacy-policy/privacy-policy.component';
 
 @NgModule({
   declarations: [
     FaqsComponent,
-    PricingComponent,
+    PrivacyPolicyComponent,
+    TermsConditionComponent
   ],
   imports: [
     CommonModule,
