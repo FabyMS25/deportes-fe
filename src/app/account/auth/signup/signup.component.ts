@@ -12,6 +12,8 @@ import { Router } from '@angular/router';
 import { UserDataService } from './user-data.service';
 import { RuatAuthService } from 'src/app/core/services/ruat/ruatAuth.service';
 import { Observable } from 'rxjs';
+import { RuatService } from 'src/app/core/services/ruat/ruat.service';
+import { RuatCallsService } from 'src/app/core/services/ruat/php/ruatcalls.service';
 
 @Component({
   selector: 'app-signup',
@@ -42,6 +44,8 @@ export class SignupComponent implements OnInit {
   constructor(private formBuilder: UntypedFormBuilder,
     private contribuyentesService: ContribuyentesService,
     private ruatAuthService: RuatAuthService,
+    // private ruatService: RuatService,
+    private ruatService: RuatCallsService,
     private router: Router,
     private userDataService: UserDataService
   ) { }
@@ -77,8 +81,8 @@ export class SignupComponent implements OnInit {
     }, {
       validator: MustMatch('password', 'cpassword')
     });
-  // }
-  // // Password Validation set
+    
+  // Password Validation set
   // onPasswordFocus() {
     var myInput = document.getElementById("password-input") as HTMLInputElement;
     var letter = document.getElementById("pass-lower");
@@ -141,7 +145,6 @@ export class SignupComponent implements OnInit {
         };
       }
     };
-
   }
 
   onUsernameFocus() {
@@ -181,13 +184,12 @@ export class SignupComponent implements OnInit {
             uLength?.classList.add("invalid");
         }        
       };
-  }
-  
+  }  
   onUsernameBlur() {
-      let inputMsg = document.getElementById("username-contain") as HTMLElement;
-      if (this.SignupForm.get('username')?.valid) {
-        inputMsg.style.display = "none";
-      }
+    let inputMsg = document.getElementById("username-contain") as HTMLElement;
+    if (this.SignupForm.get('username')?.valid) {
+      inputMsg.style.display = "none";
+    }
   }
   usernameValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
     return new Promise((resolve) => {
@@ -216,11 +218,12 @@ export class SignupComponent implements OnInit {
     }
     return null;
   }
+
   get f() { return this.SignupForm.controls; }
    /**
    * Password Hide/Show
    */
-   togglepasswordField() {
+  togglepasswordField() {
     this.passwordField = !this.passwordField;
   }
   /**
@@ -252,6 +255,7 @@ export class SignupComponent implements OnInit {
         apMaterno: this.SignupForm.value.segundoApellido,
         sexo:this.SignupForm.value.genero,
         fechaNacimiento: this.SignupForm.value.fechaNacimiento,
+        estadoCivil: this.SignupForm.value.estadoCivil,
         tipoDocumento: this.SignupForm.value.tipoDocumento,
         nroCarnet: this.SignupForm.value.nroDocumento,
         ciExpedido:this.SignupForm.value.expedido,
@@ -261,6 +265,7 @@ export class SignupComponent implements OnInit {
         direccion:this.SignupForm.value.direccion,
       };
       // Store datos in the service
+      // this.searchContribuyente(datos);
       this.userDataService.setTemporaryUserData(datos);
   
       this.sendEmail(datos, '')
@@ -338,37 +343,20 @@ export class SignupComponent implements OnInit {
         }
       });
   }
-  private authRuat() {
-  this.ruatAuthService.authenticate().subscribe({
-    next: (response: any) => {
-      console.log('Authentication successful:', response);     
 
-    },
-    error: (error: any) => {
-      console.error('Authentication error:', error);
-      
-      if (error.name === 'HttpErrorResponse') {
-        if (error.status === 0) {
-          console.error('CORS error or network issue:', error.message);
-        } else {
-          console.error(`Server returned error ${error.status}:`, error.error);
+  /* API RUAT Services */
+  private authRuat() {
+      this.ruatService.authenticate().subscribe({
+        next: (response) => {          
+          // localStorage.setItem('ruatToken', JSON.stringify(response.token));
+          window.sessionStorage.setItem('ruatToken', response.token);
+        },
+        error: (error) => {
+          console.error('Authentication failed', error)
         }
-        
-        // Log additional details that might be helpful
-        console.log('Error details:', {
-          headers: error.headers,
-          url: error.url,
-          type: error.type,
-          ok: error.ok
-        });
-      }
-      
-      // Handle authentication error here
-    },
-    complete: () => {
-      console.log('Authentication request completed');
-    }
-  });
-}
+      });
+  }
+
+
 
 }

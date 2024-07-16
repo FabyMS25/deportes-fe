@@ -12,6 +12,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { UserDataService } from '../signup/user-data.service';
 
 import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
+import { RuatService } from 'src/app/core/services/ruat/ruat.service';
+import { RuatCallsService } from 'src/app/core/services/ruat/php/ruatcalls.service';
 // typescriptCopyimport {
 
 @Component({
@@ -30,11 +32,14 @@ export class TwoStepComponent implements OnInit {
   @ViewChild(NgOtpInputComponent, { static: false }) otpComponent?: NgOtpInputComponent;
 
   userData: any;
+  ruatData: any;
 
   constructor( private router: Router, private http: HttpClient,private fb: FormBuilder, 
     private route: ActivatedRoute,
     private userDataService : UserDataService,
-    private contribuyentesService: ContribuyentesService
+    private contribuyentesService: ContribuyentesService,
+    private ruatService: RuatCallsService,
+    // private ruatService: RuatService
   ) {  }
 
   ngOnInit(): void {
@@ -43,8 +48,8 @@ export class TwoStepComponent implements OnInit {
       this.userData = this.userDataService.getTemporaryUserData();
       console.log(username)
       console.log(this.userData)
-      if (!this.userData) {
-        console.error('No user data found');
+      if (this.userData) {
+        this.searchContribuyente(this.userData);
       }
     });
   }
@@ -101,6 +106,7 @@ export class TwoStepComponent implements OnInit {
         });
     }
     
+  /* API Request */
   addData(datos:Contribuyente){
     this.contribuyentesService.save(datos).subscribe({
       next:(data:any)=>{
@@ -121,6 +127,44 @@ export class TwoStepComponent implements OnInit {
     })
   }
   
+  /* RUAT API Requests */
+  searchContribuyente(data:Contribuyente){
+    this.ruatService.getContribuyentePorCi(data.nroCarnet,data.tipoDocumento, data.ciExpedido ).subscribe({    
+      next: (response: any) => {
+        if(response.continuarFlujo){
+          this.notify("Usted se encuentra registrado en el Ruat",'success')
+          this.ruatData= response;
+          console.log('Contribuyente Data:', response);
+
+        }else{
+          this.notify(response.mensaje,'error')
+        }
+      },
+      error: (error: any) => {        
+        console.error('Error:', error);
+      }
+    });
+  }
+
+  registerContribuyente(data:Contribuyente){
+
+    this.ruatService.registerContribuyente(data ).subscribe({    
+      next: (response: any) => {
+        if(response.continuarFlujo){
+          this.notify("Usted se encuentra registrado en el Ruat",'success')
+          this.ruatData= response;
+          console.log('Contribuyente Data:', response);
+
+        }else{
+          this.notify(response.mensaje,'error')
+        }
+      },
+      error: (error: any) => {        
+        console.error('Error:', error);
+      }
+    });
+  }
+
   private notify(message: any, type: any): void {
     let timerInterval: any;
     Swal.fire({
@@ -136,5 +180,4 @@ export class TwoStepComponent implements OnInit {
       }
     });
   }
-
 }

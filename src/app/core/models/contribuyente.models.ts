@@ -10,6 +10,7 @@ export interface Contribuyente {
   apPaterno: string; //primerApellido
   apMaterno?: string; //segundoApellido
   fechaNacimiento: Date;
+  estadoCivil: string;
   tipoDocumento: string;
   nroCarnet: string; //nroDocumento
   nroNit?: string;
