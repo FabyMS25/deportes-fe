@@ -78,7 +78,15 @@ export class TwoStepComponent implements OnInit {
       }  
       if (enteredOtp === this.userData.verificationCode) {
         this.userData.estadoUsuario = 'Active';
-        this.addData(this.userData);
+        if(!this.ruatData){
+          this.registerContribuyente(this.userData)
+        }else{
+          if(this.ruatData){
+            this.userData.codigoContribuyente = this.ruatData.codigoContribuyente
+            console.log(this.userData)
+            this.addData(this.userData);
+          }
+        }
       } else {
           this.notify('Código incorrecto. Por favor, inténtelo de nuevo.','success');  
         this.otpComponent?.setValue(''); 
@@ -127,6 +135,13 @@ export class TwoStepComponent implements OnInit {
     })
   }
   
+  formatDate(date: Date): string {
+    const day = ('0' + date.getDate()).slice(-2);
+    const month = ('0' + (date.getMonth() + 1)).slice(-2);
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
   /* RUAT API Requests */
   searchContribuyente(data:Contribuyente){
     this.ruatService.getContribuyentePorCi(data.nroCarnet,data.tipoDocumento, data.ciExpedido ).subscribe({    
@@ -138,6 +153,7 @@ export class TwoStepComponent implements OnInit {
 
         }else{
           this.notify(response.mensaje,'error')
+          
         }
       },
       error: (error: any) => {        
@@ -147,13 +163,15 @@ export class TwoStepComponent implements OnInit {
   }
 
   registerContribuyente(data:Contribuyente){
-
+    
     this.ruatService.registerContribuyente(data ).subscribe({    
       next: (response: any) => {
         if(response.continuarFlujo){
           this.notify("Usted se encuentra registrado en el Ruat",'success')
-          this.ruatData= response;
-          console.log('Contribuyente Data:', response);
+          this.ruatData= response;          
+          this.userData.codigoContribuyente = this.ruatData.codigoContribuyente
+          console.log(this.userData)
+          this.addData(this.userData);
 
         }else{
           this.notify(response.mensaje,'error')

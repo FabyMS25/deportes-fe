@@ -1,5 +1,5 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 import { NgbCarouselModule, NgbToastModule } from '@ng-bootstrap/ng-bootstrap';
@@ -39,6 +39,10 @@ import { SignupComponent } from './signup/signup.component';
     NgOtpInputModule,
     AccountRoutingModule,
     // SigninModule
+  ],
+  
+  providers: [
+    DatePipe,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

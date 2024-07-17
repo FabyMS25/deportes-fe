@@ -40,8 +40,15 @@ export class RuatCallsService {
     );
   }
 
+  formatDate(date: Date): string {
+    const day = ('0' + date.getDate()).slice(-2);
+    const month = ('0' + (date.getMonth() + 1)).slice(-2);
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
   registerContribuyente(data:Contribuyente): Observable<any> {
     const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     });
 
@@ -56,15 +63,15 @@ export class RuatCallsService {
       primerApellido: data.apPaterno,
       segundoApellido: data.apMaterno,
       estadoCivil: data.estadoCivil,
-      fechaNacimiento: data.fechaNacimiento,
+      fechaNacimiento: this.formatDate(data.fechaNacimiento),
       genero: data.sexo,
       apellidoEsposo: "",  
       motivo:"REGISTRO TASAS Y OTROS INGRESOS",
       observacion: "REGISTRO PARA DEPORTESAPP - GAMQ"
-
     }
+    console.log(contribuyente)
     return this.http.post<any>(
-      `${this.apiUrl}/getContribuyentePorCi`,
+      `${this.apiUrl}/registerContribuyente`,
       contribuyente,
       { headers }
     );

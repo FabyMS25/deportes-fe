@@ -14,6 +14,7 @@ import { RuatAuthService } from 'src/app/core/services/ruat/ruatAuth.service';
 import { Observable } from 'rxjs';
 import { RuatService } from 'src/app/core/services/ruat/ruat.service';
 import { RuatCallsService } from 'src/app/core/services/ruat/php/ruatcalls.service';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-signup',
@@ -46,7 +47,7 @@ export class SignupComponent implements OnInit {
     private ruatAuthService: RuatAuthService,
     // private ruatService: RuatService,
     private ruatService: RuatCallsService,
-    private router: Router,
+    private router: Router, private datePipe: DatePipe,
     private userDataService: UserDataService
   ) { }
 
@@ -72,9 +73,9 @@ export class SignupComponent implements OnInit {
       fechaNacimiento: ['', [Validators.required]],
       estadoCivil: [''],
       tipoDocumento:['', [Validators.required]],
-      nroDocumento:['', [Validators.required]],
+      nroDocumento:['', [Validators.required], [this.nroDocumentoValidator.bind(this)]],
+      expedido:['', [Validators.required]],
       nroNit:[''],
-      expedido:[''],
       celular:['', [Validators.required]],
       correo: ['', [Validators.required]],
       direccion:[''],
@@ -219,6 +220,20 @@ export class SignupComponent implements OnInit {
     return null;
   }
 
+  
+  nroDocumentoValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (this.usersList) {
+          const itExist = this.usersList.some(user => user.nroCarnet === control.value);
+          if (itExist) {
+            resolve({itExist: true });
+          } else { resolve(null); }
+        } else {   resolve(null); }
+      }, 300); 
+    });
+  }
+
   get f() { return this.SignupForm.controls; }
    /**
    * Password Hide/Show
@@ -284,8 +299,13 @@ export class SignupComponent implements OnInit {
       });
     }
   }
-
-  
+  getFormattedDate(dateString: string | null): Date {
+    if (!dateString) {
+      return new Date(); // or handle it as needed
+    }
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
   generateCode(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
   }

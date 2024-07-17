@@ -78,7 +78,7 @@
                                         </div>
                                         <div class="col-lg-4">
                                             <label for="fechaNacimiento-field" class="form-label">Fecha de Nacimiento <span class="text-danger">*</span></label>
-                                            <input type="Date" id="fechaNacimiento-field" class="form-control" placeholder="Ingresar su Fecha de Nacimiento"
+                                            <input type="date" id="fechaNacimiento-field" class="form-control" placeholder="DD/MM/YYYY"
                                                 formControlName="fechaNacimiento"
                                                 [ngClass]="{ 'is-invalid': submitted && f['fechaNacimiento'].errors }" />
                                             <div class="invalid-feedback">El campo es requerido.</div>
@@ -119,11 +119,13 @@
                                             <label for="nroDocumento-field" class="form-label">Nro Documento <span class="text-danger">*</span></label>
                                             <input type="text" id="nroDocumento-field" class="form-control" placeholder="Ingresar su Identificación"
                                                 formControlName="nroDocumento"
-                                                [ngClass]="{ 'is-invalid': submitted && f['nroDocumento'].errors }" />
-                                            <div class="invalid-feedback">El campo es requerido.</div>
-                                            <div id="identificacionInput" class="form-text"><!-- Si el número tiene un --> Agregar complemento si corresponde,<!--  debe escribirlo separado por un guion, como por --> ejemplo: <b>12345678-1C</b><!-- , donde 1C es el complemento --> </div>
-                                        </div>
-                                        
+                                                [ngClass]="{'is-invalid': (f['nroDocumento'].touched || submitted) && f['nroDocumento'].errors}">
+                                         
+                                            <div *ngIf="(f['nroDocumento'].touched || submitted) && f['nroDocumento'].errors" class="invalid-feedback">
+                                                <span *ngIf="f['nroDocumento'].errors?.['required']">El campo es requerido</span>
+                                                <span *ngIf="f['nroDocumento'].errors?.['itExist']">La identificacion ya se encuentra registrada.</span>
+                                            </div>
+                                        </div>   
                                         <div class="col-lg-4">
                                             <label for="expedido-field" class="form-label">Expedido</label><span class="text-danger">*</span>
                                             <select class="form-select" 
@@ -137,7 +139,10 @@
                                             <div *ngIf="submitted && f['expedido'].errors" class="invalid-feedback" align="left">
                                                 <div *ngIf="f['expedido'].errors['required']">El campo es requerido</div>
                                             </div>
-                                        </div>
+                                        </div> 
+
+                                        <div id="identificacionInput" class="form-text"><!-- Si el número tiene un --> Agregar complemento si corresponde al Nro Documento,<!--  debe escribirlo separado por un guion, como por --> ejemplo: <b>12345678-1C</b><!-- , donde 1C es el complemento --></div>
+                                        
                                     </div>
                                     <div class="row mt-2">
                                         <div class="col-lg-6">
@@ -170,7 +175,7 @@
                                             [ngClass]="{ 'is-invalid': submitted && f['correo'].errors }" />
                                         <div class="invalid-feedback">Debe Ingresar un correo.</div>
                                     </div> 
-                                    <div id="emailInput" class="form-text">Debe tener acceso al correo <b>Se le enviara el codigo de confirmación </b></div>
+                                    <div id="emailInput" class="form-text">Asegúrese de tener acceso al correo, <b>Se le enviara el codigo de confirmación </b></div>
                              
                                     <div class="mt-2">
                                         <label class="form-label" for="username-input">Usuario</label>
@@ -200,8 +205,6 @@
                                             <p id="user-length" class="invalid fs-12 mb-2">Mínimo <b>6 caracteres</b></p>
                                             <p id="user-pattern" class="invalid fs-12 mb-2">El usuario solo puede contener <b>letras, números y puntos</b> (a-z)</p>
                                         </div>
-                                        
-                                    
                                     </div>
 
                                     <div class="mt-2">
