@@ -6,8 +6,8 @@ import Swal from 'sweetalert2';
 import { ngxCsv } from 'ngx-csv';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { Categoria } from 'src/app/core/models/categoria.model';
 import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
+import { Superficie } from 'src/app/core/models/superficie.model';
 
 
 @Component({
@@ -25,7 +25,7 @@ export class AreasComponent {
   title="Superficies";
   submitted = false;
   contentForm!: UntypedFormGroup;
-  deporteData!: Categoria;
+  // deporteData!: Categoria;
   checkedList: any;
 
   searchResults: any;
@@ -53,7 +53,7 @@ export class AreasComponent {
     ];
 
     this.listaItems = [
-      {name: 'Descripción', prop: 'nombre'},
+      {name: 'Descripción', prop: 'descripcion'},
       {name: 'Canchas',prop: 'canchas'},
     ];
     /**
@@ -121,6 +121,7 @@ export class AreasComponent {
             this.superficiesList = data.payload;
             this.temp = this.superficiesList
           }else{
+            this.loading = false;
             Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
           }
         },
@@ -138,8 +139,8 @@ export class AreasComponent {
       this.submitted = true;
       if (this.contentForm.valid) {
         this.contentForm.enable()
-        let datos: Categoria = {
-          nombre: this.contentForm.value.nombre,
+        let datos: Superficie = {
+          descripcion: this.contentForm.value.descripcion,
         };
         if (this.contentForm.get('uuid')?.value) {
           datos.uuid=this.contentForm.value.uuid,
@@ -157,9 +158,9 @@ export class AreasComponent {
       // this.submitted = true
     }
       
-  addData(datos:Categoria){
+  addData(datos:Superficie){
     this.superficiesService.save(datos).subscribe({
-      next:(data:Categoria)=>{
+      next:(data:Superficie)=>{
         this.submitted=false;
         this.notify('Datos Registrados exitosamente!','success'); 
         this.closeModal();
@@ -171,9 +172,9 @@ export class AreasComponent {
       }
     })
   }
-  updateData(datosUnit:Categoria) {
+  updateData(datosUnit:Superficie) {
       this.superficiesService.update(datosUnit).subscribe({
-          next: (data: Categoria) => {
+          next: (data: Superficie) => {
             this.submitted = false;
             this.closeModal();
             this.getSurfaces();

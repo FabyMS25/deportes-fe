@@ -14,6 +14,8 @@ import { ModalFieldsComponent } from '../modal/modal.component';
 import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
+import { ModalScheduleComponent } from '../modal-schedule/modal-schedule.component';
+import { ModalTarifaComponent } from '../modal-tarifa/modal-tarifa.component';
 @Component({
   selector: 'app-fields',
   templateUrl: './fields.component.html',
@@ -58,9 +60,9 @@ export class FieldsComponent {
     ];
     this.listaItems = [
       {name: 'Complejo', prop: 'complejoDto.nombre'},
-      {name: 'Superficie',prop: 'superficie'},
+      {name: 'codigo', prop: 'codigo'},
+      {name: 'Superficie',prop: 'superficieDto.descripcion'},
       {name: 'tipo', prop: 'tipo'},
-      {name: 'Categoria(s)', prop: 'totalxhora'},
     ];
     /**
      * fetches data
@@ -111,6 +113,31 @@ export class FieldsComponent {
     modalRef.componentInstance.listaItems.subscribe(() => {
     this.getFields();
     });
+  }
+
+  public openScheduleModal(row: campoDeportivo | undefined, accion: string, size: string) {
+    const modalRef = this.modalService.open(ModalScheduleComponent, {
+        backdrop: 'static',
+        size:size
+    });
+    modalRef.componentInstance.row = row;
+    modalRef.componentInstance.accion = accion;
+    // modalRef.componentInstance.listaItems.subscribe(() => {
+    // this.getFields();
+    // });
+  }
+
+  public openTarifaModal(row: campoDeportivo | undefined, accion: string, size: string) {
+    const modalRef = this.modalService.open(ModalTarifaComponent, {
+        backdrop: 'static',
+        size:size
+    });
+    modalRef.componentInstance.row = row;
+    modalRef.componentInstance.categoryList = this.categoryList;
+    modalRef.componentInstance.accion = accion;
+    // modalRef.componentInstance.listaItems.subscribe(() => {
+    // this.getFields();
+    // });
   }
   /**
    * Form data get

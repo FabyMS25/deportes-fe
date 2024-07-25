@@ -1,0 +1,76 @@
+<div class="modal-header bg-info-subtle  p-3">
+    <h5 class="modal-title" ngbAutofocus>Tarifas del Campo Deportivo</h5>
+    <button type="button"
+        class="btn-close"
+        data-dismiss="modal" aria-label="Cerrar"
+        [disabled]="submitted"
+        (click)="closeModal()">
+    </button>
+</div>
+
+<form [formGroup]="form" (ngSubmit)="saveData()" *ngIf="accion === 'edit'" class="tablelist-form" autocomplete="off">
+  <div formArrayName="fieldsForm">
+    <div class="modal-body">
+      <div class="row mb-3">
+        <div class="d-flex align-items-center flex-wrap gap-2">
+          <div class="flex-grow-1">
+          </div>
+          <div class="flex-shrink-0">
+            <div class="col-lg-12">
+              <button type="button" class="btn btn-primary add-btn" (click)="addTarifa()">
+                <i class="las la-calendar-plus align-middle"></i>Agregar
+              </button>
+            </div>   
+          </div>  
+        </div>
+      </div>
+      <div class="row g-3">
+        <div class="row">
+          <div *ngFor="let control of fieldsForm.controls; let i = index" [formGroupName]="i" class="row g-1 mb-3">
+            <div class="col-lg-3">
+              <div>
+                <label [for]="'costo'+i" class="form-label">Costo (Bs): </label>
+                <input type="number" step="0.1" [id]="'costo'+i" class="form-control"
+                    placeholder="costo por Hora" formControlName="costo">
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <label class="form-label">Intervalo horario</label>
+              <div class="row g-1">
+                <div class="col-lg-6">
+                  <input class="form-control flatpickr-input" type="text" mwlFlatpickr
+                        [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
+                        placeholder="Desde" formControlName="desde">
+                </div>
+                <div class="col-lg-6">
+                  <input class="form-control flatpickr-input" type="text" mwlFlatpickr
+                        [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
+                        placeholder="Hasta" formControlName="hasta">
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div>
+                <label for="categorias-field" class="form-label">Categorias</label>
+                <ng-select [items]="categoryList" [multiple]="true" bindLabel="nombre"
+                          formControlName="categorias" placeholder="Seleccione una o más Categorias">
+                </ng-select>
+              </div>
+            </div>
+            <div class="col-lg-1 d-flex align-items-end">
+              <button type="button" class="btn btn-danger" (click)="removeTarifa(i)">
+                <i class="las la-calendar-minus align-bottom"></i> 
+              </button>
+            </div>
+          </div>
+        </div>      
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <div class="hstack gap-2 justify-content-end">
+      <button type="button" class="btn btn-light" data-bs-dismiss="modal" (click)="closeModal()">Cerrar</button>
+      <button type="submit" class="btn btn-success" id="add-btn">Guardar</button>
+    </div>
+  </div>
+</form>

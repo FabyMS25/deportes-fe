@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 import Swal from 'sweetalert2';
@@ -10,11 +10,17 @@ import { Surfaces } from 'src/app/core/constants/Superficies';
 import { Ceiling } from 'src/app/core/constants/Techados';
 import { Categoria } from 'src/app/core/models/categoria.model';
 import { Horario } from 'src/app/core/models/horario.model';
-import { CanchaDeportesService } from 'src/app/core/services/api/cancha-deportes.service';
-import { CanchaCategoria } from 'src/app/core/models/cancha-categoria.model';
+// import { CanchaDeportesService } from 'src/app/core/services/api/cancha-deportes.service';
+// import { CanchaCategoria } from 'src/app/core/models/cancha-categoria.model';
 import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { HorariosService } from 'src/app/core/services/api/horarios.service';
+import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
+import { TarifaService } from 'src/app/core/services/api/tarifa.service';
+import { TarifaCategoriesService } from 'src/app/core/services/api/tarifa-categorias.service';
+import { forkJoin, Observable, switchMap } from 'rxjs';
+import { ModalScheduleComponent } from '../modal-schedule/modal-schedule.component';
 
 @Component({
   selector: 'app-modal',
@@ -28,9 +34,9 @@ export class ModalFieldsComponent {
   @Input() categoryList:Categoria[]=[];
 
   placeholder='Seleccione una opción'
-  ceilingList=Ceiling
-  surfacesList = Surfaces
-  distictList=Districts
+  ceilingList= Ceiling
+  surfacesList:any[]=[];// Surfaces
+  distictList= Districts
   dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'];
 
   submitted = false;
@@ -44,53 +50,56 @@ export class ModalFieldsComponent {
   searchResults: any;
   searchTerm: any;
   canchasList:any[]=[];
+  complejosList:any[]=[];
 
   constructor(private modalService: NgbModal,
-    private canchaService: CamposDeportivoService,
-    private categoriesService: CanchaDeportesService,
-    private horariosService: HorariosService,
     private formBuilder: UntypedFormBuilder,
+    private complejoService: ComplejosService,
+    private canchaService: CamposDeportivoService,
+    private surfaceService: SuperficiesService,
+    private tarifaService: TarifaService,
+    private categoriesService: TarifaCategoriesService
   ) {
       
   }
 
   ngOnInit(): void {
+    this.getFacilities();
+    this.getSurfaces()
     /**
      * Form Validation
      */
     this.fieldsForm = this.formBuilder.group({
       uuid: [''],
       image_src: ['brands/dribbble.png'],
-
-      nombre: ['', [Validators.required]],
-      techado: [null, [Validators.required]],
-      distrito: [null, [Validators.required]],
-      ubicacion: ['', [Validators.required]],
-      latitud: ['', [Validators.required]],
-      longitud: ['', [Validators.required]],
-
+      complejo: [, [Validators.required]],
       codigo: ['', [Validators.required]],
-      superficie: ['', [Validators.required]],
+      superficie: [, [Validators.required]],
       tipo: ['', [Validators.required]],
-      // categorias: [[],[Validators.required]],
-      // tarifa: [0, [Validators.required]],
       tarifasCategorias : this.formBuilder.array([
-        this.formBuilder.group({
-          categorias: [[]],
-          costo: [0],
-          desde: [""],
-          hasta: [""],
-          allDay: [true],
-          descripcion: [""]
-        })]),
+        this.createTarifaFormGroup()
+      ]),
       horariosDeAtencion : this.formBuilder.array([
         this.formBuilder.group({
           dia: [""],
+          abierto: [""],
           horaInicio: [""],
           horaFin: [""]
         })])
     });
     this.formDataSet();
+  }
+
+  createTarifaFormGroup(): FormGroup {
+    return this.formBuilder.group({
+      costo: [0, Validators.required],
+      desde: [""],
+      hasta: [""],
+      allDay: [true],
+      descripcion: [""],
+      canchasDto:this.row,
+      categorias: [[], Validators.required],
+    });
   }
 
   /**
@@ -101,8 +110,19 @@ export class ModalFieldsComponent {
   }
   get horariosDeAtencion() {
       return this.fieldsForm.get('horariosDeAtencion') as FormArray;
+  } 
+  get tarifasCategorias() {
+    return this.fieldsForm.get('tarifasCategorias') as FormArray;
+}
+
+  addTarifa() {
+    this.tarifasCategorias.push(this.createTarifaFormGroup());
   }
 
+  // Function to remove a horario entry
+  removeTarifa(index: number) {
+      this.tarifasCategorias.removeAt(index);
+  }
   // Function to add a new horario entry  
   addHorario() {
     const horarioGroup = this.formBuilder.group({
@@ -124,13 +144,11 @@ export class ModalFieldsComponent {
           uuid:this.row.uuid,
             image_src: [''],
             codigo: this.row.codigo,
-            // tarifa: this.row.totalxhora,
-            superficie: this.row.superficie,
             tipo: this.row.tipo,
-            complejoDto: this.row.complejoDto,
+            superficie: this.row.superficieDto,
+            complejo: this.row.complejoDto,
 
             tarifas:this.row.tarifasList,
-            categorias:this.row.canchaDeportesList,
             horariosDeAtencion :this.row.horarioList
         });
     }
@@ -153,36 +171,16 @@ export class ModalFieldsComponent {
     }
     reader.readAsDataURL(file)
   }
-  
-  public openMapa() {
-    const modalRef = this.modalService.open(LeafletComponent, {
-        backdrop: 'static',
-        size: 'lg'
-    });
-    modalRef.componentInstance.title = 'Buscar en Mapa';
-    modalRef.componentInstance.form=true;
-    modalRef.componentInstance.latLngEmitter.subscribe((data:any) => {
-      const latitud=data.lat;
-      const longitud=data.lng;
-      const direccion=data.dir;
-      this.fieldsForm.get('ubicacion')?.patchValue(direccion);
-      this.fieldsForm.get('latitud')?.patchValue(latitud);
-      this.fieldsForm.get('longitud')?.patchValue(longitud);
-    });
-  }
 
-  /**
-  * API Services Functions
-  */ 
   saveData() {
     this.submitted = true;
     if (this.fieldsForm.valid) {
       this.fieldsForm.enable()
       let datos: campoDeportivo = {
+        complejoDto: this.fieldsForm.value.complejo,
         codigo: this.fieldsForm.value.codigo,
-        superficie: this.fieldsForm.value.superficie,
         tipo: this.fieldsForm.value.tipo,
-        // totalxhora: this.fieldsForm.value.tarifa,
+        superficieDto: this.fieldsForm.value.superficie,
       };
       if (this.fieldsForm.get('uuid')?.value) {
           datos.uuid = this.fieldsForm.value.uuid;
@@ -205,13 +203,12 @@ export class ModalFieldsComponent {
       next:(data:any)=>{
         if (data['status'] === 'OK') {
           console.log("data saved", data)
-          this.saveCategoriesTaxes(data['payload'].uuid);
-          this.saveServiceHours(data['payload'].uuid); 
+          this.saveTarifasCat(data['payload']);
+          this.openScheduleModal(data['payload'],'edit','md')
           this.submitted=false;
-          this.modalService.dismissAll();
+          // this.modalService.dismissAll();
           this.fieldsForm.reset();
           this.listaItems.emit();       
-          this.notify('Datos Registrados exitosamente!','success');
 
         }else{
           this.notify(data.payload, 'error');
@@ -224,15 +221,14 @@ export class ModalFieldsComponent {
   }
   private updateData(datos:campoDeportivo) {
       this.canchaService.update(datos).subscribe({
-          next: (data: campoDeportivo) => {
+          next: (data: any) => {
             const field=data;
-            this.saveCategoriesTaxes(data.uuid);
-            this.saveServiceHours(data.uuid);
+            this.saveTarifasCat(data['payload']);
+            this.openScheduleModal(data['payload'],'edit','md')
             this.submitted = false;
-            this.modalService.dismissAll();
+            // this.modalService.dismissAll();
             this.fieldsForm.reset();
             this.listaItems.emit();
-            this.notify('Datos Actualizados exitosamente!', 'success');
           },
           error: (error) => {
             this.submitted = false;
@@ -242,47 +238,67 @@ export class ModalFieldsComponent {
           }
       })
   }
-  private saveCategoriesTaxes(uuid:string | undefined){
-    if(uuid){
-      
-      const categories= this.fieldsForm.value.categorias
-      categories.forEach((element:any) => {
-        let datos: CanchaCategoria = {
-          deporteDto:{uuid:element.uuid},
-          canchasDto:{uuid:uuid}
-        };
-        this.categoriesService.save(datos).subscribe({
-          next:(data:CanchaCategoria)=>{
-            
-            this.notify('Categoria Registrada','success'); 
-          },error:(error)=>{
-            this.notify('Formulario Invalido: '+error, 'error');
-          }
-        })
-        
-      });
-    }
+  private saveTarifasCat(cancha:any){      
+      // const categories= this.fieldsForm.value.categorias      
 
-  }
-  private saveServiceHours(uuid:string | undefined){
-    if(uuid){
-      this.form['horariosDeAtencion'].value.forEach((element:Horario) => {
-        let datos = {
-          dia: element.dia,
-          horaInicio:element.horaInicio,
-          horaFin:element.horaFin,
-          canchasDto:{uuid:uuid}
-        };
-        this.horariosService.save(datos).subscribe({
-            next:(data:Horario)=>{            
-            this.notify('Horario Registrado'+data,'success'); 
-          },error:(error)=>{
-            this.notify('Formulario Invalido: '+error, 'error');
-          }
-        })
-        
+      const formArray = this.tarifasCategorias ;
+      const saveObservables: Observable<any>[] = [];
+    
+      formArray.controls.forEach((abstractControl: AbstractControl) => {
+        const control = abstractControl as FormGroup;
+        if (control.valid) {
+          const tarifaData = {
+            costo: control.value.costo,
+            desde: control.value.desde,
+            hasta: control.value.hasta,
+            descripcion: control.value.descripcion,
+            categorias: control.value.categorias,
+            canchasDto: cancha  
+          };
+          const categorias = control.value.categorias;
+          console.log(categorias)
+          const saveTarifaAndCategories = this.tarifaService.save(tarifaData).pipe(
+            switchMap((savedTarifa: any) => {
+              console.log("tarifa ",savedTarifa)
+              const categorySaveObservables = categorias.map((categoria: any) => {
+                const tarifaCategoriaData = {
+                  tarifaDto: {uuid:savedTarifa.payload.uuid},
+                  categoriaDto:{uuid: categoria.uuid} 
+                };
+                console.log(tarifaCategoriaData)
+                return this.categoriesService.save(tarifaCategoriaData);
+              });
+              return forkJoin(categorySaveObservables);
+            })
+          );
+    
+          saveObservables.push(saveTarifaAndCategories);
+        }
       });
-    }
+    
+      if (saveObservables.length > 0) {
+        forkJoin(saveObservables).subscribe({
+          next: (results) => {
+            this.notify('Datos Registrados exitosamente!','success');
+            // You might want to close the modal or reset the form here
+          },
+          error: (error) => {
+            this.notify('Error al guardar las tarifas o categorías: ' + error, 'error');
+          }
+        });
+      } else {
+        this.notify('No hay tarifas válidas para guardar', 'warning');
+      }
+  }
+
+  
+  openScheduleModal(row: campoDeportivo | undefined, accion: string, size: string) {
+    const modalRef = this.modalService.open(ModalScheduleComponent, {
+        backdrop: 'static',
+        size:size
+    });
+    modalRef.componentInstance.row = row;
+    modalRef.componentInstance.accion = accion;
   }
 
   /**
@@ -326,6 +342,33 @@ export class ModalFieldsComponent {
       Swal.fire({ text: 'Please select at least one checkbox', confirmButtonColor: '#299cdb', });
     }
     this.checkedValGet = checkedVal;
+  }
+
+  
+  private getFacilities(){
+    this.complejoService.getAll().subscribe({
+      next: (data: any) => {
+        if (data['status'] === 'OK') {
+          this.complejosList = data.payload;
+        }
+      },
+      error: (error) => {
+        Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb', });
+      }
+    });
+  }
+    
+  private getSurfaces(){
+    this.surfaceService.getAll().subscribe({
+      next: (data: any) => {
+        if (data['status'] === 'OK') {
+          this.surfacesList = data.payload;
+        }
+      },
+      error: (error) => {
+        Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb', });
+      }
+    });
   }
 
   public closeModal() {

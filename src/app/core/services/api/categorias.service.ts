@@ -14,7 +14,7 @@ import { Categoria } from '../../models/categoria.model';
 })
 
 export class CategoriasService {
-  apiUrl = environment.backendUrl + '/deportes';
+  apiUrl = environment.backendUrl + '/categorias';
 
   constructor(private http: HttpClient) { }
 

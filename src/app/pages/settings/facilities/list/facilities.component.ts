@@ -64,8 +64,7 @@ export class FacilitiesComponent {
     this.listaItems = [
       {name: 'Nombre', prop: 'nombre'},
       {name: 'Techado', prop: 'techado'},
-      {name: 'Distrito',prop: 'distrito'},
-      {name: 'Encargado', prop: 'encargado'},
+      {name: 'Distrito',prop: 'distrito'}
     ];
     /**
      * fetches data

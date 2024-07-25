@@ -12,10 +12,9 @@ export interface  Encargado{
     
     horaEntrada: string; // "HH:mm:ss"
     horaSalida: string; // "HH:mm:ss"
-    nombre?: string;
+    nombre: string;
     telefono?:string;
-    // canchasDto: Cancha;
-    complejoDto: Complejo
+    complejoDto: {uuid:string}
 
   }
   

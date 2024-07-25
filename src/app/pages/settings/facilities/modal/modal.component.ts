@@ -5,12 +5,12 @@ import { FormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@an
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LeafletComponent } from 'src/app/shared/map/leaflet.component';
 import { Horario } from 'src/app/core/models/horario.model';
-import { CanchaDeportesService } from 'src/app/core/services/api/cancha-deportes.service';
+// import { CanchaDeportesService } from 'src/app/core/services/api/cancha-deportes.service';
 import { Districts } from 'src/app/core/constants/Distritos';
 import { Surfaces } from 'src/app/core/constants/Superficies';
 import { Ceiling } from 'src/app/core/constants/Techados';
 import { Categoria } from 'src/app/core/models/categoria.model';
-import { CanchaCategoria } from 'src/app/core/models/cancha-categoria.model';
+// import { CanchaCategoria } from 'src/app/core/models/cancha-categoria.model';
 import { Complejo } from 'src/app/core/models/complejo.model';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { HorariosService } from 'src/app/core/services/api/horarios.service';
@@ -46,7 +46,7 @@ export class ModalFacilitiesComponent {
 
   constructor(private modalService: NgbModal,
     private complejosSevice: ComplejosService,
-    private categoriesService: CanchaDeportesService,
+    // private categoriesService: CanchaDeportesService,
     private horariosService: HorariosService,
     private formBuilder: UntypedFormBuilder,
     // private store: Store<{ data: RootReducerState }>
@@ -62,20 +62,20 @@ export class ModalFacilitiesComponent {
       uuid: [''],
       image_src: ['brands/dribbble.png'],
       nombre: ['', [Validators.required]],
-      tarifa: [0, [Validators.required]],
+      // tarifa: [0, [Validators.required]],
       techado: ['', [Validators.required]],
-      superficie: [null, [Validators.required]],
+      // superficie: [null, [Validators.required]],
       distrito: [null, [Validators.required]],
       ubicacion: ['', [Validators.required]],
       latitud: ['', [Validators.required]],
       longitud: ['', [Validators.required]],
-      categorias: [[],[Validators.required]],
-      horariosDeAtencion : this.formBuilder.array([
-        this.formBuilder.group({
-          dia: [""],
-          horaInicio: [""],
-          horaFin: [""]
-        })])
+      // categorias: [[],[Validators.required]],
+      // horariosDeAtencion : this.formBuilder.array([
+      //   this.formBuilder.group({
+      //     dia: [""],
+      //     horaInicio: [""],
+      //     horaFin: [""]
+      //   })])
     });
     this.formDataSet();
   }
@@ -194,9 +194,8 @@ export class ModalFacilitiesComponent {
     this.complejosSevice.save(datos).subscribe({
       next:(data:any)=>{
         if (data['status'] === 'OK') {
-          console.log("data saved", data)
-          this.saveCategories(data['payload'].uuid);
-          this.saveServiceHours(data['payload'].uuid); 
+          // this.saveCategories(data['payload'].uuid);
+          // this.saveServiceHours(data['payload'].uuid); 
           this.submitted=false;
           this.modalService.dismissAll();
           this.complejosForm.reset();
@@ -215,7 +214,7 @@ export class ModalFacilitiesComponent {
       this.complejosSevice.update(datos).subscribe({
           next: (data: Complejo) => {
             const field=data;
-            this.saveCategories(data.uuid);
+            // this.saveCategories(data.uuid);
             this.saveServiceHours(data.uuid);
             this.submitted = false;
             this.modalService.dismissAll();
@@ -231,28 +230,28 @@ export class ModalFacilitiesComponent {
           }
       })
   }
-  private saveCategories(uuid:string | undefined){
-    if(uuid){
+  // private saveCategories(uuid:string | undefined){
+  //   if(uuid){
       
-      const categories= this.complejosForm.value.categorias
-      categories.forEach((element:any) => {
-        let datos: CanchaCategoria = {
-          deporteDto:{uuid:element.uuid},
-          canchasDto:{uuid:uuid}
-        };
-        this.categoriesService.save(datos).subscribe({
-          next:(data:CanchaCategoria)=>{
+  //     const categories= this.complejosForm.value.categorias
+  //     categories.forEach((element:any) => {
+  //       let datos: CanchaCategoria = {
+  //         deporteDto:{uuid:element.uuid},
+  //         canchasDto:{uuid:uuid}
+  //       };
+  //       this.categoriesService.save(datos).subscribe({
+  //         next:(data:CanchaCategoria)=>{
             
-            this.notify('Categoria Registrada','success'); 
-          },error:(error)=>{
-            this.notify('Formulario Invalido: '+error, 'error');
-          }
-        })
+  //           this.notify('Categoria Registrada','success'); 
+  //         },error:(error)=>{
+  //           this.notify('Formulario Invalido: '+error, 'error');
+  //         }
+  //       })
         
-      });
-    }
+  //     });
+  //   }
 
-  }
+  // }
   private saveServiceHours(uuid:string | undefined){
     if(uuid){
       this.form['horariosDeAtencion'].value.forEach((element:Horario) => {

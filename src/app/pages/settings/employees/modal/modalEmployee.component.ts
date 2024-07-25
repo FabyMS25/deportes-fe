@@ -42,10 +42,11 @@ export class ModalEmployeeComponent {
       image_src: [''],
       uuid: [''],
       uuidUsuario: ['', [Validators.required]],
-      fechaInicio: ['', [Validators.required]],
-      fechaFin: ['', [Validators.required]],
+      // fechaInicio: ['', [Validators.required]],
+      // fechaFin: ['', [Validators.required]],
       horaEntrada: ['', [Validators.required]],
       horaSalida: ['', [Validators.required]],
+      nombre: [''],
       telefono: [''],
       uuidCancha: [''],
       canchaDto: new FormControl(),
@@ -65,10 +66,11 @@ export class ModalEmployeeComponent {
             uuid:this.row.uuid,
             image_src: [''],
             uuidUsuario: this.row.userUuid,
-            fechaInicio: this.row.fechaInicio,
-            fechaFin: this.row.fechaFin,
+            // fechaInicio: this.row.fechaInicio,
+            // fechaFin: this.row.fechaFin,
             horaEntrada: this.row.horaEntrada,
             horaSalida: this.row.horaSalida,
+            nombre:this.row.nombre,
             telefono:this.row.telefono,
             uuidCancha: this.row.complejoDto.uuid,
             canchaDto:this.row.complejoDto
@@ -76,14 +78,25 @@ export class ModalEmployeeComponent {
     }
   }
 
-  public onUserSelectHandler(event: Event): void {
-    const selectedValue = (event.target as HTMLSelectElement).value;
-    this.usersList.forEach(element => {
-        if (element.uuid === selectedValue) {
-            this.user = element;
-        }
+//   public onUserSelectHandler(event: Event): void {
+//     const selectedValue = (event.target as HTMLSelectElement).value;
+//     this.usersList.forEach(element => {
+//         if (element.uuid === selectedValue) {
+//             this.user = element;
+//         }
+//     });
+// }
+onUserSelectHandler(event: any) {
+  const selectedUuid = event.target.value;
+  const selectedUser = this.usersList.find(user => user.uuid === selectedUuid);
+  if (selectedUser) {
+    this.user = selectedUser;
+    this.contentForm.patchValue({
+      nombre: selectedUser.designacionFuncionarioDto.personaDto.fullName
     });
+  }
 }
+
 
   // File Upload
   imageURL: string | undefined;
@@ -130,12 +143,13 @@ export class ModalEmployeeComponent {
     if (this.contentForm.valid) {
       this.contentForm.enable();
       
-      let datos: any = {
+      let datos: Encargado = {
         userUuid: this.contentForm.value.uuidUsuario,
-        fechaInicio: this.contentForm.value.fechaInicio,
-        fechaFin: this.contentForm.value.fechaFin,
+        // fechaInicio: this.contentForm.value.fechaInicio,
+        // fechaFin: this.contentForm.value.fechaFin,
         horaEntrada: this.contentForm.value.horaEntrada,
         horaSalida: this.contentForm.value.horaSalida,
+        nombre: this.contentForm.value.nombre,
         telefono: this.contentForm.value.telefono,
         complejoDto: { uuid: this.contentForm.value.uuidCancha },
       };

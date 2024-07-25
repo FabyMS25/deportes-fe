@@ -66,7 +66,7 @@
             </div>
             <div class="col-lg-12">
                 <div class="mb-3" >
-                    <label for="uuidCancha" class="form-label">Cancha</label>
+                    <label for="uuidCancha" class="form-label">Complejo</label>
                     <select class="form-control mb-0" data-choices data-choices-search-false
                         id="uuidCancha" formControlName="uuidCancha" required
                         (change)="onUserSelectHandler($event)"
@@ -88,7 +88,7 @@
                     }
                 </div>
             </div>
-            <div class="col-lg-6">
+            <!-- <div class="col-lg-6">
                 <div>
                     <label for="fechaInicio-field" class="form-label">Fecha Inicio</label>
                     <input type="date" id="fechaInicio-field" class="form-control"
@@ -103,23 +103,7 @@
                     </div>
                     }
                 </div>
-            </div>
-            <div class="col-lg-6">
-                <div>
-                    <label for="fechaFin-field" class="form-label">fecha Fin</label>
-                    <input type="date" id="fechaFin-field" class="form-control"
-                        placeholder="Es fechaFin" required formControlName="fechaFin"
-                        [ngClass]="{ 'is-invalid': submitted && form['fechaFin'].errors }" />
-                    @if(submitted && form['fechaFin'].errors){ 
-                    <div class="invalid-feedback"
-                        align="left">
-                        @if(form['fechaFin'].errors['required']){ 
-                        <div>El campo es requerido </div>
-                        }
-                    </div>
-                    }
-                </div>
-            </div>
+            </div> -->
             <div class="col-lg-6">
               <div>
                 <label for="horaEntrada-field" class="form-label">Hora Entrada</label>

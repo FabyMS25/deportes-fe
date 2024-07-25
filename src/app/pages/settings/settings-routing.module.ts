@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 
 // Component pages
-import { EmployeesComponent } from "./empleados/employees.component";
+import { EmployeesComponent } from "./employees/employees.component";
 import { CategoriasComponent } from "./categories/categorias.component";
 import { FieldsComponent } from './fields/list/fields.component';
 import { FacilitiesComponent } from './facilities/list/facilities.component';

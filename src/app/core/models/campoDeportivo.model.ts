@@ -1,24 +1,23 @@
 import { Categoria } from "./categoria.model";
 import { Complejo } from "./complejo.model";
 import { Horario } from "./horario.model";
+import { Superficie } from "./superficie.model";
 import { Tarifa } from "./tarifa.model";
 
 export interface campoDeportivo {
   uuid?: string;
   estado?:string;
 
-  codigo?:string;
-  // techado?:string;
-  superficie:string;
-  tipo?:string;
-  // totalxhora?:number;
+  codigo:string;
+  tipo:string;
 
   tarifasList?: Tarifa[];
-  canchaDeportesList?:Categoria[]; //categorias
+  // canchaDeportesList?:Categoria[]; //categorias
   horarioList?:Horario[];
   
   reservasList?:any[];
   
-  complejoDto?: Complejo;
+  complejoDto: Complejo;
+  superficieDto:Superficie;
 
 }

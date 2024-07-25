@@ -57,9 +57,9 @@ export class CategoriasComponent {
     ];
 
     this.listaItems = [
+      {name: 'Codigo', prop: 'codigo'},
       {name: 'Nombre', prop: 'nombre'},
-      {name: 'Tipo', prop: 'tipo'},
-      {name: 'Canchas',prop: 'canchas'},
+      {name: 'Tipo Cobro', prop: 'tipo'},
     ];
     /**
      * Form Validation
@@ -67,7 +67,9 @@ export class CategoriasComponent {
     this.contentForm = this.formBuilder.group({
       uuid: [''],
       estado:[''],
-      nombre: ['', [Validators.required]]
+      codigo: ['', [Validators.required]],
+      nombre: ['', [Validators.required]],
+      tipo: ['']
     });
 
     /**
@@ -94,9 +96,9 @@ export class CategoriasComponent {
   private formDataSet(row:any) {
         this.contentForm.patchValue({
             uuid:row.uuid,
-            // image_src: [''],
+            codigo: row.codigo,
             nombre: row.nombre,
-            // tarifa: row.totalxhora,
+            tipo: row.tipo,
         });
   }
   /**
@@ -144,7 +146,9 @@ export class CategoriasComponent {
       if (this.contentForm.valid) {
         this.contentForm.enable()
         let datos: Categoria = {
+          codigo: this.contentForm.value.codigo,
           nombre: this.contentForm.value.nombre,
+          tipo: this.contentForm.value.tipo,
         };
         if (this.contentForm.get('uuid')?.value) {
           datos.uuid=this.contentForm.value.uuid,
@@ -164,7 +168,8 @@ export class CategoriasComponent {
       
   addData(datos:Categoria){
     this.deportesService.save(datos).subscribe({
-      next:(data:Categoria)=>{
+      next:(data:any)=>{
+        console.log(data)
         this.submitted=false;
         this.notify('Datos Registrados exitosamente!','success'); 
         this.closeModal();

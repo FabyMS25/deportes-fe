@@ -11,6 +11,7 @@ import Swal from 'sweetalert2';
 
 // import { OpenStreetMapProvider, GeoSearchControl, SearchControl } from 'leaflet-geosearch';
 import * as GeoSearch from 'leaflet-geosearch';
+import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 
 @Component({
     selector: 'app-contribuyente',
@@ -39,6 +40,7 @@ export class ContribuyenteComponent implements OnInit {
  
     constructor(private router: Router,
       private categoriasService: CategoriasService,
+      private complejoService: ComplejosService,
       private fieldsService: CamposDeportivoService
     ) {}
 
@@ -48,7 +50,7 @@ export class ContribuyenteComponent implements OnInit {
             { label: 'Contribuyente', active: true }
         ];
         this.getDeportes();
-        this.getFields();
+        this.getComplejos();
         this.setMaps();
         // this.setMarkers();
         // this.configDefaultMap();
@@ -73,14 +75,14 @@ export class ContribuyenteComponent implements OnInit {
       const provider = new GeoSearch.OpenStreetMapProvider();
       const searchControl = new (GeoSearch.GeoSearchControl as any)({
         provider: provider,
-        style: 'bar',
+        style: '',
         showMarker: true,
         showPopup: false,
         autoClose: true,
         retainZoomLevel: false,
         animateZoom: true,
         keepResult: false,
-        searchLabel: 'Buscar un direción',
+        searchLabel: 'Buscar... ',
         classNames: {
           container: 'custom-geosearch-control'
         },
@@ -197,6 +199,22 @@ export class ContribuyenteComponent implements OnInit {
         });
     }
     
+    private getComplejos(){
+      this.complejoService.getAll().subscribe({
+        next: (data: any) => {
+          if (data['status'] === 'OK') {
+            this.canchasList = data.payload;
+            this.temp = data.payload;
+            this.setMarkers()
+          }else{
+            Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
+          }
+        },
+        error: (error) => {
+          Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb', });
+        }
+      });
+    }
     private getFields(){
       this.fieldsService.getAll().subscribe({
         next: (data: any) => {

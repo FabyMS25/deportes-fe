@@ -72,8 +72,8 @@ export class EmployeesComponent implements OnInit {
       { label: this.title, active: true }
     ];
     this.listaItems = [
-      {name: 'Nombre', prop: 'nombreCompleto', avatar:true},
-      {name: 'Cancha',prop: 'canchasDto.nombre'},
+      {name: 'Nombre', prop: 'nombre', avatar:true},
+      {name: 'Complejo',prop: 'complejoDto.nombre'},
       {name: 'Telefono', prop: 'telefono'},
     ];
 

@@ -17,7 +17,7 @@ const httpOptions = {
   providedIn: 'root'
 })
 export class ComplejosService {
-    apiUrl = environment.backendUrl + '/canchas';
+    apiUrl = environment.backendUrl + '/complejos';
 
 
   constructor(private http: HttpClient) { }

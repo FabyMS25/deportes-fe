@@ -8,8 +8,8 @@ export interface  Horario{
     dia: String;
     horaInicio: string; // "HH:mm:ss"
     horaFin: string; // "HH:mm:ss"
-    activo?: boolean
+    abierto: boolean
 
-    canchasDto?: campoDeportivo;
+    canchasDto: campoDeportivo;
   }
   

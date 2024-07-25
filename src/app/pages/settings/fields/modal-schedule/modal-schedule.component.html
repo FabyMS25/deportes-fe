@@ -1,0 +1,54 @@
+<div class="modal-header bg-info-subtle  p-3">
+    <h5 class="modal-title" ngbAutofocus>Horarios de Atención </h5>
+    <button type="button"
+        class="btn-close"
+        data-dismiss="modal" aria-label="Cerrar"
+        [disabled]="submitted"
+        (click)="closeModal()">
+    </button>
+</div>
+
+<form [formGroup]="form" (ngSubmit)="saveData()" *ngIf="accion === 'edit'" class="tablelist-form" autocomplete="off">
+    <div formArrayName="fieldsForm">
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="row">
+            <div *ngFor="let control of fieldsForm.controls; let i = index" [formGroupName]="i" class="row g-1">
+              <div class="col-lg-3">
+                <div>
+                    <span class="form-control-plaintext">{{ dias[i] }}</span>
+                  <!-- <input class="form-control" type="text" [value]="dias[i]" readonly formControlName="dia"> -->
+                </div>
+              </div>
+              <div class="col-lg-3">
+                <label class="text-muted mb-0" [for]="'abierto' + i">Abierto:</label>
+                <div class="form-check form-switch form-switch-md" dir="ltr">
+                  <input type="checkbox" class="form-check-input" [id]="'abierto' + i" formControlName="abierto">
+                </div>
+              </div>
+              <div class="col-lg-3">
+                <div>
+                  <input class="form-control flatpickr-input" type="text" mwlFlatpickr
+                         [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
+                         placeholder="Hora inicio" formControlName="horaInicio">
+                </div>
+              </div>
+              <div class="col-lg-3">
+                <div>
+                  <input class="form-control flatpickr-input" type="text" mwlFlatpickr
+                         [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
+                         placeholder="Hora final" formControlName="horaFin">
+                </div>
+              </div>
+            </div>
+          </div>      
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div class="hstack gap-2 justify-content-end">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal" (click)="closeModal()">Cerrar</button>
+        <button type="submit" class="btn btn-success" id="add-btn">Guardar</button>
+      </div>
+    </div>
+  </form>

@@ -16,17 +16,19 @@ import lottie from 'lottie-web';
 // Component pages
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SharedModule } from '../../shared/shared.module';
-import { EmployeesComponent } from './empleados/employees.component';
+import { EmployeesComponent } from './employees/employees.component';
 import { CategoriasComponent } from './categories/categorias.component';
 import { SortByCrmPipe } from "../settings/sort-by.pipe";
 
 import { FieldsComponent } from './fields/list/fields.component';
-import { ModalEmployeeComponent } from './empleados/modal/modalEmployee.component';
+import { ModalEmployeeComponent } from './employees/modal/modalEmployee.component';
 import { FacilitiesComponent } from './facilities/list/facilities.component';
 import { ModalFacilitiesComponent } from './facilities/modal/modal.component';
 import { ModalFieldsComponent } from './fields/modal/modal.component';
 import { AreasComponent } from './areas/areas.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { ModalScheduleComponent } from './fields/modal-schedule/modal-schedule.component';
+import { ModalTarifaComponent } from './fields/modal-tarifa/modal-tarifa.component';
 
 @NgModule({
   declarations: [
@@ -38,7 +40,9 @@ import { TranslateModule } from '@ngx-translate/core';
     SortByCrmPipe,
     ModalFacilitiesComponent,
     ModalFieldsComponent,
-    ModalEmployeeComponent
+    ModalEmployeeComponent,
+    ModalScheduleComponent,
+    ModalTarifaComponent
   ],
   imports: [
     CommonModule,

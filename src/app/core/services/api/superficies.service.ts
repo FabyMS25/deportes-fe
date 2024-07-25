@@ -14,7 +14,7 @@ import { Superficie } from '../../models/superficie.model';
 })
 
 export class SuperficiesService {
-  apiUrl = environment.backendUrl + '/deportes';
+  apiUrl = environment.backendUrl + '/superficie';
 
   constructor(private http: HttpClient) { }
 
