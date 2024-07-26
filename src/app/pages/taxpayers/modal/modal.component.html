@@ -1,6 +1,7 @@
 
 <div class="modal-header bg-light p-3">
-    <h5 class="modal-title" id="exampleModalLabel">Agregar Contribuyente</h5>
+    <h5 class="modal-title" id="exampleModalLabel" *ngIf="'edit'">Agregar Contribuyente</h5>
+    <h5 class="modal-title" id="exampleModalLabel" *ngIf="'show'">Datos de Contribuyente</h5>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
         id="close-modal" (click)="closeModal()"></button>
 </div>

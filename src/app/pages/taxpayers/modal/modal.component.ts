@@ -106,7 +106,7 @@ export class ModalComponent {
         apPaterno: this.contentForm.value.primerApellido,
         apMaterno: this.contentForm.value.segundoApellido,
         sexo:this.contentForm.value.genero,
-        fechaNacimiento: this.contentForm.value.fechaNacimiento,
+        fechaNac: this.contentForm.value.fechaNacimiento,
         estadoCivil: this.contentForm.value.estadoCivil,
         tipoDocumento: this.contentForm.value.tipoDocumento,
         nroCarnet: this.contentForm.value.nroDocumento,

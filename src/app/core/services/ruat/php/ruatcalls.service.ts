@@ -26,31 +26,32 @@ export class RuatCallsService {
 
   getContribuyentePorCi(nroDocumento: string, tipoDocumento: string, expedido: string): Observable<any> {
   
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
+
     const requestData = {
-      'nroDocumento': nroDocumento,
+      'numeroDocumento': nroDocumento,
       'tipoDocumento': tipoDocumento,
       'expedido': expedido,
-      'token': token, 
+      // 'token': token, 
       'codigoAlcaldia': codigoAlcaldia 
     };
     
     return this.http.post<any>(
     `${this.apiUrl}/getContribuyentePorCi`,
-      requestData
+      requestData,
+      { headers }
     );
   }
 
-  formatDate(date: Date): string {
-    const day = ('0' + date.getDate()).slice(-2);
-    const month = ('0' + (date.getMonth() + 1)).slice(-2);
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
   registerContribuyente(data:Contribuyente): Observable<any> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     });
+
 
     const contribuyente={
       codigoAlcaldia: codigoAlcaldia,
@@ -63,7 +64,7 @@ export class RuatCallsService {
       primerApellido: data.apPaterno,
       segundoApellido: data.apMaterno,
       estadoCivil: data.estadoCivil,
-      fechaNacimiento: this.formatDate(data.fechaNacimiento),
+      fechaNacimiento: data.fechaNac,
       genero: data.sexo,
       apellidoEsposo: "",  
       motivo:"REGISTRO TASAS Y OTROS INGRESOS",

@@ -85,7 +85,7 @@
                     [show]="canActivate.includes('VER')"
                     [edit]="canActivate.includes('ACTUALIZAR')"
                     [delete]="canActivate.includes('ELIMINAR')"
-                    (showItemEmitter)="viewDataGet($event)"
+                    (showItemEmitter)="openModal($event,'show','lg')"
                     (editItemEmitter)="openModal($event,'edit','lg')"
                     (deleteItemEmitter)="deleteData($event)"              
                 >

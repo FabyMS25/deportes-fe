@@ -12,6 +12,8 @@ import { ModalComponent } from '../reservas/modal/modal.component';
 import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { HorariosService } from 'src/app/core/services/api/horarios.service';
+import { Complejo } from 'src/app/core/models/complejo.model';
+import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 @Component({
   selector: 'app-details',
   templateUrl: './details.component.html',
@@ -27,9 +29,10 @@ export class DetailsComponent implements OnInit  {
   currentTime!: string;
   
   uuid='';
-  dataField!:campoDeportivo;
+  dataField!:Complejo;
   categoryList:any[]=[];
   InvoiceForm!: UntypedFormGroup;
+  isCollapsed: boolean[] = [];
   public FCollapsed = true;
   public CCollapsed = true;
 
@@ -41,6 +44,7 @@ export class DetailsComponent implements OnInit  {
     private formBuilder: UntypedFormBuilder,
     private categoriasService: CategoriasService,
     private horariosService: HorariosService,
+    private fieldService: CamposDeportivoService,
     private route: ActivatedRoute ) { }
 
     @ViewChild('slickModal') slickModal!: SlickCarouselComponent;
@@ -74,12 +78,13 @@ export class DetailsComponent implements OnInit  {
     this.dataField = history.state.data;
     console.log(this.dataField)
     if(this.dataField){
-      this.initMap(this.dataField.complejoDto?.latitud, this.dataField.complejoDto?.longitud); 
+      this.initMap(this.dataField.latitud, this.dataField.longitud); 
     }      
     this.updateTime();
     this.timerId = setInterval(() => this.updateTime(), 1000);
     
     this.getDeportes();
+    this.getFields();
     /**
      * Form Validation
      */
@@ -148,9 +153,16 @@ export class DetailsComponent implements OnInit  {
     { horaInicio: '14:00', horaFin: '18:00' ,dia:"martes", activo:true},
     { horaInicio: '08:00', horaFin: '11:00', dia:"miércoles", activo:true },
     { horaInicio: '13:00', horaFin: '16:00' ,dia:"miércoles", activo:true},
+    { horaInicio: '08:00', horaFin: '11:00', dia:"viernes", activo:true },
+    { horaInicio: '13:00', horaFin: '16:00' ,dia:"viernes", activo:true},
     { horaInicio: '', horaFin: '', dia:"Sabado", activo:false },
     { horaInicio: '', horaFin: '' ,dia:"Domingo", activo:false}
   ];
+
+  toggleCollapse(index: number) {
+    this.isCollapsed[index] = !this.isCollapsed[index];
+  }
+
   getAvailableHour(type:string): string {
     const now = new Date();
     const currentDay = now.toLocaleString('es-ES', { weekday: 'long' });
@@ -299,6 +311,23 @@ export class DetailsComponent implements OnInit  {
             Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
           }
         });
+    }
+
+    canchasList:any[]=[];
+    private getFields(){
+      this.fieldService.getAll().subscribe({
+        next: (data: any) => {
+          if (data['status'] === 'OK') {
+            this.canchasList = data.payload;
+            this.canchasList.forEach((cancha, index) => {
+              this.isCollapsed.push(false);
+            });
+          }
+        },
+        error: (error) => {
+          Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb', });
+        }
+      });
     }
 
     saveData(){

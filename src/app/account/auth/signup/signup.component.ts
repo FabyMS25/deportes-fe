@@ -68,7 +68,7 @@ export class SignupComponent implements OnInit {
       verificationCode:[null],
       nombre: ['', [Validators.required]],
       primerApellido: ['', [Validators.required]],
-      segundoApellido: [''],
+      segundoApellido: ['', [Validators.required]],
       genero: [''],
       fechaNacimiento: ['', [Validators.required]],
       estadoCivil: [''],
@@ -256,9 +256,17 @@ export class SignupComponent implements OnInit {
     if (this.SignupForm.valid) {
       const codigo = this.generateCode();
       this.SignupForm.enable();
-      
+  
+      const dateString: string = this.SignupForm.value.fechaNacimiento;
+      const originalDate: Date = new Date(dateString);
+      const formattedDate: string = originalDate.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+
       let datos: Contribuyente = {
-        uuid:this.SignupForm.value.uuid,
+        // uuid:this.SignupForm.value.uuid,
         userName: this.SignupForm.value.username,
         password: this.SignupForm.value.password,
         tipoContribuyente: this.SignupForm.value.tipoContribuyente,
@@ -269,7 +277,7 @@ export class SignupComponent implements OnInit {
         apPaterno: this.SignupForm.value.primerApellido,
         apMaterno: this.SignupForm.value.segundoApellido,
         sexo:this.SignupForm.value.genero,
-        fechaNacimiento: this.SignupForm.value.fechaNacimiento,
+        fechaNac: formattedDate,
         estadoCivil: this.SignupForm.value.estadoCivil,
         tipoDocumento: this.SignupForm.value.tipoDocumento,
         nroCarnet: this.SignupForm.value.nroDocumento,
@@ -299,13 +307,8 @@ export class SignupComponent implements OnInit {
       });
     }
   }
-  getFormattedDate(dateString: string | null): Date {
-    if (!dateString) {
-      return new Date(); // or handle it as needed
-    }
-    const [year, month, day] = dateString.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  }
+  
+  
   generateCode(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
   }
@@ -355,8 +358,6 @@ export class SignupComponent implements OnInit {
         next: (data: any) => {
           if (data['status'] === 'OK') {
             this.usersList = data.payload;
-          }else{
-            Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
           }
         },
         error: (error) => {         

@@ -215,20 +215,5 @@ export class ContribuyenteComponent implements OnInit {
         }
       });
     }
-    private getFields(){
-      this.fieldsService.getAll().subscribe({
-        next: (data: any) => {
-          if (data['status'] === 'OK') {
-            this.canchasList = data.payload;
-            this.temp = data.payload;
-            this.setMarkers()
-          }else{
-            Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
-          }
-        },
-        error: (error) => {
-          Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb', });
-        }
-      });
-    }
+
 }

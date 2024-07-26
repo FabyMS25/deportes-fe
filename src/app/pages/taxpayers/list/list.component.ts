@@ -62,20 +62,14 @@ export class ListComponent {
       {name: 'Nombre', prop: 'nombre'},
       {name: 'Nro Carnet',prop: 'nroCarnet'},
       {name: 'Celular', prop: 'celular'},
-      {name: 'Estado', prop: 'state',tag:true},
+      {name: 'Estado', prop: 'estadoUsuario',tag:true},
     ];
 
     this.getTaxpayers();
   }
 
 
-  /**
-   * View Data Get
-   * @param content modal content
-   */
-  viewDataGet(data: any) {
-    // this.dataSelected=data
-  }
+
 
   // Search Data
   performSearch(): void {

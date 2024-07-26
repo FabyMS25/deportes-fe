@@ -8,8 +8,8 @@ export interface Contribuyente {
   verificationCode?: string; //no en bk
   nombre: string;
   apPaterno: string; //primerApellido
-  apMaterno?: string; //segundoApellido
-  fechaNacimiento: Date;
+  apMaterno: string; //segundoApellido
+  fechaNac: string;
   estadoCivil: string;
   tipoDocumento: string;
   nroCarnet: string; //nroDocumento

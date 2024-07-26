@@ -162,8 +162,15 @@ export class TwoStepComponent implements OnInit {
     });
   }
 
-  registerContribuyente(data:Contribuyente){
-    
+  registerContribuyente(data:any){
+    // const originalDate: Date = data.fechaNac;
+    // const formattedDate: string = originalDate.toLocaleDateString('es-ES', {
+    //   day: '2-digit',
+    //   month: '2-digit',
+    //   year: 'numeric'
+    // });
+    // data.fechaNac = formattedDate;
+    // console.log(formattedDate); // Output: "25/04/1999"
     this.ruatService.registerContribuyente(data ).subscribe({    
       next: (response: any) => {
         if(response.continuarFlujo){
