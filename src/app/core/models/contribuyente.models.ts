@@ -1,5 +1,5 @@
 export interface Contribuyente {
-  uuid?: number;
+  uuid?: string;
   userName: string;
   password: string;
   tipoContribuyente?:string;

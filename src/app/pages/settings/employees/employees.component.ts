@@ -20,6 +20,7 @@ import { ModalEmployeeComponent } from './modal/modalEmployee.component';
 import { UserService } from 'src/app/core/services/api-users/users.service';
 import { UserRol } from 'src/app/core/constants/UserData';
 import { EncargadoService } from 'src/app/core/services/api/encargado.service';
+import { ModalImportComponent } from './modal-import/modal-import.component';
 
 @Component({
   selector: 'app-employees',
@@ -114,6 +115,36 @@ export class EmployeesComponent implements OnInit {
   }
 
   /**
+   * Delete model
+   */
+  deleteModal(content: any, data: any) {
+    this.checkedValGet.push(data.uuid);
+    this.modalService.open(content, { centered: true });
+  }
+  /**
+   * Multiple Delete
+   */
+  checkedValGet: any[] = [];
+  deleteMultiple(content: any) {
+    var checkboxes: any = document.getElementsByName('checkAll');
+    var result
+    var checkedVal: any[] = [];
+    for (var i = 0; i < checkboxes.length; i++) {
+      if (checkboxes[i].checked) {
+        result = checkboxes[i].value;
+        checkedVal.push(result);
+      }
+    }
+    this.checkedValGet = checkedVal;
+    if (checkedVal.length > 0) {
+      this.modalService.open(content, { centered: true });
+    }
+    else {
+      Swal.fire({ text: 'Porfavor seleccione almenos un checkbox', confirmButtonColor: '#299cdb', });
+    }
+  }
+
+  /**
   * Form data get
   */
   get form() {
@@ -146,29 +177,26 @@ export class EmployeesComponent implements OnInit {
     this.funcionarioSelected=data
   }
 
-  // The master checkbox will check/ uncheck all items
-  checkUncheckAll(ev: any) {
-    this.employeesList.forEach((x: { state: any; }) => x.state = ev.target.checked)
-    var checkedVal: any[] = [];
-    var result
-    for (var i = 0; i < this.employeesList.length; i++) {
-      if (this.employeesList[i].state == true) {
-        result = this.employeesList[i];
-        checkedVal.push(result);
-      }
-    }
-    this.checkedValGet = checkedVal
-    checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
-
+  camposImport: any[] =[];
+  public abrirModalImport() {
+    this.camposImport = [
+        {prop: 'userUuid', name: 'userUuid'},
+        {prop: 'Nombre', name: 'Nombre'},
+        {prop: 'Telefono', name: 'Telefono'},
+        {prop: 'Hora Entrada', name: 'Hora Entrada'},
+        {prop: 'Hora Salida', name: 'Hora Salida'},
+        {prop: 'Complejo', name: 'Complejo'},
+    ];
+    const modalRef = this.modalService.open(ModalImportComponent, {
+        size: 'lg',
+        backdrop: 'static'
+    });
+    modalRef.componentInstance.titles = this.camposImport;
+    modalRef.componentInstance.itemsList = this.employeesList;
+    modalRef.componentInstance.listaItems.subscribe(() => {
+        this.getEmployees();
+    });
   }
-  isAllChecked() {
-    return this.employeesList.every((_: { state: any; }) => _.state);
-  }
-
-  /**
-  * Multiple Default Select2
-  */
-  selectValue = ['Lead', 'Partner', 'Exiting', 'Long-term'];
 
   // Csv File Export
   csvFileExport() {
@@ -181,69 +209,11 @@ export class EmployeesComponent implements OnInit {
       title: 'Lista de Encargados',
       useBom: true,
       noDownload: false,
-      headers: ["uuid", "userUuid", "Hora Entrado", "Hora Salida","Telefono", "Estado", "Cancha", "Nombre Completo","avatar"]
+      headers: ["uuid", "userUuid", "Hora Entrada", "Hora Salida","Telefono","Nombre", "Estado", "Complejo", "avatar"]
     };
     new ngxCsv(this.employeesList, "Encargados", orders);
   }
 
-  // Select Checkbox value Get
-  onCheckboxChange(e: any) {
-    const checkArray: UntypedFormArray = this.contentForm.get('subItem') as UntypedFormArray;
-    checkArray.push(new UntypedFormControl(e.target.value));
-    var checkedVal: any[] = [];
-    var result
-    for (var i = 0; i < this.employeesList.length; i++) {
-      if (this.employeesList[i].state == true) {
-        result = this.employeesList[i];
-        checkedVal.push(result);
-      }
-    }
-    this.checkedValGet = checkedVal
-    checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
-  }
-
-  /**
-   * Confirmation mail model
-   */
-  deleteId: any;
-  confirm(content: any, id: any) {
-    this.deleteId = id;
-    this.modalService.open(content, { centered: true });
-  }
-
-  // Delete Data
-  deleteData(id: any) {
-    if (id) {
-      // this.store.dispatch(deleteContact({ id: this.deleteId.toString() }));
-    } else {
-      // this.store.dispatch(deleteContact({ id: this.checkedValGet.toString() }));
-    }
-    this.deleteId = '';
-    this.masterSelected = false;
-  }
-
-  /**
-   * Multiple Delete
-   */
-  checkedValGet: any[] = [];
-  deleteMultiple(content: any) {
-    var checkboxes: any = document.getElementsByName('checkAll');
-    var result
-    var checkedVal: any[] = [];
-    for (var i = 0; i < checkboxes.length; i++) {
-      if (checkboxes[i].checked) {
-        result = checkboxes[i].value;
-        checkedVal.push(result);
-      }
-    }
-    if (checkedVal.length > 0) {
-      this.modalService.open(content, { centered: true });
-    }
-    else {
-      Swal.fire({ text: 'Please select at least one checkbox', confirmButtonColor: '#299cdb', });
-    }
-    this.checkedValGet = checkedVal;
-  }
 
   // Sort filter
   sortField: any;
@@ -275,7 +245,7 @@ export class EmployeesComponent implements OnInit {
           if (data.status === 'OK') {
             this.employeesList = data.payload.map((employee: any) => ({
               ...employee,
-              nombreCompleto: this.getFullName(employee),
+              // nombreCompleto: this.getFullName(employee),
               avatar: this.getAvatar(employee)
             }));
             this.temp = this.employeesList;
@@ -294,6 +264,24 @@ export class EmployeesComponent implements OnInit {
       document.getElementById('elmLoader')?.classList.add('d-none');
     }, 1200);
   }
+    // Delete Data
+    deleteData() {
+      this.checkedValGet.forEach(uuid => {
+        this.employeesService.delete(uuid).subscribe({
+          next: (data:any) => {
+                this.submitted = false;
+                // this.closeModal();
+                // this.notify('registro Eliminado exitosamente!','success')
+              Swal.fire({ text: 'registro Eliminado exitosamente!', confirmButtonColor: 'success' });
+           },
+          error: err => {
+            this.submitted = false;
+            // this.notify('No se pudo eliminar el registro!','error')
+          Swal.fire({ text: 'No se pudo eliminar el registro!', confirmButtonColor: 'success' });
+          }
+        });
+      });
+    }
 
   private getFullName(employee: any): string {
     const user = this.userList.find((user: any) => user.uuid === employee.userUuid);

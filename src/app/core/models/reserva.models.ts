@@ -14,7 +14,7 @@ import { Pago } from "./pago.model";
   totalPesonas: number;
 
   categoria?: string;
-  superficie?: string;
+  superficie: string;
   observacion?: string;
   
   canchasDto:campoDeportivo;

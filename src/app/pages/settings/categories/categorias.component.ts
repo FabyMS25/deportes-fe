@@ -11,6 +11,7 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { Categoria } from 'src/app/core/models/categoria.model';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ModalImportComponent } from './modal-import/modal-import.component';
 
 
 @Component({
@@ -22,22 +23,19 @@ import { TranslateService } from '@ngx-translate/core';
  * Leads Component
  */
 export class CategoriasComponent {
-
-  // bread crumb items
   breadCrumbItems!: Array<{}>;
   title="Categorias";
+  canActivate:string[];
+  listaItems:any[]=[];
+  temp:any[]=[];
+
+  categoryList:any[]=[];
   submitted = false;
   contentForm!: UntypedFormGroup;
   deporteData!: Categoria;
   checkedList: any;
   searchResults: any;
   searchTerm: any;
-
-  listaItems:any[]=[];
-  categoryList:any[]=[];
-  temp:any[]=[];
-
-  canActivate:string[];
 
   constructor(private modalService: NgbModal,
     private authService: AuthenticationService,
@@ -48,9 +46,6 @@ export class CategoriasComponent {
   }
 
   ngOnInit(): void {
-    /**
-    * BreadCrumb
-    */
     this.breadCrumbItems = [
       { label: 'Administracion' },
       { label: this.title, active: true }
@@ -61,9 +56,7 @@ export class CategoriasComponent {
       {name: 'Nombre', prop: 'nombre'},
       {name: 'Tipo Cobro', prop: 'tipo'},
     ];
-    /**
-     * Form Validation
-     */
+    
     this.contentForm = this.formBuilder.group({
       uuid: [''],
       estado:[''],
@@ -71,11 +64,30 @@ export class CategoriasComponent {
       nombre: ['', [Validators.required]],
       tipo: ['']
     });
-
-    /**
-     * fetches data
-     */
     this.getDeportes();
+  }
+
+  get form() {
+    return this.contentForm.controls;
+  }
+
+  private formDataSet(row:any) {
+        this.contentForm.patchValue({
+            uuid:row.uuid,
+            codigo: row.codigo,
+            nombre: row.nombre,
+            tipo: row.tipo,
+        });
+  }
+
+
+  // Search Data
+  performSearch(): void {
+    this.categoryList = this.temp.filter((item: any) => {
+      return (
+        item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
+      );
+    });
   }
 
   /**
@@ -93,29 +105,74 @@ export class CategoriasComponent {
     }
     this.modalService.open(content, { size: 'md', centered: true });
   }
-  private formDataSet(row:any) {
-        this.contentForm.patchValue({
-            uuid:row.uuid,
-            codigo: row.codigo,
-            nombre: row.nombre,
-            tipo: row.tipo,
-        });
+  
+  camposImport: any[] =[];
+  public abrirModalImport() {
+    this.camposImport = [
+        {prop: 'codigo', name: 'Codigo'},
+        {prop: 'tipo', name: 'Tipo Cobro'},
+        {prop: 'nombre', name: 'Nombre'},
+    ];
+    const modalRef = this.modalService.open(ModalImportComponent, {
+        size: 'lg',
+        backdrop: 'static'
+    });
+    modalRef.componentInstance.titles = this.camposImport;
+    modalRef.componentInstance.itemsList = this.categoryList;
+    modalRef.componentInstance.listaItems.subscribe(() => {
+        this.getDeportes();
+    });
   }
   /**
-   * Form data get
+   * Delete model
    */
-  get form() {
-    return this.contentForm.controls;
+  deleteModal(content: any, data: any) {
+    this.checkedValGet.push(data.uuid);
+    this.modalService.open(content, { centered: true });
   }
-
-
-  // Search Data
-  performSearch(): void {
-    this.categoryList = this.temp.filter((item: any) => {
-      return (
-        item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
-    });
+  /**
+   * Multiple Delete
+   */
+  checkedValGet: any[] = [];
+  deleteMultiple(content: any) {
+    var checkboxes: any = document.getElementsByName('checkAll');
+    var result
+    var checkedVal: any[] = [];
+    for (var i = 0; i < checkboxes.length; i++) {
+      if (checkboxes[i].checked) {
+        result = checkboxes[i].value;
+        checkedVal.push(result);
+      }
+    }
+    this.checkedValGet = checkedVal;
+    if (checkedVal.length > 0) {
+      this.modalService.open(content, { centered: true });
+    }
+    else {
+      Swal.fire({ text: 'Porfavor seleccione almenos un checkbox', confirmButtonColor: '#299cdb', });
+    }
+  }
+  /**
+  * Save
+  */
+  saveData() {
+    this.submitted = true;
+    if (this.contentForm.valid) {
+      this.contentForm.enable()
+      let datos: Categoria = {
+        codigo: this.contentForm.value.codigo,
+        nombre: this.contentForm.value.nombre,
+        tipo: this.contentForm.value.tipo,
+      };
+      if (this.contentForm.get('uuid')?.value) {
+        datos.uuid=this.contentForm.value.uuid,
+          this.updateData(datos);
+      } else {
+          this.addData(datos);
+      }
+    }else {
+        this.notify('Formulario Invalido!', 'error');
+    }
   }
 
   /* API Services */
@@ -136,45 +193,14 @@ export class CategoriasComponent {
           Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
         }
       });
-  }
-  
-  /**
-  * Save
-  */
-  saveData() {
-      this.submitted = true;
-      if (this.contentForm.valid) {
-        this.contentForm.enable()
-        let datos: Categoria = {
-          codigo: this.contentForm.value.codigo,
-          nombre: this.contentForm.value.nombre,
-          tipo: this.contentForm.value.tipo,
-        };
-        if (this.contentForm.get('uuid')?.value) {
-          datos.uuid=this.contentForm.value.uuid,
-            this.updateData(datos);
-        } else {
-            this.addData(datos);
-        }
-      }else {
-          this.notify('Formulario Invalido!', 'error');
-      }
-  
-      setTimeout(() => {
-        // this.contentForm.reset();
-      }, 2000);
-      // this.submitted = true
-    }
-      
+  }      
   addData(datos:Categoria){
     this.deportesService.save(datos).subscribe({
       next:(data:any)=>{
         console.log(data)
         this.submitted=false;
         this.notify('Datos Registrados exitosamente!','success'); 
-        this.closeModal();
-        this.getDeportes();
-        // this.listaItems.emit();       
+        this.closeModal();     
       },
       error: (error) => {
         this.notify('No se pudo Guardar los datos! '+error, 'error');
@@ -186,8 +212,6 @@ export class CategoriasComponent {
           next: (data: Categoria) => {
             this.submitted = false;
             this.closeModal();
-            this.getDeportes();
-            // this.listaItems.emit();
             this.notify('Datos Actualizados exitosamente!', 'success');
           },
           error: (error) => {
@@ -195,24 +219,13 @@ export class CategoriasComponent {
           }
       })
   }
-
-  /**
-   * Delete model
-   */
-  deleteId: any;
-  confirm(content: any, data: any) {
-    this.deleteId = data.uuid;
-    this.modalService.open(content, { centered: true });
-  }
-
   // Delete Data
-  deleteData(id: any) {
-    if (id) {
-      this.deportesService.delete(id).subscribe({
+  deleteData() {
+    this.checkedValGet.forEach(uuid => {
+      this.deportesService.delete(uuid).subscribe({
         next: (data:any) => {
               this.submitted = false;
               this.closeModal();
-              // this.listaItems.emit();
               this.notify('registro Eliminado exitosamente!','success')
          },
         error: err => {
@@ -220,33 +233,9 @@ export class CategoriasComponent {
           this.notify('No se pudo eliminar el registro!','error')
         }
       });
-    }
+    });
   }
-  /**
-   * Multiple Delete
-   */
-  checkedValGet: any[] = [];
-  deleteMultiple(content: any) {
-    var checkboxes: any = document.getElementsByName('checkAll');
-    var result
-    var checkedVal: any[] = [];
-    for (var i = 0; i < checkboxes.length; i++) {
-      if (checkboxes[i].checked) {
-        result = checkboxes[i].value;
-        checkedVal.push(result);
-      }
-    }
-    if (checkedVal.length > 0) {
-      this.modalService.open(content, { centered: true });
-      // checkedVal.forEach(uuid => {
-      //     this.deleteData(uuid)
-      // });
-    }
-    else {
-      Swal.fire({ text: 'Porfavor seleccione almenos un checkbox', confirmButtonColor: '#299cdb', });
-    }
-    this.checkedValGet = checkedVal;
-  }
+
 
   // Csv File Export
   csvFileExport() {
@@ -259,7 +248,7 @@ export class CategoriasComponent {
       title: 'Lista de Categorias',
       useBom: true,
       noDownload: false,
-      headers: ["uuid", "Nombre","tipo", "status"]
+      headers: ["uuid", "Codigo","Tipo Cobro", "Nombre","estado"]
     };
     new ngxCsv(this.categoryList, "Categorias", data);
   }
@@ -269,6 +258,8 @@ export class CategoriasComponent {
     this.modalService.dismissAll();
     this.contentForm.reset();
     this.contentForm.enable();
+    // this.listaItems.emit();
+    this.getDeportes();
   }
   private notify(message: any, type: any): void {
     let timerInterval: any;

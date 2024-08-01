@@ -59,6 +59,7 @@ export class DataTableComponent {
   //   this.docItemEmitter.emit(item);
   // }
   
+  @Output() seleccionarItemEmitter = new EventEmitter();
   // Select Checkbox value Get
   onCheckboxChange(e: any) {
     var checkedVal: any[] = [];
@@ -70,7 +71,8 @@ export class DataTableComponent {
       }
     }
     this.checkedValGet = checkedVal
-    checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
+    this.seleccionarItemEmitter.emit(this.checkedValGet);
+    // checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
   }
     /**
   * Multiple Default Select
@@ -87,7 +89,8 @@ export class DataTableComponent {
       }
     }
     this.checkedValGet = checkedVal
-    checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
+    this.seleccionarItemEmitter.emit(this.checkedValGet);
+    // checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
   }
 
 

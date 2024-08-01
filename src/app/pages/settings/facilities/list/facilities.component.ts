@@ -16,6 +16,7 @@ import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { Districts } from 'src/app/core/constants/Distritos';
 import { Ceiling } from 'src/app/core/constants/Techados';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
+import { ModalImportComponent } from '../modal-import/modal-import.component';
 @Component({
   selector: 'app-facilities',
   templateUrl: './facilities.component.html',
@@ -27,12 +28,16 @@ import { CategoriasService } from 'src/app/core/services/api/categorias.service'
  */
 export class FacilitiesComponent {
   title="Complejos Deportivos";
-  // bread crumb items
   breadCrumbItems!: Array<{}>;
+  canActivate:string[];
+  listaItems:any[]=[];
+  temp:any[]=[];
+ 
+  categoryList:any[]=[]; 
+  complejosList:any[]=[]
   distictList=Districts
   ceilingList=Ceiling
 
-  submitted = false;
   fieldsForm!: UntypedFormGroup;
   CustomersData!: any;
   masterSelected!: boolean;
@@ -40,12 +45,6 @@ export class FacilitiesComponent {
 
   searchTerm: any;
 
-  canActivate:string[];
-  categoryList:any[]=[];
-  listaItems:any[]=[];
-  complejosList:any[]=[];
-  temp:any[]=[];
-  
   dataSelected!:Complejo;
   constructor(private modalService: NgbModal,
     private complejosService: ComplejosService,
@@ -66,16 +65,10 @@ export class FacilitiesComponent {
       {name: 'Techado', prop: 'techado'},
       {name: 'Distrito',prop: 'distrito'}
     ];
-    /**
-     * fetches data
-     */
     this.getCategories();
     this.getFacilities()
   }
 
-  // changePage() {
-  //   this.company = this.service.changePage(this.allcompany)
-  // }
 
   // Search Data
   performSearch(): void {
@@ -213,6 +206,26 @@ export class FacilitiesComponent {
     checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
   }
 
+  camposImport: any[] =[];
+  public abrirModalImport() {
+    this.camposImport = [
+        {prop: 'Nombre', name: 'Nombre'},
+        {prop: 'Techado', name: 'Techado'},
+        {prop: 'Distrito', name: 'Distrito'},
+        {prop: 'Ubicacion', name: 'Ubicacion'},
+        {prop: 'Latitud', name: 'Latitud'},
+        {prop: 'Longitud', name: 'Longitud'},
+    ];
+    const modalRef = this.modalService.open(ModalImportComponent, {
+        size: 'lg',
+        backdrop: 'static'
+    });
+    modalRef.componentInstance.titles = this.camposImport;
+    modalRef.componentInstance.itemsList = this.complejosList;
+    modalRef.componentInstance.listaItems.subscribe(() => {
+        this.getFacilities();
+    });
+  }
   // Csv File Export
   csvFileExport() {
     var data = {
@@ -224,7 +237,7 @@ export class FacilitiesComponent {
       title: 'Lista de Complejos',
       useBom: true,
       noDownload: false,
-      headers: ["Uuid", "Techado","Dirección", "Distrito", "Latitud", "Longitud", "Nombre", "Estado"]
+      headers: ["Uuid", "Nombre","Techado","Dirección", "Distrito", "Latitud", "Longitud", "Estado"]
     };
     new ngxCsv(this.complejosList, "Lista de Complejos", data);
   }

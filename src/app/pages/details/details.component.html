@@ -61,7 +61,8 @@
                                 <p>{{item.codigo}} - {{item.superficieDto.descripcion}}</p>
                             </div>
                             <div class="flex-shrink-1">
-                                <button type="button" class="btn btn-soft-primary btn-sm" [ngxScrollTo]="'invoice_form'">
+                                <button type="button" class="btn btn-soft-primary btn-sm" [ngxScrollTo]="'invoice_form'"
+                                (click)="selectCancha(item)">
                                     Reservar cancha
                                 </button>
                             </div>
@@ -255,7 +256,8 @@
                                                     <label class="form-label text-uppercase">Superficie: </label>
                                                 </div>
                                                 <div class="flex-grow-1 ms-2">
-                                                    <!-- <p class="text-muted mb-0">{{dataField.superficieDto}}</p> -->
+                                                    <p class="text-muted mb-0">{{ InvoiceForm.get('superficie')?.value }}</p>
+
                                                 </div>
                                             </div>
                                         </li>
@@ -278,7 +280,7 @@
                                 <label class="text-muted text-uppercase fw-semibold">
                                     Contribuyente:
                                 </label>
-                                <p>{{dataField.nombre}}</p>
+                                <p>{{contribuyente.nombre}} {{contribuyente.apPaterno}} {{contribuyente.apMaterno}}  </p>
                             </div>
                             <div class="flex-shrink-0">
                                 <button class="btn btn-light p-1 m-0" type="button" data-bs-toggle="collapse"
@@ -296,40 +298,40 @@
                                         <li>
                                             <div class="d-flex ">
                                                 <div class="flex-shrink-0">
-                                                    <label class="form-label text-uppercase">Distrito: </label>
+                                                    <label class="form-label text-uppercase">Tipo Dcocumento: </label>
                                                 </div>
                                                 <div class="flex-grow-1 ms-2">
-                                                    <p class="text-muted mb-0">{{dataField.distrito}}</p>
+                                                    <p class="text-muted mb-0">{{contribuyente.tipoDocumento}}</p>
                                                 </div>
                                             </div>
                                         </li>
                                         <li>
                                             <div class="d-flex ">
                                                 <div class="flex-shrink-0">
-                                                    <label class="form-label text-uppercase">Techado: </label>
+                                                    <label class="form-label text-uppercase">Nro Documento: </label>
                                                 </div>
                                                 <div class="flex-grow-1 ms-2">
-                                                    <p class="text-muted mb-0">{{dataField.techado}}</p>
+                                                    <p class="text-muted mb-0">{{contribuyente.nroCarnet}}</p>
                                                 </div>
                                             </div>
                                         </li>
                                         <li>
                                             <div class="d-flex ">
                                                 <div class="flex-shrink-0">
-                                                    <label class="form-label text-uppercase">Superficie: </label>
+                                                    <label class="form-label text-uppercase">Expedido: </label>
                                                 </div>
                                                 <div class="flex-grow-1 ms-2">
-                                                    <!-- <p class="text-muted mb-0">{{dataField.superficieDto}}</p> -->
+                                                    <p class="text-muted mb-0">{{contribuyente.ciExpedido}}</p>
                                                 </div>
                                             </div>
                                         </li>
                                         <li>
                                             <div class="d-flex ">
                                                 <div class="flex-shrink-0">
-                                                    <label class="form-label text-uppercase">Ubicación: </label>
+                                                    <label class="form-label text-uppercase">Celular: </label>
                                                 </div>
                                                 <div class="flex-grow-1 ms-2">
-                                                    <p class="text-muted mb-0">{{dataField.ubicacion}}</p>
+                                                    <p class="text-muted mb-0">{{contribuyente.celular}}</p>
                                                 </div>
                                             </div>
                                         </li>

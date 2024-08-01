@@ -1,19 +1,112 @@
 
-<div class="modal-header bg-light p-3">
-    <h5 class="modal-title" id="exampleModalLabel" *ngIf="'edit'">Agregar Contribuyente</h5>
-    <h5 class="modal-title" id="exampleModalLabel" *ngIf="'show'">Datos de Contribuyente</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-        id="close-modal" (click)="closeModal()"></button>
-</div>
-<form (ngSubmit)="saveData()" [formGroup]="contentForm" class="tablelist-form" autocomplete="off">
+
+<div id="event-modal">
+    <div class="modal-content border-0">
+        <div class="modal-header bg-info-subtle  p-3">
+        <!-- <div class="modal-header bg-light p-3"> -->
+            <h5 class="modal-title" id="modal-title">Contribuyente</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" 
+                (click)="closeModal()" id="close-modal"></button>
+        </div>
+
+        <div class="modal-body p-4">
+            <form [formGroup]="contentForm" (ngSubmit)="saveData()" class="needs-validation" name="event-form" id="form-event" >
+                @if(accion==='show'){
+                    <!-- <div class="text-end">
+                        <a href="javascript:void(0);" class="btn btn-sm btn-soft-primary" id="edit-event-btn" data-id="edit-event" (click)="showeditEvent()" role="button">Editar</a>
+                    </div> -->
+                }
+                @if(row){
+                <div class="event-details">
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="ri-discuss-line text-muted fs-lg"></i> Nombre:
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="d-block mb-0" id="event-description-tag">{{row.nombre}} {{row.apPaterno}} {{row.apMaterno}}</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="ri-discuss-line text-muted fs-lg"></i> Genero:
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="d-block mb-0" id="event-description-tag">{{row.sexo}}</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-2">
+                        <div class="flex-grow-1 d-flex align-items-center">
+                            <div class="flex-shrink-0 me-3">
+                                <i class="ri-calendar-event-line text-muted fs-lg"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="d-block fw-semibold mb-0" id="event-start-date-tag">{{row.fechaNac | date: 'dd MMMM,yyyy'}}</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="ri-time-line text-muted fs-lg"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                                <h6 class="d-block fw-semibold mb-0">
+                                    <span id="event-timepicker1-tag"></span> {{row.nroCarnet }} - {{row.ciExpedido }} 
+                                </h6>
+                                <h6 class="d-block fw-semibold mb-0">
+                                </h6>
+                        </div>
+                        <!-- <ng-select 
+                                [items]="cityAcronym" bindLabel="nombre" bindValue="id"
+                                formControlName="ciExpedido">
+                            </ng-select> -->
+
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="ri-discuss-line text-muted fs-lg"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="d-block text-muted mb-0" id="event-description-tag">{{row.correo}}</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="ri-discuss-line text-muted fs-lg"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="d-block text-muted mb-0" id="event-description-tag">{{row.celular}}</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="ri-map-pin-line text-muted fs-lg"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="d-block fw-semibold mb-0"> <span id="event-location-tag">{{row.direccion}}</span></h6>
+                        </div>
+                    </div>
+                </div>
+                }
+                <!-- <div class="hstack gap-2 justify-content-end">
+                    <button type="button" class="btn btn-light" id="btn-cancel-event" (click)="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="btn-save-event">Guardar</button>  
+                </div> -->
+            </form>
+        </div>
+    </div> <!-- end modal-content-->
+</div> 
+
+
+<form (ngSubmit)="saveData()" [formGroup]="contentForm" *ngIf="accion==='edit' || accion===''"
+    class="tablelist-form" autocomplete="off">
     <div class="modal-body">
         <div class="row g-3">
         <input type="hidden" name="uuid" value="" formControlName="uuid" />
         <div class="col-lg-6">
-            <label for="userName-field" class="form-label">Usuario</label>
-            <input type="text" id="userName-field" class="form-control" placeholder="Usuario"
-                required formControlName="userName"
-                [ngClass]="{ 'is-invalid': submitted && form['userName'].errors }" />
+            <label for="username-field" class="form-label">Usuario</label>
+            <input type="text" id="username-field" class="form-control" placeholder="Usuario"
+                required formControlName="username"
+                [ngClass]="{ 'is-invalid': submitted && form['username'].errors }" />
             <div class="invalid-feedback">El campo es requerido.</div>
         </div>
         <div class="col-lg-6">
@@ -31,24 +124,24 @@
             <div class="invalid-feedback">El campo es requerido.</div>
         </div>
         <div class="col-lg-6">
-            <label for="apPaterno-field" class="form-label">Apellido Paterno</label>
-            <input type="text" id="apPaterno-field" class="form-control" placeholder="Apellido Paterno"
-                required formControlName="apPaterno"
-                [ngClass]="{ 'is-invalid': submitted && form['apPaterno'].errors }" />
+            <label for="primerApellido-field" class="form-label">Apellido Paterno</label>
+            <input type="text" id="primerApellido-field" class="form-control" placeholder="Apellido Paterno"
+                required formControlName="primerApellido"
+                [ngClass]="{ 'is-invalid': submitted && form['primerApellido'].errors }" />
             <div class="invalid-feedback">El campo es requerido.</div>
         </div>
         <div class="col-lg-6">
-            <label for="apMaterno-field" class="form-label">Apellido Materno</label>
-            <input type="text" id="apMaterno-field" class="form-control" placeholder="Apellido Materno"
-                formControlName="apMaterno"
-                [ngClass]="{ 'is-invalid': submitted && form['apMaterno'].errors }" />
+            <label for="segundoApellido-field" class="form-label">Apellido Materno</label>
+            <input type="text" id="segundoApellido-field" class="form-control" placeholder="Apellido Materno"
+                formControlName="segundoApellido"
+                [ngClass]="{ 'is-invalid': submitted && form['segundoApellido'].errors }" />
             <div class="invalid-feedback">El campo es requerido.</div>
         </div>
         <div class="col-lg-4">
-            <label for="nroCarnet-field" class="form-label">Carnet</label>
-            <input type="text" id="nroCarnet-field" class="form-control" placeholder="Ingresar Carnet"
-                formControlName="nroCarnet"
-                [ngClass]="{ 'is-invalid': submitted && form['nroCarnet'].errors }" />
+            <label for="nroDocumento-field" class="form-label">Carnet</label>
+            <input type="text" id="nroDocumento-field" class="form-control" placeholder="Ingresar Carnet"
+                formControlName="nroDocumento"
+                [ngClass]="{ 'is-invalid': submitted && form['nroDocumento'].errors }" />
             <div class="invalid-feedback">El campo es requerido.</div>
         </div>
         <div class="col-lg-2">
@@ -115,32 +208,6 @@
             <input type="text" id="celular-field" class="form-control" placeholder="Ingresar no. celular"
                 mask="000-000-0000" formControlName="celular"/>
         </div>
-
-        <!-- <div class="mb-3">
-            <label for="date-field" class="form-label">Joining Date</label>
-            <input class="form-control flatpickr-input" type="text" mwlFlatpickr [altInput]="true"
-                [convertModelValue]="true" formControlName="date"
-                [ngClass]="{ 'is-invalid': submitted && form['date'].errors }">
-            <div class="invalid-feedback">Please select a date.</div>
-        </div>
-
-        <div>
-            <label for="status-field" class="form-label">Status</label>
-            <select class="form-control" data-trigger name="status-field" id="status-field" required
-                formControlName="status"
-                [ngClass]="{ 'is-invalid': submitted && form['status'].errors }">
-                <option value="">Status</option>
-                <option value="Active">Activo</option>
-                <option value="Block">Bloqueado</option>
-            </select>
-            @if(submitted && form['status'].errors){
-            <div class="invalid-feedback" align="left">
-                @if(form['status'].errors['required']){
-                <div>Status is required</div>
-                }
-            </div>
-            }
-        </div> -->
         </div>
     </div>
     <div class="modal-footer">

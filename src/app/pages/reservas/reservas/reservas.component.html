@@ -18,7 +18,8 @@
                                 <i class="ri-add-circle-line align-middle"></i> 
                                 {{"Agregar" | translate}}
                             </button>
-                            <button type="button" class="btn btn-soft-success"><i class="ri-file-download-line align-bottom me-1"></i> Importar</button>
+                            <button type="button" class="btn btn-soft-info" (click)="csvFileExport()"><i
+                                    class="ri-file-download-line align-bottom me-1"></i> Exportar</button>
                             <button class="btn btn-soft-danger" id="remove-actions" (click)="confirm(deletemodal,'')"><i class="ri-delete-bin-2-line"></i></button>
                         </div>
                     </div>
@@ -44,11 +45,10 @@
                         <div>
                             <select class="form-control" data-choices data-choices-search-false name="choices-single-default" id="idStatus" [(ngModel)]="status" (ngModelChange)="statusFilter()">
                                 <option value="">Estado</option>
-                                <option value="" selected>All</option>
-                                <option value="Approved">Approved</option>
-                                <option value="New">New</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Rejected">Rejected</option>
+                                <option value="" selected>Todo</option>
+                                
+                                <option value="Pending">Pendiente</option>
+                                <option value="Pagado">Pagado</option>
                             </select>
                         </div>
                     </div>
@@ -56,10 +56,11 @@
                     <div class="col-xxl-2 col-sm-4">
                         <div>
                             <select class="form-control" data-choices data-choices-search-false name="choices-single-default" id="idType" [(ngModel)]="type" (ngModelChange)="typeFilter()">
-                                <option value="">Select Type</option>
-                                <option value="" selected>All</option>
-                                <option value="Full Time">Full Time</option>
-                                <option value="Part Time">Part Time</option>
+                                <option value="">Tipo de Cobro</option>
+                                <option value="" selected>Todo</option>
+                                <option value="hora">Hora</option>
+                                <option value="Persona">Persona</option>
+                                <option value="Evento">Evento</option>
                             </select>
                         </div>
                     </div>

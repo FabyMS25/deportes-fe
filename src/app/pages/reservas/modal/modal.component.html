@@ -13,7 +13,8 @@
             <form [formGroup]="contentForm" (ngSubmit)="saveData()" class="needs-validation" name="event-form" id="form-event" >
                 @if(accion==='show'){
                     <div class="text-end">
-                        <a href="javascript:void(0);" class="btn btn-sm btn-soft-primary" id="edit-event-btn" data-id="edit-event" (click)="showeditEvent()" role="button">Editar</a>
+                        <a href="javascript:void(0);" class="btn btn-sm btn-soft-primary" id="edit-event-btn" data-id="edit-event" 
+                        (click)="showeditEvent()" role="button">Editar</a>
                     </div>
                 }
                 @if(row){
@@ -49,7 +50,7 @@
                             <i class="ri-map-pin-line text-muted fs-lg"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <!-- <h6 class="d-block fw-semibold mb-0"> <span id="event-location-tag">{{row.canchasDto.ubicacion}}</span></h6> -->
+                            <h6 class="d-block fw-semibold mb-0"> <span id="event-location-tag">{{row.canchasDto.complejoDto.ubicacion}}</span></h6>
                         </div>
                     </div>
                     <div class="d-flex mb-3">
@@ -57,7 +58,7 @@
                             <i class="ri-discuss-line text-muted fs-lg"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <p class="d-block text-muted mb-0" id="event-description-tag">{{row.contribuyenteDto.nombre}}</p>
+                            <p class="d-block text-muted mb-0" id="event-description-tag">{{row.contribuyenteDto.nombre}} {{row.contribuyenteDto.apPaterno}} {{row.contribuyenteDto.apMaterno}}</p>
                         </div>
                     </div>
                 </div>
@@ -72,7 +73,7 @@
                         <div>
                             <label for="cancha-field" class="form-label">Cancha</label>
                             <ng-select 
-                                [items]="canchasList" bindLabel="nombre" bindValue="uuid"
+                                [items]="canchasList" bindLabel="codigo" bindValue="uuid"
                                 formControlName="uuidCancha" 
                                 placeholder="Seleccione una Cancha" 
                                 [disabled]="form['uuidCancha'].disabled"
@@ -109,24 +110,10 @@
                         </div>
                     </div>            
                     <div class="mb-3">
-                        <!-- <div class="col-md-6"> -->
                             <div>
                                 <label for="totalPago-field" class="form-label">Total</label>
                                 <input type="number" id="totalPago-field" class="form-control" placeholder="" formControlName="totalPago" required />
                             </div>
-                        <!-- </div> -->
-                        <!-- <div class="col-md-6">
-                            <div>
-                                <label for="status-input" class="form-label">Estado</label>
-                                <select class="form-control" data-trigger name="status-input" id="status-input" formControlName="status">
-                                    <option value="">Status</option>
-                                    <option value="Approved">Approved</option>
-                                    <option value="New">New</option>
-                                    <option value="Pending">Pending</option>
-                                    <option value="Rejected">Rejected</option>
-                                </select>
-                            </div>
-                        </div> -->
                     </div>        
                     <div class="col-12">
                         <div class="mb-3">

@@ -6,13 +6,11 @@ import { UntypedFormBuilder, Validators, UntypedFormGroup, UntypedFormArray, Abs
 
 // Sweet Alert
 import Swal from 'sweetalert2';
-import { RootReducerState } from 'src/app/store';
-import { Store } from '@ngrx/store';
-import { cloneDeep } from 'lodash';
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { ModalComponent } from '../modal/modal.component';
+import { ngxCsv } from 'ngx-csv';
 
 @Component({
   selector: 'app-reservas',
@@ -21,29 +19,23 @@ import { ModalComponent } from '../modal/modal.component';
 })
 export class ReservasComponent implements OnInit {
 
-  title='Reservas';
-  // bread crumb items
   breadCrumbItems!: Array<{}>;
+  title='Reservas';
+  canActivate:string[];
+  listaItems:any[]=[];
+
+  reservasList:any[]=[];
+  temp:any[]=[];
+
   applications: any ;
   masterSelected!: boolean;
-  // Form
-  applicationData!: UntypedFormGroup;
-  submitted = false;
   allapplications: any;
   searchTerm: any;
   searchResults: any;
   date: any;
   status: any = '';
   type: any = '';
-
-
-  usuariosList:any[]=[];
-  funcionarioSelected!:any;
   
-  canActivate:string[];
-  listaItems:any[]=[];
-  reservasList:any[]=[];
-  temp:any[]=[];
 
   constructor(public service: PaginationService,
     public formBuilder: UntypedFormBuilder,
@@ -58,18 +50,26 @@ export class ReservasComponent implements OnInit {
       { label: '' },
       { label: this.title, active: true }
     ];
-
     this.listaItems = [
-      {name: 'Codigo', prop: 'codigo'},
-      {name: 'Fecha',prop: 'fechaReserva', date:true},
+      {name: 'Complejo  ',prop: 'canchasDto.complejoDto.nombre'},
       {name: 'Contribuyente', prop: 'contribuyenteDto.nombre'},
-      {name: 'Cancha',prop: 'canchasDto.nombre'},
+      {name: 'Fecha Reserva',prop: 'fechaReserva', date:true},
       {name: 'Hora',prop: 'horaEntrada'},
-      {name: 'Estado', prop: 'estado', tag:true},
+      // {name: 'Estado', prop: 'estado', tag:true},
     ];
-    this.getReservas();
+    this.getReservas();    
+  }
 
-    
+  public openModal(content: any | undefined, accion: string, size: string) {
+    const modalRef = this.modalService.open(ModalComponent, {
+        backdrop: 'static',
+        size:size
+    });
+    modalRef.componentInstance.row = content;
+    modalRef.componentInstance.accion = accion;
+    modalRef.componentInstance.listaItems.subscribe(() => {
+      this.getReservas();
+    });
   }
 
 
@@ -140,18 +140,6 @@ export class ReservasComponent implements OnInit {
   //   }
   // } 
 
-  public openModal(content: any | undefined, accion: string, size: string) {
-    const modalRef = this.modalService.open(ModalComponent, {
-        backdrop: 'static',
-        size:size
-    });
-    modalRef.componentInstance.row = content;
-    modalRef.componentInstance.accion = accion;
-    modalRef.componentInstance.listaItems.subscribe(() => {
-      this.getReservas();
-    });
-  }
-
 
   /**
    * Delete Model Open
@@ -186,6 +174,7 @@ export class ReservasComponent implements OnInit {
     });
   }
 
+
   /* API Services */
   loading: boolean = true;
   private getReservas() {
@@ -203,6 +192,23 @@ export class ReservasComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  
+  // Csv File Export
+  csvFileExport() {
+    var data = {
+      fieldSeparator: ',',
+      quoteStrings: '"',
+      decimalseparator: '.',
+      showLabels: true,
+      showTitle: true,
+      title: 'Lista de Reservas',
+      useBom: true,
+      noDownload: false,
+      headers: ["uuid", "Fecha Reserva","Desde","Hasta", "Total Pago", "Categoria", "Superficie","Total Personas","","Cancha","Contribuyente","Celular", "Email", "Tipo Contribuyente", "Codigo Contribuyente", "Estado Civil", "Fecha Nacimiento","Estado Usuario"]
+    };
+    new ngxCsv(this.reservasList, "Reservas", data);
   }
 
 }

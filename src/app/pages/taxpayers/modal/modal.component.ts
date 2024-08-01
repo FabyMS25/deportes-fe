@@ -54,6 +54,18 @@ export class ModalComponent {
       direccion:[''],
     });
     this.formDataSet();
+    
+    if(this.accion==='show'){
+      setTimeout(() => {
+        document.getElementById('form-event')?.classList.add('view-event');
+        (document.getElementById('btn-save-event') as HTMLElement).setAttribute("hidden", "true");
+        (document.getElementById('btn-cancel-event') as HTMLElement).setAttribute("hidden", "true");
+      }, 100);
+
+    }else{
+      (document.getElementById('btn-delete-event') as HTMLElement).setAttribute("hidden", "true");
+
+    }
   }
   
   /**
@@ -87,6 +99,26 @@ export class ModalComponent {
   generateCode(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
   }
+
+
+  showeditEvent() {
+    if (document.querySelector('#edit-event-btn')?.innerHTML == 'Cancelar') {
+      document.getElementById('form-event')?.classList.add('view-event');
+      var editbtn = document.querySelector('#edit-event-btn') as HTMLAreaElement;
+      editbtn.innerHTML = 'Editar';
+      // (document.getElementById('btn-save-event') as HTMLElement).setAttribute("hidden", "true");
+    } else {
+      document.getElementById('form-event')?.classList.remove('view-event');
+      (document.getElementById('btn-save-event') as HTMLElement).removeAttribute("hidden");
+      (document.getElementById('btn-cancel-event') as HTMLElement).removeAttribute("hidden");
+
+      var modalbtn = document.querySelector('#btn-save-event') as HTMLAreaElement;
+      modalbtn.innerHTML = "Actualizar"
+      var editbtn = document.querySelector('#edit-event-btn') as HTMLAreaElement;
+      editbtn.innerHTML = 'Cancelar'
+    }
+  }
+
   /**
   * Save
   */

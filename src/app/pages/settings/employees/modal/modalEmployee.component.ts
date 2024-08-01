@@ -29,10 +29,8 @@ export class ModalEmployeeComponent {
     private encargadoCanchaService: EncargadoService,
     private formBuilder: UntypedFormBuilder,
   ) {}
-
   
   ngOnInit(): void {
-    console.log(this.accion)
     this.getUsers();
     this.getFields();
     /**

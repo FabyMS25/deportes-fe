@@ -21,16 +21,10 @@
                             <button type="button" class="btn btn-primary" data-bs-toggle="offcanvas"
                                 href="javascript:void(0);" (click)="openEnd(filtetcontent)"><i
                                 class="ri-filter-3-line align-bottom me-1"></i>Filtrar</button>
-                            <button class="btn btn-soft-success" (click)="csvFileExport()">Exportar</button>
-                            <button type="button" id="dropdownMenuLink1" data-bs-toggle="dropdown" aria-expanded="false"
-                                class="btn btn-soft-info arrow-none" ngbDropdownToggle><i
-                                    class="ri-more-2-fill"></i></button>
-                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink1" ngbDropdownMenu>
-                                <li><a class="dropdown-item" href="javascript:void(0);">Todos</a></li>
-                                <li><a class="dropdown-item" href="javascript:void(0);">Last Week</a></li>
-                                <li><a class="dropdown-item" href="javascript:void(0);">Last Month</a></li>
-                                <li><a class="dropdown-item" href="javascript:void(0);">Last Year</a></li>
-                            </ul>
+                                <button class="btn btn-soft-info" (click)="csvFileExport()">
+                                    <i class="ri-file-download-line align-bottom me-1"></i>Exportar</button>
+                                <button class="btn btn-soft-info" (click)="abrirModalImport()">
+                                    <i class="ri-file-upload-line align-bottom me-1"></i>Importar</button>
                         </div>
                     </div>
                 </div>

@@ -31,7 +31,7 @@
                                     <i class="ri-settings-4-line"></i>
                                 </button>
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
-                                    <li><a class="dropdown-item"  (click)="csvFileExport()">
+                                    <li><a class="dropdown-item"  (click)="abrirModalImport()">
                                         <i class="ri-file-upload-line align-bottom me-1"></i>Importar</a>
                                     </li>
                                     <li><a class="dropdown-item"  (click)="csvFileExport()">
@@ -55,7 +55,7 @@
                     [delete]="canActivate.includes('ELIMINAR')"
                     (showItemEmitter)="openModal($event,content,'show')"
                     (editItemEmitter)="openModal($event,content,'edit')"
-                    (deleteItemEmitter)="confirm(deleteModel,$event)"              
+                    (deleteItemEmitter)="deleteModal(deleteModel,$event)"              
                 >
                 </app-data-table>  
             </div>
@@ -128,7 +128,7 @@
                 <button class="btn btn-link link-success fw-medium text-decoration-none" data-bs-dismiss="modal"
                     id="deleteRecord-close" (click)="modal.close('Close click')"><i
                         class="ri-close-line me-1 align-middle"></i> Cancelar</button>
-                <button type="button" class="btn w-sm btn-danger " id="delete-product" (click)="deleteData(deleteId)"
+                <button type="button" class="btn w-sm btn-danger " id="delete-product" (click)="deleteData()"
                     (click)="modal.close('Close click')">Si, Elmimar!</button>
             </div>
         </div>

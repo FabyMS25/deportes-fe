@@ -14,7 +14,7 @@
                            {{item.name}}
                         </th>
                     }
-                    <th>Acciones</th>
+                    <th *ngIf="show || edit || delete">Acciones</th>
                 </tr>
             </thead>
             <tbody>

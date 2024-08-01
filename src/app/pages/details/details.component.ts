@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -14,6 +14,9 @@ import { CategoriasService } from 'src/app/core/services/api/categorias.service'
 import { HorariosService } from 'src/app/core/services/api/horarios.service';
 import { Complejo } from 'src/app/core/models/complejo.model';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
+import { Reserva } from 'src/app/core/models/reserva.models';
+import { ReservaService } from 'src/app/core/services/api/reserva.service';
+import { Contribuyente } from 'src/app/core/models/contribuyente.models';
 @Component({
   selector: 'app-details',
   templateUrl: './details.component.html',
@@ -45,6 +48,7 @@ export class DetailsComponent implements OnInit  {
     private categoriasService: CategoriasService,
     private horariosService: HorariosService,
     private fieldService: CamposDeportivoService,
+    private reservaService: ReservaService,
     private route: ActivatedRoute ) { }
 
     @ViewChild('slickModal') slickModal!: SlickCarouselComponent;
@@ -90,6 +94,9 @@ export class DetailsComponent implements OnInit  {
      */
     this.InvoiceForm = this.formBuilder.group({
       uuid: [''],
+      categoria:[''],
+      superficie:[''],
+      totalPersonas:[''],
       fechaReserva: [new Date(), [Validators.required]],
       horaEntrada: [this.getAvailableHour('start'), [Validators.required, this.timeValidator.bind(this)]],
       horaSalida: [this.getAvailableHour('end'), [Validators.required, this.timeValidator.bind(this)]],
@@ -97,9 +104,9 @@ export class DetailsComponent implements OnInit  {
       totalTime: [0, [Validators.required]],
       // status: ['', [Validators.required]]
       // uuidCancha: [{ value: this.cancha, disabled: !!this.cancha }, [Validators.required]],
-      // canchasDto: new FormControl(),
+      canchasDto: new FormControl(),
       // uuidContribuyente: [{ value: this.contribuyente, disabled: !!this.contribuyente }, [Validators.required]],
-      // contribuyenteDto: new FormControl(),
+      contribuyenteDto: new FormControl(),
       observacion: ['Reserva de Cancha Deportiva GAMQ', [Validators.required]],
       check: [false, [Validators.required]],
     });
@@ -120,7 +127,7 @@ export class DetailsComponent implements OnInit  {
   calculateTotalTimeAndPago() {
     const horaEntrada = this.InvoiceForm.get('horaEntrada')?.value;
     const horaSalida = this.InvoiceForm.get('horaSalida')?.value;
-    const tarifa = 0;//this.dataField.tarifasList || 0
+    // const tarifa = 0;//this.dataField.tarifasList || 0
 
     if (horaEntrada && horaSalida) {
       const [entradaHours, entradaMinutes] = horaEntrada.split(':').map(Number);
@@ -137,7 +144,7 @@ export class DetailsComponent implements OnInit  {
       const diffMinutes = Math.round((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
       const totalTime = `${this.pad(diffHours)}:${this.pad(diffMinutes)}`;
-      const totalPago = ((diffHours + diffMinutes / 60) * tarifa).toFixed(2);
+      const totalPago = ((diffHours + diffMinutes / 60) * this.tarifa).toFixed(2);
 
       this.InvoiceForm.patchValue({
         totalTime,
@@ -225,7 +232,17 @@ export class DetailsComponent implements OnInit  {
     });
     
   }
-
+  selectCancha(data:any) {
+    console.log(data)
+    this.tarifa= 10
+    this.InvoiceForm.patchValue({
+      canchasDto:data,
+      categoria:'',
+      superficie:data.superficieDto.descripcion,
+      totalPersonas:0,
+    });
+    
+  }
   get form() {
     return this.InvoiceForm.controls;
   }
@@ -329,14 +346,68 @@ export class DetailsComponent implements OnInit  {
         }
       });
     }
-
-    saveData(){
+contribuyente:Contribuyente = {
+  uuid:	"e8a64564-3c9b-469b-b307-986689fece89",
+  userName:	"contribuyente",
+  password:	"Password123",
+  nombre:	"Fabiola",
+  apPaterno:	"Morales",
+  apMaterno:	"Siles",
+  nroCarnet:	"8695227",
+  nroNit:	"",
+  ciExpedido:	"3",
+  sexo:	"F",
+  direccion:	"",
+  celular:	"72248669",
+  correo:	"moralessfaby.dev@gmail.com",
+  tipoContribuyente:	"NA",
+  codigoContribuyente:	"0A025F03001B0E001D055E5751",
+  tipoDocumento:	"CI",
+  estadoCivil:	"SO",
+  fechaNac:	"1999-04-25",
+  estadoUsuario:	"Active",
+  // estado:	false
+}
+    saveData() {
+      this.submitted = true;
       if (this.InvoiceForm.valid) {
-        
-      } else {
-        
+        this.InvoiceForm.enable()
+        let datos: Reserva = {
+          fechaReserva: this.InvoiceForm.value.fechaReserva,
+          horaEntrada: this.InvoiceForm.value.horaEntrada,
+          horaSalida: this.InvoiceForm.value.horaSalida,
+          totalPago: this.InvoiceForm.value.totalPago,
+          totalPesonas: this.InvoiceForm.value.estadoUsuario,
+          categoria: this.InvoiceForm.value.categoria,
+          superficie: this.InvoiceForm.value.superficie,
+          observacion: this.InvoiceForm.value.observacion,
+          canchasDto: this.InvoiceForm.value.canchasDto,
+          contribuyenteDto: this.contribuyente,
+        };
+          this.addData(datos);
+      }else {
+          this.notify('Formulario Invalido!', 'error');
       }
+  
+      setTimeout(() => {
+        // this.contentForm.reset();
+      }, 2000);
+      // this.submitted = true
     }
+      
+  addData(datos:any){
+    this.reservaService.save(datos).subscribe({
+      next:(data:Reserva)=>{
+        this.submitted=false;
+        this.notify('Datos Registrados exitosamente!','success'); 
+        // this.closeModal();
+        // this.listaItems.emit();       
+      },
+      error: (error) => {
+        this.notify('No se pudo Guardar los datos! '+error, 'error');
+      }
+    })
+  }
 
 
     horariosList=[];
@@ -384,5 +455,21 @@ export class DetailsComponent implements OnInit  {
     
     getTime(time: string): number {
       return parseInt(time.split(':')[0], 10);
+    }
+
+    private notify(message: any, type: any): void {
+      let timerInterval: any;
+      Swal.fire({
+        title: message,
+        icon: type,
+        timer: 2000,
+        timerProgressBar: true,
+        willClose: () => {
+          clearInterval(timerInterval);
+        },
+      }).then((result) => {
+        if (result.dismiss === Swal.DismissReason.timer) {
+        }
+      });
     }
 }

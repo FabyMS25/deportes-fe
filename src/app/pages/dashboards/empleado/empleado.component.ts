@@ -60,7 +60,7 @@ export class EmpleadoComponent implements OnInit {
           this.allcalendarEvents = data.payload;
           this.calendarEvents = reservasList.map(
             (evt: any) => {
-              return { title: evt.canchasDto.nombre, 
+              return { title: evt.canchasDto.complejoDto.nombre, 
                   date: evt.fechaReserva, 
                   start:  `${evt.fechaReserva.split('T')[0]}T${evt.horaEntrada}`,
                   end: `${evt.fechaReserva.split('T')[0]}T${evt.horaSalida}`,

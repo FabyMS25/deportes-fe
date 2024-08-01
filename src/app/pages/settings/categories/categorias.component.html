@@ -30,17 +30,13 @@
                                     <i class="ri-settings-4-line"></i>
                                 </button>
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
-                                    <li><a class="dropdown-item"  (click)="csvFileExport()">
+                                    <li><a class="dropdown-item"  (click)="abrirModalImport()">
                                         <i class="ri-file-upload-line align-bottom me-1"></i>Importar</a>
                                     </li>
                                     <li><a class="dropdown-item"  (click)="csvFileExport()">
                                         <i class="ri-file-download-line align-bottom me-1"></i>Exportar</a>
                                     </li>
-                                    <li><a class="dropdown-item" href="javascript:void(0);">Copy</a></li>
-                                    <li><a class="dropdown-item" href="javascript:void(0);">Move to pipline</a></li>
-                                    <li><a class="dropdown-item" href="javascript:void(0);">Add to exceptions</a></li>
-                                    <li><a class="dropdown-item" href="javascript:void(0);">Switch to common form view</a></li>
-                                    <li><a class="dropdown-item" href="javascript:void(0);">Reset form view to default</a></li>
+                                    <!-- <li><a class="dropdown-item" href="javascript:void(0);">Copy</a></li> -->
                                 </ul>
                             </span>
                         </div>
@@ -59,7 +55,7 @@
                     [delete]="canActivate.includes('ELIMINAR')"
                     (showItemEmitter)="openModal($event,content,'show')"
                     (editItemEmitter)="openModal($event,content,'edit')"
-                    (deleteItemEmitter)="confirm(deleteModel,$event)"              
+                    (deleteItemEmitter)="deleteModal(deleteModel,$event)"              
                 >
                 </app-data-table>  
                 <ng-template #content role="document" let-modal>
@@ -141,7 +137,6 @@
             </div>
         </div>
     </div>
-    <!--end col-->
 </div>
 <!--end row-->
 
@@ -167,10 +162,9 @@
                 <button class="btn btn-link link-success fw-medium text-decoration-none" data-bs-dismiss="modal"
                     id="deleteRecord-close" (click)="modal.close('Close click')"><i
                         class="ri-close-line me-1 align-middle"></i> Cancelar</button>
-                <button type="button" class="btn w-sm btn-danger " id="delete-product" (click)="deleteData(deleteId)"
+                <button type="button" class="btn w-sm btn-danger " id="delete-product" (click)="deleteData()"
                     (click)="modal.close('Close click')">Si, Elmimar!</button>
             </div>
         </div>
-    </div><!-- /.modal-content -->
+    </div>
 </ng-template>
-

@@ -8,6 +8,7 @@ import { ngxCsv } from 'ngx-csv';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
 import { Superficie } from 'src/app/core/models/superficie.model';
+import { ModalImportComponent } from './modal-import/modal-import.component';
 
 
 @Component({
@@ -56,18 +57,12 @@ export class AreasComponent {
       {name: 'Descripción', prop: 'descripcion'},
       {name: 'Canchas',prop: 'canchas'},
     ];
-    /**
-     * Form Validation
-     */
     this.contentForm = this.formBuilder.group({
       uuid: [''],
       estado:[''],
       descripcion: ['', [Validators.required]]
     });
 
-    /**
-     * fetches data
-     */
     this.getSurfaces();
   }
 
@@ -78,7 +73,7 @@ export class AreasComponent {
   accion='';
   openModal(data:any,content: any,accion:string) {
     this.accion=accion;
-    if(data){
+    if (this.accion != '') {
       this.formDataSet(data);
       if(accion==='show'){
         this.contentForm.disable()
@@ -89,9 +84,7 @@ export class AreasComponent {
   private formDataSet(row:any) {
         this.contentForm.patchValue({
             uuid:row.uuid,
-            // image_src: [''],
-            nombre: row.nombre,
-            // tarifa: row.totalxhora,
+            descripcion: row.descripcion,
         });
   }
   /**
@@ -101,6 +94,35 @@ export class AreasComponent {
     return this.contentForm.controls;
   }
 
+  /**
+   * Delete model
+   */
+  deleteModal(content: any, data: any) {
+    this.checkedValGet.push(data.uuid);
+    this.modalService.open(content, { centered: true });
+  }
+  /**
+   * Multiple Delete
+   */
+  checkedValGet: any[] = [];
+  deleteMultiple(content: any) {
+    var checkboxes: any = document.getElementsByName('checkAll');
+    var result
+    var checkedVal: any[] = [];
+    for (var i = 0; i < checkboxes.length; i++) {
+      if (checkboxes[i].checked) {
+        result = checkboxes[i].value;
+        checkedVal.push(result);
+      }
+    }
+    this.checkedValGet = checkedVal;
+    if (checkedVal.length > 0) {
+      this.modalService.open(content, { centered: true });
+    }
+    else {
+      Swal.fire({ text: 'Porfavor seleccione almenos un checkbox', confirmButtonColor: '#299cdb', });
+    }
+  }
 
   // Search Data
   performSearch(): void {
@@ -151,11 +173,6 @@ export class AreasComponent {
       }else {
           this.notify('Formulario Invalido!', 'error');
       }
-  
-      setTimeout(() => {
-        // this.contentForm.reset();
-      }, 2000);
-      // this.submitted = true
     }
       
   addData(datos:Superficie){
@@ -187,23 +204,14 @@ export class AreasComponent {
       })
   }
 
-  /**
-   * Delete model
-   */
-  deleteId: any;
-  confirm(content: any, data: any) {
-    this.deleteId = data.uuid;
-    this.modalService.open(content, { centered: true });
-  }
 
   // Delete Data
-  deleteData(id: any) {
-    if (id) {
-      this.superficiesService.delete(id).subscribe({
+  deleteData() {
+    this.checkedValGet.forEach(uuid => {
+      this.superficiesService.delete(uuid).subscribe({
         next: (data:any) => {
               this.submitted = false;
               this.closeModal();
-              // this.listaItems.emit();
               this.notify('registro Eliminado exitosamente!','success')
          },
         error: err => {
@@ -211,35 +219,24 @@ export class AreasComponent {
           this.notify('No se pudo eliminar el registro!','error')
         }
       });
-    }
+    });    
   }
-  /**
-   * Multiple Delete
-   */
-  checkedValGet: any[] = [];
-  deleteMultiple(content: any) {
-    var checkboxes: any = document.getElementsByName('checkAll');
-    var result
-    var checkedVal: any[] = [];
-    for (var i = 0; i < checkboxes.length; i++) {
-      if (checkboxes[i].checked) {
-        result = checkboxes[i].value;
-        checkedVal.push(result);
-      }
-    }
-    if (checkedVal.length > 0) {
-      this.modalService.open(content, { centered: true });
-      // checkedVal.forEach(uuid => {
-      //     this.deleteData(uuid)
-      // });
-    }
-    else {
-      Swal.fire({ text: 'Porfavor seleccione almenos un checkbox', confirmButtonColor: '#299cdb', });
-    }
-    this.checkedValGet = checkedVal;
-  }
-
   
+  camposImport: any[] =[];
+  public abrirModalImport() {
+    this.camposImport = [
+        {prop: 'descripcion', name: 'descripcion'},
+    ];
+    const modalRef = this.modalService.open(ModalImportComponent, {
+        size: 'lg',
+        backdrop: 'static'
+    });
+    modalRef.componentInstance.titles = this.camposImport;
+    modalRef.componentInstance.itemsList = this.superficiesList;
+    modalRef.componentInstance.listaItems.subscribe(() => {
+        this.getSurfaces();
+    });
+  }
   // Csv File Export
   csvFileExport() {
     var data = {

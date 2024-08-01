@@ -23,7 +23,7 @@
                                 <i class="ri-add-circle-line align-middle"></i> 
                                 {{"Agregar" | translate}}
                             </button>
-                            <button type="button" class="btn btn-soft-success" (click)="csvFileExport()"><i
+                            <button type="button" class="btn btn-soft-info" (click)="csvFileExport()"><i
                                     class="ri-file-download-line align-bottom me-1"></i> Exportar</button>
                         </div>
                     </div>
@@ -43,14 +43,6 @@
                     <div class="col-xl-6">
                         <div class="row g-3">
                             <div class="col-sm-4">
-                                <div class="">
-                                    <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                                        [altInput]="true" [convertModelValue]="true" placeholder="Select date"
-                                        id="isDate" [(ngModel)]="filterDate" (change)="dateFilter()" mode="range">
-                                </div>
-                            </div>
-                            <!--end col-->
-                            <div class="col-sm-4">
                                 <div>
                                     <select class="form-control" data-plugin="choices" data-choices
                                         data-choices-search-false name="choices-single-default" id="idStatus"
@@ -63,12 +55,12 @@
                             </div>
                             <!--end col-->
 
-                            <div class="col-sm-4">
+                            <!-- <div class="col-sm-4">
                                 <div>
                                     <button type="button" class="btn btn-primary w-100"><i
                                             class="ri-equalizer-fill mx-2 align-bottom"></i>Filtrar</button>
                                 </div>
-                            </div>
+                            </div> -->
                             <!--end col-->
                         </div>
                     </div>

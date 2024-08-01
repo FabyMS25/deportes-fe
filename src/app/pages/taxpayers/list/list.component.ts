@@ -27,10 +27,12 @@ import { ModalComponent } from '../modal/modal.component';
  */
 export class ListComponent {
   title="Contribuyentes";
-
-  // bread crumb items
   breadCrumbItems!: Array<{}>;
-  submitted = false;
+  canActivate:string[];
+  listaItems:any[]=[];
+  temp:any[]=[];
+  contribuyentesList:any[]=[];
+
   masterSelected!: boolean;
   checkedList: any;
 
@@ -38,11 +40,6 @@ export class ListComponent {
   filterDate: any;
   status: any = '';
   
-  canActivate:string[];
-  listaItems:any[]=[];
-  contribuyentesList:any[]=[];
-  temp:any[]=[];
-
   constructor(private modalService: NgbModal, 
      private authService: AuthenticationService,
      private contribuyentesService: ContribuyentesService,
@@ -51,9 +48,6 @@ export class ListComponent {
   }
 
   ngOnInit(): void {
-    /**
-    * BreadCrumb
-    */
     this.breadCrumbItems = [
       { label: '' },
       { label: this.title, active: true }
@@ -85,13 +79,9 @@ export class ListComponent {
     });
   }
 
-  dateFilter() {
-    this.contribuyentesList = this.temp.filter((item: any) => new Date(item.date) >= new Date(Object.values(this.dateFilter)[0]) && new Date(item.date) <= new Date(Object.values(this.dateFilter)[1]));
-  }
-
   statusFilter() {
     if (this.status != '') {
-      this.contribuyentesList = this.temp.filter((customer: any) => customer.status == this.status);
+      this.contribuyentesList = this.temp.filter((item: any) => item.estadoUsuario == this.status);
     } else {
       this.contribuyentesList = this.temp
     }
@@ -167,7 +157,7 @@ export class ListComponent {
       title: 'Lista de Contribuyentes',
       useBom: true,
       noDownload: false,
-      headers: ["uuid", "Usuario","Contraseña","Nombre", "Apellido Paterno", "Apellido Materno", "Nro Carnet","Nro NIT","Expedido","Sexo","Dirección","email", "celular", "date", "status"]
+      headers: ["uuid", "Usuario","Contraseña","Nombre", "Apellido Paterno", "Apellido Materno", "Nro Carnet","Nro NIT","Expedido","Sexo","Dirección","Celular", "Email", "Tipo Contribuyente", "Codigo Contribuyente", "Estado Civil", "Fecha Nacimiento","Estado Usuario"]
     };
     new ngxCsv(this.contribuyentesList, "contribuyentes", data);
   }

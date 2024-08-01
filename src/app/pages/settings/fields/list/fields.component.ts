@@ -16,6 +16,7 @@ import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportiv
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { ModalScheduleComponent } from '../modal-schedule/modal-schedule.component';
 import { ModalTarifaComponent } from '../modal-tarifa/modal-tarifa.component';
+import { ModalImportComponent } from '../modal-import/modal-import.component';
 @Component({
   selector: 'app-fields',
   templateUrl: './fields.component.html',
@@ -112,6 +113,25 @@ export class FieldsComponent {
     modalRef.componentInstance.accion = accion;
     modalRef.componentInstance.listaItems.subscribe(() => {
     this.getFields();
+    });
+  }
+
+  camposImport: any[] =[];
+  public abrirModalImport() {
+    this.camposImport = [
+        {prop: 'Codigo', name: 'Codigo'},
+        {prop: 'Tipo Cobro', name: 'Tipo Cobro'},
+        {prop: 'Complejo', name: 'Complejo'},
+        {prop: 'Superficie', name: 'Superficie'},
+    ];
+    const modalRef = this.modalService.open(ModalImportComponent, {
+        size: 'lg',
+        backdrop: 'static'
+    });
+    modalRef.componentInstance.titles = this.camposImport;
+    modalRef.componentInstance.itemsList = this.canchasList;
+    modalRef.componentInstance.listaItems.subscribe(() => {
+        this.getFields();
     });
   }
 
@@ -234,7 +254,14 @@ export class FieldsComponent {
   }
 
   // Csv File Export
-  csvFileExport() {
+  csvFileExport() {    
+    const lista = this.canchasList.map(item => ({
+      complejo: item.complejoDto.nombre,
+      codigo: item.codigo,
+      superficie: item.superficieDto.descripcion,
+      tipo: item.tipo
+    }));
+
     var data = {
       fieldSeparator: ',',
       quoteStrings: '"',
@@ -244,9 +271,9 @@ export class FieldsComponent {
       title: 'Lista de Campos Deportivos',
       useBom: true,
       noDownload: false,
-      headers: ["Uuid", "Techado", "Superficie", "Dirección", "Distrito", "Tarifa", "Latitud", "Longitud", "Nombre", "Estado"]
+      headers: ["Complejo", "Codigo" , "Superficie", "tipo",]
     };
-    new ngxCsv(this.canchasList, "Lista de Campos Deportivos", data);
+    new ngxCsv(lista, "Lista de Campos Deportivos", data);
   }
 
 
