@@ -11,7 +11,7 @@
                     <div class="d-flex align-items-lg-center flex-lg-row flex-column">
                         <div class="flex-grow-1">
                             <h4 class="fs-16 mb-1">Bienvenida, {{userData.username}}!</h4>
-                            <p class="text-muted mb-0">Here's what's happening with your store today.</p>
+                            <p class="text-muted mb-0">Revisa tus reservas en Deportes GAMQ.</p>
                         </div>
                         <div class="mt-3 mt-lg-0">
                             <div class="row g-3 mb-0 align-items-center">
@@ -68,7 +68,7 @@
                                     6M
                                 </button>
                                 <button type="button" class="btn btn-soft-primary btn-sm" (click)="setrevenuevalue('1Y')">
-                                    1Y
+                                    1A
                                 </button>
                             </div>
                         </div><!-- end card header -->
@@ -470,7 +470,7 @@
             <div class="card h-100 rounded-0">
                 <div class="card-body p-0">
                     <div class="p-3">
-                        <h6 class="text-muted mb-0 text-uppercase fw-semibold">Recent Activity</h6>
+                        <h6 class="text-muted mb-0 text-uppercase fw-semibold">Actividades recientes</h6>
                     </div>
                     <ngx-simplebar style="max-height: 410px;" class="p-3 pt-0">
                         <div class="acitivity-timeline acitivity-main">
@@ -481,9 +481,9 @@
                                     </div>
                                 </div>
                                 <div class="flex-grow-1 ms-3">
-                                    <h6 class="mb-1 lh-base">Purchase by James Price</h6>
+                                    <h6 class="mb-1 lh-base">Reserva por James Price</h6>
                                     <p class="text-muted mb-1">Product noise evolve smartwatch </p>
-                                    <small class="mb-0 text-muted">02:14 PM Today</small>
+                                    <small class="mb-0 text-muted">02:14 PM Hoy</small>
                                 </div>
                             </div>
                             <div class="acitivity-item py-3 d-flex">
@@ -508,17 +508,6 @@
                                         </a>
                                     </div>
                                     <p class="mb-0 text-muted"><small>9:47 PM Yesterday</small></p>
-                                </div>
-                            </div>
-                            <div class="acitivity-item py-3 d-flex">
-                                <div class="flex-shrink-0">
-                                    <img src="assets/images/users/avatar-2.jpg" alt="" class="avatar-xs rounded-circle acitivity-avatar">
-                                </div>
-                                <div class="flex-grow-1 ms-3">
-                                    <h6 class="mb-1 lh-base">Natasha Carey have liked the products</h6>
-                                    <p class="text-muted mb-1">Allow users to like products in your WooCommerce store.
-                                    </p>
-                                    <small class="mb-0 text-muted">25 Dec, 2021</small>
                                 </div>
                             </div>
                             <div class="acitivity-item py-3 d-flex">
@@ -579,22 +568,11 @@
                                     <small class="mb-0 text-muted">15 Oct</small>
                                 </div>
                             </div>
-                            <div class="acitivity-item d-flex">
-                                <div class="flex-shrink-0">
-                                    <img src="assets/images/users/avatar-3.jpg" alt="" class="avatar-xs rounded-circle acitivity-avatar" />
-                                </div>
-                                <div class="flex-grow-1 ms-3">
-                                    <h6 class="mb-1 lh-base">Frank Hook Commented</h6>
-                                    <p class="text-muted mb-2 fst-italic">" A product that has reviews is more likable
-                                        to be sold than a product. "</p>
-                                    <small class="mb-0 text-muted">26 Aug, 2021</small>
-                                </div>
-                            </div>
                         </div>
                     </ngx-simplebar>
 
                     <div class="p-3 mt-2">
-                        <h6 class="text-muted mb-3 text-uppercase fw-semibold">Categorias</h6>
+                        <h6 class="text-muted mb-3 text-uppercase fw-semibold">Categorías</h6>
 
                         <ol class="ps-3 text-muted">
                             <li class="py-1">
@@ -631,133 +609,6 @@
                         <div class="mt-3 text-center">
                             <!-- <a href="javascript:void(0);" class="text-muted text-decoration-underline">View all
                                 Categories</a> -->
-                        </div>
-                    </div>
-                    <div class="p-3">
-                        <h6 class="text-muted mb-3 text-uppercase fw-semibold">Products Reviews</h6>
-                        <!-- Swiper -->
-                        <div class="swiper vertical-swiper rounded" style="height: 280px;" dir="ltr">
-                            <ngx-slick-carousel class="carousel" [config]="Vertical" style="height: 280px; width: auth;">
-                                <div class="swiper-slide" ngxSlickItem>
-                                    <div class="card border border-dashed shadow-none m-0">
-                                        <div class="card-body">
-                                            <div class="d-flex">
-                                                <div class="flex-shrink-0 avatar-sm">
-                                                    <div class="avatar-title bg-light rounded">
-                                                        <img src="assets/images/companies/img-1.png" alt="" height="30">
-                                                    </div>
-                                                </div>
-                                                <div class="flex-grow-1 ms-3">
-                                                    <div>
-                                                        <p class="text-muted mb-1 fst-italic text-truncate-two-lines">
-                                                            "
-                                                            Great product and looks great, lots of features. "</p>
-                                                        <div class="fs-11 align-middle text-warning">
-                                                            <i class="ri-star-fill"></i>
-                                                            <i class="ri-star-fill"></i>
-                                                            <i class="ri-star-fill"></i>
-                                                            <i class="ri-star-fill"></i>
-                                                            <i class="ri-star-fill"></i>
-                                                        </div>
-                                                    </div>
-                                                    <div class="text-end mb-0 text-muted">
-                                                        - by <cite title="Source Title">Force Medicines</cite>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="swiper-slide" ngxSlickItem>
-                                    <div class="card border border-dashed shadow-none m-0">
-                                        <div class="card-body">
-                                            <div class="d-flex">
-                                                <div class="flex-shrink-0">
-                                                    <img src="assets/images/users/avatar-3.jpg" alt="" class="avatar-sm rounded">
-                                                </div>
-                                                <div class="flex-grow-1 ms-3">
-                                                    <div>
-                                                        <p class="text-muted mb-1 fst-italic text-truncate-two-lines">
-                                                            "
-                                                            Amazing template, very easy to understand and
-                                                            manipulate. "
-                                                        </p>
-                                                        <div class="fs-11 align-middle text-warning">
-                                                            <i class="ri-star-fill"></i>
-                                                            <i class="ri-star-fill"></i>
-                                                            <i class="ri-star-fill"></i>
-                                                            <i class="ri-star-fill"></i>
-                                                            <i class="ri-star-half-fill"></i>
-                                                        </div>
-                                                    </div>
-                                                    <div class="text-end mb-0 text-muted">
-                                                        - by <cite title="Source Title">Henry Baird</cite>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="swiper-slide" ngxSlickItem>
-                                    <div class="card border border-dashed shadow-none m-0">
-                                        <div class="card-body">
-                                            <div class="d-flex">
-                                                <div class="flex-shrink-0 avatar-sm">
-                                                    <div class="avatar-title bg-light rounded">
-                                                        <img src="assets/images/companies/img-8.png" alt="" height="30">
-                                                    </div>
-                                                </div>
-                                                <div class="flex-grow-1 ms-3">
-                                                    <div>
-                                                        <p class="text-muted mb-1 fst-italic text-truncate-two-lines">
-                                                            "Very beautiful product and Very helpful customer
-                                                            service."
-                                                        </p>
-                                                        <div class="fs-11 align-middle text-warning">
-                                                            <i class="ri-star-fill"></i>
-                                                            <i class="ri-star-fill"></i>
-                                                            <i class="ri-star-fill"></i>
-                                                            <i class="ri-star-line"></i>
-                                                            <i class="ri-star-line"></i>
-                                                        </div>
-                                                    </div>
-                                                    <div class="text-end mb-0 text-muted">
-                                                        - by <cite title="Source Title">Zoetic Fashion</cite>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="swiper-slide" ngxSlickItem>
-                                    <div class="card border border-dashed shadow-none m-0">
-                                        <div class="card-body">
-                                            <div class="d-flex">
-                                                <div class="flex-shrink-0">
-                                                    <img src="assets/images/users/avatar-2.jpg" alt="" class="avatar-sm rounded">
-                                                </div>
-                                                <div class="flex-grow-1 ms-3">
-                                                    <div>
-                                                        <p class="text-muted mb-1 fst-italic text-truncate-two-lines">
-                                                            "
-                                                            The product is very beautiful. I like it. "</p>
-                                                        <div class="fs-11 align-middle text-warning">
-                                                            <i class="ri-star-fill"></i>
-                                                            <i class="ri-star-fill"></i>
-                                                            <i class="ri-star-fill"></i>
-                                                            <i class="ri-star-half-fill"></i>
-                                                            <i class="ri-star-line"></i>
-                                                        </div>
-                                                    </div>
-                                                    <div class="text-end mb-0 text-muted">
-                                                        - by <cite title="Source Title">Nancy Martino</cite>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </ngx-slick-carousel>
                         </div>
                     </div>
 
@@ -896,9 +747,9 @@
                             <img src="assets/images/giftbox.png" alt="">
                             <div class="mt-4">
                                 <h5>Enviar un Mensaje</h5>
-                                <p class="text-muted lh-base">Refer a new seller to us and earn $100 per refer.</p>
-                                <button type="button" class="btn btn-primary btn-label rounded-pill"><i class="ri-mail-fill label-icon align-middle rounded-pill fs-16 me-2"></i> Invite
-                                    Now</button>
+                                <p class="text-muted lh-base"></p>
+                                <button type="button" class="btn btn-primary btn-label rounded-pill"><i class="ri-mail-fill label-icon align-middle rounded-pill fs-16 me-2"></i> 
+                                    Enviar</button>
                             </div>
                         </div>
                     </div>

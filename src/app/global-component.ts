@@ -29,4 +29,4 @@ export const GlobalComponent = {
     horarios:'/horario',
     categoriasCampos:'/canchasDeporte',
     // orderId:'apps/order/',
-}
+} 

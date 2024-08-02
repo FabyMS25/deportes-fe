@@ -58,12 +58,8 @@ export class ListComponent {
       {name: 'Celular', prop: 'celular'},
       {name: 'Estado', prop: 'estadoUsuario',tag:true},
     ];
-
     this.getTaxpayers();
   }
-
-
-
 
   // Search Data
   performSearch(): void {
@@ -78,7 +74,7 @@ export class ListComponent {
       );
     });
   }
-
+ 
   statusFilter() {
     if (this.status != '') {
       this.contribuyentesList = this.temp.filter((item: any) => item.estadoUsuario == this.status);

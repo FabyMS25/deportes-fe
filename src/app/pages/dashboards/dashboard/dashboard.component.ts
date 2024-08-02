@@ -1,4 +1,4 @@
-import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ToastService } from './toast-service';
 
 import { circle, latLng, tileLayer } from 'leaflet';

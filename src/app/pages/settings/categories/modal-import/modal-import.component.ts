@@ -9,7 +9,7 @@ import { SharedModule } from 'src/app/shared/shared.module';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 
 @Component({
-  selector: 'app-modal-import',
+  selector: 'app-categorias-import',
   standalone: true,
   imports: [
     FormsModule,

@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -6,5 +7,97 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'Deportes';
+  title = 'deportes-gamq';
+
+  subscriberId = environment.subscriberId;
+
+  applicationIdentifier = environment.applicationIdentifier;
+
+
+styles = {
+
+    bellButton: {
+
+      root: {
+
+        svg: {
+
+          color: 'white',
+
+          width: '45px',
+
+          height: '40px',
+
+          fill: 'white',
+
+        },
+
+      },
+
+      dot: {
+
+        rect: {
+
+          fill: 'rgb(221, 0, 49)',
+
+          strokeWidth: '0.2',
+
+          stroke: 'white',
+
+          width: '3.5px',
+
+          height: '3.5px',
+
+        },
+
+        left: '40%',
+
+      },
+
+    },
+
+    header: {
+
+      root: {
+
+        backgroundColor: '',
+
+        '&:hover': { backgroundColor: '' },
+
+        '.some_class': { color: '' },
+
+      },
+
+    },
+
+    layout: {
+
+      root: {
+
+        backgroundColor: '',
+
+      },
+
+    },
+
+    popover: {
+
+      arrow: {
+
+        backgroundColor: '',
+
+        border: '',
+
+      },
+
+    },
+
+  };
+
+
+  sessionLoaded = (data: unknown) => {
+
+    console.log('loaded', { data });
+
+  };
 }

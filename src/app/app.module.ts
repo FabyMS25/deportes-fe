@@ -1,4 +1,4 @@
-import { LOCALE_ID, NgModule } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, LOCALE_ID, NgModule, isDevMode } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
 // search module
@@ -32,6 +32,8 @@ export function createTranslateLoader(http: HttpClient): any {
 
 import localeEs from '@angular/common/locales/es';
 import { registerLocaleData } from '@angular/common';
+
+// import { NotificationCenterModule } from '@novu/notification-center-angular';
 
 registerLocaleData(localeEs, 'es');
 // if (environment.defaultauth === 'firebase') {
@@ -67,7 +69,9 @@ registerLocaleData(localeEs, 'es');
     }),
     EffectsModule.forRoot([
       AuthenticationEffects]),
+      // NotificationCenterModule
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   providers: [
     { provide: LOCALE_ID, useValue: 'es' },
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },

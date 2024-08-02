@@ -12,9 +12,7 @@ import { TokenStorageService } from '../../core/services/token-storage.service';
 import { CookieService } from 'ngx-cookie-service';
 import { LanguageService } from '../../core/services/language.service';
 import { TranslateService } from '@ngx-translate/core';
-import { allNotification, messages } from './data'
-import { CartModel } from './topbar.model';
-import { cartData } from './data';
+import { allNotification } from './data'
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -23,6 +21,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
   styleUrls: ['./topbar.component.scss']
 })
 export class TopbarComponent implements OnInit {
+  
   messages: any
   element: any;
   mode: string | undefined;
@@ -33,7 +32,6 @@ export class TopbarComponent implements OnInit {
   countryName: any;
   cookieValue: any;
   userData: any;
-  cartData!: CartModel[];
   total = 0;
   cart_length: any = 0;
   totalNotify: number = 0;
@@ -64,16 +62,8 @@ export class TopbarComponent implements OnInit {
       this.flagvalue = val.map(element => element.flag);
     }
 
-    // Fetch Data
     this.allnotifications = allNotification;
 
-    this.messages = messages;
-    this.cartData = cartData;
-    this.cart_length = this.cartData.length;
-    this.cartData.forEach((item) => {
-      var item_price = item.quantity * item.price
-      this.total += item_price
-    });
   }
 
   /**
@@ -154,7 +144,7 @@ export class TopbarComponent implements OnInit {
    */
   listLang = [
     { text: 'English', flag: 'assets/images/flags/us.svg', lang: 'en' },
-    { text: 'Española', flag: 'assets/images/flags/spain.svg', lang: 'es' },
+    { text: 'Español', flag: 'assets/images/flags/spain.svg', lang: 'es' },
     { text: 'Deutsche', flag: 'assets/images/flags/germany.svg', lang: 'de' },
     { text: 'Italiana', flag: 'assets/images/flags/italy.svg', lang: 'it' },
     { text: 'русский', flag: 'assets/images/flags/russia.svg', lang: 'ru' },

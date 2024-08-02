@@ -9,7 +9,7 @@ import { SharedModule } from 'src/app/shared/shared.module';
 import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
 
 @Component({
-  selector: 'app-modal-import',
+  selector: 'app-sperficies-import',
   standalone: true,
   imports: [
     FormsModule,
