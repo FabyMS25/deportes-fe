@@ -1,8 +1,8 @@
 const Ceiling =
 [ 
-    'TECHADO',
-    'ABIERTO',
-    'CERRADO'
+    'Techado',
+    'Abierto',
+    'Cerrado'
 ]
 
 export{ Ceiling };

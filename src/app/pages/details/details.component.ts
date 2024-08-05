@@ -83,12 +83,12 @@ export class DetailsComponent implements OnInit  {
     console.log(this.dataField)
     if(this.dataField){
       this.initMap(this.dataField.latitud, this.dataField.longitud); 
+      this.getFields(this.dataField.uuid);
     }      
     this.updateTime();
     this.timerId = setInterval(() => this.updateTime(), 1000);
     
     this.getDeportes();
-    this.getFields();
     /**
      * Form Validation
      */
@@ -331,8 +331,8 @@ export class DetailsComponent implements OnInit  {
     }
 
     canchasList:any[]=[];
-    private getFields(){
-      this.fieldService.getAll().subscribe({
+    private getFields(uuid:any){
+      this.fieldService.getByComplejo(uuid).subscribe({
         next: (data: any) => {
           if (data['status'] === 'OK') {
             this.canchasList = data.payload;
@@ -342,7 +342,7 @@ export class DetailsComponent implements OnInit  {
           }
         },
         error: (error) => {
-          Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb', });
+          Swal.fire({ text: 'No se encontraron Canchas del Complejo', confirmButtonColor: '#299cdb', });
         }
       });
     }

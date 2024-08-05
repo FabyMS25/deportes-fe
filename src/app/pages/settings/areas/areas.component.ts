@@ -225,7 +225,7 @@ export class AreasComponent {
   camposImport: any[] =[];
   public abrirModalImport() {
     this.camposImport = [
-        {prop: 'descripcion', name: 'descripcion'},
+        {prop: 'Descripcion', name: 'Descripcion'},
     ];
     const modalRef = this.modalService.open(ModalImportComponent, {
         size: 'lg',

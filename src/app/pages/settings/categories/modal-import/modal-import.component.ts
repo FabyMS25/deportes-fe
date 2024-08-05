@@ -73,7 +73,7 @@ export class ModalImportComponent {
     const val = event.target.value.toLowerCase();
     const temp = this.listaTemporal.filter((l) => {
         return (
-            l.nombre.toLowerCase().indexOf(val) !== -1 ||
+            l.Nombre.toLowerCase().indexOf(val) !== -1 ||
             !val
         );
     });
@@ -84,9 +84,9 @@ export class ModalImportComponent {
       this.loading = true;
       for (let i = 0; i < xlsxData.length; i++) {
           let record: any = {
-              codigo: '' + xlsxData[i].codigo,
-              nombre: '' + xlsxData[i].nombre,
-              tipo: '' + xlsxData[i].tipo,
+              codigo: '' + xlsxData[i].Codigo,
+              nombre: '' + xlsxData[i].Nombre,
+              tipo: '' + xlsxData[i]['Tipo Cobro'],
           };
           if (!this.rexordExist(record)) {
               await this.createRecord(record);

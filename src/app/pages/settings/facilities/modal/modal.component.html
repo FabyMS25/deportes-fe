@@ -59,11 +59,12 @@
             <div class="col-lg-6">
                 <div>
                     <label for="techado-field" class="form-label">Techado</label>
-                    <select class="form-select" aria-label="techado" id="techado-field" formControlName="techado"
-                         [ngClass]="{'is-invalid': submitted && form['techado'].errors }">
-                        <option value="Abierto">Abierto</option>
-                        <option value="Cerrado">Cerrado</option>
-                    </select>
+                    <ng-select 
+                        [items]="ceilingList" bindLabel="techado" bindValue="techado"
+                        formControlName="techado"
+                        placeholder="techado" 
+                        [ngClass]="{'is-invalid': submitted && form['techado'].errors }">
+                    </ng-select>
                     @if(submitted && form['techado'].errors){ 
                     <div class="invalid-feedback"
                         align="left">
