@@ -58,12 +58,12 @@ export class ModalComponent {
     if(this.accion==='show'){
       setTimeout(() => {
         document.getElementById('form-event')?.classList.add('view-event');
-        (document.getElementById('btn-save-event') as HTMLElement).setAttribute("hidden", "true");
-        (document.getElementById('btn-cancel-event') as HTMLElement).setAttribute("hidden", "true");
+        // (document.getElementById('btn-save-event') as HTMLElement).setAttribute("hidden", "true");
+        // (document.getElementById('btn-cancel-event') as HTMLElement).setAttribute("hidden", "true");
       }, 100);
 
     }else{
-      (document.getElementById('btn-delete-event') as HTMLElement).setAttribute("hidden", "true");
+      // (document.getElementById('btn-delete-event') as HTMLElement).setAttribute("hidden", "true");
 
     }
   }
@@ -84,8 +84,9 @@ export class ModalComponent {
             estadoUsuario: this.row.estadoUsuario,
             correo:this.row.correo,
             nombre: this.row.nombre,
-            apPaterno: this.row.apPaterno,
-            apMaterno: this.row.apMaterno,
+            primerApellido: this.row.apPaterno,
+            segundoApellido: this.row.apMaterno,
+            fechaNacimiento:this.row.fechaNac,
             sexo:this.row.sexo,
             nroCarnet: this.row.nroCarnet,
             ciExpedido:this.row.ciExpedido,
@@ -109,11 +110,11 @@ export class ModalComponent {
       // (document.getElementById('btn-save-event') as HTMLElement).setAttribute("hidden", "true");
     } else {
       document.getElementById('form-event')?.classList.remove('view-event');
-      (document.getElementById('btn-save-event') as HTMLElement).removeAttribute("hidden");
-      (document.getElementById('btn-cancel-event') as HTMLElement).removeAttribute("hidden");
+      // (document.getElementById('btn-save-event') as HTMLElement).removeAttribute("hidden");
+      // (document.getElementById('btn-cancel-event') as HTMLElement).removeAttribute("hidden");
 
-      var modalbtn = document.querySelector('#btn-save-event') as HTMLAreaElement;
-      modalbtn.innerHTML = "Actualizar"
+      // var modalbtn = document.querySelector('#btn-save-event') as HTMLAreaElement;
+      // modalbtn.innerHTML = "Actualizar"
       var editbtn = document.querySelector('#edit-event-btn') as HTMLAreaElement;
       editbtn.innerHTML = 'Cancelar'
     }

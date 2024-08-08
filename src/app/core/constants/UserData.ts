@@ -42,14 +42,14 @@ const UserStates = [
     }
 ]
 
-const UserDocType = [
+const UserGender = [
     {
-        "type":"CI",
-        "description": "Carnet de Identidad",
+        "id":"F",
+        "description": "FEMENINO",
     },
     {
-        "type": "CE",
-        "description": "Carnet de Extranjero",
+        "id": "M",
+        "description": "MASCULINO",
     }
 ]
 
@@ -57,20 +57,31 @@ const UserDocType = [
 const UserCivilStatus = [
     {
         "type":"SO",
-        "description": "Soltero(a)",
+        "description": "SOLTERO(A)",
     },
     {
         "type": "CA",
-        "description": "Casado(a)",
+        "description": "CASADO(A)",
     },
     {
         "type": "VI",
-        "description": "Ciudo(a)",
+        "description": "VIUDO(A)",
     },
     {
         "type": "DI",
-        "description": "Divorciado(a)",
+        "description": "DIVORCIADO(A)",
     }
 ]
 
-export{ UserRol , UserStates , UserCivilStatus, UserDocType};
+const UserDocType = [
+    {
+        "type":"CI",
+        "description": "CEDULA DE IDENTIDAD",
+    },
+    {
+        "type": "CE",
+        "description": "Carnet de Extranjero",
+    }
+]
+
+export{ UserRol , UserStates , UserGender, UserCivilStatus, UserDocType};

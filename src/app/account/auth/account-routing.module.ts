@@ -9,6 +9,7 @@ import { PassCreateComponent } from './pass-create/pass-create.component';
 import { LogoutComponent } from './logout/logout.component';
 import { SuccessMsgComponent } from './success-msg/success-msg.component';
 import { TwoStepComponent } from './twostep/twostep.component';
+import { SignupCheckComponent } from './signup-check/signup-check.component';
 
 const routes: Routes = [
   {
@@ -25,6 +26,10 @@ const routes: Routes = [
   },
   {
     path: 'twostep', component:TwoStepComponent
+  },
+  {
+    path: "signup-check",
+    component: SignupCheckComponent
   },
   {
     path: "signup",

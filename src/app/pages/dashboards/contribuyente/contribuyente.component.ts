@@ -21,12 +21,10 @@ import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 
 export class ContribuyenteComponent implements OnInit {
 
-    // bread crumb items
     breadCrumbItems!: Array<{}>;
     categoryList:any[]=[];
     canchasList:any[]=[];
     temp:any=[]
-
 
     map:any;
     layerControl:any;
@@ -40,13 +38,12 @@ export class ContribuyenteComponent implements OnInit {
  
     constructor(private router: Router,
       private categoriasService: CategoriasService,
-      private complejoService: ComplejosService,
-      private fieldsService: CamposDeportivoService
+      private complejoService: ComplejosService
     ) {}
 
     ngOnInit(): void {
         this.breadCrumbItems = [
-            { label: 'Dashboards' },
+            { label: 'Dashboard' },
             { label: 'Contribuyente', active: true }
         ];
         this.getDeportes();
@@ -98,37 +95,28 @@ export class ContribuyenteComponent implements OnInit {
     overlayMaps:any;
     main : any;
     setMaps() {
-      this.main = L.tileLayer(
-      "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoidGhlbWVzYnJhbmQiLCJhIjoiY2xmbmc3bTV4MGw1ejNzbnJqOWpubzhnciJ9.DNkdZVKLnQ6I9NOz7EED-w",
-      {
-        maxZoom: 18,
-        attribution:
-          'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-        id: "mapbox/streets-v11",
-        tileSize: 512,
-        zoomOffset: -1,
-      }
-    )
+      this.main = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoidGhlbWVzYnJhbmQiLCJhIjoiY2xmbmc3bTV4MGw1ejNzbnJqOWpubzhnciJ9.DNkdZVKLnQ6I9NOz7EED-w",
+        {
+          maxZoom: 18,
+          // attribution:'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+          id: "mapbox/streets-v11",
+          tileSize: 512,
+          zoomOffset: -1,
+        }
+      )
       const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        attribution: '© OpenStreetMap'
       });
-    
       const osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '© OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team hosted by OpenStreetMap France'
+          maxZoom: 19
       });
-    
       var openTopoMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)'
       });
-
       this.baseMaps = {
         "Mapa Basico": this.main,
-        "OpenStreetMap": osm,
-        "<span style='color: red'>OpenStreetMap.HOT</span>": osmHOT,
-        "OpenTopoMap":openTopoMap
+        "Mapa Calles": osm,
       };
       // this.layerControl.addBaseLayer(openTopoMap, "OpenTopoMap");
     }
@@ -170,7 +158,7 @@ export class ContribuyenteComponent implements OnInit {
       let colList = L.layerGroup([col1,col2]); 
       
       this.overlayMaps = {
-        "Canchas": this.mainList,
+        "<span style='color: blue'>Todo</span>": this.mainList,
         "Estadios": stadiumsList,
         "Coliseos": colList
       };

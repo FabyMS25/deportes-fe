@@ -17,6 +17,7 @@ import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportiv
 import { Reserva } from 'src/app/core/models/reserva.models';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
 @Component({
   selector: 'app-details',
   templateUrl: './details.component.html',
@@ -42,14 +43,54 @@ export class DetailsComponent implements OnInit  {
   tarifa=0;
   imagesList=['assets/images/fields/img-1.png','assets/images/fields/img-2.png',
     'assets/images/fields/img-3.png','assets/images/fields/img-4.png']
+  
+    horariosAtencion = [
+      { horaInicio: '08:00', horaFin: '12:00', dia:"lunes", activo:true },
+      { horaInicio: '14:00', horaFin: '18:00' ,dia:"lunes", activo:true},
+      { horaInicio: '08:00', horaFin: '12:00', dia:"martes", activo:true },
+      { horaInicio: '14:00', horaFin: '18:00' ,dia:"martes", activo:true},
+      { horaInicio: '08:00', horaFin: '11:00', dia:"miércoles", activo:true },
+      { horaInicio: '13:00', horaFin: '16:00' ,dia:"miércoles", activo:true},
+      { horaInicio: '08:00', horaFin: '11:00', dia:"jueves", activo:true },
+      { horaInicio: '13:00', horaFin: '16:00' ,dia:"jueves", activo:true},
+      { horaInicio: '08:00', horaFin: '11:00', dia:"viernes", activo:true },
+      { horaInicio: '13:00', horaFin: '16:00' ,dia:"viernes", activo:true},
+      // { horaInicio: '', horaFin: '', dia:"Sabado", activo:false },
+      // { horaInicio: '', horaFin: '' ,dia:"Domingo", activo:false}
+    ];
 
+    contribuyente:Contribuyente = {
+      uuid:	"5ecd8156-502a-4a21-ba3a-1112d2322994",
+      userName:	"contribuyente1",
+      password:	"Contribuyente1",
+      nombre:	"FABIOLA",
+      apPaterno:	"MORALES",
+      apMaterno:	"S",
+      nroCarnet:	"8695227",
+      nroNit:	"",
+      ciExpedido:	"3",
+      sexo:	"F",
+      direccion:	"",
+      celular:	"72248669",
+      correo:	"moralessfaby.dev@gmail.com",
+      tipoContribuyente:	"NA",
+      codigoContribuyente:	"0A025F03001B0E001407505B51",
+      tipoDocumento:	"CI",
+      estadoCivil:	"SO",
+      fechaNac:	"23/04/1999",
+      estadoUsuario:	"Active",
+      // estado:	false
+    }
   constructor(private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
     private categoriasService: CategoriasService,
     private horariosService: HorariosService,
     private fieldService: CamposDeportivoService,
     private reservaService: ReservaService,
-    private route: ActivatedRoute ) { }
+    private route: ActivatedRoute ,
+    private ruatService: RuatRequestsService
+  
+  ) { }
 
     @ViewChild('slickModal') slickModal!: SlickCarouselComponent;
   /**
@@ -70,10 +111,15 @@ export class DetailsComponent implements OnInit  {
       autoplay: true,
     }
   ngOnInit(): void {
+    this.authRuat();
+
      this.breadCrumbItems = [
-      { label: 'Canchas' },
-      { label: 'Reservas', active: true }
+      { label: 'Complejo' },
+      { label: 'Reserva', active: true }
     ];    
+    this.updateTime();
+    this.timerId = setInterval(() => this.updateTime(), 1000);
+    
     // this.route.params.subscribe(params => {
     //   this.uuid = params['uuid'];
     //   // this.getAdjuntos(this.uuid);
@@ -85,8 +131,6 @@ export class DetailsComponent implements OnInit  {
       this.initMap(this.dataField.latitud, this.dataField.longitud); 
       this.getFields(this.dataField.uuid);
     }      
-    this.updateTime();
-    this.timerId = setInterval(() => this.updateTime(), 1000);
     
     this.getDeportes();
     /**
@@ -153,18 +197,6 @@ export class DetailsComponent implements OnInit  {
     }
   }
 
-  horariosAtencion = [
-    { horaInicio: '08:00', horaFin: '12:00', dia:"lunes", activo:true },
-    { horaInicio: '14:00', horaFin: '18:00' ,dia:"lunes", activo:true},
-    { horaInicio: '08:00', horaFin: '12:00', dia:"martes", activo:true },
-    { horaInicio: '14:00', horaFin: '18:00' ,dia:"martes", activo:true},
-    { horaInicio: '08:00', horaFin: '11:00', dia:"miércoles", activo:true },
-    { horaInicio: '13:00', horaFin: '16:00' ,dia:"miércoles", activo:true},
-    { horaInicio: '08:00', horaFin: '11:00', dia:"viernes", activo:true },
-    { horaInicio: '13:00', horaFin: '16:00' ,dia:"viernes", activo:true},
-    { horaInicio: '', horaFin: '', dia:"Sabado", activo:false },
-    { horaInicio: '', horaFin: '' ,dia:"Domingo", activo:false}
-  ];
 
   toggleCollapse(index: number) {
     this.isCollapsed[index] = !this.isCollapsed[index];
@@ -198,11 +230,29 @@ export class DetailsComponent implements OnInit  {
   morningHorarios: string[] = [];
   afternoonHorarios: string[] = [];
   horariosToday!:any[];
-  generateHorarios() {
-    const fechaReserva = this.InvoiceForm.get('fechaReserva')?.value;
-    const selectedDay = fechaReserva.toLocaleString('es-ES', { weekday: 'long' });
 
+
+
+  generateHorarios() {  const fechaReserva = this.InvoiceForm.get('fechaReserva')?.value;
+
+    if (!fechaReserva) {
+      console.error('fechaReserva is undefined or null');
+      return;
+    }
+  
+    console.log('Selected fechaReserva:', fechaReserva);
+  
+    const selectedDay = fechaReserva.toLocaleString('es-ES', { weekday: 'long' });
+    console.log('Selected day:', selectedDay);
+  
+    // Filter active schedules for the selected day
     this.horariosToday = this.horariosAtencion.filter(horario => horario.dia === selectedDay && horario.activo);
+    console.log('Filtered horariosToday:', this.horariosToday);
+  
+    if (this.horariosToday.length === 0) {
+      console.warn('No active schedules found for the selected day:', selectedDay);
+      return;
+    }
 
     this.morningHorarios = [];
     this.afternoonHorarios = [];
@@ -346,28 +396,6 @@ export class DetailsComponent implements OnInit  {
         }
       });
     }
-contribuyente:Contribuyente = {
-  uuid:	"e8a64564-3c9b-469b-b307-986689fece89",
-  userName:	"contribuyente",
-  password:	"Password123",
-  nombre:	"Fabiola",
-  apPaterno:	"Morales",
-  apMaterno:	"Siles",
-  nroCarnet:	"8695227",
-  nroNit:	"",
-  ciExpedido:	"3",
-  sexo:	"F",
-  direccion:	"",
-  celular:	"72248669",
-  correo:	"moralessfaby.dev@gmail.com",
-  tipoContribuyente:	"NA",
-  codigoContribuyente:	"0A025F03001B0E001D055E5751",
-  tipoDocumento:	"CI",
-  estadoCivil:	"SO",
-  fechaNac:	"1999-04-25",
-  estadoUsuario:	"Active",
-  // estado:	false
-}
     saveData() {
       this.submitted = true;
       if (this.InvoiceForm.valid) {
@@ -384,7 +412,8 @@ contribuyente:Contribuyente = {
           canchasDto: this.InvoiceForm.value.canchasDto,
           contribuyenteDto: this.contribuyente,
         };
-          this.addData(datos);
+          this.registerBook(datos)
+          // this.addData(datos);
       }else {
           this.notify('Formulario Invalido!', 'error');
       }
@@ -397,11 +426,53 @@ contribuyente:Contribuyente = {
       
   addData(datos:any){
     this.reservaService.save(datos).subscribe({
-      next:(data:Reserva)=>{
+      next:(data:any)=>{
         this.submitted=false;
+        const reserva = data.payload
+        // this.registerBook(reserva);
         this.notify('Datos Registrados exitosamente!','success'); 
         // this.closeModal();
         // this.listaItems.emit();       
+      },
+      error: (error) => {
+        this.notify('No se pudo Guardar los datos! '+error, 'error');
+      }
+    })
+  }
+     
+  /* API RUAT Services */
+  private authRuat() {
+    this.ruatService.authenticate().subscribe({
+      next: (response) => {          
+        window.sessionStorage.setItem('ruatToken', response.token);
+      },
+      error: (error) => {
+        this.notify("Falla en la coneccion con el RUAT, porfavor intente mas tarde",'error')
+      }
+    });
+}
+  private registerBook(reserva:any){
+    
+    let datos = {
+      codigoContribuyente: reserva.contribuyenteDto.codigoContribuyente,
+      // codigoClasificador: reserva.codigoClasificador,
+      monto: reserva.totalPago,
+      observacion: reserva.observacion,
+      // observacion: "Reserva de Cancha Deportiva GAMQ",
+      // canchasDto: reserva.canchasDto,
+      // contribuyenteDto: this.contribuyente,
+    };
+    
+    
+
+    this.ruatService.createTasa(datos).subscribe({
+      next:(data:any)=>{
+        if(data['status']==='OK'){
+          this.addData(reserva);
+          this.notify('Datos Registrados exitosamente!','success');
+
+        } else{
+          this.notify('No se pudo Guardar los datos! '+data.payload, 'error');}
       },
       error: (error) => {
         this.notify('No se pudo Guardar los datos! '+error, 'error');

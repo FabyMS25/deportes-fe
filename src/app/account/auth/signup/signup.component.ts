@@ -1,20 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { CityAcronym } from 'src/app/core/constants/Ciudades';
-import { UserStates , UserCivilStatus, UserDocType} from 'src/app/core/constants/UserData';
+import { UserStates , UserCivilStatus, UserDocType, UserGender} from 'src/app/core/constants/UserData';
 import { Contribuyente } from 'src/app/core/models/contribuyente.models';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import Swal from 'sweetalert2';
 
 import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
 import { MustMatch } from '../pass-create/must-match';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UserDataService } from './user-data.service';
-import { RuatAuthService } from 'src/app/core/services/ruat/ruatAuth.service';
 import { Observable } from 'rxjs';
-import { RuatService } from 'src/app/core/services/ruat/ruat.service';
-import { RuatCallsService } from 'src/app/core/services/ruat/php/ruatcalls.service';
-import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-signup',
@@ -38,21 +34,24 @@ export class SignupComponent implements OnInit {
   tipoDocs = UserDocType
   cityAcronym= CityAcronym
   userState= UserStates
+  userGender= UserGender
 
   usersList!:any[];
   userExist=false;
+  ruatData: any;
 
-  constructor(private formBuilder: UntypedFormBuilder,
+  constructor(
+    private route: ActivatedRoute,
+    private formBuilder: UntypedFormBuilder,
     private contribuyentesService: ContribuyentesService,
-    private ruatAuthService: RuatAuthService,
-    // private ruatService: RuatService,
-    private ruatService: RuatCallsService,
-    private router: Router, private datePipe: DatePipe,
+    private router: Router,
     private userDataService: UserDataService
   ) { }
 
   ngOnInit(): void {
-    this.authRuat()
+    
+
+    // this.authRuat()
     this.getUsers(); // api rest to get userList
     /**
      * Form Validatyion
@@ -146,8 +145,59 @@ export class SignupComponent implements OnInit {
         };
       }
     };
-  }
 
+    
+    this.route.queryParams.subscribe(params => {
+      const exist = params['userExist'];
+      this.ruatData = this.userDataService.getTemporaryUserData();
+      if(exist && this.ruatData){
+        this.formDataSet(this.ruatData);
+        this.userDataService.setTemporaryUserData(null);
+      }
+      // if (this.userData) {
+      //   this.searchContribuyente(this.userData);
+      // }
+    });
+  }
+  
+  private formDataSet(data:any) {
+    const contribuyente = data.contribuyente
+    const doc = UserDocType.find(d => d.description === contribuyente.tipoDocumento);    
+    const civ = UserCivilStatus.find(d => d.description === contribuyente.estadoCivil);
+    const exp = CityAcronym.find(d => d.description === contribuyente.expedido);    
+    const gen = UserGender.find(d => d.description === contribuyente.genero);
+    let dateObject ='';
+    if(contribuyente.fechaNacimiento){
+      const [day, month, year] = contribuyente.fechaNacimiento.split('/').map(Number);
+      const date = new Date(+year, +month - 1, +day);
+      dateObject = date.toISOString().split('T')[0]
+    }  
+    
+    this.SignupForm.patchValue({
+    // userName: this.SignupForm.value.username,
+    // password: this.SignupForm.value.password,
+    // estadoUsuario: this.SignupForm.value.estadoUsuario,
+    // verificationCode: codigo,
+    tipoContribuyente: contribuyente.tipoContribuyente,
+    codigoContribuyente: data.codigoContribuyente,
+    nombre: contribuyente.nombre,
+    primerApellido: contribuyente.primerApellido,
+    segundoApellido: contribuyente.segundoApellido,
+    genero:gen ? gen.id : '',
+    fechaNacimiento: dateObject,
+    estadoCivil: civ ? civ.type : '',
+    tipoDocumento: doc ? doc.type : '',
+    nroDocumento: contribuyente.numeroDocumento,
+    expedido:exp ? exp.id : '',
+    // nroNit:this.SignupForm.value.nroNit,
+    // celular:this.SignupForm.value.celular,
+    // correo:this.SignupForm.value.correo,
+    // direccion:this.SignupForm.value.direccion,
+
+    });
+
+
+  }
   onUsernameFocus() {
     var inputUser = document.getElementById("username-input") as HTMLInputElement;
     var message = document.getElementById("user-taken");
@@ -364,20 +414,5 @@ export class SignupComponent implements OnInit {
         }
       });
   }
-
-  /* API RUAT Services */
-  private authRuat() {
-      this.ruatService.authenticate().subscribe({
-        next: (response) => {          
-          // localStorage.setItem('ruatToken', JSON.stringify(response.token));
-          window.sessionStorage.setItem('ruatToken', response.token);
-        },
-        error: (error) => {
-          console.error('Authentication failed', error)
-        }
-      });
-  }
-
-
 
 }

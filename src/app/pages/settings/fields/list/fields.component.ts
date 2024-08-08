@@ -61,9 +61,9 @@ export class FieldsComponent {
     ];
     this.listaItems = [
       {name: 'Complejo', prop: 'complejoDto.nombre'},
-      {name: 'codigo', prop: 'codigo'},
+      {name: 'Codigo', prop: 'codigo'},
       {name: 'Superficie',prop: 'superficieDto.descripcion'},
-      {name: 'tipo', prop: 'tipo'},
+      {name: 'Tipo Cobro', prop: 'tipo'},
     ];
     /**
      * fetches data
@@ -119,10 +119,21 @@ export class FieldsComponent {
   camposImport: any[] =[];
   public abrirModalImport() {
     this.camposImport = [
-        {prop: 'Codigo', name: 'Codigo'},
-        {prop: 'Tipo Cobro', name: 'Tipo Cobro'},
-        {prop: 'Complejo', name: 'Complejo'},
-        {prop: 'Superficie', name: 'Superficie'},
+      {prop: 'Complejo', name: 'Complejo'},
+      {prop: 'Codigo', name: 'Codigo'},
+      {prop: 'Superficie', name: 'Superficie'},
+      {prop: 'Categorias', name: 'Categorias'},
+      {prop: 'Tipo Cobro', name: 'Tipo Cobro'},
+      {prop: 'Costo', name: 'Costo'},
+      {prop: 'Desde', name: 'Desde'},
+      {prop: 'Hasta', name: 'Hasta'},
+      {prop: 'Lunes', name: 'Lunes'},
+      {prop: 'Martes', name: 'Martes'},
+      {prop: 'Miercoles', name: 'Miercoles'},
+      {prop: 'Jueves', name: 'Jueves'},
+      {prop: 'Viernes', name: 'Viernes'},
+      {prop: 'Sabado', name: 'Sabado'},
+      {prop: 'Domingo', name: 'Domingo'},
     ];
     const modalRef = this.modalService.open(ModalImportComponent, {
         size: 'lg',
@@ -259,7 +270,13 @@ export class FieldsComponent {
       complejo: item.complejoDto.nombre,
       codigo: item.codigo,
       superficie: item.superficieDto.descripcion,
-      tipo: item.tipo
+      // tipo: item.tipo,
+      categorias: "",
+      tipo: item.tipo || '',
+      costo: item.tarifaDto?.costo || '',
+      desde: item.tarifaDto?.desde || '',
+      hasta: item.tarifaDto?.hasta || '',
+      horario: item.hroariosList || ''
     }));
 
     var data = {
@@ -271,7 +288,7 @@ export class FieldsComponent {
       title: 'Lista de Campos Deportivos',
       useBom: true,
       noDownload: false,
-      headers: ["Complejo", "Codigo" , "Superficie", "tipo",]
+      headers: ["Complejo", "Codigo" , "Superficie",   "Categorias","Tipo Cobro",   "Costo","Desde","Hasta",    "Lunes","Martes","Miercoles","Jueves","Viernes","Sabado","Domingo"]
     };
     new ngxCsv(lista, "Lista de Campos Deportivos", data);
   }

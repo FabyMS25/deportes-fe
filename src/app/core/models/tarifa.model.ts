@@ -5,13 +5,14 @@ export interface Tarifa {
   estado?:string;
 
   costo: number;
-  tipo_cobro:string;
+  tipo_cobro?:string;
 
   desde?: string;
   hasta?:string;
   allDay?: boolean;
   categoria?: string;
+  descripcion?:string;
 
-  canchaDto: campoDeportivo
+  canchasDto: campoDeportivo
 
 }

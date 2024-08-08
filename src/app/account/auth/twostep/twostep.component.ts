@@ -1,20 +1,14 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgOtpInputComponent } from 'ng-otp-input'; // Make sure you have this package installed
-// import { UserDataService } from './user-data.service';
+import { NgOtpInputComponent } from 'ng-otp-input'; 
 
 import { Contribuyente } from 'src/app/core/models/contribuyente.models';
-// import { UserDataService } from '../signup/user-data.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import Swal from 'sweetalert2';
-import { HttpClient } from '@angular/common/http';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { UserDataService } from '../signup/user-data.service';
 
 import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
-import { RuatService } from 'src/app/core/services/ruat/ruat.service';
-import { RuatCallsService } from 'src/app/core/services/ruat/php/ruatcalls.service';
-// typescriptCopyimport {
+import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
 
 @Component({
   selector: 'app-twostep',
@@ -27,30 +21,23 @@ import { RuatCallsService } from 'src/app/core/services/ruat/php/ruatcalls.servi
  */
 export class TwoStepComponent implements OnInit {
 
-  // set the current year
   year: number = new Date().getFullYear();
   @ViewChild(NgOtpInputComponent, { static: false }) otpComponent?: NgOtpInputComponent;
 
   userData: any;
-  ruatData: any;
 
-  constructor( private router: Router, private http: HttpClient,private fb: FormBuilder, 
+  constructor( private router: Router, 
     private route: ActivatedRoute,
     private userDataService : UserDataService,
     private contribuyentesService: ContribuyentesService,
-    private ruatService: RuatCallsService,
-    // private ruatService: RuatService
+    // private ruatService: RuatCallsService,
+    private ruatService: RuatRequestsService,
   ) {  }
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
       const username = params['username'];
       this.userData = this.userDataService.getTemporaryUserData();
-      console.log(username)
-      console.log(this.userData)
-      if (this.userData) {
-        this.searchContribuyente(this.userData);
-      }
     });
   }
 
@@ -78,14 +65,10 @@ export class TwoStepComponent implements OnInit {
       }  
       if (enteredOtp === this.userData.verificationCode) {
         this.userData.estadoUsuario = 'Active';
-        if(!this.ruatData){
+        if(!this.userData.codigoContribuyente){
           this.registerContribuyente(this.userData)
         }else{
-          if(this.ruatData){
-            this.userData.codigoContribuyente = this.ruatData.codigoContribuyente
-            console.log(this.userData)
             this.addData(this.userData);
-          }
         }
       } else {
           this.notify('Código incorrecto. Por favor, inténtelo de nuevo.','success');  
@@ -143,45 +126,20 @@ export class TwoStepComponent implements OnInit {
   }
 
   /* RUAT API Requests */
-  searchContribuyente(data:Contribuyente){
-    this.ruatService.getContribuyentePorCi(data.nroCarnet,data.tipoDocumento, data.ciExpedido ).subscribe({    
-      next: (response: any) => {
-        if(response.continuarFlujo){
-          this.notify("Usted se encuentra registrado en el Ruat",'success')
-          this.ruatData= response;
-          console.log('Contribuyente Data:', response);
-
-        }else{
-          this.notify(response.mensaje,'error')
-          
-        }
-      },
-      error: (error: any) => {        
-        console.error('Error:', error);
-      }
-    });
-  }
-
   registerContribuyente(data:any){
-    // const originalDate: Date = data.fechaNac;
-    // const formattedDate: string = originalDate.toLocaleDateString('es-ES', {
-    //   day: '2-digit',
-    //   month: '2-digit',
-    //   year: 'numeric'
-    // });
-    // data.fechaNac = formattedDate;
-    // console.log(formattedDate); // Output: "25/04/1999"
     this.ruatService.registerContribuyente(data ).subscribe({    
-      next: (response: any) => {
-        if(response.continuarFlujo){
-          this.notify("Usted se encuentra registrado en el Ruat",'success')
-          this.ruatData= response;          
-          this.userData.codigoContribuyente = this.ruatData.codigoContribuyente
-          console.log(this.userData)
-          this.addData(this.userData);
-
+      next: (resp: any) => {
+        if(resp['status']==='OK'){
+          const response = resp.payload
+          if(response.continuarFlujo){
+            this.notify("Usted se encuentra registrado en el Ruat",'success')
+            this.userData.codigoContribuyente = response.codigoContribuyente
+            this.addData(this.userData);  
+          }else{
+            this.notify(response.mensaje,'error')
+          }
         }else{
-          this.notify(response.mensaje,'error')
+          this.notify(resp.payload,'error')
         }
       },
       error: (error: any) => {        

@@ -69,8 +69,9 @@
                                                 formControlName="genero" 
                                                 [ngClass]="{'is-invalid': submitted && f['genero'].errors }">
                                                 <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                                                <option value="F">Femenino</option>
-                                                <option value="M">Masculino</option>
+                                                <option *ngFor="let item of userGender" [value]="item.id">
+                                                    {{ item.description }}
+                                                </option>
                                             </select>
                                             <div *ngIf="submitted && f['genero'].errors" class="invalid-feedback" align="left">
                                                 <div *ngIf="f['genero'].errors['required']">Debe seleccionar una opcion</div>
@@ -78,9 +79,14 @@
                                         </div>
                                         <div class="col-lg-4">
                                             <label for="fechaNacimiento-field" class="form-label">Fecha de Nacimiento <span class="text-danger">*</span></label>
-                                            <input type="date" id="fechaNacimiento-field" class="form-control" placeholder="DD/MM/YYYY"
+                                            <!-- <input type="date" id="fechaNacimiento-field" class="form-control" placeholder="DD/MM/YYYY"
                                                 formControlName="fechaNacimiento"
-                                                [ngClass]="{ 'is-invalid': submitted && f['fechaNacimiento'].errors }" />
+                                                [ngClass]="{ 'is-invalid': submitted && f['fechaNacimiento'].errors }" /> -->
+                                            <input type="date" id="fechaNacimiento-field" class="form-control" 
+                                                placeholder="DD/MM/YYYY"
+                                                formControlName="fechaNacimiento"
+                                                [ngClass]="{ 'is-invalid': submitted && f['fechaNacimiento'].errors }"
+                                                [value]="f['fechaNacimiento'].value | date:'yyyy-MM-dd'" />
                                             <div class="invalid-feedback">El campo es requerido.</div>
                                         </div>
                                         <div class="col-lg-4">

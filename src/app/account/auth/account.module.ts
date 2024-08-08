@@ -18,11 +18,13 @@ import { LogoutComponent } from './logout/logout.component';
 import { SuccessMsgComponent } from './success-msg/success-msg.component';
 import { TwoStepComponent } from './twostep/twostep.component';
 import { SignupComponent } from './signup/signup.component';
+import { SignupCheckComponent } from './signup-check/signup-check.component';
 
 @NgModule({
   declarations: [
     LoginComponent,
     SignupComponent,
+    SignupCheckComponent,
     PassResetComponent,
     PassCreateComponent,
     LogoutComponent,

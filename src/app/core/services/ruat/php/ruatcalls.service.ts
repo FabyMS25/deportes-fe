@@ -6,7 +6,7 @@ import { GlobalComponent } from "../../../../global-component";
 import { environment } from 'src/environments/environment';
 import { Contribuyente } from 'src/app/core/models/contribuyente.models';
 
-const ruatUrl = `${environment.apiRuatUrl}`;
+const apiUrl = 'http://php-backend.test/api';
 
 const token = GlobalComponent.RUAT_token;
 const codigoAlcaldia = GlobalComponent.RUAT_codigoAlcaldia;
@@ -16,13 +16,14 @@ const codigoUsuario = GlobalComponent.RUAT_codigoUsuario;
   providedIn: 'root'
 })
 export class RuatCallsService {
-  private apiUrl = 'http://php-backend.test/api';
 
   constructor(private http: HttpClient) { }
 
   authenticate(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/authenticate`);
+    return this.http.get(`${apiUrl}/authenticate`);
   }
+
+
 
   getContribuyentePorCi(nroDocumento: string, tipoDocumento: string, expedido: string): Observable<any> {
   
@@ -40,7 +41,7 @@ export class RuatCallsService {
     };
     
     return this.http.post<any>(
-    `${this.apiUrl}/getContribuyentePorCi`,
+    `${apiUrl}/getContribuyentePorCi`,
       requestData,
       { headers }
     );
@@ -72,7 +73,7 @@ export class RuatCallsService {
     }
     console.log(contribuyente)
     return this.http.post<any>(
-      `${this.apiUrl}/registerContribuyente`,
+      `${apiUrl}/registerContribuyente`,
       contribuyente,
       { headers }
     );

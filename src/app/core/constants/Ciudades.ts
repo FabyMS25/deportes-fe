@@ -3,47 +3,47 @@ const CityAcronym =
     {
         "id":"1",
         "acromyn": "CH",
-        "description": "Chuquisaca"
+        "description": "CHUQUISACA"
     },
     {
         "id":"2",
         "acromyn": "LP",
-        "description": "La Paz"
+        "description": "LA PAZ"
     },
     {
         "id":"3",
         "acromyn": "CB",
-        "description": "Cochabamba"
+        "description": "COCHABAMBA"
     },
     {
         "id":"4",
         "acromyn": "OR",
-        "description": "Oruro"
+        "description": "ORURO"
     },
     {
         "id":"5",
         "acromyn": "PT",
-        "description": "Potosí"
+        "description": "POTOSI"
     },
     {
         "id":"6",
         "acromyn": "TJ",
-        "description": "Tarija"
+        "description": "TARIJA"
     },
     {
         "id":"7",
         "acromyn": "SC",
-        "description": "Santa Cruz"
+        "description": "SANTA CRUZ"
     },
     {
         "id":"8",
         "acromyn": "BN",
-        "description": "Beni"
+        "description": "BENI"
     },
     {
         "id":"9",
         "acromyn": "CB",
-        "description": "Cobija"
+        "description": "COBIJA"
     },
     // {
     //     "id":"9",

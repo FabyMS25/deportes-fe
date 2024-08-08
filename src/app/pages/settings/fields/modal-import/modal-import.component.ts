@@ -1,15 +1,20 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { AbstractControl, FormGroup, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import {read, utils} from 'xlsx';
-import { forkJoin, map, Observable } from 'rxjs';
+import { forkJoin, from, map, mergeMap, Observable, switchMap } from 'rxjs';
 import Swal from 'sweetalert2';
 import { SharedModule } from 'src/app/shared/shared.module';
 
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
+import { TarifaService } from 'src/app/core/services/api/tarifa.service';
+import { TarifaCategoriesService } from 'src/app/core/services/api/tarifa-categorias.service';
+import { CategoriasService } from 'src/app/core/services/api/categorias.service';
+import { Tarifa } from 'src/app/core/models/tarifa.model';
+import { HorariosService } from 'src/app/core/services/api/horarios.service';
 
 @Component({
   selector: 'app-modal-import',
@@ -38,10 +43,16 @@ export class ModalImportComponent {
       private activeModal: NgbActiveModal,
       private service: CamposDeportivoService,
       private complejoService: ComplejosService,
-      private superficieService: SuperficiesService
-  ) {}
+      private superficieService: SuperficiesService,
+      private tarifaService: TarifaService,
+      private categoriesService: CategoriasService,
+      private TarifacategoriesService: TarifaCategoriesService,
+      private horariosService: HorariosService
+  ) {
+  }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+  }
 
   cerrarModal() {
       this.activeModal.close();
@@ -50,23 +61,19 @@ export class ModalImportComponent {
   cargarDatosDesdeExcel(event: any) {
     const file = event.target.files[0];
     if(file){
-        const reader = new FileReader();
-        reader.readAsBinaryString(file);
-        
-        reader.onload = (e: any) => {
-            let workBook = read(reader.result, {type: 'binary'});
-            let sheetNames = workBook.SheetNames;
-            this.xlsxData = utils.sheet_to_json(
-                workBook.Sheets[sheetNames[0]]
-            );
-            this.listaTemporal = utils.sheet_to_json(
-                workBook.Sheets[sheetNames[0]]
-            );
-            if (this.xlsxData.length <= 0) {
-                this.loading = false;
-                Swal.fire({ text: 'Registro ya existeEl archivo no tiene datos para importar', confirmButtonColor: '#299cdb' });
-            }
-        };
+      const reader = new FileReader();
+      reader.readAsBinaryString(file);
+      
+      reader.onload = (e: any) => {
+        let workBook = read(reader.result, {type: 'binary'});
+        let sheetNames = workBook.SheetNames;
+        this.xlsxData = utils.sheet_to_json(workBook.Sheets[sheetNames[0]]);
+        this.listaTemporal = this.xlsxData;
+        if (this.xlsxData.length <= 0) {
+          this.loading = false;
+          Swal.fire({ text: 'El archivo no tiene datos para importar', confirmButtonColor: '#299cdb' });
+        }
+      };
     }
   }
    
@@ -78,8 +85,9 @@ export class ModalImportComponent {
     const val = event.target.value.toLowerCase();
     const temp = this.listaTemporal.filter((l) => {
         return (
-            l.Nombre.toLowerCase().indexOf(val) !== -1 ||
-            !val
+          l.Codigo.toLowerCase().indexOf(val) !== -1 ||
+          l.Superficie.toLowerCase().indexOf(val) !== -1 ||
+          !val
         );
     });
     this.xlsxData = temp;
@@ -87,6 +95,38 @@ export class ModalImportComponent {
 
   public async createRegisterfromXlsx(xlsxData: any) {
     this.loading = true;
+
+    this.getCategorias().pipe(
+      mergeMap(() => {
+        return from(xlsxData).pipe(
+          mergeMap((data:any, i) => {
+            const categoryNames = data.Categorias.split(',').map((nombre: string) => nombre.trim());    
+            const categorias = categoryNames.map((nombre: string) => {
+              const foundItem = this.categoryList.find(item => item.nombre === nombre);
+              if (!foundItem) {
+                console.warn(`Category not found: ${nombre}`);
+              }
+              return foundItem;
+            }).filter(Boolean);
+            data.processedCategories = categorias;
+            return from([data]);
+          })
+        );
+      })
+    ).subscribe({
+      next: (processedItem) => {
+        // console.log('Processed item:', processedItem);
+      },
+      complete: () => {
+        // console.log('Processed all data:', xlsxData);
+      },
+      error: (error) => {
+        console.error('Error processing data:', error);
+      }
+    });
+
+
+
     const createPromises: Promise<void>[] = [];
       for (let i = 0; i < xlsxData.length; i++) {
         let record: any = {
@@ -104,22 +144,16 @@ export class ModalImportComponent {
             record.superficieDto = superficie;
             return record;
           }),
-          // catchError(error => {
-          //   console.error('Error searching for complejo or superficie:', error);
-          //   Swal.fire({ text: error.message, icon: 'error', confirmButtonColor: '#299cdb' });
-          //   return from([] as Record[]);
-          // })
         ).toPromise()
           .then(async (recordWithData: any) => {
             if (recordWithData && !this.recordExists(recordWithData)) {
-              await this.createRecord(recordWithData);
+              await this.createRecord(recordWithData,xlsxData[i]);             
+
             } else if (recordWithData) {
               Swal.fire({ text: 'Registro ya existe', confirmButtonColor: '#299cdb' });
             }
-          });
-  
+          });  
         createPromises.push(createPromise);
-      
       }
       await Promise.all(createPromises);
       this.loading = false;
@@ -159,17 +193,108 @@ export class ModalImportComponent {
         })
       );
     }
+    
+    categoryList:any[]=[]
+    private getCategorias() {
+      return this.categoriesService.getAll().pipe(
+        map((response: any) => {
+          if (response['status'] === 'OK') {
+            this.categoryList = response['payload'];
+          } 
+        })
+      );
+    }
   
   private recordExists(registro: any): boolean {
     return this.itemsList.some(item => item.codigo === registro.codigo);
   }
 
-  private async createRecord(datos: any) {
+  // private async createRecord(cancha: any, datos:any) {
+  //   try {
+  //     const data = await this.service.save(cancha).subscribe({
+  //       next:(data:any)=>{
+  //         if (data['status'] === 'OK') {
+  //           this.saveTarifasCat(data['payload'],datos);
+  //           this.saveSchedule(data['payload'],datos)  
+  //           Swal.fire({ text: 'Registro Creado con éxito', confirmButtonColor: '#299cdb' });
+  //         }else{}
+  //       }
+  //     });
+  //   } catch (error) {
+  //     Swal.fire({ text: 'Error al crear el registro', icon: 'error', confirmButtonColor: '#299cdb' });
+  //   }
+  // }
+  private async createRecord(cancha: any, datos: any) {
     try {
-      const data = await this.service.save(datos).toPromise();
-      Swal.fire({ text: 'Registro Creado con éxito', confirmButtonColor: '#299cdb' });
+      const data:any = await this.service.save(cancha).toPromise();
+      if (data['status'] === 'OK') {
+        forkJoin([
+          this.saveTarifasCat(data['payload'], datos),
+          this.saveSchedule(data['payload'], datos)
+        ]).subscribe({
+          next: (results) => {
+            Swal.fire({ text: 'Registro Creado con éxito', confirmButtonColor: '#299cdb' });
+          },
+          error: (error) => {
+            console.error("Error saving data:", error);
+            Swal.fire({ text: 'Error al crear el registro', icon: 'error', confirmButtonColor: '#299cdb' });
+          }
+        });
+      } else {
+        Swal.fire({ text: 'Error al crear el registro', icon: 'error', confirmButtonColor: '#299cdb' });
+      }
     } catch (error) {
       Swal.fire({ text: 'Error al crear el registro', icon: 'error', confirmButtonColor: '#299cdb' });
     }
+  }
+
+  private saveTarifasCat(cancha: any, datos: any) {
+    const tarifaData: Tarifa = {
+      costo: datos.Costo,
+      desde: this.formatTimeString(datos.Desde),
+      hasta: this.formatTimeString(datos.Hasta),
+      descripcion: "",
+      canchasDto: cancha
+    };
+    const categorias = datos.processedCategories;
+  
+    return this.tarifaService.save(tarifaData).pipe(
+      switchMap((savedTarifa: any) => {
+        const categorySaveObservables = categorias.map((categoria: any) => {
+          const tarifaCategoriaData = {
+            tarifaDto: { uuid: savedTarifa.payload.uuid },
+            categoriaDto: { uuid: categoria.uuid }
+          };
+          // return this.TarifacategoriesService.save(tarifaCategoriaData);
+          return from(this.TarifacategoriesService.save(tarifaCategoriaData));
+        });
+        return forkJoin(categorySaveObservables);
+      })
+    );
+  }
+
+  private saveSchedule(cancha: any, datos: any) {
+    const saveObservables: any[] = [];
+  
+    Object.entries(datos).forEach(([day]) => {
+      if (day === 'Lunes' || day === 'Martes' || day === 'Miercoles' || day === 'Jueves' || day === 'Viernes' || day == "Sabedo" || day === "Domingo") {
+        const [horaInicio, horaFin] = datos[day].split(' - ');  
+        const horario = {
+          dia: day,
+          abierto: true,
+          horaInicio: this.formatTimeString(horaInicio),
+          horaFin: this.formatTimeString(horaFin),
+          canchasDto: cancha
+        };
+        saveObservables.push(from(this.horariosService.save(horario)));
+      }
+    });
+  
+    return forkJoin(saveObservables);
+  }
+  
+  private formatTimeString(timeString: string): string {
+    const [hours, minutes] = timeString.split(':');
+    return `${String(parseInt(hours)).padStart(2, '0')}:${minutes}`;
   }
 }

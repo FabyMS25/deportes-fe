@@ -59,7 +59,7 @@ export class ModalImportComponent {
             );
             if (this.xlsxData.length <= 0) {
                 this.loading = false;
-                Swal.fire({ text: 'Registro ya existeEl archivo no tiene datos para importar', confirmButtonColor: '#299cdb' });
+                Swal.fire({ text: 'El archivo no tiene datos para importar', confirmButtonColor: '#299cdb' });
             }
         };
     }

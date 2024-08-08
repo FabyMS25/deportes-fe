@@ -1,11 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
-import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder } from '@angular/forms';
 import { HorariosService } from 'src/app/core/services/api/horarios.service';
-import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
-import { Horario } from 'src/app/core/models/horario.model';
 import { forkJoin } from 'rxjs';
 
 @Component({

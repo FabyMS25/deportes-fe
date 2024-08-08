@@ -18,6 +18,36 @@ export class RuatService {
     private http: HttpClient,
   ) { }
 
+  // authenticate(): Observable<any> {
+  //   const username=GlobalComponent.RUAT_usuario;
+  //   const password=GlobalComponent.RUAT_clave;
+  //   const headers = new HttpHeaders({
+  //     'Content-Type': 'application/json',
+  //     'usuario': username,
+  //     'clave': password
+  //   });
+  //   return this.http.post<any>(`${ruatUrl}/ServiciosRuatJEE-web/api/autentificacion`, { headers });
+  // }
+
+  authenticate(): Observable<any> {
+    const username = GlobalComponent.RUAT_usuario;
+    const password = GlobalComponent.RUAT_clave;
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json, text/plain, */*',
+      'Usuario': username,
+      'Clave': password
+    });
+    return this.http.post<any>(
+      `${ruatUrl}/ServiciosRuatJEE-web/api/autentificacion`, 
+      null, 
+      { 
+        headers: headers,
+        withCredentials: true
+      }
+    );
+  }
+  
   getContribuyentePorCi( nroDocumento: string, tipoDocumento: string,expedido:string): Observable<any> {
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
