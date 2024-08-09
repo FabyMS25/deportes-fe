@@ -28,11 +28,11 @@ export class TokenStorageService {
   }
 
   public getUser(): any {
-    const user = window.sessionStorage.getItem(USER_KEY);    
-    if (user) {
-      return JSON.parse(user);
-    }
-
-    return {};
+    const user =  window.sessionStorage.getItem(USER_KEY);
+    return user ? JSON.parse(user) : null;
+    // if (user) {
+    //   return JSON.parse(user);
+    // }
+    // return {};
   }
 }

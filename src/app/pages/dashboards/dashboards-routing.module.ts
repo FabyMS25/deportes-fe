@@ -13,11 +13,11 @@ const routes: Routes = [
       component: DashboardComponent
   },
   {
-    path: "dashboard-employee",
+    path: "employee",
     component: EmpleadoComponent
   },
   {
-    path: "dashboard-taxpayer",
+    path: "taxpayer",
     component: ContribuyenteComponent
   },
 ];

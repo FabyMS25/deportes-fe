@@ -7,7 +7,7 @@ import { DetailsComponent } from './details/details.component';
 
 const routes: Routes = [
     {
-      path: '', loadChildren: () => import('./dashboards/dashboards.module').then(m => m.DashboardsModule)
+      path: 'inicio', loadChildren: () => import('./dashboards/dashboards.module').then(m => m.DashboardsModule)
     },
     {
       path: 'profile', loadChildren: () => import('./profile/profile.module').then(m => m.ProfileModule)

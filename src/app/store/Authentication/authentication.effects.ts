@@ -10,20 +10,20 @@ import { environment } from 'src/environments/environment';
 @Injectable()
 export class AuthenticationEffects {
 
-  Register$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(Register),
-      exhaustMap(({ email, first_name, password }) =>
-        this.AuthenticationService.register(email, first_name, password).pipe(
-          map((user) => {
-            this.router.navigate(['/auth/login']);
-            return loginSuccess({ user });
-          }),
-          catchError((error) => of(loginFailure({ error })))
-        )
-      )
-    )
-  );
+  // Register$ = createEffect(() =>
+  //   this.actions$.pipe(
+  //     ofType(Register),
+  //     exhaustMap(({ email, first_name, password }) =>
+  //       this.AuthenticationService.register(email, first_name, password).pipe(
+  //         map((user) => {
+  //           this.router.navigate(['/auth/login']);
+  //           return loginSuccess({ user });
+  //         }),
+  //         catchError((error) => of(loginFailure({ error })))
+  //       )
+  //     )
+  //   )
+  // );
 
   login$ = createEffect(() =>
   this.actions$.pipe(

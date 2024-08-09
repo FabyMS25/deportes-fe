@@ -21,6 +21,10 @@ export class EncargadoService {
   getByUuid(uuid: String): Observable<Encargado> {
     return this.http.get<Encargado>(`${this.apiUrl}/${uuid}`)
   }
+  
+  getByUserUuid(uuid: String): Observable<Encargado> {
+    return this.http.get<Encargado>(`${this.apiUrl}/user/${uuid}`)
+  }
 
   save(data: Encargado): Observable<Encargado> {
     return this.http.post<Encargado>(`${this.apiUrl}`, data);

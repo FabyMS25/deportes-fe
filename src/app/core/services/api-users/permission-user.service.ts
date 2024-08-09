@@ -4,9 +4,8 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { GlobalComponent } from 'src/app/global-component';
 
-// const CODE_APP = GlobalComponent.AUTH_API;
+const CODE_APP = GlobalComponent.CODE_APP;
 const USERS_API = `${environment.apiLoginUrl}/permiso`;
-const CODE_APP= "SIS-013";
 @Injectable({
   providedIn: 'root'
 })

@@ -9,11 +9,11 @@ const TOKEN_HEADER_KEY = 'Authorization';       // for Spring Boot back-end
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private token: TokenStorageService) { }
+  constructor(private storage: TokenStorageService) { }
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     let authReq = req;
-    const token = this.token.getToken();
+    const token = this.storage.getToken();
     if (token != null) {
       // for Spring Boot back-end
       authReq = req.clone({ headers: req.headers.set(TOKEN_HEADER_KEY, 'Bearer ' + token) });

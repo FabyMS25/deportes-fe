@@ -103,7 +103,6 @@ export class EmpleadoComponent implements OnInit {
   };
 
   openModal(events?: any) {
-    console.log(events)
     const modalRef = this.modalService.open(ModalComponent, {
         backdrop: 'static',
         size:''

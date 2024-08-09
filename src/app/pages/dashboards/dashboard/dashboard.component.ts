@@ -82,9 +82,8 @@ export class DashboardComponent implements OnInit {
       { label: '' },
       { label: 'Dashboard', active: true }
     ];
-    const userString = localStorage.getItem('currentUser');
+    const userString = window.sessionStorage.getItem('currentUser');
     this.userData =userString ? JSON.parse(userString) : null;
-
 
     if (sessionStorage.getItem('toast')) {
       this.toastService.show('Logged in Successfull.', { classname: 'bg-success text-center text-white', delay: 5000 });

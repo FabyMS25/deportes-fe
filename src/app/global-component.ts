@@ -19,6 +19,7 @@ export const GlobalComponent = {
 
     
     // Api backend Calling:
+    CODE_APP : "SIS-013",
     API_URL : 'http://181.177.143.185:8081/api',
     complejos: '/complejos',
     camposDeportivos: '/canchas',

@@ -13,6 +13,7 @@ import { AuthUserService } from './api-users/auth.service';
 import { PermissionUserService } from './api-users/permission-user.service';
 
 import { UserRol } from 'src/app/core/constants/UserData';
+import { EncargadoService } from './api/encargado.service';
 
 const AUTH_API = ""//GlobalComponent.AUTH_API;
 
@@ -29,14 +30,12 @@ const httpOptions = {
 export class AuthenticationService {
 
     user!: any;
-    currentUserValue: any;
+    // currentUserValue: any;
 
-    private currentUserSubject: any;//BehaviorSubject<User>;
+    currentUserSubject: any;//BehaviorSubject<User>;
     // public currentUser: Observable<User>;
 
     permisoAdmin ='Administracion'
-    private funcionariosList:any[]=[];
-    private contribuyentesList:any[]=[];
     private empleado:any;
     private contribuyente:any;
     // private currentUser: any;
@@ -47,7 +46,7 @@ export class AuthenticationService {
     constructor(private http: HttpClient, private store: Store,
         private authUser: AuthUserService,
         private permissionService: PermissionUserService,
-        // private designationsService: DesignacionFuncionarioService,
+        private designationsService: EncargadoService,
         private storageService: TokenStorageService,
         private toastService: ToastService,
         private router: Router,
@@ -59,34 +58,6 @@ export class AuthenticationService {
         this.isAuthenticated = !!storageService.getToken();
     }
 
-    /**
-     * Performs the register
-     * @param email email
-     * @param password password
-     */
-    register(email: string, first_name: string, password: string) {        
-        // return getFirebaseBackend()!.registerUser(email, password).then((response: any) => {
-        //     const user = response;
-        //     return user;
-        // });
-
-        // Register Api
-        return this.http.post(AUTH_API + 'signup', {
-            email,
-            first_name,
-            password,
-          }, httpOptions).pipe(
-            map((response: any) => {
-                const user = response;
-                return user;
-            }),
-            catchError((error: any) => {
-                const errorMessage = 'Login failed'; // Customize the error message as needed
-                this.store.dispatch(loginFailure({ error: errorMessage }));
-                return throwError(errorMessage);
-            })
-        );
-    }
 
     /**
      * Performs the auth
@@ -108,19 +79,21 @@ export class AuthenticationService {
 
     async login(username: string, password: string): Promise<boolean> {
       try {
-          // await this.listaFuncionarios();
           return new Promise<boolean>((resolve, reject) => {
               this.authUser.loginByUsername(username, password).subscribe({
                   next: (data) => {
-                      console.log("data", data);
                       this.currentUserSubject = data;
-                      this.storageService.saveUser(data);
+                      // this.storageService.saveUser(data);
                       this.storageService.saveToken(data.token);
-                      this.hasPermission(data.uuid);
+                      this.hasPermission(data);
                       resolve(true);
                   },
                   error: (error: any) => {
                       console.error("Login error:", error);
+                                  
+                      // this.router.navigate(['/inicio/taxpayer']).then(() => {
+                      //   this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
+                      // });
                       resolve(false);
                   }
               });
@@ -131,50 +104,53 @@ export class AuthenticationService {
       }
   }
   
-    async hasPermission(uuid:String ){
-        try {
-          await this.permissionService.getPermisosUsuario(uuid).subscribe({
-              next: (data) => {
-                if(data.length>0){
-                  const userPermissions = data;
-                  this.empleado = this.funcionariosList.find((us) => us.uuidUsuario === uuid );
-                  if (this.empleado || this.contribuyente || userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin)) {
-                    this.isAuthenticated = true;
-                    localStorage.setItem('currentUser', JSON.stringify(this.currentUserSubject));
-                    userPermissions.forEach((menu: any) => {
-                      if(!menu.permisoPadreDto){
-                        menu.isCollapsed = true
-                      }else{
-                        // menu.isCollapsed = false                        
-                      }
-                      
-                    });
-                    localStorage.setItem('menu', JSON.stringify(userPermissions));
-                    console.log(userPermissions)
-                    if(userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin)){                  
-                        this.router.navigate(['/']).then(() => {
-                          this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
-                      });
-                      return;
-                    }
-                    localStorage.setItem('assignaments', JSON.stringify(this.empleado));
-                    this.router.navigate(['/empleado']).then(() => {
-                        this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
-                    });
-                  } else {
-                    this.storageService.signOut();
-                    this.toastService.show("El usuario no cuenta con los permisos necesarios en la aplicacion SIGECEM, Comunicarce con Admnistrador");
-                  }
-                } else {
-                  this.storageService.signOut();
-                  this.toastService.show("El usuario no cuenta con permisos");
-                }
-              }
+  async hasPermission(user: any) {
+    try {
+      const [userPermissions, empleado] = await Promise.all([
+        this.permissionService.getPermisosUsuario(user.uuid).toPromise(),
+        this.designationsService.getByUserUuid(user.uuid).toPromise(),
+      ]);
+      this.empleado = empleado
+  
+      if (userPermissions && Array.isArray(userPermissions) && userPermissions.length > 0) {
+        if (empleado !== null || userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin)) {
+          this.isAuthenticated = true;
+          userPermissions.forEach((menu: any) => {
+            if (!menu.permisoPadreDto) {
+              menu.isCollapsed = true;
+            }
           });
-        } catch (error) {
+          this.storageService.saveUser(user);
+          // localStorage.setItem('currentUser', JSON.stringify(this.currentUserSubject));
+          localStorage.setItem('menu', JSON.stringify(userPermissions));  
+  
+          if (userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin)) {
+            this.router.navigate(['/inicio']).then(() => {
+              this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
+            });
+            return;
+          }
+  
+          localStorage.setItem('assignaments', JSON.stringify(empleado));
+          this.router.navigate(['/inicio/employee']).then(() => {
+            this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
+          });
           
+
+        } else {
+          this.storageService.signOut();
+          this.toastService.show("El usuario no cuenta con los permisos necesarios en esta aplicación, Comunicarse con Administrador");
         }
+      } else {
+        this.storageService.signOut();
+        this.toastService.show("El usuario no cuenta con permisos");
       }
+    } catch (error) {
+      console.error('Error in hasPermission:', error);
+      this.toastService.show("Ocurrió un error al verificar los permisos");
+    }
+  }
+
 
     /**
      * Returns the current user
@@ -182,7 +158,9 @@ export class AuthenticationService {
     public currentUser(): any {
         return this.currentUserSubject;
     }
-
+    public isLoggedIn(): boolean {
+      return this.isAuthenticated;
+  }
     /**
      * Logout the user
      */
@@ -213,16 +191,6 @@ export class AuthenticationService {
         //     return message;
         // });
     }
-
-    
-    // private listaFuncionarios() {
-    //   return this.designationsService.getAll()
-    //       .subscribe((res:any) => {
-    //       if (res['status'] === 'OK') {
-    //         this.funcionariosList = res['payload'];
-    //       }
-    //   });
-    // }
 
     
     hasPermissionModulo(modulo: string): string[] {

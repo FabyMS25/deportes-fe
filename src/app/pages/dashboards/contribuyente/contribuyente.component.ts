@@ -4,10 +4,8 @@ import { Router } from '@angular/router';
 // import { latLng, tileLayer, circle, polygon, marker, icon } from 'leaflet';
 
 import * as L from 'leaflet';
-import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import Swal from 'sweetalert2';
-// when the docs use an import:
 
 // import { OpenStreetMapProvider, GeoSearchControl, SearchControl } from 'leaflet-geosearch';
 import * as GeoSearch from 'leaflet-geosearch';

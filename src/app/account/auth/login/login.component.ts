@@ -36,8 +36,8 @@ export class LoginComponent implements OnInit {
     private router: Router,
     public toastService: ToastService) {
       // redirect to home if already logged in
-      if (this.authenticationService.currentUserValue) {
-        this.router.navigate(['/']);
+      if (!this.authenticationService.currentUserSubject) {
+        this.router.navigate(['/auth/login']);
       }
      }
 
@@ -75,7 +75,8 @@ export class LoginComponent implements OnInit {
 
   /**
    * Form submit
-   */  async onSubmit() {
+   */  
+  async onSubmit() {
     this.submitted = true;  
     try {
       const username = this.form['username'].value;
@@ -94,7 +95,7 @@ export class LoginComponent implements OnInit {
           //     this.toastService.show(data.data, { classname: 'bg-danger text-white', delay: 15000 });
           //   }
           // });
-          this.toastService.show('Login failed', { classname: 'bg-danger text-white', delay: 15000 });
+          this.toastService.show('Inicio de sesión fallido', { classname: 'bg-danger text-white', delay: 15000 });
         }
       } else {
         this.loginForm.markAllAsTouched();

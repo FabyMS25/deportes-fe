@@ -1,5 +1,6 @@
 export interface MenuItem {
   uuid?: string;
+  estado?:boolean;
   modulo?: string;
   codigo?:string;
 
@@ -9,11 +10,12 @@ export interface MenuItem {
   icono?: string;
   ruta?: string;
   permisoHijoListDto?: any;
-  permisoPadreDto?: number;
+  permisoPadreDto?: any;
 
   
   isTitle?: boolean;
   badge?: any;
   isLayout?: boolean;
   isCollapsed?: boolean;
+  subNivel?:boolean
 }

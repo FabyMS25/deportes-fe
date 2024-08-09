@@ -43,7 +43,7 @@ passwordData = {
    }
 
   ngOnInit(): void {
-      const userString = localStorage.getItem('currentUser');
+      const userString = window.sessionStorage.getItem('currentUser');
       this.userData =userString ? JSON.parse(userString) : null;
       this.persona =this.userData.designacion.personaDto;
       const funcionarioString = localStorage.getItem('assignaments');

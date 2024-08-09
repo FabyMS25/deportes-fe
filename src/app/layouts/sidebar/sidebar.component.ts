@@ -2,7 +2,7 @@ import { Component, OnInit, EventEmitter, Output, ViewChild, ElementRef } from '
 import { NavigationEnd, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 
-import { MENU } from './menu';
+import { MENU_BASE } from './menu';
 import { MenuItem } from './menu.model';
 import { environment } from 'src/environments/environment';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
@@ -30,13 +30,14 @@ export class SidebarComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const userString = localStorage.getItem('currentUser');
+    const userString =  window.sessionStorage.getItem('currentUser');
     this.userData =userString ? JSON.parse(userString) : null;
     this.avatar=this.authService.getAvatar();
     // Menu Items    
     const menu = localStorage.getItem('menu');
     this.menuItems =menu ? JSON.parse(menu) : null;
-    // this.menuItems = MENU;
+    this.menuItems = MENU_BASE;
+    
     this.router.events.subscribe((event) => {
       if (document.documentElement.getAttribute('data-layout') != "twocolumn") {
         if (event instanceof NavigationEnd) {
