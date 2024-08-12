@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 // import { User } from 'src/app/store/Authentication/auth.models';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { catchError, map } from 'rxjs/operators';
-import { Observable, of, throwError } from 'rxjs';
+import { forkJoin, Observable, of, throwError } from 'rxjs';
 import { GlobalComponent } from "../../global-component";
 import { Store } from '@ngrx/store';
 import { RegisterSuccess, loginFailure, loginSuccess, logout, logoutSuccess } from 'src/app/store/Authentication/authentication.actions';
@@ -14,6 +14,8 @@ import { PermissionUserService } from './api-users/permission-user.service';
 
 import { UserRol } from 'src/app/core/constants/UserData';
 import { EncargadoService } from './api/encargado.service';
+import { MENU_BASE } from 'src/app/core/constants/menu';
+import { ContribuyentesService } from './api/contribuyentes.service';
 
 const AUTH_API = ""//GlobalComponent.AUTH_API;
 
@@ -30,21 +32,15 @@ const httpOptions = {
 export class AuthenticationService {
 
     user!: any;
-    // currentUserValue: any;
-
-    currentUserSubject: any;//BehaviorSubject<User>;
-    // public currentUser: Observable<User>;
-
+    currentUserSubject: any;
     permisoAdmin ='Administracion'
-    private empleado:any;
-    private contribuyente:any;
-    // private currentUser: any;
 
     isAuthenticated: boolean = false;
     userRol:any[]=[];
 
     constructor(private http: HttpClient, private store: Store,
         private authUser: AuthUserService,
+        private authContribuyente: ContribuyentesService,
         private permissionService: PermissionUserService,
         private designationsService: EncargadoService,
         private storageService: TokenStorageService,
@@ -64,44 +60,61 @@ export class AuthenticationService {
      * @param username username of user
      * @param password password of user
      */
-    loginUser(username: string, password: string): Observable<boolean> {
-      return this.authUser.loginByUsername(username, password).pipe(
-        map((data: any) => {
-          // Aquí puedes manejar los datos de la respuesta si es necesario
-          return true; // Devolvemos true si la autenticación es exitosa
-        }),
-        catchError((error: any) => {
-          console.error("Login error:", error);
-          return of(false); // Devolvemos false si hay un error
-        })
-      );
-    }
-
-    async login(username: string, password: string): Promise<boolean> {
-      try {
-          return new Promise<boolean>((resolve, reject) => {
-              this.authUser.loginByUsername(username, password).subscribe({
-                  next: (data) => {
-                      this.currentUserSubject = data;
-                      // this.storageService.saveUser(data);
-                      this.storageService.saveToken(data.token);
-                      this.hasPermission(data);
-                      resolve(true);
-                  },
-                  error: (error: any) => {
-                      console.error("Login error:", error);
-                                  
-                      // this.router.navigate(['/inicio/taxpayer']).then(() => {
-                      //   this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
-                      // });
-                      resolve(false);
-                  }
-              });
-          });
-      } catch (error) {
-          console.error("Error in logInSubmit:", error);
-          return false;
+  async login(username: string, password: string): Promise<boolean> {
+    try {
+      const [empleadoResult, contribuyenteResult] = await Promise.all([
+        this.loginEmpleado(username, password),
+        this.loginContribuyente(username, password)
+      ]);
+  
+      if (empleadoResult) {
+        return true;
+      } else if (contribuyenteResult) {
+        // this.router.navigate(['/inicio/taxpayer']).then(() => {
+        //   this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
+        // });
+        return true;
+      } else {
+        return false;
       }
+    } catch (error) {
+      console.error("Error in login:", error);
+      return false;
+    }
+  }
+  
+  private loginEmpleado(username: string, password: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      this.authUser.loginByUsername(username, password).subscribe({
+        next: (data) => {
+          this.currentUserSubject = data;
+          this.storageService.saveToken(data.token);
+          this.hasPermission(data);
+          resolve(true);
+        },
+        error: () => resolve(false)
+      });
+    });
+  }
+  
+  private loginContribuyente(username: string, password: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      this.authContribuyente.loginByUsername(username, password).subscribe({
+        next: (data:any) => {
+          console.log('Login successful', data);
+          this.currentUserSubject = data;
+          this.storageService.saveToken("isContribuyente");
+          this.storageService.saveUser(data);
+          const menu = MENU_BASE;
+          localStorage.setItem('menu', JSON.stringify(menu));
+          this.router.navigate(['/inicio/taxpayer']).then(() => {
+            this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
+          });
+          resolve(true);
+        },
+        error: () => resolve(false)
+      });
+    });
   }
   
   async hasPermission(user: any) {
@@ -110,10 +123,9 @@ export class AuthenticationService {
         this.permissionService.getPermisosUsuario(user.uuid).toPromise(),
         this.designationsService.getByUserUuid(user.uuid).toPromise(),
       ]);
-      this.empleado = empleado
   
       if (userPermissions && Array.isArray(userPermissions) && userPermissions.length > 0) {
-        if (empleado !== null || userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin)) {
+        if (empleado !== null || this.isSuperAdmin(userPermissions)) {
           this.isAuthenticated = true;
           userPermissions.forEach((menu: any) => {
             if (!menu.permisoPadreDto) {
@@ -121,10 +133,9 @@ export class AuthenticationService {
             }
           });
           this.storageService.saveUser(user);
-          // localStorage.setItem('currentUser', JSON.stringify(this.currentUserSubject));
           localStorage.setItem('menu', JSON.stringify(userPermissions));  
   
-          if (userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin)) {
+          if (this.isSuperAdmin(userPermissions)) {
             this.router.navigate(['/inicio']).then(() => {
               this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
             });
@@ -151,7 +162,7 @@ export class AuthenticationService {
     }
   }
 
-
+  
     /**
      * Returns the current user
      */
@@ -172,7 +183,6 @@ export class AuthenticationService {
         this.storageService.signOut();
         this.isAuthenticated = false;
         this.currentUserSubject = null;
-        this.empleado = null;
         this.router.navigate(['/auth/login']);
 
         this.store.dispatch(logoutSuccess());
@@ -193,6 +203,14 @@ export class AuthenticationService {
     }
 
     
+    isAdmin():boolean{
+      const menuString = localStorage.getItem('menu');
+      const menu: any[] = menuString ? JSON.parse(menuString) : null;      
+      return menu.some(permission => permission.nombreMenu === this.permisoAdmin)
+    }    
+    isSuperAdmin(menu:any[]):boolean{    
+      return menu.some(permission => permission.nombreMenu === this.permisoAdmin)
+    }
     hasPermissionModulo(modulo: string): string[] {
       const menuString = localStorage.getItem('menu');
       const menu: any[] = menuString ? JSON.parse(menuString) : null;
@@ -203,20 +221,30 @@ export class AuthenticationService {
 
     public getAvatar(): string{    
       let avatar="default-profile1.png";
+      let tipoUser;
       const menuString = localStorage.getItem('menu');
       const menu: any[] = menuString ? JSON.parse(menuString) : null;
-      let tipoUser;
-      if (menu.some(permission => permission.nombreMenu === this.permisoAdmin)) {
-        tipoUser = UserRol.find(item => item.tipo === 0);//ADMINISTRADOR
-      } else {
-        tipoUser = UserRol.find(item => item.tipo == 1);//VALIDADOR
+      if(this.storageService.getToken()==="isContribuyente"){
+        tipoUser = UserRol.find(item => item.tipo == 2);//Contribuyente
+        if (tipoUser !== undefined) {
+            avatar = tipoUser.avatarM;
+            if (this.currentUserSubject.sexo === 'F') {
+                avatar = tipoUser.avatarF;
+            }
+        }  
+      }else{
+        if (this.isSuperAdmin(menu)) {
+          tipoUser = UserRol.find(item => item.tipo === 0);//ADMINISTRADOR
+        } else {
+          tipoUser = UserRol.find(item => item.tipo == 1);//VALIDADOR
+        }
+        if (tipoUser !== undefined) {
+            avatar = tipoUser.avatarM;
+            if (this.currentUserSubject.designacion.personaDto.sexo === 'F') {
+                avatar = tipoUser.avatarF;
+            }
+        }  
       }
-      if (tipoUser !== undefined) {
-          avatar = tipoUser.avatarM;
-          if (this.currentUserSubject.designacion.personaDto.sexo === 'F') {
-              avatar = tipoUser.avatarF;
-          }
-      }  
       return avatar
     }
 

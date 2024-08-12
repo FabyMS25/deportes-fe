@@ -1,7 +1,7 @@
 import { Component, OnInit, EventEmitter, Output, ViewChild, ElementRef } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MenuItem } from '../sidebar/menu.model';
+import { MenuItem } from '../../core/data/menu.model';
 
 @Component({
   selector: 'app-two-column-sidebar',
@@ -16,7 +16,7 @@ export class TwoColumnSidebarComponent implements OnInit {
   @Output() mobileMenuButtonClicked = new EventEmitter();
 
   constructor(private router: Router, public translate: TranslateService) {
-    translate.setDefaultLang('en');
+    translate.setDefaultLang('es');
   }
 
   ngOnInit(): void {
@@ -187,16 +187,16 @@ export class TwoColumnSidebarComponent implements OnInit {
 
   activateParentDropdown(item: any) { // navbar-nav menu add active
     item.classList.add("active");
-    let parentCollapseDiv = item.closest(".isCollapsed.menu-dropdown");
+    let parentCollapseDiv = item.closest(".collapsed.menu-dropdown");
     if (parentCollapseDiv) {
       // to set aria expand true remaining
       parentCollapseDiv.classList.add("show");
       parentCollapseDiv.parentElement.children[0].classList.add("active");
       parentCollapseDiv.parentElement.children[0].setAttribute("aria-expanded", "true");
-      if (parentCollapseDiv.parentElement.closest(".isCollapsed.menu-dropdown")) {
-        parentCollapseDiv.parentElement.closest(".isCollapsed").classList.add("show");
-        if (parentCollapseDiv.parentElement.closest(".isCollapsed").previousElementSibling)
-          parentCollapseDiv.parentElement.closest(".isCollapsed").previousElementSibling.classList.add("active");
+      if (parentCollapseDiv.parentElement.closest(".collapsed.menu-dropdown")) {
+        parentCollapseDiv.parentElement.closest(".collapsed").classList.add("show");
+        if (parentCollapseDiv.parentElement.closest(".collapsed").previousElementSibling)
+          parentCollapseDiv.parentElement.closest(".collapsed").previousElementSibling.classList.add("active");
       }
       this.activateIconSidebarActive(parentCollapseDiv.getAttribute("id"));
       return false;

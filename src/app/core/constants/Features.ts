@@ -1,4 +1,4 @@
-const Surfaces =
+export const Surfaces =
 [ 
     'PASTO NATURAL',
     'PISTA ATLETICA',
@@ -18,4 +18,11 @@ const Surfaces =
     // 'Arena' 
 ]
 
-export{ Surfaces };
+export const Ceiling =
+[ 
+    'Techado',
+    'Abierto',
+    'Cerrado'
+]
+
+

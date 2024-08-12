@@ -1,4 +1,4 @@
-import { MenuItem } from './menu.model';
+import { MenuItem } from '../data/menu.model';
 export const MENU_BASE: MenuItem[] = [
   // {
   //   "uuid":"91b69bcd-6273-479c-88a3-9c3bd796584c",

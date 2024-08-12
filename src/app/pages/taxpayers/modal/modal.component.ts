@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 
-import {CityAcronym} from 'src/app/core/constants/Ciudades'
+import {CityAcronym} from 'src/app/core/constants/Places'
 @Component({
   selector: 'app-modal',
   templateUrl: './modal.component.html',

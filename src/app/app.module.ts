@@ -14,7 +14,7 @@ import { PagesModule } from "./pages/pages.module";
 import { HttpClientModule, HttpClient, HTTP_INTERCEPTORS  } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { environment } from '../environments/environment';
-import { ErrorInterceptor } from './core/helpers/error.interceptor';
+import { ErrorInterceptor } from './core/models/helpers/error.interceptor';
 
 // Language
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -24,7 +24,7 @@ import { rootReducer } from './store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { EffectsModule } from '@ngrx/effects';
 import { AuthenticationEffects } from './store/Authentication/authentication.effects';
-import { AuthInterceptor } from './core/helpers/auth.interceptor';
+import { AuthInterceptor } from './core/models/helpers/auth.interceptor';
 
 export function createTranslateLoader(http: HttpClient): any {
   return new TranslateHttpLoader(http, 'assets/i18n/', '.json');

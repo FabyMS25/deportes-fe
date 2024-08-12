@@ -1,4 +1,17 @@
-const Districts =
+export const CityAcronym = [
+    { "id": "1", "acromyn": "CH", "description": "CHUQUISACA" },
+    { "id": "2", "acromyn": "LP", "description": "LA PAZ" },
+    { "id": "3", "acromyn": "CB", "description": "COCHABAMBA" },
+    { "id": "4", "acromyn": "OR", "description": "ORURO"  },
+    { "id": "5", "acromyn": "PT",  "description": "POTOSI" },
+    { "id": "6", "acromyn": "TJ",  "description": "TARIJA"  },
+    { "id": "7", "acromyn": "SC",  "description": "SANTA CRUZ" },
+    { "id":"8", "acromyn": "BN",   "description": "BENI" },
+    { "id":"9", "acromyn": "CO",   "description": "COBIJA" },
+    // { "id":"9", "acromyn": "PN",  "description": "PANDO" }
+]
+
+export const Districts =
 [
     {distrito:'Distrito 1 (Tacata)', area:'Ámbito urbano', comprende: 'las zonas de Sapenco y Tacata.'},
     {distrito:'Distrito 2 (Piñami)', area:'Ámbito urbano', comprende: 'Iquircollo Central.'},
@@ -10,5 +23,5 @@ const Districts =
     {distrito:'Distrito 8 (El Paso)', area:'Ámbito rural-urbano', comprende: 'Las comunidades de Chocaya, Molle Molle, Urinzaya, Aranzaya, Pihusi, Apote, Mosoj Rancho,Okhosuru, Pandoja, Chojñacollo, Khorapata, Callajchullpa, Llaukenquiri, Totorcahua, Águila Rancho y El Paso.'},
     {distrito:'Distrito 9 (Misicuni)',area: 'Ámbito rural-cordillera', comprende: 'todas las comunidades situadas en la Cordillera, con escasa densidad poblacional y accesibilidad.'},
     {distrito:'Distrito 10 (Ámbito urbano)'}
-  ]
-export{ Districts };
+]
+  

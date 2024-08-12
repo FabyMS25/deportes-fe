@@ -2,9 +2,7 @@ import { Component, OnInit, EventEmitter, Output, ViewChild, ElementRef } from '
 import { NavigationEnd, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 
-import { MENU_BASE } from './menu';
-import { MenuItem } from './menu.model';
-import { environment } from 'src/environments/environment';
+import { MenuItem } from '../../core/data/menu.model';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 
 @Component({
@@ -36,7 +34,6 @@ export class SidebarComponent implements OnInit {
     // Menu Items    
     const menu = localStorage.getItem('menu');
     this.menuItems =menu ? JSON.parse(menu) : null;
-    this.menuItems = MENU_BASE;
     
     this.router.events.subscribe((event) => {
       if (document.documentElement.getAttribute('data-layout') != "twocolumn") {
@@ -79,12 +76,11 @@ export class SidebarComponent implements OnInit {
       if (menuItem === item) {
         menuItem.isCollapsed = !menuItem.isCollapsed
       } else {
-        // menuItem.isCollapsed = true
+        menuItem.isCollapsed = true
       }
-      if (menuItem.permisoHijoListDto) {
+      if (menuItem.permisoHijoListDto.length>0) {
         menuItem.permisoHijoListDto.forEach((subItem: any) => {
-
-          if (subItem == item) {
+          if (subItem === item) {
             menuItem.isCollapsed = !menuItem.isCollapsed
             subItem.isCollapsed = !subItem.isCollapsed
           } else {
@@ -93,7 +89,7 @@ export class SidebarComponent implements OnInit {
           if (subItem.permisoHijoListDto) {
             subItem.permisoHijoListDto.forEach((childitem: any) => {
 
-              if (childitem == item) {
+              if (childitem === item) {
                 childitem.isCollapsed = !childitem.isCollapsed
                 subItem.isCollapsed = !subItem.isCollapsed
                 menuItem.isCollapsed = !menuItem.isCollapsed
@@ -104,12 +100,12 @@ export class SidebarComponent implements OnInit {
                 childitem.permisoHijoListDto.forEach((childrenitem: any) => {
 
                   if (childrenitem == item) {
-                    childrenitem.isCollapsed = false
-                    childitem.isCollapsed = false
-                    subItem.isCollapsed = false
-                    menuItem.isCollapsed = false
-                  } else {
                     childrenitem.isCollapsed = true
+                    childitem.isCollapsed = true
+                    subItem.isCollapsed = true
+                    menuItem.isCollapsed = true
+                  } else {
+                    childrenitem.isCollapsed = false
                   }
                 })
               }
@@ -149,11 +145,6 @@ export class SidebarComponent implements OnInit {
 
   initActiveMenu() {
     let pathName = window.location.pathname;
-    // Check if the application is running in production
-    if (environment.production) {
-      // Modify pathName for production build
-      pathName = pathName.replace('/velzon/angular/master', '');
-    }
 
     const active = this.findMenuItem(pathName, this.menuItems)
     this.toggleItem(active)
@@ -164,14 +155,7 @@ export class SidebarComponent implements OnInit {
       this.removeActivation(activeItems);
 
       let matchingMenuItem = items.find((x: any) => {
-        if (environment.production) {
-          let path = x.pathname
-          path = path.replace('/velzon/angular/master', '');
-          return path === pathName;
-        } else {
           return x.pathname === pathName;
-        }
-
       });
       if (matchingMenuItem) {
         this.activateParentDropdown(matchingMenuItem);
@@ -181,12 +165,12 @@ export class SidebarComponent implements OnInit {
 
   private findMenuItem(pathname: string, menuItems: any[]): any {
     for (const menuItem of menuItems) {
-      if (menuItem.link && menuItem.link === pathname) {
+      if (menuItem.ruta && menuItem.ruta === pathname) {
         return menuItem;
       }
 
-      if (menuItem.subItems) {
-        const foundItem = this.findMenuItem(pathname, menuItem.subItems);
+      if (menuItem.permisoHijoListDto) {
+        const foundItem = this.findMenuItem(pathname, menuItem.permisoHijoListDto);
         if (foundItem) {
           return foundItem;
         }

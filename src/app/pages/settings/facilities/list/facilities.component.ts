@@ -13,10 +13,10 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ModalFacilitiesComponent } from '../modal/modal.component';
 import { Complejo } from 'src/app/core/models/complejo.model';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
-import { Districts } from 'src/app/core/constants/Distritos';
-import { Ceiling } from 'src/app/core/constants/Techados';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { ModalImportComponent } from '../modal-import/modal-import.component';
+import { Districts } from 'src/app/core/constants/Places';
+import { Ceiling } from 'src/app/core/constants/Features';
 @Component({
   selector: 'app-facilities',
   templateUrl: './facilities.component.html',

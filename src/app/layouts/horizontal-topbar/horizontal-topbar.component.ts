@@ -1,7 +1,7 @@
 import { Component, OnInit, EventEmitter, Output, ViewChild, ElementRef } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MenuItem } from '../sidebar/menu.model';
+import { MenuItem } from '../../core/data/menu.model';
 
 @Component({
   selector: 'app-horizontal-topbar',

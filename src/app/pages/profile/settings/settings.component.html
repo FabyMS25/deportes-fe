@@ -31,54 +31,13 @@
                             </label>
                         </div>
                     </div>
-                    <h5 class="fs-16 mb-1">{{userData.designacion.personaDto.fullName}}</h5>
-                    <p class="text-muted mb-0">{{userData.email}}</p>
-                </div>
-            </div>
-        </div><!--end card-->
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-5">
-                    <div class="flex-grow-1">
-                        <h5 class="card-title mb-0">Completar perfil</h5>
-                    </div>
-                    <div class="flex-shrink-0">
-                        <a href="javascript:void(0);" class="badge bg-light text-primary fs-12"><i
-                                class="ri-edit-box-line align-bottom me-1"></i> Edit</a>
-                    </div>
-                </div>
-                <div class="progress animated-progess custom-progress progress-label">
-                    <div class="progress-bar bg-danger" role="progressbar" style="width: 30%" aria-valuenow="30"
-                        aria-valuemin="0" aria-valuemax="100">
-                        <!-- <div class="label">30%</div> -->
-                    </div>
+                    <h5 class="fs-16 mb-1">
+                        {{userData.designacion? userData.designacion.personaDto.fullName : userData.nombre+" "+userData.apPaterno+" "+userData.apMaterno}}
+                    </h5>
+                    <p class="text-muted mb-0">{{userData.email?userData.email:userData.correo}}</p>
                 </div>
             </div>
         </div>
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-4">
-                    <div class="flex-grow-1">
-                        <h5 class="card-title mb-0">Portfolio</h5>
-                    </div>
-                    <div class="flex-shrink-0">
-                        <a href="javascript:void(0);" class="badge bg-light text-primary fs-12"><i
-                                class="ri-add-fill align-bottom me-1"></i> Add</a>
-                    </div>
-                </div>
-                @for(data of userData.portfolio;track $index){
-                <div class="mb-3 d-flex">
-                    <div class="avatar-xs d-block flex-shrink-0 me-3">
-                        <span class="avatar-title rounded-circle fs-16 bg-{{data.bg_color}} text-body">
-                            <i class="ri-{{data.logo}}-fill"></i>
-                        </span>
-                    </div>
-                    <input type="email" class="form-control" id="gitUsername" placeholder="Username"
-                        value="{{data.link}}">
-                </div>
-            }
-            </div>
-        </div><!--end card-->
     </div><!--end col-->
     <div class="col-xxl-9">
         <div class="card mt-xxl-n5">
@@ -138,7 +97,7 @@
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label for="ciExpedido" class="form-label">Expedido</label>          
-                                            <select class="form-select" required id="ciExpedito" name="ciExpedito" [(ngModel)]="persona.ciExpedito">
+                                            <select class="form-select" required id="ciExpedido" name="ciExpedido" [(ngModel)]="persona.ciExpedido">
                                                 <option *ngFor="let ex of CityAcronym" [ngValue]="ex.description">
                                                 {{ex.description}}
                                                 </option>
@@ -146,40 +105,40 @@
                                             <div class="invalid-feedback">El campo es requerido.</div>
                                         </div>
                                     </div><!--end col-->
-                                    <div class="col-lg-2">
+                                    <!-- <div class="col-lg-2">
                                         <div class="mb-3">
                                             <label for="prefijo" class="form-label">Prefijo:</label>
                                             <input type="text" class="form-control" id="prefijo"
                                                 value="{{persona.prefijo}}">
                                         </div>
-                                    </div><!--end col-->
+                                    </div>
                                     <div class="col-lg-4">
                                         <div class="mb-3">
                                             <label for="profesion" class="form-label">Profesión:</label>
                                             <input type="text" class="form-control" id="profesion"
                                                 value="{{persona.profesion}}">
                                         </div>
-                                    </div><!--end col-->
-                                    <div class="col-lg-6">
+                                    </div> -->
+                                    <!-- <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label for="nroNit" class="form-label">Nro Nit:</label>
                                             <input type="text" class="form-control" minlength="5" maxlength="20"
                                                 id="nroNit" placeholder="Ingresar Numero Nit"
                                                 value="{{persona.nroNit}}">
                                         </div>
-                                    </div><!--end col-->
+                                    </div> -->
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label for="nroCelular" class="form-label">Nro Celular:</label>
                                             <input type="text" class="form-control" id="nroCelular"
-                                                placeholder="Ingresa tu Nro de Celular" value="{{persona.nroCelular}}">
+                                                placeholder="Ingresa tu Nro de Celular" value="{{persona.nroCelular?persona.nroCelular:persona.celular}}">
                                         </div>
                                     </div><!--end col-->
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label for="correoElectronico" class="form-label">Email:</label>
                                             <input type="email" class="form-control" id="correoElectronico"
-                                                placeholder="Ingresa tu CorreoElectronico" value="{{persona.correoElectronico}}">
+                                                placeholder="Ingresa tu CorreoElectronico" value="{{persona.correoElectronico? persona.correoElectronico : persona.correo}}">
                                         </div>
                                     </div><!--end col-->
                                     <div class="col-lg-12">
@@ -187,27 +146,6 @@
                                             <label for="direccion" class="form-label">Dirección </label>
                                             <input type="text" class="form-control" id="direccion" placeholder="Ingrese su Direccion"
                                                 value="{{persona.direccion}}" />
-                                        </div>
-                                    </div><!--end col-->
-                                    <div class="col-lg-4">
-                                        <div class="mb-3">
-                                            <label for="cityInput" class="form-label">Ciudad</label>
-                                            <input type="text" class="form-control" id="cityInput" placeholder="City"
-                                                value="{{persona.city}}" />
-                                        </div>
-                                    </div><!--end col-->
-                                    <div class="col-lg-4">
-                                        <div class="mb-3">
-                                            <label for="countryInput" class="form-label">Departamento</label>
-                                            <input type="text" class="form-control" id="countryInput"
-                                                placeholder="Country" value="{{persona.country}}" />
-                                        </div>
-                                    </div><!--end col-->
-                                    <div class="col-lg-4">
-                                        <div class="mb-3">
-                                            <label for="countryInput" class="form-label">Distrito</label>
-                                            <input type="text" class="form-control" id="countryInput"
-                                                placeholder="Country" value="{{persona.country}}" />
                                         </div>
                                     </div><!--end col-->
                                     <div class="col-lg-12">
@@ -294,7 +232,7 @@
                                     </div><!--end col-->
                                     <div class="col-lg-12">
                                         <div class="mb-3">
-                                            <a href="javascript:void(0);"
+                                            <a href="/auth/pass-reset"
                                                 class="link-primary text-decoration-underline">Olvidaste tu Contraseña ?</a>
                                         </div>
                                     </div><!--end col-->
@@ -309,7 +247,7 @@
                             </form>
                         </ng-template>
                     </li>
-                    <li [ngbNavItem]="3" class="nav-item">
+                    <li [ngbNavItem]="3" class="nav-item" *ngIf="userData.designacion">
                         <a ngbNavLink class="nav-link" data-bs-toggle="tab" role="tab">
                             <i class="far fa-envelope"></i>
                             Datos de Designacion
@@ -322,8 +260,8 @@
                                             <div class="col-lg-12">
                                                 <div class="mb-3">
                                                     <label for="unidad" class="form-label">Unidad</label>
-                                                    <input type="text" class="form-control" id="unidad"
-                                                        placeholder="Designation" value="{{userData.designacion.gestionCargoDto.cargoDto.unidad}}">
+                                                    <input type="text" class="form-control" id="unidad" placeholder="Unidad" 
+                                                        value="{{userData.designacion.gestionCargoDto.cargoDto.unidad}}">
                                                 </div>
                                             </div>
                                             <div class="col-lg-12">
@@ -363,45 +301,126 @@
                         </a>
                         <ng-template ngbNavContent>
                             <div class="mb-4 pb-2">
-                                <h5 class="card-title text-decoration-underline mb-3">Security:</h5>
-                                <div class="d-flex flex-column flex-sm-row mb-4 mb-sm-0">
-                                    <div class="flex-grow-1">
-                                        <h6 class="fs-14 mb-1">Two-factor Authentication</h6>
-                                        <p class="text-muted">Two-factor authentication is an enhanced security meansur.
-                                            Once enabled, you'll be required to give two types of identification when
-                                            you log into Google Authentication and SMS are Supported.</p>
+                                <h5 class="card-title text-decoration-underline mb-3">
+                                    Terminos & Condiciones de Uso
+                                </h5>
+                                <p class="mb-0 text-muted">Ultima Actualización: 15 de Julio, 2024</p>
+                            </div>
+                            
+                            <div class="mb-4 pb-2">
+                                <div class="">
+                                    <div>
+                                        <h5> Aceptación de Términos y Condiciones</h5>
+                                        <p class="text-muted">
+                                            El acceso y la utilización de las aplicaciones así como sus actualizaciones
+                                            como futuras aplicaciones, en adelante “las aplicaciones” así como los sitios web donde se hospeden
+                                            los Términos y Condiciones, son propiedad y responsabilidad del Gobierno Autono municipal de Quillacollo en
+                                            adelante “Nosotros” o “GAMQ”. Con domicilio Plaza 06 de Agosto Acera Este. Los medios de contacto son: (591) + 4 + 4362771-72-73 
+                                            y el correo electrónico: adminquillacollo.gob.bo .</p>
+                                        <p class="text-muted">
+                                            Los Términos y Condiciones de las aplicaciones, en adelante “Términos y Condiciones” o
+                                            “Documento” o “Contrato” regulan el uso, manejo, control de las aplicaciones que utilizan 
+                                            el sitio web o las páginas o sitios hospedados ubicados o ligados al o en el
+                                            mismo que ofrecen servicios y proveen información sobre los distintas propiedades del GAMQ.</p>
+                                        <p class="text-muted">
+                                            Los Usuarios aceptan completamente y expresamente cada una de las cláusulas que conforman los
+                                            Términos y Condiciones desde el momento que utilizan la aplicación. Nos reservamos el derecho de
+                                            cambiar, modificar y/o actualizar en cualquier momento las condiciones y términos establecidos en
+                                            el presente documento. Podrá consultar la versión actualizada en el sitio sección Términos
+                                            y condiciones de uso de las aplicaciones. Asimismo, podrá encontrar en la parte superior la
+                                            fecha de actualización del contrato para revisar cuando fueron modificadas. Por tanto, le pedimos
+                                            a Usted “Usuario” revisar periódicamente y leer cuidadosamente los Términos y Condiciones.
+                                            En caso de no estar de acuerdo con alguna cláusula o todos los términos y condiciones le rogamos
+                                            que por favor no utilice la aplicación
+                                        </p>
                                     </div>
-                                    <div class="flex-shrink-0 ms-sm-3">
-                                        <a href="javascript:void(0);" class="btn btn-sm btn-primary">Enable Two-facor
-                                            Authentication</a>
+                                    <div>
+                                        <h5>Confidencialidad.</h5>
+                                        <p class="text-muted">
+                                            GAMQ se compromete a resguardar su información cumpliendo con lo establecido en las leyes
+                                            bolivianas en protección de datos personales.</p>
                                     </div>
-                                </div>
-                                <div class="d-flex flex-column flex-sm-row mb-4 mb-sm-0 mt-2">
-                                    <div class="flex-grow-1">
-                                        <h6 class="fs-14 mb-1">Secondary Verification</h6>
-                                        <p class="text-muted">The first factor is a password and the second commonly
-                                            includes a text with a code sent to your smartphone, or biometrics using
-                                            your fingerprint, face, or retina.</p>
+                                    <div>
+                                        <h5>Servicios</h5>
+                                        <p class="text-muted">Le recordamos que todo producto servicio ofertado en nuestras aplicaciones está sujeto a
+                                            disponibilidad de cada encargado. 
+                                            GAMQ no es responsable de los daños y/o perjuicios que pudiera sufrir el Usuario como
+                                            consecuencia de la toma de decisiones con base en la información presentada en las aplicaciones,
+                                            la cual es de naturaleza general e informativa, por lo que el Usuario debe tomarla en cuenta
+                                            únicamente como referencia para la adopción de decisiones personales.
+                                            Nos reservamos el derecho a modificar la oferta de productos y/o servicios en cualquier momento
+                                            y sin previo aviso. Toda descripción de productos y/o servicios es con un fin informativo. No
+                                            garantizamos que la descripción del producto y/o servicio sea precisa, correcta, vigente y/o
+                                            actualizada.
+                                        </p>
                                     </div>
-                                    <div class="flex-shrink-0 ms-sm-3">
-                                        <a href="javascript:void(0);" class="btn btn-sm btn-primary">Set up secondary
-                                            method</a>
+
+                                    <div>
+                                        <h5>Licencia</h5>
+                                        <p class="text-muted">Todos los derechos de propiedad son reservados.
+                                            Usted puede ingresar a el sitio web para us uso personal sujeto a las restricciones
+                                            en enstos terminos y condiciones.</p>
+                                        <p class="text-muted">Usted No debe:</p>
+                                        <ul class="text-muted vstack gap-2 ul-padd">
+                                            <li>
+                                                Republicar material de DEPORTES - GAMQ
+                                            </li>
+                                            <li>
+                                                Vender, alquilar o sublicenciar material de DEPORTES - GAMQ
+                                            </li>
+                                            <li>
+                                                Reproducir, duplicar o copiar material de DEPORTES - GAMQ
+                                            </li>
+                                            <li>
+                                                Redistribuir contenido de DEPORTES - GAMQ
+                                            </li>
+                                        </ul>
                                     </div>
-                                </div>
-                                <div class="d-flex flex-column flex-sm-row mb-4 mb-sm-0 mt-2">
-                                    <div class="flex-grow-1">
-                                        <h6 class="fs-14 mb-1">Backup Codes</h6>
-                                        <p class="text-muted mb-sm-0">A backup code is automatically generated for you
-                                            when you turn on two-factor authentication through your iOS or Android
-                                            Twitter app. You can also generate a backup code on twitter.com.</p>
-                                    </div>
-                                    <div class="flex-shrink-0 ms-sm-3">
-                                        <a href="javascript:void(0);" class="btn btn-sm btn-primary">Generate backup
-                                            codes</a>
+
+                                    <div>
+                                        <h5>Jurisdicción y competencia</h5>
+                                        <p class="text-muted">                        
+                                            El Usuario acepta que la legislación y leyes aplicables serán las Bolivianas y para cualquier disputa,
+                                            juicio, controversia de cualquier índole o materia deberán someterse a los Juzgados y Tribunales de
+                                            Bolivia.
+                                            Previo a cualquier inicio de juicio o controversia ambas Partes se comprometen a resolver de
+                                            manera amistosa mediante una conciliación.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
-                            <div class="mb-3">
+
+                        <!-- <div class="mb-4 pb-2">
+                                <div class="d-flex flex-column flex-sm-row mb-4 mb-sm-0">
+                                <div class="flex-grow-1">
+                                    <h6 class="fs-14 mb-1">Autenticación de dos factores</h6>
+                                    <p class="text-muted">La autenticación de dos factores es una medida de seguridad mejorada. Una vez habilitada, se te pedirá que proporciones dos tipos de identificación cuando inicies sesión. Google Authenticator y SMS son compatibles.</p>
+                                </div>
+                                <div class="flex-shrink-0 ms-sm-3">
+                                    <a href="javascript:void(0);" class="btn btn-sm btn-primary">Habilitar autenticación de dos factores</a>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column flex-sm-row mb-4 mb-sm-0 mt-2">
+                                <div class="flex-grow-1">
+                                    <h6 class="fs-14 mb-1">Verificación secundaria</h6>
+                                    <p class="text-muted">El primer factor es una contraseña, y el segundo comúnmente incluye un mensaje de texto con un código enviado a tu teléfono inteligente, o datos biométricos usando tu huella digital, rostro o retina.</p>
+                                </div>
+                                <div class="flex-shrink-0 ms-sm-3">
+                                    <a href="javascript:void(0);" class="btn btn-sm btn-primary">Configurar método secundario</a>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column flex-sm-row mb-4 mb-sm-0 mt-2">
+                                <div class="flex-grow-1">
+                                    <h6 class="fs-14 mb-1">Códigos de respaldo</h6>
+                                    <p class="text-muted mb-sm-0">Un código de respaldo se genera automáticamente cuando activas la autenticación de dos factores a través de tu aplicación de Twitter en iOS o Android. También puedes generar un código de respaldo en twitter.com.</p>
+                                </div>
+                                <div class="flex-shrink-0 ms-sm-3">
+                                    <a href="javascript:void(0);" class="btn btn-sm btn-primary">Generar códigos de respaldo</a>
+                                </div>
+                            </div> 
+                        </div>-->
+                        
+                            <!-- <div class="mb-3">
                                 <h5 class="card-title text-decoration-underline mb-3">Application Notifications:</h5>
                                 <ul class="list-unstyled mb-0">
                                     <li class="d-flex">
@@ -479,21 +498,23 @@
                                         </div>
                                     </li>
                                 </ul>
-                            </div>
+                            </div> -->
                             <div>
-                                <h5 class="card-title text-decoration-underline mb-3">Delete This Account:</h5>
-                                <p class="text-muted">Go to the Data & Privacy section of your profile Account. Scroll
-                                    to "Your data & privacy options." Delete your Profile Account. Follow the
-                                    instructions to delete your account :</p>
+                                <h5 class="card-title text-decoration-underline mb-3">Eliminar esta cuenta:</h5>
+                                <p class="text-muted">
+                                    Una vez elimine su cuenta no podra recuperar sus Datos.
+                                    Ingrese su contraseña para elimar su cuenta
+                                </p>
                                 <div>
                                     <input type="password" class="form-control" id="passwordInput"
-                                        placeholder="Enter your password" value="make@321654987"
+                                        placeholder="Ingresa tu contraseña" value="make@321654987"
                                         style="max-width: 265px;">
                                 </div>
                                 <div class="hstack gap-2 mt-3">
-                                    <a href="javascript:void(0);" class="btn btn-soft-danger">Close & Delete This
-                                        Account</a>
-                                    <a href="javascript:void(0);" class="btn btn-light">Cancel</a>
+                                    <a href="javascript:void(0);" class="btn btn-soft-danger">
+                                        Cerrar & Eliminar esta cuenta
+                                    </a>
+                                    <a href="/" class="btn btn-light">Cancelar</a>
                                 </div>
                             </div>
                         </ng-template>

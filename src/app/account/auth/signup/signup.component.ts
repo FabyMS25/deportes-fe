@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { CityAcronym } from 'src/app/core/constants/Ciudades';
+import { CityAcronym } from 'src/app/core/constants/Places';
 import { UserStates , UserCivilStatus, UserDocType, UserGender} from 'src/app/core/constants/UserData';
 import { Contribuyente } from 'src/app/core/models/contribuyente.models';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';

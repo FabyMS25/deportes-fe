@@ -4,23 +4,17 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 import Swal from 'sweetalert2';
 
-import { LeafletComponent } from 'src/app/shared/map/leaflet.component';
-import { Districts } from 'src/app/core/constants/Distritos';
-import { Surfaces } from 'src/app/core/constants/Superficies';
-import { Ceiling } from 'src/app/core/constants/Techados';
 import { Categoria } from 'src/app/core/models/categoria.model';
-import { Horario } from 'src/app/core/models/horario.model';
-// import { CanchaDeportesService } from 'src/app/core/services/api/cancha-deportes.service';
-// import { CanchaCategoria } from 'src/app/core/models/cancha-categoria.model';
 import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
-import { HorariosService } from 'src/app/core/services/api/horarios.service';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
 import { TarifaService } from 'src/app/core/services/api/tarifa.service';
 import { TarifaCategoriesService } from 'src/app/core/services/api/tarifa-categorias.service';
 import { forkJoin, Observable, switchMap } from 'rxjs';
 import { ModalScheduleComponent } from '../modal-schedule/modal-schedule.component';
+import { Ceiling } from 'src/app/core/constants/Features';
+import { Districts } from 'src/app/core/constants/Places';
 
 @Component({
   selector: 'app-modal',

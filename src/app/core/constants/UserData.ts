@@ -10,6 +10,13 @@ const UserRol = [
         "tipo": 1,
         "id": "ENCARGADO",
         "institucion":"GAMQ DEPORTES",
+        "avatarF":"avatar-admin-w.png",
+        "avatarM":"avatar-admin-m.png"
+    },
+    {
+        "tipo": 2,
+        "id": "CONTRIBUYENTE",
+        "institucion":"GAMQ DEPORTES",
         "avatarF":"avatar-op-w.png",
         "avatarM":"avatar-op-m.png"
     }
@@ -80,8 +87,12 @@ const UserDocType = [
     },
     {
         "type": "CE",
-        "description": "Carnet de Extranjero",
+        "description": "CARNET DE EXTRANJERO",
     }
+    // {
+    //     "id": 3,
+    //     "descripcion": "NIT"
+    // },
 ]
 
 export{ UserRol , UserStates , UserGender, UserCivilStatus, UserDocType};

@@ -30,7 +30,7 @@
         <span class="d-flex align-items-center gap-2">
           <img class="rounded-circle header-profile-user" [src]="'assets/images/users/'+avatar" alt="Header Avatar">
            <span class="text-start">
-              <span class="d-none d-lg-inline-block text-primary sidebar-user-name-text">{{userData.username}}</span>
+              <span class="d-none d-lg-inline-block text-primary sidebar-user-name-text">{{userData.username ? userData.username : userData.userName}}</span>
               <span class="d-none d-lg-block fs-14 sidebar-user-name-sub-text">
                 <i class="ri ri-checkbox-blank-circle-fill fs-10 text-primary align-self-center"></i> 
                 <span class="align-middle text-muted m-2">Online</span>
@@ -40,7 +40,7 @@
     </button>
     <div class="dropdown-menu dropdown-menu-end">
         <!-- item-->
-        <h6 class="dropdown-header">Bienvenido {{userData.username}}!</h6>
+        <h6 class="dropdown-header">Bienvenido {{userData.username ? userData.username : userData.userName}}!</h6>
         <a class="dropdown-item" href="pages-profile.html"><i class="mdi mdi-account-circle text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Profile</span></a>
         <a class="dropdown-item" href="apps-chat.html"><i class="mdi mdi-message-text-outline text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Messages</span></a>
         <a class="dropdown-item" href="apps-tasks-kanban.html"><i class="mdi mdi-calendar-check-outline text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Taskboard</span></a>

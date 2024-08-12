@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { TokenStorageService } from '../../../core/services/token-storage.service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 
-import {CityAcronym}  from 'src/app/core/constants/Ciudades';
+import {CityAcronym}  from 'src/app/core/constants/Places';
 import { UserService } from 'src/app/core/services/api-users/users.service';
 import Swal from 'sweetalert2';
 import { AbstractControl, AsyncValidatorFn, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
@@ -29,7 +29,6 @@ export class SettingsComponent implements OnInit {
   passwordForm: FormGroup = this.formBuilder.group({
     currentPassword: ['', {
       validators: [Validators.required],
-      asyncValidators: [this.validateCurrentPassword()],
       updateOn: 'blur'
     }],
     newPassword: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(120)]],
@@ -38,16 +37,23 @@ export class SettingsComponent implements OnInit {
 
   constructor(
     private formBuilder: FormBuilder,
-    private TokenStorageService : TokenStorageService,
     private authService:AuthenticationService,
     private userService:UserService,
    ) { }
 
-  ngOnInit(): void {
-    this.userData =  this.TokenStorageService.getUser();   
-    this.avatar=this.authService.getAvatar(); 
-    this.persona =this.userData.designacion.personaDto;
-    
+  ngOnInit(): void {    
+    const token = window.sessionStorage.getItem('auth-token');
+    const userString = window.sessionStorage.getItem('currentUser');
+    this.userData =userString ? JSON.parse(userString) : null;
+    this.avatar=this.authService.getAvatar();
+    if(token==='isContribuyente'){
+      this.persona =this.userData;
+    }else{
+      this.persona =this.userData.designacion.personaDto;
+      this.persona.ciExpedido = this.persona.ciExpedito
+      const funcionarioString = localStorage.getItem('assignaments');
+      // this.funcionario =funcionarioString ? JSON.parse(funcionarioString) : null;
+    }
   }
 
   /**
@@ -58,19 +64,7 @@ export class SettingsComponent implements OnInit {
    get form() {
     return this.passwordForm.controls;
   }
-  validateCurrentPassword(): AsyncValidatorFn {
-    return (control: AbstractControl): Observable<ValidationErrors | null> => {
-      if (!this.userData) {
-        return of(null); 
-      }
-      return this.authService.loginUser(this.userData.username, control.value).pipe(
-        map((res: boolean) => {
-          return !res ? { invalidCurrentPassword: 'Contraseña incorrecta' } : null;
-        }),
-        catchError(() => of(null))
-      );
-    };
-  }
+
    getAcronymCity(city: string): string {
     let acronym = '';
     CityAcronym.forEach(element => {
@@ -83,7 +77,7 @@ export class SettingsComponent implements OnInit {
 
    /* API Services */
    updatePersona() {    
-    this.persona['ciExpedito'] = this.getAcronymCity(this.persona['ciExpedito']);
+    this.persona['ciExpedido'] = this.getAcronymCity(this.persona['ciExpedido']);
     this.userService.updatePersona(this.persona).subscribe({
       next:(data) => {
           this.persona = data;

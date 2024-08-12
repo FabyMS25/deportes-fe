@@ -5,15 +5,13 @@ import { FormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@an
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LeafletComponent } from 'src/app/shared/map/leaflet.component';
 import { Horario } from 'src/app/core/models/horario.model';
-// import { CanchaDeportesService } from 'src/app/core/services/api/cancha-deportes.service';
-import { Districts } from 'src/app/core/constants/Distritos';
-import { Surfaces } from 'src/app/core/constants/Superficies';
-import { Ceiling } from 'src/app/core/constants/Techados';
 import { Categoria } from 'src/app/core/models/categoria.model';
 // import { CanchaCategoria } from 'src/app/core/models/cancha-categoria.model';
 import { Complejo } from 'src/app/core/models/complejo.model';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { HorariosService } from 'src/app/core/services/api/horarios.service';
+import { Ceiling, Surfaces } from 'src/app/core/constants/Features';
+import { Districts } from 'src/app/core/constants/Places';
 
 @Component({
   selector: 'app-modal',
