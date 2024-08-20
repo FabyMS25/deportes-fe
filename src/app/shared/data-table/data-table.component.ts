@@ -19,6 +19,7 @@ export class DataTableComponent {
   @Input() show!: boolean;
   @Input() edit!: boolean;
   @Input() delete!: boolean;
+  @Input() consult!: boolean;
 
   @Input() telf!:boolean;
   @Input() comment!: boolean;
@@ -26,6 +27,7 @@ export class DataTableComponent {
   @Output() showItemEmitter = new EventEmitter();
   @Output() editItemEmitter = new EventEmitter();
   @Output() deleteItemEmitter = new EventEmitter();
+  @Output() consultItemEmitter = new EventEmitter();
   // @Output() mapItemEmitter = new EventEmitter();
   // @Output() docItemEmitter = new EventEmitter();
   
@@ -44,6 +46,10 @@ export class DataTableComponent {
   }
   public editItem(item: any) {
     this.editItemEmitter.emit(item);
+  }
+
+  public consultItem(item: any) {
+    this.consultItemEmitter.emit(item);
   }
 
 

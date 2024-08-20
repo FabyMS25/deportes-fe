@@ -8,8 +8,11 @@ import { SettingsComponent } from './settings/settings.component';
 const routes: Routes = [
   {
     path: 'profile',
-    component: ProfileComponent
+    component: ProfileComponent,
+    data: { requiredPermission: 'USER_ACCESS' }
   },
+
+
   {
     path: 'profile-setting',
     component: SettingsComponent

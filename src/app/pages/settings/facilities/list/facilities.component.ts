@@ -52,7 +52,7 @@ export class FacilitiesComponent {
     private authService: AuthenticationService, 
     private offcanvasService: NgbOffcanvas,
     private datePipe: DatePipe,) {
-      this.canActivate = this.authService.hasPermissionModulo(this.title);
+      this.canActivate = this.authService.hasPermission(this.title);
   }
 
   ngOnInit(): void {

@@ -42,7 +42,7 @@ export class CategoriasComponent {
     public translate: TranslateService,
     private deportesService: CategoriasService,
     private formBuilder: UntypedFormBuilder,) {      
-      this.canActivate = this.authService.hasPermissionModulo(this.title);
+      this.canActivate = this.authService.hasPermission(this.title);
   }
 
   ngOnInit(): void {

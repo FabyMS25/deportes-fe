@@ -41,7 +41,7 @@ export class AreasComponent {
     private authService: AuthenticationService,
     private superficiesService: SuperficiesService,
     private formBuilder: UntypedFormBuilder) {
-      this.canActivate = this.authService.hasPermissionModulo(this.title);
+      this.canActivate = this.authService.hasPermission(this.title);
   }
 
   ngOnInit(): void {

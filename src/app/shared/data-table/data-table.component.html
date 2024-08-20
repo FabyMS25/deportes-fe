@@ -66,12 +66,19 @@
                                         (click)="editItem(data)">
                                         <i class="ri-pencil-fill fs-16"></i>
                                     </a>
+                                </li>                                                  
+                                <li *ngIf="consult" class="list-inline-item edit" ngbTooltip="Consultar" placement="top">
+                                    <a href="javascript:void(0);" data-bs-toggle="modal"
+                                        class="text-primary d-inline-block edit-item-btn"
+                                        (click)="consultItem(data)">
+                                        <i class=" ri-restart-fill fs-16"></i>
+                                    </a>
                                 </li>
                                 <li *ngIf="delete" class="list-inline-item me-0" ngbTooltip="Eliminar" placement="top">
                                     <a class="text-danger d-inline-block remove-item-btn"
                                         data-bs-toggle="modal" data-bs-toggle="modal"
                                         (click)="deleteItem(data)">
-                                        <i class="ri-delete-bin-5-fill fs-16"></i>
+                                        <i class=" ri-close-circle-line fs-16"></i>
                                     </a>
                                 </li>
                                 <li *ngIf="telf" class="list-inline-item edit" ngbTooltip="Call" placement="top">

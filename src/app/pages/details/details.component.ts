@@ -43,7 +43,7 @@ export class DetailsComponent implements OnInit  {
   tarifa=0;
   imagesList=['assets/images/fields/img-1.png','assets/images/fields/img-2.png',
     'assets/images/fields/img-3.png','assets/images/fields/img-4.png']
-  
+  contribuyente : any;
     horariosAtencion = [
       { horaInicio: '08:00', horaFin: '12:00', dia:"lunes", activo:true },
       { horaInicio: '14:00', horaFin: '18:00' ,dia:"lunes", activo:true},
@@ -59,28 +59,6 @@ export class DetailsComponent implements OnInit  {
       // { horaInicio: '', horaFin: '' ,dia:"Domingo", activo:false}
     ];
 
-    contribuyente:Contribuyente = {
-      uuid:	"5ecd8156-502a-4a21-ba3a-1112d2322994",
-      userName:	"contribuyente1",
-      password:	"Contribuyente1",
-      nombre:	"FABIOLA",
-      apPaterno:	"MORALES",
-      apMaterno:	"S",
-      nroCarnet:	"8695227",
-      nroNit:	"",
-      ciExpedido:	"3",
-      sexo:	"F",
-      direccion:	"",
-      celular:	"72248669",
-      correo:	"moralessfaby.dev@gmail.com",
-      tipoContribuyente:	"NA",
-      codigoContribuyente:	"0A025F03001B0E001407505B51",
-      tipoDocumento:	"CI",
-      estadoCivil:	"SO",
-      fechaNac:	"23/04/1999",
-      estadoUsuario:	"Active",
-      // estado:	false
-    }
   constructor(private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
     private categoriasService: CategoriasService,
@@ -111,14 +89,17 @@ export class DetailsComponent implements OnInit  {
       autoplay: true,
     }
   ngOnInit(): void {
-    this.authRuat();
-
-     this.breadCrumbItems = [
+    this.breadCrumbItems = [
       { label: 'Complejo' },
       { label: 'Reserva', active: true }
     ];    
     this.updateTime();
     this.timerId = setInterval(() => this.updateTime(), 1000);
+
+    this.authRuat();    
+    const currentUser =   window.sessionStorage.getItem("currentUser");
+    this.contribuyente =  currentUser ? JSON.parse(currentUser) : null;
+
     
     // this.route.params.subscribe(params => {
     //   this.uuid = params['uuid'];
@@ -126,13 +107,12 @@ export class DetailsComponent implements OnInit  {
     // });
     // this.canActivate = history.state.canActivate;
     this.dataField = history.state.data;
-    console.log(this.dataField)
     if(this.dataField){
       this.initMap(this.dataField.latitud, this.dataField.longitud); 
       this.getFields(this.dataField.uuid);
     }      
     
-    this.getDeportes();
+    this.getCategories();
     /**
      * Form Validation
      */
@@ -236,16 +216,10 @@ export class DetailsComponent implements OnInit  {
   generateHorarios() {  const fechaReserva = this.InvoiceForm.get('fechaReserva')?.value;
 
     if (!fechaReserva) {
-      console.error('fechaReserva is undefined or null');
       return;
     }
   
-    console.log('Selected fechaReserva:', fechaReserva);
-  
     const selectedDay = fechaReserva.toLocaleString('es-ES', { weekday: 'long' });
-    console.log('Selected day:', selectedDay);
-  
-    // Filter active schedules for the selected day
     this.horariosToday = this.horariosAtencion.filter(horario => horario.dia === selectedDay && horario.activo);
     console.log('Filtered horariosToday:', this.horariosToday);
   
@@ -283,7 +257,6 @@ export class DetailsComponent implements OnInit  {
     
   }
   selectCancha(data:any) {
-    console.log(data)
     this.tarifa= 10
     this.InvoiceForm.patchValue({
       canchasDto:data,
@@ -345,8 +318,8 @@ export class DetailsComponent implements OnInit  {
   /**
    * Open modal
    * @param content modal content
-   */
-   openEmployeeModal(content: any) {
+  **/
+  openEmployeeModal(content: any) {
     this.submitted = false;
     this.modalService.open(content, { size: 'md', centered: true });
   }
@@ -365,7 +338,7 @@ export class DetailsComponent implements OnInit  {
   }
   
     /* API Services */
-    private getDeportes(){
+    private getCategories(){
       this.categoriasService.getAll().subscribe({
           next: (data: any) => {
             if (data['status'] === 'OK') {
@@ -387,7 +360,9 @@ export class DetailsComponent implements OnInit  {
           if (data['status'] === 'OK') {
             this.canchasList = data.payload;
             this.canchasList.forEach((cancha, index) => {
-              this.isCollapsed.push(false);
+              if(index===0){ this.isCollapsed.push(true)
+                this.selectCancha(cancha)
+              }else{ this.isCollapsed.push(false);}
             });
           }
         },
@@ -401,6 +376,8 @@ export class DetailsComponent implements OnInit  {
       if (this.InvoiceForm.valid) {
         this.InvoiceForm.enable()
         let datos: Reserva = {
+          numeroTasa	: "",
+          estadoReserva:'Pendiente',
           fechaReserva: this.InvoiceForm.value.fechaReserva,
           horaEntrada: this.InvoiceForm.value.horaEntrada,
           horaSalida: this.InvoiceForm.value.horaSalida,
@@ -424,7 +401,7 @@ export class DetailsComponent implements OnInit  {
       // this.submitted = true
     }
       
-  addData(datos:any){
+  addData(datos:Reserva){
     this.reservaService.save(datos).subscribe({
       next:(data:any)=>{
         this.submitted=false;
@@ -464,10 +441,12 @@ export class DetailsComponent implements OnInit  {
     };
     
     
-
     this.ruatService.createTasa(datos).subscribe({
       next:(data:any)=>{
         if(data['status']==='OK'){
+          console.log(data.payload)
+          const res = data.payload
+          reserva.numeroTasa = res.numeroTasa	
           this.addData(reserva);
           this.notify('Datos Registrados exitosamente!','success');
 

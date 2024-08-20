@@ -6,12 +6,13 @@ import { Pago } from "./pago.model";
   uuid?: String;
   estado?:boolean;
 
-  // codigo:string;
   fechaReserva: Date;
   horaEntrada:string;
   horaSalida:string;
   totalPago:number;   
   totalPesonas: number;
+  numeroTasa :string;
+  estadoReserva:string;//pendiente//vencido//anulado
 
   categoria?: string;
   superficie: string;

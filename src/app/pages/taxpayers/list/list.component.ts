@@ -44,7 +44,7 @@ export class ListComponent {
      private authService: AuthenticationService,
      private contribuyentesService: ContribuyentesService,
   ) {
-      this.canActivate = this.authService.hasPermissionModulo(this.title);
+      this.canActivate = this.authService.hasPermission(this.title);
   }
 
   ngOnInit(): void {

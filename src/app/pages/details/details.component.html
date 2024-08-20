@@ -42,27 +42,29 @@
                         </div>
                     </div>  
                     
-                            <h6 class="mb-3 fw-semibold text-uppercase">Campos Deportivos del Complejo:</h6>  
+                    <h6 class="mb-3 fw-semibold text-uppercase">Campos Deportivos del Complejo:</h6>  
                     <div class="row pt-1 mt-1 mb-2" *ngFor="let item of canchasList; let i = index">
                         <div class="d-flex align-items-center">
                             <div class=" flex-grow-1 d-flex gap-3">
                                 <label class="text-muted text-uppercase fw-semibold">
                                     Cancha:
                                 </label>
-                                <p>{{item.codigo}} - {{item.superficieDto.descripcion}}</p>
+                                <p>Superficie: {{item.superficieDto.descripcion}}</p>
                             </div>
-                            <div class="flex-shrink-1">
-                                <button type="button" class="btn btn-soft-primary btn-sm" [ngxScrollTo]="'invoice_form'"
-                                (click)="selectCancha(item)">
-                                    Reservar cancha
-                                </button>
-                            </div>
-                            <div class="flex-shrink-0">
-                              <button class="btn btn-light p-1 m-0" type="button" 
-                                      (click)="toggleCollapse(i)" 
-                                      [attr.aria-expanded]="isCollapsed[i]">
-                                <i class="ri-arrow-down-s-fill"></i>
-                              </button>                                
+                            <div *ngIf="canchasList.length>1">
+                                <div class="flex-shrink-1">
+                                    <button type="button" class="btn btn-soft-primary btn-sm" [ngxScrollTo]="'invoice_form'"
+                                    (click)="selectCancha(item)">
+                                        Reservar cancha
+                                    </button>
+                                </div>
+                                <div class="flex-shrink-0">
+                                  <button class="btn btn-light p-1 m-0" type="button" 
+                                          (click)="toggleCollapse(i)" 
+                                          [attr.aria-expanded]="isCollapsed[i]">
+                                    <i class="ri-arrow-down-s-fill"></i>
+                                  </button>                                
+                                </div>
                             </div>
                           </div>
                         <div class="collapse show" [ngbCollapse]="!isCollapsed[i]">
@@ -174,8 +176,6 @@
                                 </div>
 
                             </div>
-                            <!-- <p class="mb-1"><b>Latitud:</b><span class="text-muted ms-2 float-end">{{dataField.latitud}}</span></p>
-                            <p class="mb-1"><b>Longitud:</b><span class="text-muted ms-2 float-end">{{dataField.longitud}}</span></p> -->
                             <p class="mb-1"><b class="text-uppercase">Dirección:</b> <span class="text-muted ms-2">{{dataField.ubicacion}}</span></p>
                             <p class="mb-1"><b class="text-uppercase">Distrito:</b> <span class="text-muted ms-2 float-end">{{dataField.distrito}}</span></p>
                             <p class="mb-1"><b class="text-uppercase">Techado:</b> <span class="text-muted ms-2 float-end">{{dataField.techado}}</span></p>

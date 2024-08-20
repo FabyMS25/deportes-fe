@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { Observable, of, throwError } from 'rxjs';
@@ -12,7 +12,7 @@ export class ContribuyentesService {
     apiUrl = environment.backendUrl + '/contribuyente';
 
     contribuyente = {
-      uuid:	"5ecd8156-502a-4a21-ba3a-1112d2322994",
+      uuid:	"d133432d-ecc5-4952-af1b-1ca825f815f9",
       userName:	"contribuyente",
       password:	"Contribuyente",
       nombre:	"FABIOLA",
@@ -36,19 +36,24 @@ export class ContribuyentesService {
 
   constructor(private http: HttpClient) { }
 
-  // loginByUsername(username: String, password: String) {
-  //   // return this.http.post<any>(`${this.apiUrl}/auth/signin`, {username, password});
-  // }
-  loginByUsername(username: string, password: string){
-    if (username === this.contribuyente.userName && password === this.contribuyente.password) {
-      return of(this.contribuyente);
-    } else {
-      return new Observable(observer => {
-        observer.error('Invalid credentials');
-        observer.complete();
-      });
-    }
+  loginByUsername(user: String, pass: String) {
+    return this.http.post<any>(`${this.apiUrl}/login`, { user, pass });
   }
+  // loginByUsername(user: string, pass: string) {
+  //   const params = { user, pass };
+  //   return this.http.get<any>(`${this.apiUrl}/login`, { params });
+  // }
+  
+  // loginByUsername(username: string, password: string){
+  //   if (username === this.contribuyente.userName && password === this.contribuyente.password) {
+  //     return of(this.contribuyente);
+  //   } else {
+  //     return new Observable(observer => {
+  //       observer.error('Invalid credentials');
+  //       observer.complete();
+  //     });
+  //   }
+  // }
   getAll(): Observable<Contribuyente[]> {
     return this.http.get<Contribuyente[]>(`${this.apiUrl}`);
   }

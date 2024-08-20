@@ -118,7 +118,7 @@ export class RuatRequestsService {
     return this.http.post<any>(`${apiUrl}/creartasa`,requestData, );
   }
 
-  cancelTasa(token: string, codigoUsuario: string, nroTasa: number, motivo: string, observaciones: string): Observable<any> {
+  cancelTasa( codigoUsuario: string, nroTasa: number, motivo: string, observaciones: string): Observable<any> {
    
     const requestData = {
       'token':token,
@@ -135,7 +135,7 @@ export class RuatRequestsService {
     return this.http.post<any>(`${apiUrl}/anulartasa`,requestData, );
   }
 
-  consultaPagoTasa(token: string, nroTasa: number){
+  consultaPagoTasa( nroTasa: number): Observable<any> {
 
     const requestData = {
       'token':token,

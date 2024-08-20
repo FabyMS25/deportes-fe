@@ -10,32 +10,32 @@ export class AuthGuard  {
         private router: Router,
         private authService: AuthenticationService,
     ) { }
+    
+    canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot):boolean {
+        const baseUrl = state.url.split('?')[0];
+        const requiredPermission = route.data['requiredPermission'];
 
-    canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
-        // if (environment.defaultauth === 'firebase') {
-            const currentUser = this.authService.currentUser();
-            if (currentUser) {
-                // logged in so return true
-                // return true;
-            }
-            
-        if (!this.authService.isLoggedIn()) {
-            this.router.navigate(['/auth/login']);
-            return false;            
+        const currentUser =   window.sessionStorage.getItem("currentUser");
+        if(!currentUser){
+            this.router.navigate(['/auth/login'], { queryParams: { returnUrl: state.url } });
+            return false;
+
         }
-        // } else {
-            // const currentUser = this.authFackservice.currentUserValue;
-            // if (currentUser) {
-                // logged in so return true
-            //     return true;
-            // }
-            // check if user data is in storage is logged in via API.
-            // if(sessionStorage.getItem('currentUser')) {
-            //     return true;
-            // }
-        // }
-        // not logged in so redirect to login page with the return url
-        // this.router.navigate(['/auth/login'], { queryParams: { returnUrl: state.url } });
-        return true;
+        if (this.authService.hasRoutePermission(baseUrl)) {
+            return true;
+        } else {
+            const link =this.authService.getRouteDB();
+            this.router.navigate(['/inicio/'+link]);            
+            return false;
+        }
+            
+        // if (!this.authService.isLoggedIn()) {
+        //     this.router.navigate(['/auth/login']);
+        //     return false;            
+        // }    
+        const hasPermission = this.authService.hasRoutePermission(baseUrl);
+        return hasPermission;         
     }
+
+
 }

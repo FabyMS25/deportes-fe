@@ -11,6 +11,7 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { ModalComponent } from '../modal/modal.component';
 import { ngxCsv } from 'ngx-csv';
+import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
 
 @Component({
   selector: 'app-reservas',
@@ -26,10 +27,8 @@ export class ReservasComponent implements OnInit {
 
   reservasList:any[]=[];
   temp:any[]=[];
+  dataSelected ='';
 
-  applications: any ;
-  masterSelected!: boolean;
-  allapplications: any;
   searchTerm: any;
   searchResults: any;
   date: any;
@@ -41,8 +40,9 @@ export class ReservasComponent implements OnInit {
     public formBuilder: UntypedFormBuilder,
     private authService: AuthenticationService,
     private reservasService: ReservaService,
+    private ruatService: RuatRequestsService,
     public modalService: NgbModal) {
-      this.canActivate = this.authService.hasPermissionModulo(this.title);
+      this.canActivate = this.authService.hasPermission(this.title);
   }
 
   ngOnInit(): void {
@@ -52,11 +52,14 @@ export class ReservasComponent implements OnInit {
     ];
     this.listaItems = [
       {name: 'Complejo  ',prop: 'canchasDto.complejoDto.nombre'},
-      {name: 'Contribuyente', prop: 'contribuyenteDto.nombre'},
+      // {name: 'Contribuyente', prop: 'contribuyenteDto.nombre'},
+      {name: 'Superficie', prop: 'superficie'},
       {name: 'Fecha Reserva',prop: 'fechaReserva', date:true},
+      {name: 'Estado', prop: 'estadoReserva', tag:true},
       {name: 'Hora',prop: 'horaEntrada'},
-      // {name: 'Estado', prop: 'estado', tag:true},
     ];
+    
+    this.authRuat();    
     this.getReservas();    
   }
 
@@ -72,55 +75,60 @@ export class ReservasComponent implements OnInit {
     });
   }
 
+  showModal(content: any, data: any) {
+    // this.checkedValGet.push(data.uuid);
+    this.dataSelected = data;
+    this.modalService.open(content, { centered: true });
+  }
 
   // Filter
   statusFilter() {
     if (this.status != '') {
-      this.applications = this.allapplications.filter((app: any) => {
+      this.reservasList = this.temp.filter((app: any) => {
         return app.status === this.status;
       });
     } else {
-      this.applications = this.service.changePage(this.allapplications,8)
+      this.reservasList = this.service.changePage(this.temp,8)
     }
   }
 
   typeFilter() {
     if (this.type != '') {
-      this.applications = this.allapplications.filter((app: any) => {
+      this.reservasList = this.temp.filter((app: any) => {
         return app.type === this.type;
       });
     } else {
-      this.applications = this.service.changePage(this.allapplications,8)
+      this.reservasList = this.service.changePage(this.temp,8)
     }
   }
 
   // Search Data
   performSearch(): void {
-    this.searchResults = this.allapplications.filter((item: any) => {
+    this.searchResults = this.temp.filter((item: any) => {
       return (
         item.name.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
-    this.applications = this.service.changePage(this.searchResults,8)
+    this.reservasList = this.service.changePage(this.searchResults,8)
   }
 
   onNavChange(changeEvent: NgbNavChangeEvent) {
 
     if (changeEvent.nextId === 1) {
       this.reservasList = this.temp;
-      // this.applications = this.service.changePage(this.allapplications,8)
+      // this.reservasList = this.service.changePage(this.temp,8)
     }
     if (changeEvent.nextId === 2) {
-      this.reservasList = this.temp.filter((item:any) => item.status == 'Nuevo');
+      this.reservasList = this.temp.filter((item:any) => item.estadoReserva == 'Pendiente');
     }
     if (changeEvent.nextId === 3) {
-      this.reservasList = this.temp.filter((item:any) => item.status == 'Pending');
+      this.reservasList = this.temp.filter((item:any) => item.estadoReserva == 'Pagado');
     }
     if (changeEvent.nextId === 4) {
-      this.reservasList = this.temp.filter((item:any) => item.status == 'Vencido');
+      this.reservasList = this.temp.filter((item:any) => item.estadoReserva == 'Vencido');
     }
     if (changeEvent.nextId === 5) {
-      this.reservasList = this.temp.filter((item:any) => item.status == 'Rechazado');
+      this.reservasList = this.temp.filter((item:any) => item.estadoReserva == 'Anulado');
     }
   }
 
@@ -144,36 +152,88 @@ export class ReservasComponent implements OnInit {
   /**
    * Delete Model Open
    */
-  deleteId: any;
   confirm(content: any, id: any) {
-    this.deleteId = id;
+    console.log(id)
+    // this.bookId = id;
     this.modalService.open(content, { centered: true });
   }
 
   // Delete Data
-  deleteData(id: any) {
-    if (id) {
+  annularData(data: any) {
+    console.log(data)
+    if (data) {
       // this.store.dispatch(deleteApplication({ id: this.deleteId.toString() }));
     } else {
       // this.store.dispatch(deleteApplication({ id: this.checkedValGet.toString() }));
     }
-    this.masterSelected = false;
-    this.deleteId = '';
+    this.dataSelected = '';
     this.modalService.dismissAll('close click')
     let timerInterval: any;
     Swal.fire({
-      title: 'Deleted!',
-      text: 'Your data has been deleted.',
+      title: 'Anulado!',
+      text: 'Se Anulo la reserva',
       icon: 'success',
       confirmButtonColor: '#299cdb',
-      timer: 2000,
+      timer: 3000,
       timerProgressBar: true,
       willClose: () => {
         clearInterval(timerInterval);
       },
     });
   }
-
+  consultData(data: any) {
+    let text: string = '';
+    if (data) {
+      const nroTasa = data.numeroTasa;
+      this.ruatService.consultaPagoTasa(nroTasa).subscribe({
+        next: (resp: any) => {
+          if (resp['status'] === 'OK') {
+            text = resp.payload['mensaje'];
+          } else {
+            console.log(resp.payload);
+            text = resp.payload;
+          }
+  
+          // Move Swal.fire here to ensure the text is updated
+          let timerInterval: any;
+          Swal.fire({
+            title: 'Se realizo la Consulta!',
+            text: text,
+            icon: 'success',
+            confirmButtonColor: '#299cdb',
+            timer: 5000,
+            timerProgressBar: true,
+            willClose: () => {
+              clearInterval(timerInterval);
+            },
+          });
+  
+          // Optionally clear the selected data and close the modal
+          this.dataSelected = '';
+          this.modalService.dismissAll('close click');
+        },
+        error: (error) => {
+          console.error('Error:', error);
+          text = 'Error al realizar la consulta';
+          Swal.fire({
+            title: 'Error!',
+            text: text,
+            icon: 'error',
+            confirmButtonColor: '#d33',
+          });
+        },
+      });
+    } else {
+      text = 'No se pudo obtener el dato seleccionado';
+      Swal.fire({
+        title: 'Error!',
+        text: text,
+        icon: 'error',
+        confirmButtonColor: '#d33',
+      });
+    }
+  }
+  
 
   /* API Services */
   loading: boolean = true;
@@ -210,5 +270,15 @@ export class ReservasComponent implements OnInit {
     };
     new ngxCsv(this.reservasList, "Reservas", data);
   }
-
+  /* API RUAT Services */
+  private authRuat() {
+    this.ruatService.authenticate().subscribe({
+      next: (response) => {          
+        window.sessionStorage.setItem('ruatToken', response.token);
+      },
+      error: (error) => {
+        // this.notify("Falla en la coneccion con el RUAT, porfavor intente mas tarde",'error')
+      }
+    });
+}
 }

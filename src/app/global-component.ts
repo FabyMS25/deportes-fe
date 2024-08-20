@@ -11,7 +11,7 @@ export const GlobalComponent = {
     //Ruat Data Produccion
     // RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
     // RUAT_clave: "Gam#1209",
-    RUAT_codigoUsuario: "JAYMA.QUI",
+    RUAT_codigoUsuario: "ERODRIGUEZ2.QUI",
     RUAT_codigoAlcaldia: "QUI",
     RUAT_servicioMunicipal: "2174", //TASAS Y OTROS INGRESOS
     RUAT_tipoTasa: "TO", //TASAS Y OTROS INGRESOS

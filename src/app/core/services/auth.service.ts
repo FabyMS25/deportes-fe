@@ -48,9 +48,8 @@ export class AuthenticationService {
         private router: Router,
 
     ) {
-        // this.currentUserSubject = new BehaviorSubject<User>(JSON.parse(sessionStorage.getItem('currentUser')!));
-        // this.currentUser = this.currentUserSubject.asObservable();
-        this.currentUserSubject = storageService.getUser()
+        this.currentUserSubject = storageService.getUser();
+        // this.currentUserSubject = storageService.getUser()
         this.isAuthenticated = !!storageService.getToken();
     }
 
@@ -89,7 +88,7 @@ export class AuthenticationService {
         next: (data) => {
           this.currentUserSubject = data;
           this.storageService.saveToken(data.token);
-          this.hasPermission(data);
+          this.userHasPermission(data);
           resolve(true);
         },
         error: () => resolve(false)
@@ -101,27 +100,29 @@ export class AuthenticationService {
     return new Promise((resolve) => {
       this.authContribuyente.loginByUsername(username, password).subscribe({
         next: (data:any) => {
-          console.log('Login successful', data);
-          this.currentUserSubject = data;
-          this.storageService.saveToken("isContribuyente");
-          this.storageService.saveUser(data);
-          const menu = MENU_BASE;
-          localStorage.setItem('menu', JSON.stringify(menu));
-          this.router.navigate(['/inicio/taxpayer']).then(() => {
-            this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
-          });
-          resolve(true);
+          if(data['status']=== 'OK'){
+            this.currentUserSubject = data.payload;
+            this.storageService.saveToken("isContribuyente");
+            this.storageService.saveUser(this.currentUserSubject);
+            localStorage.setItem('menu', JSON.stringify(MENU_BASE));
+            this.router.navigate(['/inicio/taxpayer']).then(() => {
+              this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
+            });
+            resolve(true);
+          }
         },
         error: () => resolve(false)
       });
     });
   }
   
-  async hasPermission(user: any) {
+  private async userHasPermission(user: any) {
     try {
       const [userPermissions, empleado] = await Promise.all([
         this.permissionService.getPermisosUsuario(user.uuid).toPromise(),
-        this.designationsService.getByUserUuid(user.uuid).toPromise(),
+        this.designationsService.getByUserUuid(user.uuid).toPromise().catch(error => {
+            return null; 
+        }),
       ]);
   
       if (userPermissions && Array.isArray(userPermissions) && userPermissions.length > 0) {
@@ -211,11 +212,28 @@ export class AuthenticationService {
     isSuperAdmin(menu:any[]):boolean{    
       return menu.some(permission => permission.nombreMenu === this.permisoAdmin)
     }
-    hasPermissionModulo(modulo: string): string[] {
+
+    getRouteDB():string{      
+      if(this.storageService.getToken()==="isContribuyente"){
+        return 'taxpayer'
+      }else{
+        if (!this.isAdmin()) {
+          return 'employee'
+        }
+      }      
+      return ''
+    }
+    hasPermission(modulo: string): string[] {
       const menuString = localStorage.getItem('menu');
       const menu: any[] = menuString ? JSON.parse(menuString) : null;
       const permissions = menu.filter(permission => permission.nombreMenu === modulo);
       return permissions.map(permission => permission.accion);
+    }
+    hasRoutePermission(route: string): boolean {
+      const menuString = localStorage.getItem('menu');
+      const menu: any[] = menuString ? JSON.parse(menuString) : null;
+      const permissions = menu.filter(permission => permission.ruta === route);
+      return menu.find(permission => permission.ruta === route) ? true : false;
     }
 
 

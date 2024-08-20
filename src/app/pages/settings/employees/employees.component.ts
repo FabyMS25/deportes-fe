@@ -64,7 +64,7 @@ export class EmployeesComponent implements OnInit {
     private usersService: UserService,
     private employeesService: EncargadoService,
   ) {
-      this.canActivate = this.authService.hasPermissionModulo(this.title);
+      this.canActivate = this.authService.hasPermission(this.title);
   }
 
   ngOnInit(): void {
