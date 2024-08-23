@@ -55,7 +55,8 @@
                     [delete]="canActivate.includes('ELIMINAR')"
                     (showItemEmitter)="openModal($event,content,'show')"
                     (editItemEmitter)="openModal($event,content,'edit')"
-                    (deleteItemEmitter)="deleteModal(deleteModel,$event)"              
+                    (deleteItemEmitter)="deleteModal(deleteModel,$event)"  
+                    (seleccionarItemEmitter)="getSeleccionados($event)"             
                 >
                 </app-data-table>  
                 <ng-template #content role="document" let-modal>

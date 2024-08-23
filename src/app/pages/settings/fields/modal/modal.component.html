@@ -53,95 +53,109 @@
                     </div>
                 </div>
             </div>
-            <div class="d-flex align-items-center flex-wrap gap-2">
-                <div class="flex-grow-1"><h5 class="mt-2">Tarifa(s) y Categorias: </h5></div> 
-                <div class="flex-grow-1">
-                    <div>
-                        <!-- <label for="tipo-field" class="form-label">Tipo de Cobro</label> -->
-                        <select class="form-select" aria-label="tipo" formControlName="tipo"
-                             [ngClass]="{'is-invalid': submitted && form['tipo'].errors }">
-                            <option value="" disabled class="text-muted">tipo de Cobro</option>
-                            <option value="Hora">Hora</option>
-                            <option value="Persona">Persona</option>
-                            <option value="Evento">Evento</option>
-                        </select>
-                        @if(submitted && form['tipo'].errors){
-                        <div class="invalid-feedback" align="left">
-                            @if(form['tipo'].errors['required']){
-                            <div>El campo es requirido</div>
-                            }
-                        </div>
-                        }
+            <!-- <div class="col-lg-12">
+                <label for="tipo-field" class="form-label">Ttipo de Cobro</label>
+                <select class="form-select" aria-label="tipo" formControlName="tipo"
+                     [ngClass]="{'is-invalid': submitted && form['tipo'].errors }">
+                    <option value="" disabled class="text-muted">tipo de Cobro</option>
+                    <option value="Hora">Hora</option>
+                    <option value="Persona">Persona</option>
+                    <option value="Evento">Evento</option>
+                </select>
+                @if(submitted && form['tipo'].errors){
+                <div class="invalid-feedback" align="left">
+                    @if(form['tipo'].errors['required']){
+                    <div>El campo es requirido</div>
+                    }
+                </div>
+                }
+            </div> -->
+            
+            <div>
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title mb-0">Tarifas y Categorias: </h6>
                     </div>
-
-                </div>               
-                <div class="flex-shrink-0">
-                    <div class="col-lg-12 mt-2">
-                        <button type="button" class="btn btn-primary  add-btn" (click)="addTarifa()">
-                            <i class="las la-calendar-plus align-middle "></i>Agregar
-                        </button>
-                    </div>   
-                </div>         
-            </div>
-            <div class="row">
-                <div formArrayName="tarifasCategorias" class="row">
-                    <div *ngFor="let horario of tarifasCategorias.controls; let i = index" [formGroupName]="i" class="row g-2">
-                        <div class="col-lg-3">
-                            <div>
-                                <label for="costo-field" class="form-label">Costo (Bs): </label>
-                                <input type="number" step="0.1" id="costo-field" class="form-control"
-                                    placeholder="costo por Hora" formControlName="costo">
-                                    <!-- [ngClass]="{ 'is-invalid': submitted && form['costo'].errors }" />
-                                @if(submitted && form['costo'].errors){ 
-                                <div class="invalid-feedback"
-                                    align="left">
-                                    @if(form['costo'].errors['required']){ 
-                                    <div>Debe ingresar el costo
+                    <div class="flex-shrink-0">                        
+                    </div>
+                </div>
+                <div formArrayName="tarifas" class="collapse show" id="">                    
+                    <div *ngFor="let tarifa of tarifasCategorias.controls; let i = index" [formGroupName]="i" class="row g-2">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 mt-4 py-2">
+                                <i class="ri-checkbox-circle-fill text-success"></i>
+                            </div>
+                            <div class="flex-grow-1 text-muted mt-1">
+                                <div class="row g-1">
+                                    <div class="col-lg-2">
+                                        <label for="tipo-field" class="form-label">Tipo de Cobro</label>
+                                        <ng-select [items]="tipoList" 
+                                                   formControlName="tipo" placeholder="Seleccionar"
+                                                   [ngClass]="{'is-invalid': submitted && tarifa.get('tipo')?.errors }">
+                                        </ng-select>
+                                        <div *ngIf="submitted && tarifa.get('tipo')?.errors" class="invalid-feedback" align="left">
+                                          <div *ngIf="tarifa.get('tipo')?.errors?.['required']">Debe seleccionar un tipo de Cobro</div>
+                                        </div>
+                                    </div>  
+                                    <div class="col-lg-4">
+                                        <label for="categorias-field" class="form-label">Categoria(s)</label>
+                                        <ng-select [items]="categoryList" [multiple]="true" bindLabel="nombre"
+                                                   formControlName="categorias" placeholder="Seleccione una o más"
+                                                   [ngClass]="{'is-invalid': submitted && tarifa.get('categorias')?.errors }">
+                                        </ng-select>
+                                        <div *ngIf="submitted && tarifa.get('categorias')?.errors" class="invalid-feedback" align="left">
+                                          <div *ngIf="tarifa.get('categorias')?.errors?.['required']">Debe seleccionar al menos una categoría</div>
+                                        </div>
                                     </div>
-                                }
+                                    <div class="col-lg-2">
+                                        <label for="costo-field" class="form-label">Costo (Bs): </label>
+                                        <input type="number" step="0.1" id="costo-field" class="form-control"
+                                            placeholder="costo " formControlName="costo"
+                                            [ngClass]="{'is-invalid': submitted && tarifa.get('costo')?.errors }">
+                                        <div *ngIf="submitted && tarifa.get('costo')?.errors" class="invalid-feedback" align="left">
+                                        <div *ngIf="tarifa.get('costo')?.errors?.['required']">Debe ingresar el costo</div>
+                                        </div>
+                                    </div>
+                                      
+                                  <div class="col-lg-3">
+                                    <label for="costo-field" class="form-label">Intervalo Valido de Tarifa</label>
+                                    <div class="row g-1">
+                                        <div class="col-lg-6">
+                                          <input class="form-control flatpickr-input" type="text" mwlFlatpickr
+                                                 [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
+                                                 placeholder="Desde" formControlName="desde">
+                                        </div>
+                                      <div class="col-lg-6">
+                                          <input class="form-control flatpickr-input" type="text" mwlFlatpickr
+                                                 [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
+                                                 placeholder="Hasta" formControlName="hasta">
+                                        </div>
+                                    </div>
+                                  </div>
+                                  <div class="col-lg-1">
+                                    <div class="mt-4 py-1 flex-shrink-0">
+                                        <ul class="list-inline card-toolbar-menu d-flex align-items-center mb-0">
+                                            <li class="list-inline-item" *ngIf="tarifasCategorias.length>1">
+                                                <a class="align-middle"  (click)="removeTarifa(i)">
+                                                    <i class=" ri-close-fill align-middle"></i>
+                                                </a>
+                                            </li>
+                                            <li class="list-inline-item">
+                                                <a class="align-middle btn btn-add" (click)="addTarifa()"
+                                                 role="button" aria-expanded="false"
+                                                    aria-controls="collapseExample2">
+                                                    <i class=" ri-add-circle-line align-middle"></i>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                  </div>
                                 </div>
-                                } -->
                             </div>
                         </div>
-                      <div class="col-lg-4">
-                        <label for="costo-field" class="form-label">Intervalo Valido de Tarifa</label>
-                        <div class="row g-1">
-                            <div class="col-lg-6">
-                              <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                                     [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                                     placeholder="Desde" formControlName="desde">
-                            </div>
-                          <!-- </div> -->
-                          <div class="col-lg-6">
-                            <!-- <div> -->
-                              <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                                     [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                                     placeholder="Hasta" formControlName="hasta">
-                            </div>
-
-                        </div>
-                      </div>
-                      <div class="col-lg-4">
-                          <div>
-                              <label for="categorias-field" class="form-label">Categorias</label>
-                              <ng-select [items]="categoryList" [multiple]="true" bindLabel="nombre"
-                                         formControlName="categorias" placeholder="Seleccione una o más Categorias">
-                                         <!-- [ngClass]="{'is-invalid': submitted && form['categorias'].errors }"> -->
-                              </ng-select>
-                              <!-- <div *ngIf="submitted && form['categorias'].errors" class="invalid-feedback" align="left">
-                                <div *ngIf="form['categorias'].errors['required']">Debe seleccionar al menos una categoría</div>
-                              </div> -->
-                          </div>
-                      </div>
-                      <div class="col-lg-1 mt-4">
-                        <button type="button" class="btn btn-danger" (click)="removeTarifa(i)">
-                          <i class="las la-calendar-minus align-bottom"></i> 
-                        </button>
-                      </div>
                     </div>
-                </div>  
-
-            </div>          
+                </div>
+            </div>     
         </div>
     </div>
     <div class="modal-footer">

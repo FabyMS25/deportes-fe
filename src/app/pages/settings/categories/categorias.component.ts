@@ -123,9 +123,16 @@ export class CategoriasComponent {
         this.getDeportes();
     });
   }
+  
+  selectedItems:any[] =[];
+  getSeleccionados(items: any[]) {
+    items.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
+    this.selectedItems = items;
+  }
   /**
    * Delete model
    */
+  checkedValGet: any[] = [];
   deleteModal(content: any, data: any) {
     this.checkedValGet.push(data.uuid);
     this.modalService.open(content, { centered: true });
@@ -133,7 +140,6 @@ export class CategoriasComponent {
   /**
    * Multiple Delete
    */
-  checkedValGet: any[] = [];
   deleteMultiple(content: any) {
     var checkboxes: any = document.getElementsByName('checkAll');
     var result

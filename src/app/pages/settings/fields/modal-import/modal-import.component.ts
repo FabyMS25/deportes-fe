@@ -249,7 +249,7 @@ export class ModalImportComponent {
   }
 
   private saveTarifasCat(cancha: any, datos: any) {
-    const tarifaData: Tarifa = {
+    const tarifaData: any = {
       costo: datos.Costo,
       desde: this.formatTimeString(datos.Desde),
       hasta: this.formatTimeString(datos.Hasta),

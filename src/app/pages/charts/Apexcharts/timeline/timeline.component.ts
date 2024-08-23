@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import * as moment from 'moment';
+// import * as moment from 'moment';
 
 @Component({
   selector: 'app-timeline',
@@ -196,8 +196,8 @@ export class TimelineComponent implements OnInit {
         enabled: true,
         formatter: function (val: any, opts: any) {
           var label = opts.w.globals.labels[opts.dataPointIndex];
-          var a = moment(val[0]);
-          var b = moment(val[1]);
+          var a = val[0]//moment(val[0]);
+          var b = val[1]//moment(val[1]);
           var diff = b.diff(a, "days");
           return label + ": " + diff + (diff > 1 ? " days" : " day");
         },
@@ -286,8 +286,8 @@ export class TimelineComponent implements OnInit {
       dataLabels: {
         enabled: true,
         formatter: function (val: any) {
-          var a = moment(val[0]);
-          var b = moment(val[1]);
+          var a = val[0]//moment(val[0]);
+          var b = val[1]//moment(val[1]);
           var diff = b.diff(a, "days");
           return diff + (diff > 1 ? " days" : " day");
         },

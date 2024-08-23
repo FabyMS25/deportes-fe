@@ -30,8 +30,8 @@ export class CamposDeportivoService {
     return this.http.get<campoDeportivo>(`${this.apiUrl}/${uuid}`);
   }
 
-  getByComplejo(uuid:string):Observable<campoDeportivo>{
-    return this.http.get<campoDeportivo>(`${this.apiUrl}/complejo/${uuid}`);
+  getByComplejo(data:any):Observable<campoDeportivo>{
+    return this.http.get<campoDeportivo>(`${this.apiUrl}/complejo/${data.uuid}`);
   }
 
   save(data: campoDeportivo): Observable<campoDeportivo> {  

@@ -20,9 +20,9 @@ export class ReservaService {
     return this.http.get<Reserva[]>(`${this.apiUrl}`);
   }
 
-  // getAllbyFechas(desde:Date, hasta:Date): Observable<Reserva[]> {
-  //   return this.http.get<Reserva[]>(`${this.apiUrl}/por-fechareserva?fechaIni=${desde}&fechaFin=${hasta}`);
-  // }
+  getAllbyFechas(desde:Date, hasta:Date): Observable<Reserva[]> {
+    return this.http.get<Reserva[]>(`${this.apiUrl}/por-fechareserva?fechaIni=${desde}&fechaFin=${hasta}`);
+  }
 
   getByUuid(uuid: String): Observable<Reserva> {
     return this.http.get<Reserva>(`${this.apiUrl}${uuid}`);

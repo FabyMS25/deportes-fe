@@ -14,6 +14,4 @@ export interface Complejo {
 
   canchasList?:campoDeportivo[];  
   encargadoCanchaList?:Encargado;
-  // reservasList?:any[];
-
 }

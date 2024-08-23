@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import * as moment from 'moment';
+// import * as moment from 'moment';
 
 /**
  * Series Data
@@ -922,7 +922,7 @@ export class CandlestickComponent implements OnInit {
         type: "category",
         labels: {
           formatter: function (val:any) {
-            return moment(val).format("MMM DD HH:mm");
+            return ''//moment(val).format("MMM DD HH:mm");
           }
         }
       },

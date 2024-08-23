@@ -95,8 +95,7 @@ export class RuatRequestsService {
 
 
 /* ------API REST RUAT TASAS y OTROS SERVICIOS -------*/
-   createTasa(data:any): Observable<any> {
-    
+   createTasa(data:any): Observable<any> {    
     const requestData = {
       'token':token,
       'tasa': {
@@ -114,29 +113,25 @@ export class RuatRequestsService {
         observacion: data.observacion
       }
     };
-
     return this.http.post<any>(`${apiUrl}/creartasa`,requestData, );
   }
 
-  cancelTasa( codigoUsuario: string, nroTasa: number, motivo: string, observaciones: string): Observable<any> {
-   
+  cancelTasa( data:any): Observable<any> {   
     const requestData = {
       'token':token,
       'anular': {
-        'codigoAlcaldia': 'QUI',
+        'codigoAlcaldia': codigoAlcaldia,
         'codigoUsuario': codigoUsuario,
-        'numeroTasa' : nroTasa,
+        'numeroTasa' : data.numeroTasa,
         'tipoTasa' : 'TO',
-        'motivoTasa': motivo,
-        'observacion': observaciones
+        'motivoTasa': data.motivo,
+        'observacion': data.observacion
       }
     };
-
     return this.http.post<any>(`${apiUrl}/anulartasa`,requestData, );
   }
-
+  
   consultaPagoTasa( nroTasa: number): Observable<any> {
-
     const requestData = {
       'token':token,
       'pago': {
@@ -145,7 +140,6 @@ export class RuatRequestsService {
         'tipoTasa': 'TO'
       }
     };
-
     return this.http.post<any>(`${apiUrl}/pago`,requestData, );
   }
 }

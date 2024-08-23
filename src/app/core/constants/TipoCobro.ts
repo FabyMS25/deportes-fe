@@ -1,15 +1,16 @@
 export const TipoCobro =
 [
-    {
-        "id": 1,
-        "descripcion": "Hora"
-    },
-    {
-        "id": 2,
-        "descripcion": "Persona"
-    },
-    {
-        "id": 3,
-        "descripcion": "Evento"
-    }
+    "Hora","Persona","Evento"
+    // {
+    //     "id": 1,
+    //     "descripcion": "Hora"
+    // },
+    // {
+    //     "id": 2,
+    //     "descripcion": "Persona"
+    // },
+    // {
+    //     "id": 3,
+    //     "descripcion": "Evento"
+    // }
 ]

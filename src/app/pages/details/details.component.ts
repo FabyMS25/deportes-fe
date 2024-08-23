@@ -6,7 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SlickCarouselComponent } from 'ngx-slick-carousel';
 import Swal from 'sweetalert2';
 import * as L from 'leaflet';
-import { debounceTime } from 'rxjs';
+import { debounceTime, firstValueFrom } from 'rxjs';
 
 import { ModalComponent } from '../reservas/modal/modal.component';
 import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
@@ -18,6 +18,7 @@ import { Reserva } from 'src/app/core/models/reserva.models';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { Contribuyente } from 'src/app/core/models/contribuyente.models';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
+import { Tarifa } from 'src/app/core/models/tarifa.model';
 @Component({
   selector: 'app-details',
   templateUrl: './details.component.html',
@@ -29,40 +30,25 @@ export class DetailsComponent implements OnInit  {
 
   breadCrumbItems!: Array<{}>;
   private timerId:any;
-  submitted = false;
   currentTime!: string;
   
-  uuid='';
-  dataField!:Complejo;
-  categoryList:any[]=[];
+  contribuyente : any;
+  dataComplejo!:Complejo;
+  dataField!:campoDeportivo
+  tarifa!:Tarifa;  
+  canchasList:any[]=[];
+
+  submitted = false;
   InvoiceForm!: UntypedFormGroup;
   isCollapsed: boolean[] = [];
   public FCollapsed = true;
   public CCollapsed = true;
 
-  tarifa=0;
   imagesList=['assets/images/fields/img-1.png','assets/images/fields/img-2.png',
     'assets/images/fields/img-3.png','assets/images/fields/img-4.png']
-  contribuyente : any;
-    horariosAtencion = [
-      { horaInicio: '08:00', horaFin: '12:00', dia:"lunes", activo:true },
-      { horaInicio: '14:00', horaFin: '18:00' ,dia:"lunes", activo:true},
-      { horaInicio: '08:00', horaFin: '12:00', dia:"martes", activo:true },
-      { horaInicio: '14:00', horaFin: '18:00' ,dia:"martes", activo:true},
-      { horaInicio: '08:00', horaFin: '11:00', dia:"miércoles", activo:true },
-      { horaInicio: '13:00', horaFin: '16:00' ,dia:"miércoles", activo:true},
-      { horaInicio: '08:00', horaFin: '11:00', dia:"jueves", activo:true },
-      { horaInicio: '13:00', horaFin: '16:00' ,dia:"jueves", activo:true},
-      { horaInicio: '08:00', horaFin: '11:00', dia:"viernes", activo:true },
-      { horaInicio: '13:00', horaFin: '16:00' ,dia:"viernes", activo:true},
-      // { horaInicio: '', horaFin: '', dia:"Sabado", activo:false },
-      // { horaInicio: '', horaFin: '' ,dia:"Domingo", activo:false}
-    ];
 
   constructor(private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
-    private categoriasService: CategoriasService,
-    private horariosService: HorariosService,
     private fieldService: CamposDeportivoService,
     private reservaService: ReservaService,
     private route: ActivatedRoute ,
@@ -81,106 +67,164 @@ export class DetailsComponent implements OnInit  {
     autoplay: true,
     arrows: false
   };
-    slidesConfig = {
-      // Configuration options for the ngx-slick-carousel
-      infinite: true,
-      slidesToShow: 4,
-      slidesToScroll: 1,
-      autoplay: true,
-    }
-  ngOnInit(): void {
+  slidesConfig = {
+    infinite: true,
+    slidesToShow: 4,
+    slidesToScroll: 1,
+    autoplay: true,
+  }
+  async ngOnInit(): Promise<void> {
     this.breadCrumbItems = [
       { label: 'Complejo' },
       { label: 'Reserva', active: true }
-    ];    
+    ];
+    
     this.updateTime();
     this.timerId = setInterval(() => this.updateTime(), 1000);
-
-    this.authRuat();    
-    const currentUser =   window.sessionStorage.getItem("currentUser");
-    this.contribuyente =  currentUser ? JSON.parse(currentUser) : null;
-
-    
-    // this.route.params.subscribe(params => {
-    //   this.uuid = params['uuid'];
-    //   // this.getAdjuntos(this.uuid);
-    // });
-    // this.canActivate = history.state.canActivate;
-    this.dataField = history.state.data;
-    if(this.dataField){
-      this.initMap(this.dataField.latitud, this.dataField.longitud); 
-      this.getFields(this.dataField.uuid);
-    }      
-    
-    this.getCategories();
-    /**
-     * Form Validation
-     */
+    this.authRuat();
+  
+    if (window.sessionStorage.getItem("auth-token") === 'isContribuyente') {
+      const currentUser = window.sessionStorage.getItem("currentUser");
+      this.contribuyente = currentUser ? JSON.parse(currentUser) : null;
+    }
+  
+    this.dataComplejo = history.state.data;  
+    if (this.dataComplejo) {
+      this.initMap(this.dataComplejo.latitud, this.dataComplejo.longitud);
+    }
+  
+    try {
+      const data: any = await firstValueFrom(this.fieldService.getByComplejo(this.dataComplejo));
+      if (data?.status === 'OK') {
+        this.canchasList = data.payload;
+        this.canchasList.forEach((cancha, index) => {
+          if (index === 0) {
+            this.dataField = cancha;
+            this.tarifa = cancha.tarifasDtoList[0];
+            this.isCollapsed.push(true);
+          } else {
+            this.isCollapsed.push(false);
+          }
+        });
+      } else {
+        console.error('No se encontraron Canchas del Complejo');
+      }
+    } catch (error) {
+      console.error('Error fetching fields:', error);
+    }
+  
+    // Initialize the form
     this.InvoiceForm = this.formBuilder.group({
       uuid: [''],
-      categoria:[''],
-      superficie:[''],
-      totalPersonas:[''],
-      fechaReserva: [new Date(), [Validators.required]],
+      categoria: [''],
+      superficie: [''],
+      totalPersonas: [],
+      fechaReserva: [new Date(), [Validators.required]], // Should show today's date
       horaEntrada: [this.getAvailableHour('start'), [Validators.required, this.timeValidator.bind(this)]],
       horaSalida: [this.getAvailableHour('end'), [Validators.required, this.timeValidator.bind(this)]],
       totalPago: [0, [Validators.required]],
       totalTime: [0, [Validators.required]],
-      // status: ['', [Validators.required]]
-      // uuidCancha: [{ value: this.cancha, disabled: !!this.cancha }, [Validators.required]],
-      canchasDto: new FormControl(),
-      // uuidContribuyente: [{ value: this.contribuyente, disabled: !!this.contribuyente }, [Validators.required]],
-      contribuyenteDto: new FormControl(),
-      observacion: ['Reserva de Cancha Deportiva GAMQ', [Validators.required]],
-      check: [false, [Validators.required]],
+      numeroTasa: ['#'],
+      estadoReserva: ['Pendiente'],
+      canchasDto: [''],
+      contribuyenteDto: [this.contribuyente],
+      observacion: ['Reserva de Cancha Deportiva GAMQ', [Validators.required]], // Should show this text
+      check: [, [Validators.required]],
     });
+  
+    if (this.dataField) {
+      this.selectCancha(this.dataField,undefined);
+      this.generateHorarios();
+    }
+  
     this.InvoiceForm.get('fechaReserva')?.valueChanges.subscribe(() => {
       this.generateHorarios();
     });
-
-    this.generateHorarios();
-    this.InvoiceForm.valueChanges.pipe(debounceTime(300) 
-    ).subscribe(() => {
-        const { horaEntrada, horaSalida } = this.InvoiceForm.controls;
-        if (horaEntrada.valid && horaSalida.valid) {
-          this.calculateTotalTimeAndPago();
-        }
+  
+    this.InvoiceForm.valueChanges.pipe(debounceTime(300)).subscribe(() => {
+      const { horaEntrada, horaSalida } = this.InvoiceForm.controls;
+      if (horaEntrada.valid && horaSalida.valid) {
+        this.calculateTotalTimeAndPago();
+      }
+    });
+    this.InvoiceForm.get('totalPersonas')?.valueChanges.subscribe(() => {
+      this.calculateTotalTimeAndPago();
     });
   }
+  selectCancha(cancha: any, tarifa:any | undefined) {
+    this.dataField = cancha;
+    this.tarifa = tarifa? tarifa :cancha.tarifasDtoList[0];
+    let categoriasString = this.tarifa.categoriaDtoList
+    .map(categoria => categoria.categoriaDto.nombre).join(', ');
 
+    if(this.tarifa.categoriaDtoList[0].categoriaDto.tipo === 'Evento'){      
+      const start = this.tarifa.desde? this.tarifa.desde: ''
+      const end = this.tarifa.hasta? this.tarifa.hasta: ''
+      this.reserve(start,end,undefined)
+    
+    }else{ 
+      
+    }
+    
+    this.InvoiceForm.patchValue({
+      canchasDto: cancha,
+      superficie: cancha.superficieDto.descripcion,
+      categoria: categoriasString,
+    });
+  }
+  
+  toggleCollapse(index: number) {
+    // this.selectCancha(cancha);
+    this.isCollapsed[index] = !this.isCollapsed[index];
+  }
   calculateTotalTimeAndPago() {
-    const horaEntrada = this.InvoiceForm.get('horaEntrada')?.value;
-    const horaSalida = this.InvoiceForm.get('horaSalida')?.value;
-    // const tarifa = 0;//this.dataField.tarifasList || 0
-
-    if (horaEntrada && horaSalida) {
-      const [entradaHours, entradaMinutes] = horaEntrada.split(':').map(Number);
-      const [salidaHours, salidaMinutes] = horaSalida.split(':').map(Number);
-
-      const entradaDate = new Date();
-      entradaDate.setHours(entradaHours, entradaMinutes, 0);
-
-      const salidaDate = new Date();
-      salidaDate.setHours(salidaHours, salidaMinutes, 0);
-
-      const diffMs = salidaDate.getTime() - entradaDate.getTime();
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      const diffMinutes = Math.round((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-      const totalTime = `${this.pad(diffHours)}:${this.pad(diffMinutes)}`;
-      const totalPago = ((diffHours + diffMinutes / 60) * this.tarifa).toFixed(2);
-
+    if(this.tarifa.categoriaDtoList[0].categoriaDto.tipo === 'Evento'){
+      const totalTime = `allDay`;
+      const totalPago = this.tarifa.costo;
+      
       this.InvoiceForm.patchValue({
         totalTime,
-        totalPago
+        totalPago,
       });
+
+    }else{
+      const horaEntrada = this.InvoiceForm.get('horaEntrada')?.value;
+      const horaSalida = this.InvoiceForm.get('horaSalida')?.value;
+      if (horaEntrada && horaSalida) {
+        const [entradaHours, entradaMinutes] = horaEntrada.split(':').map(Number);
+        const [salidaHours, salidaMinutes] = horaSalida.split(':').map(Number);
+
+        const entradaDate = new Date();
+        entradaDate.setHours(entradaHours, entradaMinutes, 0);
+        const salidaDate = new Date();
+        salidaDate.setHours(salidaHours, salidaMinutes, 0);
+
+        const diffMs = salidaDate.getTime() - entradaDate.getTime();
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffMinutes = Math.round((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+        const totalTime = `${this.pad(diffHours)}:${this.pad(diffMinutes)}`;        
+    
+        if(this.tarifa.categoriaDtoList[0].categoriaDto.tipo === 'Persona'){
+          const personas = this.InvoiceForm.get('totalPersonas')?.value;
+          const totalPago = this.tarifa.costo*personas;          
+          this.InvoiceForm.patchValue({
+            totalTime,
+            totalPago,
+          });
+
+        }else{
+          const totalPago = ((diffHours + diffMinutes / 60) * this.tarifa.costo).toFixed(2);
+          this.InvoiceForm.patchValue({
+            totalTime,
+            totalPago
+          });
+        }
+      }
     }
   }
 
 
-  toggleCollapse(index: number) {
-    this.isCollapsed[index] = !this.isCollapsed[index];
-  }
 
   getAvailableHour(type:string): string {
     const now = new Date();
@@ -188,30 +232,42 @@ export class DetailsComponent implements OnInit  {
     const currentHour = now.getHours();
     const currentMinutes = now.getMinutes();
     const currentTime = `${this.pad(currentHour)}:${this.pad(currentMinutes)}`;
-
-    const horariosToday = this.horariosAtencion.filter(horario => horario.dia === currentDay && horario.activo);
-    console.log(horariosToday)
-    
-    if (type === 'start' && horariosToday.length) {
-      for (const horario of horariosToday) {
-          if (currentTime < horario.horaInicio) {
-            return horario.horaInicio;
-          }
-          if (currentTime >= horario.horaInicio && currentTime < horario.horaFin) {
-            return `${this.pad(currentHour + 1)}:00`;
-          }
+    if(this.dataField.horarioDtoList){
+      const horariosAtencion = this.dataField.horarioDtoList
+      const horariosToday = horariosAtencion.filter(horario => horario.dia === currentDay && horario.abierto);
+      console.log(horariosToday)
+      
+      if (type === 'start' && horariosToday.length) {
+        for (const horario of horariosToday) {
+            if (currentTime < horario.horaInicio) {
+              return horario.horaInicio;
+            }
+            if (currentTime >= horario.horaInicio && currentTime < horario.horaFin) {
+              return `${this.pad(currentHour + 1)}:00`;
+            }
+        }
+      } else if (type === 'end' && horariosToday.length) {
+        return horariosToday[horariosToday.length - 1].horaFin;
       }
-    } else if (type === 'end' && horariosToday.length) {
-      return horariosToday[horariosToday.length - 1].horaFin;
-    }
+  
+      return horariosToday.length > 0 ? horariosToday[0].horaInicio : horariosAtencion[0].horaInicio;
 
-    return horariosToday.length > 0 ? horariosToday[0].horaInicio : this.horariosAtencion[0].horaInicio;
+    }
+    return currentTime;
   }
   morningHorarios: string[] = [];
   afternoonHorarios: string[] = [];
   horariosToday!:any[];
 
-
+  isEvento(cancha:any):boolean{
+    const result = cancha.tarifasDtoList.every((tar:any) => tar.categoriaDtoList[0].categoriaDto.tipo === 'Evento')
+    // if(result){
+    //   const start = this.tarifa.desde? this.tarifa.desde: ''
+    //   const end = this.tarifa.hasta? this.tarifa.hasta: ''
+    //   this.reserve(start,end)
+    // }
+    return result;
+  }
 
   generateHorarios() {  const fechaReserva = this.InvoiceForm.get('fechaReserva')?.value;
 
@@ -220,8 +276,14 @@ export class DetailsComponent implements OnInit  {
     }
   
     const selectedDay = fechaReserva.toLocaleString('es-ES', { weekday: 'long' });
-    this.horariosToday = this.horariosAtencion.filter(horario => horario.dia === selectedDay && horario.activo);
-    console.log('Filtered horariosToday:', this.horariosToday);
+    const horariosAtencion = this.dataField.horarioDtoList;
+    console.log('horariosAtencion:', horariosAtencion);
+    console.log('selectedDay:', selectedDay);
+    if(horariosAtencion) {
+      this.horariosToday = horariosAtencion.filter(horario => horario.dia.toLowerCase() === selectedDay && horario.abierto);
+      console.log('Filtered horariosToday:', this.horariosToday);
+
+    }
   
     if (this.horariosToday.length === 0) {
       console.warn('No active schedules found for the selected day:', selectedDay);
@@ -245,30 +307,45 @@ export class DetailsComponent implements OnInit  {
     }
   }
 
+  reserve(start: string, end:string,cancha:any|undefined) {
+    this.InvoiceForm.patchValue({
+      horaEntrada: start,
+      horaSalida: end
+    });    
+    if(cancha){
+      this.selectCancha(cancha, undefined);
+    }
+  }
   pad(num: number): string {
     return num < 10 ? '0' + num : num.toString();
   }
 
-  reserve(start: string, end:string) {
-    this.InvoiceForm.patchValue({
-      horaEntrada: start,
-      horaSalida: end
-    });
-    
-  }
-  selectCancha(data:any) {
-    this.tarifa= 10
-    this.InvoiceForm.patchValue({
-      canchasDto:data,
-      categoria:'',
-      superficie:data.superficieDto.descripcion,
-      totalPersonas:0,
-    });
-    
-  }
+
+
+
   get form() {
     return this.InvoiceForm.controls;
   }
+
+  public openModal(content: any | undefined, accion: string) {
+    const modalRef = this.modalService.open(ModalComponent, {
+        backdrop: 'static',
+        size:''
+    });
+    modalRef.componentInstance.row = content;
+    modalRef.componentInstance.cancha = this.dataComplejo.uuid;
+    modalRef.componentInstance.contribuyente = '';
+    modalRef.componentInstance.accion = accion;
+  }
+  /**
+   * Open modal
+   * @param content modal content
+  **/
+  openScheduleModal(content: any) {
+    this.submitted = false;
+    this.modalService.open(content, { size: 'md', centered: true });
+  }
+
   map:any; 
   private initMap(lat:any,long:any) {
     if (this.map) {
@@ -277,7 +354,7 @@ export class DetailsComponent implements OnInit  {
     const main = L.tileLayer(
       "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoidGhlbWVzYnJhbmQiLCJhIjoiY2xmbmc3bTV4MGw1ejNzbnJqOWpubzhnciJ9.DNkdZVKLnQ6I9NOz7EED-w",
       {
-        maxZoom: 23,
+        maxZoom: 30,
         attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
         id: "mapbox/streets-v11",
         tileSize: 512,
@@ -287,15 +364,15 @@ export class DetailsComponent implements OnInit  {
     const field = L.circle([lat, long],
       { color: "#435fe3",
         opacity: 0.5,
-        weight: 10,
+        weight: 8,
         fillColor: "#435fe3",
         fillOpacity: 1,
-        radius: 30,
+        radius: 10,
       }
     );
     this.map = L.map('mapa', {
       center: [lat, long],
-      zoom: 16,
+      zoom: 17,
       layers: [main, field]
     });
   }
@@ -304,26 +381,6 @@ export class DetailsComponent implements OnInit  {
     const now = new Date();
     this.currentTime = now.toLocaleTimeString();
   }
-
-  public openModal(content: any | undefined, accion: string) {
-    const modalRef = this.modalService.open(ModalComponent, {
-        backdrop: 'static',
-        size:''
-    });
-    modalRef.componentInstance.row = content;
-    modalRef.componentInstance.cancha = this.dataField.uuid;
-    modalRef.componentInstance.contribuyente = '';
-    modalRef.componentInstance.accion = accion;
-  }
-  /**
-   * Open modal
-   * @param content modal content
-  **/
-  openEmployeeModal(content: any) {
-    this.submitted = false;
-    this.modalService.open(content, { size: 'md', centered: true });
-  }
-
   slickChange(event: any) {
     const swiper = document.querySelectorAll('.swiperlist')
   }
@@ -338,39 +395,6 @@ export class DetailsComponent implements OnInit  {
   }
   
     /* API Services */
-    private getCategories(){
-      this.categoriasService.getAll().subscribe({
-          next: (data: any) => {
-            if (data['status'] === 'OK') {
-              this.categoryList = data.payload;
-            }else{
-              Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
-            }
-          },
-          error: (error) => {
-            Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
-          }
-        });
-    }
-
-    canchasList:any[]=[];
-    private getFields(uuid:any){
-      this.fieldService.getByComplejo(uuid).subscribe({
-        next: (data: any) => {
-          if (data['status'] === 'OK') {
-            this.canchasList = data.payload;
-            this.canchasList.forEach((cancha, index) => {
-              if(index===0){ this.isCollapsed.push(true)
-                this.selectCancha(cancha)
-              }else{ this.isCollapsed.push(false);}
-            });
-          }
-        },
-        error: (error) => {
-          Swal.fire({ text: 'No se encontraron Canchas del Complejo', confirmButtonColor: '#299cdb', });
-        }
-      });
-    }
     saveData() {
       this.submitted = true;
       if (this.InvoiceForm.valid) {
@@ -460,14 +484,6 @@ export class DetailsComponent implements OnInit  {
   }
 
 
-    horariosList=[];
-    getHorarios(){
-      this.horariosService.getAll().subscribe({
-        next:(value:any) =>{
-            this.horariosList = value.payload
-        },
-      })
-    }
 
     
     timeValidator(control: AbstractControl): ValidationErrors | null {

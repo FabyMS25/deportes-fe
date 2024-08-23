@@ -31,29 +31,38 @@ export class ModalTarifaComponent {
 
   form!: FormGroup;
   fieldsForm!: FormArray;
-  
-
-  ngOnInit() {
-    this.fieldsForm = this.formBuilder.array([
-      this.createTarifaFormGroup()
-    ]);
-
+  ngOnInit() {    
+    this.fieldsForm = this.formBuilder.array([]);
     this.form = this.formBuilder.group({
       fieldsForm: this.fieldsForm
     });
-  }
 
-  createTarifaFormGroup(): FormGroup {
+    this.formDataSet();
+  }
+  
+  createTarifaFormGroup(tarifa: any = {}): FormGroup {
     return this.formBuilder.group({
-      costo: [0, Validators.required],
-      desde: [""],
-      hasta: [""],
-      allDay: [true],
-      descripcion: [""],
-      canchasDto:this.row,
-      categorias: [[], Validators.required],
+      uuid: [tarifa.uuid || ""],
+      costo: [tarifa.costo || 0, Validators.required],
+      desde: [tarifa.desde || ""],
+      hasta: [tarifa.hasta || ""],
+      descripcion: [tarifa.descripcion || ""],
+      categorias: [tarifa.categoriaDtoList ? tarifa.categoriaDtoList.map((cat:any) => cat.categoriaDto) : [], Validators.required],
+      // canchasDto: this.row  
     });
   }
+
+  private formDataSet() {
+    if (this.row.tarifasDtoList && this.row.tarifasDtoList.length > 0) {
+      this.row.tarifasDtoList.forEach((tarifa: any) => {
+        this.fieldsForm.push(this.createTarifaFormGroup(tarifa));
+      });
+    } else {
+      this.fieldsForm.push(this.createTarifaFormGroup());
+    }
+  }
+
+
 
   addTarifa() {
     this.fieldsForm.push(this.createTarifaFormGroup());
@@ -86,7 +95,7 @@ saveData() {
           const categorySaveObservables = control.value.categorias.map((categoria: any) => {
             const tarifaCategoriaData = {
               tarifaDto: {uuid:savedTarifa.payload.uuid},
-              categoriaDto:{uuid: categoria.uuid}  // Assuming each categoria object has a uuid property
+              categoriaDto:{uuid: categoria.uuid} 
             };
             return this.categoriesService.save(tarifaCategoriaData);
           });
@@ -146,11 +155,12 @@ saveDataNoCategory() {
     this.notify('No hay tarifas válidas para guardar', 'warning');
   }
 }
-  public closeModal() {
-    this.accion = '';
-    this.fieldsForm.enable();
-    this.modalService.dismissAll();
-    this.fieldsForm.reset();
+
+public closeModal() {
+  this.accion = '';
+  this.fieldsForm.enable();
+  this.modalService.dismissAll();
+  this.fieldsForm.reset();
 }
 private notify(message: any, type: any): void {
   let timerInterval: any;

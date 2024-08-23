@@ -6,11 +6,15 @@ export const GlobalComponent = {
     // RUAT_token : {'Authorization': `Bearer ${sessionStorage.getItem('ruatToken')}`}, 
     RUAT_token : `${sessionStorage.getItem('ruatToken')}`, 
     //Ruat Data Prueba
-    RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
-    RUAT_clave: "fIH1z30a1SpB",
-    //Ruat Data Produccion
+    apiRuatUrl: "https://verificacionjboss.ruat.gob.bo", //test
     // RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
-    // RUAT_clave: "Gam#1209",
+    // RUAT_clave: "fIH1z30a1SpB",
+
+    //Ruat Data Produccion
+    // apiRuatUrl: "https://aplicaciones.ruat.gob.bo" //Prod
+    RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
+    RUAT_clave: "Gam#1209",
+    
     RUAT_codigoUsuario: "ERODRIGUEZ2.QUI",
     RUAT_codigoAlcaldia: "QUI",
     RUAT_servicioMunicipal: "2174", //TASAS Y OTROS INGRESOS

@@ -5,11 +5,11 @@ export interface  Horario{
     uuid?: String;
     estado?:boolean;
 
-    dia: String;
+    dia: string;
     horaInicio: string; // "HH:mm:ss"
     horaFin: string; // "HH:mm:ss"
     abierto: boolean
 
-    canchasDto: campoDeportivo;
+    canchasDto?: campoDeportivo;
   }
   

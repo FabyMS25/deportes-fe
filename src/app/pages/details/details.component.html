@@ -6,192 +6,156 @@
 <div class="row px-2">
     <div class="card">
         <div class="card-header align-items-center d-flex">
-            <h4 class="mb-0 flex-grow-1 text-uppercase">{{dataField.nombre}} </h4>
-            <div class="flex-shrink-0">
+            <h4 class="mb-0 flex-grow-1 text-uppercase">{{dataComplejo.nombre}} </h4>
+            <!-- <div class="flex-shrink-0">
                 <button type="button" class="btn btn-soft-primary btn-sm" [ngxScrollTo]="'invoice_form'">
-                <!-- (click)="openModal(undefined,'')"> -->
                     Realizar Reserva
                 </button>
-            </div>
+            </div> -->
         </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-xl-7">
-                    <div class="row pt-1 mt-1 mb-2">
-                        <div class="col-lg-7 col-sm-6">
-                            <!-- <h6 class="mb-3 fw-semibold text-uppercase">Detalles de Cancha</h6> -->
-                            <div class="">
-                                <ul class="list-unstyled vstack gap-3 mb-0">
-                                    <li>
-                                        <div class="d-flex align-items-center">
-                                            <div class="flex-shrink-0">
-                                                <label class="form-label text-uppercase text-muted">Techado: </label>
-                                            </div>
-                                            <div class="flex-grow-1 ms-2 mb-2">
-                                                <p class="text-muted mb-0">{{dataField.techado}}</p>
-                                            </div>
-                                        </div>
-                                    </li>
-                                </ul>        
-                            </div>    
-                        </div>
-                        <div class="col-lg-5 col-sm-6">
-                            <h6 class="mb-3 fw-semibold text-uppercase"></h6>
-                            <div class="hstack flex-wrap gap-2 fs-15">
-                            </div>
-                        </div>
-                    </div>  
-                    
-                    <h6 class="mb-3 fw-semibold text-uppercase">Campos Deportivos del Complejo:</h6>  
-                    <div class="row pt-1 mt-1 mb-2" *ngFor="let item of canchasList; let i = index">
-                        <div class="d-flex align-items-center">
-                            <div class=" flex-grow-1 d-flex gap-3">
-                                <label class="text-muted text-uppercase fw-semibold">
-                                    Cancha:
-                                </label>
-                                <p>Superficie: {{item.superficieDto.descripcion}}</p>
-                            </div>
-                            <div *ngIf="canchasList.length>1">
-                                <div class="flex-shrink-1">
-                                    <button type="button" class="btn btn-soft-primary btn-sm" [ngxScrollTo]="'invoice_form'"
-                                    (click)="selectCancha(item)">
-                                        Reservar cancha
-                                    </button>
-                                </div>
-                                <div class="flex-shrink-0">
-                                  <button class="btn btn-light p-1 m-0" type="button" 
-                                          (click)="toggleCollapse(i)" 
-                                          [attr.aria-expanded]="isCollapsed[i]">
-                                    <i class="ri-arrow-down-s-fill"></i>
-                                  </button>                                
-                                </div>
-                            </div>
-                          </div>
-                        <div class="collapse show" [ngbCollapse]="!isCollapsed[i]">
-                            <div class="card">
-                                <div class="card-body">                                                    
-                                    <div class="row pt-1 mt-1 mb-2">
-                                        <div class="col-lg-5 col-sm-6">
-                                            <div class="p-2 border border-dashed rounded">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="avatar-sm me-2">
-                                                        <div class="avatar-title rounded bg-transparent text-secondary fs-24">
-                                                            <i class="ri-money-dollar-circle-fill"></i>
-                                                        </div>
-                                                    </div>
-                                                    <div class="flex-grow-1">
-                                                        <p class="text-muted mb-1">Tarifa por Hora:</p>
-                                                            <h5 class="mb-0">Bs. {{tarifa}}</h5>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-7 col-sm-6"> 
-                                            <h6 class="mb-3 fw-semibold text-uppercase">Categorías</h6>
-                                            <div class="hstack flex-wrap gap-2 fs-15">
-                                                @for (item of categoryList; track $index) {
-                                                    <div class="badge bg-info-subtle text-info">{{item.nombre}}</div>
-                                                }
-                                            </div>                             
-                                            <!-- <div class="p-2 border border-dashed rounded">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="avatar-sm me-2">
-                                                        <div class="avatar-title rounded bg-transparent text-secondary fs-24">
-                                                            <i class="ri-time-fill"></i>
-                                                        </div>
-                                                    </div>
-                                                    <div class="flex-grow-1">
-                                                        <p class="text-muted mb-1">Horario de Atencion:</p>
-                                                            <h5 class="mb-0"> 8:00 - 18:00</h5>
-                                                    </div>
-                                                </div>
-                                            </div> -->
-                                        </div>
-                                    </div>  
-                                    <div class="row pt-1 mt-1 mb-2">
-                                        <!-- <div class="col-xxl-6">
-                                            <div class="card-header border-0">
-                                                <h6 class="text-uppercase fw-semibold text-muted">Fecha</h6>
-                                            </div>
-                                            <div class="upcoming-scheduled">
-                                                <input type="text" class="form-control" mwlFlatpickr [altInput]="true" [convertModelValue]="true"
-                                                    [inline]="true">
-                                            </div>
-                                        </div> -->
-                                        <h6 class="mb-3 fw-semibold text-uppercase">Horarios Disponibles (Hoy)</h6>
-                                        <div class="col-lg-6 col-sm-6">
-                                            <h6>Mañana <span class="text-uppercase">(am)</span></h6>
-                                            <div *ngFor="let horario of morningHorarios" class="align-items-center d-flex">
-                                              <span class=" flex-grow-1">{{ horario }}</span>
-                                              <div class="flex-shrink-0 p-1">
-                                                <button type="button" class="btn btn-soft-primary btn-sm" [ngxScrollTo]="'invoice_form'"
-                                                    (click)="reserve(horario.split(' - ')[0], horario.split(' - ')[1])">
-                                                    Reservar
-                                                </button>
-                                              </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6 col-sm-6">
-                                          <h6>Tarde <span class="text-uppercase">(pm)</span></h6>
-                                          <div *ngFor="let horario of afternoonHorarios" class="align-items-center d-flex">
-                                            <span class=" flex-grow-1">{{ horario }}</span>
-                                            <div class="flex-shrink-0 p-1">
-                                                <button type="button" class="btn btn-soft-primary btn-sm" [ngxScrollTo]="'invoice_form'"
-                                                    (click)="reserve(horario.split(' - ')[0], horario.split(' - ')[1])">
-                                                    Reservar
-                                                </button>
-                                            </div>
-                                          </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>     
-                    <div class="row pt-1 mt-1 mb-2">
-                        <!-- <div class="col-xxl-6">
-                            <div class="card-header border-0">
-                                <h6 class="text-uppercase fw-semibold text-muted">Fecha</h6>
-                            </div>
-                            <div class="upcoming-scheduled">
-                                <input type="text" class="form-control" mwlFlatpickr [altInput]="true" [convertModelValue]="true"
-                                    [inline]="true">
-                            </div>
-                        </div> -->
-                    </div>
-          
-                </div><!-- end col -->
-            
                 <div class="col-xl-5">
+                    <h6 class="mb-3 fw-semibold text-uppercase">Detalles del Complejo:</h6> 
                     <div class="">                            
                         <div id="mapa" style="width: 100%; height: 269px;"></div>
         
                         <div class="px-2 py-2 mt-1">
                             <div class="row">
                                 <div class="col-lg-6 col-sm-6">
-                                    <p class="mb-1"><b>Latitud:</b><span class="text-muted ms-2 float-end">{{dataField.latitud}}</span></p>
+                                    <p class="mb-1"><b>Latitud:</b><span class="text-muted ms-2 float-end">{{dataComplejo.latitud}}</span></p>
                                 </div>
                                 <div class="col-lg-6 col-sm-6">
-                                    <p class="mb-1"><b>Longitud:</b><span class="text-muted ms-2 float-end">{{dataField.longitud}}</span></p>
+                                    <p class="mb-1"><b>Longitud:</b><span class="text-muted ms-2 float-end">{{dataComplejo.longitud}}</span></p>
                                 </div>
 
                             </div>
-                            <p class="mb-1"><b class="text-uppercase">Dirección:</b> <span class="text-muted ms-2">{{dataField.ubicacion}}</span></p>
-                            <p class="mb-1"><b class="text-uppercase">Distrito:</b> <span class="text-muted ms-2 float-end">{{dataField.distrito}}</span></p>
-                            <p class="mb-1"><b class="text-uppercase">Techado:</b> <span class="text-muted ms-2 float-end">{{dataField.techado}}</span></p>
+                            <p class="mb-1"><b class="text-uppercase">Dirección:</b> <span class="text-muted ms-2">{{dataComplejo.ubicacion}}</span></p>
+                            <p class="mb-1"><b class="text-uppercase">Distrito:</b> <span class="text-muted ms-2 float-end">{{dataComplejo.distrito}}</span></p>
+                            <p class="mb-1"><b class="text-uppercase">Techado:</b> <span class="text-muted ms-2 float-end">{{dataComplejo.techado}}</span></p>
                         </div>
                         
                     </div>
                 </div> 
+                <div class="col-xl-7">                    
+                    <div class="row pt-1 mt-1 mb-2" *ngIf="canchasList.length>0">
+                        <h6 class="mb-3 fw-semibold text-uppercase">Campos Deportivos Disponibles:</h6>  
+                        <div *ngFor="let item of canchasList; let i = index">
+                            <div class="d-flex align-items-center">
+                                <div class=" flex-grow-1 d-flex gap-3">
+                                    <label class="text-muted text-uppercase fw-semibold">
+                                        Cancha:
+                                    </label>
+                                    <p>{{item.superficieDto.descripcion}}</p>
+                                </div>
+                                <div *ngIf="canchasList.length>1">
+                                    <div class="flex-shrink-0">
+                                    <button class="btn btn-light p-1 m-0" type="button" 
+                                            (click)="toggleCollapse(i)" 
+                                            [attr.aria-expanded]="isCollapsed[i]">
+                                        Ver<i class="ri-arrow-down-s-fill"></i>
+                                    </button>                                
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="collapse show" [ngbCollapse]="!isCollapsed[i]">
+                                <div class="card">
+                                    <div class="card-body">   
+                                        @for (fee of item.tarifasDtoList; track $index) {                                                 
+                                        <div class="row pt-1 mt-1 mb-2">
+                                            <div class="col-lg-3 col-sm-6">
+                                                <div class="p-2 border border-dashed rounded">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm me-2">
+                                                            <div class="avatar-title rounded bg-transparent text-secondary fs-24">
+                                                                <i class="ri-money-dollar-circle-fill"></i>
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex-grow-1">
+                                                            <p class="text-muted mb-1">Tarifa por {{fee.categoriaDtoList[0].categoriaDto.tipo}}:</p>
+                                                            <h5 class="mb-0">Bs. {{fee.costo}}</h5>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-3 col-sm-6">
+                                                <div class="p-2 border border-dashed rounded">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm me-2">
+                                                            <div class="avatar-title rounded bg-transparent text-secondary fs-24">
+                                                                <i class="ri-money-dollar-circle-fill"></i>
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex-grow-1">
+                                                            <p class="text-muted mb-1">Horario:</p>
+                                                            <h5 class="mb-0">
+                                                              {{fee.desde.slice(0, 5)}} - {{fee.hasta.slice(0, 5)}}
+                                                            </h5>
+                                                        </div>                                                        
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4  col-sm-6">                                                 
+                                                <h6 class="mb-3 fw-semibold text-uppercase">Categorías</h6>
+                                                <div class="hstack flex-wrap gap-2 fs-15">
+                                                    @for (cat of fee.categoriaDtoList; track $index) {
+                                                        <div class="badge bg-info-subtle text-info">{{cat.categoriaDto.nombre}}</div>
+                                                    }
+                                                </div> 
+                                            </div>
+                                            <div class="col-lg-2 col-sm-6" *ngIf="item.tarifasDtoList.length>1 || (item.tarifasDtoList.length>0 && isEvento(item))">
+                                                <button class="btn btn-primary btn-sm" [ngxScrollTo]="'invoice_form'"
+                                                    (click)="selectCancha(item,fee)">
+                                                    Seleccionar
+                                                </button>
+                                            </div>
+                                        </div> 
+                                        }
+                                        @if (!isEvento(item)) {
+                                        <div class="row pt-1 mt-1 mb-2">
+                                            <h6 class="mb-3 fw-semibold text-uppercase">Horarios Disponibles (Hoy)</h6>
+                                            <div class="col-lg-6 col-sm-6">
+                                                <h6>Mañana <span class="text-uppercase">(am)</span></h6>
+                                                <div *ngFor="let horario of morningHorarios" class="align-items-center d-flex">
+                                                <span class=" flex-grow-1">{{ horario }}</span>
+                                                <div class="flex-shrink-0 p-1">
+                                                    <button type="button" class="btn btn-primary btn-sm" [ngxScrollTo]="'invoice_form'"
+                                                        (click)="reserve(horario.split(' - ')[0], horario.split(' - ')[1],item)">
+                                                        Reservar
+                                                    </button>
+                                                </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-6 col-sm-6">
+                                            <h6>Tarde <span class="text-uppercase">(pm)</span></h6>
+                                            <div *ngFor="let horario of afternoonHorarios" class="align-items-center d-flex">
+                                                <span class=" flex-grow-1">{{ horario }}</span>
+                                                <div class="flex-shrink-0 p-1">
+                                                    <button type="button" class="btn btn-primary btn-sm" [ngxScrollTo]="'invoice_form'"
+                                                        (click)="reserve(horario.split(' - ')[0], horario.split(' - ')[1],item)">
+                                                        Reservar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            </div>
+                                        </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>               
+                </div>            
             </div>            
         </div>
     </div>
 </div>
 
 
-<div class="row">
+<div class="row" *ngIf="canchasList.length>0">
     <div class="col-xl-9">
         <div class="card card-height-100">
+            <form (ngSubmit)="saveData()" [formGroup]="InvoiceForm" id="invoice_form">
             <div class="card-header ">
                 <div class="mini-stats-wid d-flex align-items-center">
                     <div class="flex-shrink-0 avatar-sm">
@@ -203,10 +167,12 @@
                     <div class="flex-grow-1 ms-3">
                         <h4 class="">Realizar Reserva</h4> 
                     </div>
-                    <div class="flex-shrink-0">
-                        <!-- <label for="invoicenoInput">Tasa No</label>
-                        <input type="text" class="form-control bg-light border-0" id="invoicenoInput"
-                            placeholder="Invoice No" value="#VL25000355" readonly /> -->
+                    <div class="flex-shrink-0 ms-3">
+                        <label for="numeroTasa">Tasa No</label> 
+                    </div>
+                    <div class="flex-shrink-0 ms-3">
+                        <input type="text" class="form-control bg-light border-0" id="numeroTasa"
+                          formArrayName="numeroTasa" readonly />
                     </div>
                 </div>       
             </div>
@@ -218,7 +184,7 @@
                                 <label class="text-muted text-uppercase fw-semibold">
                                     Reserva en:
                                 </label>
-                                <p>{{dataField.nombre}}</p>
+                                <p>Complejo {{dataComplejo.nombre}} / {{dataField.superficieDto.descripcion}}</p>
                             </div>
                             <div class="flex-shrink-0">
                                 <button class="btn btn-light p-1 m-0" type="button" data-bs-toggle="collapse"
@@ -239,7 +205,7 @@
                                                     <label class="form-label text-uppercase">Distrito: </label>
                                                 </div>
                                                 <div class="flex-grow-1 ms-2">
-                                                    <p class="text-muted mb-0">{{dataField.distrito}}</p>
+                                                    <p class="text-muted mb-0">{{dataComplejo.distrito}}</p>
                                                 </div>
                                             </div>
                                         </li>
@@ -249,7 +215,7 @@
                                                     <label class="form-label text-uppercase">Techado: </label>
                                                 </div>
                                                 <div class="flex-grow-1 ms-2">
-                                                    <p class="text-muted mb-0">{{dataField.techado}}</p>
+                                                    <p class="text-muted mb-0">{{dataComplejo.techado}}</p>
                                                 </div>
                                             </div>
                                         </li>
@@ -259,7 +225,7 @@
                                                     <label class="form-label text-uppercase">Superficie: </label>
                                                 </div>
                                                 <div class="flex-grow-1 ms-2">
-                                                    <p class="text-muted mb-0">{{ InvoiceForm.get('superficie')?.value }}</p>
+                                                    <p class="text-muted mb-0">{{dataField.superficieDto.descripcion}}</p>
 
                                                 </div>
                                             </div>
@@ -270,7 +236,7 @@
                                                     <label class="form-label text-uppercase">Ubicación: </label>
                                                 </div>
                                                 <div class="flex-grow-1 ms-2">
-                                                    <p class="text-muted mb-0">{{dataField.ubicacion}}</p>
+                                                    <p class="text-muted mb-0">{{dataComplejo.ubicacion}}</p>
                                                 </div>
                                             </div>
                                         </li>
@@ -344,63 +310,74 @@
                         </div>
                     </div>
                 </div>
-                <form (ngSubmit)="saveData()" [formGroup]="InvoiceForm" id="invoice_form">
-                    <div class="card-body px-4">
-                        <div class="row g-3">
-                            <!-- <div class="col-lg-4 col-sm-6">
-                                <label for="tarifa">Tarifa</label>
-                                <input type="text" class="form-control bg-light border-0" id="tarifa"
-                                    value={{dataField.totalxhora}} readonly />
+                <div class="card-body px-4">
+                    <div class="row g-3">
+                        <div class="d-flex gap-3">
+                            <label class="text-muted text-uppercase fw-semibold mt-2">
+                                Fecha:
+                            </label>
+                            <div class="input-group">
+                                <input type="text" id="fechaReserva-field" class="form-control  flatpickr flatpickr-input rounded-3" 
+                                    mwlFlatpickr [altInput]="true" altFormat="d/m/Y" [convertModelValue]="true"
+                                    placeholder="Seleccionar Fecha" readonly required formControlName="fechaReserva">                                
+                                <span class="input-group-text"><i class="ri-calendar-event-line"></i></span>
                             </div>
-                            <div class="col-lg-8 col-sm-6"> -->
-                            <div class="d-flex gap-3">
-                                <label class="text-muted text-uppercase fw-semibold mt-2">
-                                    Fecha:
-                                </label>
-                                <div class="input-group">
-                                    <input type="text" id="fechaReserva-field" class="form-control  flatpickr flatpickr-input rounded-3" mwlFlatpickr
-                                           [altInput]="true" altFormat="d/m/Y" [convertModelValue]="true"
-                                           placeholder="Seleccionar Fecha" readonly required formControlName="fechaReserva">
-                                    <span class="input-group-text"><i class="ri-calendar-event-line"></i></span>
-                                </div>
-                            </div>                            
-                            <!-- <div class="col-lg-4 col-sm-6">
+                        </div> 
+                    </div> 
+                    @if (tarifa) {
+                    @if(tarifa.categoriaDtoList[0].categoriaDto.tipo === 'Evento'){           
+                        <div class="row mt-3">    
+                            <div class="col-lg-4 col-sm-6">
                                 <div>
-                                    <label class="form-label">Hora Entrada</label>
-                                    <div class="input-group">
-                                        <input id="horaEntrada" type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'" 
-                                        formControlName="horaEntrada" class="form-control bg-light border-0 flatpickr flatpickr-input" placeholder="Hora Entrada" readonly>
-                                        <span class="input-group-text bg-light border-0 "><i class="ri-time-line"></i></span>
+                                    <label class="form-label">Categoría</label>
+                                    <input type="text" class="form-control bg-light border-0" 
+                                        id="categoria" formControlName="categoria" readonly 
+                                        placeholder="{{tarifa.categoriaDtoList[0].categoriaDto.nombre}}" />
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-sm-6">
+                                <div class="d-flex">
+                                    <div>
+                                        <label for="horaEntrada">Desde</label>
+                                        <div class="input-group">
+                                            <input class="form-control bg-light border-0 flatpickr-input" type="text" mwlFlatpickr
+                                                   [noCalendar]="true" [enableTime]="false" [dateFormat]="'H:i'"
+                                                   id="horaEntrada" formControlName="horaEntrada">
+                                            <div *ngIf="InvoiceForm.get('horaEntrada')?.errors" class="text-danger">
+                                              Horario Invalido.
+                                            </div>
+                                        </div>
                                     </div>
+                                    <div for="horaSalida">
+                                        <label for="totalPago">Hasta</label>
+                                        <div class="input-group">
+                                            <input class="form-control bg-light border-0 flatpickr-input" type="text" mwlFlatpickr
+                                                   [noCalendar]="true" [enableTime]="false" [dateFormat]="'H:i'"
+                                                   id="horaSalida" formControlName="horaSalida" readonly>
+                                            <div *ngIf="InvoiceForm.get('horaSalida')?.errors" class="text-danger">
+                                              Horario Invalido.
+                                            </div>
+                                        </div>
+                                    </div>                                    
                                 </div>
                             </div>
                             <div class="col-lg-4 col-sm-6">
                                 <div>
-                                    <label class="form-label">Hora Salida</label>
-                                    <div class="input-group">
-                                        <input id="horaSalida" type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'" 
-                                        formControlName="horaSalida" class="form-control bg-light border-0  flatpickr flatpickr-input" placeholder="Hora Salida" readonly>
-                                        <span class="input-group-text bg-light border-0 "><i class="ri-time-line"></i></span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-4 col-sm-6">
-                                <div>
-                                    <label for="totalPago">Total</label>
+                                    <label class="form-label">Costo del Evento</label>
                                     <input type="text" class="form-control bg-light border-0" id="totalPago"
-                                        placeholder="Bs. 0.00" readonly />
+                                        placeholder="Bs. 0.00"  formControlName="totalPago"
+                                        value={{tarifa.costo}}  readonly/>
                                 </div>
-                            </div> -->
+                            </div>
                         </div>
-                    </div>
-                    <div class="card-body px-4">
-                        <div class="table-responsive">
+                    }@else{
+                        <div class="table-responsive mt-3">
                             <table class="invoice-table table table-borderless table-nowrap mb-0">
                                 <thead class="align-middle">
                                     <tr class="table-active">
                                         <th scope="col">
                                             <div class="d-flex currency-select input-light align-items-center">
-                                                Tarifa
+                                                Tarifa por {{tarifa.categoriaDtoList[0].categoriaDto.tipo}}
                                                 <select class="form-select border-0 bg-light" data-choices
                                                     data-choices-search-false id="choices-payment-currency"
                                                     onchange="otherPayment()">
@@ -411,7 +388,12 @@
                                         </th>
                                         <th scope="col"><i class="ri-time-line"></i> Hora Entrada</th>
                                         <th scope="col"><i class="ri-time-line"></i> Hora Salida</th>
-                                        <th scope="col"><i class="ri-timer-line"></i> Duracion</th>
+                                        <th scope="col">
+                                             @if(tarifa.categoriaDtoList[0].categoriaDto.tipo === 'Hora'){
+                                                <i class="ri-timer-line"></i> Duración}
+                                             @if(tarifa.categoriaDtoList[0].categoriaDto.tipo === 'Persona'){
+                                                <i class="ri-group-line"></i> Personas}  
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody id="newlink">
@@ -419,7 +401,7 @@
                                         <td class="text-start">
                                             <div class="mb-2">
                                                 <input type="text" class="form-control bg-light border-0" id="tarifa"
-                                                    value={{tarifa}} readonly />
+                                                    value={{tarifa.costo}} readonly />
                                             </div>
                                         </td>
                                         <td class="text-end">
@@ -444,8 +426,13 @@
                                         </td>
                                         <td class="text-center ">
                                             <div class="mb-2">
-                                                <input class="form-control bg-light border-0" type="text"
-                                                       id="totalTime" formControlName="totalTime" readonly>
+                                                @if(tarifa.categoriaDtoList[0].categoriaDto.tipo === 'Hora'){
+                                                    <input class="form-control bg-light border-0" type="text"
+                                                    id="totalTime" formControlName="totalTime" readonly>
+                                                }@else{
+                                                    <input class="form-control bg-light border-0" type="number"
+                                                        id="totalPersonas" formControlName="totalPersonas" >
+                                                }
                                             </div>
                                         </td>
                                     </tr>
@@ -455,7 +442,8 @@
                                         <td class="d-none" colspan="5">
                                             <textarea class="form-control bg-light border-0" id="observacion" rows="3"
                                                 placeholder="Observacion" required formControlName="observacion"
-                                                [ngClass]="{ 'is-invalid': submitted && form['observacion'].errors }"></textarea></td>
+                                                [ngClass]="{ 'is-invalid': submitted && form['observacion'].errors }"></textarea>
+                                        </td>
                                     </tr>
                                     <tr class="border-top border-top-dashed mt-2">
                                         <td colspan="2"></td>
@@ -492,55 +480,55 @@
                                                         </td>
                                                     </tr>
                                                 </tbody>
-                                            </table><!--end table-->
+                                            </table>
                                         </td>
                                     </tr>
                                 </tbody>
-                            </table><!--end table-->
+                            </table>
                         </div>
-                        <div class="row mt-3">
-                            <div class="col-lg-6">
-                                <div class="">
-                                    <label for="observacion">Observaciones: </label>
-                                    <textarea class="form-control bg-light border-0" id="observacion" rows="2"
-                                        placeholder="Escribe alguna Observacion" formControlName="observacion"
-                                    ></textarea>
-                                </div>
-                            </div><!--end col-->
-                        </div><!--end row-->
-                        <div class="mt-4">
-                            <label for="exampleFormControlTextarea1"
-                                class="form-label text-muted text-uppercase fw-semibold">Terminos</label>
-                            <textarea class="form-control alert alert-info" id="exampleFormControlTextarea1"
-                                placeholder="Notes" rows="2"
-                                required> En calidad de contribuyente, y en cumplimiento a normariva vigente, declaro que los datos fueron revisados antes de su registro y asumiendo por mi parte, la responsabilidad por la exactitud de la presente declaracion 
-                            </textarea>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="check" name="check"
-                                 formControlName="check"
-                                [ngClass]="{ 'is-invalid': submitted && form['check'].errors }" />
-                            <label class="form-check-label" for="check">
-                                Acepto Todos los teminos
-                            </label>
-                            <a href="javascript:void(0);" class="text-muted text-decoration-underline">Ver Terminos</a>
-                        </div>
-                        <div class="hstack gap-2 justify-content-end d-print-none mt-4 flex-wrap">
-                            <button type="submit" class="btn btn-success">
-                                <!-- <i class="ri-printer-line align-bottom mx-1"></i> -->
-                                Generar Reserva</button>
-                            <!-- <a href="javascript:void(0);" class="btn btn-primary"><i
-                                    class="ri-download-2-line align-bottom mx-1"></i> Download Invoice</a>
-                            <a href="javascript:void(0);" class="btn btn-secondary"><i
-                                    class="ri-send-plane-fill align-bottom mx-1"></i> Send Invoice</a> -->
-                        </div>
+                    }
+                    }
+                    <div class="row mt-3">
+                        <div class="col-lg-6">
+                            <div class="">
+                                <label for="observacion">Observaciones: </label>
+                                <textarea class="form-control bg-light border-0" id="observacion" rows="2"
+                                    placeholder="Escribe alguna Observacion" formControlName="observacion"
+                                ></textarea>
+                            </div>
+                        </div><!--end col-->
+                    </div><!--end row-->
+                    <div class="mt-4">
+                        <label for="exampleFormControlTextarea1"
+                            class="form-label text-muted text-uppercase fw-semibold">Terminos</label>
+                        <textarea class="form-control alert alert-info" id="exampleFormControlTextarea1"
+                            placeholder="Notes" rows="2" disabled
+                            required> En calidad de contribuyente, y en cumplimiento a normativa vigente, declaro que los datos fueron revisados antes de su registro y asumiendo por mi parte, la responsabilidad por la exactitud de la presente declaración 
+                        </textarea>
                     </div>
-                </form>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="check" name="check"
+                             formControlName="check"
+                            [ngClass]="{ 'is-invalid': submitted && form['check'].errors }" />
+                        <label class="form-check-label" for="check">
+                            Acepto Todos los teminos
+                        </label>
+                        <a href="javascript:void(0);" class="text-muted text-decoration-underline">Ver Terminos</a>
+                    </div>
+                    <div class="hstack gap-2 justify-content-end d-print-none mt-4 flex-wrap">
+                        <button type="submit" class="btn btn-success">
+                            <i class="ri-printer-line align-bottom mx-1"></i>
+                            Generar Reserva
+                        </button>
+                    </div>
+                </div>
             </div><!-- end cardbody -->
+        </form>
         </div>
     </div>
-    <div class="col-xl-3 col-md-6 mx-auto">
-        <div class="sticky-side-div">
+    <div class="col-xl-3 col-md-12 ">
+        <div class="sticky-side-div row">
+        <div class="col-xl-12 col-md-6 ">
             <div class="card">
                 <div class="card-body text-center">
                 <div class="">
@@ -551,13 +539,24 @@
                 <h3 class="mb-1">{{ currentTime }}</h3>
                 <h5 class="fs-14">Hora Actual</h5>
                 <!-- <div class="hstack gap-2 justify-content-center">
-                    <button class="btn btn-danger btn-sm"><i class="ri-stop-circle-line align-bottom me-1"></i>
-                    Stop</button>
-                    <button class="btn btn-primary btn-sm"><i class="ri-play-circle-line align-bottom me-1"></i>
-                    Start</button>
+
                 </div> -->
                 </div>
             </div>
+        </div>
+        <div class="col-xl-12 col-md-6 ">      
+            <div class="card">
+                <div class="card-header d-flex">
+                    <h6 class="card-title mb-0 flex-grow-1">Horarios</h6>
+                    <div class="flex-shrink-0">
+                        <button type="button" class="btn btn-soft-danger btn-sm" data-bs-toggle="modal"
+                            data-bs-target="#inviteMembersModal" (click)="openScheduleModal(content)"><i
+                                class="ri-share-line align-bottom"></i> Ver Todo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-12 col-md-6 ">
             <div class="card">
                 <div class="card-header d-flex align-items-center">
                     <h6 class="card-title mb-0 flex-grow-1">Contacto(s)</h6>
@@ -592,49 +591,9 @@
                         </li>
                     </ul>
                 </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-header d-flex">
-                    <h6 class="card-title mb-0 flex-grow-1">Horarios</h6>
-                    <div class="flex-shrink-0">
-                        <button type="button" class="btn btn-soft-danger btn-sm" data-bs-toggle="modal"
-                            data-bs-target="#inviteMembersModal" (click)="openEmployeeModal(content)"><i
-                                class="ri-share-line align-bottom"></i> Ver Todo</button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive table-card">
-                        <ngx-simplebar style="max-height: 350px;">
-                            <!-- <h6 class=" fw-semibold text-uppercase">Horarios Disponibles (Hoy)</h6> -->
-                            <div class="ms-3">
-                                <h6 class="fs-14 mb-1">Mañana<span class="text-uppercase">(am)</span></h6>
-                                <div *ngFor="let horario of morningHorarios" class="align-items-center d-flex">
-                                  <span class=" flex-grow-1">{{ horario }}</span>
-                                  <div class="flex-shrink-0 p-1">
-                                    <button type="button" class="btn btn-soft-primary btn-sm" [ngxScrollTo]="'invoice_form'"
-                                        (click)="reserve(horario.split(' - ')[0], horario.split(' - ')[1])">
-                                        Seleccionar
-                                    </button>
-                                  </div>
-                                </div>
-                            </div>
-                            <div class="ms-3 mt-2">
-                              <h6 class="fs-14 mb-1">Tarde <span class="text-uppercase">(pm)</span></h6>
-                              <div *ngFor="let horario of afternoonHorarios" class="align-items-center d-flex">
-                                <span class=" flex-grow-1">{{ horario }}</span>
-                                <div class="flex-shrink-0 p-1">
-                                    <button type="button" class="btn btn-soft-primary btn-sm" [ngxScrollTo]="'invoice_form'"
-                                        (click)="reserve(horario.split(' - ')[0], horario.split(' - ')[1])">
-                                        Reservar
-                                    </button>
-                                </div>
-                              </div>
-                            </div>
-                        </ngx-simplebar>
-                    </div>
-                </div>
-            </div>
+            </div>      
+        </div>
+        <div class="col-xl-12 col-md-6 ">
             <div class="card">
                 <div class="card-body">
                 <div class="product-img-slider" dir="ltr">
@@ -658,6 +617,7 @@
                 </div>
             </div>
         </div>
+        </div>
     </div>
 </div>
 
@@ -665,131 +625,24 @@
 <ng-template #content role="document" let-modal>
     <div class="modal-content border-0">
         <div class="modal-header p-3 bg-success-subtle">
-            <h5 class="modal-title" id="inviteMembersModalLabel">Contactos</h5>
+            <h5 class="modal-title" id="inviteMembersModalLabel">Calendario</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
                 (click)="modal.dismiss('Cross click')"></button>
         </div>
         <div class="modal-body p-4">
-            <div class="search-box mb-3">
-                <input type="text" class="form-control bg-light border-light" placeholder="Search here...">
-                <i class="ri-search-line search-icon"></i>
-            </div>
-
             <div class="mb-4 d-flex align-items-center">
-                <div class="me-2">
-                    <h5 class="mb-0 fs-13">Members :</h5>
-                </div>
-                <div class="avatar-group justify-content-center">
-                    <a href="javascript: void(0);" class="avatar-group-item" ngbTooltip="Tonya Noble" placement="top"
-                        data-bs-toggle="tooltip">
-                        <div class="avatar-xs">
-                            <img src="assets/images/users/avatar-10.jpg" alt="" class="rounded-circle img-fluid">
+                <div class="row pt-1 mt-1 mb-2">
+                    <div class="col-xxl-6">
+                        <div class="card-header border-0">
+                            <h6 class="text-uppercase fw-semibold text-muted"></h6>
                         </div>
-                    </a>
-                    <a href="javascript: void(0);" class="avatar-group-item" ngbTooltip="Thomas Taylor" placement="top">
-                        <div class="avatar-xs">
-                            <img src="assets/images/users/avatar-8.jpg" alt="" class="rounded-circle img-fluid">
+                        <div class="upcoming-scheduled">
+                            <input type="text" class="form-control" mwlFlatpickr [altInput]="true" [convertModelValue]="true"
+                                [inline]="true">
                         </div>
-                    </a>
-                    <a href="javascript: void(0);" class="avatar-group-item" ngbTooltip="Nancy Martino" placement="top">
-                        <div class="avatar-xs">
-                            <img src="assets/images/users/avatar-2.jpg" alt="" class="rounded-circle img-fluid">
-                        </div>
-                    </a>
+                    </div>
                 </div>
             </div>
-            <ngx-simplebar class="mx-n4 px-4" data-simplebar style="max-height: 225px;">
-                <div class="vstack gap-3">
-                    <div class="d-flex align-items-center">
-                        <div class="avatar-xs flex-shrink-0 me-3">
-                            <img src="assets/images/users/avatar-2.jpg" alt="" class="img-fluid rounded-circle">
-                        </div>
-                        <div class="flex-grow-1">
-                            <h5 class="fs-13 mb-0"><a href="javascript:void(0);" class="text-body d-block">Nancy
-                                    Martino</a></h5>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <button type="button" class="btn btn-light btn-sm">Add</button>
-                        </div>
-                    </div>
-                    <!-- end member item -->
-                    <div class="d-flex align-items-center">
-                        <div class="avatar-xs flex-shrink-0 me-3">
-                            <div class="avatar-title bg-danger-subtle text-danger rounded-circle">
-                                HB
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h5 class="fs-13 mb-0"><a href="javascript:void(0);" class="text-body d-block">Henry
-                                    Baird</a></h5>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <button type="button" class="btn btn-light btn-sm">Add</button>
-                        </div>
-                    </div>
-                    <!-- end member item -->
-                    <div class="d-flex align-items-center">
-                        <div class="avatar-xs flex-shrink-0 me-3">
-                            <img src="assets/images/users/avatar-3.jpg" alt="" class="img-fluid rounded-circle">
-                        </div>
-                        <div class="flex-grow-1">
-                            <h5 class="fs-13 mb-0"><a href="javascript:void(0);" class="text-body d-block">Frank
-                                    Hook</a></h5>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <button type="button" class="btn btn-light btn-sm">Add</button>
-                        </div>
-                    </div>
-                    <!-- end member item -->
-                    <div class="d-flex align-items-center">
-                        <div class="avatar-xs flex-shrink-0 me-3">
-                            <img src="assets/images/users/avatar-4.jpg" alt="" class="img-fluid rounded-circle">
-                        </div>
-                        <div class="flex-grow-1">
-                            <h5 class="fs-13 mb-0"><a href="javascript:void(0);" class="text-body d-block">Jennifer
-                                    Carter</a></h5>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <button type="button" class="btn btn-light btn-sm">Add</button>
-                        </div>
-                    </div>
-                    <!-- end member item -->
-                    <div class="d-flex align-items-center">
-                        <div class="avatar-xs flex-shrink-0 me-3">
-                            <div class="avatar-title bg-success-subtle text-success rounded-circle">
-                                AC
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h5 class="fs-13 mb-0"><a href="javascript:void(0);" class="text-body d-block">Alexis
-                                    Clarke</a></h5>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <button type="button" class="btn btn-light btn-sm">Add</button>
-                        </div>
-                    </div>
-                    <!-- end member item -->
-                    <div class="d-flex align-items-center">
-                        <div class="avatar-xs flex-shrink-0 me-3">
-                            <img src="assets/images/users/avatar-7.jpg" alt="" class="img-fluid rounded-circle">
-                        </div>
-                        <div class="flex-grow-1">
-                            <h5 class="fs-13 mb-0"><a href="javascript:void(0);" class="text-body d-block">Joseph
-                                    Parker</a></h5>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <button type="button" class="btn btn-light btn-sm">Add</button>
-                        </div>
-                    </div>
-                    <!-- end member item -->
-                </div>
-                <!-- end list -->
-            </ngx-simplebar>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-light w-xs" data-bs-dismiss="modal"
-                (click)="modal.close('Close click')">Cancel</button>
-            <button type="button" class="btn btn-success w-xs">Assigned</button>
         </div>
     </div>
     <!-- end modal-content -->

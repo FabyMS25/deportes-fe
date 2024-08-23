@@ -5,6 +5,7 @@ import { HorariosService } from 'src/app/core/services/api/horarios.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { forkJoin } from 'rxjs';
+import { Horario } from 'src/app/core/models/horario.model';
 
 @Component({
   selector: 'app-modal-schedule',
@@ -18,7 +19,6 @@ export class ModalScheduleComponent {
   @Input() row!: campoDeportivo;
   @Output() listaItems = new EventEmitter();
 
-  placeholder='Seleccione una opción'
   dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'];
 
   submitted = false;
@@ -53,12 +53,30 @@ export class ModalScheduleComponent {
         canchasDto:[this.row]
       }))
     );
+    this.formDataSet();
   
     this.form = this.formBuilder.group({
       fieldsForm: this.fieldsForm
     });
   }
-
+  private formDataSet(): void {
+    if(this.row.horarioDtoList){
+      this.row.horarioDtoList.forEach((horario) => {
+        const index = this.dias.indexOf(horario.dia);
+        if (index !== -1) {
+          const control = this.fieldsForm.at(index) as FormGroup;
+          control.patchValue({
+            uuid: horario.uuid,
+            dia: horario.dia,
+            abierto: horario.abierto,
+            horaInicio: horario.horaInicio,
+            horaFin: horario.horaFin,
+            canchasDto: this.row
+          });
+        }
+      });
+    }
+  }
   
   saveData() {
     const formArray = this.form.get('fieldsForm') as FormArray;
@@ -67,7 +85,7 @@ export class ModalScheduleComponent {
     formArray.controls.forEach((abstractControl: AbstractControl) => {
       const control = abstractControl as FormGroup;
       if (control.value.abierto) {
-        const datos = {
+        const datos: Horario = {
           // uuid: control.value.uuid,
           dia: control.value.dia,
           abierto: control.value.abierto,

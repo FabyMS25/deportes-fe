@@ -10,11 +10,6 @@ export const environment = {
   apiLoginUrl: 'http://181.177.143.185:8080/api',
   backendUrl: "http://localhost:8081/api",
   // backendUrl: "http://181.177.143.185:8081/api",
-  apiRuatUrl: "https://verificacionjboss.ruat.gob.bo", //test
-  // apiRuatUrl: "https://aplicaciones.ruat.gob.bo" //Prod
-
-
-
 };
 
 /*

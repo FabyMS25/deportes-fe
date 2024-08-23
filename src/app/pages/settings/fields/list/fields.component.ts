@@ -146,6 +146,13 @@ export class FieldsComponent {
     });
   }
 
+  /**
+   * Form data get
+   */
+  get form() {
+    return this.fieldsForm.controls;
+  }
+  
   public openScheduleModal(row: campoDeportivo | undefined, accion: string, size: string) {
     const modalRef = this.modalService.open(ModalScheduleComponent, {
         backdrop: 'static',
@@ -153,9 +160,9 @@ export class FieldsComponent {
     });
     modalRef.componentInstance.row = row;
     modalRef.componentInstance.accion = accion;
-    // modalRef.componentInstance.listaItems.subscribe(() => {
-    // this.getFields();
-    // });
+    modalRef.componentInstance.listaItems.subscribe(() => {
+    this.getFields();
+    });
   }
 
   public openTarifaModal(row: campoDeportivo | undefined, accion: string, size: string) {
@@ -166,15 +173,9 @@ export class FieldsComponent {
     modalRef.componentInstance.row = row;
     modalRef.componentInstance.categoryList = this.categoryList;
     modalRef.componentInstance.accion = accion;
-    // modalRef.componentInstance.listaItems.subscribe(() => {
-    // this.getFields();
-    // });
-  }
-  /**
-   * Form data get
-   */
-  get form() {
-    return this.fieldsForm.controls;
+    modalRef.componentInstance.listaItems.subscribe(() => {
+    this.getFields();
+    });
   }
 
   //  Filter Offcanvas Set
@@ -188,8 +189,6 @@ export class FieldsComponent {
   viewDataGet(data: any) {
     this.dataSelected=data
   }
-
-
 
   /**
   * Delete model
@@ -264,35 +263,6 @@ export class FieldsComponent {
     checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
   }
 
-  // Csv File Export
-  csvFileExport() {    
-    const lista = this.canchasList.map(item => ({
-      complejo: item.complejoDto.nombre,
-      codigo: item.codigo,
-      superficie: item.superficieDto.descripcion,
-      // tipo: item.tipo,
-      categorias: "",
-      tipo: item.tipo || '',
-      costo: item.tarifaDto?.costo || '',
-      desde: item.tarifaDto?.desde || '',
-      hasta: item.tarifaDto?.hasta || '',
-      horario: item.hroariosList || ''
-    }));
-
-    var data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de Campos Deportivos',
-      useBom: true,
-      noDownload: false,
-      headers: ["Complejo", "Codigo" , "Superficie",   "Categorias","Tipo Cobro",   "Costo","Desde","Hasta",    "Lunes","Martes","Miercoles","Jueves","Viernes","Sabado","Domingo"]
-    };
-    new ngxCsv(lista, "Lista de Campos Deportivos", data);
-  }
-
 
   // Sort filter
   sortField: any;
@@ -337,5 +307,34 @@ export class FieldsComponent {
         Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb', });
       }
     });
+  }
+  
+  // Csv File Export
+  csvFileExport() {    
+    const lista = this.canchasList.map(item => ({
+      complejo: item.complejoDto.nombre,
+      codigo: item.codigo,
+      superficie: item.superficieDto.descripcion,
+      // tipo: item.tipo,
+      categorias: "",
+      tipo: item.tipo || '',
+      costo: item.tarifaDto?.costo || '',
+      desde: item.tarifaDto?.desde || '',
+      hasta: item.tarifaDto?.hasta || '',
+      horario: item.hroariosList || ''
+    }));
+
+    var data = {
+      fieldSeparator: ',',
+      quoteStrings: '"',
+      decimalseparator: '.',
+      showLabels: true,
+      showTitle: true,
+      title: 'Lista de Campos Deportivos',
+      useBom: true,
+      noDownload: false,
+      headers: ["Complejo", "Codigo" , "Superficie",   "Categorias","Tipo Cobro",   "Costo","Desde","Hasta",    "Lunes","Martes","Miercoles","Jueves","Viernes","Sabado","Domingo"]
+    };
+    new ngxCsv(lista, "Lista de Campos Deportivos", data);
   }
 }

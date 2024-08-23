@@ -48,8 +48,8 @@ export class AuthenticationService {
         private router: Router,
 
     ) {
-        this.currentUserSubject = storageService.getUser();
-        // this.currentUserSubject = storageService.getUser()
+        // this.currentUserSubject = JSON.parse(storageService.getUser())
+        this.currentUserSubject = storageService.getUser()
         this.isAuthenticated = !!storageService.getToken();
     }
 

@@ -11,6 +11,7 @@ import { PaginationService } from 'src/app/core/services/pagination.service';
 })
 export class DataTableComponent {
 
+  @Input() multiCheck: boolean = true;
   @Input() loading: boolean = true;
   @Input() listaItems!: any[];
   @Input() content!: any[];
@@ -27,13 +28,9 @@ export class DataTableComponent {
   @Output() showItemEmitter = new EventEmitter();
   @Output() editItemEmitter = new EventEmitter();
   @Output() deleteItemEmitter = new EventEmitter();
-  @Output() consultItemEmitter = new EventEmitter();
-  // @Output() mapItemEmitter = new EventEmitter();
-  // @Output() docItemEmitter = new EventEmitter();
-  
+  @Output() consultItemEmitter = new EventEmitter();  
 
   masterSelected!: boolean;
-  // allcontent: any;
 
   constructor( public service: PaginationService){}
   
@@ -47,24 +44,14 @@ export class DataTableComponent {
   public editItem(item: any) {
     this.editItemEmitter.emit(item);
   }
+  public deleteItem(item: any) {
+    this.deleteItemEmitter.emit(item);
+  }
 
   public consultItem(item: any) {
     this.consultItemEmitter.emit(item);
   }
 
-
-  public deleteItem(item: any) {
-    this.deleteItemEmitter.emit(item);
-  }
-
-  // public mapItem(item: any) {
-  //   this.mapItemEmitter.emit(item);
-  // }  
- 
-  // public docItem(item: any) {
-  //   this.docItemEmitter.emit(item);
-  // }
-  
   @Output() seleccionarItemEmitter = new EventEmitter();
   // Select Checkbox value Get
   onCheckboxChange(e: any) {
@@ -76,14 +63,14 @@ export class DataTableComponent {
         checkedVal.push(result);
       }
     }
-    this.checkedValGet = checkedVal
-    this.seleccionarItemEmitter.emit(this.checkedValGet);
+    // this.checkedValGet = checkedVal
+    this.seleccionarItemEmitter.emit(checkedVal);
     // checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
   }
-    /**
+  /**
   * Multiple Default Select
   */
-  checkedValGet: any[] = [];
+  // checkedValGet: any[] = [];
   checkUncheckAll(ev: any) {
     this.content.forEach((x: { state: any; }) => x.state = ev.target.checked)
     var checkedVal: any[] = [];
@@ -94,29 +81,27 @@ export class DataTableComponent {
         checkedVal.push(result);
       }
     }
-    this.checkedValGet = checkedVal
-    this.seleccionarItemEmitter.emit(this.checkedValGet);
+    // this.checkedValGet = checkedVal
+    this.seleccionarItemEmitter.emit(checkedVal);
     // checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
   }
 
 
-  getPropertyValue(obj: any, item: any): any {
-    const propPath:String =item.prop
-    const value = propPath.split('.').reduce((o, p) => o && o[p], obj);
-    if ( item.date) {
-        return this.formatDate(value); 
+  getPropertyValue(obj: any, prop: String): any {
+    return prop.split('.').reduce((o, p) => o && o[p], obj);
+  }    
+  public getBadgeClass(value:any) {
+    switch (value) {
+    case 'Activo' : return 'bg-success-subtle text-success';
+    case 'Bloqueado' : return 'bg-warning-subtle text-warning';
+    case 'Pagado' : return 'bg-success-subtle text-success';
+    case 'Pendiente' : return 'bg-secondary-subtle text-secondary';
+    case 'Vencido' : return 'bg-danger-subtle text-danger';
+    case 'Anulado' : return 'bg-warning-subtle text-warning';
+    default: 
+      return 'bg-info-subtle text-info';
     }
-    if(item.name==='Estado'){
-      return this.ponerEstado(value)
-    }
-    return value;
-  }
-  /* state for reclamos */
-  ponerEstado(i: boolean)
-  {
-      if (i) return "Activo";
-      else return "Bloqueado";
-  }
+ }
   formatDate(data: any): string |null{
     var date = new Date(data);
     var yyyy = date.getFullYear().toString();
@@ -126,7 +111,6 @@ export class DataTableComponent {
     var ddChars = dd.split('');
     return   (ddChars[1]?dd:"0"+ddChars[0]) + '/' + (mmChars[1]?mm:"0"+mmChars[0])  +'/'+yyyy;
   }
- 
   
   // Search Data
   searchTerm: any;
@@ -139,6 +123,7 @@ export class DataTableComponent {
     });
     this.content = this.service.changePage(this.searchResults,this.itemsPerPage)
   }
+
   /**
    * ******* to sort ******* 
    */
