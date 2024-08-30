@@ -33,31 +33,18 @@ import { ModalImportComponent } from './modal-import/modal-import.component';
  */
 export class EmployeesComponent implements OnInit {
   title='Encargados'
-  // bread crumb items
   breadCrumbItems!: Array<{}>;
-  submitted = false;
-  contentForm!: UntypedFormGroup;
-  masterSelected!: boolean;
-  checkedList: any;
-
-  userRol =UserRol;
-  // Api Data
-  econtent?: any;
-  url = GlobalComponent.API_URL;
-  allcontent: any;
-  searchTerm: any;
-
-
   
   canActivate:string[];
-  listaItems:any[]=[];
-  // userRol =UserRol;
+  itemsList:any[]=[];
+  temp: any[] = [];
+
+  submitted = false;
+
+  userRol =UserRol;
   userList:any;
   employeesList:any[]= [];//Employees;
-  temp: any[] = [];
   funcionarioSelected!:any;
-  // loading:boolean=false;
-
 
   constructor(private modalService: NgbModal,
     private authService: AuthenticationService,
@@ -72,7 +59,7 @@ export class EmployeesComponent implements OnInit {
       { label: 'Administracion' },
       { label: this.title, active: true }
     ];
-    this.listaItems = [
+    this.itemsList = [
       {name: 'Nombre', prop: 'nombre', avatar:true},
       {name: 'Complejo',prop: 'complejoDto.nombre'},
       {name: 'Telefono', prop: 'telefono'},
@@ -86,87 +73,10 @@ export class EmployeesComponent implements OnInit {
     await this.getUsers();
     await this.getEmployees();
   }
-
-  // Search Data
-  performSearch(): void {
-    this.employeesList = this.temp.filter((item: any) => {
-      return (
-        item.nombreCompleto.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.canchasDto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
-    });
-  }
-
-  /**
-   * Open modal
-   * @param content modal content
-   */
-
-  public openModal(row: any, accion: string, size: string) {
-    const modalRef = this.modalService.open(ModalEmployeeComponent, {
-        backdrop: 'static',
-        size:size
-    });
-    modalRef.componentInstance.row = row;
-    modalRef.componentInstance.accion = accion;
-    modalRef.componentInstance.listaItems.subscribe(() => {
-    this.loadData();
-    });
-  }
-
-  /**
-   * Delete model
-   */
-  deleteModal(content: any, data: any) {
-    this.checkedValGet.push(data.uuid);
-    this.modalService.open(content, { centered: true });
-  }
-  /**
-   * Multiple Delete
-   */
-  checkedValGet: any[] = [];
-  deleteMultiple(content: any) {
-    var checkboxes: any = document.getElementsByName('checkAll');
-    var result
-    var checkedVal: any[] = [];
-    for (var i = 0; i < checkboxes.length; i++) {
-      if (checkboxes[i].checked) {
-        result = checkboxes[i].value;
-        checkedVal.push(result);
-      }
-    }
-    this.checkedValGet = checkedVal;
-    if (checkedVal.length > 0) {
-      this.modalService.open(content, { centered: true });
-    }
-    else {
-      Swal.fire({ text: 'Porfavor seleccione almenos un checkbox', confirmButtonColor: '#299cdb', });
-    }
-  }
-
-  /**
-  * Form data get
-  */
-  get form() {
-    return this.contentForm.controls;
-  }
-
-  // File Upload
-  imageURL: string | undefined;
-  fileChange(event: any) {
-    let fileList: any = (event.target as HTMLInputElement);
-    let file: File = fileList.files[0];
-    document.getElementById('')
-    this.contentForm.patchValue({
-      // image_src: file.name
-      image_src: 'avatar-8.jpg'
-    });
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.imageURL = reader.result as string;
-      (document.getElementById('customer-img') as HTMLImageElement).src = this.imageURL;
-    }
-    reader.readAsDataURL(file)
+  
+  selectedItems:any[] =[];
+  getSelectedItems(items: any[]) {
+    this.selectedItems = items;
   }
 
   /**
@@ -177,8 +87,60 @@ export class EmployeesComponent implements OnInit {
     this.funcionarioSelected=data
   }
 
+  // Search Data
+  searchTerm: any;
+  performSearch(): void {
+    this.employeesList = this.temp.filter((item: any) => {
+      return (
+        item.nombreCompleto.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.canchasDto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
+      );
+    });
+  }
+
+  // Sort filter
+  sortField: any;
+  sortBy: any
+  SortFilter() {
+    this.sortField = (document.getElementById("choices-single-default") as HTMLInputElement).value;
+    console.log(this.sortField);
+    if (this.sortField[0] == 'A') {
+      this.sortBy = 'desc';
+      this.sortField = this.sortField.replace(/A/g, '')
+    }
+    if (this.sortField[0] == 'D') {
+      this.sortBy = 'asc';
+      this.sortField = this.sortField.replace(/D/g, '')
+    }
+  }
+  
+  /**
+   * Open modal
+   * @param content modal content
+   */
+  public openModal(row: any, accion: string, size: string) {
+    const modalRef = this.modalService.open(ModalEmployeeComponent, {
+        backdrop: 'static',
+        size:size
+    });
+    modalRef.componentInstance.row = row;
+    modalRef.componentInstance.accion = accion;
+    modalRef.componentInstance.itemsList.subscribe(() => {
+    this.loadData();
+    });
+  }
+
+  /**
+   * Delete model
+   */
+  deleteId!: string;
+  deleteModal(content: any, data: any) {
+    this.deleteId = data.uuid;
+    this.modalService.open(content, { centered: true });
+  }
+
   camposImport: any[] =[];
-  public abrirModalImport() {
+  public openModalImport() {
     this.camposImport = [
         {prop: 'userUuid', name: 'userUuid'},
         {prop: 'Nombre', name: 'Nombre'},
@@ -193,7 +155,7 @@ export class EmployeesComponent implements OnInit {
     });
     modalRef.componentInstance.titles = this.camposImport;
     modalRef.componentInstance.itemsList = this.employeesList;
-    modalRef.componentInstance.listaItems.subscribe(() => {
+    modalRef.componentInstance.itemsList.subscribe(() => {
         this.getEmployees();
     });
   }
@@ -211,25 +173,8 @@ export class EmployeesComponent implements OnInit {
       noDownload: false,
       headers: ["uuid", "userUuid", "Hora Entrada", "Hora Salida","Telefono","Nombre", "Estado", "Complejo", "avatar"]
     };
-    new ngxCsv(this.employeesList, "Encargados", orders);
+    new ngxCsv(this.selectedItems, "Encargados", orders);
   }
-
-
-  // Sort filter
-  sortField: any;
-  sortBy: any
-  SortFilter() {
-    this.sortField = (document.getElementById("choices-single-default") as HTMLInputElement).value;
-    if (this.sortField[0] == 'A') {
-      this.sortBy = 'desc';
-      this.sortField = this.sortField.replace(/A/g, '')
-    }
-    if (this.sortField[0] == 'D') {
-      this.sortBy = 'asc';
-      this.sortField = this.sortField.replace(/D/g, '')
-    }
-  }
-
 
   /* API Services */
   private getUsers(){
@@ -264,25 +209,24 @@ export class EmployeesComponent implements OnInit {
       document.getElementById('elmLoader')?.classList.add('d-none');
     }, 1200);
   }
-    // Delete Data
-    deleteData() {
-      this.checkedValGet.forEach(uuid => {
-        this.employeesService.delete(uuid).subscribe({
-          next: (data:any) => {
-                this.submitted = false;
-                // this.closeModal();
-                // this.notify('registro Eliminado exitosamente!','success')
-              Swal.fire({ text: 'registro Eliminado exitosamente!', confirmButtonColor: 'success' });
-           },
-          error: err => {
+  // Delete Data
+  deleteData() {
+    let uuid = this.deleteId;
+    this.employeesService.delete(uuid).subscribe({
+      next: (data:any) => {
             this.submitted = false;
-            // this.notify('No se pudo eliminar el registro!','error')
-          Swal.fire({ text: 'No se pudo eliminar el registro!', confirmButtonColor: 'success' });
-          }
-        });
-      });
-    }
-
+            // this.closeModal();
+            // this.notify('registro Eliminado exitosamente!','success')
+          Swal.fire({ text: 'registro Eliminado exitosamente!', confirmButtonColor: 'success' });
+       },
+      error: err => {
+        this.submitted = false;
+        // this.notify('No se pudo eliminar el registro!','error')
+      Swal.fire({ text: 'No se pudo eliminar el registro!', confirmButtonColor: 'success' });
+      }
+    });
+  }
+    
   private getFullName(employee: any): string {
     const user = this.userList.find((user: any) => user.uuid === employee.userUuid);
     return user ? user.designacionFuncionarioDto.personaDto.fullName : '';

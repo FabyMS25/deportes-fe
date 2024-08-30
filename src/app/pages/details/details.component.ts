@@ -119,6 +119,7 @@ export class DetailsComponent implements OnInit  {
       categoria: [''],
       superficie: [''],
       totalPersonas: [],
+      fechaCreated: [new Date()], // Should show today's date
       fechaReserva: [new Date(), [Validators.required]], // Should show today's date
       horaEntrada: [this.getAvailableHour('start'), [Validators.required, this.timeValidator.bind(this)]],
       horaSalida: [this.getAvailableHour('end'), [Validators.required, this.timeValidator.bind(this)]],
@@ -402,6 +403,7 @@ export class DetailsComponent implements OnInit  {
         let datos: Reserva = {
           numeroTasa	: "",
           estadoReserva:'Pendiente',
+          fechaCreated: this.InvoiceForm.value.fechaCreated,
           fechaReserva: this.InvoiceForm.value.fechaReserva,
           horaEntrada: this.InvoiceForm.value.horaEntrada,
           horaSalida: this.InvoiceForm.value.horaSalida,
@@ -452,8 +454,7 @@ export class DetailsComponent implements OnInit  {
       }
     });
 }
-  private registerBook(reserva:any){
-    
+  private registerBook(reserva:any){    
     let datos = {
       codigoContribuyente: reserva.contribuyenteDto.codigoContribuyente,
       // codigoClasificador: reserva.codigoClasificador,
@@ -462,8 +463,7 @@ export class DetailsComponent implements OnInit  {
       // observacion: "Reserva de Cancha Deportiva GAMQ",
       // canchasDto: reserva.canchasDto,
       // contribuyenteDto: this.contribuyente,
-    };
-    
+    };    
     
     this.ruatService.createTasa(datos).subscribe({
       next:(data:any)=>{

@@ -90,8 +90,10 @@
                                     <div class="col-lg-2">
                                         <label for="tipo-field" class="form-label">Tipo de Cobro</label>
                                         <ng-select [items]="tipoList" 
-                                                   formControlName="tipo" placeholder="Seleccionar"
-                                                   [ngClass]="{'is-invalid': submitted && tarifa.get('tipo')?.errors }">
+                                                   formControlName="tipo" 
+                                                   placeholder="Seleccionar"
+                                                   [ngClass]="{'is-invalid': submitted && tarifa.get('tipo')?.errors }"
+                                                   (change)="onTipoChange(i)">
                                         </ng-select>
                                         <div *ngIf="submitted && tarifa.get('tipo')?.errors" class="invalid-feedback" align="left">
                                           <div *ngIf="tarifa.get('tipo')?.errors?.['required']">Debe seleccionar un tipo de Cobro</div>
@@ -99,12 +101,18 @@
                                     </div>  
                                     <div class="col-lg-4">
                                         <label for="categorias-field" class="form-label">Categoria(s)</label>
-                                        <ng-select [items]="categoryList" [multiple]="true" bindLabel="nombre"
-                                                   formControlName="categorias" placeholder="Seleccione una o más"
-                                                   [ngClass]="{'is-invalid': submitted && tarifa.get('categorias')?.errors }">
+                                        <ng-select [items]="filteredCategories$ | async" 
+                                            [multiple]="true" 
+                                            bindLabel="nombre"
+                                            formControlName="categorias" 
+                                            placeholder="Seleccione una o más"
+                                            [ngClass]="{'is-invalid': submitted && tarifa.get('categorias')?.errors }"
+                                            (change)="onCategoriesChange(i)"
+                                            [disabled]="!tarifa.get('tipo')?.value">
                                         </ng-select>
                                         <div *ngIf="submitted && tarifa.get('categorias')?.errors" class="invalid-feedback" align="left">
                                           <div *ngIf="tarifa.get('categorias')?.errors?.['required']">Debe seleccionar al menos una categoría</div>
+                                          <div *ngIf="tarifa.get('categorias')?.errors?.['invalidTipo']">Las categorías seleccionadas no corresponden al tipo de cobro</div>
                                         </div>
                                     </div>
                                     <div class="col-lg-2">

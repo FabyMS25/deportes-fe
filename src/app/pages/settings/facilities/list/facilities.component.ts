@@ -30,7 +30,7 @@ export class FacilitiesComponent {
   title="Complejos Deportivos";
   breadCrumbItems!: Array<{}>;
   canActivate:string[];
-  listaItems:any[]=[];
+  itemsList:any[]=[];
   temp:any[]=[];
  
   categoryList:any[]=[]; 
@@ -38,14 +38,8 @@ export class FacilitiesComponent {
   distictList=Districts
   ceilingList=Ceiling
 
-  fieldsForm!: UntypedFormGroup;
-  CustomersData!: any;
-  masterSelected!: boolean;
-  checkedList: any;
-
-  searchTerm: any;
-
   dataSelected!:Complejo;
+
   constructor(private modalService: NgbModal,
     private complejosService: ComplejosService,
     private categoriasService: CategoriasService,
@@ -60,7 +54,7 @@ export class FacilitiesComponent {
       { label: 'Administracion' },
       { label: this.title, active: true }
     ];
-    this.listaItems = [
+    this.itemsList = [
       {name: 'Nombre', prop: 'nombre'},
       {name: 'Techado', prop: 'techado'},
       {name: 'Distrito',prop: 'distrito'}
@@ -69,33 +63,61 @@ export class FacilitiesComponent {
     this.getFacilities()
   }
 
-
-  // Search Data
-  performSearch(): void {
-    this.complejosList = this.temp.filter((item: any) => {
-      return (
-        item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
-    });
+  selectedItems:any[] =[];
+  getSelectedItems(items: any[]) {
+    this.selectedItems = items;
+  }
+  /**
+   * View Data Get
+   * @param content modal content
+   */
+  viewDataGet(data: any) {
+    this.dataSelected=data
+  }
+  
+  // Sort filter
+  sortField: any;
+  sortBy: any
+  SortFilter(event: Event) {
+    const selectedValue = (event.target as HTMLSelectElement).value;
+    console.log('Selected value:', selectedValue);
+    this.sortField = (document.getElementById("choices-single-default") as HTMLInputElement).value;
+    if (this.sortField[0] == 'D') {
+      this.sortBy = 'asc';
+      this.sortField = this.sortField.replace(/D/g, '')
+    }
   }
 
-
-  // Filtering
-  isstatus?: any
-  leads:any
-  SearchData() {
-    var date = document.getElementById("isDate") as HTMLInputElement;
-    var dateVal = date.value ? this.datePipe.transform(new Date(date.value), "yyyy-MM-dd") : '';
-
-    if (dateVal != '') {
-      this.leads = this.temp.filter((order: any) => {
-        return this.datePipe.transform(new Date(order.date), "yyyy-MM-dd") == dateVal;
+  //  Filter Offcanvas Set
+  openEnd(content: TemplateRef<any>) {
+    this.offcanvasService.open(content, { position: 'end' });
+  }
+    // Search Data
+  searchTerm: any;
+    performSearch(): void {
+      this.complejosList = this.temp.filter((item: any) => {
+        return (
+          item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
+        );
       });
     }
-    else {
-      this.leads = this.categoryList;
+    // Filtering
+    isstatus?: any
+    leads:any
+    SearchData() {
+      var date = document.getElementById("isDate") as HTMLInputElement;
+      var dateVal = date.value ? this.datePipe.transform(new Date(date.value), "yyyy-MM-dd") : '';
+  
+      if (dateVal != '') {
+        this.leads = this.temp.filter((order: any) => {
+          return this.datePipe.transform(new Date(order.date), "yyyy-MM-dd") == dateVal;
+        });
+      }
+      else {
+        this.leads = this.categoryList;
+      }
     }
-  }
+  
   /**
    * Open modal
    * @param content modal content
@@ -108,37 +130,17 @@ export class FacilitiesComponent {
     modalRef.componentInstance.row = row;
     modalRef.componentInstance.categoryList = this.categoryList;
     modalRef.componentInstance.accion = accion;
-    modalRef.componentInstance.listaItems.subscribe(() => {
+    modalRef.componentInstance.itemsList.subscribe(() => {
     this.getFacilities();
     });
-  }
+  }  
+
   /**
-   * Form data get
+   * Delete model
    */
-  get form() {
-    return this.fieldsForm.controls;
-  }
-
-  //  Filter Offcanvas Set
-  openEnd(content: TemplateRef<any>) {
-    this.offcanvasService.open(content, { position: 'end' });
-  }
-  /**
-   * View Data Get
-   * @param content modal content
-   */
-  viewDataGet(data: any) {
-    this.dataSelected=data
-  }
-
-
-
-  /**
-  * Delete model
-  */
-  deleteId: any;
-  confirm(content: any, id: any) {
-    this.deleteId = id;
+  deleteId!: string;
+  deleteModal(content: any, data: any) {
+    this.deleteId = data.uuid;
     this.modalService.open(content, { centered: true });
   }
 
@@ -150,64 +152,10 @@ export class FacilitiesComponent {
       // this.store.dispatch(deleteCompany({ id: this.checkedValGet.toString() }));
     }
     this.deleteId = '';
-    this.masterSelected = false;
-  }
-
-  /**
-   * Multiple Delete
-   */
-  checkedValGet: any[] = [];
-  deleteMultiple(content: any) {
-    var checkboxes: any = document.getElementsByName('checkAll');
-    var result
-    var checkedVal: any[] = [];
-    for (var i = 0; i < checkboxes.length; i++) {
-      if (checkboxes[i].checked) {
-        result = checkboxes[i].value;
-        checkedVal.push(result);
-      }
-    }
-    if (checkedVal.length > 0) {
-      this.modalService.open(content, { centered: true });
-    }
-    else {
-      Swal.fire({ text: 'Please select at least one checkbox', confirmButtonColor: '#299cdb', });
-    }
-    this.checkedValGet = checkedVal;
-  }
-
-  // The master checkbox will check/ uncheck all items
-  checkUncheckAll(ev: any) {
-    this.complejosList.forEach((x: { state: any; }) => x.state = ev.target.checked)
-    var checkedVal: any[] = [];
-    var result
-    for (var i = 0; i < this.complejosList.length; i++) {
-      if (this.complejosList[i].state == true) {
-        result = this.complejosList[i];
-        checkedVal.push(result);
-      }
-    }
-    this.checkedValGet = checkedVal
-    checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
-
-  }
-
-  // Select Checkbox value Get
-  onCheckboxChange(e: any) {
-    var checkedVal: any[] = [];
-    var result
-    for (var i = 0; i < this.complejosList.length; i++) {
-      if (this.complejosList[i].state == true) {
-        result = this.complejosList[i];
-        checkedVal.push(result);
-      }
-    }
-    this.checkedValGet = checkedVal
-    checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
   }
 
   camposImport: any[] =[];
-  public abrirModalImport() {
+  public openModalImport() {
     this.camposImport = [
         {prop: 'Nombre', name: 'Nombre'},
         {prop: 'Techado', name: 'Techado'},
@@ -222,7 +170,7 @@ export class FacilitiesComponent {
     });
     modalRef.componentInstance.titles = this.camposImport;
     modalRef.componentInstance.itemsList = this.complejosList;
-    modalRef.componentInstance.listaItems.subscribe(() => {
+    modalRef.componentInstance.itemsList.subscribe(() => {
         this.getFacilities();
     });
   }
@@ -243,29 +191,7 @@ export class FacilitiesComponent {
   }
 
 
-  // Sort filter
-  sortField: any;
-  sortBy: any
-  SortFilter(event: Event) {
-    const selectedValue = (event.target as HTMLSelectElement).value;
-    console.log('Selected value:', selectedValue);
-    this.sortField = (document.getElementById("choices-single-default") as HTMLInputElement).value;
-    if (this.sortField[0] == 'D') {
-      this.sortBy = 'asc';
-      this.sortField = this.sortField.replace(/D/g, '')
-    }
-  }
-
   /* API Services */
-  private getCategories(){
-    this.categoriasService.getAll().subscribe({
-        next: (data: any) => {
-          if (data['status'] === 'OK') {
-            this.categoryList = data.payload;
-          }
-        }
-      });
-  }
   loading: boolean = true;
   private getFacilities(){
     this.complejosService.getAll().subscribe({
@@ -286,5 +212,14 @@ export class FacilitiesComponent {
         Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb', });
       }
     });
+  }
+  private getCategories(){
+    this.categoriasService.getAll().subscribe({
+        next: (data: any) => {
+          if (data['status'] === 'OK') {
+            this.categoryList = data.payload;
+          }
+        }
+      });
   }
 }

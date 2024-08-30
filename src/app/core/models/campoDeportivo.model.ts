@@ -11,9 +11,9 @@ export interface campoDeportivo {
   codigo:string;
   tipo:string;
 
-  tarifasDtoList?: Tarifa[];
+  tarifasDtoList: Tarifa[];
   // canchaDeportesList?:Categoria[]; //categorias
-  horarioDtoList?:Horario[];
+  horarioDtoList:Horario[];
   
   reservasList?:any[];
   

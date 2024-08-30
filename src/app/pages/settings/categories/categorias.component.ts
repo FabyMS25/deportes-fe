@@ -26,7 +26,7 @@ export class CategoriasComponent {
   breadCrumbItems!: Array<{}>;
   title="Categorias";
   canActivate:string[];
-  listaItems:any[]=[];
+  itemsList:any[]=[];
   temp:any[]=[];
 
   categoryList:any[]=[];
@@ -51,10 +51,10 @@ export class CategoriasComponent {
       { label: this.title, active: true }
     ];
 
-    this.listaItems = [
+    this.itemsList = [
       {name: 'Codigo', prop: 'codigo'},
       {name: 'Nombre', prop: 'nombre'},
-      {name: 'Tipo Cobro', prop: 'tipo'},
+      {name: 'Tipo Cobro', prop: 'tipo', tag:true},
     ];
     
     this.contentForm = this.formBuilder.group({
@@ -64,7 +64,7 @@ export class CategoriasComponent {
       nombre: ['', [Validators.required]],
       tipo: ['']
     });
-    this.getDeportes();
+    this.getCategories();
   }
 
   get form() {
@@ -80,6 +80,10 @@ export class CategoriasComponent {
         });
   }
 
+  selectedItems:any[] =[];
+  getSelectedItems(items: any[]) {
+    this.selectedItems = items;
+  }
 
   // Search Data
   performSearch(): void {
@@ -99,7 +103,7 @@ export class CategoriasComponent {
     this.accion=accion;
     if(data){
       this.formDataSet(data);
-      if(accion==='show'){
+      if(accion ==='show'){
         this.contentForm.disable()
       }
     }
@@ -107,59 +111,49 @@ export class CategoriasComponent {
   }
   
   camposImport: any[] =[];
-  public abrirModalImport() {
+  public openModalImport() {
     this.camposImport = [
         {prop: 'Codigo', name: 'Codigo'},
         {prop: 'Tipo Cobro', name: 'Tipo Cobro'},
         {prop: 'Nombre', name: 'Nombre'},
     ];
     const modalRef = this.modalService.open(ModalImportComponent, {
-        size: 'lg',
-        backdrop: 'static'
+        size: 'lg', backdrop: 'static'
     });
     modalRef.componentInstance.titles = this.camposImport;
     modalRef.componentInstance.itemsList = this.categoryList;
-    modalRef.componentInstance.listaItems.subscribe(() => {
-        this.getDeportes();
+    modalRef.componentInstance.itemsList.subscribe(() => {
+        this.getCategories();
     });
   }
   
-  selectedItems:any[] =[];
-  getSeleccionados(items: any[]) {
-    items.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
-    this.selectedItems = items;
+  // Csv File Export
+  csvFileExport() {
+    var data = {
+      fieldSeparator: ',',
+      quoteStrings: '"',
+      decimalseparator: '.',
+      showLabels: true,
+      showTitle: true,
+      title: 'Lista de Categorias',
+      useBom: true,
+      noDownload: false,
+      headers: ["uuid", "Codigo","Tipo Cobro", "Nombre","estado"]
+    };
+    new ngxCsv(this.selectedItems, "Categorias", data);
   }
+
   /**
    * Delete model
    */
-  checkedValGet: any[] = [];
+  deleteId!: string;
   deleteModal(content: any, data: any) {
-    this.checkedValGet.push(data.uuid);
+    this.deleteId = data.uuid;
     this.modalService.open(content, { centered: true });
   }
+
   /**
-   * Multiple Delete
-   */
-  deleteMultiple(content: any) {
-    var checkboxes: any = document.getElementsByName('checkAll');
-    var result
-    var checkedVal: any[] = [];
-    for (var i = 0; i < checkboxes.length; i++) {
-      if (checkboxes[i].checked) {
-        result = checkboxes[i].value;
-        checkedVal.push(result);
-      }
-    }
-    this.checkedValGet = checkedVal;
-    if (checkedVal.length > 0) {
-      this.modalService.open(content, { centered: true });
-    }
-    else {
-      Swal.fire({ text: 'Porfavor seleccione almenos un checkbox', confirmButtonColor: '#299cdb', });
-    }
-  }
-  /**
-  * Save
+  * Save Form
   */
   saveData() {
     this.submitted = true;
@@ -183,7 +177,7 @@ export class CategoriasComponent {
 
   /* API Services */
   loading: boolean = true;
-  private getDeportes(){
+  private getCategories(){
     this.deportesService.getAll().subscribe({
         next: (data: any) => {
           this.loading = false;
@@ -227,45 +221,29 @@ export class CategoriasComponent {
   }
   // Delete Data
   deleteData() {
-    this.checkedValGet.forEach(uuid => {
-      this.deportesService.delete(uuid).subscribe({
-        next: (data:any) => {
-              this.submitted = false;
-              this.closeModal();
-              this.notify('registro Eliminado exitosamente!','success')
-         },
-        error: err => {
-          this.submitted = false;
-          this.notify('No se pudo eliminar el registro!','error')
-        }
-      });
+    let uuid = this.deleteId;
+    this.deportesService.delete(uuid).subscribe({
+      next: (data:any) => {
+            this.submitted = false;
+            this.closeModal();
+            this.notify('registro Eliminado exitosamente!','success')
+       },
+      error: err => {
+        this.submitted = false;
+        this.notify('No se pudo eliminar el registro!','error')
+      }
     });
   }
 
 
-  // Csv File Export
-  csvFileExport() {
-    var data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de Categorias',
-      useBom: true,
-      noDownload: false,
-      headers: ["uuid", "Codigo","Tipo Cobro", "Nombre","estado"]
-    };
-    new ngxCsv(this.categoryList, "Categorias", data);
-  }
-  
+  /* commun functions */  
   public closeModal() {
     // this.accion = '';
     this.modalService.dismissAll();
     this.contentForm.reset();
     this.contentForm.enable();
-    // this.listaItems.emit();
-    this.getDeportes();
+    // this.itemsList.emit();
+    this.getCategories();
   }
   private notify(message: any, type: any): void {
     let timerInterval: any;

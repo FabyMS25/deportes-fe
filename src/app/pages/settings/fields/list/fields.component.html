@@ -16,16 +16,15 @@
                     </div>
                     <div class="flex-shrink-0">
                         <div class="hstack text-nowrap gap-2" ngbDropdown>
-                            <button class="btn btn-soft-danger" id="remove-actions" style="display: none"
-                                (click)="deleteMultiple(deleteModel)"><i class="ri-delete-bin-2-line"></i></button>
                             <button type="button" class="btn btn-primary" data-bs-toggle="offcanvas"
                                 href="javascript:void(0);" (click)="openEnd(filtetcontent)"><i
                                 class="ri-filter-3-line align-bottom me-1"></i>Filtrar
                             </button>
-                            <button class="btn btn-soft-info" (click)="csvFileExport()">
+                            <button class="btn btn-soft-info" (click)="csvFileExport()"
+                                id="remove-actions" style="display: none">
                                 <i class="ri-file-download-line align-bottom me-1"></i>Exportar</button>
-                            <button class="btn btn-soft-info" (click)="abrirModalImport()">
-                                <i class="ri-file-upload-line align-bottom me-1"></i>Importar</button>                            
+                            <button class="btn btn-soft-primary" (click)="openModalImport()">
+                                <i class="ri-file-upload-line align-bottom me-1"></i>Importar</button>                          
                         </div>
                     </div>
                 </div>
@@ -54,6 +53,20 @@
                                     <option [value]=item.nombre>{{item.nombre}}</option>
                                 }
                             </select>
+                            <div class="hstack gap-2">
+                                <span class="dropdown" ngbDropdown>
+                                    <button class="btn btn-soft-info btn-icon fs-14 arrow-none d-block" type="button"
+                                        id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false"
+                                        ngbDropdownToggle>
+                                        <i class="ri-settings-4-line"></i>
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
+                                        <li><a class="dropdown-item">
+                                            <i class="ri-file-upload-line align-bottom me-1"></i>Ver</a>
+                                        </li>
+                                    </ul>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -70,7 +83,8 @@
                     [delete]="canActivate.includes('ELIMINAR')"
                     (showItemEmitter)="viewDataGet($event)"
                     (editItemEmitter)="openModal($event,'edit','lg')"
-                    (deleteItemEmitter)="deleteData($event)"              
+                    (deleteItemEmitter)="deleteData($event)" 
+                    (seleccionarItemEmitter)="getSelectedItems($event)"                        
                 >
                 </app-data-table> 
             </div>

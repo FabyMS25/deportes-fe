@@ -21,21 +21,15 @@ import { ModalImportComponent } from './modal-import/modal-import.component';
  */
 export class AreasComponent {
 
-  // bread crumb items
   breadCrumbItems!: Array<{}>;
   title="Superficies";
+  canActivate:string[];
+  itemsList:any[]=[];
+  temp:any[]=[];
+
   submitted = false;
   contentForm!: UntypedFormGroup;
-  // deporteData!: Categoria;
-  checkedList: any;
-
-  searchResults: any;
-  searchTerm: any;
-
   superficiesList:any[]=[];
-  temp:any[]=[];
-  listaItems:any[]=[];
-  canActivate:string[];
 
   constructor(private modalService: NgbModal,
     private authService: AuthenticationService,
@@ -45,17 +39,13 @@ export class AreasComponent {
   }
 
   ngOnInit(): void {
-    /**
-    * BreadCrumb
-    */
     this.breadCrumbItems = [
       { label: 'Administracion' },
       { label: this.title, active: true }
     ];
 
-    this.listaItems = [
+    this.itemsList = [
       {name: 'Descripción', prop: 'descripcion'},
-      {name: 'Canchas',prop: 'canchas'},
     ];
     this.contentForm = this.formBuilder.group({
       uuid: [''],
@@ -66,6 +56,23 @@ export class AreasComponent {
     this.getSurfaces();
   }
 
+
+  private formDataSet(row:any) {
+        this.contentForm.patchValue({
+            uuid:row.uuid,
+            descripcion: row.descripcion,
+        });
+  }
+  
+  get form() {
+    return this.contentForm.controls;
+  }
+
+  selectedItems:any[] =[];
+  getSelectedItems(items: any[]) {
+    this.selectedItems = items;
+  }
+
   /**
    * Open modal
    * @param content modal content
@@ -73,7 +80,7 @@ export class AreasComponent {
   accion='';
   openModal(data:any,content: any,accion:string) {
     this.accion=accion;
-    if (this.accion != '') {
+    if (data) {
       this.formDataSet(data);
       if(accion==='show'){
         this.contentForm.disable()
@@ -81,56 +88,78 @@ export class AreasComponent {
     }
     this.modalService.open(content, { size: 'md', centered: true });
   }
-  private formDataSet(row:any) {
-        this.contentForm.patchValue({
-            uuid:row.uuid,
-            descripcion: row.descripcion,
-        });
-  }
-  /**
-   * Form data get
-   */
-  get form() {
-    return this.contentForm.controls;
-  }
 
+  camposImport: any[] =[];
+  public openModalImport() {
+    this.camposImport = [
+        {prop: 'Descripcion', name: 'Descripcion'},
+    ];
+    const modalRef = this.modalService.open(ModalImportComponent, {
+        size: 'lg',
+        backdrop: 'static'
+    });
+    modalRef.componentInstance.titles = this.camposImport;
+    modalRef.componentInstance.itemsList = this.superficiesList;
+    modalRef.componentInstance.itemsList.subscribe(() => {
+        this.getSurfaces();
+    });
+  }
+  // Csv File Export
+  csvFileExport() {
+    var data = {
+      fieldSeparator: ',',
+      quoteStrings: '"',
+      decimalseparator: '.',
+      showLabels: true,
+      showTitle: true,
+      title: 'Lista de Superficies',
+      useBom: true,
+      noDownload: false,
+      headers: ["uuid", "Descripcion", "status"]
+    };
+    new ngxCsv(this.selectedItems, "Superficies", data);
+  }
+  
   /**
    * Delete model
    */
+  deleteId!: string;
   deleteModal(content: any, data: any) {
-    this.checkedValGet.push(data.uuid);
+    this.deleteId = data.uuid;
     this.modalService.open(content, { centered: true });
   }
-  /**
-   * Multiple Delete
-   */
-  checkedValGet: any[] = [];
-  deleteMultiple(content: any) {
-    var checkboxes: any = document.getElementsByName('checkAll');
-    var result
-    var checkedVal: any[] = [];
-    for (var i = 0; i < checkboxes.length; i++) {
-      if (checkboxes[i].checked) {
-        result = checkboxes[i].value;
-        checkedVal.push(result);
-      }
-    }
-    this.checkedValGet = checkedVal;
-    if (checkedVal.length > 0) {
-      this.modalService.open(content, { centered: true });
-    }
-    else {
-      Swal.fire({ text: 'Porfavor seleccione almenos un checkbox', confirmButtonColor: '#299cdb', });
-    }
-  }
+
 
   // Search Data
+  searchResults: any;
+  searchTerm: any;
   performSearch(): void {
     this.superficiesList = this.temp.filter((item: any) => {
       return (
         item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
+  }
+  
+  /**
+  * Save
+  */
+  saveData() {
+    this.submitted = true;
+    if (this.contentForm.valid) {
+      this.contentForm.enable()
+      let datos: Superficie = {
+        descripcion: this.contentForm.value.descripcion,
+      };
+      if (this.contentForm.get('uuid')?.value) {
+        datos.uuid=this.contentForm.value.uuid,
+          this.updateData(datos);
+      } else {
+          this.addData(datos);
+      }
+    }else {
+        this.notify('Formulario Invalido!', 'error');
+    }
   }
 
   /* API Services */
@@ -153,49 +182,28 @@ export class AreasComponent {
         }
       });
   }
-  
-  /**
-  * Save
-  */
-  saveData() {
-      this.submitted = true;
-      if (this.contentForm.valid) {
-        this.contentForm.enable()
-        let datos: Superficie = {
-          descripcion: this.contentForm.value.descripcion,
-        };
-        if (this.contentForm.get('uuid')?.value) {
-          datos.uuid=this.contentForm.value.uuid,
-            this.updateData(datos);
-        } else {
-            this.addData(datos);
-        }
-      }else {
-          this.notify('Formulario Invalido!', 'error');
-      }
-    }
       
-  addData(datos:Superficie){
+  private addData(datos:Superficie){
     this.superficiesService.save(datos).subscribe({
       next:(data:Superficie)=>{
         this.submitted=false;
         this.notify('Datos Registrados exitosamente!','success'); 
         this.closeModal();
         this.getSurfaces();
-        // this.listaItems.emit();       
+        // this.itemsList.emit();       
       },
       error: (error) => {
         this.notify('No se pudo Guardar los datos! '+error, 'error');
       }
     })
   }
-  updateData(datosUnit:Superficie) {
+  private updateData(datosUnit:Superficie) {
       this.superficiesService.update(datosUnit).subscribe({
           next: (data: Superficie) => {
             this.submitted = false;
             this.closeModal();
             this.getSurfaces();
-            // this.listaItems.emit();
+            // this.itemsList.emit();
             this.notify('Datos Actualizados exitosamente!', 'success');
           },
           error: (error) => {
@@ -203,57 +211,24 @@ export class AreasComponent {
           }
       })
   }
-
-
   // Delete Data
   deleteData() {
-    this.checkedValGet.forEach(uuid => {
-      this.superficiesService.delete(uuid).subscribe({
-        next: (data:any) => {
-              this.submitted = false;
-              this.closeModal();
-              this.notify('registro Eliminado exitosamente!','success')
-         },
-        error: err => {
-          this.submitted = false;
-          this.notify('No se pudo eliminar el registro!','error')
-        }
-      });
-    });    
-  }
-  
-  camposImport: any[] =[];
-  public abrirModalImport() {
-    this.camposImport = [
-        {prop: 'Descripcion', name: 'Descripcion'},
-    ];
-    const modalRef = this.modalService.open(ModalImportComponent, {
-        size: 'lg',
-        backdrop: 'static'
-    });
-    modalRef.componentInstance.titles = this.camposImport;
-    modalRef.componentInstance.itemsList = this.superficiesList;
-    modalRef.componentInstance.listaItems.subscribe(() => {
-        this.getSurfaces();
+    let uuid = this.deleteId;
+    this.superficiesService.delete(uuid).subscribe({
+      next: (data:any) => {
+            this.submitted = false;
+            this.closeModal();
+            this.notify('registro Eliminado exitosamente!','success')
+       },
+      error: err => {
+        this.submitted = false;
+        this.notify('No se pudo eliminar el registro!','error')
+      }
     });
   }
-  // Csv File Export
-  csvFileExport() {
-    var data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de Superficies',
-      useBom: true,
-      noDownload: false,
-      headers: ["uuid", "Descripcion", "status"]
-    };
-    new ngxCsv(this.superficiesList, "superficies", data);
-  }
+
+  /* common functions */
   public closeModal() {
-    // this.accion = '';
     this.modalService.dismissAll();
     this.contentForm.reset();
     this.contentForm.enable();

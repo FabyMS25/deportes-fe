@@ -5,8 +5,8 @@
                 <tr>
                     <th scope="col" style="width: 50px;" *ngIf="multiCheck">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="checkAll" value="option"
-                                [(ngModel)]="masterSelected" (change)="checkUncheckAll($event)">
+                            <input class="form-check-input" type="checkbox" id="checkAll" value="checkAll"
+                                [(ngModel)]="masterSelected" (change)="checkUncheckAll($event)">                            
                         </div>
                     </th>
                     @for (item of listaItems; track $index) {
@@ -14,17 +14,20 @@
                        {{item.name}}
                     </th>
                     }
-                    <th *ngIf="show || edit || delete">Acciones</th>
+                    <th *ngIf="show || edit || delete || consult">Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 @for (data of content; track $index) {
                 <tr id="c_{{data.uuid}}">                    
                     <th scope="row" *ngIf="multiCheck">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="checkAll"
+                        <div class="form-check">                            
+                            <input class="form-check-input" type="checkbox" 
+                            [checked]="checkedValGet.includes(data)" 
+                            (change)="onCheckboxChange($event, data)">
+                            <!-- <input class="form-check-input" type="checkbox" name="checkAll"
                                 value="{{data.uuid}}" [(ngModel)]="data.state"
-                                (change)="onCheckboxChange($event)">
+                                (change)="onCheckboxChange($event, data)"> -->
                         </div>
                     </th>
                     @for (item of listaItems; track $index) {
@@ -57,7 +60,7 @@
                                     <i class="ri-eye-fill align-bottom me-2 float-start"></i>
                                 </a>
                             </li>                                                        
-                            <li *ngIf="edit &&(data.estadoReserva && data.estadoReserva ==='Pendiente')"
+                            <li *ngIf="edit || (edit && data.estadoReserva && data.estadoReserva ==='Pendiente')"
                                 class="list-inline-item edit" ngbTooltip="Editar" placement="top">
                                 <a href="javascript:void(0);" data-bs-toggle="modal"
                                     class="text-primary d-inline-block edit-item-btn"
@@ -73,7 +76,7 @@
                                     <i class="ri-restart-fill fs-16"></i>
                                 </a>
                             </li>
-                            <li *ngIf="delete &&(data.estadoReserva && data.estadoReserva ==='Pendiente')" 
+                            <li *ngIf="delete || (delete && data.estadoReserva && data.estadoReserva ==='Pendiente')" 
                                 class="list-inline-item me-0" ngbTooltip="Anular" placement="top">
                                 <a class="text-danger d-inline-block remove-item-btn"
                                     data-bs-toggle="modal" data-bs-toggle="modal"

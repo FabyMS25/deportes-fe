@@ -5,7 +5,7 @@ import { Pago } from "./pago.model";
  export interface Reserva{
   uuid?: String;
   estado?:boolean;
-
+  fechaCreated:Date;
   fechaReserva: Date;
   horaEntrada:string;
   horaSalida:string;

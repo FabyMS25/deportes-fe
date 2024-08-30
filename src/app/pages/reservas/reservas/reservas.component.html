@@ -20,7 +20,7 @@
                             </button>
                             <button type="button" class="btn btn-soft-info" (click)="csvFileExport()"><i
                                     class="ri-file-download-line align-bottom me-1"></i> Exportar</button>
-                            <button class="btn btn-soft-primary" id="remove-actions" (click)="checkedMultiple(consultModel)">
+                            <button class="btn btn-soft-primary" id="remove-actions" (click)="consultModal(consultModel,undefined)">
                                 <i class="ri-restart-fill fs-16 "></i> Consultar
                             </button>
                         </div>
@@ -29,54 +29,59 @@
             </div>
             <!-- Filters -->
             <div class="card-body border border-dashed border-end-0 border-start-0">
-                <!-- <form> -->
-                <div class="row g-3">
-                    <div class="col-xxl-5 col-sm-6">
-                        <div class="search-box">
-                            <input type="text" class="form-control search" placeholder="Buscar reservas ..." [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
-                            <i class="ri-search-line search-icon"></i>
+                <form (ngSubmit)="applyFilters()">
+                    <div class="row g-3">
+                        <div class="col-xxl-5 col-sm-6">
+                            <div class="search-box">
+                                <input type="text" class="form-control search" placeholder="Buscar reservas ..." name="searchTerm"
+                                [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
+                                <i class="ri-search-line search-icon"></i>
+                            </div>
+                        </div>
+                        <div class="col-xxl-2 col-sm-6">
+                            <div>
+                                <input type="text" class="form-control" mwlFlatpickr placeholder="Fecha de Reserva" name="date"
+                                    [convertModelValue]="true"     
+                                    mode="range"                                 
+                                    [(ngModel)]="date"                                     
+                                    [altInput]="true"
+                                    [altFormat]="'F j, Y'"
+                                    dateFormat="Y-m-d">
+                            </div>
+                        </div>
+                        <div class="col-xxl-2 col-sm-4">
+                            <div>
+                                <select class="form-control" data-choices data-choices-search-false name="status" id="idStatus" 
+                                [(ngModel)]="status">
+                                    <option value="" selected>Todo</option>                                
+                                    <option value="Pendiente">Pendiente</option>
+                                    <option value="Pagado">Pagado</option>
+                                    <option value="Vencido">Vencido</option>
+                                    <option value="Anulado">Anulado</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-xxl-2 col-sm-4">
+                            <div>
+                                <select class="form-control" data-choices data-choices-search-false 
+                                        name="category" id="idCategory" [(ngModel)]="category">
+                                    <option value="" selected>Todo</option>
+                                    <option *ngFor="let category of categoryList" [value]="category.nombre">
+                                        {{category.nombre}}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-xxl-1 col-sm-4">
+                            <div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="ri-equalizer-fill mx-1 align-bottom"></i>
+                                    Filtrar
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <!--end col-->
-                    <div class="col-xxl-2 col-sm-6">
-                        <div>
-                            <input type="text" class="form-control" mwlFlatpickr [convertModelValue]="true" placeholder="Select date" [(ngModel)]="date" mode="range">
-                        </div>
-                    </div>
-                    <!--end col-->
-                    <div class="col-xxl-2 col-sm-4">
-                        <div>
-                            <select class="form-control" data-choices data-choices-search-false name="choices-single-default" id="idStatus" [(ngModel)]="status" (ngModelChange)="statusFilter()">
-                                <option value="">Estado</option>
-                                <option value="" selected>Todo</option>
-                                
-                                <option value="Pendiente">Pendiente</option>
-                                <option value="Pagado">Pagado</option>
-                            </select>
-                        </div>
-                    </div>
-                    <!--end col-->
-                    <div class="col-xxl-2 col-sm-4">
-                        <div>
-                            <select class="form-control" data-choices data-choices-search-false name="choices-single-default" id="idType" [(ngModel)]="type" (ngModelChange)="typeFilter()">
-                                <option value="">Tipo de Cobro</option>
-                                <option value="" selected>Todo</option>
-                                <option value="hora">Hora</option>
-                                <option value="Persona">Persona</option>
-                                <option value="Evento">Evento</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-xxl-1 col-sm-4">
-                        <div>
-                            <button type="button" class="btn btn-primary w-100"> <i class="ri-equalizer-fill mx-1 align-bottom"></i>
-                                Filtrar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <!--end row-->
-                <!-- </form> -->
+                </form>
             </div>
             
             <div class="card-body pt-0">
@@ -84,12 +89,12 @@
                     <ul ngbNav #nav="ngbNav" [activeId]="1" (navChange)="onNavChange($event)" class="nav nav-tabs nav-tabs-custom nav-success mb-3" role="tablist">
                         <li [ngbNavItem]="1" class="nav-item">
                             <a ngbNavLink class="nav-link All py-3" data-bs-toggle="tab" id="All" href="javascript:void(0);" role="tab" aria-selected="true">
-                                Todas las Reservas
+                                Todas las Reservas<span class="badge bg-danger align-middle ms-1">{{temp.length}}</span>
                             </a>
                         </li>
                         <li [ngbNavItem]="2" class="nav-item">
                             <a ngbNavLink class="nav-link py-3 New" data-bs-toggle="tab" id="Pendiente" href="javascript:void(0);" role="tab" aria-selected="false">
-                                Pendiente<span class="badge bg-danger align-middle ms-1">2</span>
+                                Pendiente
                             </a>
                         </li>
                         <li [ngbNavItem]="3" class="nav-item">
@@ -115,10 +120,8 @@
                         [allcontent]="reservasList"
                         [sortField]="searchTerm"
                         [show]="canActivate.includes('VER')"
-                        [edit]="canActivate.includes('ACTUALIZAR')"
+                        [consult]="canActivate.includes('ACTUALIZAR')"
                         [delete]="canActivate.includes('ANULAR')"
-                        [consult]="true"
-                        [delete]="true"
                         (showItemEmitter)="openModal($event,'show','md')"
                         (editItemEmitter)="openModal($event,'edit','md')"
                         (consultItemEmitter)="consultModal(consultModel,$event)"    
@@ -147,15 +150,46 @@
                 </div>
             </div>
             <div class="mt-4 pt-2 fs-15">
-                <h4 class="fs-20 fw-semibold">Se realizo la Consulta!</h4>
-                <p class="text-muted mb-0 mt-3 fs-13">We have sent you verification email <span class="fw-medium text-body">exampleabc.com</span>, <br> Please check it.</p>
+                <h4 class="fs-20 fw-semibold text-info ">Se realizo la Consulta!</h4>
+                
+                <ul>
+                    <li *ngFor="let result of consultResults" class="fs-14 px-5 text-start">
+                        La Reserva al complejo <b>{{result.item.canchasDto.complejoDto.nombre}}</b> con Tasa <b>{{result.item.numeroTasa}}</b> se encuentra
+                        <span class="fw-medium"> </span>,
+                        <span class="badge " [ngClass]="{
+                            'badge bg-secondary-subtle text-secondary': result.item.estadoReserva === 'Pendiente' ,
+                            'badge bg-success-subtle text-success': result.item.estadoReserva === 'Pagado' ,
+                            'badge bg-warning-subtle text-warning': result.item.estadoReserva === 'Anulado',
+                            'badge bg-danger-subtle text-danger': result.item.estadoReserva === 'Vencido' }">
+                            <strong>{{result.item.estadoReserva}}</strong>
+                        </span> <br/>
+                        <ng-container *ngIf="result.item.pagosDtoList && result.item.pagosDtoList[0] as pago; else noPayment">
+                            <div  class=" text-muted ">
+                            <b>Fecha de Pago:</b> {{pago.fechaPago | date:'dd/MM/yyyy'}}<br/>
+                            <b>Monto Pagado:</b> {{pago.montoPago}}<br/>
+                            <b>Forma de Pago:</b> {{pago.formaPago}}<br/>
+                            <b>Entidad Financiera:</b> {{pago.entidadFinanciera}}<br/>
+                            <b>Observacion:</b> {{pago.observacion}}<br/>
+                            </div>
+                        </ng-container>
+                         
+                        <ng-template #noPayment>
+                            <p [ngClass]="{
+                                'text-success': result.type === 'success' ,
+                                'text-warning': result.type === 'warning',
+                                'text-danger': result.type === 'error' }">
+                                {{result.text}}
+                            </p>
+                        </ng-template>
+                    </li>
+                </ul>
             </div>
         </div>
         <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
             <button type="button" class="swal2-confirm btn btn-primary mb-1" aria-label="" (click)="modal.dismiss('Cross click')">OK</button>
         </div>
-        <div class="swal2-footer" *ngIf="pago">
-            <p class="fs-14 text-muted">{{pago.nroTasa}}</p>
+        <div class="swal2-footer" *ngIf="consultResults.length>0">
+                <p class="fs-14 text-muted">Consultas Realizadas en RUAT</p>
         </div>
       </div>
     </div><!-- /.modal-content -->
@@ -173,18 +207,50 @@
                     colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
                 <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
                     <h4>Estas seguro de Anular la Reserva?</h4>
-                    <p class="text-muted mx-4 mb-0">
-                        Al Confirmar no podra reactivar esta reserva nuevamente.
-                    </p>
                 </div>
             </div>
-            <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
-                <button class="btn btn-link link-success fw-medium text-decoration-none" data-bs-dismiss="modal"
-                    id="deleteRecord-close" (click)="modal.close('Close click')"><i
-                        class="ri-close-line me-1 align-middle"></i> Cancelar</button>
-                <button type="button" class="btn w-sm btn-danger " id="delete-product" (click)="annularData(dataSelected)"
-                    (click)="modal.close('Close click')">Si, Anular!</button>
-            </div>
+            
+            <form #annulForm="ngForm" (ngSubmit)="annularData(annulForm.value)">
+                
+                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+                    <div>
+                        <label for="motivo">Indique el motivo de la Anulacion</label>
+                        <select class="form-control" data-choices 
+                            name="motivo" id="idCategory" [(ngModel)]="motivo" required #motivoCtrl="ngModel">
+                            <option value="">Seleccione un motivo</option>
+                            <option value="A SOLICITUD DEL CONTRIBUYENTE">A SOLICITUD DEL CONTRIBUYENTE</option>
+                            <option value="NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO">NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO</option>
+                            <option value="REGISTRO DE DATOS INCONSISTENTES">REGISTRO DE DATOS INCONSISTENTES</option>
+                        </select>
+                        <div *ngIf="motivoCtrl.invalid && motivoCtrl.touched" class="text-danger">
+                            El motivo es requerido.
+                        </div>
+                    </div>
+                
+                    <div>
+                        <label for="observation">Escriba la Observación de la Reserva</label>
+                        <input type="text" class="form-control" placeholder="minimo 10 caracteres" name="observation"
+                            [(ngModel)]="observation" required minlength="10" #observationCtrl="ngModel">
+                        <div *ngIf="observationCtrl.invalid && observationCtrl.touched" class="text-danger">
+                            <!-- <div *ngIf="observationCtrl.errors?.required">La observación es requerida.</div>
+                            <div *ngIf="observationCtrl.errors?.minlength">La observación debe tener al menos 10 caracteres.</div> -->
+                        </div>
+                    </div>
+                </div>
+                <p class="text-muted  mb-0 fs-15 mx-4 mx-sm-5">
+                    Al Confirmar no podra reactivar esta reserva nuevamente.
+                </p>                            
+                <div class="d-flex gap-2 justify-content-center mt-2 mb-2">
+                    <button class="btn btn-link link-success fw-medium text-decoration-none" data-bs-dismiss="modal"
+                        id="deleteRecord-close" (click)="modal.close('Close click')">
+                        <i class="ri-close-line me-1 align-middle"></i> Cancelar
+                    </button>                
+                    <button type="submit" class="btn w-sm btn-danger" id="delete-button" 
+                        [disabled]="annulForm.invalid" (click)="modal.close('Close click')">
+                        Anular!
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </ng-template>

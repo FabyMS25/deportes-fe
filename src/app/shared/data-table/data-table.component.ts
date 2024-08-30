@@ -30,7 +30,6 @@ export class DataTableComponent {
   @Output() deleteItemEmitter = new EventEmitter();
   @Output() consultItemEmitter = new EventEmitter();  
 
-  masterSelected!: boolean;
 
   constructor( public service: PaginationService){}
   
@@ -54,37 +53,79 @@ export class DataTableComponent {
 
   @Output() seleccionarItemEmitter = new EventEmitter();
   // Select Checkbox value Get
-  onCheckboxChange(e: any) {
-    var checkedVal: any[] = [];
-    var result
-    for (var i = 0; i < this.content.length; i++) {
-      if (this.content[i].state == true) {
-        result = this.content[i];
-        checkedVal.push(result);
-      }
+  masterSelected: boolean = false;
+  checkedValGet: any[] = [];
+
+onCheckboxChange(e: any, item: any) {
+    if (e.target.checked) {
+        this.checkedValGet.push(item);
+    } else {
+        this.checkedValGet = this.checkedValGet.filter(i => i !== item);
     }
-    // this.checkedValGet = checkedVal
-    this.seleccionarItemEmitter.emit(checkedVal);
-    // checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
-  }
+
+    // Check if all items are selected
+    if (this.checkedValGet.length === this.allcontent.length) {
+        this.masterSelected = true;
+    } else {
+        this.masterSelected = false;
+    }
+    console.log(this.checkedValGet);
+
+    this.seleccionarItemEmitter.emit(this.checkedValGet);
+    this.checkedValGet.length > 0 
+        ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block"
+        : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
+}
+
+
+
+  // onCheckboxChange(e: any, item:any) {
+    
+  //   if(this.masterSelected && !e.target.checked){
+  //     this.masterSelected = false;
+  //   }
+  //   if(e.target.checked){
+  //     this.checkedValGet.push(item);
+  //     if(this.checkedValGet.length === this.allcontent.length){
+  //       console.log("all ")
+  //       this.masterSelected = false;  
+  //       (document.getElementById("checkAll") as HTMLElement).target.checked = true;
+  //     }
+  //   }else{
+  //     for (var i = 0; i < this.checkedValGet.length; i++) {
+  //       if (this.checkedValGet[i] == item) {
+  //         this.checkedValGet.splice(i, 1);
+  //         break;
+  //       }
+  //     }
+  //   }
+  //   console.log(this.checkedValGet)
+  //   this.seleccionarItemEmitter.emit(this.checkedValGet);
+  //   this.checkedValGet.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
+  // }
   /**
   * Multiple Default Select
   */
-  // checkedValGet: any[] = [];
-  checkUncheckAll(ev: any) {
-    this.content.forEach((x: { state: any; }) => x.state = ev.target.checked)
-    var checkedVal: any[] = [];
-    var result
-    for (var i = 0; i < this.content.length; i++) {
-      if (this.content[i].state == true) {
-        result = this.content[i];
-        checkedVal.push(result);
-      }
-    }
-    // this.checkedValGet = checkedVal
-    this.seleccionarItemEmitter.emit(checkedVal);
-    // checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
+checkUncheckAll(e: any) {
+  this.masterSelected = e.target.checked;
+  if (this.masterSelected) {
+      this.checkedValGet = [...this.allcontent];
+  } else {
+      this.checkedValGet = [];
   }
+  this.seleccionarItemEmitter.emit(this.checkedValGet);
+  this.checkedValGet.length > 0 
+      ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block"
+      : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
+}
+  // checkUncheckAll(ev: any) {
+  //   this.masterSelected = ev.target.checked;
+  //   console.log(ev.target.checked);
+  //   this.allcontent.forEach((x: { state: any; }) => x.state = ev.target.checked)
+  //   this.checkedValGet = this.allcontent// checkedVal
+  //   this.seleccionarItemEmitter.emit(this.allcontent);
+  //   this.checkedValGet.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
+  // }
 
 
   getPropertyValue(obj: any, prop: String): any {

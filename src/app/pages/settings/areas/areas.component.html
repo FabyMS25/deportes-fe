@@ -4,6 +4,30 @@
 
 <div class="row">
     <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <div class="flex-grow-1">
+                        <button type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal" 
+                            (click)="openModal(undefined,content,'')">
+                            <i class="ri-add-circle-line align-middle"></i> 
+                            {{"Agregar" | translate}}
+                        </button>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <div class="hstack text-nowrap gap-2" ngbDropdown>
+                            <button class="btn btn-soft-info" (click)="csvFileExport()"
+                                id="remove-actions" style="display: none">
+                                <i class="ri-file-download-line align-bottom me-1"></i>Exportar</button>
+                            <button class="btn btn-soft-primary" (click)="openModalImport()">
+                                <i class="ri-file-upload-line align-bottom me-1"></i>Importar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-12">
         <div class="card" id="leadsList">
             <div class="card-header border-0">
 
@@ -16,14 +40,7 @@
                         </div>
                     </div>
                     <div class="col-sm-auto ms-auto">
-                        <div class="hstack gap-2">
-                            <button class="btn btn-soft-danger" id="remove-actions" style="display: none"
-                                (click)="deleteMultiple(deleteModel)"><i class="ri-delete-bin-2-line"></i></button>                            
-                            <button type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal" 
-                                (click)="openModal(undefined,content,'')">
-                                <i class="ri-add-circle-line align-middle"></i> 
-                                {{"Agregar" | translate}}
-                            </button>
+                        <div class="hstack gap-2">                           
                             <span class="dropdown" ngbDropdown>
                                 <button class="btn btn-soft-info btn-icon fs-14 arrow-none d-block" type="button"
                                     id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false"
@@ -31,9 +48,6 @@
                                     <i class="ri-settings-4-line"></i>
                                 </button>
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
-                                    <li><a class="dropdown-item"  (click)="abrirModalImport()">
-                                        <i class="ri-file-upload-line align-bottom me-1"></i>Importar</a>
-                                    </li>
                                     <li><a class="dropdown-item"  (click)="csvFileExport()">
                                         <i class="ri-file-download-line align-bottom me-1"></i>Exportar</a>
                                     </li>
@@ -46,7 +60,7 @@
             <div class="card-body">
                 <app-data-table
                     [loading]="loading"
-                    [listaItems]="listaItems"
+                    [listaItems]="itemsList"
                     [content]="superficiesList"
                     [allcontent]="superficiesList"
                     [sortField]="''"
@@ -55,19 +69,18 @@
                     [delete]="canActivate.includes('ELIMINAR')"
                     (showItemEmitter)="openModal($event,content,'show')"
                     (editItemEmitter)="openModal($event,content,'edit')"
-                    (deleteItemEmitter)="deleteModal(deleteModel,$event)"              
+                    (deleteItemEmitter)="deleteModal(deleteModel,$event)"   
+                    (seleccionarItemEmitter)="getSelectedItems($event)"              
                 >
                 </app-data-table>  
             </div>
         </div>
 
     </div>
-    <!--end col-->
 </div>
 <!--end row-->
 
-<!-- removeItemModal -->
- 
+<!-- Modals --> 
 <ng-template #content role="document" let-modal>
     <div class="modal-header bg-light p-3">
         <h5 class="modal-title" class="tablelist-form" autocomplete="off" *ngIf="accion === ''" ngbAutofocus>Agregar Superficie</h5>

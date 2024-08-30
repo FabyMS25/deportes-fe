@@ -10,6 +10,8 @@ import Swal from 'sweetalert2';
 // import { OpenStreetMapProvider, GeoSearchControl, SearchControl } from 'leaflet-geosearch';
 import * as GeoSearch from 'leaflet-geosearch';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
+import { an } from '@fullcalendar/core/internal-common';
 
 @Component({
     selector: 'app-contribuyente',
@@ -21,7 +23,8 @@ export class ContribuyenteComponent implements OnInit {
 
     breadCrumbItems!: Array<{}>;
     categoryList:any[]=[];
-    canchasList:any[]=[];
+    complexList:any[]=[];
+    fieldList:any[]=[];
     temp:any=[]
 
     map:any;
@@ -35,37 +38,35 @@ export class ContribuyenteComponent implements OnInit {
     })
  
     constructor(private router: Router,
-      private categoriasService: CategoriasService,
-      private complejoService: ComplejosService
+      private categoriesService: CategoriasService,
+      private complexService: ComplejosService,
+      private fieldService: CamposDeportivoService
     ) {}
 
     ngOnInit(): void {
-        this.breadCrumbItems = [
-            { label: 'Dashboard' },
-            { label: 'Contribuyente', active: true }
-        ];
-        this.getDeportes();
-        this.getComplejos();
-        this.setMaps();
-        // this.setMarkers();
-        // this.configDefaultMap();
-    }
-      
+      this.breadCrumbItems = [
+          { label: 'Dashboard' },
+          { label: 'Contribuyente', active: true }
+      ];
   
-    configDefaultMap(){
-      
+      this.initializeData();
+    }    
+    async initializeData() {
+      await this.getFields();      
+      await this.getCategories();  
+      await this.getComplexes();   
+      this.setMaps();              
+    }
+ 
+    configDefaultMap(){      
       
       this.map = L.map('map', {
         zoom: 13,
         center: [-17.379564334907542, -66.28315805967586],
         layers: [this.main,this.mainList]
       });
-      
+        
       this.layerControl = L.control.layers(this.baseMaps,this.overlayMaps).addTo(this.map);
-
-      this.map.on('click', (e:any) => {
-        console.log(e.latlng);
-      });
       
       const provider = new GeoSearch.OpenStreetMapProvider();
       const searchControl = new (GeoSearch.GeoSearchControl as any)({
@@ -119,50 +120,54 @@ export class ContribuyenteComponent implements OnInit {
       // this.layerControl.addBaseLayer(openTopoMap, "OpenTopoMap");
     }
     
-    mainList:any=[];
+    mainList:any;
     private setMarkers(){   
       let listFields:any[]=[]   
-      this.canchasList.forEach(element => {
-        const field = L.marker([element.latitud, element.longitud], { icon: this.icon });
-
-        const popupContent = document.createElement('div');
-        popupContent.innerHTML = `
-          <b>${element.nombre}</b><br />
-          <b>Superficie: </b>${element.superficie}<br />
-          <b>Techado: </b>${element.techado}<br />
-          <b>Ubicación: </b>${element.ubicacion}<br />
-          <br>
-          <button class="btn btn-secondary">
-            <i class="ri-edit-box-line align-bottom"></i> Realizar reserva
-          </button>
-        `;
-        const button = popupContent.querySelector('button');
-        if (button) {
-          button.addEventListener('click', () => this.handleButtonClick(element));
-        }
-        field.bindPopup(popupContent);
-        listFields.push(field);      
+      this.complexList.forEach(element => {
+        const complex = this.setPopup(element); 
+        listFields.push(complex);      
       });
       this.mainList = L.layerGroup(listFields);
-      
-      const field = L.marker([-17.387307611639038, -66.29626036201263], { icon: this.icon });
-      const stadium1 = L.marker([-17.39185128319654, -66.27510257300892],{icon:this.icon}).bindPopup("<b>Estadio de Quillacollo</b><br />I am a popup.");
-      const stadium2 = L.marker([-17.45723608999351, -66.35638454666658],{icon:this.icon}).bindPopup('Estadio de Sipe Sipe.');
-      const col1 = L.marker([-17.40778033504033, -66.28931060434014],{icon:this.icon}).bindPopup('Coliseo PoliDeportivo Quillacollo "Evo Morales"');
-      const col2 = L.marker([-17.39821984789503, -66.28245117735644],{icon:this.icon}).bindPopup('Coliseo Max Fernandez.'); 
 
-      // this.mainList = L.layerGroup([field]);
-      let stadiumsList = L.layerGroup([stadium1,stadium2]);
-      let colList = L.layerGroup([col1,col2]); 
+      let mapsByCategory:any[]=[];
+      this.categoryList.forEach(category => {       
+        const list:any[]= this.getListByCategory(category)        
+        const markers = list.map(element => {
+          const complex = this.setPopup(element);    
+            return complex
+        });
+        mapsByCategory[category.nombre] = L.layerGroup(markers);
+      });
       
       this.overlayMaps = {
         "<span style='color: blue'>Todo</span>": this.mainList,
-        "Estadios": stadiumsList,
-        "Coliseos": colList
+        ...mapsByCategory,
       };
+
       // this.layerControl.addOverlay(colList, "Coliseos");   
       (window as any).handleButtonClick = this.handleButtonClick.bind(this);
       this.configDefaultMap();
+    }
+
+    private setPopup(element:any):any{
+      const complex = L.marker([element.latitud, element.longitud], { icon: this.icon });
+      const popupContent = document.createElement('div');
+      popupContent.innerHTML = `
+        <b>${element.nombre}</b><br />
+        <b>Superficie: </b>${element.superficie}<br />
+        <b>Techado: </b>${element.techado}<br />
+        <b>Ubicación: </b>${element.ubicacion}<br />
+        <br>
+        <button class="btn btn-secondary">
+          <i class="ri-edit-box-line align-bottom"></i> Realizar reserva
+        </button>
+      `;
+      const button = popupContent.querySelector('button');
+      if (button) {
+        button.addEventListener('click', () => this.handleButtonClick(element));
+      }
+      complex.bindPopup(popupContent);
+      return complex
     }
 
     handleButtonClick(data:any):void {
@@ -170,8 +175,8 @@ export class ContribuyenteComponent implements OnInit {
     }
 
     /* API Services */
-    private getDeportes(){
-      this.categoriasService.getAll().subscribe({
+    private getCategories(){
+      this.categoriesService.getAll().subscribe({
           next: (data: any) => {
             if (data['status'] === 'OK') {
               this.categoryList = data.payload;
@@ -185,11 +190,11 @@ export class ContribuyenteComponent implements OnInit {
         });
     }
     
-    private getComplejos(){
-      this.complejoService.getAll().subscribe({
+    private getComplexes(){
+      this.complexService.getAll().subscribe({
         next: (data: any) => {
           if (data['status'] === 'OK') {
-            this.canchasList = data.payload;
+            this.complexList = data.payload;
             this.temp = data.payload;
             this.setMarkers()
           }else{
@@ -201,5 +206,42 @@ export class ContribuyenteComponent implements OnInit {
         }
       });
     }
+    private getFields(){
+      this.fieldService.getAll().subscribe({
+        next: (data: any) => {
+          if (data['status'] === 'OK') {
+            this.fieldList = data.payload;
+          }else{
+            Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
+          }
+        },
+        error: (error) => {
+          Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb', });
+        }
+      });
+    }
+
+    getListByCategory(category: any): any[] {
+      const filteredComplejos: any[] = [];
+  
+      this.fieldList.forEach((field:any) => {
+          let found = false;  
+          field.tarifasDtoList.forEach((tarifa:any) => {
+              tarifa.categoriaDtoList.forEach((item:any) => {
+                  if (item.categoriaDto.nombre === category.nombre) {
+                      found = true;
+                  }
+              });
+          });  
+          if (found) {
+              const complejo = field.complejoDto;
+              if (!filteredComplejos.some(c => c.uuid === complejo.uuid)) {
+                  filteredComplejos.push(complejo);
+              }
+          }
+      });  
+      return filteredComplejos;
+  }
+  
 
 }

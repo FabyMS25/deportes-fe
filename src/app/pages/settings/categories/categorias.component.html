@@ -4,6 +4,30 @@
 
 <div class="row">
     <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <div class="flex-grow-1">
+                        <button type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal" 
+                            (click)="openModal(undefined,content,'lg')">
+                            <i class="ri-add-circle-line align-middle"></i> 
+                            {{"Agregar" | translate}}
+                        </button>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <div class="hstack text-nowrap gap-2" ngbDropdown>
+                            <button class="btn btn-soft-info" (click)="csvFileExport()"
+                                id="remove-actions" style="display: none">
+                                <i class="ri-file-download-line align-bottom me-1"></i>Exportar</button>
+                            <button class="btn btn-soft-primary" (click)="openModalImport()">
+                                <i class="ri-file-upload-line align-bottom me-1"></i>Importar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-12">
         <div class="card" id="leadsList">
             <div class="card-header border-0">
                 <div class="row g-4 align-items-center">
@@ -16,13 +40,6 @@
                     </div>
                     <div class="col-sm-auto ms-auto">
                         <div class="hstack gap-2">
-                            <button class="btn btn-soft-danger" id="remove-actions" style="display: none"
-                                (click)="deleteMultiple(deleteModel)"><i class="ri-delete-bin-2-line"></i></button>
-                            <button type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal" 
-                                (click)="openModal(undefined,content,'')">
-                                <i class="ri-add-circle-line align-middle"></i> 
-                                {{"Agregar" | translate}}
-                            </button>
                             <span class="dropdown" ngbDropdown>
                                 <button class="btn btn-soft-info btn-icon fs-14 arrow-none d-block" type="button"
                                     id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false"
@@ -30,13 +47,12 @@
                                     <i class="ri-settings-4-line"></i>
                                 </button>
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
-                                    <li><a class="dropdown-item"  (click)="abrirModalImport()">
+                                    <li><a class="dropdown-item"  (click)="openModalImport()">
                                         <i class="ri-file-upload-line align-bottom me-1"></i>Importar</a>
                                     </li>
                                     <li><a class="dropdown-item"  (click)="csvFileExport()">
                                         <i class="ri-file-download-line align-bottom me-1"></i>Exportar</a>
                                     </li>
-                                    <!-- <li><a class="dropdown-item" href="javascript:void(0);">Copy</a></li> -->
                                 </ul>
                             </span>
                         </div>
@@ -46,7 +62,7 @@
             <div class="card-body">
                 <app-data-table
                     [loading]="loading"
-                    [listaItems]="listaItems"
+                    [listaItems]="itemsList"
                     [content]="categoryList"
                     [allcontent]="categoryList"
                     [sortField]="''"
@@ -56,92 +72,93 @@
                     (showItemEmitter)="openModal($event,content,'show')"
                     (editItemEmitter)="openModal($event,content,'edit')"
                     (deleteItemEmitter)="deleteModal(deleteModel,$event)"  
-                    (seleccionarItemEmitter)="getSeleccionados($event)"             
+                    (seleccionarItemEmitter)="getSelectedItems($event)"             
                 >
                 </app-data-table>  
-                <ng-template #content role="document" let-modal>
-                    <div class="modal-header bg-light p-3">
-                        <h5 class="modal-title" class="tablelist-form" autocomplete="off" *ngIf="accion === ''" ngbAutofocus>Agregar Categoria</h5>
-                        <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>Editar Datos Categoria</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-                            id="close-modal" (click)="closeModal()"></button>
-                    </div>
-                    <form (ngSubmit)="saveData()" [formGroup]="contentForm" class="tablelist-form" autocomplete="off">
-                        <div class="modal-body">
-                            <input type="hidden" name="uuid" formControlName="uuid" />
-                            <div class="row g-3">
-                                <div class="col-lg-12">
-                                    <div>
-                                        <label for="codigo-field" class="form-label">Código </label>
-                                        <input type="text" id="codigo-field" class="form-control"
-                                            placeholder="Ingresan el codigo del Deporte" required formControlName="codigo"
-                                            [ngClass]="{ 'is-invalid': submitted && form['codigo'].errors }" />
-                                        @if(submitted && form['codigo'].errors){
-                                        <div class="invalid-feedback" align="left">
-                                            @if(form['codigo'].errors['required']){
-                                            <div>El campo es requirido</div>
-                                            }
-                                        </div>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row g-3">
-                                <div class="col-lg-12">
-                                    <div>
-                                        <label for="nombre-field" class="form-label">Nombre</label>
-                                        <input type="text" id="nombre-field" class="form-control"
-                                            placeholder="Ingresan el Nombre del Deporte" required formControlName="nombre"
-                                            [ngClass]="{ 'is-invalid': submitted && form['nombre'].errors }" />
-                                        @if(submitted && form['nombre'].errors){
-                                        <div class="invalid-feedback" align="left">
-                                            @if(form['nombre'].errors['required']){
-                                            <div>El campo es requirido</div>
-                                            }
-                                        </div>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row g-3">
-                                <div class="col-lg-12">
-                                    <div>
-                                        <label for="tipo-field" class="form-label">Tipo de Cobro</label>
-                                        <select class="form-select" aria-label="tipo" formControlName="tipo"
-                                             [ngClass]="{'is-invalid': submitted && form['tipo'].errors }">
-                                            <option selected disabled class="text-muted">tipo de Cobro</option>
-                                            <option value="Hora">Hora</option>
-                                            <option value="Persona">Persona</option>
-                                            <option value="Evento">Evento</option>
-                                        </select>
-                                        @if(submitted && form['tipo'].errors){
-                                        <div class="invalid-feedback" align="left">
-                                            @if(form['tipo'].errors['required']){
-                                            <div>El campo es requirido</div>
-                                            }
-                                        </div>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                            <!--end row-->
-                        </div>
-                        <div class="modal-footer">
-                            <div class="hstack gap-2 justify-content-end">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal"
-                                    (click)="closeModal()">Cerrar</button>
-                                <button type="submit" class="btn btn-primary" id="add-btn">Agregar</button>
-                            </div>
-                        </div>
-                    </form>
-                </ng-template>
             </div>
         </div>
     </div>
 </div>
 <!--end row-->
 
-<!-- removeItemModal -->
+<!-- Modals -->
+<ng-template #content role="document" let-modal>
+    <div class="modal-header bg-light p-3">
+        <h5 class="modal-title" class="tablelist-form" autocomplete="off" *ngIf="accion === ''" ngbAutofocus>Agregar Categoria</h5>
+        <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>Editar Datos Categoria</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+            id="close-modal" (click)="closeModal()"></button>
+    </div>
+    <form (ngSubmit)="saveData()" [formGroup]="contentForm" class="tablelist-form" autocomplete="off">
+        <div class="modal-body">
+            <input type="hidden" name="uuid" formControlName="uuid" />
+            <div class="row g-3">
+                <div class="col-lg-12">
+                    <div>
+                        <label for="codigo-field" class="form-label">Código </label>
+                        <input type="text" id="codigo-field" class="form-control"
+                            placeholder="Ingresan el codigo del Deporte" required formControlName="codigo"
+                            [ngClass]="{ 'is-invalid': submitted && form['codigo'].errors }" />
+                        @if(submitted && form['codigo'].errors){
+                        <div class="invalid-feedback" align="left">
+                            @if(form['codigo'].errors['required']){
+                            <div>El campo es requirido</div>
+                            }
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-lg-12">
+                    <div>
+                        <label for="nombre-field" class="form-label">Nombre</label>
+                        <input type="text" id="nombre-field" class="form-control"
+                            placeholder="Ingresan el Nombre del Deporte" required formControlName="nombre"
+                            [ngClass]="{ 'is-invalid': submitted && form['nombre'].errors }" />
+                        @if(submitted && form['nombre'].errors){
+                        <div class="invalid-feedback" align="left">
+                            @if(form['nombre'].errors['required']){
+                            <div>El campo es requirido</div>
+                            }
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-lg-12">
+                    <div>
+                        <label for="tipo-field" class="form-label">Tipo de Cobro</label>
+                        <select class="form-select" aria-label="tipo" formControlName="tipo"
+                             [ngClass]="{'is-invalid': submitted && form['tipo'].errors }">
+                            <option selected disabled class="text-muted">tipo de Cobro</option>
+                            <option value="Hora">Hora</option>
+                            <option value="Persona">Persona</option>
+                            <option value="Evento">Evento</option>
+                        </select>
+                        @if(submitted && form['tipo'].errors){
+                        <div class="invalid-feedback" align="left">
+                            @if(form['tipo'].errors['required']){
+                            <div>El campo es requirido</div>
+                            }
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <!--end row-->
+        </div>
+        <div class="modal-footer">
+            <div class="hstack gap-2 justify-content-end">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                    (click)="closeModal()">Cerrar</button>
+                <button type="submit" class="btn btn-primary" id="add-btn">Agregar</button>
+            </div>
+        </div>
+    </form>
+</ng-template>
+
 <ng-template #deleteModel let-modal>
     <div class="modal-content">
         <div class="modal-header">

@@ -65,13 +65,22 @@ export class FieldsComponent {
       {name: 'Superficie',prop: 'superficieDto.descripcion'},
       {name: 'Tipo Cobro', prop: 'tipo'},
     ];
-    /**
-     * fetches data
-     */
     this.getCategories();
     this.getFields()
   }
 
+  selectedItems:any[] =[];
+  getSelectedItems(items: any[]) {
+    this.selectedItems = items;
+  }
+  
+  /**
+   * View Data Get
+   * @param content modal content
+   */
+  viewDataGet(data: any) {
+    this.dataSelected=data
+  }
 
   // Search Data
   performSearch(): void {
@@ -81,7 +90,6 @@ export class FieldsComponent {
       );
     });
   }
-
 
   // Filtering
   isstatus?: any
@@ -99,6 +107,24 @@ export class FieldsComponent {
       this.leads = this.categoryList;
     }
   }
+   // Sort filter
+   sortField: any;
+   sortBy: any
+   SortFilter(event: Event) {
+     const selectedValue = (event.target as HTMLSelectElement).value;
+     console.log('Selected value:', selectedValue);
+     this.sortField = (document.getElementById("choices-single-default") as HTMLInputElement).value;
+     if (this.sortField[0] == 'D') {
+       this.sortBy = 'asc';
+       this.sortField = this.sortField.replace(/D/g, '')
+     }
+   }
+  
+  //  Filter Offcanvas Set
+  openEnd(content: TemplateRef<any>) {
+    this.offcanvasService.open(content, { position: 'end' });
+  }
+
   /**
    * Open modal
    * @param content modal content
@@ -117,7 +143,7 @@ export class FieldsComponent {
   }
 
   camposImport: any[] =[];
-  public abrirModalImport() {
+  public openModalImport() {
     this.camposImport = [
       {prop: 'Complejo', name: 'Complejo'},
       {prop: 'Codigo', name: 'Codigo'},
@@ -145,12 +171,34 @@ export class FieldsComponent {
         this.getFields();
     });
   }
+  
+  // Csv File Export
+  csvFileExport() {    
+    const lista = this.canchasList.map(item => ({
+      complejo: item.complejoDto.nombre,
+      codigo: item.codigo,
+      superficie: item.superficieDto.descripcion,
+      // tipo: item.tipo,
+      categorias: "",
+      tipo: item.tipo || '',
+      costo: item.tarifaDto?.costo || '',
+      desde: item.tarifaDto?.desde || '',
+      hasta: item.tarifaDto?.hasta || '',
+      horario: item.hroariosList || ''
+    }));
 
-  /**
-   * Form data get
-   */
-  get form() {
-    return this.fieldsForm.controls;
+    var data = {
+      fieldSeparator: ',',
+      quoteStrings: '"',
+      decimalseparator: '.',
+      showLabels: true,
+      showTitle: true,
+      title: 'Lista de Campos Deportivos',
+      useBom: true,
+      noDownload: false,
+      headers: ["Complejo", "Codigo" , "Superficie",   "Categorias","Tipo Cobro",   "Costo","Desde","Hasta",    "Lunes","Martes","Miercoles","Jueves","Viernes","Sabado","Domingo"]
+    };
+    new ngxCsv(lista, "Lista de Campos Deportivos", data);
   }
   
   public openScheduleModal(row: campoDeportivo | undefined, accion: string, size: string) {
@@ -178,18 +226,6 @@ export class FieldsComponent {
     });
   }
 
-  //  Filter Offcanvas Set
-  openEnd(content: TemplateRef<any>) {
-    this.offcanvasService.open(content, { position: 'end' });
-  }
-  /**
-   * View Data Get
-   * @param content modal content
-   */
-  viewDataGet(data: any) {
-    this.dataSelected=data
-  }
-
   /**
   * Delete model
   */
@@ -208,73 +244,6 @@ export class FieldsComponent {
     }
     this.deleteId = '';
     this.masterSelected = false;
-  }
-
-  /**
-   * Multiple Delete
-   */
-  checkedValGet: any[] = [];
-  deleteMultiple(content: any) {
-    var checkboxes: any = document.getElementsByName('checkAll');
-    var result
-    var checkedVal: any[] = [];
-    for (var i = 0; i < checkboxes.length; i++) {
-      if (checkboxes[i].checked) {
-        result = checkboxes[i].value;
-        checkedVal.push(result);
-      }
-    }
-    if (checkedVal.length > 0) {
-      this.modalService.open(content, { centered: true });
-    }
-    else {
-      Swal.fire({ text: 'Please select at least one checkbox', confirmButtonColor: '#299cdb', });
-    }
-    this.checkedValGet = checkedVal;
-  }
-
-  // The master checkbox will check/ uncheck all items
-  checkUncheckAll(ev: any) {
-    this.canchasList.forEach((x: { state: any; }) => x.state = ev.target.checked)
-    var checkedVal: any[] = [];
-    var result
-    for (var i = 0; i < this.canchasList.length; i++) {
-      if (this.canchasList[i].state == true) {
-        result = this.canchasList[i];
-        checkedVal.push(result);
-      }
-    }
-    this.checkedValGet = checkedVal
-    checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
-
-  }
-
-  // Select Checkbox value Get
-  onCheckboxChange(e: any) {
-    var checkedVal: any[] = [];
-    var result
-    for (var i = 0; i < this.canchasList.length; i++) {
-      if (this.canchasList[i].state == true) {
-        result = this.canchasList[i];
-        checkedVal.push(result);
-      }
-    }
-    this.checkedValGet = checkedVal
-    checkedVal.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
-  }
-
-
-  // Sort filter
-  sortField: any;
-  sortBy: any
-  SortFilter(event: Event) {
-    const selectedValue = (event.target as HTMLSelectElement).value;
-    console.log('Selected value:', selectedValue);
-    this.sortField = (document.getElementById("choices-single-default") as HTMLInputElement).value;
-    if (this.sortField[0] == 'D') {
-      this.sortBy = 'asc';
-      this.sortField = this.sortField.replace(/D/g, '')
-    }
   }
 
   /* API Services */
@@ -309,32 +278,4 @@ export class FieldsComponent {
     });
   }
   
-  // Csv File Export
-  csvFileExport() {    
-    const lista = this.canchasList.map(item => ({
-      complejo: item.complejoDto.nombre,
-      codigo: item.codigo,
-      superficie: item.superficieDto.descripcion,
-      // tipo: item.tipo,
-      categorias: "",
-      tipo: item.tipo || '',
-      costo: item.tarifaDto?.costo || '',
-      desde: item.tarifaDto?.desde || '',
-      hasta: item.tarifaDto?.hasta || '',
-      horario: item.hroariosList || ''
-    }));
-
-    var data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de Campos Deportivos',
-      useBom: true,
-      noDownload: false,
-      headers: ["Complejo", "Codigo" , "Superficie",   "Categorias","Tipo Cobro",   "Costo","Desde","Hasta",    "Lunes","Martes","Miercoles","Jueves","Viernes","Sabado","Domingo"]
-    };
-    new ngxCsv(lista, "Lista de Campos Deportivos", data);
-  }
 }
