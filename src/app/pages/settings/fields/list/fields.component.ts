@@ -3,10 +3,7 @@ import { DatePipe } from '@angular/common';
 import { NgbModal, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import {  UntypedFormGroup } from '@angular/forms';
 
-// Csv File Export
 import { ngxCsv } from 'ngx-csv/ngx-csv';
-
-// Sweet Alert
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
@@ -61,9 +58,9 @@ export class FieldsComponent {
     ];
     this.listaItems = [
       {name: 'Complejo', prop: 'complejoDto.nombre'},
-      {name: 'Codigo', prop: 'codigo'},
+      {name: 'Cancha', prop: 'codigo'},
       {name: 'Superficie',prop: 'superficieDto.descripcion'},
-      {name: 'Tipo Cobro', prop: 'tipo'},
+      {name: 'Tipo Cobro', prop: 'tipo', tag:true},
     ];
     this.getCategories();
     this.getFields()
@@ -86,7 +83,10 @@ export class FieldsComponent {
   performSearch(): void {
     this.canchasList = this.temp.filter((item: any) => {
       return (
-        item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
+        item.codigo.toLowerCase().includes(this.searchTerm.toLowerCase()) || 
+        item.topo.toLowerCase().includes(this.searchTerm.toLowerCase()) || 
+        item.superficieDto.descripcion.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.complejoDto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
   }
@@ -113,11 +113,11 @@ export class FieldsComponent {
    SortFilter(event: Event) {
      const selectedValue = (event.target as HTMLSelectElement).value;
      console.log('Selected value:', selectedValue);
-     this.sortField = (document.getElementById("choices-single-default") as HTMLInputElement).value;
-     if (this.sortField[0] == 'D') {
-       this.sortBy = 'asc';
-       this.sortField = this.sortField.replace(/D/g, '')
-     }
+    //  this.sortField = (document.getElementById("choices-single-default") as HTMLInputElement).value;
+    //  if (this.sortField[0] == 'D') {
+    //    this.sortBy = 'asc';
+    //    this.sortField = this.sortField.replace(/D/g, '')
+    //  }
    }
   
   //  Filter Offcanvas Set

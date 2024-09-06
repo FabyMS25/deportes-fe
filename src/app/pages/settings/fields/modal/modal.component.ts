@@ -1,8 +1,8 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder, UntypedFormGroup, Validators,ValidationErrors } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { BehaviorSubject, Observable, Subscription,  combineLatest,  forkJoin, of, switchMap } from 'rxjs';
-import { catchError, map, startWith } from 'rxjs/operators';
+import { catchError, map, startWith, tap } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
 import { Categoria } from 'src/app/core/models/categoria.model';
@@ -16,6 +16,7 @@ import { ModalScheduleComponent } from '../modal-schedule/modal-schedule.compone
 import { Ceiling } from 'src/app/core/constants/Features';
 import { Districts } from 'src/app/core/constants/Places';
 import { TipoCobro } from 'src/app/core/constants/TipoCobro';
+import { Tarifa } from 'src/app/core/models/tarifa.model';
 
 @Component({
   selector: 'app-modal',
@@ -41,6 +42,8 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   multiDefaultOption='';
   // Api Data
   complejosList:any[]=[];
+
+  @ViewChild('deleteConfirmation', { static: true }) deleteConfirmation!: TemplateRef<any>;
 
   private selectedTipoSubject = new BehaviorSubject<string | null>(null);
   private selectedTipo$ = this.selectedTipoSubject.asObservable();
@@ -90,25 +93,26 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
     });
   }
 
-  createTarifaFormGroup(): FormGroup {
+  createTarifaFormGroup(tarifa: any = {}): FormGroup { 
+    const tipo = tarifa.categoriaDtoList?.length > 0 ? tarifa.categoriaDtoList[0].categoriaDto.tipo : '';
     return this.formBuilder.group({
-      uuid:[''],
-      costo: [, Validators.required],
-      desde: [""],
-      hasta: [""],
-      descripcion: [""],
-      categorias: [[], [Validators.required, this.categoriasTipoValidator]],
-      categoriaDtoList: [[]],
-      tipo: [, Validators.required],
+      uuid: [tarifa.uuid || ''],
+      costo: [tarifa.costo || '', Validators.required],
+      desde: [tarifa.desde || ''],
+      hasta: [tarifa.hasta || ''],
+      descripcion: [tarifa.descripcion || ''],
+      tipo: [tipo, Validators.required],
+      categorias: [tarifa.categoriaDtoList?.map((cat:any) => cat.categoriaDto) || [], [Validators.required, this.categoriasTipoValidator]],
+      categoriaDtoList: [tarifa.categoriaDtoList || []],
     });
   }
-  createTarCatFormGroup(): FormGroup {
-    return this.formBuilder.group({
-      uuid:[''],
-      tarifaDto: [],
-      categoriaDto: [, Validators.required],
-    });
-  }
+  // createTarCategoryFormGroup(): FormGroup {
+  //   return this.formBuilder.group({
+  //     uuid:[''],
+  //     tarifaDto: [],
+  //     categoriaDto: [, Validators.required],
+  //   });
+  // }
 
   private formDataSet() {    
     if (this.accion !== '' ) {
@@ -122,24 +126,11 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
       });
 
       const tarifasArray = this.fieldsForm.get('tarifas') as FormArray;
-
       if (tarifasArray) {
-        tarifasArray.clear();
-      
+        tarifasArray.clear();      
         if (this.row.tarifasDtoList && this.row.tarifasDtoList.length > 0) {
           this.row.tarifasDtoList.forEach(tarifa => {
-            const tipo = tarifa.categoriaDtoList.length >0? tarifa.categoriaDtoList[0].categoriaDto.tipo :''
-            const tarifaGroup = this.formBuilder.group({
-              uuid: [tarifa.uuid],
-              costo: [tarifa.costo],
-              desde: [tarifa.desde],
-              hasta: [tarifa.hasta],
-              descripcion: [tarifa.descripcion],
-              tipo: [tipo],
-              categorias: [tarifa.categoriaDtoList.map(cat => cat.categoriaDto)],
-              categoriaDtoList: [tarifa.categoriaDtoList ],
-            });
-            tarifasArray.push(tarifaGroup);
+            tarifasArray.push(this.createTarifaFormGroup(tarifa));
           });
         } else {
           tarifasArray.push(this.createTarifaFormGroup());
@@ -178,10 +169,24 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
       this.fieldsForm.valueChanges.pipe(startWith(null))
     ]).pipe(
       map(([selectedTipo, _]) => {
-        if (!selectedTipo) return [];
+        if (!selectedTipo) return this.categoryList ;
         return this.categoryList.filter(category => category.tipo === selectedTipo);
       })
     );
+  }
+  categoriasTipoValidator(control: AbstractControl): ValidationErrors | null {
+    const categorias = control.value;
+    const tipo = control.parent?.get('tipo')?.value;
+    console.log(categorias, tipo);
+
+    if (!categorias || !tipo) {
+      return null;
+    }
+    const allCategoriesMatchTipo = categorias.every(
+      (category: any) => category.tipo === tipo
+    );
+
+    return allCategoriesMatchTipo ? null : { invalidTipo: true };
   }
 
   onTipoChange(index: number) {
@@ -196,23 +201,6 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
     tarifa.get('categorias')?.updateValueAndValidity();
   }
 
-  categoriasTipoValidator(control: AbstractControl): ValidationErrors | null {
-    const categorias = control.value;
-    const tipo = control.parent?.get('tipo')?.value;
-
-    if (!categorias || !tipo) {
-      return null;
-    }
-
-    const allCategoriesMatchTipo = categorias.every(
-      (category: any) => category.tipo === tipo
-    );
-
-    return allCategoriesMatchTipo ? null : { invalidTipo: true };
-  }
-
-
-
   openScheduleModal(row: campoDeportivo | undefined, accion: string, size: string) {
     const modalRef = this.modalService.open(ModalScheduleComponent, {
         backdrop: 'static',
@@ -222,26 +210,38 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
     modalRef.componentInstance.accion = accion;
   }
 
-  addTarifa() {
+  addTariffForm() {
     this.tarifasCategorias.push(this.createTarifaFormGroup());
   }
-  removeTarifa(index: number) {
-    if (this.tarifasCategorias.length > 1) {
+  removeTariff(index: number) {
+    const tarifaGroup = this.tarifasCategorias.at(index);
+    const uuid = tarifaGroup.get('uuid')?.value;
+  
+    if (uuid) {
+      const modalRef = this.modalService.open(this.deleteConfirmation);
+      modalRef.result.then(
+        (result) => {
+          if (result === 'delete') {
+            this.deleteTarifa(uuid).subscribe({
+              next: (result) => {
+                if (result) {
+                  this.tarifasCategorias.removeAt(index);
+                }
+              },
+              error: (err) => {
+                console.error('Error while deleting tarifa', err);
+              }
+            });
+          }
+        },
+        (reason) => {
+          console.log('Delete operation canceled', reason);
+        }
+      );
+    } else {
       this.tarifasCategorias.removeAt(index);
     }
   } 
-  saveAll() {
-    this.updateCancha(this.fieldsForm.value).subscribe({
-      next: (result) => {
-        if (result !== null) {
-          this.notify('Cancha, tarifas, y categorias actualizados exitosamente', 'success');
-        }
-      },
-      error: (error) => {
-        this.notify('Error in update process: ' + error, 'error');
-      }
-    });
-  }
 
   saveData() {
     this.submitted = true;
@@ -249,141 +249,90 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
       this.fieldsForm.enable()
       let datos: campoDeportivo = {
         codigo: this.fieldsForm.value.codigo,
-        // tipo: this.fieldsForm.value.tipo,
         tipo: this.fieldsForm.value.tarifas[0].tipo,
         superficieDto: this.fieldsForm.value.superficie,
         complejoDto: this.fieldsForm.value.complejo,
         tarifasDtoList: this.fieldsForm.value.tarifas,
         horarioDtoList: this.fieldsForm.value.horariosDeAtencion,
-      };
-      
+      };      
 
       if (this.fieldsForm.get('uuid')?.value) {
           datos.uuid = this.fieldsForm.value.uuid;
-          this.updateCancha(datos).subscribe({
+          this.updateField(datos).subscribe({
             next: (result) => {
               if (result !==null) {
                 this.notify('Cancha, tarifas, y categorias exitosamente actualizados', 'success');
+                this.fieldsForm.reset();
+                this.listaItems.emit();
               }
             },
             error: (error) => {
-              this.notify('Error in update process: ' + error, 'error');
+              this.notify('Error en proceso de actualización: ' + error, 'error');
             }
           });
       } else {
-          this.addData(datos);
+          this.addField(datos).subscribe({
+            next: (result) => {
+              if (result !==null) {
+                this.notify('Cancha, tarifas, y categorias exitosamente creados', 'success');
+                this.fieldsForm.reset();
+                this.listaItems.emit();
+              }
+            },
+            error: (error) => {
+              this.notify('Error en proceso de actualización: ' + error, 'error');
+            }
+          });
       }
     } else {
         this.notify('Formulario Invalido!', 'error');
     }
-
-    setTimeout(() => {
-      // this.fieldsForm.reset();
-    }, 2000);
-    // this.submitted = true
   }
   
-  private addData(datos:campoDeportivo){
-    this.canchaService.save(datos).subscribe({
-      next:(data:any)=>{
-        if (data['status'] === 'OK') {
-          this.saveTarifasCat(data['payload'], datos);
-          this.openScheduleModal(data['payload'],'edit','md')
-          this.submitted=false;
-          // this.modalService.dismissAll();
-          this.fieldsForm.reset();
-          this.listaItems.emit();       
-
-        }else{
-          this.notify(data.payload, 'error');
-        }
-      },error:(error)=>{
-        this.notify(error, 'error');
-      }
-    })
-  }
-  
-  updateCancha(canchaData: campoDeportivo): Observable<any> {
-    return this.canchaService.update(canchaData).pipe(
-      switchMap((updatedCancha: any) => {
-        this.submitted = false;
-        this.openScheduleModal(updatedCancha.payload,'edit','md')
-        // this.modalService.dismissAll();
-        // this.fieldsForm.reset();
-        // this.listaItems.emit();
-        return this.saveTarifasCat(updatedCancha.payload , canchaData);
-      }),
-      catchError((error) => {
-        this.submitted = false;
-        this.modalService.dismissAll();
-        this.fieldsForm.reset();
-        this.notify('Error updating cancha: ' + error, 'error');
-        return of(null);
-      })
-    );
-  }
-
-  private saveTarifasCat(cancha: any , data:any): Observable<any> {
-    console.log("data in  save tar cat ", data)
+  private saveTarifasCat(cancha: any ): Observable<any> {
     const tarifaUpdates = this.tarifasCategorias.controls.map((control: AbstractControl) => {
-      const tarifaData = {
-        ...control.value,
-        //   uuid: tarifaData.uuid,
-        //   costo: tarifaData.costo,
-        //   desde: tarifaData.desde,
-        //   hasta: tarifaData.hasta,
-        //   descripcion: tarifaData.descripcion,
-        canchasDto: cancha
-      };
-      // console.log(tarifaData)
-      
-      // Create the categoriaDtoList with the correct structure
-      tarifaData.categoriaDtoList = this.mergeCategorias(tarifaData.categoriaDtoList, tarifaData.categorias);
-      //  tarifaData.categorias.map((element:any) => ({
-      //   categoriaDto: element,
-      // }));
-
-      // Remove the original categorias array as it's no longer needed
-      delete tarifaData.categorias;
-      console.log("tarifa fin ",tarifaData)
-      
-      if (tarifaData.uuid) {
-        return this.tarifaService.update(tarifaData);
+      const tarifaData:Tarifa = {
+        // ...control.value,
+        // uuid: control.value.uuid,
+        costo: control.value.costo,
+        desde: control.value.desde,
+        hasta: control.value.hasta,
+        descripcion: control.value.descripcion,
+        canchasDto: cancha,
+        categoriaDtoList: this.mergeCategories(control.value.categoriaDtoList, control.value.categorias)
+      };      
+      if (control.value.uuid) {
+        tarifaData.uuid = control.value.uuid;
+        return this.updateTariff(tarifaData);//this.tarifaService.update(tarifaData);
       } else {
-        return this.tarifaService.save(tarifaData);
+        return this.addTariff(tarifaData);//this.tarifaService.save(tarifaData);
       }
     });
-
     return forkJoin(tarifaUpdates)
   }
 
-
-   mergeCategorias(categoriaTarifaDtoList: any[], categorias: any[]): any[] {
+   mergeCategories(categoriaTarifaDtoList: any[], categorias: any[]): any[] {
     const mergedList: any[] = [];
-  
-    // Create a map of existing CategoriaTarifaDto items for quick lookup
     const existingCategoriaTarifaMap = new Map(
       categoriaTarifaDtoList.map(item => [item.categoriaDto.uuid, item])
     );
-  
-    // Process each categoria in the categorias list
+    existingCategoriaTarifaMap.forEach(element => {
+      if(!categorias.find((categoria:any) => categoria.uuid === element.categoriaDto.uuid)){
+        console.log("delete", element.uuid)
+        this.tarifaCategoryService.delete(element.uuid).subscribe()
+      }
+    });
     categorias.forEach(categoria => {
-      const existingItem = existingCategoriaTarifaMap.get(categoria.uuid);
-  
-      if (existingItem) {
-        // If the categoria exists in categoriaTarifaDtoList, add it to the merged list
-        mergedList.push(existingItem);
-      } else {
-        // If the categoria doesn't exist, create a new entry with an empty UUID
+      const existingItem = existingCategoriaTarifaMap.get(categoria.uuid);  
+      if (!existingItem) {
         mergedList.push({
           uuid: '',
           estado: false,
           categoriaDto: categoria,
-          // tarifaDto: null // or undefined, depending on how you want to handle this
+          // tarifaDto: null 
         });
       }
-    });
-  
+    });  
     return mergedList;
   }
   
@@ -407,30 +356,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
     this.masterSelected = false;
   }
 
-  /**
-   * Multiple Delete
-   */
-  checkedValGet: any[] = [];
-  deleteMultiple(content: any) {
-    var checkboxes: any = document.getElementsByName('checkAll');
-    var result
-    var checkedVal: any[] = [];
-    for (var i = 0; i < checkboxes.length; i++) {
-      if (checkboxes[i].checked) {
-        result = checkboxes[i].value;
-        checkedVal.push(result);
-      }
-    }
-    if (checkedVal.length > 0) {
-      this.modalService.open(content, { centered: true });
-    }
-    else {
-      Swal.fire({ text: 'Please select at least one checkbox', confirmButtonColor: '#299cdb', });
-    }
-    this.checkedValGet = checkedVal;
-  }
-
-  
+  /* API Requests */
   private getFacilities(){
     this.complejoService.getAll().subscribe({
       next: (data: any) => {
@@ -439,7 +365,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb', });
+        this.notify('No se pudo recuperar los registros: ' + error, 'error');
       }
     });
   }
@@ -452,11 +378,98 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb', });
+        this.notify('No se pudo recuperar los registros: ' + error, 'error');
       }
     });
   }
 
+  private addField(datos: campoDeportivo): Observable<any> {
+    return this.canchaService.save(datos).pipe(
+      switchMap((result: any) => {
+        if(result.status === 'OK'){
+          this.submitted = false;
+          this.openScheduleModal(result.payload, 'edit', 'md');
+          return this.saveTarifasCat(result.payload)
+        }else{
+          return of(null);
+        }
+      }),
+      catchError((error) => {
+        this.submitted = false;
+        this.modalService.dismissAll();
+        this.fieldsForm.reset();
+        this.notify('Error al crear la cancha: ' + error, 'error');
+        return of(null);
+      })
+    );
+  }  
+  private updateField(canchaData: campoDeportivo): Observable<any> {
+    return this.canchaService.update(canchaData).pipe(
+      switchMap((updatedCancha: any) => {
+        if(updatedCancha.status ==='OK'){
+          this.submitted = false;
+          this.openScheduleModal(updatedCancha.payload,'edit','md')
+          return this.saveTarifasCat(updatedCancha.payload );
+        }else{
+          return of(null);
+        }
+      }),
+      catchError((error) => {
+        this.submitted = false;
+        this.modalService.dismissAll();
+        this.fieldsForm.reset();
+        this.notify('Error en proceso de actualización: ' + error, 'error');
+        return of(null);
+      })
+    );
+  }
+
+  private addTariff(datos: Tarifa): Observable<any> {
+    return this.tarifaService.save(datos).pipe(
+      switchMap((result: any) => {
+        if(result.status === 'OK'){
+          return of(result);
+        }else{
+          return of(null);
+        }
+      }),
+      catchError((error) => {
+        return of(null);
+      })
+    );
+  }
+  private updateTariff(datos: Tarifa): Observable<any> {
+    return this.tarifaService.update(datos).pipe(
+      switchMap((result: any) => {
+        if(result.status === 'OK'){
+          return of(result);
+        }else{
+          return of(null);
+        }
+      }),
+      catchError((error) => {
+        return of(null);
+      })
+    );
+  }
+  deleteTarifa(uuid: string): Observable<boolean> {
+    return this.tarifaService.delete(uuid).pipe(
+      tap((data: any) => {
+        if (data.status === 'OK') {
+          this.notify('Tarifa eliminada exitosamente', 'success');
+        } else {
+          Swal.fire({ text: 'No se pudo eliminar la Tarifa', confirmButtonColor: '#299cdb' });
+        }
+      }),
+      catchError((error) => {
+        Swal.fire({ text: 'No se pudo eliminar la Tarifa', confirmButtonColor: '#299cdb' });
+        return of(false);
+      }),
+      map((data: any) => data.status === 'OK')
+    );
+  }
+  
+  /*  */
   public closeModal() {
     this.accion = '';
     this.fieldsForm.enable();

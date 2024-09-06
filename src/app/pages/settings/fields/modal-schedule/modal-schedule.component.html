@@ -1,5 +1,5 @@
 <div class="modal-header bg-info-subtle  p-3">
-    <h5 class="modal-title" ngbAutofocus>Horarios de Atención </h5>
+    <h5 class="modal-title" ngbAutofocus>Horarios de Atención :: {{row.complejoDto.nombre}} - {{row.codigo}}</h5>
     <button type="button"
         class="btn-close"
         data-dismiss="modal" aria-label="Cerrar"
@@ -17,7 +17,6 @@
               <div class="col-lg-3">
                 <div>
                     <span class="form-control-plaintext">{{ dias[i] }}</span>
-                  <!-- <input class="form-control" type="text" [value]="dias[i]" readonly formControlName="dia"> -->
                 </div>
               </div>
               <div class="col-lg-3">

@@ -39,7 +39,7 @@
                     <div class="col-md-3">
                         <div class="search-box">
                             <input type="text" name="searchTerm" class="form-control"
-                                placeholder="Buscar por Nombre..." [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
+                                placeholder="Buscar ..." [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
                             <i class="ri-search-line search-icon"></i>
                         </div>
                     </div>
@@ -48,7 +48,8 @@
                             <span class="text-muted text-nowrap">Filtrar por: </span>
                             <select class="form-control mb-0" data-choices data-choices-search-false
                                 id="choices-single-default" (change)="SortFilter($event)"> 
-                                <option value=''>Todos</option>                              
+                                <option value='tipo'>Todos</option>            
+                                <option value="codigo">Cancha</option>                  
                                 @for (item of categoryList; track $index) {
                                     <option [value]=item.nombre>{{item.nombre}}</option>
                                 }
@@ -77,7 +78,7 @@
                     [listaItems]="listaItems"
                     [content]="canchasList"
                     [allcontent]="canchasList"
-                    [sortField]="searchTerm"
+                    [sortField]="sortField"
                     [show]="canActivate.includes('VER')"
                     [edit]="canActivate.includes('ACTUALIZAR')"
                     [delete]="canActivate.includes('ELIMINAR')"
@@ -129,7 +130,7 @@
                       </div>
                       <div class="flex-shrink-0">
                         <button class="btn btn-secondary add-btn" data-bs-toggle="modal" data-bs-target="#showModal"
-                            (click)="openTarifaModal( dataSelected,'edit','md')">
+                            (click)="openTarifaModal( dataSelected,'edit','lg')">
                             <i class="ri-add-fill align-bottom"></i>
                         </button>
                       </div>

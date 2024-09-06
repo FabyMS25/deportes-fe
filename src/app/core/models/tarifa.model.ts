@@ -5,10 +5,10 @@ export interface Tarifa {
   estado?:string;
 
   costo: number;
-  tipo:string;
+  tipo?:string;
 
-  desde?: string;
-  hasta?:string;
+  desde: string;
+  hasta:string;
   descripcion?:string;
 
   canchasDto: campoDeportivo

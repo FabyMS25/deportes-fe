@@ -27,6 +27,9 @@ export class ReservaService {
   getByUuid(uuid: String): Observable<Reserva> {
     return this.http.get<Reserva>(`${this.apiUrl}${uuid}`);
   }
+  getByField(uuid: String): Observable<Reserva> {
+    return this.http.get<Reserva>(`${this.apiUrl}/cancha/${uuid}`);
+  }
 
   // getClaimByCode(code: String): Observable<Reserva> {
   //   return this.http.get<Reserva>(`${this.apiUrl}/codigo/${code}`).pipe(map((data: any) => data.payload));

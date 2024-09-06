@@ -4,7 +4,7 @@ import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder } from '@angu
 import { HorariosService } from 'src/app/core/services/api/horarios.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, Observable, of, switchMap } from 'rxjs';
 import { Horario } from 'src/app/core/models/horario.model';
 
 @Component({
@@ -52,13 +52,13 @@ export class ModalScheduleComponent {
         horaFin: [''],
         canchasDto:[this.row]
       }))
-    );
-    this.formDataSet();
-  
+    );  
     this.form = this.formBuilder.group({
       fieldsForm: this.fieldsForm
     });
+    this.formDataSet();
   }
+  
   private formDataSet(): void {
     if(this.row.horarioDtoList){
       this.row.horarioDtoList.forEach((horario) => {
@@ -82,10 +82,10 @@ export class ModalScheduleComponent {
     const formArray = this.form.get('fieldsForm') as FormArray;
     const saveObservables :any[]= [];
   
-    formArray.controls.forEach((abstractControl: AbstractControl) => {
-      const control = abstractControl as FormGroup;
+    formArray.controls.forEach((control: AbstractControl) => {
+      // const control = abstractControl as FormGroup;
       if (control.value.abierto) {
-        const datos: Horario = {
+        const horarioData: Horario = {
           // uuid: control.value.uuid,
           dia: control.value.dia,
           abierto: control.value.abierto,
@@ -93,21 +93,58 @@ export class ModalScheduleComponent {
           horaFin: control.value.horaFin,
           canchasDto: this.row
         };
-  
-        saveObservables.push(this.horariosService.save(datos));
+          
+        if (control.value.uuid) {
+          horarioData.uuid = control.value.uuid;
+          saveObservables.push(this.updateSchedule(horarioData));
+        } else {
+          saveObservables.push(this.addSchedule(horarioData));
+        }
       }
     });
   
     forkJoin(saveObservables).subscribe({
       next: (results) => {
         this.notify('Todos los horarios han sido guardados exitosamente', 'success');
+        this.fieldsForm.reset();
+        this.listaItems.emit();
         this.modalService.dismissAll();
       },
       error: (error) => {
-        this.notify('Error al guardar los horarios: ' + error, 'error');
+        this.notify('Error en proceso de Guardar: ' + error, 'error');
       }
     });
   }
+
+  /* API requests */
+private addSchedule(datos: Horario): Observable<any> {
+  return this.horariosService.save(datos).pipe(
+    switchMap((result: any) => {
+      if(result.status === 'OK'){
+        return of(result);
+      }else{
+        return of(null);
+      }
+    }),
+    catchError((error) => {
+      return of(null);
+    })
+  );
+}
+private updateSchedule(datos: Horario): Observable<any> {
+  return this.horariosService.update(datos).pipe(
+    switchMap((result: any) => {
+      if(result.status === 'OK'){
+        return of(result);
+      }else{
+        return of(null);
+      }
+    }),
+    catchError((error) => {
+      return of(null);
+    })
+  );
+}
   public closeModal() {
     this.accion = '';
     this.fieldsForm.enable();

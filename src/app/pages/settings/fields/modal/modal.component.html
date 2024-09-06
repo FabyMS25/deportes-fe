@@ -32,8 +32,7 @@
                         placeholder="Ingresa el codigo de la Cancha" required formControlName="codigo"
                         [ngClass]="{ 'is-invalid': submitted && form['codigo'].errors }" />
                     @if(submitted && form['codigo'].errors){   
-                    <div class="invalid-feedback"
-                        align="left">
+                    <div class="invalid-feedback" align="left">
                         @if(form['codigo'].errors['required']){  
                         <div>El codigo es requirido</div>
                         }
@@ -52,25 +51,7 @@
                       <div *ngIf="form['superficie'].errors['required']">Debe seleccionar una Superficie</div>
                     </div>
                 </div>
-            </div>
-            <!-- <div class="col-lg-12">
-                <label for="tipo-field" class="form-label">Ttipo de Cobro</label>
-                <select class="form-select" aria-label="tipo" formControlName="tipo"
-                     [ngClass]="{'is-invalid': submitted && form['tipo'].errors }">
-                    <option value="" disabled class="text-muted">tipo de Cobro</option>
-                    <option value="Hora">Hora</option>
-                    <option value="Persona">Persona</option>
-                    <option value="Evento">Evento</option>
-                </select>
-                @if(submitted && form['tipo'].errors){
-                <div class="invalid-feedback" align="left">
-                    @if(form['tipo'].errors['required']){
-                    <div>El campo es requirido</div>
-                    }
-                </div>
-                }
-            </div> -->
-            
+            </div>            
             <div>
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
@@ -80,12 +61,12 @@
                     </div>
                 </div>
                 <div formArrayName="tarifas" class="collapse show" id="">                    
-                    <div *ngFor="let tarifa of tarifasCategorias.controls; let i = index" [formGroupName]="i" class="row g-2">
+                    <div *ngFor="let tarifa of tarifasCategorias.controls; let i = index" [formGroupName]="i" class="row g-2">                        
                         <div class="d-flex">
                             <div class="flex-shrink-0 mt-4 py-2">
                                 <i class="ri-checkbox-circle-fill text-success"></i>
                             </div>
-                            <div class="flex-grow-1 text-muted mt-1">
+                            <div class="flex-grow-1 text-muted mt-1">  
                                 <div class="row g-1">
                                     <div class="col-lg-2">
                                         <label for="tipo-field" class="form-label">Tipo de Cobro</label>
@@ -144,12 +125,12 @@
                                     <div class="mt-4 py-1 flex-shrink-0">
                                         <ul class="list-inline card-toolbar-menu d-flex align-items-center mb-0">
                                             <li class="list-inline-item" *ngIf="tarifasCategorias.length>1">
-                                                <a class="align-middle"  (click)="removeTarifa(i)">
+                                                <a class="align-middle"  (click)="removeTariff(i)">
                                                     <i class=" ri-close-fill align-middle"></i>
                                                 </a>
                                             </li>
                                             <li class="list-inline-item">
-                                                <a class="align-middle btn btn-add" (click)="addTarifa()"
+                                                <a class="align-middle btn btn-add" (click)="addTariffForm()"
                                                  role="button" aria-expanded="false"
                                                     aria-controls="collapseExample2">
                                                     <i class=" ri-add-circle-line align-middle"></i>
@@ -170,8 +151,36 @@
         <div class="hstack gap-2 justify-content-end">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal"
                 (click)="closeModal()">Cerrar</button>
-            <button type="submit" class="btn btn-success" id="add-btn">Agregar</button>
+            <button type="submit" class="btn btn-success" id="add-btn">Guardar</button>
         </div>
     </div>
 </form>
 
+<ng-template #deleteConfirmation let-modal>
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="btn-close"
+                (click)="modal.dismiss('Cross click')"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mt-2 text-center">
+                <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
+                    colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
+                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+                    <h4>Esta seguro de eliminar el registro?</h4>
+                    <p class="text-muted mx-4 mb-0">
+                        Al Confirmar la eliminacion se quitara toda informacion de nuestra base de datos.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-link link-success fw-medium text-decoration-none" data-bs-dismiss="modal"
+              id="deleteRecord-close" (click)="modal.dismiss('cancel')"><i
+                  class="ri-close-line me-1 align-middle"></i> Cancelar</button>
+          <button type="button" class="btn w-sm btn-danger " id="delete-product" 
+          (click)="modal.close('delete')">Si, Elmimar!</button>
+        </div>
+    </div>
+</ng-template>
+  
