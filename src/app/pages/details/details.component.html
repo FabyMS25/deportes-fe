@@ -167,12 +167,12 @@
                                           <div class="col-12 col-sm-6 col-lg-7 text-end mt-2 mt-md-0">
                                             <ul ngbNav #Header="ngbNav" [activeId]="activeDayName" 
                                               class="nav nav-pills nav-pills-tab d-flex justify-content-end p-0 m-0">
-                                              <li *ngFor="let day of weekDays" [ngbNavItem]="day.name.toLowerCase()" class="p-1" >
-                                                <div class="bg-primary-subtle rounded-3">
-                                                    <small><a ngbNavLink class="m-0 p-1 py-2">
+                                                <li *ngFor="let day of weekDays" [ngbNavItem]="day.name" class="p-1" >
+                                                    <div class="bg-primary-subtle rounded-3">
+                                                      <small><a ngbNavLink class="m-0 p-1 py-2">
                                                         {{ day.name }} {{ day.date | date:'d/M' }}
-                                                    </a></small>
-                                                </div>
+                                                      </a></small>
+                                                    </div>
                                                 <ng-template ngbNavContent>
                                                   <div class="row">
                                                     <ng-container *ngIf="getTimeSlotsForDay(day.date) as slots">
@@ -181,28 +181,28 @@
                                                         </ng-container>                                                    
                                                         <div *ngIf="slots.morningSlots.length > 0" class="col-sm-6">
                                                             <div *ngFor="let horario of slots.morningSlots" class="align-items-center d-flex">
-                                                                <span class="flex-grow-1">{{ horario }}</span>
+                                                                <span class="flex-grow-1">{{ horario.time }}</span>
                                                                 <div class="flex-shrink-0 p-1">
-                                                                    <button *ngIf="isAvailable(horario)" type="button" class="btn btn-info btn-sm" [ngxScrollTo]="'invoice_form'"
-                                                                        (click)="setReserve(horario.split(' - ')[0], horario.split(' - ')[1])">
-                                                                        Reservar
+                                                                    <button *ngIf="horario.isAvailable" type="button" class="btn btn-info btn-sm" [ngxScrollTo]="'invoice_form'"
+                                                                      (click)="setReserve(horario.time.split(' - ')[0], horario.time.split(' - ')[1])">
+                                                                      Reservar
                                                                     </button>
-                                                                    <button *ngIf="!isAvailable(horario)" type="button" class="btn btn-danger btn-sm" disabled>
-                                                                        Reservado
+                                                                    <button *ngIf="!horario.isAvailable" type="button" class="btn btn-danger btn-sm" disabled>
+                                                                      Reservado
                                                                     </button>
                                                                 </div>
                                                             </div>
                                                         </div>                                                    
                                                         <div *ngIf="slots.afternoonSlots.length > 0" class="col-sm-6">
                                                             <div *ngFor="let horario of slots.afternoonSlots" class="align-items-center d-flex">
-                                                                <span class="flex-grow-1">{{ horario }}</span>
+                                                                <span class="flex-grow-1">{{ horario.time }}</span>
                                                                 <div class="flex-shrink-0 p-1">
-                                                                    <button *ngIf="isAvailable(horario)" type="button" class="btn btn-info btn-sm" [ngxScrollTo]="'invoice_form'"
-                                                                        (click)="setReserve(horario.split(' - ')[0], horario.split(' - ')[1])">
-                                                                        Reservar
+                                                                    <button *ngIf="horario.isAvailable" type="button" class="btn btn-info btn-sm" [ngxScrollTo]="'invoice_form'"
+                                                                      (click)="setReserve(horario.time.split(' - ')[0], horario.time.split(' - ')[1])">
+                                                                      Reservar
                                                                     </button>
-                                                                    <button *ngIf="!isAvailable(horario)" type="button" class="btn btn-danger btn-sm" disabled>
-                                                                        Reservado
+                                                                    <button *ngIf="!horario.isAvailable" type="button" class="btn btn-danger btn-sm" disabled>
+                                                                      Reservado
                                                                     </button>
                                                                 </div>
                                                             </div>
@@ -220,73 +220,6 @@
                                           <div [ngbNavOutlet]="Header"></div>
                                         </div>
                                     </div>
-                                                                            
-                                    <!-- <div class="row" *ngIf="tariffDto === tariff" id="schedules">
-                                        <div class="">
-                                            <div class="card-header align-items-xl-center d-xl-flex gap-2">
-                                                <p class="flex-grow-1 mb-xl-0 text-uppercase">
-                                                    HORARIOS DISPONIBLES ({{InvoiceForm.get('fechaReserva')?.value | date:'dd/MM/yyyy' }} - {{dayName}})
-                                                </p>                                                      
-                                                <div class="flex-shrink-0">
-                                                    <ul ngbNav #Header="ngbNav" [activeId]="dayName" class="nav nav-pills nav-pills-tab text-center">
-                                                    @for (day of days; track $index) {
-                                                    <li [ngbNavItem]="day.day.toLowerCase()" class="px-2">
-                                                        <div class="avatar-xs">
-                                                            <div class="avatar-title bg-primary-subtle rounded-3">
-                                                                <a ngbNavLink>{{day.ab}}</a>
-                                                            </div>
-                                                        </div>                        
-                                                        <ng-template ngbNavContent>
-                                                          <div class="row">
-                                                            <ng-container *ngIf="getTimeSlotsForDay(day.day) as slots">
-                                                                <ng-container *ngIf="slots.morningSlots.length === 0 && slots.afternoonSlots.length === 0">
-                                                                    <p>No se encontraron horarios disponibles para {{day.day}}.</p>
-                                                                </ng-container>                                                    
-                                                                <div *ngIf="slots.morningSlots.length > 0" class="col-sm-6">
-                                                                    <div *ngFor="let horario of slots.morningSlots" class="align-items-center d-flex">
-                                                                        <span class="flex-grow-1">{{ horario }}</span>
-                                                                        <div class="flex-shrink-0 p-1">
-                                                                            <button *ngIf="isAvailable(horario)" type="button" class="btn btn-info btn-sm" [ngxScrollTo]="'invoice_form'"
-                                                                                (click)="setReserve(horario.split(' - ')[0], horario.split(' - ')[1])">
-                                                                                Reservar
-                                                                            </button>
-                                                                            <button *ngIf="!isAvailable(horario)" type="button" class="btn btn-danger btn-sm" disabled>
-                                                                                Reservado
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>                                                    
-                                                                <div *ngIf="slots.afternoonSlots.length > 0" class="col-sm-6">
-                                                                    <div *ngFor="let horario of slots.afternoonSlots" class="align-items-center d-flex">
-                                                                        <span class="flex-grow-1">{{ horario }}</span>
-                                                                        <div class="flex-shrink-0 p-1">
-                                                                            <button *ngIf="isAvailable(horario)" type="button" class="btn btn-info btn-sm" [ngxScrollTo]="'invoice_form'"
-                                                                                (click)="setReserve(horario.split(' - ')[0], horario.split(' - ')[1])">
-                                                                                Reservar
-                                                                            </button>
-                                                                            <button *ngIf="!isAvailable(horario)" type="button" class="btn btn-danger btn-sm" disabled>
-                                                                                Reservado
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </ng-container>
-                                                                    
-                                                          </div>
-                                                        </ng-template>
-                                                    </li>
-                                                    }
-                                                  </ul>
-                                                </div>
-                                            </div>
-                                            <div class="card-body">
-                                                <div class="tab-content text-muted">
-                                                  <div [ngbNavOutlet]="Header"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                  </div> -->
-                                
                                 </div>
                                 }
                               }
@@ -373,16 +306,16 @@
                                   <span>{{contribuyente.nombre}} {{contribuyente.apPaterno}} {{contribuyente.apMaterno}}  </span>
                                 }
                                 @if(contribuyentesList.length>0){
-                                    <select class="form-select form-control   rounded-3" formControlName="contribuyenteDto"
-                                        [ngClass]="{'is-invalid': submitted && form['contribuyenteDto'].errors }">
-                                        <option value="null">Seleccione un Contribuynete</option>
-                                        <option [value]="item" *ngFor="let item of contribuyentesList">
-                                            {{item.nombre}} {{item.apPaterno}} {{item.apMaterno}}
-                                        </option>
-                                    </select>
-                                    <div *ngIf="submitted && form['contribuyenteDto'].errors" class="invalid-feedback" align="left">
-                                        <div *ngIf="form['contribuyenteDto'].errors['required']">Debe seleccionar una opción</div>
-                                    </div>
+                                  <select class="form-select form-control rounded-3" formControlName="contribuyenteDto"
+                                    [ngClass]="{'is-invalid': submitted && form['contribuyenteDto'].errors }">
+                                    <option value="null">Seleccione un Contribuyente</option>
+                                    <option [ngValue]="item" *ngFor="let item of contribuyentesList">
+                                        {{item.nombre}} {{item.apPaterno}} {{item.apMaterno}}
+                                    </option>
+                                  </select>                                
+                                  <div *ngIf="submitted && form['contribuyenteDto'].errors" class="invalid-feedback" align="left">
+                                      <div *ngIf="form['contribuyenteDto'].errors['required']">Debe seleccionar una opción</div>
+                                  </div>
                                 }
                             </div>
                             <div class="flex-shrink-0" *ngIf="contribuyente">
@@ -427,6 +360,9 @@
                                     placeholder="Seleccionar Fecha" readonly required formControlName="fechaReserva">                                
                                 <span class="input-group-text"><i class="ri-calendar-event-line"></i></span>
                             </div>
+                            <div *ngIf="InvoiceForm.get('fechaReserva')?.errors"><!-- ['pastDate'] -->
+                                <span class="text-danger">Seleccione una Fecha Valida.</span>
+                              </div>
                         </div> 
                     </div> 
                     @if (tariff) {
@@ -448,7 +384,10 @@
                                             <input class="form-control bg-light border-0 flatpickr-input" type="text" mwlFlatpickr
                                                    [noCalendar]="true" [enableTime]="false" [dateFormat]="'H:i'"
                                                    id="horaEntrada" formControlName="horaEntrada">
-                                            <div *ngIf="InvoiceForm.get('horaEntrada')?.errors" class="text-danger">
+                                            <div *ngIf="InvoiceForm.get('horaEntrada')?.errors?.['pastTime']" class="text-danger">
+                                              No disponible
+                                            </div>
+                                            <div *ngIf="InvoiceForm.get('horaEntrada')?.errors?.['invalidTime']" class="text-danger">
                                               Horario Invalido.
                                             </div>
                                         </div>
@@ -513,15 +452,13 @@
                                           <div class="input-group">
                                             <input class="form-control flatpickr-input" type="text" mwlFlatpickr [inline]="true"
                                                    [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                                                   id="horaEntrada" formControlName="horaEntrada"
-                                                   [ngClass]="{'is-invalid': submitted && form['horaEntrada'].errors }">
-                                            <!-- <div *ngIf="InvoiceForm.get('horaEntrada')?.errors" class="text-danger">
-                                              Horario Invalido.
-                                            </div> -->
-                                            <div *ngIf="InvoiceForm.get('horaEntrada')?.errors" class="invalid-feedback" align="left">
-                                              <div *ngIf="InvoiceForm.get('horaEntrada')?.errors?.['required']">Ingrese Horario</div>
-                                              <div *ngIf="InvoiceForm.get('horaEntrada')?.errors?.['invalid']">Horario invalido</div>
-                                            </div>
+                                                   id="horaEntrada" formControlName="horaEntrada"                                                   
+                                                [ngClass]="{'is-invalid': submitted && InvoiceForm.get('horaEntrada')?.errors }">
+                                                <div *ngIf="InvoiceForm.get('horaEntrada')?.errors" class="text-danger" align="left"><!-- invalid-feedback -->
+                                                    <div *ngIf="InvoiceForm.get('horaEntrada')?.errors?.['required']">Ingrese Horario</div>
+                                                    <div *ngIf="InvoiceForm.get('horaEntrada')?.errors?.['invalidTime']">Horario invalido</div>
+                                                    <div *ngIf="InvoiceForm.get('horaEntrada')?.errors?.['pastTime']">No Disponible</div>
+                                                </div>
                                           </div>
                                         </td>
                                         <td class="text-end">
@@ -530,15 +467,20 @@
                                                    [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
                                                    id="horaSalida" formControlName="horaSalida"
                                                    [ngClass]="{'is-invalid': submitted && form['horaSalida'].errors }">
-                                            <!-- <div *ngIf="InvoiceForm.get('horaSalida')?.errors" class="text-danger">
-                                              Horario Invalido.
-                                            </div> -->
-                                            <div *ngIf="InvoiceForm.get('horaSalida')?.errors" class="invalid-feedback" align="left">
-                                              <div *ngIf="InvoiceForm.get('horaSalida')?.errors?.['required']">Seleccione Horario</div>
-                                              <div *ngIf="InvoiceForm.get('horaSalida')?.errors?.['invalid']">Horario invalido</div>
-                                            </div>
+                                                <div *ngIf="InvoiceForm.get('horaSalida')?.errors" class="text-danger" align="left"><!-- invalid-feedback -->
+                                                   <div *ngIf="InvoiceForm.get('horaSalida')?.errors?.['required']">Ingrese Horario</div>
+                                                   <div *ngIf="InvoiceForm.get('horaSalida')?.errors?.['invalidTime']">Horario invalido</div>
+                                                   <div *ngIf="InvoiceForm.get('horaSalida')?.errors?.['pastTime']">No Disponible</div>
+                                               </div>
                                           </div>
-                                        </td>
+                                        </td>                                        
+                                        <div *ngIf="InvoiceForm.errors?.['timeRange']" class="text-danger" align="left">
+                                            La hora de salida debe ser mayor que la hora de entrada.
+                                        </div>
+                                        <div *ngIf="InvoiceForm.errors?.['isReserved']" class="text-danger" align="left">
+                                            El rango de horas no se encuentra disponible.
+                                        </div>
+                                          
                                         <td class="text-center ">
                                             <div class="mb-2">
                                                 @if(tariff.categoriaDtoList[0].categoriaDto.tipo === 'Hora'){

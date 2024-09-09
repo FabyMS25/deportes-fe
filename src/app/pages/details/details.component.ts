@@ -1,5 +1,5 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { Component, NgZone, OnInit, ViewChild } from '@angular/core';
+import { AbstractControl, FormControl, FormGroup, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -7,6 +7,7 @@ import { SlickCarouselComponent } from 'ngx-slick-carousel';
 import Swal from 'sweetalert2';
 import * as L from 'leaflet';
 import { debounceTime, firstValueFrom, switchMap } from 'rxjs';
+import { ChangeDetectorRef } from '@angular/core';
 
 import { ModalComponent } from '../reservas/modal/modal.component';
 import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
@@ -20,7 +21,8 @@ import { Contribuyente } from 'src/app/core/models/contribuyente.models';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
-import { addDays, subDays, startOfWeek, endOfWeek } from 'date-fns'; // Assuming you're using date-fns or you can manually implement it
+import { addDays, subDays,  startOfWeek, endOfWeek, format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 @Component({
   selector: 'app-details',
@@ -32,7 +34,6 @@ import { addDays, subDays, startOfWeek, endOfWeek } from 'date-fns'; // Assuming
 export class DetailsComponent implements OnInit  {
 
   breadCrumbItems!: Array<{}>;
-  private timerId:any;
   currentTime!: string;
   
   contribuyente : any;
@@ -59,7 +60,8 @@ export class DetailsComponent implements OnInit  {
     private reservaService: ReservaService,
     private route: ActivatedRoute ,
     private ruatService: RuatRequestsService,
-    private contribuyenteService: ContribuyentesService
+    private contribuyenteService: ContribuyentesService,
+    private ngZone: NgZone, private cdr: ChangeDetectorRef
   
   ) { }
 
@@ -80,20 +82,18 @@ export class DetailsComponent implements OnInit  {
     autoplay: true,
   }
   
-  currentWeekStart: Date= new Date();
-  currentWeekEnd: Date = new Date();
   weekDays: { name: string, date: Date }[] = [];
   activeDayName: string = '';
-  allSlots: { [key: string]: { morningSlots: string[], afternoonSlots: string[] } } = {};
+  currentWeekStart!: Date;
+  currentWeekEnd!: Date;
+  // allSlots: { [key: string]: { morningSlots: string[], afternoonSlots: string[] } } = {};
 
   async ngOnInit(): Promise<void> {
     this.breadCrumbItems = [
       { label: 'Complejo' },
       { label: 'Reserva', active: true }
     ];
-    
-    this.updateTime();
-    this.timerId = setInterval(() => this.updateTime(), 1000);
+    this.currentTime = (new Date()).toLocaleTimeString();
     this.authRuat();
     if (window.sessionStorage.getItem("auth-token") === 'isContribuyente') {
       const currentUser = window.sessionStorage.getItem("currentUser");
@@ -101,8 +101,7 @@ export class DetailsComponent implements OnInit  {
     }else{    
       this.contribuyente = null;
       this.getTaxpayers();
-    }
-  
+    }  
     this.dataComplejo = history.state.data;  
     if (this.dataComplejo) {
       this.initMap(this.dataComplejo.latitud, this.dataComplejo.longitud);
@@ -121,6 +120,7 @@ export class DetailsComponent implements OnInit  {
     } catch (error) {
       console.error('Error fetching fields:', error);
     }  
+    
     // Initialize the form
     this.InvoiceForm = this.formBuilder.group({
       uuid: [''],
@@ -128,9 +128,9 @@ export class DetailsComponent implements OnInit  {
       superficie: [''],
       totalPersonas: [],
       fechaCreated: [new Date()], 
-      fechaReserva: [new Date(), [Validators.required]], 
-      horaEntrada: [, [Validators.required, this.timeValidator.bind(this)]],
-      horaSalida: [, [Validators.required, this.timeValidator.bind(this)]],
+      fechaReserva: [new Date(), [Validators.required, this.futureDateValidator()]],
+      horaEntrada: ['', [Validators.required, this.timeValidator.bind(this)]],
+      horaSalida: ['', [Validators.required, this.timeValidator.bind(this)]],
       totalPago: [0, [Validators.required]],
       totalTime: [0, [Validators.required]],
       numeroTasa: [''],
@@ -138,14 +138,13 @@ export class DetailsComponent implements OnInit  {
       canchasDto: ['', [Validators.required]],
       contribuyenteDto: [this.contribuyente, [Validators.required]],
       observacion: ['Reserva de Cancha Deportiva GAMQ', [Validators.required]], 
-      check: [, [Validators.required]],
-    });
-  
+      check: ['', [Validators.required]],
+    }, { validators: this.timeRangeValidator() });
+
     if (this.dataField) {
       this.setField(this.dataField,undefined);
       this.goToToday();
     }  
-
     this.InvoiceForm.get('fechaReserva')?.valueChanges.subscribe(() => {
       const date = this.InvoiceForm.get('fechaReserva')?.value;
       this.allSlots={}
@@ -181,18 +180,23 @@ export class DetailsComponent implements OnInit  {
         fechaReserva: date
       });
     }
+    // setTimeout(() => {
+      this.activeDayName = format(date, 'EEE', { locale: es }).toLowerCase();
+    // });
   }
   private setWeekRange(date: Date) {
     this.currentWeekStart = startOfWeek(date, { weekStartsOn: 1 });
-    this.currentWeekEnd = endOfWeek(date, { weekStartsOn: 1 });  
-    const daysOfWeek = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
-    this.weekDays = daysOfWeek.map((name, index) => ({
-      name,
-      date: addDays(this.currentWeekStart, index)
-    }));
-    const dayDayName = daysOfWeek[date.getDay() - 1] || 'lun'; 
-    this.activeDayName = dayDayName.toLowerCase();
-    // this.getTimeSlotsForDay(date);
+    this.currentWeekEnd = endOfWeek(date, { weekStartsOn: 1 });
+  
+    this.weekDays = Array.from({ length: 7 }, (_, i) => {
+      const currentDate = addDays(this.currentWeekStart, i);
+      return {
+        name: format(currentDate, 'EEE', { locale: es }).toLowerCase(),
+        date: currentDate
+      };
+    });
+  
+    this.activeDayName = format(date, 'EEE', { locale: es }).toLowerCase();
   }
 
   get form() {
@@ -200,6 +204,9 @@ export class DetailsComponent implements OnInit  {
   }
 
   setField(field: any, tarifa:any | undefined) {
+    this.getReservationsByField(field.uuid).then(() => {      
+      this.allSlots={}
+    })
     this.dataField = field;
     this.tariff = tarifa? tarifa :field.tarifasDtoList[0];
     if(this.tariff.categoriaDtoList[0].categoriaDto.tipo === 'Evento'){    
@@ -209,8 +216,6 @@ export class DetailsComponent implements OnInit  {
         this.setReserve(this.tariff.desde, this.tariff.hasta)
       }
     }    
-    this.getReservationsByField(field.uuid)
-    this.allSlots={}
     if (this.InvoiceForm) {
       this.InvoiceForm.patchValue({
         canchasDto: field,
@@ -230,58 +235,127 @@ export class DetailsComponent implements OnInit  {
   }
   
   timetables!:any[];
+  allSlots: { [key: string]: { morningSlots: { time: string, isAvailable: boolean }[], afternoonSlots: { time: string, isAvailable: boolean }[] } } = {};
+
   getTimeSlotsForDay(date: Date) {
-    // const date = this.InvoiceForm.get('fechaReserva')?.value;
-    const dayString = date ? new Date(date).toLocaleString('es-ES', { weekday: 'long' }).toLowerCase() : '';
-    // const dayString = this.formatDateKey(date); // Use a formatted string (e.g., '2024-09-02') as the key
+    const dayString = date ? new Date(date).toLocaleString('es-ES', { weekday: 'long' }).toLowerCase() : '';    
     if (!this.allSlots[dayString]) {
-      this.setSelectedDay(date)
-      console.log(date)
-      console.log(dayString)
-      const morningSlots = this.getTimeSlots(dayString, 'morning');
-      const afternoonSlots = this.getTimeSlots(dayString, 'afternoon');
+      this.setSelectedDay(date);
+      const morningSlots = this.getTimeSlots(date,dayString, 'morning');
+      const afternoonSlots = this.getTimeSlots(date,dayString, 'afternoon');      
       this.allSlots[dayString] = { morningSlots, afternoonSlots };
     }  
     return this.allSlots[dayString];
   }
-  
-  // Helper method to format Date as a string key (e.g., '2024-09-02')
-  private formatDateKey(date: Date): string {
-    const year = date.getFullYear();
-    const month = ('0' + (date.getMonth() + 1)).slice(-2); // Month is 0-based, so add 1
-    const day = ('0' + date.getDate()).slice(-2);
-    return `${year}-${month}-${day}`;
-  }
-  
 
-  getTimeSlots(day: string,period:string): string[] {
-    const horariosAtencion: any[] = this.dataField.horarioDtoList;    
-    this.timetables = horariosAtencion.filter(horario => (horario.dia.toLowerCase() === day.toLowerCase() && horario.abierto));
+  private getTimeSlots(date:Date,day: string, period: string): { time: string, isAvailable: boolean }[] {
+    const horariosAtencion: any[] = this.dataField.horarioDtoList;
+    this.timetables = horariosAtencion.filter(horario => (horario.dia.toLowerCase() === day.toLowerCase() && horario.abierto));    
     if (this.timetables.length === 0) {
       return [];
-    }
-    const availableSlots = [];
-    const morningSlots:string[] = [];
-    const afternoonSlots:string[] = [];
+    }  
+    const slots: { time: string, isAvailable: boolean }[] = []; 
     for (const horario of this.timetables) {
-        const startTime = horario.horaInicio > this.tariff.desde ? this.tariff.desde : horario.horaInicio;
-        const endTime = horario.horaFin >this.tariff.hasta ? this.tariff.hasta : horario.horaFin ;        
-        for (let hour = this.getTime(startTime); hour < this.getTime(endTime); hour++) {
-          const horarioStr = `${this.pad(hour)}:00 - ${this.pad(hour + 1)}:00`;
-          const timeSlot = horarioStr
-          if (hour < 12) {
-            morningSlots.push(timeSlot);
-          } else {
-            afternoonSlots.push(timeSlot);
-          }
-          availableSlots.push(timeSlot);
+      const startTime = horario.horaInicio > this.tariff.desde ? this.tariff.desde : horario.horaInicio;
+      const endTime = horario.horaFin > this.tariff.hasta ? this.tariff.hasta : horario.horaFin;  
+      for (let hour = this.getTime(startTime); hour < this.getTime(endTime); hour++) {
+        const slotTime  = `${this.pad(hour)}:00 - ${this.pad(hour + 1)}:00`;  
+        const slotStartDate = new Date(date);
+        slotStartDate.setHours(hour, 0, 0, 0);      
+        let isAvailable = slotStartDate >= (new Date());
+        if(isAvailable){
+          
+          let [slotStart, slotEnd] = slotTime.split(' - ');
+          slotStart = `${slotStart}:00`;
+          slotEnd = `${slotEnd}:00`;
+          isAvailable = this.isAvailable(slotStart,slotEnd);
         }
-    }
-    if(period === 'morning') return morningSlots;
-    if(period === 'afternoon') return afternoonSlots;
-    return availableSlots;
+        slots.push({ time: slotTime , isAvailable: isAvailable});     
+      }      
+    }  
+    if (period === 'morning') {
+      return slots.filter(slot => this.getTime(slot.time.split(':')[0]) < 12);
+    } else if (period === 'afternoon') {
+      return slots.filter(slot => this.getTime(slot.time.split(':')[0]) >= 12);
+    }  
+    return slots;
   }
-
+  
+  private isAvailable(slotStart: any , slotEnd:any): boolean {
+    const fechaReserva = this.InvoiceForm.get('fechaReserva')?.value;
+    return !this.reservationsList.some((reservation: any) => {
+      const reservationStart = reservation.horaEntrada;
+      const reservationEnd = reservation.horaSalida;
+      const reservationDate = new Date(reservation.fechaReserva);
+      if (reservationDate.getDate() === fechaReserva.getDate()) {  
+        return (slotStart < reservationEnd && slotEnd > reservationStart); 
+        // return (
+        //   (slotStart >= reservationStart && slotStart < reservationEnd) &&
+        //   (slotEnd > reservationStart && slotEnd <= reservationEnd) 
+        // );
+      }      
+    return false; 
+    });
+  }  
+  private futureDateValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const selectedDate = new Date(control.value);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return selectedDate < today ? { pastDate: true } : null;
+    };
+  }
+  timeValidator(control: AbstractControl): ValidationErrors | null {
+    const time = control.value;
+    if (!time) return null;
+    const fechaReserva = this.InvoiceForm.get('fechaReserva')?.value;
+    if (!fechaReserva) return null;  
+    const selectedDate = new Date(fechaReserva);
+    const [hours, minutes] = time.split(':').map(Number);        
+    if (!this.timetables) return null;  
+    const start = this.getTime(this.timetables[0].horaInicio);
+    const end = this.getTime(this.timetables[0].horaFin);
+      if ((hours < start) || (hours > end) || (hours === end && minutes > 0)) {
+        return { invalidTime: true };
+      }
+    if (selectedDate.toDateString() === new Date().toDateString()) {
+      if (hours < new Date().getHours() || (hours === new Date().getHours() && minutes < new Date().getMinutes())) {
+        return { pastTime: true };
+      }
+    }
+    return  null;
+  }
+  
+  timeRangeValidator(): ValidatorFn {
+    return (formGroup: AbstractControl): ValidationErrors | null => {
+      const horaEntrada = formGroup.get('horaEntrada')?.value;
+      const horaSalida = formGroup.get('horaSalida')?.value;
+  
+      if (horaEntrada && horaSalida) {
+        const [entradaHours, entradaMinutes] = horaEntrada.split(':').map(Number);
+        const [salidaHours, salidaMinutes] = horaSalida.split(':').map(Number);
+  
+        // Ensure the start time is before the end time
+        if (entradaHours > salidaHours || (entradaHours === salidaHours && entradaMinutes >= salidaMinutes)) {
+          return { timeRange: true }; // Invalid time range
+        }
+  
+        // Check if the time slot is already reserved
+        if (this.reservationsList.length > 0) {
+          const isReserved = !this.isAvailable(`${horaEntrada}:00`, `${horaSalida}:00`);
+          if (isReserved) {
+            return { isReserved: true }; // Time slot is reserved
+          }
+        }
+      }
+  
+      // If everything is valid, return null (no errors)
+      return null;
+    };
+  }
+  
+  
+  
   isEvent(cancha:any):boolean{
     const result = cancha.tarifasDtoList.every((tar:any) => tar.categoriaDtoList[0].categoriaDto.tipo === 'Evento')
     // if(result){
@@ -291,56 +365,6 @@ export class DetailsComponent implements OnInit  {
     // }
     return result;
   }
-  
-  isAvailable(slot: string): boolean {
-    const fechaReserva = this.InvoiceForm.get('fechaReserva')?.value;
-    let [slotStart, slotEnd] = slot.split(' - ');
-    slotStart = `${slotStart}:00`;
-    slotEnd = `${slotEnd}:00`;
-    return !this.reservationsList.some((reservation: any) => {
-      const reservationStart = reservation.horaEntrada;
-      const reservationEnd = reservation.horaSalida;
-      const reservationDate = new Date(reservation.fechaReserva);
-      return (
-        reservationDate.getDate() === fechaReserva.getDate() &&
-        (slotStart >= reservationStart && slotStart < reservationEnd) 
-      );
-    });
-  }
-  
-  timeValidator(control: AbstractControl): ValidationErrors | null {
-    const time = control.value;
-    if (!time) return null;
-
-    const fechaReserva = this.InvoiceForm.get('fechaReserva')?.value || new Date();
-    // const selectedDay = fechaReserva.toLocaleString('es-ES', { weekday: 'long' });  
-    // const timetables = this.horariosAtencion.filter(horario => horario.dia === selectedDay && horario.activo);
-    
-    if (!this.timetables) return null;
-
-    const [hours, minutes] = time.split(':').map(Number);      
-
-    const start = this.getTime(this.timetables[0].horaInicio);
-    const end = this.getTime(this.timetables[0].horaFin);
-
-    if (this.timetables.length > 1) {
-      const startT = this.getTime(this.timetables[1].horaInicio);
-      const endT = this.getTime(this.timetables[1].horaFin);  
-      if ((hours < start) || (hours > endT) ||
-          (hours > end && hours < startT) ||
-          (hours === end && minutes > 0) ||
-          (hours === endT && minutes > 0)
-      ) {
-        return { invalidTime: true };
-      }
-    } else {
-      if ((hours < start) || (hours > end) || (hours === end && minutes > 0)) {
-        return { invalidTime: true };
-      }
-    }
-    return null;
-  }
-
   calculateTotalTimeAndPago() {
     if(this.tariff.categoriaDtoList[0].categoriaDto.tipo === 'Evento'){
       const totalTime = `allDay`;
@@ -400,9 +424,12 @@ export class DetailsComponent implements OnInit  {
   
   saveData(): void {
     this.submitted = true;
+    console.log(this.InvoiceForm.valid)
+    console.log(this.InvoiceForm.value)
     if (this.InvoiceForm.valid) {
       this.InvoiceForm.enable();
       const formData = {...this.InvoiceForm.value};
+      console.log(formData)
       const ruatData = {
         codigoContribuyente: formData.contribuyenteDto.codigoContribuyente,
         monto: formData.totalPago,
@@ -430,16 +457,22 @@ export class DetailsComponent implements OnInit  {
     });
   }
   reservationsList=[]
-  private getReservationsByField(uuid:string): void {
-    this.reservaService.getByField(uuid).subscribe({
-      next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.reservationsList = data.payload;
-          console.log("reservas",this.reservationsList)
-        }else{
-          Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
+  private getReservationsByField(uuid: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.reservaService.getByField(uuid).subscribe({
+        next: (data: any) => {
+          if (data['status'] === 'OK') {
+            this.reservationsList = data.payload;
+            resolve();
+          } else {
+            Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb' });
+            reject();
+          }
+        },
+        error: (error) => {
+          reject(error);
         }
-      }
+      });
     });
   }
 
@@ -516,10 +549,6 @@ export class DetailsComponent implements OnInit  {
     });
   }
 
-    private updateTime(): void {
-      const now = new Date();
-      this.currentTime = now.toLocaleTimeString();
-    }
 
     private getTime(time: string): number {
       return parseInt(time.split(':')[0], 10);
