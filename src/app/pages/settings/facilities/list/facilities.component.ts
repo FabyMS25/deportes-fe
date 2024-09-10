@@ -130,8 +130,8 @@ export class FacilitiesComponent {
     modalRef.componentInstance.row = row;
     modalRef.componentInstance.categoryList = this.categoryList;
     modalRef.componentInstance.accion = accion;
-    modalRef.componentInstance.itemsList.subscribe(() => {
-    this.getFacilities();
+    modalRef.componentInstance.emitList.subscribe(() => {
+      this.getFacilities();
     });
   }  
 
@@ -170,7 +170,7 @@ export class FacilitiesComponent {
     });
     modalRef.componentInstance.titles = this.camposImport;
     modalRef.componentInstance.itemsList = this.complejosList;
-    modalRef.componentInstance.itemsList.subscribe(() => {
+    modalRef.componentInstance.emitList.subscribe(() => {
         this.getFacilities();
     });
   }

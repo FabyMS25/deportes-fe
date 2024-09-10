@@ -14,12 +14,12 @@ import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportiv
 import { an } from '@fullcalendar/core/internal-common';
 
 @Component({
-    selector: 'app-contribuyente',
-    templateUrl: './contribuyente.component.html',
-    styleUrls: ['./contribuyente.component.scss']
+    selector: 'app-map-dashboard',
+    templateUrl: './map-dashboard.component.html',
+    styleUrls: ['./map-dashboard.component.scss']
 })
 
-export class ContribuyenteComponent implements OnInit {
+export class MapDashboardComponent implements OnInit {
 
     breadCrumbItems!: Array<{}>;
     categoryList:any[]=[];

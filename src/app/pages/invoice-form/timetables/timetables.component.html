@@ -1,0 +1,88 @@
+
+<!-- <div class="card">
+    <div class="card-header">
+        <div>
+            
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="tab-content">
+            <div [ngbNavOutlet]="customNav"></div>
+        </div>
+    </div>
+</div> -->
+
+<div class="">
+    <div class="card-header d-xl-flex">
+        <div class="row w-100">
+          <div class="col-12 col-sm-6 col-lg-5 mb-sm-0 d-flex align-items-center">
+            <p class="flex-grow-1 mb-xl-0 text-uppercase">
+              HORARIOS ({{ currentWeekStart | date:'dd/MM/yyyy' }} - {{ currentWeekEnd | date:'dd/MM/yyyy' }})
+            </p>
+            <div class="flex-shrink-0 d-flex align-items-center gap-2">
+              <button class="btn btn-outline-secondary btn-sm" (click)="moveWeek(-1)">
+                <i class="ri-arrow-left-s-line"></i>
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" (click)="goToToday()">Hoy</button>
+              <button class="btn btn-outline-secondary btn-sm" (click)="moveWeek(1)">
+                <i class="ri-arrow-right-s-line"></i>
+              </button>
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-lg-7 text-end mt-2 mt-md-0">
+            <ul ngbNav #Header="ngbNav" [activeId]="activeDayName" 
+              class="nav nav-pills nav-pills-tab d-flex justify-content-end p-0 m-0">
+                <li *ngFor="let day of weekDays" [ngbNavItem]="day.name" class="p-1" >
+                    <div class="bg-primary-subtle rounded-3">
+                      <small><a ngbNavLink class="m-0 p-1 py-2">
+                        {{ day.name }} {{ day.date | date:'d/M' }}
+                      </a></small>
+                    </div>
+                <ng-template ngbNavContent>
+                  <div class="row">
+                    <ng-container *ngIf="getTimeSlotsForDay(day.date) as slots">
+                        <ng-container *ngIf="slots.morningSlots.length === 0 && slots.afternoonSlots.length === 0">
+                            <p>No se encontraron horarios disponibles para {{day.name}}.</p>
+                        </ng-container>                                                    
+                        <div *ngIf="slots.morningSlots.length > 0" class="col-sm-6">
+                            <div *ngFor="let horario of slots.morningSlots" class="align-items-center d-flex">
+                                <span class="flex-grow-1">{{ horario.time }}</span>
+                                <div class="flex-shrink-0 p-1">
+                                    <button *ngIf="horario.isAvailable" type="button" class="btn btn-info btn-sm" [ngxScrollTo]="'invoice_form'"
+                                      (click)="setReserve(horario.time.split(' - ')[0], horario.time.split(' - ')[1])">
+                                      Reservar
+                                    </button>
+                                    <button *ngIf="!horario.isAvailable" type="button" class="btn btn-danger btn-sm" disabled>
+                                      Reservado
+                                    </button>
+                                </div>
+                            </div>
+                        </div>                                                    
+                        <div *ngIf="slots.afternoonSlots.length > 0" class="col-sm-6">
+                            <div *ngFor="let horario of slots.afternoonSlots" class="align-items-center d-flex">
+                                <span class="flex-grow-1">{{ horario.time }}</span>
+                                <div class="flex-shrink-0 p-1">
+                                    <button *ngIf="horario.isAvailable" type="button" class="btn btn-info btn-sm" [ngxScrollTo]="'invoice_form'"
+                                      (click)="setReserve(horario.time.split(' - ')[0], horario.time.split(' - ')[1])">
+                                      Reservar
+                                    </button>
+                                    <button *ngIf="!horario.isAvailable" type="button" class="btn btn-danger btn-sm" disabled>
+                                      Reservado
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </ng-container>                                                            
+                  </div>
+                </ng-template>
+              </li>
+            </ul>
+          </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="tab-content text-muted">
+          <div [ngbNavOutlet]="Header"></div>
+        </div>
+    </div>
+</div>

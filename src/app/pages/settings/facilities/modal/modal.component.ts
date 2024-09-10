@@ -21,7 +21,7 @@ import { Districts } from 'src/app/core/constants/Places';
 export class ModalFacilitiesComponent {
   @Input() accion!: string;
   @Input() row!: Complejo;
-  @Output() listaItems = new EventEmitter();
+  @Output() emitList = new EventEmitter();
   @Input() categoryList:Categoria[]=[];
 
   placeholder='Seleccione una opción'
@@ -197,7 +197,7 @@ export class ModalFacilitiesComponent {
           this.submitted=false;
           this.modalService.dismissAll();
           this.complejosForm.reset();
-          this.listaItems.emit();       
+          this.emitList.emit();       
           this.notify('Datos Registrados exitosamente!','success');
 
         }else{
@@ -217,7 +217,7 @@ export class ModalFacilitiesComponent {
             this.submitted = false;
             this.modalService.dismissAll();
             this.complejosForm.reset();
-            this.listaItems.emit();
+            this.emitList.emit();
             this.notify('Datos Actualizados exitosamente!', 'success');
           },
           error: (error) => {

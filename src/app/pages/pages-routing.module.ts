@@ -2,9 +2,8 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 // Component pages
-import { DashboardComponent } from "./dashboards/dashboard/dashboard.component";
-import { DetailsComponent } from './details/details.component';
 import { AuthGuard } from '../core/guards/auth.guard';
+import { InvoiceFormComponent } from './invoice-form/invoice-form.component';
 
 const routes: Routes = [
     {
@@ -17,13 +16,13 @@ const routes: Routes = [
       path: 'settings', loadChildren: () => import('./settings/settings.module').then(m => m.SettingsModule), canActivate: [AuthGuard]
     },
     {
-      path: 'reservations', loadChildren: () => import('./reservas/reservas.module').then(m => m.ReservasModule), canActivate: [AuthGuard]
+      path: 'reservations', loadChildren: () => import('./reservations/reservations.module').then(m => m.ReservationsModule), canActivate: [AuthGuard]
     },
     {
       path: 'taxpayers', loadChildren: () => import('./taxpayers/taxpayers.module').then(m => m.TaxpayersModule), canActivate: [AuthGuard]
     },
     {
-      path: "reservations/details", component: DetailsComponent
+      path: "reservations/details", component: InvoiceFormComponent
     },
     {
       path: 'pages', loadChildren: () => import('./extrapages/extraspages.module').then(m => m.ExtraspagesModule)

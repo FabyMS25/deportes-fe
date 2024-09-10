@@ -1,0 +1,43 @@
+<!-- Start Breadcrumbs -->
+<!-- <app-breadcrumbs title="PANEL DE CONTROL DE ENCARGADO" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs> -->
+<!-- End Breadcrumbs -->
+
+<div class="row g-0">
+    <div class="col-12">
+      <div class="card cel-card">
+        <div class="card-header">
+          <h4 class="card-title mb-0">PANEL DE CONTROL DE RESERVAS</h4>
+        </div>        
+        <div class="card-body">
+            <full-calendar [options]="calendarOptions" [events]="this.calendarEvents"></full-calendar>
+        </div>
+      </div>
+    </div>
+</div>
+
+<div class="row g-0">
+    <div class="col-12 ">
+      <div class="card mobile-events-list">
+        <h5 class="card-title px-2">Proximos Eventos</h5>
+            @for (event of calendarEvents; track $index) {
+            <div class="card p-2">
+                <div class=" align-items-center d-flex">
+                    <span class="card-title mb-0 flex-grow-1">{{ event.date | date: 'dd MMM yyyy' }}</span>
+                    <div class="flex-shrink-0">
+                        <div class=" bg-info-subtle px-2">
+                            <span class="event-time text-muted">
+                                {{ event.start | date: 'shortTime' }} -{{ event.end | date: 'shortTime' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <h2 class="card-title mb-0 p-2">{{ event.title }}</h2>
+
+                </div>
+            </div>
+            }
+      </div>
+    </div>
+  </div>
+  

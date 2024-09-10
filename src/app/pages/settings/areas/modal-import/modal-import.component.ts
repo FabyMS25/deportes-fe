@@ -23,7 +23,7 @@ import { SuperficiesService } from 'src/app/core/services/api/superficies.servic
 export class ModalImportComponent {
   @Input() itemsList!: any[];
   @Input() titles!:any[];
-  @Output() listaItems = new EventEmitter();
+  @Output() emitList = new EventEmitter();
 
   xlsxData: any[]=[];
   selectedItems: any[] = [];
@@ -93,7 +93,7 @@ export class ModalImportComponent {
       }
       this.loading = false;
       this.activeModal.close();
-      this.listaItems.emit();
+      this.emitList.emit();
   }
 
   private rexordExist(registro: any): boolean {

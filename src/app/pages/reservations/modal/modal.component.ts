@@ -19,7 +19,7 @@ export class ModalComponent {
   @Input() row!: Reserva;
   @Input() cancha: any = '';
   @Input() contribuyente: any = '';
-  @Output() listaItems = new EventEmitter();
+  @Output() emitList = new EventEmitter();
 
   contentForm!: UntypedFormGroup;
   submitted = false;
@@ -158,7 +158,7 @@ addData(datos:Reserva){
       this.submitted=false;
       this.notify('Datos Registrados exitosamente!','success'); 
       this.closeModal();
-      this.listaItems.emit();       
+      this.emitList.emit();       
     },
     error: (error) => {
       this.notify('No se pudo Guardar los datos! '+error, 'error');
@@ -171,7 +171,7 @@ updateData(datosUnit:Reserva) {
           this.Editposition();
           this.submitted = false;
           this.closeModal();
-          this.listaItems.emit();
+          this.emitList.emit();
           this.notify('Datos Actualizados exitosamente!', 'success');
         },
         error: (error) => {

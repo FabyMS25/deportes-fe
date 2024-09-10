@@ -1,28 +1,24 @@
-import { DecimalPipe } from '@angular/common';
 import { Component, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { NgbModal, NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
-import { Observable } from 'rxjs';
 import { UntypedFormBuilder, Validators, UntypedFormGroup, UntypedFormArray, AbstractControl } from '@angular/forms';
-
-// Sweet Alert
+import { NgbModal, NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
+import { ngxCsv } from 'ngx-csv';
+
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
-import { ModalComponent } from '../modal/modal.component';
-import { ngxCsv } from 'ngx-csv';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
-import { Reserva } from 'src/app/core/models/reserva.models';
-import { Pago } from 'src/app/core/models/pago.model';
 import { PagoService } from 'src/app/core/services/api/pago.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
+import { ModalComponent } from '../modal/modal.component';
+import { Reserva } from 'src/app/core/models/reserva.models';
 
 @Component({
-  selector: 'app-reservas',
-  templateUrl: './reservas.component.html',
-  styleUrls: ['./reservas.component.scss']
+  selector: 'app-reservations',
+  templateUrl: './reservations.component.html',
+  styleUrls: ['./reservations.component.scss']
 })
-export class ReservasComponent implements OnInit {
+export class ReservationsComponent implements OnInit {
 
   breadCrumbItems!: Array<{}>;
   title='Reservas';
@@ -31,9 +27,8 @@ export class ReservasComponent implements OnInit {
 
   reservasList:any[]=[];
   temp:any[]=[];
-  dataSelected!:any;
   categoryList:any[]=[];
-
+  dataSelected!:any;
   contribuyente!:any;
 
   constructor(public service: PaginationService,
@@ -49,8 +44,8 @@ export class ReservasComponent implements OnInit {
 
   async ngOnInit() {
     
-    const currentUser = window.sessionStorage.getItem("currentUser");
     if (window.sessionStorage.getItem("auth-token") === 'isContribuyente') {
+      const currentUser = window.sessionStorage.getItem("currentUser");
       this.contribuyente = currentUser ? JSON.parse(currentUser) : null;
     }  
     await this.getReservas();
@@ -161,7 +156,7 @@ export class ReservasComponent implements OnInit {
     });
     modalRef.componentInstance.row = content;
     modalRef.componentInstance.accion = accion;
-    modalRef.componentInstance.listaItems.subscribe(() => {
+    modalRef.componentInstance.emitList.subscribe(() => {
       this.getReservas();
     });
   }
@@ -353,6 +348,11 @@ export class ReservasComponent implements OnInit {
         if(this.contribuyente){
           list = data.payload.filter((item: any) => item.contribuyenteDto.uuid === this.contribuyente.uuid);
         }      
+        let employee:any = localStorage.getItem("assignaments");
+        if(employee){
+          employee = employee ? JSON.parse(employee) : null;
+          list = data.payload.filter((item: any) => item.canchasDto.complejoDto.uuid === employee.complejoDto.uuid);
+        }
         const updatedReservas = await this.checkAndUpdateExpiredReservas(list);
         this.reservasList = updatedReservas;
         this.temp = updatedReservas;

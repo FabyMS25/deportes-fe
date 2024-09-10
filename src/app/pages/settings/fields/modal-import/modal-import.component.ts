@@ -3,7 +3,7 @@ import { AbstractControl, FormGroup, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import {read, utils} from 'xlsx';
-import { forkJoin, from, map, mergeMap, Observable, switchMap } from 'rxjs';
+import { catchError, forkJoin, from, map, mergeMap, Observable, of, switchMap } from 'rxjs';
 import Swal from 'sweetalert2';
 import { SharedModule } from 'src/app/shared/shared.module';
 
@@ -32,7 +32,7 @@ import { HorariosService } from 'src/app/core/services/api/horarios.service';
 export class ModalImportComponent {
   @Input() itemsList!: any[];
   @Input() titles!:any[];
-  @Output() listaItems = new EventEmitter();
+  @Output() emitList = new EventEmitter();
 
   xlsxData: any[]=[];
   selectedItems: any[] = [];
@@ -41,7 +41,7 @@ export class ModalImportComponent {
   
   constructor(
       private activeModal: NgbActiveModal,
-      private service: CamposDeportivoService,
+      private fieldService: CamposDeportivoService,
       private complejoService: ComplejosService,
       private superficieService: SuperficiesService,
       private tarifaService: TarifaService,
@@ -93,74 +93,6 @@ export class ModalImportComponent {
     this.xlsxData = temp;
   }
 
-  public async createRegisterfromXlsx(xlsxData: any) {
-    this.loading = true;
-
-    this.getCategorias().pipe(
-      mergeMap(() => {
-        return from(xlsxData).pipe(
-          mergeMap((data:any, i) => {
-            const categoryNames = data.Categorias.split(',').map((nombre: string) => nombre.trim());    
-            const categorias = categoryNames.map((nombre: string) => {
-              const foundItem = this.categoryList.find(item => item.nombre === nombre);
-              if (!foundItem) {
-                console.warn(`Category not found: ${nombre}`);
-              }
-              return foundItem;
-            }).filter(Boolean);
-            data.processedCategories = categorias;
-            return from([data]);
-          })
-        );
-      })
-    ).subscribe({
-      next: (processedItem) => {
-        // console.log('Processed item:', processedItem);
-      },
-      complete: () => {
-        // console.log('Processed all data:', xlsxData);
-      },
-      error: (error) => {
-        console.error('Error processing data:', error);
-      }
-    });
-
-
-
-    const createPromises: Promise<void>[] = [];
-      for (let i = 0; i < xlsxData.length; i++) {
-        let record: any = {
-            codigo: '' + xlsxData[i].Codigo,
-            tipo: '' + xlsxData[i]['Tipo Cobro'],
-            complejoDto: null,
-            superficieDto: null
-        };
-        const createPromise = forkJoin({
-          complejo: this.searchData(xlsxData[i].Complejo),
-          superficie: this.searchData2(xlsxData[i].Superficie)
-        }).pipe(
-          map(({ complejo, superficie }) => {
-            record.complejoDto = complejo;
-            record.superficieDto = superficie;
-            return record;
-          }),
-        ).toPromise()
-          .then(async (recordWithData: any) => {
-            if (recordWithData && !this.recordExists(recordWithData)) {
-              await this.createRecord(recordWithData,xlsxData[i]);             
-
-            } else if (recordWithData) {
-              Swal.fire({ text: 'Registro ya existe', confirmButtonColor: '#299cdb' });
-            }
-          });  
-        createPromises.push(createPromise);
-      }
-      await Promise.all(createPromises);
-      this.loading = false;
-      this.activeModal.close();
-      this.listaItems.emit();
-  }
-  
     private searchData(nombre: string): Observable<any> {
       return this.complejoService.getAll().pipe(
         map((response: any) => {
@@ -194,43 +126,99 @@ export class ModalImportComponent {
       );
     }
     
-    categoryList:any[]=[]
-    private getCategorias() {
-      return this.categoriesService.getAll().pipe(
-        map((response: any) => {
-          if (response['status'] === 'OK') {
-            this.categoryList = response['payload'];
-          } 
-        })
-      );
-    }
+  public async createRegisterfromXlsx(xlsxData: any) {
+    this.loading = true;
+
+    this.getCategorias().pipe(
+      mergeMap(() => {
+        return from(xlsxData).pipe(
+          mergeMap((data:any, i) => {
+            const categoryNames = data.Categorias.split(',').map((nombre: string) => nombre.trim());    
+            const categorias = categoryNames.map((nombre: string) => {
+              const foundItem = this.categoryList.find(item => item.nombre === nombre);
+              if (!foundItem) {
+                console.warn(`Category not found: ${nombre}`);
+              }
+              return foundItem;
+            }).filter(Boolean);
+            data.processedCategories = categorias;
+            return from([data]);
+          })
+        );
+      })
+    ).subscribe({
+      next: (processedItem) => {
+        // console.log('Processed item:', processedItem);
+      },
+      complete: () => {
+        // console.log('Processed all data:', xlsxData);
+      },
+      error: (error) => {
+        console.error('Error processing data:', error);
+      }
+    });
+
+    
+    const createPromises: Promise<void>[] = [];
+    const canchaGroupedData = this.groupByCancha(xlsxData);
+
+    for (const canchaKey in canchaGroupedData) {
+      const xlsxData = canchaGroupedData[canchaKey];
+      // for (let i = 0; i < xlsxData.length; i++) {
+        let record: any = {
+            codigo: '' + xlsxData[0].Codigo,
+            tipo: '' + xlsxData[0]['Tipo Cobro'],
+            complejoDto: null,
+            superficieDto: null
+        };
+        const createPromise = forkJoin({
+          complejo: this.searchData(xlsxData[0].Complejo),
+          superficie: this.searchData2(xlsxData[0].Superficie)
+        }).pipe(
+          map(({ complejo, superficie }) => {
+            record.complejoDto = complejo;
+            record.superficieDto = superficie;
+            return record;
+          }),
+        ).toPromise()
+          .then(async (recordWithData: any) => {
+            if (recordWithData && !this.recordExists(recordWithData)) {
+              await this.createRecord(recordWithData,xlsxData);             
+
+            } else if (recordWithData) {
+              Swal.fire({ text: 'Registro ya existe', confirmButtonColor: '#299cdb' });
+            }
+          });  
+        createPromises.push(createPromise);
+      }
+      await Promise.all(createPromises);
+      this.loading = false;
+      this.activeModal.close();
+      this.emitList.emit();
+  }
+  private groupByCancha(xlsxData: any[]): { [key: string]: any[] } {
+    return xlsxData.reduce((acc, item) => {
+      const key = item.Codigo; // Group by "Codigo" or other unique identifier for cancha
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(item);
+      return acc;
+    }, {});
+  }
+  
   
   private recordExists(registro: any): boolean {
     return this.itemsList.some(item => item.codigo === registro.codigo);
   }
 
-  // private async createRecord(cancha: any, datos:any) {
-  //   try {
-  //     const data = await this.service.save(cancha).subscribe({
-  //       next:(data:any)=>{
-  //         if (data['status'] === 'OK') {
-  //           this.saveTarifasCat(data['payload'],datos);
-  //           this.saveSchedule(data['payload'],datos)  
-  //           Swal.fire({ text: 'Registro Creado con éxito', confirmButtonColor: '#299cdb' });
-  //         }else{}
-  //       }
-  //     });
-  //   } catch (error) {
-  //     Swal.fire({ text: 'Error al crear el registro', icon: 'error', confirmButtonColor: '#299cdb' });
-  //   }
-  // }
-  private async createRecord(cancha: any, datos: any) {
+  private async createRecord(cancha: any, datos: any[]) {
     try {
-      const data:any = await this.service.save(cancha).toPromise();
+      const data:any = await this.fieldService.save(cancha).toPromise();
       if (data['status'] === 'OK') {
         forkJoin([
           this.saveTarifasCat(data['payload'], datos),
-          this.saveSchedule(data['payload'], datos)
+          this.saveSchedule(data['payload'], datos[0])
         ]).subscribe({
           next: (results) => {
             Swal.fire({ text: 'Registro Creado con éxito', confirmButtonColor: '#299cdb' });
@@ -248,36 +236,43 @@ export class ModalImportComponent {
     }
   }
 
-  private saveTarifasCat(cancha: any, datos: any) {
-    const tarifaData: any = {
-      costo: datos.Costo,
-      desde: this.formatTimeString(datos.Desde),
-      hasta: this.formatTimeString(datos.Hasta),
-      descripcion: "",
-      canchasDto: cancha
-    };
-    const categorias = datos.processedCategories;
+  private saveTarifasCat(cancha: any, canchaDataList: any[]) {
+    const saveTarifaObservables = canchaDataList.map((datos) => {
+      const tarifaData: any = {
+        costo: datos.Costo,
+        desde: this.formatTimeString(datos.Desde),
+        hasta: this.formatTimeString(datos.Hasta),
+        descripcion: "",
+        canchasDto: cancha,
+        // categoriaDtoList: datos.processedCategories        
+      };
   
-    return this.tarifaService.save(tarifaData).pipe(
-      switchMap((savedTarifa: any) => {
-        const categorySaveObservables = categorias.map((categoria: any) => {
-          const tarifaCategoriaData = {
-            tarifaDto: { uuid: savedTarifa.payload.uuid },
-            categoriaDto: { uuid: categoria.uuid }
-          };
-          // return this.TarifacategoriesService.save(tarifaCategoriaData);
-          return from(this.TarifacategoriesService.save(tarifaCategoriaData));
-        });
-        return forkJoin(categorySaveObservables);
-      })
-    );
+      const categorias = datos.processedCategories;
+      console.log("tarifadata", tarifaData);
+  
+      // Save the tariff and then associate categories with it
+      return this.tarifaService.save(tarifaData).pipe(
+        switchMap((savedTarifa: any) => {
+          // Save the association between the tarifa and its categories
+          const categorySaveObservables = categorias.map((categoria: any) => {
+            const tarifaCategoriaData = {
+              tarifaDto: { uuid: savedTarifa.payload.uuid },
+              categoriaDto: { uuid: categoria.uuid }
+            };
+            return from(this.TarifacategoriesService.save(tarifaCategoriaData));
+          });
+          return forkJoin(categorySaveObservables);
+        })
+      );
+    });
+    return forkJoin(saveTarifaObservables);
   }
-
+  
   private saveSchedule(cancha: any, datos: any) {
     const saveObservables: any[] = [];
   
     Object.entries(datos).forEach(([day]) => {
-      if (day === 'Lunes' || day === 'Martes' || day === 'Miercoles' || day === 'Jueves' || day === 'Viernes' || day == "Sabedo" || day === "Domingo") {
+      if (day === 'Lunes' || day === 'Martes' || day === 'Miércoles' || day === 'Jueves' || day === 'Viernes' || day == "Sábado" || day === "Domingo") {
         const [horaInicio, horaFin] = datos[day].split(' - ');  
         const horario = {
           dia: day,
@@ -296,5 +291,30 @@ export class ModalImportComponent {
   private formatTimeString(timeString: string): string {
     const [hours, minutes] = timeString.split(':');
     return `${String(parseInt(hours)).padStart(2, '0')}:${minutes}`;
+  }
+
+  categoryList:any[]=[]
+  private getCategorias() {
+    return this.categoriesService.getAll().pipe(
+      map((response: any) => {
+        if (response['status'] === 'OK') {
+          this.categoryList = response['payload'];
+        } 
+      })
+    );
+  }
+  private addTariff(datos: Tarifa): Observable<any> {
+    return this.tarifaService.save(datos).pipe(
+      switchMap((result: any) => {
+        if(result.status === 'OK'){
+          return of(result);
+        }else{
+          return of(null);
+        }
+      }),
+      catchError((error) => {
+        return of(null);
+      })
+    );
   }
 }

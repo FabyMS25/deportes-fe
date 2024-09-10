@@ -137,7 +137,7 @@ export class FieldsComponent {
     modalRef.componentInstance.row = row;
     modalRef.componentInstance.categoryList = this.categoryList;
     modalRef.componentInstance.accion = accion;
-    modalRef.componentInstance.listaItems.subscribe(() => {
+    modalRef.componentInstance.emitList.subscribe(() => {
     this.getFields();
     });
   }
@@ -167,8 +167,9 @@ export class FieldsComponent {
     });
     modalRef.componentInstance.titles = this.camposImport;
     modalRef.componentInstance.itemsList = this.canchasList;
-    modalRef.componentInstance.listaItems.subscribe(() => {
-        this.getFields();
+    modalRef.componentInstance.emitList.subscribe(() => {
+      this.getCategories();
+      this.getFields()
     });
   }
   

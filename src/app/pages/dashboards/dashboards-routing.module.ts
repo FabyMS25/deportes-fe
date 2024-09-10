@@ -1,24 +1,24 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { EmpleadoComponent } from './empleado/empleado.component';
-import { ContribuyenteComponent } from './contribuyente/contribuyente.component';
-import { DashboardComponent } from './dashboard/dashboard.component';
+import { CalendarDashboardComponent } from './employee/calendar-dashboard.component';
+import { MapDashboardComponent } from './taxpayer/map-dashboard.component';
+import { DashboardComponent } from './admin/dashboard.component';
 
 // Component Pages
 
 
 const routes: Routes = [
   {
-      path: "",
-      component: DashboardComponent
+    path: "",
+    component: DashboardComponent
   },
   {
     path: "employee",
-    component: EmpleadoComponent
+    component: CalendarDashboardComponent
   },
   {
     path: "taxpayer",
-    component: ContribuyenteComponent
+    component: MapDashboardComponent
   },
 ];
 

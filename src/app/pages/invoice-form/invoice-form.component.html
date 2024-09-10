@@ -144,10 +144,19 @@
                                             </button>
                                         </div>
                                     </div>
-                                </li>                                       
-                                <!-- row horarios -->                                         
+                                </li>            
+                                <!-- row horarios -->                                                                
                                 @if (!isEvent(item)) {
-                                <div *ngIf="tariffDto === tariff" id="schedules">
+                                <div *ngIf="tariffDto === tariff" id="schedules"> 
+                                    <!-- <app-timetables *ngIf="can"
+                                        [horariosAtencion]="dataField.horarioDtoList"
+                                        [tariff]="tariff"
+                                        [reservationsList]="reservationsList"
+                                        [reservationDate]="InvoiceForm.get('fechaReserva')?.value"
+                                        (selectedDay)="setSelectedDay($event)"
+                                        (reserveEvent)="setReserve($event.start, $event.end)"
+                                    >
+                                    </app-timetables> -->
                                     <div class="card-header d-xl-flex">
                                         <div class="row w-100">
                                           <div class="col-12 col-sm-6 col-lg-5 mb-sm-0 d-flex align-items-center">

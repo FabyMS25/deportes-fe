@@ -25,3 +25,33 @@
     width: 12px;
     height: 12px;
   }
+  
+  .row.g-0 {
+    margin: 0;
+  }
+
+  .map-card {
+    height: calc(100vh - 118px); /* Adjust 56px based on your header height */
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-body {
+    flex-grow: 1;
+    padding: 0 !important;
+  }
+
+  .map-container {
+    height: 100%;
+  }
+
+  @media (max-width: 767px) {
+    .map-card {
+      margin: -15px;
+      border-radius: 3;
+    }
+    
+    .card-header {
+      padding: 10px 15px;
+    }
+  }

@@ -122,7 +122,7 @@ export class CategoriasComponent {
     });
     modalRef.componentInstance.titles = this.camposImport;
     modalRef.componentInstance.itemsList = this.categoryList;
-    modalRef.componentInstance.itemsList.subscribe(() => {
+    modalRef.componentInstance.emitList.subscribe(() => {
         this.getCategories();
     });
   }

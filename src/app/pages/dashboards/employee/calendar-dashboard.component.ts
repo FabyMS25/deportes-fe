@@ -13,20 +13,20 @@ import Swal from 'sweetalert2';
 import esLocale from '@fullcalendar/core/locales/es';
 
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
-import { ModalComponent } from '../../reservas/modal/modal.component';
+import { ModalComponent } from '../../reservations/modal/modal.component';
 @Component({
-    selector: 'app-empleado',
-    templateUrl: './empleado.component.html',
-    styleUrls: ['./empleado.component.scss']
+    selector: 'app-calendar-dashboard',
+    templateUrl: './calendar-dashboard.component.html',
+    styleUrls: ['./calendar-dashboard.component.scss']
 })
 
-export class EmpleadoComponent implements OnInit {
+export class CalendarDashboardComponent implements OnInit {
 
   // bread crumb items
   breadCrumbItems!: Array<{}>;
 
   // calendar
-  calendarEvents!: EventInput[];
+  calendarEvents!: any[];
   direction: any = 'ltr';
   selectedLocale: any = 'en';
   masterSelected: any = true;
@@ -45,7 +45,7 @@ export class EmpleadoComponent implements OnInit {
       this.breadCrumbItems = [
           { label: 'Dashboards' },
           { label: 'Encargado', active: true }
-      ];  
+      ];        
     this._fetchData();
   }
 
@@ -56,12 +56,20 @@ export class EmpleadoComponent implements OnInit {
     this.reservasService.getAll().subscribe({
       next: (data: any) => {
         if (data['status'] === 'OK') {
-          const reservasList = data.payload;
-          this.allcalendarEvents = data.payload;
-          this.calendarEvents = reservasList.map(
+          let reservasList = data.payload;
+          let employee:any = localStorage.getItem("assignaments");
+          if(employee){
+            employee = employee ? JSON.parse(employee) : null;
+            reservasList = data.payload.filter((item: any) => item.canchasDto.complejoDto.uuid === employee.complejoDto.uuid);
+          }
+          employee = employee ? JSON.parse(employee) : null;
+          console.log('reservasList', reservasList);  
+          this.allcalendarEvents = reservasList;
+          this.calendarEvents = this.allcalendarEvents.map(
             (evt: any) => {
               return { title: evt.canchasDto.complejoDto.nombre, 
-                  date: evt.fechaReserva, 
+                  // date: evt.fechaReserva, 
+                  date: new Date(evt.fechaReserva), 
                   start:  `${evt.fechaReserva.split('T')[0]}T${evt.horaEntrada}`,
                   end: `${evt.fechaReserva.split('T')[0]}T${evt.horaSalida}`,
                   className: evt.className, 
@@ -136,23 +144,18 @@ export class EmpleadoComponent implements OnInit {
   * Events bind in calander
   * @param events events
   */
+  currentEvents: EventApi[] = [];
   handleEvents(events: EventApi[]) {
     this.currentEvents = events;
   }
 
-  currentEvents: EventApi[] = [];
 
-  // Calender direction functionality
   changeDirection() {
     this.calendarOptions.direction = this.direction
   }
-
-  // Calender langulage functionality
   changeLocale() {
     this.calendarOptions.locale = this.selectedLocale
   }
-
-  // Calender filter functionality
   checkUncheckAll(ev: any) {
     this.masterSelected = ev.target.checked;
     this.filterArray.forEach((data: any) => {

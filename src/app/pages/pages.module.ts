@@ -32,17 +32,19 @@ import { WidgetModule } from '../shared/widget/widget.module';
 import { DashboardsModule } from "./dashboards/dashboards.module";
 import { FeatherModule } from 'angular-feather';
 import { allIcons } from 'angular-feather/icons';
-import { DetailsComponent } from './details/details.component';
-import { CommentsComponent } from './details/comments/comments.component';
+import { InvoiceFormComponent } from './invoice-form/invoice-form.component';
+import { CommentsComponent } from './invoice-form/comments/comments.component';
 import { ModalComponent } from './taxpayers/modal/modal.component';
 
 // Scrollto
 import { ScrollToModule } from '@nicky-lenaers/ngx-scroll-to';
+import { TimeTablesComponent } from './invoice-form/timetables/timetables.component';
 
 
 @NgModule({
   declarations: [
-    DetailsComponent,
+    TimeTablesComponent,
+    InvoiceFormComponent,
     CommentsComponent,
     ModalComponent
   ],

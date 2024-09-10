@@ -120,11 +120,19 @@ export class AuthenticationService {
     try {
       const [userPermissions, empleado] = await Promise.all([
         this.permissionService.getPermisosUsuario(user.uuid).toPromise(),
-        this.designationsService.getByUserUuid(user.uuid).toPromise().catch(error => {
+        this.designationsService.getByUserUuid(user.uuid).toPromise()
+          .then((response:any) => {
+            if (response && response.status === 'OK') {
+              return response.payload;
+            } else {
+              return null;
+            }
+          })
+          .catch(error => {
             return null; 
-        }),
+          }),
       ]);
-  
+      
       if (userPermissions && Array.isArray(userPermissions) && userPermissions.length > 0) {
         if (empleado !== null || this.isSuperAdmin(userPermissions)) {
           this.isAuthenticated = true;

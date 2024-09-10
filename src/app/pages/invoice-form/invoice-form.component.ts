@@ -9,7 +9,6 @@ import * as L from 'leaflet';
 import { debounceTime, firstValueFrom, switchMap } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
 
-import { ModalComponent } from '../reservas/modal/modal.component';
 import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { HorariosService } from 'src/app/core/services/api/horarios.service';
@@ -25,13 +24,13 @@ import { addDays, subDays,  startOfWeek, endOfWeek, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 @Component({
-  selector: 'app-details',
-  templateUrl: './details.component.html',
-  styleUrls: ['./details.component.scss']
+  selector: 'app-invoice-form',
+  templateUrl: './invoice-form.component.html',
+  styleUrls: ['./invoice-form.component.scss']
 })
 
 
-export class DetailsComponent implements OnInit  {
+export class InvoiceFormComponent implements OnInit  {
 
   breadCrumbItems!: Array<{}>;
   currentTime!: string;
@@ -85,8 +84,8 @@ export class DetailsComponent implements OnInit  {
   weekDays: { name: string, date: Date }[] = [];
   activeDayName: string = '';
   currentWeekStart!: Date;
-  currentWeekEnd!: Date;
-  // allSlots: { [key: string]: { morningSlots: string[], afternoonSlots: string[] } } = {};
+  currentWeekEnd!: Date;  
+  allSlots: { [key: string]: { morningSlots: { time: string, isAvailable: boolean }[], afternoonSlots: { time: string, isAvailable: boolean }[] } } = {};
 
   async ngOnInit(): Promise<void> {
     this.breadCrumbItems = [
@@ -174,16 +173,6 @@ export class DetailsComponent implements OnInit  {
       : subDays(this.currentWeekStart, 7);
     this.setWeekRange(newStartDate);
   }
-  setSelectedDay(date: Date) {
-    if (this.InvoiceForm) {
-      this.InvoiceForm.patchValue({
-        fechaReserva: date
-      });
-    }
-    // setTimeout(() => {
-      this.activeDayName = format(date, 'EEE', { locale: es }).toLowerCase();
-    // });
-  }
   private setWeekRange(date: Date) {
     this.currentWeekStart = startOfWeek(date, { weekStartsOn: 1 });
     this.currentWeekEnd = endOfWeek(date, { weekStartsOn: 1 });
@@ -202,9 +191,9 @@ export class DetailsComponent implements OnInit  {
   get form() {
     return this.InvoiceForm.controls;
   }
-
+  
   setField(field: any, tarifa:any | undefined) {
-    this.getReservationsByField(field.uuid).then(() => {      
+    this.getReservationsByField(field.uuid).then(() => {  
       this.allSlots={}
     })
     this.dataField = field;
@@ -233,10 +222,16 @@ export class DetailsComponent implements OnInit  {
       });
     }
   }
+  setSelectedDay(date: Date) {
+    if (this.InvoiceForm) {
+      this.InvoiceForm.patchValue({
+        fechaReserva: date
+      });
+    }
+      this.activeDayName = format(date, 'EEE', { locale: es }).toLowerCase();
+  }
   
   timetables!:any[];
-  allSlots: { [key: string]: { morningSlots: { time: string, isAvailable: boolean }[], afternoonSlots: { time: string, isAvailable: boolean }[] } } = {};
-
   getTimeSlotsForDay(date: Date) {
     const dayString = date ? new Date(date).toLocaleString('es-ES', { weekday: 'long' }).toLowerCase() : '';    
     if (!this.allSlots[dayString]) {
@@ -334,22 +329,16 @@ export class DetailsComponent implements OnInit  {
       if (horaEntrada && horaSalida) {
         const [entradaHours, entradaMinutes] = horaEntrada.split(':').map(Number);
         const [salidaHours, salidaMinutes] = horaSalida.split(':').map(Number);
-  
-        // Ensure the start time is before the end time
         if (entradaHours > salidaHours || (entradaHours === salidaHours && entradaMinutes >= salidaMinutes)) {
-          return { timeRange: true }; // Invalid time range
+          return { timeRange: true };
         }
-  
-        // Check if the time slot is already reserved
         if (this.reservationsList.length > 0) {
           const isReserved = !this.isAvailable(`${horaEntrada}:00`, `${horaSalida}:00`);
           if (isReserved) {
-            return { isReserved: true }; // Time slot is reserved
+            return { isReserved: true };
           }
         }
       }
-  
-      // If everything is valid, return null (no errors)
       return null;
     };
   }
@@ -424,12 +413,9 @@ export class DetailsComponent implements OnInit  {
   
   saveData(): void {
     this.submitted = true;
-    console.log(this.InvoiceForm.valid)
-    console.log(this.InvoiceForm.value)
     if (this.InvoiceForm.valid) {
       this.InvoiceForm.enable();
       const formData = {...this.InvoiceForm.value};
-      console.log(formData)
       const ruatData = {
         codigoContribuyente: formData.contribuyenteDto.codigoContribuyente,
         monto: formData.totalPago,

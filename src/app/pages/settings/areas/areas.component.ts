@@ -100,7 +100,7 @@ export class AreasComponent {
     });
     modalRef.componentInstance.titles = this.camposImport;
     modalRef.componentInstance.itemsList = this.superficiesList;
-    modalRef.componentInstance.itemsList.subscribe(() => {
+    modalRef.componentInstance.emitList.subscribe(() => {
         this.getSurfaces();
     });
   }

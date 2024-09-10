@@ -31,8 +31,8 @@ import { WidgetModule } from '../../shared/widget/widget.module';
 
 // Component
 import { FullCalendarModule } from '@fullcalendar/angular';
-import { EmpleadoComponent } from './empleado/empleado.component';
-import { ContribuyenteComponent } from './contribuyente/contribuyente.component';
+import { CalendarDashboardComponent } from './employee/calendar-dashboard.component';
+import { MapDashboardComponent } from './taxpayer/map-dashboard.component';
 import { NgPipesModule } from 'ngx-pipes';
 import { CKEditorModule } from '@ckeditor/ckeditor5-angular';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
@@ -41,16 +41,16 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { MatTableModule } from '@angular/material/table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxMaskDirective, NgxMaskPipe } from 'ngx-mask';
-import { DashboardComponent } from './dashboard/dashboard.component';
-import { ToastsContainer } from './dashboard/toasts-container.component';
+import { DashboardComponent } from './admin/dashboard.component';
+import { ToastsContainer } from './admin/toasts-container.component';
 import { ListComponent } from './cards-row/list.component';
 
 @NgModule({
   declarations: [
     ToastsContainer,
     DashboardComponent,
-    EmpleadoComponent,
-    ContribuyenteComponent,
+    CalendarDashboardComponent,
+    MapDashboardComponent,
     ListComponent,
   ],
   imports: [

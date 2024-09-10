@@ -26,13 +26,13 @@ import { Tarifa } from 'src/app/core/models/tarifa.model';
 export class ModalFieldsComponent implements OnInit, OnDestroy {
   @Input() accion!: string;
   @Input() row!: campoDeportivo;
-  @Output() listaItems = new EventEmitter();
+  @Output() emitList = new EventEmitter();
   @Input() categoryList:Categoria[]=[];
   tipoList= TipoCobro
   ceilingList= Ceiling
   surfacesList:any[]=[];
   distictList= Districts
-  dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'];
+  dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
   submitted = false;
   masterSelected!: boolean;
@@ -40,7 +40,6 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
 
   fieldsForm!: UntypedFormGroup;
   multiDefaultOption='';
-  // Api Data
   complejosList:any[]=[];
 
   @ViewChild('deleteConfirmation', { static: true }) deleteConfirmation!: TemplateRef<any>;
@@ -263,7 +262,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
               if (result !==null) {
                 this.notify('Cancha, tarifas, y categorias exitosamente actualizados', 'success');
                 this.fieldsForm.reset();
-                this.listaItems.emit();
+                this.emitList.emit();
               }
             },
             error: (error) => {
@@ -276,7 +275,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
               if (result !==null) {
                 this.notify('Cancha, tarifas, y categorias exitosamente creados', 'success');
                 this.fieldsForm.reset();
-                this.listaItems.emit();
+                this.emitList.emit();
               }
             },
             error: (error) => {

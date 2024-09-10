@@ -4,11 +4,11 @@ import { NgbDropdownModule, NgbTooltipModule, NgbPaginationModule, NgbNavModule 
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 // Routing
-import { ReservasRoutingModule } from './reservas-routing.module';
+import { ReservationsRoutingModule } from './reservations-routing.module';
 import { SharedModule } from 'src/app/shared/shared.module';
 
 // Component
-import { ReservasComponent } from './reservas/reservas.component';
+import { ReservationsComponent } from './list/reservations.component';
 
 // Apex Chart Package
 import { NgApexchartsModule } from 'ng-apexcharts';
@@ -32,12 +32,12 @@ import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
   declarations: [
-    ReservasComponent,
+    ReservationsComponent,
     ModalComponent
   ],
   imports: [
     CommonModule,
-    ReservasRoutingModule,
+    ReservationsRoutingModule,
     SharedModule,
     NgApexchartsModule,
     FeatherModule.pick(allIcons),
@@ -54,7 +54,7 @@ import { TranslateModule } from '@ngx-translate/core';
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ReservasModule {
+export class ReservationsModule {
   constructor() {
     defineElement(lottie.loadAnimation);
   }

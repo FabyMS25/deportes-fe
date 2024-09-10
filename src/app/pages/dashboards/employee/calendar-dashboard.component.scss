@@ -1,0 +1,118 @@
+  .calendar-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .calendar-header {
+    margin-bottom: 20px;
+  }
+  
+  .calendar-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .nav-btn, .today-btn, .view-btn {
+    padding: 5px 10px;
+    margin: 0 5px;
+  }
+  
+  .view-btn.active {
+    background-color: #ff7f50;
+    color: white;
+  }
+  
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+
+
+  .mobile-events-list  {
+    display: none;
+  }
+@media (max-width: 767px) {
+    .fc-header-toolbar {
+        flex-direction: column;
+    }
+    .fc-toolbar-chunk {
+        margin-bottom: 10px;
+    }
+    .fc-view-harness {
+        height: 400px !important;
+    }
+    .event-time {
+        font-weight: bold;
+        margin-right: 10px;
+    }
+}
+
+  @media (max-width: 768px) {
+   
+    .view-options {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+  
+    .mobile-events-list  {
+        margin: -15px;
+      display: block;
+      margin-top: 20px;
+    //   border-top: 1px solid #ccc;
+      padding-top: 20px;
+    }
+  
+    .mobile-events-list  ul {
+      list-style-type: none;
+      padding: 0;
+    }
+  
+    .mobile-events-list  li {
+      margin-bottom: 10px;
+    }
+  
+    .event-time {
+      font-weight: bold;
+      margin-right: 10px;
+    }
+  }
+
+  /*  */
+  .row.g-0 {
+    margin: 0;
+  }
+
+  .cel-card {
+    // height: calc(100vh - 56px); /* Adjust 56px based on your header height */
+    display: flex;
+    flex-direction: column;
+    border-radius: 3;
+  }
+
+  .card-body {
+    flex-grow: 1;
+    padding: 2;
+  }
+
+  @media (max-width: 767px) {
+    .cel-card {
+      margin: -15px;
+      border-radius: 2;
+    }
+    
+    .card-header {
+      padding: 10px 15px;
+    }
+    .card-body {
+      flex-grow: 1;
+      padding: 0 ;
+    }
+  }
