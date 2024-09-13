@@ -134,7 +134,7 @@ export class AuthenticationService {
       ]);
       
       if (userPermissions && Array.isArray(userPermissions) && userPermissions.length > 0) {
-        if (empleado !== null || this.isSuperAdmin(userPermissions)) {
+        if (empleado !== null || userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin)) {
           this.isAuthenticated = true;
           userPermissions.forEach((menu: any) => {
             if (!menu.permisoPadreDto) {
@@ -144,7 +144,7 @@ export class AuthenticationService {
           this.storageService.saveUser(user);
           localStorage.setItem('menu', JSON.stringify(userPermissions));  
   
-          if (this.isSuperAdmin(userPermissions)) {
+          if (userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin)) {
             this.router.navigate(['/inicio']).then(() => {
               this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
             });
@@ -217,20 +217,24 @@ export class AuthenticationService {
       const menu: any[] = menuString ? JSON.parse(menuString) : null;      
       return menu.some(permission => permission.nombreMenu === this.permisoAdmin)
     }    
-    isSuperAdmin(menu:any[]):boolean{    
-      return menu.some(permission => permission.nombreMenu === this.permisoAdmin)
+    // getRouteDB():string{      
+    //   if(this.storageService.getToken()==="isContribuyente"){
+    //     return 'taxpayer'
+    //   }else{
+    //     if (!this.isAdmin()) {
+    //       return 'employee'
+    //     }
+    //   }      
+    //   return ''
+    // }
+    getDashboardUrl(): string {
+      const dashboardRoutes = ['/inicio', '/inicio/employee', '/inicio/taxpayer'];      
+      const storedMenu = localStorage.getItem('menu');
+      const userMenu = storedMenu ? JSON.parse(storedMenu) : null;      
+      const userDashboard = userMenu.find((item:any) => dashboardRoutes.includes(item.ruta));
+      return userDashboard ? userDashboard.ruta : '/auth/login';
     }
 
-    getRouteDB():string{      
-      if(this.storageService.getToken()==="isContribuyente"){
-        return 'taxpayer'
-      }else{
-        if (!this.isAdmin()) {
-          return 'employee'
-        }
-      }      
-      return ''
-    }
     hasPermission(modulo: string): string[] {
       const menuString = localStorage.getItem('menu');
       const menu: any[] = menuString ? JSON.parse(menuString) : null;
@@ -259,7 +263,7 @@ export class AuthenticationService {
             }
         }  
       }else{
-        if (this.isSuperAdmin(menu)) {
+        if (menu.some(permission => permission.nombreMenu === this.permisoAdmin)) {
           tipoUser = UserRol.find(item => item.tipo === 0);//ADMINISTRADOR
         } else {
           tipoUser = UserRol.find(item => item.tipo == 1);//VALIDADOR

@@ -12,10 +12,10 @@ import { Component, OnInit, Input } from '@angular/core';
 export class TopPagesComponent implements OnInit {
 
   // Top Selling data
-  @Input() TopPages: Array<{
-    page?: string;
+  @Input() List: Array<{
+    complexName?: string;
     active?: string;
-    users?: string;
+    totalIncome?: string;
   }> | undefined;
 
   constructor() { }

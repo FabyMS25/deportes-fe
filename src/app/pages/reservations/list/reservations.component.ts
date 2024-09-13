@@ -48,7 +48,7 @@ export class ReservationsComponent implements OnInit {
       const currentUser = window.sessionStorage.getItem("currentUser");
       this.contribuyente = currentUser ? JSON.parse(currentUser) : null;
     }  
-    await this.getReservas();
+    await this.getReservations();
     await this.getCategories();
     this.breadCrumbItems = [
       { label: '' },
@@ -64,7 +64,7 @@ export class ReservationsComponent implements OnInit {
     ];
     
     this.authRuat();  
-    setInterval(() => this.getReservas(), 5 * 60 * 1000);// checks periodically (e.g., every 5 minutes)
+    setInterval(() => this.getReservations(), 5 * 60 * 1000);// checks periodically (e.g., every 5 minutes)
   }
 
   // Search filter
@@ -157,7 +157,7 @@ export class ReservationsComponent implements OnInit {
     modalRef.componentInstance.row = content;
     modalRef.componentInstance.accion = accion;
     modalRef.componentInstance.emitList.subscribe(() => {
-      this.getReservas();
+      this.getReservations();
     });
   }
   
@@ -178,7 +178,7 @@ export class ReservationsComponent implements OnInit {
     }    
     this.modalService.open(content, { centered: true });
     this.selectedItems = [];
-    this.getReservas();
+    this.getReservations();
   }
 
   async consultData(item: any): Promise<any> {
@@ -339,7 +339,7 @@ export class ReservationsComponent implements OnInit {
   
   /* API Services */
   loading: boolean = true;
-  private async getReservas() {
+  private async getReservations() {
     try {
       this.loading = true;
       const data: any = await this.reservasService.getAll().toPromise();      

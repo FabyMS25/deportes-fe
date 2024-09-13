@@ -8,12 +8,8 @@ import { map } from 'rxjs/operators';
   styleUrls: ['./coming-soon.component.scss']
 })
 
-/**
- * ComingSoon Component
- */
 export class ComingSoonComponent implements OnInit {
 
-  // set the current year
   year: number = new Date().getFullYear();
   private _trialEndsAt: any;
   private _diff?: any;

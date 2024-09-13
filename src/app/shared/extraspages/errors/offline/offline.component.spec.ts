@@ -1,18 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { TermsConditionComponent } from './terms-condition.component';
+import { OfflineComponent } from './offline.component';
 
-describe('TermsConditionComponent', () => {
-  let component: TermsConditionComponent;
-  let fixture: ComponentFixture<TermsConditionComponent>;
+describe('OfflineComponent', () => {
+  let component: OfflineComponent;
+  let fixture: ComponentFixture<OfflineComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ TermsConditionComponent ]
+      declarations: [ OfflineComponent ]
     })
     .compileComponents();
+  });
 
-    fixture = TestBed.createComponent(TermsConditionComponent);
+  beforeEach(() => {
+    fixture = TestBed.createComponent(OfflineComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -26,15 +26,12 @@ export class NonAuthGuard implements CanActivate, CanActivateChild {
         | boolean
         | UrlTree {
         // const token =   window.sessionStorage.getItem("auth-token");
-        // if (!token) {
-        //     return true;
-        // }        
         const currentUser =   window.sessionStorage.getItem("currentUser");
         if(!currentUser){
             return true
         }
-        const link =this.authService.getRouteDB();
-        this.router.navigate(['/inicio/'+link]);
+        const dashboardUrl = this.authService.getDashboardUrl();
+        this.router.navigate([dashboardUrl]);
         return false;
     }
     canActivateChild(
@@ -47,4 +44,5 @@ export class NonAuthGuard implements CanActivate, CanActivateChild {
         | UrlTree {
         return this.canActivate(route, state);
     }
+    
 }

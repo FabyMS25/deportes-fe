@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 
 @Component({
-  selector: 'app-terms-condition',
+  selector: 'app-terms-condition-out',
   templateUrl: './terms-condition.component.html',
   styleUrls: ['./terms-condition.component.scss']
 })
 export class TermsConditionComponent implements OnInit {
 
-  // set the current year
   year: number = new Date().getFullYear();
+  title = 'Terminos & Condiciones de Uso'
 
   constructor() { }
 

@@ -110,9 +110,13 @@
                 <div class="table-responsive table-card">
                     <table class="table table-borderless mb-0">
                         <tbody>
-                            <tr>
+                            <tr *ngIf="dataSelected.encargadosDtoList">
                                 <td class="fw-medium" scope="row">Encargado</td>
-                                <td class="telefono">{{dataSelected.encargadoCanchaList?.nombre}}</td>
+                                <td class="telefono">
+                                    @for (item of dataSelected.encargadosDtoList; track $index) {
+                                    <p>{{item.nombre}}</p>
+                                    }
+                                </td>
                             </tr>
                             <tr>
                                 <td class="fw-medium" scope="row">Techado</td>

@@ -49,7 +49,7 @@ import { TranslateModule } from '@ngx-translate/core';
     SharedModule,
     FeatherModule.pick(allIcons),
     NgPipesModule,
-    TranslateModule
+    TranslateModule,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

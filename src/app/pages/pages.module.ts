@@ -39,6 +39,7 @@ import { ModalComponent } from './taxpayers/modal/modal.component';
 // Scrollto
 import { ScrollToModule } from '@nicky-lenaers/ngx-scroll-to';
 import { TimeTablesComponent } from './invoice-form/timetables/timetables.component';
+import { ExtraspagesModule } from './extrapages/extraspages.module';
 
 
 @NgModule({

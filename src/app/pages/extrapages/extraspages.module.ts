@@ -24,16 +24,14 @@ import lottie from 'lottie-web';
 // Component pages
 import { ExtraPagesRoutingModule } from './extrapages-routing.module';
 import { SharedModule } from '../../shared/shared.module';
-import { FaqsComponent } from './faqs/faqs.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { TermsConditionComponent } from './terms-condition/terms-condition.component';
-import { PrivacyPolicyComponent } from './privacy-policy/privacy-policy.component';
+import { ExtraPagesComponent } from './extra-pages-in/extra-pages-layout.component';
 
 @NgModule({
   declarations: [
-    FaqsComponent,
-    PrivacyPolicyComponent,
-    TermsConditionComponent
+    // FaqsComponent,
+    // PrivacyPolicyComponent,
+    ExtraPagesComponent
   ],
   imports: [
     CommonModule,
@@ -53,7 +51,8 @@ import { PrivacyPolicyComponent } from './privacy-policy/privacy-policy.componen
     NgPipesModule,
     TranslateModule
   ],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA]
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  // exports: [TermsConditionComponent]
 })
 export class ExtraspagesModule { 
   constructor() {

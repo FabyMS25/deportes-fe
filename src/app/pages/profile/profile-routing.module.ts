@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 
-// Component pages
 import { ProfileComponent } from './profile/profile.component';
 import { SettingsComponent } from './settings/settings.component';
 
@@ -11,11 +10,10 @@ const routes: Routes = [
     component: ProfileComponent,
     data: { requiredPermission: 'USER_ACCESS' }
   },
-
-
   {
     path: 'profile-setting',
-    component: SettingsComponent
+    component: SettingsComponent,
+    data: { requiredPermission: 'USER_ACCESS' }
   },
 ];
 

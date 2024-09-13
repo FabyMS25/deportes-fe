@@ -116,7 +116,7 @@ export class ModalFacilitiesComponent {
             distrito: this.row.distrito,
             latitud:this.row.latitud,
             longitud:this.row.longitud,
-            encargado:this.row.encargadoCanchaList,
+            encargados:this.row.encargadosDtoList,
             canchas :this.row.canchasList
         });
     }

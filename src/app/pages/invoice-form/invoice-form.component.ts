@@ -23,6 +23,8 @@ import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.
 import { addDays, subDays,  startOfWeek, endOfWeek, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+import { GlobalComponent } from "../../global-component";
+
 @Component({
   selector: 'app-invoice-form',
   templateUrl: './invoice-form.component.html',
@@ -34,6 +36,7 @@ export class InvoiceFormComponent implements OnInit  {
 
   breadCrumbItems!: Array<{}>;
   currentTime!: string;
+  globalAdmin = GlobalComponent.admin_deportes;
   
   contribuyente : any;
   dataComplejo!:Complejo;
@@ -567,5 +570,9 @@ export class InvoiceFormComponent implements OnInit  {
         if (result.dismiss === Swal.DismissReason.timer) {
         }
       });
+    }
+
+    getAvatar(employee:any): string {
+      return 'avatar-admin-m.png';
     }
 }

@@ -13,5 +13,5 @@ export interface Complejo {
   longitud?:string;
 
   canchasList?:campoDeportivo[];  
-  encargadoCanchaList?:Encargado;
+  encargadosDtoList?:Encargado[];
 }

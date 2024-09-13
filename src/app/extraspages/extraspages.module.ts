@@ -6,6 +6,7 @@ import { ExtrapagesRoutingModule } from './extraspages-routing.module';
 import { MaintenanceComponent } from './maintenance/maintenance.component';
 import { ComingSoonComponent } from './coming-soon/coming-soon.component';
 import { TermsConditionComponent } from './terms-condition/terms-condition.component';
+import { SharedModule } from '../shared/shared.module';
 
 @NgModule({
   declarations: [
@@ -15,6 +16,7 @@ import { TermsConditionComponent } from './terms-condition/terms-condition.compo
   ],
   imports: [
     CommonModule,
+    SharedModule,
     ExtrapagesRoutingModule
   ]
 })
