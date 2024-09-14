@@ -27,11 +27,6 @@ const routes: Routes = [
     {
       path: 'pages', loadChildren: () => import('./extrapages/extraspages.module').then(m => m.ExtraspagesModule)
     },
-
-    
-    {
-      path: 'charts', loadChildren: () => import('./charts/charts.module').then(m => m.ChartsModule)
-    },
     {
       path: '',
       redirectTo: 'inicio',

@@ -14,7 +14,7 @@ export class TopPagesComponent implements OnInit {
   // Top Selling data
   @Input() List: Array<{
     complexName?: string;
-    active?: string;
+    total?: string;
     totalIncome?: string;
   }> | undefined;
 

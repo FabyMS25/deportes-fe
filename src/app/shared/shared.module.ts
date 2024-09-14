@@ -12,9 +12,6 @@ import { CountUpModule } from 'ngx-countup';
 import { defineElement } from '@lordicon/element';
 import Lottie from 'lottie-web';
 
-import { ScrollspyDirective } from './scrollspy.directive';
-import { LandingScrollspyDirective } from './landingscrollspy.directive'
-
 import { BreadcrumbsComponent } from './breadcrumbs/breadcrumbs.component';;
 import { DataTableComponent } from './data-table/data-table.component';
 import { LeafletComponent } from './map/leaflet.component';
@@ -25,8 +22,8 @@ import { PrivacyPolicyComponent } from './extraspages/privacy-policy/privacy-pol
 @NgModule({
   declarations: [
     BreadcrumbsComponent,
-    ScrollspyDirective,
-    LandingScrollspyDirective,
+    // ScrollspyDirective,
+    // LandingScrollspyDirective,
 
     DataTableComponent,
     LeafletComponent
@@ -63,7 +60,7 @@ import { PrivacyPolicyComponent } from './extraspages/privacy-policy/privacy-pol
     DatePipe
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  exports: [BreadcrumbsComponent, LandingScrollspyDirective, ScrollspyDirective, 
+  exports: [BreadcrumbsComponent, 
           DataTableComponent,
           TermsConditionsComponent, PrivacyPolicyComponent
   ]
