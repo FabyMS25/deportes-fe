@@ -1,19 +1,17 @@
 import { Component, OnInit } from '@angular/core';
-import { UntypedFormGroup } from '@angular/forms';
 import { CalendarOptions, EventApi, EventClickArg, EventInput } from '@fullcalendar/core';
 import interactionPlugin, { Draggable } from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import multiMonthPlugin from '@fullcalendar/multimonth'
+import esLocale from '@fullcalendar/core/locales/es';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 
-
-import esLocale from '@fullcalendar/core/locales/es';
-
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { ModalComponent } from '../../reservations/modal/modal.component';
+
 @Component({
     selector: 'app-calendar-dashboard',
     templateUrl: './calendar-dashboard.component.html',
@@ -30,8 +28,6 @@ export class CalendarDashboardComponent implements OnInit {
   direction: any = 'ltr';
   selectedLocale: any = 'en';
   masterSelected: any = true;
-  // category: any
-  // events$: Observable<EventInput[]>;
 
   filterArray: any;
   filterEvents: any = [];
@@ -138,7 +134,6 @@ export class CalendarDashboardComponent implements OnInit {
     });
 
   }
-
 
   /**
   * Events bind in calander
