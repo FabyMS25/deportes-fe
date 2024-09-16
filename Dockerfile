@@ -1,5 +1,5 @@
 # Stage 1: Build the Angular application
-FROM node:20 as build
+FROM node:20-alpine as build
 # Set the working directory
 WORKDIR /app
 COPY . /app/
@@ -18,7 +18,7 @@ COPY --from=build /app/dist/deportes-gamq /usr/share/nginx/html
 # Copy a custom Nginx configuration (if needed)
 # COPY nginx.conf /etc/nginx/nginx.conf
 # Expose port 80
-EXPOSE 80
+# EXPOSE 80
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
