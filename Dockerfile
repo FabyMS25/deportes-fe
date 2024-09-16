@@ -2,11 +2,13 @@
 FROM node:20 as build
 # Set the working directory
 WORKDIR /app
+COPY . /app/
+RUN npm cache clean --force
 # Copy package.json and package-lock.json
-COPY package*.json ./
+# COPY package*.json ./
 RUN npm install
 # Copy the rest of the application code
-COPY . .
+# COPY . .
 RUN npm run build
 
 # Stage 2: Serve the application using Nginx
