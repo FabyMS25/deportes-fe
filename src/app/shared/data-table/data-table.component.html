@@ -3,56 +3,65 @@
         <table class="table">
             <thead class="table-light">
                 <tr>
-                    <th scope="col" style="width: 50px;" *ngIf="multiCheck">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="checkAll" value="checkAll"
-                                [(ngModel)]="masterSelected" (change)="checkUncheckAll($event)">                            
-                        </div>
-                    </th>
-                    @for (item of listaItems; track $index) {
-                    <th class="sort" (click)="onSort(item.prop)">
-                       {{item.name}}
-                    </th>
+                    @if (multiCheck) {
+                        <th scope="col" style="width: 50px;">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="checkAll" value="checkAll"
+                                    [(ngModel)]="masterSelected" (change)="checkUncheckAll($event)">  
+                                <!-- <input class="form-check-input" type="checkbox" id="checkAll"
+                                       [(ngModel)]="masterSelected" (change)="checkUncheckAll()"> -->
+                            </div>
+                        </th>
                     }
-                    <th *ngIf="show || edit || delete || consult">Acciones</th>
+                    @for (item of listaItems; track item.prop) {
+                        <th class="sort" (click)="onSort(item.prop)">{{item.name}}</th>
+                    }
+                    @if (show || edit || delete || consult) {
+                        <th>Acciones</th>
+                    }
                 </tr>
             </thead>
             <tbody>
-                @for (data of content; track $index) {
-                <tr id="c_{{data.uuid}}">                    
-                    <th scope="row" *ngIf="multiCheck">
-                        <div class="form-check">                            
-                            <input class="form-check-input" type="checkbox" 
-                            [checked]="checkedValGet.includes(data)" 
-                            (change)="onCheckboxChange($event, data)">
-                            <!-- <input class="form-check-input" type="checkbox" name="checkAll"
-                                value="{{data.uuid}}" [(ngModel)]="data.state"
-                                (change)="onCheckboxChange($event, data)"> -->
-                        </div>
-                    </th>
-                    @for (item of listaItems; track $index) {
-                        <ng-container *ngIf="  getPropertyValue(data, item.prop) as value">
-                            @if(item.tag) {
-                                <td class="status">
-                                    <span class="badge " [ngClass]="getBadgeClass(value)">
+                @for (data of content; track data.uuid) {
+                <tr [id]="'c_' + data.uuid">
+                    @if (multiCheck) {
+                        <td>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                   [checked]="checkedValGet.includes(data)" 
+                                   (change)="onCheckboxChange($event, data)">
+                            </div>
+                        </td>
+                    }
+                    @for (item of listaItems; track item.prop) {    
+                            <!-- @switch (item.type) {
+                                @case ('tag') {}
+                                @case ('date') {}
+                                @default {}
+                            } -->
+                        <td [ngClass]="{'status': item.tag, 'date': item.date, 'name': !item.tag && !item.date}">
+                            <ng-container *ngIf="getPropertyValue(data, item.prop) as value; else emptyValue">
+                                @if (item.tag) {
+                                    <span class="badge" [ngClass]="getBadgeClass(value)">
                                         {{value}}
                                     </span>
-                                </td>                            
-                            } @else {
-                            @if(item.date) {
-                                <td class="date">
-                                    <ngb-highlight [result]="value | date :'longDate'" [term]="searchTerm">
+                                } @else if (item.date) {
+                                    <ngb-highlight [result]="value | date:'longDate'" [term]="searchTerm">
                                     </ngb-highlight>
-                                </td>
-                            } @else {
-                                <td class="name">
-                                    <img *ngIf="item.avatar" [src]="'assets/images/users/' + data.avatar" 
-                                         alt="" class="avatar-xs rounded-circle">
+                                } @else {
+                                    @if (item.avatar && data.avatar) {
+                                        <img [src]="'assets/images/users/' + data.avatar" 
+                                             alt="" class="avatar-xs rounded-circle">
+                                    }
                                     <a (click)="showItem(data)">{{value}}</a>
-                                </td>
-                            }}
-                        </ng-container>
-                    }                                      
+                                }
+                            </ng-container>
+                            <ng-template #emptyValue>
+                                <span class="text-muted">-</span>
+                            </ng-template>
+                        </td>
+                    }
+                    @if (show || edit || delete || consult) {
                     <td>
                         <ul class="list-inline hstack gap-2 mb-0">
                             <li *ngIf="show" class="list-inline-item" ngbTooltip="Ver" placement="top">
@@ -108,9 +117,10 @@
                                 </div>
                             </li> -->
                         </ul>
-                    </td>                    
-                </tr>                    
-                }            
+                    </td>
+                    }
+                </tr>
+                }           
             </tbody>            
         </table>                    
     </div>

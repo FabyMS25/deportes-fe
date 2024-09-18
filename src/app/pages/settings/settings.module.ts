@@ -17,7 +17,7 @@ import lottie from 'lottie-web';
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SharedModule } from '../../shared/shared.module';
 import { EmployeesComponent } from './employees/employees.component';
-import { CategoriasComponent } from './categories/categorias.component';
+import { CategoriesComponent } from './categories/categories.component';
 import { SortByCrmPipe } from "../settings/sort-by.pipe";
 
 import { FieldsComponent } from './fields/list/fields.component';
@@ -25,7 +25,7 @@ import { ModalEmployeeComponent } from './employees/modal/modalEmployee.componen
 import { FacilitiesComponent } from './facilities/list/facilities.component';
 import { ModalFacilitiesComponent } from './facilities/modal/modal.component';
 import { ModalFieldsComponent } from './fields/modal/modal.component';
-import { AreasComponent } from './areas/areas.component';
+import { SurfacesComponent } from './surfaces/surfaces.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { ModalScheduleComponent } from './fields/modal-schedule/modal-schedule.component';
 import { ModalTarifaComponent } from './fields/modal-tarifa/modal-tarifa.component';
@@ -35,8 +35,8 @@ import { ModalTarifaComponent } from './fields/modal-tarifa/modal-tarifa.compone
     EmployeesComponent,
     FieldsComponent,
     FacilitiesComponent,
-    CategoriasComponent,
-    AreasComponent,
+    CategoriesComponent,
+    SurfacesComponent,
     SortByCrmPipe,
     ModalFacilitiesComponent,
     ModalFieldsComponent,

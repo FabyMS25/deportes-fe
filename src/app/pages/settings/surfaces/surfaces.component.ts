@@ -1,47 +1,40 @@
 import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { NgbModal} from '@ng-bootstrap/ng-bootstrap';
-
-
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 // Sweet Alert
 import Swal from 'sweetalert2';
 import { ngxCsv } from 'ngx-csv';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { Categoria } from 'src/app/core/models/categoria.model';
-import { CategoriasService } from 'src/app/core/services/api/categorias.service';
-import { TranslateService } from '@ngx-translate/core';
+import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
+import { Superficie } from 'src/app/core/models/superficie.model';
 import { ModalImportComponent } from './modal-import/modal-import.component';
 
 
 @Component({
-  selector: 'app-categorias',
-  templateUrl: './categorias.component.html',
-  styleUrls: ['./categorias.component.scss']
+  selector: 'app-surfaces',
+  templateUrl: './surfaces.component.html',
+  styleUrls: ['./surfaces.component.scss']
 })
 /**
  * Leads Component
  */
-export class CategoriasComponent {
+export class SurfacesComponent {
+
   breadCrumbItems!: Array<{}>;
-  title="Categorias";
+  title="Superficies";
   canActivate:string[];
   itemsList:any[]=[];
   temp:any[]=[];
 
-  categoryList:any[]=[];
   submitted = false;
   contentForm!: UntypedFormGroup;
-  deporteData!: Categoria;
-  checkedList: any;
-  searchResults: any;
-  searchTerm: any;
+  superficiesList:any[]=[];
 
   constructor(private modalService: NgbModal,
     private authService: AuthenticationService,
-    public translate: TranslateService,
-    private deportesService: CategoriasService,
-    private formBuilder: UntypedFormBuilder,) {      
+    private superficiesService: SuperficiesService,
+    private formBuilder: UntypedFormBuilder) {
       this.canActivate = this.authService.hasPermission(this.title);
   }
 
@@ -52,46 +45,32 @@ export class CategoriasComponent {
     ];
 
     this.itemsList = [
-      {name: 'Codigo', prop: 'codigo'},
-      {name: 'Nombre', prop: 'nombre'},
-      {name: 'Tipo Cobro', prop: 'tipo', tag:true},
+      {name: 'Descripción', prop: 'descripcion'},
     ];
-    
     this.contentForm = this.formBuilder.group({
       uuid: [''],
       estado:[''],
-      codigo: ['', [Validators.required]],
-      nombre: ['', [Validators.required]],
-      tipo: ['']
+      descripcion: ['', [Validators.required]]
     });
-    this.getCategories();
+
+    this.getSurfaces();
   }
 
-  get form() {
-    return this.contentForm.controls;
-  }
 
   private formDataSet(row:any) {
         this.contentForm.patchValue({
             uuid:row.uuid,
-            codigo: row.codigo,
-            nombre: row.nombre,
-            tipo: row.tipo,
+            descripcion: row.descripcion,
         });
+  }
+  
+  get form() {
+    return this.contentForm.controls;
   }
 
   selectedItems:any[] =[];
   getSelectedItems(items: any[]) {
     this.selectedItems = items;
-  }
-
-  // Search Data
-  performSearch(): void {
-    this.categoryList = this.temp.filter((item: any) => {
-      return (
-        item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
-    });
   }
 
   /**
@@ -101,32 +80,30 @@ export class CategoriasComponent {
   accion='';
   openModal(data:any,content: any,accion:string) {
     this.accion=accion;
-    if(data){
+    if (data) {
       this.formDataSet(data);
-      if(accion ==='show'){
+      if(accion==='show'){
         this.contentForm.disable()
       }
     }
     this.modalService.open(content, { size: 'md', centered: true });
   }
-  
+
   camposImport: any[] =[];
   public openModalImport() {
     this.camposImport = [
-        {prop: 'Codigo', name: 'Codigo'},
-        {prop: 'Tipo Cobro', name: 'Tipo Cobro'},
-        {prop: 'Nombre', name: 'Nombre'},
+        {prop: 'Descripcion', name: 'Descripcion'},
     ];
     const modalRef = this.modalService.open(ModalImportComponent, {
-        size: 'lg', backdrop: 'static'
+        size: 'lg',
+        backdrop: 'static'
     });
     modalRef.componentInstance.titles = this.camposImport;
-    modalRef.componentInstance.itemsList = this.categoryList;
+    modalRef.componentInstance.itemsList = this.superficiesList;
     modalRef.componentInstance.emitList.subscribe(() => {
-        this.getCategories();
+        this.getSurfaces();
     });
   }
-  
   // Csv File Export
   csvFileExport() {
     var data = {
@@ -135,14 +112,14 @@ export class CategoriasComponent {
       decimalseparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Lista de Categorias',
+      title: 'Lista de Superficies',
       useBom: true,
       noDownload: false,
-      headers: ["uuid", "Codigo","Tipo Cobro", "Nombre","estado"]
+      headers: ["uuid", "Descripcion", "status"]
     };
-    new ngxCsv(this.selectedItems, "Categorias", data);
+    new ngxCsv(this.selectedItems, "Superficies", data);
   }
-
+  
   /**
    * Delete model
    */
@@ -152,17 +129,27 @@ export class CategoriasComponent {
     this.modalService.open(content, { centered: true });
   }
 
+
+  // Search Data
+  searchResults: any;
+  searchTerm: any;
+  performSearch(): void {
+    this.superficiesList = this.temp.filter((item: any) => {
+      return (
+        item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
+      );
+    });
+  }
+  
   /**
-  * Save Form
+  * Save
   */
   saveData() {
     this.submitted = true;
     if (this.contentForm.valid) {
       this.contentForm.enable()
-      let datos: Categoria = {
-        codigo: this.contentForm.value.codigo,
-        nombre: this.contentForm.value.nombre,
-        tipo: this.contentForm.value.tipo,
+      let datos: Superficie = {
+        descripcion: this.contentForm.value.descripcion,
       };
       if (this.contentForm.get('uuid')?.value) {
         datos.uuid=this.contentForm.value.uuid,
@@ -177,14 +164,15 @@ export class CategoriasComponent {
 
   /* API Services */
   loading: boolean = true;
-  private getCategories(){
-    this.deportesService.getAll().subscribe({
+  private getSurfaces(){
+    this.superficiesService.getAll().subscribe({
         next: (data: any) => {
           this.loading = false;
           if (data['status'] === 'OK') {
-            this.categoryList = data.payload;
-            this.temp = this.categoryList
+            this.superficiesList = data.payload;
+            this.temp = this.superficiesList
           }else{
+            this.loading = false;
             Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
           }
         },
@@ -193,25 +181,28 @@ export class CategoriasComponent {
           Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
         }
       });
-  }      
-  addData(datos:Categoria){
-    this.deportesService.save(datos).subscribe({
-      next:(data:any)=>{
-        console.log(data)
+  }
+      
+  private addData(datos:Superficie){
+    this.superficiesService.save(datos).subscribe({
+      next:(data:Superficie)=>{
         this.submitted=false;
         this.notify('Datos Registrados exitosamente!','success'); 
-        this.closeModal();     
+        this.closeModal();
+        this.getSurfaces();      
       },
       error: (error) => {
         this.notify('No se pudo Guardar los datos! '+error, 'error');
       }
     })
   }
-  updateData(datosUnit:Categoria) {
-      this.deportesService.update(datosUnit).subscribe({
-          next: (data: Categoria) => {
+  private updateData(datosUnit:Superficie) {
+      this.superficiesService.update(datosUnit).subscribe({
+          next: (data: Superficie) => {
             this.submitted = false;
             this.closeModal();
+            this.getSurfaces();
+            // this.itemsList.emit();
             this.notify('Datos Actualizados exitosamente!', 'success');
           },
           error: (error) => {
@@ -222,11 +213,14 @@ export class CategoriasComponent {
   // Delete Data
   deleteData() {
     let uuid = this.deleteId;
-    this.deportesService.delete(uuid).subscribe({
+    this.superficiesService.delete(uuid).subscribe({
       next: (data:any) => {
             this.submitted = false;
+            if(data['status'] === 'OK') {
+              this.notify(data.payload, 'info')
+              this.getSurfaces();
+            }
             this.closeModal();
-            this.notify('registro Eliminado exitosamente!','success')
        },
       error: err => {
         this.submitted = false;
@@ -235,15 +229,11 @@ export class CategoriasComponent {
     });
   }
 
-
-  /* commun functions */  
+  /* common functions */
   public closeModal() {
-    // this.accion = '';
     this.modalService.dismissAll();
     this.contentForm.reset();
     this.contentForm.enable();
-    // this.itemsList.emit();
-    this.getCategories();
   }
   private notify(message: any, type: any): void {
     let timerInterval: any;

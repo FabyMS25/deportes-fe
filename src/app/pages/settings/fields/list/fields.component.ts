@@ -227,25 +227,15 @@ export class FieldsComponent {
     });
   }
 
-  /**
-  * Delete model
-  */
-  deleteId: any;
-  confirm(content: any, id: any) {
-    this.deleteId = id;
-    this.modalService.open(content, { centered: true });
-  }
-
-  // Delete Data
-  deleteData(id: any) {
-    if (id) {
-      // this.store.dispatch(deleteCompany({ id: this.deleteId.toString() }));
-    } else {
-      // this.store.dispatch(deleteCompany({ id: this.checkedValGet.toString() }));
+   /**
+   * Delete model
+   */
+    deleteId!: string;
+    deleteModal(content: any, data: any) {
+      this.deleteId = data.uuid;
+      this.modalService.open(content, { centered: true });
     }
-    this.deleteId = '';
-    this.masterSelected = false;
-  }
+  
 
   /* API Services */
   private getCategories(){
@@ -278,5 +268,38 @@ export class FieldsComponent {
       }
     });
   }
-  
+    // Delete Data
+    deleteData() {
+      let uuid = this.deleteId;
+      this.fieldsService.delete(uuid).subscribe({
+        next: (data:any) => {
+              this.submitted = false;
+              if(data['status'] === 'OK') {
+                this.notify(data.payload, 'info')
+                this.getFields();
+                this.modalService.dismissAll();
+              }
+         },
+        error: err => {
+          this.submitted = false;
+          this.notify('No se pudo eliminar el registro!','error')
+        }
+      });
+    }
+
+  private notify(message: any, type: any): void {
+    let timerInterval: any;
+    Swal.fire({
+      title: message,
+      icon: type,
+      timer: 2000,
+      timerProgressBar: true,
+      willClose: () => {
+        clearInterval(timerInterval);
+      },
+    }).then((result) => {
+      if (result.dismiss === Swal.DismissReason.timer) {
+      }
+    });
+  }
 }
