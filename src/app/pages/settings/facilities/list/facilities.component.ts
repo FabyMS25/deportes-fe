@@ -143,16 +143,6 @@ export class FacilitiesComponent {
     this.modalService.open(content, { centered: true });
   }
 
-  // Delete Data
-  deleteData(id: any) {
-    if (id) {
-      // this.store.dispatch(deleteCompany({ id: this.deleteId.toString() }));
-    } else {
-      // this.store.dispatch(deleteCompany({ id: this.checkedValGet.toString() }));
-    }
-    this.deleteId = '';
-  }
-
   camposImport: any[] =[];
   public openModalImport() {
     this.camposImport = [
@@ -220,5 +210,36 @@ export class FacilitiesComponent {
           }
         }
       });
+  }
+
+  deleteData() {
+    let uuid = this.deleteId;
+    this.complejosService.delete(uuid).subscribe({
+      next: (data:any) => {
+            if(data['status'] === 'OK') {
+              this.notify(data.payload, 'info')
+              this.getFacilities();
+              this.modalService.dismissAll();
+            }
+       },
+      error: err => {
+        this.notify('No se pudo eliminar el registro!','error')
+      }
+    });
+  }
+  private notify(message: any, type: any): void {
+    let timerInterval: any;
+    Swal.fire({
+      title: message,
+      icon: type,
+      timer: 2000,
+      timerProgressBar: true,
+      willClose: () => {
+        clearInterval(timerInterval);
+      },
+    }).then((result) => {
+      if (result.dismiss === Swal.DismissReason.timer) {
+      }
+    });
   }
 }
