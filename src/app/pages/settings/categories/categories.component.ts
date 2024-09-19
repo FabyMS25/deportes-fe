@@ -89,7 +89,9 @@ export class CategoriesComponent {
   performSearch(): void {
     this.categoryList = this.temp.filter((item: any) => {
       return (
-        item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
+        item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.codigo.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.tipo.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
   }

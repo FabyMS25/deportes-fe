@@ -13,10 +13,9 @@ export class DataTableComponent {
 
   @Input() multiCheck: boolean = true;
   @Input() loading: boolean = true;
-  @Input() listaItems!: any[];
-  @Input() content!: any[];
-  @Input() allcontent!: any[];
-  @Input() sortField!: any;
+  @Input() itemsList!: any[];
+  @Input() allcontent!: any[];//temp saved
+  @Input() content!: any[]; //list with filter
   @Input() show!: boolean;
   @Input() edit!: boolean;
   @Input() delete!: boolean;
@@ -30,11 +29,14 @@ export class DataTableComponent {
   @Output() deleteItemEmitter = new EventEmitter();
   @Output() consultItemEmitter = new EventEmitter();  
 
+  @Output() selectedItemEmitter = new EventEmitter();
+  masterSelected: boolean = false;
+  checkedValGet: any[] = [];
 
   constructor( public service: PaginationService){}
   
   ngOnChanges() {
-      this.content = this.service.changePage(this.allcontent,this.itemsPerPage)
+      this.allcontent = this.service.changePage(this.content,this.itemsPerPage)
   }
 
   public showItem(item: any) {
@@ -51,10 +53,6 @@ export class DataTableComponent {
     this.consultItemEmitter.emit(item);
   }
 
-  @Output() seleccionarItemEmitter = new EventEmitter();
-  // Select Checkbox value Get
-  masterSelected: boolean = false;
-  checkedValGet: any[] = [];
 
 onCheckboxChange(e: any, item: any) {
     if (e.target.checked) {
@@ -62,71 +60,35 @@ onCheckboxChange(e: any, item: any) {
     } else {
         this.checkedValGet = this.checkedValGet.filter(i => i !== item);
     }
-
-    // Check if all items are selected
-    if (this.checkedValGet.length === this.allcontent.length) {
+    // Check if allcontent items are selected
+    if (this.checkedValGet.length === this.content.length) {
         this.masterSelected = true;
     } else {
         this.masterSelected = false;
     }
     console.log(this.checkedValGet);
 
-    this.seleccionarItemEmitter.emit(this.checkedValGet);
+    this.selectedItemEmitter.emit(this.checkedValGet);
     this.checkedValGet.length > 0 
         ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block"
         : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
 }
 
-
-
-  // onCheckboxChange(e: any, item:any) {
-    
-  //   if(this.masterSelected && !e.target.checked){
-  //     this.masterSelected = false;
-  //   }
-  //   if(e.target.checked){
-  //     this.checkedValGet.push(item);
-  //     if(this.checkedValGet.length === this.allcontent.length){
-  //       console.log("all ")
-  //       this.masterSelected = false;  
-  //       (document.getElementById("checkAll") as HTMLElement).target.checked = true;
-  //     }
-  //   }else{
-  //     for (var i = 0; i < this.checkedValGet.length; i++) {
-  //       if (this.checkedValGet[i] == item) {
-  //         this.checkedValGet.splice(i, 1);
-  //         break;
-  //       }
-  //     }
-  //   }
-  //   console.log(this.checkedValGet)
-  //   this.seleccionarItemEmitter.emit(this.checkedValGet);
-  //   this.checkedValGet.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
-  // }
   /**
   * Multiple Default Select
   */
 checkUncheckAll(e: any) {
   this.masterSelected = e.target.checked;
   if (this.masterSelected) {
-      this.checkedValGet = [...this.allcontent];
+      this.checkedValGet = [...this.content];
   } else {
       this.checkedValGet = [];
   }
-  this.seleccionarItemEmitter.emit(this.checkedValGet);
+  this.selectedItemEmitter.emit(this.checkedValGet);
   this.checkedValGet.length > 0 
       ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block"
       : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
 }
-  // checkUncheckAll(ev: any) {
-  //   this.masterSelected = ev.target.checked;
-  //   console.log(ev.target.checked);
-  //   this.allcontent.forEach((x: { state: any; }) => x.state = ev.target.checked)
-  //   this.checkedValGet = this.allcontent// checkedVal
-  //   this.seleccionarItemEmitter.emit(this.allcontent);
-  //   this.checkedValGet.length > 0 ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block" : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
-  // }
-
 
   getPropertyValue(obj: any, prop: String): any {
     return prop.split('.').reduce((o, p) => o && o[p], obj);
@@ -155,48 +117,33 @@ checkUncheckAll(e: any) {
   
   // Search Data
   searchTerm: any;
-  searchResults: any;
   performSearch(): void {
-    this.searchResults = this.allcontent.filter((item: any) => {
+    const searchResults = this.content.filter((item: any) => {
       return (
         item.name.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
-    this.content = this.service.changePage(this.searchResults,this.itemsPerPage)
+    this.allcontent = this.service.changePage(searchResults,this.itemsPerPage)
   }
 
   /**
    * ******* to sort ******* 
    */
-  sortBy: any
-  SortFilter() {
-    this.sortField = (document.getElementById("choices-single-default") as HTMLInputElement).value;
-    if (this.sortField[0] == 'A') {
-      this.sortBy = 'desc';
-      this.sortField = this.sortField.replace(/A/g, '')
-    }
-    if (this.sortField[0] == 'D') {
-      this.sortBy = 'asc';
-      this.sortField = this.sortField.replace(/D/g, '')
-    }
-  }
-
-  // Sort data
   onSort(column: any) {
-    this.content = this.service.onSort(column, this.content)
+    this.allcontent = this.service.onSort(column, this.allcontent)
   }
 
   /**
    * ******* pagination *******
    */
   changePage() {
-    this.content = this.service.changePage(this.allcontent,this.itemsPerPage)
+    this.allcontent = this.service.changePage(this.content,this.itemsPerPage)
   }
 
   itemsPerPage: number = this.service.pageSize; 
   tableSizes:number[]= [8,10,15,20];
   public onTableSizeChange(event:any): void {
     this.itemsPerPage = Number(event.target.value);
-    this.content = this.service.changePage(this.allcontent,this.itemsPerPage)
+    this.allcontent = this.service.changePage(this.content,this.itemsPerPage)
   }
 }

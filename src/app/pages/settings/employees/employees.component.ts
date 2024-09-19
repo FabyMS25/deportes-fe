@@ -73,10 +73,21 @@ export class EmployeesComponent implements OnInit {
     await this.getUsers();
     await this.getEmployees();
   }
-  
+
   selectedItems:any[] =[];
   getSelectedItems(items: any[]) {
     this.selectedItems = items;
+  }
+  
+  // Search Data
+  searchTerm: any;
+  performSearch(): void {
+    this.employeesList = this.temp.filter((item: any) => {
+      return (
+        item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.complejoDto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
+      );
+    });
   }
 
   /**
@@ -85,35 +96,8 @@ export class EmployeesComponent implements OnInit {
    */
   viewDataGet(data: any) {
     this.funcionarioSelected=data
-  }
+  }  
 
-  // Search Data
-  searchTerm: any;
-  performSearch(): void {
-    this.employeesList = this.temp.filter((item: any) => {
-      return (
-        item.nombreCompleto.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.canchasDto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
-    });
-  }
-
-  // Sort filter
-  sortField: any;
-  sortBy: any
-  SortFilter() {
-    this.sortField = (document.getElementById("choices-single-default") as HTMLInputElement).value;
-    console.log(this.sortField);
-    if (this.sortField[0] == 'A') {
-      this.sortBy = 'desc';
-      this.sortField = this.sortField.replace(/A/g, '')
-    }
-    if (this.sortField[0] == 'D') {
-      this.sortBy = 'asc';
-      this.sortField = this.sortField.replace(/D/g, '')
-    }
-  }
-  
   /**
    * Open modal
    * @param content modal content
@@ -215,23 +199,19 @@ export class EmployeesComponent implements OnInit {
     this.employeesService.delete(uuid).subscribe({
       next: (data:any) => {
             this.submitted = false;
-            // this.closeModal();
-            // this.notify('registro Eliminado exitosamente!','success')
-          Swal.fire({ text: 'registro Eliminado exitosamente!', confirmButtonColor: 'success' });
+            if(data.status=='OK'){
+              this.loadData();
+              Swal.fire({ text: data.payload, confirmButtonColor: 'success' });
+              this.modalService.dismissAll();
+            }
        },
       error: err => {
         this.submitted = false;
-        // this.notify('No se pudo eliminar el registro!','error')
       Swal.fire({ text: 'No se pudo eliminar el registro!', confirmButtonColor: 'success' });
       }
     });
   }
-    
-  private getFullName(employee: any): string {
-    const user = this.userList.find((user: any) => user.uuid === employee.userUuid);
-    return user ? user.designacionFuncionarioDto.personaDto.fullName : '';
-  }
-
+   
   private getAvatar(employee: any): string {
     let avatar = '';
     const user = this.userList.find((user: any) => user.uuid === employee.userUuid);

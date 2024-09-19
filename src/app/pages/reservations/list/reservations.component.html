@@ -2,25 +2,25 @@
 <app-breadcrumbs title="Reservas" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
 <!-- End Breadcrumbs -->
 
-
-
-
 <div class="row">
     <div class="col-lg-12">
-        <div class="card" id="applicationList">
+        <div class="card">
             <div class="card-header  border-0">
                 <div class="d-md-flex align-items-center">
                     <h5 class="card-title mb-3 mb-md-0 flex-grow-1">Lista de Reservas</h5>
                     <div class="flex-shrink-0">
                         <div class="d-flex gap-1 flex-wrap">
-                            <button type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal" 
-                                (click)="openModal(undefined,'','lg')">
+                            <button *ngIf="canActivate.includes('CREAR')" (click)="openModal(undefined,'','lg')"
+                                type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal">
                                 <i class="ri-add-circle-line align-middle"></i> 
                                 {{"Agregar" | translate}}
                             </button>
-                            <button type="button" class="btn btn-soft-info" (click)="csvFileExport()"><i
-                                    class="ri-file-download-line align-bottom me-1"></i> Exportar</button>
-                            <button class="btn btn-soft-primary" id="remove-actions" (click)="consultModal(consultModel,undefined)">
+                            <button (click)="csvFileExport()"
+                              class="btn btn-soft-info" id="remove-actions" style="display: none">
+                              <i class="ri-file-download-line align-bottom me-1"></i>Exportar
+                            </button>
+                            <button class="btn btn-soft-primary" [style.display]="selectedItems.length > 0 ? 'inline-block' : 'none'"
+                                (click)="consultModal(consultModel,undefined)">
                                 <i class="ri-restart-fill fs-16 "></i> Consultar
                             </button>
                         </div>
@@ -115,9 +115,9 @@
                     </ul>
                     <app-data-table
                         [loading]="loading"
-                        [listaItems]="listaItems"
+                        [itemsList]="itemsList"
+                        [allcontent]="temp"
                         [content]="reservasList"
-                        [allcontent]="reservasList"
                         [sortField]="searchTerm"
                         [show]="canActivate.includes('VER')"
                         [consult]="canActivate.includes('ACTUALIZAR')"
@@ -125,8 +125,8 @@
                         (showItemEmitter)="openModal($event,'show','md')"
                         (editItemEmitter)="openModal($event,'edit','md')"
                         (consultItemEmitter)="consultModal(consultModel,$event)"    
-                        (deleteItemEmitter)="deleteModal(annularModel,$event)"     
-                        (seleccionarItemEmitter)="getSeleccionados($event)">   
+                        (deleteItemEmitter)="deleteModal(annularModel,$event)"   
+                        (selectedItemEmitter)="getSelectedItems($event)"    
                     >
                     </app-data-table>        
                 </div>

@@ -16,9 +16,6 @@
                     </div>
                     <div class="flex-shrink-0">
                         <div class="hstack text-nowrap gap-2" ngbDropdown>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="offcanvas"
-                                href="javascript:void(0);" (click)="openEnd(filtetcontent)"><i
-                                class="ri-filter-3-line align-bottom me-1"></i>Filtrar</button>
                                 <button class="btn btn-soft-info" (click)="csvFileExport()"
                                     id="remove-actions" style="display: none">
                                     <i class="ri-file-download-line align-bottom me-1"></i>Exportar</button>
@@ -44,13 +41,6 @@
                     </div>
                     <div class="col-md-auto ms-auto">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="text-muted text-nowrap">Filtrar por: </span>
-                            <select class="form-control mb-0" data-choices data-choices-search-false
-                                id="choices-single-default" (change)="SortFilter($event)"> 
-                                <option value=''>Todos</option>    
-                                <option value="distrito">Distrito</option> 
-                                <option value="techado">Es Techado</option>    
-                            </select>
                             <div class="hstack gap-2">
                                 <span class="dropdown" ngbDropdown>
                                     <button class="btn btn-soft-info btn-icon fs-14 arrow-none d-block" type="button"
@@ -72,17 +62,16 @@
             <div class="card-body">
                 <app-data-table
                     [loading]="loading"
-                    [listaItems]="itemsList"
-                    [content]="complejosList"
-                    [allcontent]="complejosList"
-                    [sortField]="searchTerm"
+                    [itemsList]="itemsList"
+                    [allcontent]="temp"
+                    [content]="facilitiesList"
                     [show]="canActivate.includes('VER')"
                     [edit]="canActivate.includes('ACTUALIZAR')"
                     [delete]="canActivate.includes('ELIMINAR')"
                     (showItemEmitter)="viewDataGet($event)"
                     (editItemEmitter)="openModal($event,'edit','lg')"
                     (deleteItemEmitter)="deleteModal(deleteModel,$event)" 
-                    (seleccionarItemEmitter)="getSelectedItems($event)"            
+                    (selectedItemEmitter)="getSelectedItems($event)"            
                 >
                 </app-data-table> 
             </div>
@@ -184,66 +173,4 @@
             </div>
         </div>
     </div>
-</ng-template>
-<!-- Right Sidebar Filter Section  -->
-<ng-template #filtetcontent let-offcanvas>
-    <div class="offcanvas-header bg-light">
-        <h5 class="offcanvas-title" id="offcanvasExampleLabel">Filtrar</h5>
-        <button type="button" class="btn-close text-body" data-bs-dismiss="offcanvas" aria-label="Close"
-            (click)="offcanvas.dismiss('Cross click')"></button>
-    </div>
-    <!--end offcanvas-header-->
-    <form action="" class="d-flex flex-column justify-content-end h-100">
-        <div class="offcanvas-body">
-            <div class="mb-4">
-                <label for="datepicker-range" class="form-label text-muted text-uppercase fw-semibold mb-3">Fecha</label>
-                <input class="form-control flatpickr-input" type="text" placeholder="Select Date" mwlFlatpickr
-                    [altInput]="true" id="isDate">
-            </div>
-            <div class="mb-4">
-                <label for="distrito-select"
-                    class="form-label text-muted text-uppercase fw-semibold mb-3">Distrito</label>
-                <select class="form-control" data-choices data-choices-multiple-remove="true" name="distrito-select"
-                    id="distrito-select">
-                    <option value="" selected>Seleccione un Distrito</option>
-                    @for (item of distictList; track $index) {
-                        <option [value]="item.area">{{item.distrito}}</option>
-                    }
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="status-select" class="form-label text-muted text-uppercase fw-semibold mb-3">Categorías</label>
-                <div class="row g-2">
-                    @for (item of categoryList; track $index) {
-                        <div class="col-lg-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="option1">
-                                <label class="form-check-label" for="inlineCheckbox1">{{item.nombre}}</label>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-            <div class="mb-4">
-                <label for="leadscore" class="form-label text-muted text-uppercase fw-semibold mb-3">Rango</label>
-                <div class="row g-2 align-items-center">
-                    <div class="col-lg">
-                        <input type="number" class="form-control" id="leadscore" placeholder="0">
-                    </div>
-                    <div class="col-lg-auto">
-                        To
-                    </div>
-                    <div class="col-lg">
-                        <input type="number" class="form-control" id="leadscore" placeholder="0">
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!--end offcanvas-body-->
-        <div class="offcanvas-footer border-top p-3 text-center hstack gap-2">
-            <button class="btn btn-light w-100">Borrar Filtro</button>
-            <button type="submit" class="btn btn-success w-100" (click)="SearchData();">Filtrar</button>
-        </div>
-        <!--end offcanvas-footer-->
-    </form>
 </ng-template>

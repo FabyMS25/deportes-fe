@@ -73,6 +73,17 @@ export class SurfacesComponent {
     this.selectedItems = items;
   }
 
+  // Search Data
+  searchResults: any;
+  searchTerm: any;
+  performSearch(): void {
+    this.superficiesList = this.temp.filter((item: any) => {
+      return (
+        item.descripcion.toLowerCase().includes(this.searchTerm.toLowerCase())
+      );
+    });
+  }
+
   /**
    * Open modal
    * @param content modal content
@@ -87,6 +98,15 @@ export class SurfacesComponent {
       }
     }
     this.modalService.open(content, { size: 'md', centered: true });
+  }
+  
+  /**
+   * Delete model
+   */
+  deleteId!: string;
+  deleteModal(content: any, data: any) {
+    this.deleteId = data.uuid;
+    this.modalService.open(content, { centered: true });
   }
 
   camposImport: any[] =[];
@@ -118,27 +138,6 @@ export class SurfacesComponent {
       headers: ["uuid", "Descripcion", "status"]
     };
     new ngxCsv(this.selectedItems, "Superficies", data);
-  }
-  
-  /**
-   * Delete model
-   */
-  deleteId!: string;
-  deleteModal(content: any, data: any) {
-    this.deleteId = data.uuid;
-    this.modalService.open(content, { centered: true });
-  }
-
-
-  // Search Data
-  searchResults: any;
-  searchTerm: any;
-  performSearch(): void {
-    this.superficiesList = this.temp.filter((item: any) => {
-      return (
-        item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
-    });
   }
   
   /**
@@ -240,7 +239,7 @@ export class SurfacesComponent {
     Swal.fire({
       title: message,
       icon: type,
-      timer: 2000,
+      timer: 3000,
       timerProgressBar: true,
       willClose: () => {
         clearInterval(timerInterval);

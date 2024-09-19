@@ -176,7 +176,6 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   categoriasTipoValidator(control: AbstractControl): ValidationErrors | null {
     const categorias = control.value;
     const tipo = control.parent?.get('tipo')?.value;
-    console.log(categorias, tipo);
 
     if (!categorias || !tipo) {
       return null;
@@ -317,7 +316,6 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
     );
     existingCategoriaTarifaMap.forEach(element => {
       if(!categorias.find((categoria:any) => categoria.uuid === element.categoriaDto.uuid)){
-        console.log("delete", element.uuid)
         this.tarifaCategoryService.delete(element.uuid).subscribe()
       }
     });

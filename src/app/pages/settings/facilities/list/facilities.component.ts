@@ -1,49 +1,42 @@
-import { Component, TemplateRef } from '@angular/core';
+import { Component } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { NgbModal, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
-
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 // Csv File Export
 import { ngxCsv } from 'ngx-csv/ngx-csv';
-
-// Sweet Alert
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { ModalFacilitiesComponent } from '../modal/modal.component';
-import { Complejo } from 'src/app/core/models/complejo.model';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
-import { ModalImportComponent } from '../modal-import/modal-import.component';
+import { Complejo } from 'src/app/core/models/complejo.model';
 import { Districts } from 'src/app/core/constants/Places';
 import { Ceiling } from 'src/app/core/constants/Features';
+import { ModalFacilitiesComponent } from '../modal/modal.component';
+import { ModalImportComponent } from '../modal-import/modal-import.component';
+
 @Component({
   selector: 'app-facilities',
   templateUrl: './facilities.component.html',
   styleUrls: ['./facilities.component.scss']
 })
 
-/**
- * Companies Component
- */
 export class FacilitiesComponent {
   title="Complejos Deportivos";
   breadCrumbItems!: Array<{}>;
   canActivate:string[];
   itemsList:any[]=[];
   temp:any[]=[];
+  dataSelected!:Complejo;
  
   categoryList:any[]=[]; 
-  complejosList:any[]=[]
+  facilitiesList:any[]=[]
   distictList=Districts
   ceilingList=Ceiling
-
-  dataSelected!:Complejo;
 
   constructor(private modalService: NgbModal,
     private complejosService: ComplejosService,
     private categoriasService: CategoriasService,
     private authService: AuthenticationService, 
-    private offcanvasService: NgbOffcanvas,
     private datePipe: DatePipe,) {
       this.canActivate = this.authService.hasPermission(this.title);
   }
@@ -56,47 +49,25 @@ export class FacilitiesComponent {
     this.itemsList = [
       {name: 'Nombre', prop: 'nombre'},
       {name: 'Techado', prop: 'techado'},
-      {name: 'Distrito',prop: 'distrito'}
+      {name: 'Distrito',prop: 'distrito'},
     ];
     this.getCategories();
     this.getFacilities()
   }
-
+  
   selectedItems:any[] =[];
   getSelectedItems(items: any[]) {
     this.selectedItems = items;
   }
-  /**
-   * View Data Get
-   * @param content modal content
-   */
-  viewDataGet(data: any) {
-    this.dataSelected=data
-  }
   
-  // Sort filter
-  sortField: any;
-  sortBy: any
-  SortFilter(event: Event) {
-    const selectedValue = (event.target as HTMLSelectElement).value;
-    console.log('Selected value:', selectedValue);
-    this.sortField = (document.getElementById("choices-single-default") as HTMLInputElement).value;
-    if (this.sortField[0] == 'D') {
-      this.sortBy = 'asc';
-      this.sortField = this.sortField.replace(/D/g, '')
-    }
-  }
-
-  //  Filter Offcanvas Set
-  openEnd(content: TemplateRef<any>) {
-    this.offcanvasService.open(content, { position: 'end' });
-  }
-    // Search Data
+  // Search Data
   searchTerm: any;
     performSearch(): void {
-      this.complejosList = this.temp.filter((item: any) => {
+      this.facilitiesList = this.temp.filter((item: any) => {
         return (
-          item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
+          item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+          item.techado.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+          item.distrito.toLowerCase().includes(this.searchTerm.toLowerCase())
         );
       });
     }
@@ -116,7 +87,15 @@ export class FacilitiesComponent {
         this.leads = this.categoryList;
       }
     }
-  
+
+  /**
+   * View Data Get
+   * @param content modal content
+   */
+  viewDataGet(data: any) {
+    this.dataSelected=data
+  }
+
   /**
    * Open modal
    * @param content modal content
@@ -158,13 +137,37 @@ export class FacilitiesComponent {
         backdrop: 'static'
     });
     modalRef.componentInstance.titles = this.camposImport;
-    modalRef.componentInstance.itemsList = this.complejosList;
+    modalRef.componentInstance.itemsList = this.facilitiesList;
     modalRef.componentInstance.emitList.subscribe(() => {
         this.getFacilities();
     });
   }
   // Csv File Export
   csvFileExport() {
+    const lista = this.selectedItems.flatMap((item: any) => {
+      const baseData = {
+        nombre: item.nombre,
+        techado: item.techado,
+        direccion: item.direccion,
+        distrito: item.distrito,
+        latitud: item.latitud,
+        longitud: item.longitud,
+      };
+    
+      if (!item.encargadosDtoList || item.encargadosDtoList.length === 0) {
+        return [{
+          ...baseData,
+          encargado: '',
+          telefono: '',
+        }];
+      }
+      return item.encargadosDtoList.map((encargado:any) => ({
+        ...baseData,
+        encargado: encargado.nombre || '',
+        telefono: encargado.telefono || '',
+      }));
+    });
+  
     var data = {
       fieldSeparator: ',',
       quoteStrings: '"',
@@ -174,11 +177,11 @@ export class FacilitiesComponent {
       title: 'Lista de Complejos',
       useBom: true,
       noDownload: false,
-      headers: ["Uuid", "Nombre","Techado","Dirección", "Distrito", "Latitud", "Longitud", "Estado"]
+      headers: [ "Nombre","Techado","Dirección", "Distrito", "Latitud", "Longitud",  
+                "Encargado(Nombre)","Encargado(Teléfono)"]
     };
-    new ngxCsv(this.complejosList, "Lista de Complejos", data);
+    new ngxCsv(lista, "Lista de Complejos", data);
   }
-
 
   /* API Services */
   loading: boolean = true;
@@ -187,18 +190,18 @@ export class FacilitiesComponent {
       next: (data: any) => {
         this.loading = false;
         if (data['status'] === 'OK') {
-          this.complejosList = data.payload;
+          this.facilitiesList = data.payload;
           this.temp = data.payload;
-          if (this.complejosList) {
-              this.dataSelected = this.complejosList[0];
+          if (this.facilitiesList) {
+              this.dataSelected = this.facilitiesList[0];
           }
         }else{
-          Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
+          this.notify(data.payload,'error')
         }
       },
       error: (error) => {
         this.loading = false;
-        Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb', });
+        this.notify('No se pudo recuperar los registros!','error')
       }
     });
   }
@@ -232,14 +235,13 @@ export class FacilitiesComponent {
     Swal.fire({
       title: message,
       icon: type,
-      timer: 2000,
+      timer: 3000,
       timerProgressBar: true,
       willClose: () => {
         clearInterval(timerInterval);
       },
     }).then((result) => {
-      if (result.dismiss === Swal.DismissReason.timer) {
-      }
+      if (result.dismiss === Swal.DismissReason.timer) { }
     });
   }
 }

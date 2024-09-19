@@ -62,17 +62,16 @@
             <div class="card-body">
                 <app-data-table
                     [loading]="loading"
-                    [listaItems]="itemsList"
+                    [itemsList]="itemsList"
+                    [allcontent]="temp"
                     [content]="categoryList"
-                    [allcontent]="categoryList"
-                    [sortField]="''"
                     [show]="canActivate.includes('VER')"
                     [edit]="canActivate.includes('ACTUALIZAR')"
                     [delete]="canActivate.includes('ELIMINAR')"
                     (showItemEmitter)="openModal($event,content,'show')"
                     (editItemEmitter)="openModal($event,content,'edit')"
                     (deleteItemEmitter)="deleteModal(deleteModel,$event)"  
-                    (seleccionarItemEmitter)="getSelectedItems($event)"             
+                    (selectedItemEmitter)="getSelectedItems($event)"             
                 >
                 </app-data-table>  
             </div>

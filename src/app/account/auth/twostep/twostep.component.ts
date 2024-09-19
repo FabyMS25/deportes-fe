@@ -64,7 +64,7 @@ export class TwoStepComponent implements OnInit {
         return;
       }  
       if (enteredOtp === this.userData.verificationCode) {
-        this.userData.estadoUsuario = 'Active';
+        this.userData.estadoUsuario = 'Activo';
         if(!this.userData.codigoContribuyente){
           this.registerContribuyente(this.userData)
         }else{

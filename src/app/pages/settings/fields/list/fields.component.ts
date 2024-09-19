@@ -37,8 +37,8 @@ export class FieldsComponent {
 
   canActivate:string[];
   categoryList:any[]=[];
-  listaItems:any[]=[];
-  canchasList:any[]=[];
+  itemsList:any[]=[];
+  fieldsList:any[]=[];
   temp:any[]=[];
   
   dataSelected!:campoDeportivo;
@@ -56,7 +56,7 @@ export class FieldsComponent {
       { label: 'Administracion' },
       { label: this.title, active: true }
     ];
-    this.listaItems = [
+    this.itemsList = [
       {name: 'Complejo', prop: 'complejoDto.nombre'},
       {name: 'Cancha', prop: 'codigo'},
       {name: 'Superficie',prop: 'superficieDto.descripcion'},
@@ -70,21 +70,13 @@ export class FieldsComponent {
   getSelectedItems(items: any[]) {
     this.selectedItems = items;
   }
-  
-  /**
-   * View Data Get
-   * @param content modal content
-   */
-  viewDataGet(data: any) {
-    this.dataSelected=data
-  }
 
   // Search Data
   performSearch(): void {
-    this.canchasList = this.temp.filter((item: any) => {
+    this.fieldsList = this.temp.filter((item: any) => {
       return (
         item.codigo.toLowerCase().includes(this.searchTerm.toLowerCase()) || 
-        item.topo.toLowerCase().includes(this.searchTerm.toLowerCase()) || 
+        item.tipo.toLowerCase().includes(this.searchTerm.toLowerCase()) || 
         item.superficieDto.descripcion.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.complejoDto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
@@ -107,22 +99,18 @@ export class FieldsComponent {
       this.leads = this.categoryList;
     }
   }
-   // Sort filter
-   sortField: any;
-   sortBy: any
-   SortFilter(event: Event) {
-     const selectedValue = (event.target as HTMLSelectElement).value;
-     console.log('Selected value:', selectedValue);
-    //  this.sortField = (document.getElementById("choices-single-default") as HTMLInputElement).value;
-    //  if (this.sortField[0] == 'D') {
-    //    this.sortBy = 'asc';
-    //    this.sortField = this.sortField.replace(/D/g, '')
-    //  }
-   }
   
   //  Filter Offcanvas Set
   openEnd(content: TemplateRef<any>) {
     this.offcanvasService.open(content, { position: 'end' });
+  }
+  
+  /**
+   * View Data Get
+   * @param content modal content
+   */
+  viewDataGet(data: any) {
+    this.dataSelected=data
   }
 
   /**
@@ -142,6 +130,15 @@ export class FieldsComponent {
     });
   }
 
+   /**
+   * Delete model
+   */
+   deleteId!: string;
+   deleteModal(content: any, data: any) {
+     this.deleteId = data.uuid;
+     this.modalService.open(content, { centered: true });
+   }  
+   
   camposImport: any[] =[];
   public openModalImport() {
     this.camposImport = [
@@ -166,7 +163,7 @@ export class FieldsComponent {
         backdrop: 'static'
     });
     modalRef.componentInstance.titles = this.camposImport;
-    modalRef.componentInstance.itemsList = this.canchasList;
+    modalRef.componentInstance.itemsList = this.fieldsList;
     modalRef.componentInstance.emitList.subscribe(() => {
       this.getCategories();
       this.getFields()
@@ -174,21 +171,46 @@ export class FieldsComponent {
   }
   
   // Csv File Export
-  csvFileExport() {    
-    const lista = this.canchasList.map(item => ({
-      complejo: item.complejoDto.nombre,
-      codigo: item.codigo,
-      superficie: item.superficieDto.descripcion,
-      // tipo: item.tipo,
-      categorias: "",
-      tipo: item.tipo || '',
-      costo: item.tarifaDto?.costo || '',
-      desde: item.tarifaDto?.desde || '',
-      hasta: item.tarifaDto?.hasta || '',
-      horario: item.hroariosList || ''
-    }));
-
-    var data = {
+  csvFileExport() {
+    const daysOrder = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];    
+    const lista = this.selectedItems.flatMap((item: any) => {
+      const baseData = {
+        complejo: item.complejoDto.nombre,
+        codigo: item.codigo,
+        superficie: item.superficieDto.descripcion,
+        categorias: "",
+        tipo: item.tipo || '',
+      };
+  
+      const sortedHorarios = item.horarioDtoList.sort((a:any, b:any) => 
+        daysOrder.indexOf(a.dia) - daysOrder.indexOf(b.dia)
+      );
+  
+      const horarios: Record<string, string> = daysOrder.reduce((acc, day) => {
+        const horario = sortedHorarios.find((h:any) => h.dia === day);
+        acc[day] = horario ? `${horario.horaInicio}-${horario.horaFin}` : '';
+        return acc;
+      }, {} as Record<string, string>);
+  
+      if (!item.tarifasDtoList || item.tarifasDtoList.length === 0) {
+        return [{
+          ...baseData,
+          costo: '',
+          desde: '',
+          hasta: '',
+          ...horarios
+        }];
+      }
+      return item.tarifasDtoList.map((tarifa:any) => ({
+        ...baseData,
+        costo: tarifa.costo || '',
+        desde: tarifa.desde || '',
+        hasta: tarifa.hasta || '',
+        ...horarios
+      }));
+    });
+  
+    const data = {
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalseparator: '.',
@@ -197,8 +219,12 @@ export class FieldsComponent {
       title: 'Lista de Campos Deportivos',
       useBom: true,
       noDownload: false,
-      headers: ["Complejo", "Codigo" , "Superficie",   "Categorias","Tipo Cobro",   "Costo","Desde","Hasta",    "Lunes","Martes","Miercoles","Jueves","Viernes","Sabado","Domingo"]
-    };
+      headers: [
+        "Complejo", "Codigo", "Superficie", "Categorias", "Tipo Cobro", 
+        "Costo", "Desde", "Hasta", 
+        "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"
+      ]
+    };  
     new ngxCsv(lista, "Lista de Campos Deportivos", data);
   }
   
@@ -209,7 +235,7 @@ export class FieldsComponent {
     });
     modalRef.componentInstance.row = row;
     modalRef.componentInstance.accion = accion;
-    modalRef.componentInstance.listaItems.subscribe(() => {
+    modalRef.componentInstance.itemsList.subscribe(() => {
     this.getFields();
     });
   }
@@ -222,20 +248,10 @@ export class FieldsComponent {
     modalRef.componentInstance.row = row;
     modalRef.componentInstance.categoryList = this.categoryList;
     modalRef.componentInstance.accion = accion;
-    modalRef.componentInstance.listaItems.subscribe(() => {
+    modalRef.componentInstance.itemsList.subscribe(() => {
     this.getFields();
     });
   }
-
-   /**
-   * Delete model
-   */
-    deleteId!: string;
-    deleteModal(content: any, data: any) {
-      this.deleteId = data.uuid;
-      this.modalService.open(content, { centered: true });
-    }
-  
 
   /* API Services */
   private getCategories(){
@@ -253,10 +269,10 @@ export class FieldsComponent {
       next: (data: any) => {
         this.loading = false;
         if (data['status'] === 'OK') {
-          this.canchasList = data.payload;
+          this.fieldsList = data.payload;
           this.temp = data.payload;
-          if (this.canchasList) {
-              this.dataSelected = this.canchasList[0];
+          if (this.fieldsList) {
+              this.dataSelected = this.fieldsList[0];
           }
         }else{
           Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
@@ -292,7 +308,7 @@ export class FieldsComponent {
     Swal.fire({
       title: message,
       icon: type,
-      timer: 2000,
+      timer: 3000,
       timerProgressBar: true,
       willClose: () => {
         clearInterval(timerInterval);

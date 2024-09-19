@@ -13,7 +13,7 @@
                             </div>
                         </th>
                     }
-                    @for (item of listaItems; track item.prop) {
+                    @for (item of itemsList; track item.prop) {
                         <th class="sort" (click)="onSort(item.prop)">{{item.name}}</th>
                     }
                     @if (show || edit || delete || consult) {
@@ -22,7 +22,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (data of content; track data.uuid) {
+                @for (data of allcontent; track data.uuid) {
                 <tr [id]="'c_' + data.uuid">
                     @if (multiCheck) {
                         <td>
@@ -33,7 +33,7 @@
                             </div>
                         </td>
                     }
-                    @for (item of listaItems; track item.prop) {    
+                    @for (item of itemsList; track item.prop) {    
                             <!-- @switch (item.type) {
                                 @case ('tag') {}
                                 @case ('date') {}
@@ -46,8 +46,7 @@
                                         {{value}}
                                     </span>
                                 } @else if (item.date) {
-                                    <ngb-highlight [result]="value | date:'longDate'" [term]="searchTerm">
-                                    </ngb-highlight>
+                                    <ngb-highlight [result]="value | date:'longDate'" [term]="searchTerm"></ngb-highlight>
                                 } @else {
                                     @if (item.avatar && data.avatar) {
                                         <img [src]="'assets/images/users/' + data.avatar" 
@@ -132,7 +131,7 @@
     </div>
   
     <!-- No Results Found -->
-    <div class="noresult" *ngIf="!loading && content.length === 0">
+    <div class="noresult" *ngIf="!loading && allcontent.length === 0">
       <div class="text-center">
         <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop" 
         colors="primary:#405189,secondary:#0ab39c" style="width:75px;height:75px">
@@ -143,7 +142,7 @@
     </div>
 
     <div class="row align-items-md-center mt-3">
-        <div class="col col-xxl-1" *ngIf="content && content.length>0">                        
+        <div class="col col-xxl-1" *ngIf="allcontent && allcontent.length>0">                        
             <div class="text-sm-left float-start listjs-pagination">     
                     <div class="d-flex">
                         <select class="form-control mb-0" (change)="onTableSizeChange($event)">
@@ -154,10 +153,10 @@
                     </div>      
             </div>
         </div>
-        <div class="col col-xxl-5" *ngIf="content && content.length>0">
+        <div class="col col-xxl-5" *ngIf="allcontent && allcontent.length>0">
             <div class="dataTables_info mb-2" id="tickets-table_info" role="status" aria-live="polite">
                 <span style="color:slategray">
-                    {{content.length}} Registros, de un total de {{ allcontent.length }}
+                    {{allcontent.length}} Registros, de un total de {{ content.length }}
                 </span>
             </div>            
         </div> 
@@ -165,7 +164,7 @@
         <div class="col col-xxl-6">
             <div class="text-sm-right float-sm-end listjs-pagination">
                 <ngb-pagination 
-                    [collectionSize]="allcontent.length" 
+                    [collectionSize]="content.length" 
                     [(page)]="service.page" 
                     [pageSize]="itemsPerPage" 
                     (pageChange)="changePage()">
@@ -174,7 +173,7 @@
         </div>
         <!-- End Pagination -->
     </div>      
-    <div id="elmLoader" *ngIf="!content">
+    <div id="elmLoader" *ngIf="!allcontent">
         <div class="spinner-border text-primary avatar-sm" role="status">
             <span class="visually-hidden">Cargando...</span>
         </div>

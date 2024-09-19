@@ -15,7 +15,7 @@ export class ModalComponent {
 
   @Input() accion!: string;
   @Input() row!: Contribuyente;
-  @Output() listaItems = new EventEmitter();
+  @Output() itemsList = new EventEmitter();
 
   cityAcronym= CityAcronym
   contentForm!: UntypedFormGroup;
@@ -172,7 +172,7 @@ addData(datos:Contribuyente){
       this.submitted=false;
       this.notify('Datos Registrados exitosamente!','success'); 
       this.closeModal();
-      this.listaItems.emit();       
+      this.itemsList.emit();       
     },
     error: (error) => {
       this.notify('No se pudo Guardar los datos! '+error, 'error');
@@ -184,7 +184,7 @@ updateData(datosUnit:Contribuyente) {
         next: (data: Contribuyente) => {
           this.submitted = false;
           this.closeModal();
-          this.listaItems.emit();
+          this.itemsList.emit();
           this.notify('Datos Actualizados exitosamente!', 'success');
         },
         error: (error) => {
@@ -193,6 +193,34 @@ updateData(datosUnit:Contribuyente) {
     })
 }
 
+blockUser(){
+  const datos ={
+    ...this.row
+  }
+  datos.estadoUsuario='Bloqueado';
+  
+  this.updateData(datos);
+}
+  // Delete Data
+  deleteData(){
+    if(this.row.uuid){
+    let uuid = this.row.uuid;
+    this.contribuyentesService.delete(uuid).subscribe({
+      next: (data:any) => {
+            this.submitted = false;
+            if(data.status=='OK'){
+              this.closeModal();
+              this.itemsList.emit();
+              this.notify(data.payload, 'info');
+            }
+       },
+      error: err => {
+        this.submitted = false;
+      Swal.fire({ text: 'No se pudo eliminar el registro!', confirmButtonColor: 'success' });
+      }
+    });
+    }
+  }
       
   public closeModal() {
     this.accion = '';

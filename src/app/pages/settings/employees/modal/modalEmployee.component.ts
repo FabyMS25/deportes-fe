@@ -15,7 +15,7 @@ import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 export class ModalEmployeeComponent {
   @Input() accion!: string;
   @Input() row!: Encargado;
-  @Output() listaItems = new EventEmitter();
+  @Output() itemsList = new EventEmitter();
 
   contentForm!: UntypedFormGroup;
   submitted = false;
@@ -76,14 +76,6 @@ export class ModalEmployeeComponent {
     }
   }
 
-//   public onUserSelectHandler(event: Event): void {
-//     const selectedValue = (event.target as HTMLSelectElement).value;
-//     this.usersList.forEach(element => {
-//         if (element.uuid === selectedValue) {
-//             this.user = element;
-//         }
-//     });
-// }
 onUserSelectHandler(event: any) {
   const selectedUuid = event.target.value;
   const selectedUser = this.usersList.find(user => user.uuid === selectedUuid);
@@ -163,7 +155,6 @@ onUserSelectHandler(event: any) {
     }
   }
   
-  
   addData(datos:Encargado){
     this.encargadoCanchaService.save(datos).subscribe({
       next:(data:Encargado)=>{
@@ -171,7 +162,7 @@ onUserSelectHandler(event: any) {
         this.notify('Datos Registrados exitosamente!','success'); 
         this.modalService.dismissAll();
         this.contentForm.reset();
-        this.listaItems.emit();       
+        this.itemsList.emit();       
       },error:(data)=>{
         this.submitted=true;
         this.notify('Formulario Invalido!', 'error');
@@ -183,7 +174,7 @@ onUserSelectHandler(event: any) {
           next: (data: Encargado) => {
             this.submitted = false;
             this.modalService.dismissAll();
-            this.listaItems.emit();
+            this.itemsList.emit();
             this.contentForm.reset();
             this.notify('Datos Actualizados exitosamente!', 'success');
           },

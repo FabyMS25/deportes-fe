@@ -18,7 +18,6 @@ import { SettingsRoutingModule } from './settings-routing.module';
 import { SharedModule } from '../../shared/shared.module';
 import { EmployeesComponent } from './employees/employees.component';
 import { CategoriesComponent } from './categories/categories.component';
-import { SortByCrmPipe } from "../settings/sort-by.pipe";
 
 import { FieldsComponent } from './fields/list/fields.component';
 import { ModalEmployeeComponent } from './employees/modal/modalEmployee.component';
@@ -37,7 +36,6 @@ import { ModalTarifaComponent } from './fields/modal-tarifa/modal-tarifa.compone
     FacilitiesComponent,
     CategoriesComponent,
     SurfacesComponent,
-    SortByCrmPipe,
     ModalFacilitiesComponent,
     ModalFieldsComponent,
     ModalEmployeeComponent,

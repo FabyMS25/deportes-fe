@@ -23,7 +23,7 @@ export class ReservationsComponent implements OnInit {
   breadCrumbItems!: Array<{}>;
   title='Reservas';
   canActivate:string[];
-  listaItems:any[]=[];
+  itemsList:any[]=[];
 
   reservasList:any[]=[];
   temp:any[]=[];
@@ -54,7 +54,7 @@ export class ReservationsComponent implements OnInit {
       { label: '' },
       { label: this.title, active: true }
     ];
-    this.listaItems = [
+    this.itemsList = [
       {name: 'Complejo  ',prop: 'canchasDto.complejoDto.nombre'},
       // {name: 'Contribuyente', prop: 'contribuyenteDto.nombre'},
       {name: 'Superficie', prop: 'superficie'},
@@ -75,7 +75,6 @@ export class ReservationsComponent implements OnInit {
   category: string = '';
   applyFilters() {
     this.reservasList = this.temp.filter(item => {
-      // Search term filter
       const searchMatch = !this.searchTerm || 
         Object.values(item).some((val:any) => 
           val.toString().toLowerCase().includes(this.searchTerm.toLowerCase())) ||
@@ -84,7 +83,6 @@ export class ReservationsComponent implements OnInit {
         item.contribuyenteDto.apPaterno.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.contribuyenteDto.apMaterno.toLowerCase().includes(this.searchTerm.toLowerCase());
 
-      //date filter
       let dateMatch = true;
       if (this.date && this.date.from && this.date.to) {
         const itemDate = new Date(item.fechaReserva);
@@ -96,9 +94,7 @@ export class ReservationsComponent implements OnInit {
         dateMatch = itemDate >= fromDate && itemDate <= toDate;
       }
 
-      // Status filter
-      const statusMatch = !this.status || item.estadoReserva === this.status;
-      
+      const statusMatch = !this.status || item.estadoReserva === this.status;      
       // category filter
       const categoryMatch = !this.category || 
       item.canchasDto.tarifasDtoList.some((tarifa: any) => 
@@ -141,11 +137,16 @@ export class ReservationsComponent implements OnInit {
     }
   }
 
-  selectedItems: any[] = [];
+  // selectedItems: any[] = [];
   consultResults: any[] = [];
-  getSeleccionados(items: any[]) {
-    const removeActions = document.getElementById("remove-actions") as HTMLElement;
-    removeActions.style.display = items.length > 0 ? "block" : "none";
+  // getSeleccionados(items: any[]) {
+  //   // const removeActions = document.getElementById("remove-actions") as HTMLElement;
+  //   // removeActions.style.display = items.length > 0 ? "block" : "none";
+  //   this.selectedItems = items;
+  // }
+
+  selectedItems:any[] =[];
+  getSelectedItems(items: any[]) {
     this.selectedItems = items;
   }
 
@@ -298,9 +299,6 @@ export class ReservationsComponent implements OnInit {
       }
     }
 
-    
-    
-
   private async checkAndUpdateExpiredReservas(reservas: Reserva[]): Promise<Reserva[]> {
     const updatedReservas: Reserva[] = [];  
     for (const reserva of reservas) {
@@ -397,6 +395,29 @@ export class ReservationsComponent implements OnInit {
 
     // Csv File Export
     csvFileExport() {
+      const lista = this.selectedItems.flatMap((item: any) => {
+        const baseData = {
+          complejo: item.canchasDto.complejoDto.nombre,
+          cancha: item.canchasDto.codigo,
+          superficie: item.superficie,
+          desde: item.horaEntrada,
+          hasta: item.horaSalida, 
+          categoria: item.categoria, 
+          fechaCreado: item.fechaCreated,
+          fecha: item.fechaReserva,
+          tasa: item.numeroTasa,
+          estado: item.estadoReserva,
+          totalPersonas: item.totalPersonas? item.totalPersonas: '-',
+          totalPago: item.totalPago, 
+          contribuyente: item.contribuyenteDto.nombre + item.contribuyenteDto.apPaterno + item.contribuyenteDto.apMaterno,
+          carnet: item.contribuyenteDto.nroCarnet,
+          celular: item.contribuyenteDto.celular,
+          email: item.contribuyenteDto.correo,
+          tipoContribuyente: item.contribuyenteDto.tipoContribuyente,
+          codigoContribuyente: item.contribuyenteDto.codigoContribuyente,
+        };    
+        return [{...baseData}];      
+      });
       var data = {
         fieldSeparator: ',',
         quoteStrings: '"',
@@ -406,8 +427,10 @@ export class ReservationsComponent implements OnInit {
         title: 'Lista de Reservas',
         useBom: true,
         noDownload: false,
-        headers: ["uuid", "Fecha Reserva","Desde","Hasta", "Total Pago", "Categoria", "Superficie","Total Personas","","Cancha","Contribuyente","Celular", "Email", "Tipo Contribuyente", "Codigo Contribuyente", "Estado Civil", "Fecha Nacimiento","Estado Usuario"]
+        headers: ["Complejo","Cancha","Superficie","Desde","Hasta", "Categoria",
+          "Fecha Creado","Fecha Reserva","Tasa","Estado ", "Total Personas","Total Pago", 
+          "Contribuyente","Carnet","Celular", "Email", "Tipo Contribuyente","Codigo Contribuyente"]
       };
-      new ngxCsv(this.reservasList, "Reservas", data);
+      new ngxCsv(lista, "Reservas", data);
     }
   }

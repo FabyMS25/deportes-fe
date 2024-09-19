@@ -1,20 +1,13 @@
 import { Component, QueryList, ViewChildren } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
-import { Observable } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { UntypedFormBuilder, UntypedFormGroup, FormArray, Validators } from '@angular/forms';
-// Date Format
-import { DatePipe } from '@angular/common';
-
-// Sweet Alert
 import Swal from 'sweetalert2';
-
 // Csv File Export
 import { ngxCsv } from 'ngx-csv/ngx-csv';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { ModalComponent } from '../modal/modal.component';
+import { CityAcronym } from 'src/app/core/constants/Places';
 
 @Component({
   selector: 'app-list',
@@ -22,19 +15,16 @@ import { ModalComponent } from '../modal/modal.component';
   styleUrls: ['./list.component.scss']
 })
 
-/**
- * Customers Component
- */
 export class ListComponent {
   title="Contribuyentes";
   breadCrumbItems!: Array<{}>;
   canActivate:string[];
-  listaItems:any[]=[];
+  itemsList:any[]=[];
   temp:any[]=[];
+
   contribuyentesList:any[]=[];
 
   masterSelected!: boolean;
-  checkedList: any;
 
   searchTerm: any;
   filterDate: any;
@@ -52,13 +42,18 @@ export class ListComponent {
       { label: '' },
       { label: this.title, active: true }
     ];
-    this.listaItems = [
+    this.itemsList = [
       {name: 'Nombre', prop: 'nombre'},
       {name: 'Nro Carnet',prop: 'nroCarnet'},
       {name: 'Celular', prop: 'celular'},
       {name: 'Estado', prop: 'estadoUsuario',tag:true},
     ];
     this.getTaxpayers();
+  }
+
+  selectedItems:any[] =[];
+  getSelectedItems(items: any[]) {
+    this.selectedItems = items;
   }
 
   // Search Data
@@ -69,8 +64,8 @@ export class ListComponent {
         item.apPaterno.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.apMaterno.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.nroCarnet.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.correo.toLowerCase().includes(this.searchTerm.toLowerCase())
-        // item.status.toLowerCase().includes(this.searchTerm.toLowerCase())
+        item.correo.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.estadoUsuario.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
   }
@@ -82,29 +77,7 @@ export class ListComponent {
       this.contribuyentesList = this.temp
     }
   }
-
-  /**
-  * Confirmation mail model
-  */
-  deleteId: any;
-  confirm(content: any, id: any) {
-    this.deleteId = id;
-    this.modalService.open(content, { centered: true });
-  }
-
-  // Delete Data
-  deleteData(id: any) {
-    if (id) {
-      // this.store.dispatch(deleteCustomer({ id: this.deleteId.toString() }));
-    } else {
-      // this.store.dispatch(deleteCustomer({ id: this.checkedValGet.toString() }));
-    }
-    this.deleteId = ''
-    this.masterSelected = false
-  }
   
-
-
   /**
   * Open modal
   * @param content modal content
@@ -116,13 +89,35 @@ export class ListComponent {
     });
     modalRef.componentInstance.row = content;
     modalRef.componentInstance.accion = accion;
-    modalRef.componentInstance.listaItems.subscribe(() => {
+    modalRef.componentInstance.itemsList.subscribe(() => {
       this.getTaxpayers();
     });
   }
 
   // Csv File Export
   csvFileExport() {
+    const lista = this.selectedItems.flatMap((item: any) => {
+      const city = CityAcronym.find(city => city.id === item.ciExpedido);   ;
+      const baseData = {
+        nombre: item.nombre,
+        apPaterno: item.apPaterno,
+        apMaterno: item.apMaterno,
+        fechaNacimiento: item.fechaNac,
+        genero: item.sexo,
+        carnet: item.nroCarnet,
+        nit: item.nroNit,
+        expedido: city ? city.description : '',
+        direccion: item.direccion,
+        celular: item.celular,
+        email: item.correo,
+        tipoContribuyente: item.tipoContribuyente,
+        codigoContribuyente: item.codigoContribuyente,
+        estadoCivil: item.estadoCivil,
+        estadoUsuario: item.estadoUsuario,
+      };    
+      return [{...baseData}];      
+    });
+  
     var data = {
       fieldSeparator: ',',
       quoteStrings: '"',
@@ -132,9 +127,10 @@ export class ListComponent {
       title: 'Lista de Contribuyentes',
       useBom: true,
       noDownload: false,
-      headers: ["uuid", "Usuario","Contraseña","Nombre", "Apellido Paterno", "Apellido Materno", "Nro Carnet","Nro NIT","Expedido","Sexo","Dirección","Celular", "Email", "Tipo Contribuyente", "Codigo Contribuyente", "Estado Civil", "Fecha Nacimiento","Estado Usuario"]
+      headers: ["Nombre", "Apellido Paterno", "Apellido Materno",, "Fecha Nacimiento","Genero", "Nro Carnet","Nro NIT","Expedido",
+        "Dirección","Celular", "Email", "Tipo Contribuyente", "Codigo Contribuyente", "Estado Civil","Estado Usuario"]
     };
-    new ngxCsv(this.contribuyentesList, "contribuyentes", data);
+    new ngxCsv(lista, "contribuyentes", data);
   }
 
   

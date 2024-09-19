@@ -39,10 +39,10 @@
     <app-data-table
         *ngIf="xlsxData.length > 0"
         [loading]="loading"
-        [listaItems]="titles"
+        [itemsList]="titles"
         [content]="xlsxData"
         [allcontent]="listaTemporal"
-        (seleccionarItemEmitter)="getSeleccionados($event)">
+        (selectedItemEmitter)="getSeleccionados($event)">
     </app-data-table>
 </div>
 

@@ -45,15 +45,6 @@
                     </div>
                     <div class="col-md-auto ms-auto">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="text-muted text-nowrap">Filtrar por: </span>
-                            <select class="form-control mb-0" data-choices data-choices-search-false
-                                id="choices-single-default" (change)="SortFilter($event)"> 
-                                <option value='tipo'>Todos</option>            
-                                <option value="codigo">Cancha</option>                  
-                                @for (item of categoryList; track $index) {
-                                    <option [value]=item.nombre>{{item.nombre}}</option>
-                                }
-                            </select>
                             <div class="hstack gap-2">
                                 <span class="dropdown" ngbDropdown>
                                     <button class="btn btn-soft-info btn-icon fs-14 arrow-none d-block" type="button"
@@ -75,17 +66,16 @@
             <div class="card-body">
                 <app-data-table
                     [loading]="loading"
-                    [listaItems]="listaItems"
-                    [content]="canchasList"
-                    [allcontent]="canchasList"
-                    [sortField]="sortField"
+                    [itemsList]="itemsList"
+                    [allcontent]="temp"
+                    [content]="fieldsList"
                     [show]="canActivate.includes('VER')"
                     [edit]="canActivate.includes('ACTUALIZAR')"
                     [delete]="canActivate.includes('ELIMINAR')"
                     (showItemEmitter)="viewDataGet($event)"
                     (editItemEmitter)="openModal($event,'edit','lg')"
                     (deleteItemEmitter)="deleteModal(deleteModel,$event)" 
-                    (seleccionarItemEmitter)="getSelectedItems($event)"                        
+                    (selectedItemEmitter)="getSelectedItems($event)"                        
                 >
                 </app-data-table> 
             </div>
