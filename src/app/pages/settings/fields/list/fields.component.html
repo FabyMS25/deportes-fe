@@ -4,7 +4,7 @@
 
 <div class="row">
     <div class="col-lg-12">
-        <div class="card" *ngIf="canActivate.includes('CREAR')">
+        <div class="card" *ngIf="canActivate.includes('CREAR') || (canActivate.includes('EXPORTAR') && selectedItems.length>0)">
             <div class="card-header">
                 <div class="d-flex align-items-center flex-wrap gap-2">
                     <div class="flex-grow-1">
