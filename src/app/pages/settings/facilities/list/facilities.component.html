@@ -4,7 +4,7 @@
 
 <div class="row">
     <div class="col-lg-12">
-        <div class="card">
+        <div class="card" *ngIf="canActivate.includes('CREAR') || (canActivate.includes('EXPORTAR') && selectedItems.length>0)">
             <div class="card-header">
                 <div class="d-flex align-items-center flex-wrap gap-2">
                     <div class="flex-grow-1">
@@ -78,7 +78,7 @@
         </div>
     </div>
     <!--end col-->    
-    <div class="col-xxl-3">
+    <div class="col-xxl-3" #viewModel>
         <div class="card" id="content-view-detail" *ngIf="dataSelected">
             <div class="card-body text-center company-details">
                 <div class="position-relative d-inline-block">
@@ -95,13 +95,13 @@
               <div class="row">
                     <h6 class="text-muted text-uppercase fw-semibold mb-3">Detalles del Complejo</h6>
               </div>
-              <div class="row mb-3">
+              <div class="row mb-2">
                 <div class="table-responsive table-card">
                     <table class="table table-borderless mb-0">
                         <tbody>
                             <tr *ngIf="dataSelected.encargadosDtoList">
                                 <td class="fw-medium" scope="row">Encargado</td>
-                                <td class="telefono">
+                                <td class="name">
                                     @for (item of dataSelected.encargadosDtoList; track $index) {
                                     <p>{{item.nombre}}</p>
                                     }
@@ -109,11 +109,11 @@
                             </tr>
                             <tr>
                                 <td class="fw-medium" scope="row">Techado</td>
-                                <td class="telefono">{{dataSelected.techado}}</td>
+                                <td class="name">{{dataSelected.techado}}</td>
                             </tr>
                             <tr>
                                 <td class="fw-medium" scope="row">Distrito</td>
-                                <td class="telefono">{{dataSelected.distrito}}</td>
+                                <td class="direccion">{{dataSelected.distrito}}</td>
                             </tr>
                             <tr>
                                 <td class="fw-medium" scope="row">Dirección</td>

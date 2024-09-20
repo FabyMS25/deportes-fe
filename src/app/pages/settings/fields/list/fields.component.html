@@ -4,7 +4,7 @@
 
 <div class="row">
     <div class="col-lg-12">
-        <div class="card">
+        <div class="card" *ngIf="canActivate.includes('CREAR')">
             <div class="card-header">
                 <div class="d-flex align-items-center flex-wrap gap-2">
                     <div class="flex-grow-1">
@@ -84,18 +84,8 @@
     </div>
     <!--end col-->
     
-    <div class="col-xxl-3">
+    <div class="col-xxl-3" #viewModel>
         <div class="card" id="content-view-detail" *ngIf="dataSelected">
-            <!-- <div class="card-body text-center company-details">
-                <div class="position-relative d-inline-block">
-                    <div class="avatar-md">
-                        <div class="avatar-title bg-light rounded-circle">
-                            <img src="assets/images/brands/dribbble.png" alt=""
-                                class="avatar-sm rounded-circle object-fit-cover">
-                        </div>
-                    </div>
-                </div>
-            </div> -->
             <div class="card-body">
               <div class="row">
                     <h6 class="text-muted text-uppercase fw-semibold mb-3">Detalles de la Cancha</h6>

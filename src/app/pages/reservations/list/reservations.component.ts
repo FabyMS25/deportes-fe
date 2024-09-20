@@ -346,9 +346,9 @@ export class ReservationsComponent implements OnInit {
         if(this.contribuyente){
           list = data.payload.filter((item: any) => item.contribuyenteDto.uuid === this.contribuyente.uuid);
         }      
-        let employee:any = localStorage.getItem("assignaments");
-        if(employee){
-          employee = employee ? JSON.parse(employee) : null;
+        const assignaments = localStorage.getItem("assignaments");
+        const employee = assignaments ? JSON.parse(assignaments) : null;
+        if(employee.length>0){
           list = data.payload.filter((item: any) => item.canchasDto.complejoDto.uuid === employee.complejoDto.uuid);
         }
         const updatedReservas = await this.checkAndUpdateExpiredReservas(list);

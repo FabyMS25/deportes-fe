@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 // Csv File Export
@@ -33,6 +33,8 @@ export class FacilitiesComponent {
   distictList=Districts
   ceilingList=Ceiling
 
+  @ViewChild('viewModel') viewModel!: ElementRef;
+  
   constructor(private modalService: NgbModal,
     private complejosService: ComplejosService,
     private categoriasService: CategoriasService,
@@ -88,13 +90,17 @@ export class FacilitiesComponent {
       }
     }
 
+
   /**
    * View Data Get
-   * @param content modal content
    */
   viewDataGet(data: any) {
-    this.dataSelected=data
-  }
+    this.dataSelected=data;    
+    const element = this.viewModel.nativeElement;
+    const elementTop = element.getBoundingClientRect().top + window.scrollY;
+    const middleOffset = elementTop - (window.innerHeight / 2) + (element.offsetHeight / 2);    
+    window.scrollTo({top: middleOffset, behavior: 'smooth' });
+  } 
 
   /**
    * Open modal

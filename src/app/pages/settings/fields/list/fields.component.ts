@@ -1,4 +1,4 @@
-import { Component, TemplateRef } from '@angular/core';
+import { Component, ElementRef, TemplateRef, ViewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NgbModal, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import {  UntypedFormGroup } from '@angular/forms';
@@ -42,6 +42,9 @@ export class FieldsComponent {
   temp:any[]=[];
   
   dataSelected!:campoDeportivo;
+  
+  @ViewChild('viewModel') viewModel!: ElementRef;
+
   constructor(private modalService: NgbModal,
     private fieldsService: CamposDeportivoService,
     private categoriasService: CategoriasService,
@@ -107,11 +110,14 @@ export class FieldsComponent {
   
   /**
    * View Data Get
-   * @param content modal content
    */
   viewDataGet(data: any) {
-    this.dataSelected=data
-  }
+    this.dataSelected=data;    
+    const element = this.viewModel.nativeElement;
+    const elementTop = element.getBoundingClientRect().top + window.scrollY;
+    const middleOffset = elementTop - (window.innerHeight / 2) + (element.offsetHeight / 2);    
+    window.scrollTo({top: middleOffset, behavior: 'smooth' });
+  } 
 
   /**
    * Open modal

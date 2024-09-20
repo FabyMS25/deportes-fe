@@ -1,4 +1,4 @@
-import { Component, QueryList, ViewChildren, OnInit } from '@angular/core';
+import { Component, QueryList, ViewChildren, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Observable } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -46,6 +46,7 @@ export class EmployeesComponent implements OnInit {
   employeesList:any[]= [];//Employees;
   funcionarioSelected!:any;
 
+  @ViewChild('viewModel') viewModel!: ElementRef;
   constructor(private modalService: NgbModal,
     private authService: AuthenticationService,
     private usersService: UserService,
@@ -92,15 +93,17 @@ export class EmployeesComponent implements OnInit {
 
   /**
    * View Data Get
-   * @param content modal content
    */
   viewDataGet(data: any) {
-    this.funcionarioSelected=data
+    this.funcionarioSelected=data;    
+    const element = this.viewModel.nativeElement;
+    const elementTop = element.getBoundingClientRect().top + window.scrollY;
+    const middleOffset = elementTop - (window.innerHeight / 2) + (element.offsetHeight / 2);    
+    window.scrollTo({top: middleOffset, behavior: 'smooth' });
   }  
 
   /**
    * Open modal
-   * @param content modal content
    */
   public openModal(row: any, accion: string, size: string) {
     const modalRef = this.modalService.open(ModalEmployeeComponent, {

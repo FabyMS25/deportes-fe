@@ -53,13 +53,11 @@ export class CalendarDashboardComponent implements OnInit {
       next: (data: any) => {
         if (data['status'] === 'OK') {
           let reservasList = data.payload;
-          let employee:any = localStorage.getItem("assignaments");
-          if(employee){
-            employee = employee ? JSON.parse(employee) : null;
+          const assignaments= localStorage.getItem("assignaments");
+          const employee = assignaments ? JSON.parse(assignaments) : null;
+          if(employee.length>0){
             reservasList = data.payload.filter((item: any) => item.canchasDto.complejoDto.uuid === employee.complejoDto.uuid);
           }
-          employee = employee ? JSON.parse(employee) : null;
-          console.log('reservasList', reservasList);  
           this.allcalendarEvents = reservasList;
           this.calendarEvents = this.allcalendarEvents.map(
             (evt: any) => {

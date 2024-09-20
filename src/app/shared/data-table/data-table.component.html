@@ -1,6 +1,7 @@
-<div>
+<div class="responsive-table">
     <div class="table-responsive table-card mb-2 table-nowrap">
-        <table class="table">
+    <!-- Desktop view -->
+        <table class="table d-none d-sm-table">
             <thead class="table-light">
                 <tr>
                     @if (multiCheck) {
@@ -8,8 +9,6 @@
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="checkAll" value="checkAll"
                                     [(ngModel)]="masterSelected" (change)="checkUncheckAll($event)">  
-                                <!-- <input class="form-check-input" type="checkbox" id="checkAll"
-                                       [(ngModel)]="masterSelected" (change)="checkUncheckAll()"> -->
                             </div>
                         </th>
                     }
@@ -33,12 +32,7 @@
                             </div>
                         </td>
                     }
-                    @for (item of itemsList; track item.prop) {    
-                            <!-- @switch (item.type) {
-                                @case ('tag') {}
-                                @case ('date') {}
-                                @default {}
-                            } -->
+                    @for (item of itemsList; track item.prop) {   
                         <td [ngClass]="{'status': item.tag, 'date': item.date, 'name': !item.tag && !item.date}">
                             <ng-container *ngIf="getPropertyValue(data, item.prop) as value; else emptyValue">
                                 @if (item.tag) {
@@ -121,15 +115,112 @@
                 </tr>
                 }           
             </tbody>            
-        </table>                    
+        </table> 
+    <!-- Mobile view -->
+        <div class="d-sm-none">
+            @for (data of allcontent; track data.uuid) {
+            <div class="card mb-3">
+                <div class="d-flex justify-content-between mb-2">  
+                <table class="table table-borderless mb-0">
+                  <tbody><tr>
+                    <th  style="width: 150px;">
+                        @if(multiCheck){
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="checkAll" value="checkAll"
+                                    [(ngModel)]="masterSelected" (change)="checkUncheckAll($event)">  
+                            </div>
+                        }
+                    </th>
+                    <td>
+                        @if (show || edit || delete || consult) {
+                            <ul class="list-inline hstack gap-2 mb-0 justify-content-end">
+                                <li *ngIf="show" class="list-inline-item" ngbTooltip="Ver" placement="top">
+                                    <a class="" (click)="showItem(data)">
+                                        <i class="ri-eye-fill align-bottom me-2 float-start"></i>
+                                    </a>
+                                </li>                                                        
+                                <li *ngIf="edit || (edit && data.estadoReserva && data.estadoReserva ==='Pendiente')"
+                                    class="list-inline-item edit" ngbTooltip="Editar" placement="top">
+                                    <a href="javascript:void(0);" data-bs-toggle="modal"
+                                        class="text-primary d-inline-block edit-item-btn"
+                                        (click)="editItem(data)">
+                                        <i class="ri-pencil-fill fs-16"></i>
+                                    </a>
+                                </li>                                                  
+                                <li *ngIf="consult" 
+                                    class="list-inline-item edit" ngbTooltip="Consultar" placement="top">
+                                    <a href="javascript:void(0);" data-bs-toggle="modal"
+                                        class="text-primary d-inline-block edit-item-btn"
+                                        (click)="consultItem(data)">
+                                        <i class="ri-restart-fill fs-16"></i>
+                                    </a>
+                                </li>
+                                <li *ngIf="delete || (delete && data.estadoReserva && data.estadoReserva ==='Pendiente')" 
+                                    class="list-inline-item me-0" ngbTooltip="Anular" placement="top">
+                                    <a class="text-danger d-inline-block remove-item-btn"
+                                        data-bs-toggle="modal" data-bs-toggle="modal"
+                                        (click)="deleteItem(data)">
+                                        <i class=" ri-close-circle-line fs-16"></i>
+                                    </a>
+                                </li>
+                                <li *ngIf="telf" class="list-inline-item edit" ngbTooltip="Call" placement="top">
+                                    <a href="javascript:void(0);" class="text-muted d-inline-block">
+                                        <i class="ri-phone-line fs-16"></i>
+                                    </a>
+                                </li>
+                                <li *ngIf="comment" class="list-inline-item edit" ngbTooltip="Message" placement="top">
+                                    <a href="https://api.whatsapp.com/send?phone=+59172248669&text=MENSAJE DESDE SISTEMA DE DEPORTES" 
+                                        class="text-muted d-inline-block">
+                                        <i class="ri-question-answer-line fs-16"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        }
+                    </td>
+                  </tr></tbody>
+                </table>
+                </div>
+                <div class="card-body">
+                    
+                @for (item of itemsList; track item.prop) {
+                    <div class="d-flex justify-content-between mb-2">                                      
+                    <strong>{{item.name}}:</strong>
+                    <span [ngClass]="{'status': item.tag, 'date': item.date}">
+                        <ng-container *ngIf="getPropertyValue(data, item.prop) as value; else emptyValue">
+                        @if (item.tag) {
+                            <span class="badge" [ngClass]="getBadgeClass(value)">{{value}}</span>
+                        } @else if (item.date) {
+                            {{value | date:'longDate'}}
+                        } @else {
+                            <div class="d-flex align-items-center justify-content-end">
+                            <img *ngIf="item.avatar && data.avatar" [src]="'assets/images/users/' + data.avatar" 
+                                alt="" class="avatar-xs rounded-circle me-2">
+                            <span class="expandable-text" (click)="toggleExpand(data, item.prop)">
+                                <span [class.truncate]="!isExpanded(data, item.prop)">{{value}}</span>
+                            </span>
+                            </div>
+                        }
+                        </ng-container>
+                        <ng-template #emptyValue>
+                        <span class="text-muted">-</span>
+                        </ng-template>
+                    </span>
+                    </div>
+                }
+                
+                </div>
+            </div>
+            }
+        </div>
+                   
     </div>
+    
     <!-- Loading Spinner -->
     <div id="elmLoader" *ngIf="loading">
       <div class="spinner-border text-primary avatar-sm" role="status">
         <span class="visually-hidden">Cargando...</span>
       </div>
-    </div>
-  
+    </div>  
     <!-- No Results Found -->
     <div class="noresult" *ngIf="!loading && allcontent.length === 0">
       <div class="text-center">
@@ -140,7 +231,7 @@
         <p class="text-muted">No encontramos datos para mostrar</p>
       </div>
     </div>
-
+    <!-- Pagination -->
     <div class="row align-items-md-center mt-3">
         <div class="col col-xxl-1" *ngIf="allcontent && allcontent.length>0">                        
             <div class="text-sm-left float-start listjs-pagination">     
@@ -153,14 +244,13 @@
                     </div>      
             </div>
         </div>
-        <div class="col col-xxl-5" *ngIf="allcontent && allcontent.length>0">
+        <div class="col col-xxl-5 d-none d-sm-table" *ngIf="allcontent && allcontent.length>0">
             <div class="dataTables_info mb-2" id="tickets-table_info" role="status" aria-live="polite">
                 <span style="color:slategray">
                     {{allcontent.length}} Registros, de un total de {{ content.length }}
                 </span>
             </div>            
         </div> 
-        <!-- Pagination -->
         <div class="col col-xxl-6">
             <div class="text-sm-right float-sm-end listjs-pagination">
                 <ngb-pagination 
@@ -171,11 +261,6 @@
                 </ngb-pagination>
             </div>
         </div>
-        <!-- End Pagination -->
-    </div>      
-    <div id="elmLoader" *ngIf="!allcontent">
-        <div class="spinner-border text-primary avatar-sm" role="status">
-            <span class="visually-hidden">Cargando...</span>
-        </div>
-    </div>
+    </div> 
+    <!-- End Pagination -->     
 </div>

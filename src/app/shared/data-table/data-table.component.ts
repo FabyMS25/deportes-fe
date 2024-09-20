@@ -33,6 +33,8 @@ export class DataTableComponent {
   masterSelected: boolean = false;
   checkedValGet: any[] = [];
 
+  private expandedItems: Set<string> = new Set();
+
   constructor( public service: PaginationService){}
   
   ngOnChanges() {
@@ -114,7 +116,7 @@ checkUncheckAll(e: any) {
     var ddChars = dd.split('');
     return   (ddChars[1]?dd:"0"+ddChars[0]) + '/' + (mmChars[1]?mm:"0"+mmChars[0])  +'/'+yyyy;
   }
-  
+
   // Search Data
   searchTerm: any;
   performSearch(): void {
@@ -145,5 +147,18 @@ checkUncheckAll(e: any) {
   public onTableSizeChange(event:any): void {
     this.itemsPerPage = Number(event.target.value);
     this.allcontent = this.service.changePage(this.content,this.itemsPerPage)
+  }
+
+  /* For Movile View */
+  toggleExpand(data: any, prop: string): void {
+    const key = `${data.uuid}_${prop}`;
+    if (this.expandedItems.has(key)) {
+      this.expandedItems.delete(key);
+    } else {
+      this.expandedItems.add(key);
+    }
+  }
+  isExpanded(data: any, prop: string): boolean {
+    return this.expandedItems.has(`${data.uuid}_${prop}`);
   }
 }
