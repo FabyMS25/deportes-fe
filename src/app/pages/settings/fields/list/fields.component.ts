@@ -60,10 +60,10 @@ export class FieldsComponent {
       { label: this.title, active: true }
     ];
     this.itemsList = [
-      {name: 'Complejo', prop: 'complejoDto.nombre'},
-      {name: 'Cancha', prop: 'codigo'},
-      {name: 'Superficie',prop: 'superficieDto.descripcion'},
-      {name: 'Tipo Cobro', prop: 'tipo', tag:true},
+      {name: 'Complejo', prop: 'complejoDto.nombre', visible:true},
+      {name: 'Cancha', prop: 'codigo', visible:true},
+      {name: 'Superficie',prop: 'superficieDto.descripcion', visible:true},
+      {name: 'Tipo Cobro', prop: 'tipo', tag:true, visible:true},
     ];
     this.getCategories();
     this.getFields()
@@ -72,6 +72,9 @@ export class FieldsComponent {
   selectedItems:any[] =[];
   getSelectedItems(items: any[]) {
     this.selectedItems = items;
+  }
+  toggleColumn(column: any) {
+    column.visible = !column.visible;
   }
 
   // Search Data

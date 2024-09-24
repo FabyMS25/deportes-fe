@@ -45,7 +45,7 @@ export class SurfacesComponent {
     ];
 
     this.itemsList = [
-      {name: 'Descripción', prop: 'descripcion'},
+      {name: 'Descripción', prop: 'descripcion',visible:true},
     ];
     this.contentForm = this.formBuilder.group({
       uuid: [''],
@@ -112,7 +112,7 @@ export class SurfacesComponent {
   camposImport: any[] =[];
   public openModalImport() {
     this.camposImport = [
-        {prop: 'Descripcion', name: 'Descripcion'},
+        {prop: 'Descripcion', name: 'Descripcion',visible:true},
     ];
     const modalRef = this.modalService.open(ModalImportComponent, {
         size: 'lg',

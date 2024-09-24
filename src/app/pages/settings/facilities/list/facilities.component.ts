@@ -49,9 +49,10 @@ export class FacilitiesComponent {
       { label: this.title, active: true }
     ];
     this.itemsList = [
-      {name: 'Nombre', prop: 'nombre'},
-      {name: 'Techado', prop: 'techado'},
-      {name: 'Distrito',prop: 'distrito'},
+      {name: 'Nombre', prop: 'nombre', visible:true},
+      {name: 'Techado', prop: 'techado', visible:true},
+      {name: 'Distrito',prop: 'distrito', visible:true},
+      {name: 'Direccion',prop: 'ubicacion', visible:false},
     ];
     this.getCategories();
     this.getFacilities()
@@ -61,7 +62,14 @@ export class FacilitiesComponent {
   getSelectedItems(items: any[]) {
     this.selectedItems = items;
   }
-  
+  toggleColumn(column: any) {
+    column.visible = !column.visible;
+  }
+
+  get visibleColumns(): string[] {
+    return this.itemsList.filter(col => col.visible).map(col => col.prop);
+  }
+
   // Search Data
   searchTerm: any;
     performSearch(): void {

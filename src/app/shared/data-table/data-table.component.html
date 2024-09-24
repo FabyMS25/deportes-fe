@@ -12,8 +12,10 @@
                             </div>
                         </th>
                     }
-                    @for (item of itemsList; track item.prop) {
-                        <th class="sort" (click)="onSort(item.prop)">{{item.name}}</th>
+                    @for (column of itemsList; track column.prop) {
+                      @if (column.visible) {
+                        <th class="sort" (click)="onSort(column.prop)">{{column.name}}</th>
+                      }
                     }
                     @if (show || edit || delete || consult) {
                         <th>Acciones</th>
@@ -21,7 +23,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (data of allcontent; track data.uuid) {
+                @for (data of content; track data.uuid) {
                 <tr [id]="'c_' + data.uuid">
                     @if (multiCheck) {
                         <td>
@@ -32,17 +34,19 @@
                             </div>
                         </td>
                     }
-                    @for (item of itemsList; track item.prop) {   
-                        <td [ngClass]="{'status': item.tag, 'date': item.date, 'name': !item.tag && !item.date}">
-                            <ng-container *ngIf="getPropertyValue(data, item.prop) as value; else emptyValue">
-                                @if (item.tag) {
+                    @for (column of itemsList; track column.prop) {   
+                      @if (column.visible) {
+                            <!-- <td>{{ data[column.prop] }}</td> -->
+                        <td [ngClass]="{'status': column.tag, 'date': column.date, 'name': !column.tag && !column.date}">
+                            <ng-container *ngIf="getPropertyValue(data, column.prop) as value; else emptyValue">
+                                @if (column.tag) {
                                     <span class="badge" [ngClass]="getBadgeClass(value)">
                                         {{value}}
                                     </span>
-                                } @else if (item.date) {
+                                } @else if (column.date) {
                                     <ngb-highlight [result]="value | date:'longDate'" [term]="searchTerm"></ngb-highlight>
                                 } @else {
-                                    @if (item.avatar && data.avatar) {
+                                    @if (column.avatar && data.avatar) {
                                         <img [src]="'assets/images/users/' + data.avatar" 
                                              alt="" class="avatar-xs rounded-circle">
                                     }
@@ -53,6 +57,7 @@
                                 <span class="text-muted">-</span>
                             </ng-template>
                         </td>
+                      }
                     }
                     @if (show || edit || delete || consult) {
                     <td>
@@ -211,8 +216,7 @@
                 </div>
             </div>
             }
-        </div>
-                   
+        </div>                   
     </div>
     
     <!-- Loading Spinner -->

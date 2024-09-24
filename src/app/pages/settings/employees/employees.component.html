@@ -51,6 +51,17 @@
                                         <i class="ri-settings-4-line"></i>
                                     </button>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
+                                      @for (column of itemsList; track $index) {             
+                                        <li class="dropdown-item p-1">
+                                          <div class="form-check form-check-outline form-check-primary">
+                                            <input class="form-check-input" type="checkbox" [id]="'formCheck' + column.prop"
+                                               [(ngModel)]="column.visible" (change)="toggleColumn(column)">
+                                            <label class="form-check-label" [for]="'formCheck' + column.prop">
+                                              {{column.name}}
+                                            </label>
+                                          </div>
+                                        </li>                            
+                                      }
                                     </ul>
                                 </span>
                             </div>                            

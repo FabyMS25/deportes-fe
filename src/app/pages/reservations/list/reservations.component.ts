@@ -55,12 +55,12 @@ export class ReservationsComponent implements OnInit {
       { label: this.title, active: true }
     ];
     this.itemsList = [
-      {name: 'Complejo  ',prop: 'canchasDto.complejoDto.nombre'},
-      // {name: 'Contribuyente', prop: 'contribuyenteDto.nombre'},
-      {name: 'Superficie', prop: 'superficie'},
-      {name: 'Fecha Reserva',prop: 'fechaReserva', date:true},
-      {name: 'Estado', prop: 'estadoReserva', tag:true},
-      {name: 'Hora',prop: 'horaEntrada'},
+      {name: 'Complejo  ',prop: 'canchasDto.complejoDto.nombre',visible:true},
+      {name: 'Contribuyente', prop: 'contribuyenteDto.nombre',visible:false},
+      {name: 'Superficie', prop: 'superficie',visible:true},
+      {name: 'Fecha Reserva',prop: 'fechaReserva', date:true,visible:true},
+      {name: 'Estado', prop: 'estadoReserva', tag:true,visible:true},
+      {name: 'Hora',prop: 'horaEntrada',visible:true},
     ];
     
     this.authRuat();  

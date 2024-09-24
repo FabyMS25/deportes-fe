@@ -55,6 +55,9 @@ export class ListComponent {
   getSelectedItems(items: any[]) {
     this.selectedItems = items;
   }
+  toggleColumn(column: any) {
+    column.visible = !column.visible;
+  }
 
   // Search Data
   performSearch(): void {

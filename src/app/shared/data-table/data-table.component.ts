@@ -55,7 +55,10 @@ export class DataTableComponent {
     this.consultItemEmitter.emit(item);
   }
 
-
+  toggleColumn(column: any) {
+    column.visible = !column.visible;
+  }
+  
 onCheckboxChange(e: any, item: any) {
     if (e.target.checked) {
         this.checkedValGet.push(item);

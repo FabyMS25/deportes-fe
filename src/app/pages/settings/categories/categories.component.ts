@@ -52,9 +52,9 @@ export class CategoriesComponent {
     ];
 
     this.itemsList = [
-      {name: 'Codigo', prop: 'codigo'},
-      {name: 'Nombre', prop: 'nombre'},
-      {name: 'Tipo Cobro', prop: 'tipo', tag:true},
+      {name: 'Codigo', prop: 'codigo',visible:true},
+      {name: 'Nombre', prop: 'nombre',visible:true},
+      {name: 'Tipo Cobro', prop: 'tipo', tag:true,visible:true},
     ];
     
     this.contentForm = this.formBuilder.group({

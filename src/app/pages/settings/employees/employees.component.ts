@@ -61,9 +61,9 @@ export class EmployeesComponent implements OnInit {
       { label: this.title, active: true }
     ];
     this.itemsList = [
-      {name: 'Nombre', prop: 'nombre', avatar:true},
-      {name: 'Complejo',prop: 'complejoDto.nombre'},
-      {name: 'Telefono', prop: 'telefono'},
+      {name: 'Nombre', prop: 'nombre', avatar:true,visible:true},
+      {name: 'Complejo',prop: 'complejoDto.nombre',visible:true},
+      {name: 'Telefono', prop: 'telefono',visible:true},
     ];
 
     this.loadData();
@@ -78,6 +78,9 @@ export class EmployeesComponent implements OnInit {
   selectedItems:any[] =[];
   getSelectedItems(items: any[]) {
     this.selectedItems = items;
+  }
+  toggleColumn(column: any) {
+    column.visible = !column.visible;
   }
   
   // Search Data
