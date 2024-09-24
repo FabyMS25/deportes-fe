@@ -52,7 +52,7 @@ export class CategoriesComponent {
     ];
 
     this.itemsList = [
-      {name: 'Codigo', prop: 'codigo',visible:true},
+      {name: 'Codigo', prop: 'codigo',visible:false},
       {name: 'Nombre', prop: 'nombre',visible:true},
       {name: 'Tipo Cobro', prop: 'tipo', tag:true,visible:true},
     ];

@@ -55,7 +55,7 @@ export class CalendarDashboardComponent implements OnInit {
           let reservasList = data.payload;
           const assignaments= localStorage.getItem("assignaments");
           const employee = assignaments ? JSON.parse(assignaments) : null;
-          if(employee.length>0){
+          if(employee){
             reservasList = data.payload.filter((item: any) => item.canchasDto.complejoDto.uuid === employee.complejoDto.uuid);
           }
           this.allcalendarEvents = reservasList;
@@ -127,7 +127,7 @@ export class CalendarDashboardComponent implements OnInit {
     });
     modalRef.componentInstance.row = row;
     modalRef.componentInstance.accion = 'show';
-    modalRef.componentInstance.listaItems.subscribe(() => {
+    modalRef.componentInstance.emitList.subscribe(() => {
       this._fetchData();
     });
 

@@ -137,15 +137,8 @@ export class ReservationsComponent implements OnInit {
     }
   }
 
-  // selectedItems: any[] = [];
+  selectedItems: any[] = [];
   consultResults: any[] = [];
-  // getSeleccionados(items: any[]) {
-  //   // const removeActions = document.getElementById("remove-actions") as HTMLElement;
-  //   // removeActions.style.display = items.length > 0 ? "block" : "none";
-  //   this.selectedItems = items;
-  // }
-
-  selectedItems:any[] =[];
   getSelectedItems(items: any[]) {
     this.selectedItems = items;
   }
@@ -288,16 +281,16 @@ export class ReservationsComponent implements OnInit {
             });
           },
         });
-      } else {
-        text = 'No se pudo obtener el dato seleccionado';
-        Swal.fire({
-          title: 'Error!',
-          text: text,
-          icon: 'error',
-          confirmButtonColor: '#d33',
-        });
-      }
+    } else {
+      text = 'No se pudo obtener el dato seleccionado';
+      Swal.fire({
+        title: 'Error!',
+        text: text,
+        icon: 'error',
+        confirmButtonColor: '#d33',
+      });
     }
+  }
 
   private async checkAndUpdateExpiredReservas(reservas: Reserva[]): Promise<Reserva[]> {
     const updatedReservas: Reserva[] = [];  
@@ -348,7 +341,7 @@ export class ReservationsComponent implements OnInit {
         }      
         const assignaments = localStorage.getItem("assignaments");
         const employee = assignaments ? JSON.parse(assignaments) : null;
-        if(employee.length>0){
+        if(employee){
           list = data.payload.filter((item: any) => item.canchasDto.complejoDto.uuid === employee.complejoDto.uuid);
         }
         const updatedReservas = await this.checkAndUpdateExpiredReservas(list);

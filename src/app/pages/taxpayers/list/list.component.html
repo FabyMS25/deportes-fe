@@ -29,12 +29,11 @@
     <div class="col-lg-12">
         <div class="card">
             <div class="card-header">
-                <div class="row g-3">
-                    <div class="col-md-4">
+                <div class="row g-2">
+                    <div class="col-6">
                         <div class="search-box">
                             <input type="text" name="searchTerm" class="form-control"
-                                placeholder="Buscar por Nombre o Carnet ..."
-                                [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
+                                placeholder="Buscar por ..." [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
                             <i class="ri-search-line search-icon"></i>
                         </div>
                     </div>
@@ -48,27 +47,27 @@
                                 <option value="Bloqueado">Bloqueado</option>
                             </select>
                             <div class="hstack gap-2">
-                                <span class="dropdown" ngbDropdown>
-                                    <button class="btn btn-soft-info btn-icon fs-14 arrow-none d-block" type="button"
+                                <span class="dropdown d-none d-md-inline-block" ngbDropdown>
+                                <button class="btn btn-soft-info btn-icon fs-14 arrow-none d-block" type="button"
                                         id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false"
                                         ngbDropdownToggle>
-                                        <i class="ri-settings-4-line"></i>
-                                    </button>
-                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
-                                      @for (column of itemsList; track $index) {             
+                                    <i class="ri-settings-4-line"></i>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
+                                    @for (column of itemsList; track column) {
                                         <li class="dropdown-item p-1">
-                                          <div class="form-check form-check-outline form-check-primary">
+                                        <div class="form-check form-check-outline form-check-primary">
                                             <input class="form-check-input" type="checkbox" [id]="'formCheck' + column.prop"
-                                               [(ngModel)]="column.visible" (change)="toggleColumn(column)">
+                                                [(ngModel)]="column.visible">
                                             <label class="form-check-label" [for]="'formCheck' + column.prop">
-                                              {{column.name}}
+                                            {{column.name}}
                                             </label>
-                                          </div>
-                                        </li>                            
-                                      }
-                                    </ul>
+                                        </div>
+                                        </li>
+                                    }
+                                </ul>
                                 </span>
-                            </div>                            
+                            </div>
                         </div>
                     </div>
                 </div>

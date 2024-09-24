@@ -38,7 +38,7 @@ export class DataTableComponent {
   constructor( public service: PaginationService){}
   
   ngOnChanges() {
-      this.allcontent = this.service.changePage(this.content,this.itemsPerPage)
+      this.content = this.service.changePage(this.allcontent,this.itemsPerPage)
   }
 
   public showItem(item: any) {
@@ -55,10 +55,6 @@ export class DataTableComponent {
     this.consultItemEmitter.emit(item);
   }
 
-  toggleColumn(column: any) {
-    column.visible = !column.visible;
-  }
-  
 onCheckboxChange(e: any, item: any) {
     if (e.target.checked) {
         this.checkedValGet.push(item);
@@ -66,12 +62,11 @@ onCheckboxChange(e: any, item: any) {
         this.checkedValGet = this.checkedValGet.filter(i => i !== item);
     }
     // Check if allcontent items are selected
-    if (this.checkedValGet.length === this.content.length) {
+    if (this.checkedValGet.length === this.allcontent.length) {
         this.masterSelected = true;
     } else {
         this.masterSelected = false;
     }
-    console.log(this.checkedValGet);
 
     this.selectedItemEmitter.emit(this.checkedValGet);
     this.checkedValGet.length > 0 
@@ -85,7 +80,7 @@ onCheckboxChange(e: any, item: any) {
 checkUncheckAll(e: any) {
   this.masterSelected = e.target.checked;
   if (this.masterSelected) {
-      this.checkedValGet = [...this.content];
+      this.checkedValGet = [...this.allcontent];
   } else {
       this.checkedValGet = [];
   }
@@ -120,36 +115,43 @@ checkUncheckAll(e: any) {
     return   (ddChars[1]?dd:"0"+ddChars[0]) + '/' + (mmChars[1]?mm:"0"+mmChars[0])  +'/'+yyyy;
   }
 
+  toggleColumn(column: any) {
+    column.visible = !column.visible;
+  }
+  
   // Search Data
   searchTerm: any;
   performSearch(): void {
-    const searchResults = this.content.filter((item: any) => {
-      return (
-        item.name.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
-    });
-    this.allcontent = this.service.changePage(searchResults,this.itemsPerPage)
+    const searchResults = this.content.filter(item =>
+      this.itemsList.some(column =>
+        column.visible && (
+          (item[column.prop] && item[column.prop].toString().toLowerCase().includes(this.searchTerm.toLowerCase())) ||
+          (column.tag && item[column.prop] && item[column.prop].toLowerCase().includes(this.searchTerm.toLowerCase()))
+        )
+      )
+    );
+    this.content = this.service.changePage(searchResults,this.itemsPerPage)
   }
 
   /**
    * ******* to sort ******* 
    */
   onSort(column: any) {
-    this.allcontent = this.service.onSort(column, this.allcontent)
+    this.content = this.service.onSort(column, this.content)
   }
 
   /**
    * ******* pagination *******
    */
   changePage() {
-    this.allcontent = this.service.changePage(this.content,this.itemsPerPage)
+    this.content = this.service.changePage(this.allcontent,this.itemsPerPage)
   }
 
   itemsPerPage: number = this.service.pageSize; 
   tableSizes:number[]= [8,10,15,20];
   public onTableSizeChange(event:any): void {
     this.itemsPerPage = Number(event.target.value);
-    this.allcontent = this.service.changePage(this.content,this.itemsPerPage)
+    this.content = this.service.changePage(this.allcontent,this.itemsPerPage)
   }
 
   /* For Movile View */

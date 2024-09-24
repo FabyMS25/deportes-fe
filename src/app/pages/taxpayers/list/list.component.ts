@@ -43,10 +43,17 @@ export class ListComponent {
       { label: this.title, active: true }
     ];
     this.itemsList = [
-      {name: 'Nombre', prop: 'nombre'},
-      {name: 'Nro Carnet',prop: 'nroCarnet'},
-      {name: 'Celular', prop: 'celular'},
-      {name: 'Estado', prop: 'estadoUsuario',tag:true},
+      {name: 'Nombre', prop: 'nombre',visible:true},
+      {name: 'Primer Apellido', prop: 'apPaterno',visible:false},
+      {name: 'Segundo Apellido', prop: 'apMaterno',visible:false},
+      {name: 'Nro Carnet',prop: 'nroCarnet',visible:true},
+      {name: 'Celular', prop: 'celular',visible:true},
+      {name: 'NIT', prop: 'nroNit',visible:false},
+      {name: 'Genero', prop: 'sexo',visible:false},
+      {name: 'Estado Civil', prop: 'estadoCivil',visible:false},
+      {name: 'Fecha Nacimiento', prop: 'fechaNac',visible:false},
+      {name: 'Direccion', prop: 'direccion',visible:false},
+      {name: 'Estado', prop: 'estadoUsuario',tag:true,visible:true},
     ];
     this.getTaxpayers();
   }

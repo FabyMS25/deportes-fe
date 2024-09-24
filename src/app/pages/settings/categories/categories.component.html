@@ -29,32 +29,39 @@
     </div>
     <div class="col-lg-12">
         <div class="card" id="leadsList">
-            <div class="card-header border-0">
-                <div class="row g-4 align-items-center">
-                    <div class="col-sm-3">
+            <div class="card-header">
+                <div class="row g-2">
+                    <div class="col-6">
                         <div class="search-box">
-                            <input type="text" name="searchTerm" class="form-control" placeholder="Buscar ..."
-                            [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
+                            <input type="text" name="searchTerm" class="form-control"
+                                placeholder="Buscar por ..." [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
                             <i class="ri-search-line search-icon"></i>
                         </div>
                     </div>
-                    <div class="col-sm-auto ms-auto">
-                        <div class="hstack gap-2">
-                            <span class="dropdown" ngbDropdown>
-                                <button class="btn btn-soft-info btn-icon fs-14 arrow-none d-block" type="button"
-                                    id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false"
-                                    ngbDropdownToggle>
-                                    <i class="ri-settings-4-line"></i>
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
-                                    <li><a class="dropdown-item"  (click)="openModalImport()">
-                                        <i class="ri-file-upload-line align-bottom me-1"></i>Importar</a>
+                    <div class="col-md-auto ms-auto">
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="hstack gap-2">
+                            <span class="dropdown d-none d-md-inline-block" ngbDropdown>
+                              <button class="btn btn-soft-info btn-icon fs-14 arrow-none d-block" type="button"
+                                      id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false"
+                                      ngbDropdownToggle>
+                                <i class="ri-settings-4-line"></i>
+                              </button>
+                              <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
+                                  @for (column of itemsList; track column) {
+                                    <li class="dropdown-item p-1">
+                                      <div class="form-check form-check-outline form-check-primary">
+                                        <input class="form-check-input" type="checkbox" [id]="'formCheck' + column.prop"
+                                               [(ngModel)]="column.visible">
+                                        <label class="form-check-label" [for]="'formCheck' + column.prop">
+                                          {{column.name}}
+                                        </label>
+                                      </div>
                                     </li>
-                                    <li><a class="dropdown-item"  (click)="csvFileExport()">
-                                        <i class="ri-file-download-line align-bottom me-1"></i>Exportar</a>
-                                    </li>
-                                </ul>
+                                  }
+                              </ul>
                             </span>
+                          </div>
                         </div>
                     </div>
                 </div>
