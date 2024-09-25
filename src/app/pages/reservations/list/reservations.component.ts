@@ -12,6 +12,7 @@ import { PagoService } from 'src/app/core/services/api/pago.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { ModalComponent } from '../modal/modal.component';
 import { Reserva } from 'src/app/core/models/reserva.models';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-reservations',
@@ -38,7 +39,8 @@ export class ReservationsComponent implements OnInit {
     private pagoService: PagoService,
     private categoriesService: CategoriasService,
     private ruatService: RuatRequestsService,
-    public modalService: NgbModal) {
+    public modalService: NgbModal,
+    private router: Router) {
       this.canActivate = this.authService.hasPermission(this.title);
   }
 
@@ -136,82 +138,49 @@ export class ReservationsComponent implements OnInit {
       this.reservasList = this.temp.filter((item:any) => item.estadoReserva == 'Anulado');
     }
   }
-
+  public redirectTo() {
+    this.router.navigate(['/inicio/taxpayer']);
+  }
   selectedItems: any[] = [];
   consultResults: any[] = [];
   getSelectedItems(items: any[]) {
     this.selectedItems = items;
   }
 
-  public openModal(content: any | undefined, accion: string, size: string) {
+  public openModal(data: any | undefined, accion: string, size: string) {
     const modalRef = this.modalService.open(ModalComponent, {
         backdrop: 'static',
         size:size
     });
-    modalRef.componentInstance.row = content;
+    modalRef.componentInstance.row = data;
     modalRef.componentInstance.accion = accion;
+    modalRef.componentInstance.canActivate = this.canActivate;
     modalRef.componentInstance.emitList.subscribe(() => {
       this.getReservations();
     });
   }
   
-  deleteModal(content: any, data: any) {
-    this.motivo ='';
-    this.dataSelected = data;
-    this.modalService.open(content, { centered: true });
-  } 
-
-  async consultModal(content: any, data: any) {
+  showLoading: boolean = false;
+  async consultModal( data: any,content: any) {
     if (this.selectedItems.length === 0) {
-      this.selectedItems.push(data);
-    }  
-    this.consultResults = [];  
-    for (const item of this.selectedItems) {
-      const result = await this.consultData(item);
-      this.consultResults.push(result);
+      this.selectedItems.push(data); 
     }    
-    this.modalService.open(content, { centered: true });
-    this.selectedItems = [];
-    this.getReservations();
-  }
-
-  async consultData(item: any): Promise<any> {
-    if (!item) {
-      return { item, text: 'No se pudo obtener el dato seleccionado', type: 'warning' };
-    }  
-    try {
-      const nroTasa = item.numeroTasa;
-      const resp: any = await this.ruatService.consultaPagoTasa(nroTasa).toPromise();
-  
-      if (resp['status'] !== 'OK') {
-        return { item, text: "La Tasa y Otro Ingreso no tiene pagos", type: 'warning' };
+    this.consultResults = [];
+    for (const item of this.selectedItems) {
+      this.showLoading = true;      
+      try {
+        this.showLoading = true;
+        const result = await this.consultData(item); 
+        this.consultResults.push(result);
+      } catch (error) {
+        console.error("Error during consultation:", error);
+      } finally {
+        this.showLoading = false;
+        this.modalService.open(content, { centered: true });        
+        this.selectedItems = [];
+        this.getReservations();
+          // this.modalService.dismissAll('close click');
       }
-      if (!resp.payload.continuarFlujo) {
-        return { item, text: resp.payload.observacion, type: 'warning' };
-      }
-  
-      let text = resp.payload.observacion;  
-      if (item.estadoReserva === 'Pendiente') {
-        let pago = resp.payload.pagoTasa;
-        const [day, month, year] = pago.fechaPago.split('/');
-        pago.fechaPago = `${year}-${month}-${day}`;
-        pago.reservasDto = item;  
-        try {
-          const pagoResp: any = await this.pagoService.save(pago).toPromise();
-          if (pagoResp.status === 'OK') {
-            item.estadoReserva = 'Pagado';
-            item = await this.updateReserva(item);
-            return { item, text, type:'success' };
-          }
-        } catch (error) {
-          console.error('Error saving pago:', error);
-          return { item, text: 'Error al guardar el pago', type: 'error' };
-        }
-      }
-      return { item, text, type:'info' };
-    } catch (error) {
-      console.error('Error:', error);
-      return { item, text: 'Error al realizar la consulta', type: 'error' };
     }
   }
 
@@ -232,64 +201,6 @@ export class ReservationsComponent implements OnInit {
         }
       });
     });
-  }
-    
-  motivo: string = '';
-  observation: string = '';
-  annularData(formValues: any) {    
-    let text: string = '';
-    const requestData = {
-        numeroTasa: this.dataSelected.numeroTasa,  
-        motivo: formValues.motivo,
-        observacion: formValues.observation
-    };
-    if (formValues) {
-        this.ruatService.cancelTasa(requestData).subscribe({
-          next: (resp: any) => {
-            if (resp['status'] === 'OK') {
-              text = resp.payload['mensaje'];
-              this.dataSelected.estadoReserva = 'Anulado'
-              this.reservasService.update(this.dataSelected).subscribe()
-              // this.updateReserva(this.dataSelected)
-            } else {
-              text = resp.payload;
-              // this.updateReserva(this.dataSelected)
-            }
-            let timerInterval: any;
-            Swal.fire({
-              title: 'Anulado!',
-              text: text,
-              icon: 'success',
-              confirmButtonColor: '#299cdb',
-              timer: 5000,
-              timerProgressBar: true,
-              willClose: () => {
-                clearInterval(timerInterval);
-              },
-            });
-            this.dataSelected = '';
-            this.modalService.dismissAll('close click');
-          },
-          error: (error) => {
-            console.error('Error:', error);
-            text = 'Error al realizar la consulta';
-            Swal.fire({
-              title: 'Error!',
-              text: text,
-              icon: 'error',
-              confirmButtonColor: '#d33',
-            });
-          },
-        });
-    } else {
-      text = 'No se pudo obtener el dato seleccionado';
-      Swal.fire({
-        title: 'Error!',
-        text: text,
-        icon: 'error',
-        confirmButtonColor: '#d33',
-      });
-    }
   }
 
   private async checkAndUpdateExpiredReservas(reservas: Reserva[]): Promise<Reserva[]> {
@@ -384,6 +295,46 @@ export class ReservationsComponent implements OnInit {
             title: 'Error!',icon: 'error',confirmButtonColor: '#d33'});
       }
     });
+  }
+
+  async consultData(item: any): Promise<any> {
+    if (!item) {
+      return { item, text: 'No se pudo obtener el dato seleccionado', type: 'warning' };
+    }  
+    try {
+      const nroTasa = item.numeroTasa;
+      const resp: any = await this.ruatService.consultaPagoTasa(nroTasa).toPromise();
+  
+      if (resp['status'] !== 'OK') {
+        return { item, text: "La Tasa y Otro Ingreso no tiene pagos", type: 'warning' };
+      }
+      if (!resp.payload.continuarFlujo) {
+        return { item, text: resp.payload.observacion, type: 'warning' };
+      }
+  
+      let text = resp.payload.observacion;  
+      if (item.estadoReserva === 'Pendiente') {
+        let pago = resp.payload.pagoTasa;
+        const [day, month, year] = pago.fechaPago.split('/');
+        pago.fechaPago = `${year}-${month}-${day}`;
+        pago.reservasDto = item;  
+        try {
+          const pagoResp: any = await this.pagoService.save(pago).toPromise();
+          if (pagoResp.status === 'OK') {
+            item.estadoReserva = 'Pagado';
+            item = await this.updateReserva(item);
+            return { item, text, type:'success' };
+          }
+        } catch (error) {
+          console.error('Error saving pago:', error);
+          return { item, text: 'Error al guardar el pago', type: 'error' };
+        }
+      }
+      return { item, text, type:'info' };
+    } catch (error) {
+      console.error('Error:', error);
+      return { item, text: 'Error al realizar la consulta', type: 'error' };
+    }
   }
 
     // Csv File Export

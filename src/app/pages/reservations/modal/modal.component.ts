@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Reserva } from 'src/app/core/models/reserva.models';
 import { FormControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -9,6 +9,7 @@ import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
 import { PagoService } from 'src/app/core/services/api/pago.service';
+import { CityAcronym } from 'src/app/core/constants/Places';
 
 @Component({
   selector: 'app-modal',
@@ -21,13 +22,18 @@ export class ModalComponent {
   @Input() row!: Reserva;
   @Input() cancha: any = '';
   @Input() contribuyente: any = '';
+  @Input() canActivate!: any[] 
   @Output() emitList = new EventEmitter();
+
+  CityAcronym = CityAcronym
 
   contentForm!: UntypedFormGroup;
   submitted = false;
 
   canchasList=[];
   contribuyentesList=[];
+  
+  // @ViewChild('consultModel') consultModel: any; 
 
   constructor(private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
@@ -40,41 +46,23 @@ export class ModalComponent {
 
    
   ngOnInit(): void {
-    this.getFields();
-    this.getTaxpayers();
     if(this.row){
       this.cancha= this.row.canchasDto.uuid;
       this.contribuyente = this.row.contribuyenteDto.uuid
     }
-    /**
-     * Form Validation
-     */
-    this.contentForm = this.formBuilder.group({
-      uuid: [''],
-      // codigo: ['', [Validators.required]],
-      fechaReserva: ['', [Validators.required]],
-      horaEntrada: ['', [Validators.required]],
-      horaSalida: ['', [Validators.required]],
-      totalPago: [0, [Validators.required]],
-      pagossDto: [null],
-      // status: ['', [Validators.required]]
-      uuidCancha: [{ value: this.cancha, disabled: !!this.cancha }, [Validators.required]],
-      canchasDto: new FormControl(),
-      uuidContribuyente: [{ value: this.contribuyente, disabled: !!this.contribuyente }, [Validators.required]],
-      contribuyenteDto: new FormControl(),
-    });
-    if(this.accion==='show'){
+    if(this.accion==='' || this.accion ==='edit'){
+      this.getFields();
+      this.getTaxpayers();
+      this.initForm();
+      if(this.accion==='edit') {this.formDataSet();}
+    }else{
       setTimeout(() => {
         document.getElementById('form-event')?.classList.add('view-event');
         (document.getElementById('btn-save-event') as HTMLElement).setAttribute("hidden", "true");
         (document.getElementById('btn-cancel-event') as HTMLElement).setAttribute("hidden", "true");
       }, 100);
 
-    }else{
-      (document.getElementById('btn-delete-event') as HTMLElement).setAttribute("hidden", "true");
-
     }
-    this.formDataSet();
   }
   
   /**
@@ -83,28 +71,40 @@ export class ModalComponent {
   get form() {
     return this.contentForm.controls;
   }
+  /**
+   * Form Validation
+   */
+  private initForm(){
+    this.contentForm = this.formBuilder.group({
+      uuid: [''],
+      numeroTasa: [''],
+      fechaReserva: ['', [Validators.required]],
+      horaEntrada: ['', [Validators.required]],
+      horaSalida: ['', [Validators.required]],
+      totalPago: [0, [Validators.required]],
+      pagossDto: [null],
+      estadoReserva: ['', [Validators.required]],
+      uuidCancha: [{ value: this.cancha, disabled: !!this.cancha }, [Validators.required]],
+      canchasDto: new FormControl(),
+      uuidContribuyente: [{ value: this.contribuyente, disabled: !!this.contribuyente }, [Validators.required]],
+      contribuyenteDto: new FormControl(),
+    });}
   private formDataSet() {
-    if (this.accion != '') {
-      setTimeout(() => {
-        var modaltitle = document.querySelector('.modal-title') as HTMLAreaElement;
-        modaltitle.innerHTML = "Reserva en: "+ this.row.canchasDto?.complejoDto?.nombre ||'';
-      }, 100);
-        this.contentForm.patchValue({
-            uuid:this.row.uuid,
-            // codigo: this.row.codigo,
-            fechaReserva: this.row.fechaReserva,
-            horaEntrada:this.row.horaEntrada,
-            horaSalida: this.row.horaSalida,
-            totalPago: this.row.totalPago,
-            contribuyenteDto: this.row.contribuyenteDto,
-            canchasDto:this.row.canchasDto,
-            pagosDto: this.row.pagosDto,
-            uuidCancha: this.row.canchasDto.uuid,
-            uuidContribuyente: this.row.contribuyenteDto.uuid,
-        });
-    }
+    this.contentForm.patchValue({
+        uuid:this.row.uuid,
+        nroTasa: this.row.numeroTasa,
+        fechaReserva: this.row.fechaReserva,
+        horaEntrada:this.row.horaEntrada,
+        horaSalida: this.row.horaSalida,
+        totalPago: this.row.totalPago,
+        contribuyenteDto: this.row.contribuyenteDto,
+        canchasDto:this.row.canchasDto,
+        pagosDto: this.row.pagosDto,
+        uuidCancha: this.row.canchasDto.uuid,
+        uuidContribuyente: this.row.contribuyenteDto.uuid,
+    });
   }
-
+  
   showeditEvent() {
     if (document.querySelector('#edit-event-btn')?.innerHTML == 'Cancelar') {
       document.getElementById('form-event')?.classList.add('view-event');
@@ -148,72 +148,43 @@ export class ModalComponent {
     }else {
         this.notify('Formulario Invalido!', 'error');
     }
-
-    setTimeout(() => {
-      // this.contentForm.reset();
-    }, 2000);
-    // this.submitted = true
-  }
-    
-  addData(datos:Reserva){
-    this.reservasService.save(datos).subscribe({
-      next:(data:Reserva)=>{
-        this.position();
-        this.submitted=false;
-        this.notify('Datos Registrados exitosamente!','success'); 
-        this.closeModal();
-        this.emitList.emit();       
-      },
-      error: (error) => {
-        this.notify('No se pudo Guardar los datos! '+error, 'error');
-      }
-    })
-  }
-  updateData(datosUnit:Reserva) {
-      this.reservasService.update(datosUnit).subscribe({
-          next: (data: Reserva) => {
-            this.Editposition();
-            this.submitted = false;
-            this.closeModal();
-            this.emitList.emit();
-            this.notify('Datos Actualizados exitosamente!', 'success');
-          },
-          error: (error) => {
-            this.notify('No se pudo Actualizar los datos! '+error, 'error');
-          }
-      })
-  }
-
+  }    
 
   showLoading: boolean = false;
   selectedItems: any[] = [];
   consultResults: any[] = [];
   async consultModal(content: any, data: any) {
     if (this.selectedItems.length === 0) {
-      this.selectedItems.push(this.row);
-    }  
-    this.consultResults = [];  
-    for (const item of this.selectedItems) {
-      
-      this.showLoading = true;
-      const result = await this.consultData(item);
-      this.consultResults.push(result);
+      this.selectedItems.push(this.row); 
     }    
-    this.modalService.open(content, { centered: true });
-    this.selectedItems = [];
-    // this.getReservations();
-      this.showLoading = false;
-      this.emitList.emit();
-      this.modalService.dismissAll('close click');
+    this.consultResults = [];
+    for (const item of this.selectedItems) {
+      this.showLoading = true;      
+      try {
+        this.showLoading = true;
+        const result = await this.consultData(item); 
+        this.consultResults.push(result);
+      } catch (error) {
+        console.error("Error during consultation:", error);
+      } finally {
+        this.showLoading = false;
+        this.modalService.open(content, { centered: true });
+        
+        this.selectedItems = [];
+        // this.getReservations();
+        this.emitList.emit();
+          // this.modalService.dismissAll('close click');
+      }
+    }
   }
   /**
    * Delete event
    */  
   deleteModal(content: any, data: any) {
+    this.accion = content
     this.motivo ='';
-    this.modalService.open(content, { centered: true });
   }
-  
+  /* API REQUESTS */
   private getFields(){
     this.canchasService.getAll().subscribe({
       next: (data: any) => {
@@ -254,6 +225,34 @@ export class ModalComponent {
         }
       });
     });
+  }
+  addData(datos:Reserva){
+    this.reservasService.save(datos).subscribe({
+      next:(data:Reserva)=>{
+        this.position();
+        this.submitted=false;
+        this.notify('Datos Registrados exitosamente!','success'); 
+        this.onCloseModal();
+        this.emitList.emit();       
+      },
+      error: (error) => {
+        this.notify('No se pudo Guardar los datos! '+error, 'error');
+      }
+    })
+  }
+  updateData(datosUnit:Reserva) {
+      this.reservasService.update(datosUnit).subscribe({
+          next: (data: Reserva) => {
+            this.Editposition();
+            this.submitted = false;
+            this.onCloseModal();
+            this.emitList.emit();
+            this.notify('Datos Actualizados exitosamente!', 'success');
+          },
+          error: (error) => {
+            this.notify('No se pudo Actualizar los datos! '+error, 'error');
+          }
+      })
   }
 
 /* RUAT REQUESTS */
@@ -362,12 +361,15 @@ async consultData(item: any): Promise<any> {
 }
 
   /* commun functions */ 
-  public closeModal() {
-    this.accion = '';
-    this.contentForm.enable();
+  public onCloseModal() {
+    this.accion = '';    
+    if (this.contentForm) {
+      this.contentForm.enable();
+      this.contentForm.reset();
+    }  
     this.modalService.dismissAll();
-    this.contentForm.reset();
   }
+  
   private notify(message: any, type: any): void {
     let timerInterval: any;
     Swal.fire({
@@ -383,7 +385,10 @@ async consultData(item: any): Promise<any> {
       }
     });
   }
-  
+  getCityDescription(cityId: string): string {
+    const city = this.CityAcronym.find(c => c.id === cityId);
+    return city ? city.description : 'Unknown';
+  }
   /***
   * Model Position Set
   */

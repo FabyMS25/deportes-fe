@@ -11,6 +11,8 @@ import Swal from 'sweetalert2';
 
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { ModalComponent } from '../../reservations/modal/modal.component';
+import { AuthenticationService } from 'src/app/core/services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-calendar-dashboard',
@@ -22,6 +24,7 @@ export class CalendarDashboardComponent implements OnInit {
 
   // bread crumb items
   breadCrumbItems!: Array<{}>;
+  canActivate:string[];
 
   // calendar
   calendarEvents!: any[];
@@ -34,8 +37,11 @@ export class CalendarDashboardComponent implements OnInit {
   allcalendarEvents: any;
 
   constructor( private modalService: NgbModal,
-    private reservasService: ReservaService
-  ) { }
+    private reservasService: ReservaService,
+    private authService: AuthenticationService,
+    private router: Router
+  ) { 
+    this.canActivate = this.authService.hasPermission('Reservas');}
 
   ngOnInit(): void {
       this.breadCrumbItems = [
@@ -99,22 +105,10 @@ export class CalendarDashboardComponent implements OnInit {
     direction: 'ltr',
     locale: 'es',
     locales: [esLocale], 
-    select: this.openModal.bind(this),
+    select: this.redirectTo.bind(this),
     eventClick: this.handleEventClick.bind(this),
     eventsSet: this.handleEvents.bind(this),
   };
-
-  openModal(events?: any) {
-    const modalRef = this.modalService.open(ModalComponent, {
-        backdrop: 'static',
-        size:''
-    });
-    modalRef.componentInstance.row = undefined;
-    modalRef.componentInstance.accion = '';
-    modalRef.componentInstance.listaItems.subscribe(() => {
-      this._fetchData();
-    });
-  }
 
   /**
    * Event click modal show
@@ -127,6 +121,7 @@ export class CalendarDashboardComponent implements OnInit {
     });
     modalRef.componentInstance.row = row;
     modalRef.componentInstance.accion = 'show';
+    modalRef.componentInstance.canActivate = this.canActivate; 
     modalRef.componentInstance.emitList.subscribe(() => {
       this._fetchData();
     });
@@ -169,4 +164,7 @@ export class CalendarDashboardComponent implements OnInit {
     this.calendarEvents = this.filterEvents
   }
 
+  public redirectTo() {
+    this.router.navigate(['/inicio/taxpayer']);
+  }
 }

@@ -38,7 +38,7 @@ export class DataTableComponent {
   constructor( public service: PaginationService){}
   
   ngOnChanges() {
-      this.content = this.service.changePage(this.allcontent,this.itemsPerPage)
+      this.content = this.service.changePage(this.content,this.itemsPerPage)
   }
 
   public showItem(item: any) {

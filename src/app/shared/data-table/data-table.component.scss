@@ -27,4 +27,23 @@
     height: 24px;
   }
 
+  .details-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 1rem;
+}
+
+.detail-item {
+    display: contents;
+}
+
+.detail-label {
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.detail-value {
+    color: #6c757d; /* This is the Bootstrap text-muted color */
+}
+
   

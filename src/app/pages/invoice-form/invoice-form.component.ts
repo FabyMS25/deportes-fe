@@ -62,9 +62,7 @@ export class InvoiceFormComponent implements OnInit  {
     private reservaService: ReservaService,
     private route: ActivatedRoute ,
     private ruatService: RuatRequestsService,
-    private contribuyenteService: ContribuyentesService,
-    private ngZone: NgZone, private cdr: ChangeDetectorRef
-  
+    private contribuyenteService: ContribuyentesService,  
   ) { }
 
   /**

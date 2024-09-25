@@ -10,17 +10,19 @@
                     <h5 class="card-title mb-3 mb-md-0 flex-grow-1">Lista de Reservas</h5>
                     <div class="flex-shrink-0">
                         <div class="d-flex gap-1 flex-wrap">
-                            <button *ngIf="canActivate.includes('CREAR')" (click)="openModal(undefined,'','lg')"
-                                type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal">
+                            <button *ngIf="canActivate.includes('CREAR')" 
+                                type="button" class="btn btn-secondary add-btn"
+                                (click)="redirectTo()">
                                 <i class="ri-add-circle-line align-middle"></i> 
                                 {{"Agregar" | translate}}
                             </button>
+                        
                             <button (click)="csvFileExport()"
                               class="btn btn-soft-info" id="remove-actions" style="display: none">
                               <i class="ri-file-download-line align-bottom me-1"></i>Exportar
                             </button>
                             <button class="btn btn-soft-primary" [style.display]="selectedItems.length > 0 ? 'inline-block' : 'none'"
-                                (click)="consultModal(consultModel,undefined)">
+                                (click)="consultModal(undefined,consultModel)">
                                 <i class="ri-restart-fill fs-16 "></i> Consultar
                             </button>
                         </div>
@@ -118,17 +120,22 @@
                         [itemsList]="itemsList"
                         [allcontent]="temp"
                         [content]="reservasList"
-                        [sortField]="searchTerm"
                         [show]="canActivate.includes('VER')"
                         [consult]="canActivate.includes('ACTUALIZAR')"
                         [delete]="canActivate.includes('ANULAR')"
                         (showItemEmitter)="openModal($event,'show','md')"
                         (editItemEmitter)="openModal($event,'edit','md')"
-                        (consultItemEmitter)="consultModal(consultModel,$event)"    
-                        (deleteItemEmitter)="deleteModal(annularModel,$event)"   
+                        (consultItemEmitter)="consultModal($event,consultModel)"    
+                        (deleteItemEmitter)="openModal($event,'annularModel','')"   
                         (selectedItemEmitter)="getSelectedItems($event)"    
                     >
-                    </app-data-table>        
+                    </app-data-table>     
+                    <!-- Loading Spinner -->
+                    <div id="elmLoader" *ngIf="showLoading">
+                        <div class="spinner-border text-primary avatar-sm" role="status">
+                          <span class="visually-hidden">Cargando...</span>
+                        </div>
+                    </div>    
                 </div>
             </div>
         </div>
@@ -137,10 +144,13 @@
 </div>
 
 <!-- Modals -->
+
 <ng-template #consultModel role="document" let-modal>
-    <div class="modal-content">
+    <div class="modal-body">
       <div class="modal-header">
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="btn-close" (click)="modal.dismiss('Cross click')"></button>
+          <button type="button" class="btn-close" id="btn-close"  
+            data-bs-dismiss="modal" aria-label="Close"
+            (click)="modal.dismiss('Cross click')"></button>
       </div>
       <div class="text-center">
         <div class="mt-3">
@@ -186,74 +196,15 @@
             </div>
         </div>
         <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
-            <button type="button" class="swal2-confirm btn btn-primary mb-1" aria-label="" (click)="modal.dismiss('Cross click')">OK</button>
+            <button type="button" class="swal2-confirm btn btn-primary mb-1" aria-label="" 
+                (click)="modal.dismiss('Cross click')">OK</button>
         </div>
         <div class="swal2-footer" *ngIf="consultResults.length>0">
-                <p class="fs-14 text-muted">Consultas Realizadas en RUAT</p>
+            <p class="fs-14 text-muted">Consultas Realizadas en RUAT</p>
         </div>
       </div>
-    </div><!-- /.modal-content -->
-</ng-template>
-<!-- removeItemModal -->
-<ng-template #annularModel let-modal>
-    <div class="modal-content">
-        <div class="modal-header">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="btn-close"
-                (click)="modal.dismiss('Cross click')"></button>
-        </div>
-        <div class="modal-body">
-            <div class="mt-2 text-center">
-                <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
-                    colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
-                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
-                    <h4>Estas seguro de Anular la Reserva?</h4>
-                </div>
-            </div>
-            
-            <form #annulForm="ngForm" (ngSubmit)="annularData(annulForm.value)">
-                
-                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
-                    <div>
-                        <label for="motivo">Indique el motivo de la Anulacion</label>
-                        <select class="form-control" data-choices 
-                            name="motivo" id="idCategory" [(ngModel)]="motivo" required #motivoCtrl="ngModel">
-                            <option value="">Seleccione un motivo</option>
-                            <option value="A SOLICITUD DEL CONTRIBUYENTE">A SOLICITUD DEL CONTRIBUYENTE</option>
-                            <option value="NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO">NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO</option>
-                            <option value="REGISTRO DE DATOS INCONSISTENTES">REGISTRO DE DATOS INCONSISTENTES</option>
-                        </select>
-                        <div *ngIf="motivoCtrl.invalid && motivoCtrl.touched" class="text-danger">
-                            El motivo es requerido.
-                        </div>
-                    </div>
-                
-                    <div>
-                        <label for="observation">Escriba la Observación de la Reserva</label>
-                        <input type="text" class="form-control" placeholder="minimo 10 caracteres" name="observation"
-                            [(ngModel)]="observation" required minlength="10" #observationCtrl="ngModel">
-                        <div *ngIf="observationCtrl.invalid && observationCtrl.touched" class="text-danger">
-                            <!-- <div *ngIf="observationCtrl.errors?.required">La observación es requerida.</div>
-                            <div *ngIf="observationCtrl.errors?.minlength">La observación debe tener al menos 10 caracteres.</div> -->
-                        </div>
-                    </div>
-                </div>
-                <p class="text-muted  mb-0 fs-15 mx-4 mx-sm-5">
-                    Al Confirmar no podra reactivar esta reserva nuevamente.
-                </p>                            
-                <div class="d-flex gap-2 justify-content-center mt-2 mb-2">
-                    <button class="btn btn-link link-success fw-medium text-decoration-none" data-bs-dismiss="modal"
-                        id="deleteRecord-close" (click)="modal.close('Close click')">
-                        <i class="ri-close-line me-1 align-middle"></i> Cancelar
-                    </button>                
-                    <button type="submit" class="btn w-sm btn-danger" id="delete-button" 
-                        [disabled]="annulForm.invalid" (click)="modal.close('Close click')">
-                        Anular!
-                    </button>
-                </div>
-            </form>
-        </div>
     </div>
 </ng-template>
-<!--end modal -->
+
 
 

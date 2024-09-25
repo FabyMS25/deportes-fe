@@ -121,22 +121,32 @@
                 }           
             </tbody>            
         </table> 
-    <!-- Mobile view -->
-        <div class="d-sm-none">
-            @for (data of content; track data.uuid) {
-            <div class="card mb-3">
-                <div class="d-flex justify-content-between mb-2">  
-                <table class="table table-borderless mb-0">
-                  <tbody><tr>
-                    <th  style="width: 150px;">
+
+    <!-- Mobile view -->     
+        <table class="table table-borderless d-sm-none">
+            <thead class="table-light">
+                <tr *ngIf="multiCheck">
+                    <th scope="col" style="width: 50px;">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="checkAll" value="checkAll"
+                                [(ngModel)]="masterSelected" (change)="checkUncheckAll($event)">  
+                                Seleccionar Todo
+                        </div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+             @for (data of content; track data.uuid) {
+              <div class="card px-2">
+                <tr>
+                    <div class="d-flex justify-content-between mb-2"> 
                         @if(multiCheck){
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="checkAll" value="checkAll"
-                                    [(ngModel)]="masterSelected" (change)="checkUncheckAll($event)">  
+                                <input class="form-check-input" type="checkbox"
+                                [checked]="checkedValGet.includes(data)" 
+                                (change)="onCheckboxChange($event, data)">
                             </div>
                         }
-                    </th>
-                    <td>
                         @if (show || edit || delete || consult) {
                             <ul class="list-inline hstack gap-2 mb-0 justify-content-end">
                                 <li *ngIf="show" class="list-inline-item" ngbTooltip="Ver" placement="top">
@@ -181,42 +191,39 @@
                                 </li>
                             </ul>
                         }
-                    </td>
-                  </tr></tbody>
-                </table>
-                </div>
-                <div class="card-body">
-                    
-                @for (item of itemsList; track item.prop) {
-                    <div class="d-flex justify-content-between mb-2">                                      
-                    <strong>{{item.name}}:</strong>
-                    <span [ngClass]="{'status': item.tag, 'date': item.date}">
-                        <ng-container *ngIf="getPropertyValue(data, item.prop) as value; else emptyValue">
-                        @if (item.tag) {
-                            <span class="badge" [ngClass]="getBadgeClass(value)">{{value}}</span>
-                        } @else if (item.date) {
-                            {{value | date:'longDate'}}
-                        } @else {
-                            <div class="d-flex align-items-center justify-content-end">
-                            <img *ngIf="item.avatar && data.avatar" [src]="'assets/images/users/' + data.avatar" 
-                                alt="" class="avatar-xs rounded-circle me-2">
-                            <span class="expandable-text" (click)="toggleExpand(data, item.prop)">
-                                <span [class.truncate]="!isExpanded(data, item.prop)">{{value}}</span>
-                            </span>
-                            </div>
-                        }
-                        </ng-container>
-                        <ng-template #emptyValue>
-                        <span class="text-muted">-</span>
-                        </ng-template>
-                    </span>
                     </div>
-                }
-                
-                </div>
-            </div>
-            }
-        </div>                   
+                </tr>
+                <tr>
+                  @for (column of itemsList; track column.prop) {
+                    <div class="d-flex justify-content-between mb-2"> 
+                        <strong class="details-grid ">{{column.name}}:</strong>
+                        <span [ngClass]="{'status': column.tag, 'date': column.date}">
+                            <ng-container *ngIf="getPropertyValue(data, column.prop) as value; else emptyValue">
+                            @if (column.tag) {
+                                <span class="badge" [ngClass]="getBadgeClass(value)">{{value}}</span>
+                            } @else if (column.date) {
+                                {{value | date:'longDate'}}
+                            } @else {
+                                <div class="d-flex justify-content-end">
+                                    <img *ngIf="column.avatar && data.avatar" [src]="'assets/images/users/' + data.avatar" 
+                                        alt="" class="avatar-xs rounded-circle me-2">
+                                    <span class="expandable-text" (click)="toggleExpand(data, column.prop)">
+                                        <span [class.truncate]="!isExpanded(data, column.prop)">{{value}}</span>
+                                    </span>
+                                </div>
+                            }
+                            </ng-container>
+                            <ng-template #emptyValue>
+                            <span class="text-muted">-</span>
+                            </ng-template>
+                        </span>
+                    </div>
+                  }
+                </tr>
+              </div>
+             }
+            </tbody>
+        </table>
     </div>
     
     <!-- Loading Spinner -->
@@ -226,7 +233,7 @@
       </div>
     </div>  
     <!-- No Results Found -->
-    <div class="noresult" *ngIf="!loading && content.length === 0">
+    <div class="noresult" *ngIf="!loading && allcontent.length === 0">
       <div class="text-center">
         <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop" 
         colors="primary:#405189,secondary:#0ab39c" style="width:75px;height:75px">
