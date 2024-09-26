@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 import { TarifaService } from 'src/app/core/services/api/tarifa.service';
 import { Categoria } from 'src/app/core/models/categoria.model';
 import { TarifaCategoriesService } from 'src/app/core/services/api/tarifa-categorias.service';
-import { TipoCobro } from 'src/app/core/data/TipoCobro';
+import { TipoCobro } from 'src/app/core/constants/TipoCobro';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
 
 @Component({
@@ -18,7 +18,7 @@ import { Tarifa } from 'src/app/core/models/tarifa.model';
 export class ModalTarifaComponent {
   @Input() accion!: string;
   @Input() row!: campoDeportivo;
-  @Output() listaItems = new EventEmitter();
+  @Output() emitList = new EventEmitter();
   @Input() categoryList:Categoria[]=[];
   tipoList= TipoCobro
 
@@ -166,7 +166,7 @@ export class ModalTarifaComponent {
         if (result !==null) {
           this.notify('Tarifas, y categorias exitosamente creados', 'success');
           this.fieldsForm.reset();
-          this.listaItems.emit();
+          this.emitList.emit();
           this.modalService.dismissAll();
         }
       },

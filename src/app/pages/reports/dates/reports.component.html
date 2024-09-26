@@ -1,0 +1,81 @@
+<!-- Start Breadcrumbs -->
+ <app-breadcrumbs [title]="'Reporte de ' + title" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+<!-- End Breadcrumbs -->
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header  border-0">
+                <h5 class="card-title mb-3 flex-grow-1">Reservas por Fechas</h5>
+                <!-- Filters -->
+                <div >
+                <form (ngSubmit)="applyFilters()">
+                    <div class="row g-3">
+                        <div class="col-xxl-6 col-sm-6">
+                            <div>
+                                <input type="text" 
+                                    class="form-control" 
+                                    mwlFlatpickr 
+                                    placeholder="Intervalo de Fechas" 
+                                    name="date"
+                                    [convertModelValue]="true"     
+                                    mode="range"                                 
+                                    [(ngModel)]="date"                                     
+                                    [altInput]="true"
+                                    [altFormat]="'F j, Y'"
+                                    dateFormat="Y-m-d"
+                                    [locale]="Spanish">                             
+                            </div>
+                        </div>
+                        <div class="col-xxl-2 col-sm-4">
+                            <div>
+                                <select class="form-control" data-choices data-choices-search-false name="status" id="idStatus" 
+                                [(ngModel)]="status">
+                                    <option value="" selected>Todo</option>                                
+                                    <option value="Pendiente">Pendiente</option>
+                                    <option value="Pagado">Pagado</option>
+                                    <option value="Vencido">Vencido</option>
+                                    <option value="Anulado">Anulado</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-xxl-2 col-sm-4">
+                            <div>
+                                <select class="form-control" data-choices data-choices-search-false 
+                                        name="category" id="idCategory" [(ngModel)]="category">
+                                    <option value="" selected>Todo</option>
+                                    <option *ngFor="let category of categoryList" [value]="category.nombre">
+                                        {{category.nombre}}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-xxl-2 col-sm-4">
+                            <div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="ri-equalizer-fill mx-1 align-bottom"></i>
+                                    Filtrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                </div>
+            </div>            
+            <div class="card-body border border-dashed border-end-0 border-start-0">
+                <div class="col-12" style="height: 430px;" >
+                    <object #pdfViewer type="application/pdf" width="100%" height="100%">
+                    </object>                         
+                </div>
+                <!-- Loading Spinner -->
+                <div id="elmLoader" *ngIf="showLoading">
+                    <div class="spinner-border text-primary avatar-sm" role="status">
+                      <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div> 
+            </div>
+        </div>
+    </div>
+</div>
+
+

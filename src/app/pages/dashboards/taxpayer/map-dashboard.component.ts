@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 
 // import { latLng, tileLayer, circle, polygon, marker, icon } from 'leaflet';
@@ -11,6 +11,9 @@ import * as GeoSearch from 'leaflet-geosearch';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
+import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
+import { category } from 'src/app/core/data/calendar';
+import { NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'app-map-dashboard',
@@ -21,8 +24,9 @@ import { CategoriasService } from 'src/app/core/services/api/categorias.service'
 export class MapDashboardComponent implements OnInit {
 
     temp:any=[]
-    categoryList:any[]=[];
     complexList:any[]=[];
+    surfaceList:any[]=[];
+    categoryList:any[]=[];
     fieldList:any[]=[];
 
     map:any;
@@ -38,16 +42,19 @@ export class MapDashboardComponent implements OnInit {
     constructor(private router: Router,
       private categoriesService: CategoriasService,
       private complexService: ComplejosService,
-      private fieldService: CamposDeportivoService
+      private fieldService: CamposDeportivoService,
+      private surfacesService:SuperficiesService,
+      private offcanvasService: NgbOffcanvas,
     ) {}
 
     ngOnInit(): void {
       this.initializeData();
     }    
     async initializeData() {
+      await this.getComplexes();   
+      await this.getSurfaces();
       await this.getFields();      
       await this.getCategories();  
-      await this.getComplexes();   
       this.setMaps();              
     }
  
@@ -75,7 +82,7 @@ export class MapDashboardComponent implements OnInit {
         classNames: {
           container: 'custom-geosearch-control'
         },
-        searchButtonHTML: '' // This removes the default search button
+        searchButtonHTML: ''
       });
       this.map.addControl(searchControl);
     }
@@ -85,6 +92,7 @@ export class MapDashboardComponent implements OnInit {
     */
     baseMaps:any;
     overlayMaps:any;
+    overlayMaps2:any;
     main : any;
     setMaps() {
       this.main = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoidGhlbWVzYnJhbmQiLCJhIjoiY2xmbmc3bTV4MGw1ejNzbnJqOWpubzhnciJ9.DNkdZVKLnQ6I9NOz7EED-w",
@@ -114,26 +122,19 @@ export class MapDashboardComponent implements OnInit {
     
     mainList:any;
     private setMarkers(){   
-      let listFields:any[]=[]   
+      let listMarkers:any[]=[]   
+
       this.complexList.forEach(element => {
         const complex = this.setPopup(element); 
-        listFields.push(complex);      
+        listMarkers.push(complex);      
       });
-      this.mainList = L.layerGroup(listFields);
+      this.mainList = L.layerGroup(listMarkers);
 
-      let mapsByCategory:any[]=[];
-      this.categoryList.forEach(category => {       
-        const list:any[]= this.getListByCategory(category)        
-        const markers = list.map(element => {
-          const complex = this.setPopup(element);    
-            return complex
-        });
-        mapsByCategory[category.nombre] = L.layerGroup(markers);
-      });
+      let filteredMarkers: any[] = this.getFilteredList();
       
       this.overlayMaps = {
-        "<span style='color: blue'>Todo</span>": this.mainList,
-        ...mapsByCategory,
+          "<span style='color: blue'>Todo</span>": this.mainList,
+          ...filteredMarkers,
       };
 
       // this.layerControl.addOverlay(colList, "Coliseos");   
@@ -144,17 +145,21 @@ export class MapDashboardComponent implements OnInit {
     private setPopup(element:any):any{
       const complex = L.marker([element.latitud, element.longitud], { icon: this.icon });
       const popupContent = document.createElement('div');
+      const canchasDescriptions = element.canchasDtoList.map((c:any) => c.superficieDto.descripcion).join(', '); // Join descriptions with a comma
+
       popupContent.innerHTML = `
         <b>${element.nombre}</b><br />
-        <b>Encargado: </b>${element.encargadosDtoList[0] ? element.encargadosDtoList[0]?.nombre :''}<br />
+        <b>Encargado: </b>${element.encargadosDtoList[0] ? element.encargadosDtoList[0]?.nombre : ''}<br />
         <b>Tipo Techado: </b>${element.techado}<br />
         <b>Distrito: </b>${element.distrito}<br />
         <b>Ubicación: </b>${element.ubicacion}<br />
+        <b>Canchas: </b>${canchasDescriptions}<br /> 
         <br>
         <button class="btn btn-secondary">
           <i class="ri-edit-box-line align-bottom"></i> Realizar reserva
         </button>
       `;
+
       const button = popupContent.querySelector('button');
       if (button) {
         button.addEventListener('click', () => this.handleButtonClick(element));
@@ -166,23 +171,50 @@ export class MapDashboardComponent implements OnInit {
     handleButtonClick(data:any):void {
       this.router.navigate(['/reservations/details'], { state: { data: data } });// , data.uuid // ,canActivate: this.canActivate
     }
-
-    /* API Services */
-    private getCategories(){
-      this.categoriesService.getAll().subscribe({
-          next: (data: any) => {
-            if (data['status'] === 'OK') {
-              this.categoryList = data.payload;
-            }else{
-              Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
-            }
-          },
-          error: (error) => {
-            Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
-          }
-        });
-    }
     
+    getListByCategory(category: any): any[] {
+      const filteredComplejos: any[] = [];
+  
+      this.fieldList.forEach((field:any) => {
+          let found = false;  
+          field.tarifasDtoList.forEach((tarifa:any) => {
+              tarifa.categoriaDtoList.forEach((item:any) => {
+                  if (item.categoriaDto.nombre === category.nombre) {
+                      found = true;
+                  }
+              });
+          });  
+          if (found) {
+              const complejo = field.complejoDto;
+              if (!filteredComplejos.some(c => c.uuid === complejo.uuid)) {
+                  filteredComplejos.push(complejo);
+              }
+          }
+      });  
+      return filteredComplejos;
+  }  
+
+  getFilteredList(): any[] {
+    let filteredMarkers: any[] =[]
+    this.surfaceList.forEach(item => {       
+  
+      const complexesBySurface = this.complexList.filter(complex => 
+          complex.canchasDtoList.some((c:any) => c.superficieDto.descripcion === item.descripcion)
+      );
+  
+      const mergedList = [...new Set([...complexesBySurface])]; 
+  
+      const markers = mergedList.map(element => {
+          const complex = this.setPopup(element);    
+          return complex;
+      });
+      
+      filteredMarkers[item.descripcion] = L.layerGroup(markers);
+  });
+    return filteredMarkers;
+  }
+
+    /* API Services */    
     private getComplexes(){
       this.complexService.getAll().subscribe({
         next: (data: any) => {
@@ -213,28 +245,56 @@ export class MapDashboardComponent implements OnInit {
         }
       });
     }
-
-    getListByCategory(category: any): any[] {
-      const filteredComplejos: any[] = [];
-  
-      this.fieldList.forEach((field:any) => {
-          let found = false;  
-          field.tarifasDtoList.forEach((tarifa:any) => {
-              tarifa.categoriaDtoList.forEach((item:any) => {
-                  if (item.categoriaDto.nombre === category.nombre) {
-                      found = true;
-                  }
-              });
-          });  
-          if (found) {
-              const complejo = field.complejoDto;
-              if (!filteredComplejos.some(c => c.uuid === complejo.uuid)) {
-                  filteredComplejos.push(complejo);
-              }
+    private getCategories(){
+      this.categoriesService.getAll().subscribe({
+          next: (data: any) => {
+            if (data['status'] === 'OK') {
+              this.categoryList = data.payload;
+            }else{
+              Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
+            }
+          },
+          error: (error) => {
+            Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
           }
-      });  
-      return filteredComplejos;
-  }
-  
+        });
+    }
+    private getSurfaces(){
+      this.surfacesService.getAll().subscribe({
+          next: (data: any) => {
+            if (data['status'] === 'OK') {
+              this.surfaceList = data.payload;
+            }else{
+              Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
+            }
+          },
+          error: (error) => {
+            Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
+          }
+        });
+    }
 
+
+    /*  */
+    //  Filter Offcanvas Set
+    openEnd(content: TemplateRef<any>) {
+      this.offcanvasService.open(content, { position: 'end' });
+    }
+    
+  // Filtering
+  isstatus?: any
+  leads:any
+  SearchData() {
+    // var date = document.getElementById("isDate") as HTMLInputElement;
+    // var dateVal = date.value ? this.datePipe.transform(new Date(date.value), "yyyy-MM-dd") : '';
+
+    // if (dateVal != '') {
+    //   this.leads = this.temp.filter((order: any) => {
+    //     return this.datePipe.transform(new Date(order.date), "yyyy-MM-dd") == dateVal;
+    //   });
+    // }
+    // else {
+    //   this.leads = this.categoryList;
+    // }
+  }
 }

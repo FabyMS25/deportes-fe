@@ -66,6 +66,11 @@
                                 <a class="" (click)="showItem(data)">
                                     <i class="ri-eye-fill align-bottom me-2 float-start"></i>
                                 </a>
+                            </li>   
+                            <li *ngIf="ticket" class="list-inline-item" ngbTooltip="Ticket" placement="top">
+                                <a class="" (click)="ticketItem(data)">
+                                    <i class="ri-file-list-3-line align-bottom me-2 float-start"></i>
+                                </a>
                             </li>                                                        
                             <li *ngIf="edit || (edit && data.estadoReserva && data.estadoReserva ==='Pendiente')"
                                 class="list-inline-item edit" ngbTooltip="Editar" placement="top">
@@ -153,7 +158,12 @@
                                     <a class="" (click)="showItem(data)">
                                         <i class="ri-eye-fill align-bottom me-2 float-start"></i>
                                     </a>
-                                </li>                                                        
+                                </li>
+                                <li *ngIf="ticket" class="list-inline-item" ngbTooltip="Ticket" placement="top">
+                                    <a class="" (click)="ticketItem(data)">
+                                        <i class="ri-file-list-3-line align-bottom me-2 float-start"></i>
+                                    </a>
+                                </li>                                                                
                                 <li *ngIf="edit || (edit && data.estadoReserva && data.estadoReserva ==='Pendiente')"
                                     class="list-inline-item edit" ngbTooltip="Editar" placement="top">
                                     <a href="javascript:void(0);" data-bs-toggle="modal"

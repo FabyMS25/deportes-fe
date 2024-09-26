@@ -17,7 +17,7 @@ import { Horario } from 'src/app/core/models/horario.model';
 export class ModalScheduleComponent {
   @Input() accion!: string;
   @Input() row!: campoDeportivo;
-  @Output() listaItems = new EventEmitter();
+  @Output() emitList = new EventEmitter();
 
   dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'];
 
@@ -107,7 +107,7 @@ export class ModalScheduleComponent {
       next: (results) => {
         this.notify('Todos los horarios han sido guardados exitosamente', 'success');
         this.fieldsForm.reset();
-        this.listaItems.emit();
+        this.emitList.emit();
         this.modalService.dismissAll();
       },
       error: (error) => {

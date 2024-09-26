@@ -1,5 +1,6 @@
-import { Component, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { UntypedFormBuilder, Validators, UntypedFormGroup, UntypedFormArray, AbstractControl } from '@angular/forms';
+import { Component, OnInit } from '@angular/core';
+import { UntypedFormBuilder } from '@angular/forms';
+import { Router } from '@angular/router';
 import { NgbModal, NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { ngxCsv } from 'ngx-csv';
@@ -12,7 +13,6 @@ import { PagoService } from 'src/app/core/services/api/pago.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { ModalComponent } from '../modal/modal.component';
 import { Reserva } from 'src/app/core/models/reserva.models';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-reservations',
@@ -140,6 +140,10 @@ export class ReservationsComponent implements OnInit {
   }
   public redirectTo() {
     this.router.navigate(['/inicio/taxpayer']);
+  }
+  
+  public showTicket(data:any) {
+    this.router.navigate(['/reservations/ticket'], { state: { data: data } });
   }
   selectedItems: any[] = [];
   consultResults: any[] = [];

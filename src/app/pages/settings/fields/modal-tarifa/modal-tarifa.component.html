@@ -32,7 +32,7 @@
               </div>   
               <div class="col-lg-4">
                   <label for="categorias-field" class="form-label">Categoria(s)</label>
-                  <ng-select [items]="filteredCategories$ | async" 
+                  <ng-select [items]="(filteredCategories$ | async) || []" 
                       [multiple]="true" 
                       bindLabel="nombre"
                       formControlName="categorias" 

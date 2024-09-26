@@ -7,7 +7,7 @@ import { ngxCsv } from 'ngx-csv/ngx-csv';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { ModalComponent } from '../modal/modal.component';
-import { CityAcronym } from 'src/app/core/data/Places';
+import { CityAcronym } from 'src/app/core/constants/Places';
 
 @Component({
   selector: 'app-list',

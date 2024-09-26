@@ -13,9 +13,9 @@ import { SuperficiesService } from 'src/app/core/services/api/superficies.servic
 import { TarifaService } from 'src/app/core/services/api/tarifa.service';
 import { TarifaCategoriesService } from 'src/app/core/services/api/tarifa-categorias.service';
 import { ModalScheduleComponent } from '../modal-schedule/modal-schedule.component';
-import { Ceiling } from 'src/app/core/data/Features';
-import { Districts } from 'src/app/core/data/Places';
-import { TipoCobro } from 'src/app/core/data/TipoCobro';
+import { Ceiling } from 'src/app/core/constants/Features';
+import { Districts } from 'src/app/core/constants/Places';
+import { TipoCobro } from 'src/app/core/constants/TipoCobro';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
 
 @Component({

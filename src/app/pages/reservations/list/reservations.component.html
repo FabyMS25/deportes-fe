@@ -123,11 +123,13 @@
                         [show]="canActivate.includes('VER')"
                         [consult]="canActivate.includes('ACTUALIZAR')"
                         [delete]="canActivate.includes('ANULAR')"
+                        [ticket]="true"
                         (showItemEmitter)="openModal($event,'show','md')"
                         (editItemEmitter)="openModal($event,'edit','md')"
                         (consultItemEmitter)="consultModal($event,consultModel)"    
                         (deleteItemEmitter)="openModal($event,'annularModel','')"   
                         (selectedItemEmitter)="getSelectedItems($event)"    
+                        (ticketEmitter)="showTicket($event)"
                     >
                     </app-data-table>     
                     <!-- Loading Spinner -->

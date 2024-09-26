@@ -20,6 +20,7 @@ export class DataTableComponent {
   @Input() edit!: boolean;
   @Input() delete!: boolean;
   @Input() consult!: boolean;
+  @Input() ticket!:boolean;
 
   @Input() telf!:boolean;
   @Input() comment!: boolean;
@@ -27,7 +28,8 @@ export class DataTableComponent {
   @Output() showItemEmitter = new EventEmitter();
   @Output() editItemEmitter = new EventEmitter();
   @Output() deleteItemEmitter = new EventEmitter();
-  @Output() consultItemEmitter = new EventEmitter();  
+  @Output() consultItemEmitter = new EventEmitter(); 
+  @Output() ticketEmitter = new EventEmitter();
 
   @Output() selectedItemEmitter = new EventEmitter();
   masterSelected: boolean = false;
@@ -55,6 +57,9 @@ export class DataTableComponent {
     this.consultItemEmitter.emit(item);
   }
 
+  public ticketItem(item: any) {
+    this.ticketEmitter.emit(item);
+  }
 onCheckboxChange(e: any, item: any) {
     if (e.target.checked) {
         this.checkedValGet.push(item);

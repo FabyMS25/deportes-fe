@@ -9,7 +9,7 @@ import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
 import { PagoService } from 'src/app/core/services/api/pago.service';
-import { CityAcronym } from 'src/app/core/data/Places';
+import { CityAcronym } from 'src/app/core/constants/Places';
 
 @Component({
   selector: 'app-modal',

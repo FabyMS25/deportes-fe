@@ -1,0 +1,127 @@
+<!-- Start Breadcrumbs -->
+<app-breadcrumbs [title]="'Ticket Reserva'" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<!-- Map and details -->
+<div class="row px-2">
+    <div class="card">        
+        <div class="card-header ">
+            <div class="mini-stats-wid d-flex align-items-center">
+                <div class="flex-shrink-0 avatar-sm">
+                    <span class="mini-stat-icon avatar-title rounded-circle text-success bg-success-subtle fs-4">
+                        <img src="assets/icons/logos/logo-sm.png"
+                            class="card-logo card-logo-dark user-profile-image img-fluid">                            
+                    </span>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h4>Ticket Reserva: {{dataComplejo.nombre}}</h4> 
+                </div>
+                <div class="flex-shrink-0 ms-3">
+                    <label for="numeroTasa">Tasa No</label> 
+                </div>
+                <div class="flex-shrink-0 ms-3">
+                    <input type="text" class="form-control bg-light border-0" id="numeroTasa"
+                     readonly />
+                </div>
+            </div>       
+        </div>       
+        <div class="card-body border border-dashed border-end-0 border-start-0">
+            <div class="col-12" style="height: 430px;" >
+                <object #pdfViewer type="application/pdf" width="100%" height="100%">
+                </object>                         
+            </div>
+            <!-- Loading Spinner -->
+            <div id="elmLoader" *ngIf="showLoading">
+                <div class="spinner-border text-primary avatar-sm" role="status">
+                  <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div> 
+        </div>
+    </div>
+</div>
+
+
+<!-- form to reserve -->
+<div class="row" >
+    <div class="sticky-side-div row">
+        <div class="col-xl-4 col-md-3 ">   
+            <div class="card">
+                <div class="card-body text-center">
+                    <lord-icon src="https://cdn.lordicon.com/kbtmbyzy.json" trigger="loop"
+                            colors="primary:#687cfe,secondary:#ff7f5d" style="width:90px;height:90px">
+                    </lord-icon>
+                    <h3 class="mb-1">{{ currentTime }}</h3>
+                    <h5 class="fs-14">Hora Actual</h5>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 col-md-3 ">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <h6 class="card-title mb-0 flex-grow-1">Contacto(s)</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled vstack gap-3 mb-0">
+                        <li *ngIf="globalAdmin">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <img [src]="'assets/icons/users/'+globalAdmin.avatar" alt="" class="avatar-xs rounded-circle">
+                                </div>
+                                <div class="flex-grow-1 ms-2">
+                                    <h6 class="mb-1">{{globalAdmin.name}}</h6>
+                                    <p class="text-muted mb-0">{{globalAdmin.role}}</p>
+                                    <h6>{{globalAdmin.telf}}</h6>
+                                </div>
+                            </div>
+                        </li>
+                        <li *ngFor="let employee of dataComplejo.encargadosDtoList">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <img [src]="'assets/icons/users/' + getAvatar(employee)" alt="" class="avatar-xs rounded-circle">
+                                </div>
+                                <div class="flex-grow-1 ms-2">
+                                    <h6 class="mb-1">{{ employee.nombre }}</h6>
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <p class="text-muted mb-0">Encargado</p>
+                                            <h6 class="mb-0">{{ employee.telefono }}</h6>
+                                        </div>
+                                        <div class="col text-end">
+                                            <span class="mb-0 p-1 bg-info-subtle rounded-2 text-info">
+                                                {{ employee.horaEntrada.slice(0, 5) }}-{{ employee.horaSalida.slice(0, 5) }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>      
+        </div>
+        <div class="col-xl-4 col-md-3 ">
+            <div class="card">
+                <div class="card-body">
+                <div class="product-img-slider" dir="ltr">
+                    <ngx-slick-carousel [config]="config" class="carousel" #slickModal="slick-carousel" (afterChange)="slickChange($event)">
+                        @for(i of imagesList;track $index){
+                        <div class="swiper-slide" ngxSlickItem>
+                            <img src="{{i}}" alt="" class="img-fluid d-block" />
+                        </div>
+                    }
+                    </ngx-slick-carousel>
+                    <ngx-slick-carousel class="carousel swiper product-nav-slider mt-1" [config]="slidesConfig">
+                        @for(i of imagesList;track $index){
+                        <div ngxSlickItem class="swiper-slide swiperlist me-2" (click)="slidePreview($index,$event)">
+                            <div class="nav-slide-item">
+                                <img src="{{i}}" alt="" class="img-fluid d-block">
+                            </div>
+                        </div>
+                        }
+                    </ngx-slick-carousel>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -9,7 +9,7 @@ import { TokenStorageService } from './token-storage.service';
 import { AuthUserService } from './api-users/auth.service';
 import { PermissionUserService } from './api-users/permission-user.service';
 
-import { UserRol } from 'src/app/core/data/UserData';
+import { UserRol } from 'src/app/core/constants/UserData';
 import { EncargadoService } from './api/encargado.service';
 import { MENU_BASE } from 'src/app/core/data/menu';
 import { ContribuyentesService } from './api/contribuyentes.service';

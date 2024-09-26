@@ -15,11 +15,7 @@
                         </button>
                     </div>
                     <div class="flex-shrink-0">
-                        <div class="hstack text-nowrap gap-2" ngbDropdown>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="offcanvas"
-                                href="javascript:void(0);" (click)="openEnd(filtetcontent)"><i
-                                class="ri-filter-3-line align-bottom me-1"></i>Filtrar
-                            </button>
+                        <div class="hstack text-nowrap gap-2">
                             <button class="btn btn-soft-info" (click)="csvFileExport()"
                                 id="remove-actions" style="display: none">
                                 <i class="ri-file-download-line align-bottom me-1"></i>Exportar</button>
@@ -192,74 +188,3 @@
     </div>
 </ng-template>
 
-
-<!-- Right Sidebar Filter Section  -->
-<ng-template #filtetcontent let-offcanvas>
-    <div class="offcanvas-header bg-light">
-        <h5 class="offcanvas-title" id="offcanvasExampleLabel">Leads Fliters</h5>
-        <button type="button" class="btn-close text-body" data-bs-dismiss="offcanvas" aria-label="Close"
-            (click)="offcanvas.dismiss('Cross click')"></button>
-    </div>
-    <!--end offcanvas-header-->
-    <form action="" class="d-flex flex-column justify-content-end h-100">
-        <div class="offcanvas-body">
-            <div class="mb-4">
-                <label for="datepicker-range" class="form-label text-muted text-uppercase fw-semibold mb-3">Fecha</label>
-                <input class="form-control flatpickr-input" type="text" placeholder="Select Date" mwlFlatpickr
-                    [altInput]="true" id="isDate">
-            </div>
-            <div class="mb-4">
-                <label for="complejo-select"
-                    class="form-label text-muted text-uppercase fw-semibold mb-3">Complejo</label>
-                <select class="form-control" data-choices data-choices-multiple-remove="true" name="complejo-select"
-                    id="complejo-select">
-                    <option value="" selected>Seleccione Complejo</option>
-
-                    <option value="Argentina">Argentina</option>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="distrito-select"
-                    class="form-label text-muted text-uppercase fw-semibold mb-3">Distrito</label>
-                <select class="form-control" data-choices data-choices-multiple-remove="true" name="distrito-select"
-                    id="distrito-select">
-                    <option value="" selected>Seleccionar Distrito</option>
-                    <option value="Argentina">Argentina</option>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="status-select" class="form-label text-muted text-uppercase fw-semibold mb-3">Categorías </label>
-                <div class="row g-2">
-                    @for (item of categoryList; track $index) {
-                        <div class="col-lg-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="categoria" [value]="item">
-                                <label class="form-check-label" for="categoria">{{item.nombre}}</label>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-            <div class="mb-4">
-                <label for="tarifa" class="form-label text-muted text-uppercase fw-semibold mb-3">Tarifa</label>
-                <div class="row g-2 align-items-center">
-                    <div class="col-lg">
-                        <input type="number" class="form-control" id="tarifa" placeholder="0">
-                    </div>
-                    <div class="col-lg-auto">
-                        a
-                    </div>
-                    <div class="col-lg">
-                        <input type="number" class="form-control" id="tarifa" placeholder="0">
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!--end offcanvas-body-->
-        <div class="offcanvas-footer border-top p-3 text-center hstack gap-2">
-            <button class="btn btn-light w-100">Borrar Filtro</button>
-            <button type="submit" class="btn btn-success w-100" (click)="SearchData();">Filtrar</button>
-        </div>
-        <!--end offcanvas-footer-->
-    </form>
-</ng-template>

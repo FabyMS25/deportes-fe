@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { TokenStorageService } from '../../../core/services/token-storage.service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 
-import {CityAcronym}  from 'src/app/core/data/Places';
+import {CityAcronym}  from 'src/app/core/constants/Places';
 import { UserService } from 'src/app/core/services/api-users/users.service';
 import Swal from 'sweetalert2';
 import { AbstractControl, AsyncValidatorFn, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';

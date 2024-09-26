@@ -1,6 +1,6 @@
 import { Component, NgZone, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { SlickCarouselComponent } from 'ngx-slick-carousel';
@@ -55,16 +55,6 @@ export class InvoiceFormComponent implements OnInit  {
   @ViewChild('slickModal') slickModal!: SlickCarouselComponent;
   imagesList=['assets/images/fields/img-1.png','assets/images/fields/img-2.png',
     'assets/images/fields/img-3.png','assets/images/fields/img-4.png']
-
-  constructor(private modalService: NgbModal,
-    private formBuilder: UntypedFormBuilder,
-    private fieldService: CamposDeportivoService,
-    private reservaService: ReservaService,
-    private route: ActivatedRoute ,
-    private ruatService: RuatRequestsService,
-    private contribuyenteService: ContribuyentesService,  
-  ) { }
-
   /**
  * Swiper setting
  */
@@ -87,6 +77,17 @@ export class InvoiceFormComponent implements OnInit  {
   currentWeekStart!: Date;
   currentWeekEnd!: Date;  
   allSlots: { [key: string]: { morningSlots: { time: string, isAvailable: boolean }[], afternoonSlots: { time: string, isAvailable: boolean }[] } } = {};
+
+  constructor(private modalService: NgbModal,
+    private formBuilder: UntypedFormBuilder,
+    private fieldService: CamposDeportivoService,
+    private reservaService: ReservaService,
+    private route: ActivatedRoute ,
+    private ruatService: RuatRequestsService,
+    private contribuyenteService: ContribuyentesService, 
+    private router: Router 
+  ) { }
+
 
   async ngOnInit(): Promise<void> {
     this.breadCrumbItems = [
@@ -436,7 +437,7 @@ export class InvoiceFormComponent implements OnInit  {
       next: (data: any) => {
         this.submitted = false;
         this.notify('Datos Registrados exitosamente!', 'success');
-        // this.router.navigate(['/reservas']);
+        this.router.navigate(['/reservations/ticket'], { state: { data: data } });
       },
       error: (error) => {
         this.notify('No se pudo Guardar los datos! '+error, 'error');

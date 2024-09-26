@@ -3,7 +3,7 @@ import {DecimalPipe} from '@angular/common';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormGroup, UntypedFormBuilder, Validators} from '@angular/forms';
 
-import {CityAcronym}  from 'src/app/core/data/Places';
+import {CityAcronym}  from 'src/app/core/constants/Places';
 // import { DesignacionFuncionario } from 'src/app/core/models/designacion-funcionario';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { UserService } from 'src/app/core/services/api-users/users.service';

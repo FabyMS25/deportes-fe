@@ -1,6 +1,5 @@
-import { Component, ElementRef, TemplateRef, ViewChild } from '@angular/core';
-import { DatePipe } from '@angular/common';
-import { NgbModal, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
+import { Component, ElementRef, ViewChild } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import {  UntypedFormGroup } from '@angular/forms';
 
 import { ngxCsv } from 'ngx-csv/ngx-csv';
@@ -14,32 +13,27 @@ import { CategoriasService } from 'src/app/core/services/api/categorias.service'
 import { ModalScheduleComponent } from '../modal-schedule/modal-schedule.component';
 import { ModalTarifaComponent } from '../modal-tarifa/modal-tarifa.component';
 import { ModalImportComponent } from '../modal-import/modal-import.component';
+
 @Component({
   selector: 'app-fields',
   templateUrl: './fields.component.html',
   styleUrls: ['./fields.component.scss']
 })
 
-/**
- * Companies Component
- */
 export class FieldsComponent {
-  title="Campos Deportivos";
-  // bread crumb items
   breadCrumbItems!: Array<{}>;
+  title="Campos Deportivos";
+  canActivate:string[];
+  temp:any[]=[];
+  itemsList:any[]=[];
+
   submitted = false;
   fieldsForm!: UntypedFormGroup;
-  CustomersData!: any;
-  masterSelected!: boolean;
-  checkedList: any;
 
   searchTerm: any;
 
-  canActivate:string[];
   categoryList:any[]=[];
-  itemsList:any[]=[];
   fieldsList:any[]=[];
-  temp:any[]=[];
   
   dataSelected!:campoDeportivo;
   
@@ -48,9 +42,7 @@ export class FieldsComponent {
   constructor(private modalService: NgbModal,
     private fieldsService: CamposDeportivoService,
     private categoriasService: CategoriasService,
-    private authService: AuthenticationService, 
-    private offcanvasService: NgbOffcanvas,
-    private datePipe: DatePipe,) {
+    private authService: AuthenticationService, ) {
       this.canActivate = this.authService.hasPermission(this.title);
   }
 
@@ -84,28 +76,6 @@ export class FieldsComponent {
         item.complejoDto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
-  }
-
-  // Filtering
-  isstatus?: any
-  leads:any
-  SearchData() {
-    var date = document.getElementById("isDate") as HTMLInputElement;
-    var dateVal = date.value ? this.datePipe.transform(new Date(date.value), "yyyy-MM-dd") : '';
-
-    if (dateVal != '') {
-      this.leads = this.temp.filter((order: any) => {
-        return this.datePipe.transform(new Date(order.date), "yyyy-MM-dd") == dateVal;
-      });
-    }
-    else {
-      this.leads = this.categoryList;
-    }
-  }
-  
-  //  Filter Offcanvas Set
-  openEnd(content: TemplateRef<any>) {
-    this.offcanvasService.open(content, { position: 'end' });
   }
   
   /**
@@ -145,6 +115,31 @@ export class FieldsComponent {
      this.modalService.open(content, { centered: true });
    }  
    
+  public openScheduleModal(row: campoDeportivo | undefined, accion: string, size: string) {
+    const modalRef = this.modalService.open(ModalScheduleComponent, {
+        backdrop: 'static',
+        size:size
+    });
+    modalRef.componentInstance.row = row;
+    modalRef.componentInstance.accion = accion;
+    modalRef.componentInstance.emitList.subscribe(() => {
+    this.getFields();
+    });
+  }
+
+  public openTarifaModal(row: campoDeportivo | undefined, accion: string, size: string) {
+    const modalRef = this.modalService.open(ModalTarifaComponent, {
+        backdrop: 'static',
+        size:size
+    });
+    modalRef.componentInstance.row = row;
+    modalRef.componentInstance.categoryList = this.categoryList;
+    modalRef.componentInstance.accion = accion;
+    modalRef.componentInstance.emitList.subscribe(() => {
+    this.getFields();
+    });
+  }
+
   camposImport: any[] =[];
   public openModalImport() {
     this.camposImport = [
@@ -234,30 +229,6 @@ export class FieldsComponent {
     new ngxCsv(lista, "Lista de Campos Deportivos", data);
   }
   
-  public openScheduleModal(row: campoDeportivo | undefined, accion: string, size: string) {
-    const modalRef = this.modalService.open(ModalScheduleComponent, {
-        backdrop: 'static',
-        size:size
-    });
-    modalRef.componentInstance.row = row;
-    modalRef.componentInstance.accion = accion;
-    modalRef.componentInstance.itemsList.subscribe(() => {
-    this.getFields();
-    });
-  }
-
-  public openTarifaModal(row: campoDeportivo | undefined, accion: string, size: string) {
-    const modalRef = this.modalService.open(ModalTarifaComponent, {
-        backdrop: 'static',
-        size:size
-    });
-    modalRef.componentInstance.row = row;
-    modalRef.componentInstance.categoryList = this.categoryList;
-    modalRef.componentInstance.accion = accion;
-    modalRef.componentInstance.itemsList.subscribe(() => {
-    this.getFields();
-    });
-  }
 
   /* API Services */
   private getCategories(){
