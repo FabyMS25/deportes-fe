@@ -10,8 +10,8 @@ import { Categoria } from 'src/app/core/models/categoria.model';
 import { Complejo } from 'src/app/core/models/complejo.model';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { HorariosService } from 'src/app/core/services/api/horarios.service';
-import { Ceiling, Surfaces } from 'src/app/core/constants/Features';
-import { Districts } from 'src/app/core/constants/Places';
+import { Ceiling, Surfaces } from 'src/app/core/data/Features';
+import { Districts } from 'src/app/core/data/Places';
 
 @Component({
   selector: 'app-modal',

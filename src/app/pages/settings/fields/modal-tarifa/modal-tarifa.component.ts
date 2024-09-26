@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 import { TarifaService } from 'src/app/core/services/api/tarifa.service';
 import { Categoria } from 'src/app/core/models/categoria.model';
 import { TarifaCategoriesService } from 'src/app/core/services/api/tarifa-categorias.service';
-import { TipoCobro } from 'src/app/core/constants/TipoCobro';
+import { TipoCobro } from 'src/app/core/data/TipoCobro';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
 
 @Component({

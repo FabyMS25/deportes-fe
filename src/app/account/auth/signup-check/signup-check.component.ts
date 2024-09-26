@@ -3,8 +3,8 @@ import { Router } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import Swal from 'sweetalert2';
 
-import { CityAcronym } from 'src/app/core/constants/Places';
-import { UserDocType} from 'src/app/core/constants/UserData';
+import { CityAcronym } from 'src/app/core/data/Places';
+import { UserDocType} from 'src/app/core/data/UserData';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { UserDataService } from '../signup/user-data.service';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';

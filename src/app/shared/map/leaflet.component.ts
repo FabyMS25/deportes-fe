@@ -22,14 +22,10 @@ export class LeafletComponent implements  OnInit {
   @Input() form:boolean=false;
   provider!: any;
 
-  // icon:any = L.icon({
-  //       iconUrl: 'assets/images/marker-icon.png',
-  //       shadowUrl: 'assets/images/marker-shadow.png',
-  //       popupAnchor: [13, 0],
-  //     });
-
       icon= L.icon({
-        iconUrl: 'assets/images/Map_pin_icon.svg ',     
+        iconUrl: 'assets/icon/pin-Map_icon.svg ', 
+        //       iconUrl: 'assets/images/marker-icon.png',
+        //       shadowUrl: 'assets/images/marker-shadow.png',    
         iconSize: [28, 41],
         iconAnchor: [12, 41],
         popupAnchor: [1, -34],
@@ -71,15 +67,6 @@ export class LeafletComponent implements  OnInit {
     });
      const basemapEnum = "arcgis/streets";
 
-    // const geocodeService = L.esri.Geocoding
-    // reverseGeocode({
-    //     apikey: environment.leaflet_key
-    // });
-    // geocodeService.reverseGeocode().latlng(marcador.getLatLng()).run((error, result:any) => {
-    //   marcador.bindPopup(result.address.LongLabel).openPopup();
-    //   this.setLatLng(marcador.getLatLng(), result);
-    // });
-
     //Agregando al mapa
     marcadores.addTo(mapa);
     capa.addTo(mapa);
@@ -109,10 +96,6 @@ export class LeafletComponent implements  OnInit {
         autoPan: true
       }).addTo(mapa);
       marcadores.addLayer(marcador);
-      // geocodeService.reverse().latlng(marcador.getLatLng()).run((error:any, result:any) => {
-      //   marcador.bindPopup(result.address.LongLabel).openPopup();address.Match_addr
-      //   this.direccion=result.address.Match_addr
-      // });
       this.moverMarcador(marcador, mapa, null);
     });
     }
@@ -145,13 +128,6 @@ export class LeafletComponent implements  OnInit {
             let position = marcador.getLatLng();
             mapa.panTo(new LatLng(position.lat, position.lng));
             this.setLatLng(position);
-            // geocodeService
-            //     .reverse()
-            //     .latlng(position)
-            //     .run((error:any, result:any) => {
-            //         marcador.bindPopup(result.address.Match_addr).openPopup();
-            //         this.setLatLng(result);
-            //     });
         });
     }
 

@@ -1,8 +1,5 @@
 import { Injectable } from '@angular/core';
-// import { User } from 'src/app/store/Authentication/auth.models';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { catchError, map } from 'rxjs/operators';
-import { forkJoin, Observable, of, throwError } from 'rxjs';
 import { GlobalComponent } from "../../global-component";
 import { Store } from '@ngrx/store';
 import { RegisterSuccess, loginFailure, loginSuccess, logout, logoutSuccess } from 'src/app/store/Authentication/authentication.actions';
@@ -12,10 +9,11 @@ import { TokenStorageService } from './token-storage.service';
 import { AuthUserService } from './api-users/auth.service';
 import { PermissionUserService } from './api-users/permission-user.service';
 
-import { UserRol } from 'src/app/core/constants/UserData';
+import { UserRol } from 'src/app/core/data/UserData';
 import { EncargadoService } from './api/encargado.service';
-import { MENU_BASE } from 'src/app/core/constants/menu';
+import { MENU_BASE } from 'src/app/core/data/menu';
 import { ContribuyentesService } from './api/contribuyentes.service';
+import { of } from 'rxjs';
 
 const AUTH_API = ""//GlobalComponent.AUTH_API;
 

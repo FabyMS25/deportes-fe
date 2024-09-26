@@ -11,7 +11,7 @@ const allNotification = [
     id: 2,
     title: "Pedro Luis Sevilla Calderón",
     desc: "Answered to your comment on the cash flow forecast's graph 🔔.",
-    img: "assets/images/users/default-profile1.png",
+    img: "assets/icons/users/default-profile1.png",
     icon: "bx-badge-check",
     time: "Hace 48 min",
     checkboxId: "all-notification-check02",

@@ -11,7 +11,6 @@ export interface MenuItem {
   ruta?: string;
   permisoHijoListDto?: any;
   permisoPadreDto?: any;
-
   
   isTitle?: boolean;
   badge?: any;

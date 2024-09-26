@@ -47,7 +47,7 @@
                                     <ngb-highlight [result]="value | date:'longDate'" [term]="searchTerm"></ngb-highlight>
                                 } @else {
                                     @if (column.avatar && data.avatar) {
-                                        <img [src]="'assets/images/users/' + data.avatar" 
+                                        <img [src]="'assets/icons/users/' + data.avatar" 
                                              alt="" class="avatar-xs rounded-circle">
                                     }
                                     <a (click)="showItem(data)">{{value}}</a>
@@ -205,7 +205,7 @@
                                 {{value | date:'longDate'}}
                             } @else {
                                 <div class="d-flex justify-content-end">
-                                    <img *ngIf="column.avatar && data.avatar" [src]="'assets/images/users/' + data.avatar" 
+                                    <img *ngIf="column.avatar && data.avatar" [src]="'assets/icons/users/' + data.avatar" 
                                         alt="" class="avatar-xs rounded-circle me-2">
                                     <span class="expandable-text" (click)="toggleExpand(data, column.prop)">
                                         <span [class.truncate]="!isExpanded(data, column.prop)">{{value}}</span>

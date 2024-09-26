@@ -9,8 +9,8 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { Complejo } from 'src/app/core/models/complejo.model';
-import { Districts } from 'src/app/core/constants/Places';
-import { Ceiling } from 'src/app/core/constants/Features';
+import { Districts } from 'src/app/core/data/Places';
+import { Ceiling } from 'src/app/core/data/Features';
 import { ModalFacilitiesComponent } from '../modal/modal.component';
 import { ModalImportComponent } from '../modal-import/modal-import.component';
 

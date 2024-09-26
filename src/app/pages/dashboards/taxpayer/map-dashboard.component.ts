@@ -4,14 +4,13 @@ import { Router } from '@angular/router';
 // import { latLng, tileLayer, circle, polygon, marker, icon } from 'leaflet';
 
 import * as L from 'leaflet';
-import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import Swal from 'sweetalert2';
 
 // import { OpenStreetMapProvider, GeoSearchControl, SearchControl } from 'leaflet-geosearch';
 import * as GeoSearch from 'leaflet-geosearch';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
-import { an } from '@fullcalendar/core/internal-common';
+import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 
 @Component({
     selector: 'app-map-dashboard',
@@ -21,18 +20,17 @@ import { an } from '@fullcalendar/core/internal-common';
 
 export class MapDashboardComponent implements OnInit {
 
-    breadCrumbItems!: Array<{}>;
+    temp:any=[]
     categoryList:any[]=[];
     complexList:any[]=[];
     fieldList:any[]=[];
-    temp:any=[]
 
     map:any;
     layerControl:any;
     icon= L.icon({
-      iconUrl: 'assets/images/Map_pin_icon.svg ',     
-      iconSize: [28, 41],
-      iconAnchor: [12, 41],
+      iconUrl: 'assets/icons/pin-location.png',     
+      iconSize: [44, 52],
+      // iconAnchor: [12, 41],
       popupAnchor: [1, -34],
       shadowSize: [41, 41]
     })
@@ -44,11 +42,6 @@ export class MapDashboardComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-      this.breadCrumbItems = [
-          { label: 'Dashboard' },
-          { label: 'Contribuyente', active: true }
-      ];
-  
       this.initializeData();
     }    
     async initializeData() {
@@ -58,11 +51,11 @@ export class MapDashboardComponent implements OnInit {
       this.setMaps();              
     }
  
-    configDefaultMap(){      
-      
+    configDefaultMap(){    
       this.map = L.map('map', {
-        zoom: 13,
-        center: [-17.379564334907542, -66.28315805967586],
+        zoom: 14,
+        // center: [-17.4092000, -66.2871000],//cell
+        center: [-17.4010000, -66.2871000],//
         layers: [this.main,this.mainList]
       });
         
@@ -97,7 +90,6 @@ export class MapDashboardComponent implements OnInit {
       this.main = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoidGhlbWVzYnJhbmQiLCJhIjoiY2xmbmc3bTV4MGw1ejNzbnJqOWpubzhnciJ9.DNkdZVKLnQ6I9NOz7EED-w",
         {
           maxZoom: 18,
-          // attribution:'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
           id: "mapbox/streets-v11",
           tileSize: 512,
           zoomOffset: -1,
@@ -154,8 +146,9 @@ export class MapDashboardComponent implements OnInit {
       const popupContent = document.createElement('div');
       popupContent.innerHTML = `
         <b>${element.nombre}</b><br />
-        <b>Superficie: </b>${element.superficie}<br />
-        <b>Techado: </b>${element.techado}<br />
+        <b>Encargado: </b>${element.encargadosDtoList[0] ? element.encargadosDtoList[0]?.nombre :''}<br />
+        <b>Tipo Techado: </b>${element.techado}<br />
+        <b>Distrito: </b>${element.distrito}<br />
         <b>Ubicación: </b>${element.ubicacion}<br />
         <br>
         <button class="btn btn-secondary">

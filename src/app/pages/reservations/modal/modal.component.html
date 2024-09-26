@@ -9,7 +9,7 @@
     <div class="modal-header" [ngClass]="{'bg-info-subtle p-2' : accion===''|| accion==='edit' || accion==='show'}">
         <h5 class="modal-title" *ngIf="accion === ''"> Agregar Reserva</h5>
         <h5 class="modal-title" *ngIf="accion === 'edit' || accion==='show'">
-            Reserva en: {{ row?.canchasDto?.complejoDto?.nombre || 'Sin Nombre' }}
+            Reserva en: {{ row.canchasDto.complejoDto.nombre || 'Sin Nombre' }}
         </h5>
         <button type="button" class="btn-close" id="btn-close"
             data-bs-dismiss="modal" aria-label="Close"
