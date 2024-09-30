@@ -145,7 +145,7 @@ export class MapDashboardComponent implements OnInit {
     private setPopup(element:any):any{
       const complex = L.marker([element.latitud, element.longitud], { icon: this.icon });
       const popupContent = document.createElement('div');
-      const canchasDescriptions = element.canchasDtoList.map((c:any) => c.superficieDto.descripcion).join(', '); // Join descriptions with a comma
+      const canchasDescriptions = element.canchasDtoList? element.canchasDtoList.map((c:any) => c.superficieDto.descripcion).join(', '): '' ; // Join descriptions with a comma
 
       popupContent.innerHTML = `
         <b>${element.nombre}</b><br />
