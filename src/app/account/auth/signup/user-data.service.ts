@@ -13,7 +13,7 @@ export class UserDataService {
 
   getTemporaryUserData() {
     const data = this.temporaryUserData;
-    this.temporaryUserData = null; // Clear data after retrieval
+    this.temporaryUserData = null; 
     return data;
   }
 }

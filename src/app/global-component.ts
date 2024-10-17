@@ -10,14 +10,19 @@ export const GlobalComponent = {
         telf:'60367407',
     },
 
+    super_admin:{
+        username:'faby25',
+        password:'password'
+    },
+
     /* RUAT CREDENTIALS TEST */
-    apiRuatUrl: "https://verificacionjboss.ruat.gob.bo", 
-    RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
-    RUAT_clave: "fIH1z30a1SpB",
-    /* RUAT CREDENTIALS PRODUCTION */
-    // apiRuatUrl: "https://aplicaciones.ruat.gob.bo" 
+    // apiRuatUrl: "https://verificacionjboss.ruat.gob.bo", 
     // RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
-    // RUAT_clave: "Gam#1209",
+    // RUAT_clave: "fIH1z30a1SpB",
+    /* RUAT CREDENTIALS PRODUCTION */
+    apiRuatUrl: "https://aplicaciones.ruat.gob.bo",
+    RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
+    RUAT_clave: "Gam#1209",
 
     /* RUAT DATA */
     RUAT_token : `${sessionStorage.getItem('ruatToken')}`,  
@@ -27,16 +32,19 @@ export const GlobalComponent = {
     RUAT_servicioMunicipal: "2174", //TASAS Y OTROS INGRESOS
     RUAT_tipoTasa: "TO", //TASAS Y OTROS INGRESOS
 
-    
     /* Api backend Calling */
+    API_BK_RUAT: "http://localhost:8085/api",
+    API_BK : 'http://181.177.143.187:8085/api',
     CODE_APP : "SIS-013",
-    API_URL : 'http://181.177.143.185:8081/api',
-    VALID_HOURS: 4,
-    facilities: '/complejos',
-    fields: '/canchas',
-    taxpayers: '/contribuyente',
-    employees: '/encargado',
-    categories: '/deportes',
-    reservations: '/reservas',
-    schedule:'/horario',
-} 
+    NAME_APP : "DEPORTESAPP",
+        facilities: '/complejos',
+        fields: '/canchas',
+        taxpayers: '/contribuyente',
+        employees: '/encargado',
+        categories: '/deportes',
+        reservations: '/reservas',
+        schedule:'/horario',
+
+    /* RULES */
+    VALID_HOURS: 4, 
+}

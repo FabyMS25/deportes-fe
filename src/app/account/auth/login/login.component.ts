@@ -37,28 +37,11 @@ export class LoginComponent implements OnInit {
       }
      }
 
-    //  constructor(
-    //   private renderer: Renderer2,private formBuilder: UntypedFormBuilder,
-    //   private authService: AuthenticationService,private router: Router,
-    //  public toastService: ToastService) {
-    //     // redirect to home if already logged in
-    //     if (this.authService.isAuthenticated) {
-    //       this.router.navigate(['/']);
-    //     }
-    //    }
-
   ngOnInit(): void {
-    if(sessionStorage.getItem('currentUser')) {
-      // this.router.navigate(['/']);
-    }
-    /**
-     * Form Validatyion
-     */
     this.loginForm = this.formBuilder.group({
       username: ['', [Validators.required]],
       password: ['', [Validators.required]],
     });
-    // this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
   }
   get form() {
     return this.loginForm.controls;
@@ -72,20 +55,41 @@ export class LoginComponent implements OnInit {
     try {
       const username = this.form['username'].value;
       const password = this.form['password'].value;  
+  
       if (this.loginForm.valid) {
-        const loginSuccessful = await this.authenticationService.login(username, password);
-        if (!loginSuccessful) {
-          this.toastService.show('Inicio de sesión fallido', { classname: 'bg-danger text-white', delay: 15000 });
+        const [empleadoResult, contribuyenteResult] = await Promise.all([
+          this.authenticationService.loginEmpleado(username, password),
+          this.authenticationService.loginContribuyente(username, password)
+        ]);
+  
+        if (empleadoResult) {
+          const permissionStatus = await this.authenticationService.userHasPermission(empleadoResult);
+          if (permissionStatus === 'isAdmin') {
+            this.router.navigate(['/inicio']).then(() => {
+              this.toastService.show('¡Bienvenido Admin!', 'Inicio de sesión exitoso');
+            });
+          } else if (permissionStatus === 'isEmpleado') {
+            this.router.navigate(['/inicio/employee']).then(() => {
+              this.toastService.show('¡Bienvenido Empleado!', 'Inicio de sesión exitoso');
+            });
+          } else {
+            this.loginForm.setErrors({ invalidPermissions: true });
+          }
+        } else if (contribuyenteResult) {
+          this.router.navigate(['/inicio/taxpayer']).then(() => {
+            this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
+          });
+        } else {
+          this.loginForm.setErrors({ invalidLogin: true });
         }
       } else {
         this.loginForm.markAllAsTouched();
-        this.toastService.show('Formulario inválido!', { classname: 'bg-warning text-dark', delay: 5000 });
       }
-    } catch (error) {
-      this.toastService.show("Error en la autenticación", { classname: 'bg-danger text-white', delay: 15000 });
-      console.error("Error in logInSubmit:", error);
+    } catch (error:any) {
+      this.loginForm.setErrors({ serverError: true });
     }
   }
+  
 
   /**
    * Password Hide/Show

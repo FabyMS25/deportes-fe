@@ -56,7 +56,7 @@ export class TwoStepComponent implements OnInit {
       }
     };
 
-    confirmar() {
+    async confirmar() {
       const enteredOtp = this.otpComponent?.currentVal;
       
       if (enteredOtp?.length !== this.config.length) {
@@ -64,9 +64,21 @@ export class TwoStepComponent implements OnInit {
         return;
       }  
       if (enteredOtp === this.userData.verificationCode) {
-        this.userData.estadoUsuario = 'Activo';
         if(!this.userData.codigoContribuyente){
-          this.registerContribuyente(this.userData)
+          const ruatResp = await this.registerContribuyente(this.userData)
+          if(ruatResp){
+            this.userData.estadoUsuario = 'Activo';
+            await this.addData(this.userData);
+            this.sendEmail(this.userData.userName, this.userData.password)
+            this.userDataService.setTemporaryUserData(null);
+            this.notify('Sus Datos fueron registrados!','success'); 
+            this.router.navigate(['/auth/success-msg'], { queryParams: { username: this.userData.userName } });
+          }else{
+            this.notify('No se pudo registrar en el Ruat', 'error');
+            // await this.addData(this.userData);
+            // this.sendEmail(this.userData.userName, this.userData.password)
+            // this.router.navigate(['/auth/success-msg'], { queryParams: { username: this.userData.userName } });
+          }
         }else{
             this.addData(this.userData);
         }
@@ -76,8 +88,27 @@ export class TwoStepComponent implements OnInit {
       }
     }
 
+    private sendEmail(username:string,password:string): Promise<void> {
+      const email = this.userData.correo;
+      const name = this.userData.nombre;
+      const message = 'USUARIO: '+ username +', CONTRASEÑA: '+ password;
+    
+      return emailjs.send("service_auth", "template_6htavso", {
+        from_name: "GAMQ-DEPORTES",
+        to_name: name,
+        message: message,
+        reply_to: email,
+      }, 'X9362U1QpUzthcHGT')
+        .then((response: EmailJSResponseStatus) => {
+          this.notify("Un email fue enviado a " + email + " con su USUARIO y CONTRASEÑA ", 'success');
+        })
+        .catch((error) => {
+          this.notify("No se pudo enviar correctamente el e-mail", 'error');
+          throw error; 
+        });
+    }
   
-    sendEmail(): Promise<void> {
+    resendEmail(): Promise<void> {
       const email = this.userData.correo;
       const name = this.userData.nombre;
       const codigo = this.userData.verificationCode;
@@ -98,54 +129,53 @@ export class TwoStepComponent implements OnInit {
     }
     
   /* API Request */
-  addData(datos:Contribuyente){
-    this.contribuyentesService.save(datos).subscribe({
-      next:(data:any)=>{
-        if (data['status'] === 'OK') {
-          this.notify('Sus Datos fueron registrados!','success');  
-          const user = data.payload;        
-          // this.sendEmail(user,link)       
-          this.userDataService.setTemporaryUserData(null);
-          this.router.navigate(['/auth/success-msg'], { queryParams: { username: user.userName } });
- 
-        }else{
-          this.notify(data.payload, 'error');
+  private async addData(datos:Contribuyente){
+    return new Promise((resolve, reject) => {
+      this.contribuyentesService.save(datos).subscribe({
+        next:(data:any)=>{
+          if (data['status'] === 'OK') { 
+            const user = data.payload;     
+            resolve(user)     
+          }else{
+            this.notify(data.payload, 'error');
+            resolve(null);
+          }
+        },
+        error: (error) => {
+          reject()
+          this.notify('No se pudo Guardar los datos! '+error, 'error');
         }
-      },
-      error: (error) => {
-        this.notify('No se pudo Guardar los datos! '+error, 'error');
-      }
+      })
     })
   }
   
-  formatDate(date: Date): string {
-    const day = ('0' + date.getDate()).slice(-2);
-    const month = ('0' + (date.getMonth() + 1)).slice(-2);
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
 
   /* RUAT API Requests */
-  registerContribuyente(data:any){
-    this.ruatService.registerContribuyente(data ).subscribe({    
-      next: (resp: any) => {
-        if(resp['status']==='OK'){
-          const response = resp.payload
-          if(response.continuarFlujo){
-            this.notify("Usted se encuentra registrado en el Ruat",'success')
-            this.userData.codigoContribuyente = response.codigoContribuyente
-            this.addData(this.userData);  
+  private async registerContribuyente(data:any): Promise<any>{
+    return new Promise((resolve, reject) => {
+      this.ruatService.registerContribuyente(data ).subscribe({    
+        next: (resp: any) => {
+          if(resp['status']==='OK'){
+            const response = resp.payload
+            if(response.continuarFlujo){
+              this.userData.codigoContribuyente = response.codigoContribuyente
+              // this.addData(this.userData);  
+              // this.notify("Usted se encuentra registrado en el Ruat",'success')
+              resolve(response); 
+            }else{
+              this.notify(response.mensaje,'error')
+              resolve(null); 
+            }
           }else{
-            this.notify(response.mensaje,'error')
+            this.notify(resp.payload,'error')
+            resolve(null); 
           }
-        }else{
-          this.notify(resp.payload,'error')
+        },
+        error: (error) => {    
+          resolve(error);
         }
-      },
-      error: (error: any) => {        
-        console.error('Error:', error);
-      }
-    });
+      });
+    })
   }
 
   private notify(message: any, type: any): void {

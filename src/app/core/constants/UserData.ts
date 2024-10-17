@@ -89,10 +89,6 @@ const UserDocType = [
         "type": "CE",
         "description": "CARNET DE EXTRANJERO",
     }
-    // {
-    //     "id": 3,
-    //     "descripcion": "NIT"
-    // },
 ]
 
 export{ UserRol , UserStates , UserGender, UserCivilStatus, UserDocType};

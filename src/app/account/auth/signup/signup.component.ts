@@ -49,16 +49,11 @@ export class SignupComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    
-
     // this.authRuat()
-    this.getUsers(); // api rest to get userList
-    /**
-     * Form Validatyion
-     */
+    this.getUsers(); 
      this.SignupForm = this.formBuilder.group({
       uuid: [''],
-      username: ['', [Validators.required, Validators.minLength(6),this.usernameFormatValidator], [this.usernameValidator.bind(this)]],
+      username: ['', [Validators.required, Validators.minLength(6),this.usernameFormatValidator]],
       password: ['', [Validators.required]], 
       cpassword: ['', [Validators.required]], 
       tipoContribuyente:['NA'],
@@ -67,85 +62,20 @@ export class SignupComponent implements OnInit {
       verificationCode:[null],
       nombre: ['', [Validators.required]],
       primerApellido: ['', [Validators.required]],
-      segundoApellido: ['', [Validators.required]],
-      genero: [''],
-      fechaNacimiento: ['', [Validators.required]],
-      estadoCivil: [''],
+      segundoApellido: [''],
       tipoDocumento:['', [Validators.required]],
       nroDocumento:['', [Validators.required], [this.nroDocumentoValidator.bind(this)]],
       expedido:['', [Validators.required]],
+      fechaNacimiento: ['', [Validators.required]],
+      genero: [''],
+      estadoCivil: [''],
       nroNit:[''],
-      celular:['', [Validators.required]],
-      correo: ['', [Validators.required]],
+      celular:['', [Validators.required]],      
+      correo: ['', [Validators.required, Validators.email]],
       direccion:[''],
     }, {
       validator: MustMatch('password', 'cpassword')
     });
-    
-  // Password Validation set
-  // onPasswordFocus() {
-    var myInput = document.getElementById("password-input") as HTMLInputElement;
-    var letter = document.getElementById("pass-lower");
-    var capital = document.getElementById("pass-upper");
-    var number = document.getElementById("pass-number");
-    var length = document.getElementById("pass-length");
-    // When the user clicks on the password field, show the message box
-    let input = document.getElementById("password-contain") as HTMLElement;
-    myInput.onfocus = function () {
-      input.style.display = "block"
-    };
-    myInput.onkeyup = function () {
-      let isValid = true;
-      // Validate lowercase letters
-      var lowerCaseLetters = /[a-z]/g;
-      if (myInput.value.match(lowerCaseLetters)) {
-          letter?.classList.remove("invalid");
-          letter?.classList.add("valid");
-      } else {
-          letter?.classList.remove("valid");
-          letter?.classList.add("invalid");
-          isValid = false
-      }
-
-      // Validate capital letters
-      var upperCaseLetters = /[A-Z]/g;
-      if (myInput.value.match(upperCaseLetters)) {
-          capital?.classList.remove("invalid");
-          capital?.classList.add("valid");
-      } else {
-          capital?.classList.remove("valid");
-          capital?.classList.add("invalid");
-          isValid = false
-      }
-
-      // Validate numbers
-      var numbers = /[0-9]/g;
-      if (myInput.value.match(numbers)) {
-          number?.classList.remove("invalid");
-          number?.classList.add("valid");
-      } else {
-          number?.classList.remove("valid");
-          number?.classList.add("invalid");
-          isValid = false
-      }
-
-      // Validate length
-      if (myInput.value.length >= 8) {
-          length?.classList.remove("invalid");
-          length?.classList.add("valid");
-      } else {
-          length?.classList.remove("valid");
-          length?.classList.add("invalid");
-          isValid =false
-      }
-      if(isValid){          
-        myInput.onblur = function () {
-          // let input = document.getElementById("password-contain") as HTMLElement;
-          input.style.display = "none"
-        };
-      }
-    };
-
     
     this.route.queryParams.subscribe(params => {
       const exist = params['userExist'];
@@ -154,9 +84,6 @@ export class SignupComponent implements OnInit {
         this.formDataSet(this.ruatData);
         this.userDataService.setTemporaryUserData(null);
       }
-      // if (this.userData) {
-      //   this.searchContribuyente(this.userData);
-      // }
     });
   }
   
@@ -195,8 +122,211 @@ export class SignupComponent implements OnInit {
     // direccion:this.SignupForm.value.direccion,
 
     });
+  }
 
+  get f() { return this.SignupForm.controls; }
+  
 
+  /**
+   * Form submit
+   */    
+  onSubmit() {
+    this.SignupForm.patchValue({
+      username: this.SignupForm.value.nroDocumento,
+      password: this.SignupForm.value.nroDocumento,
+      cpassword:this.SignupForm.value.nroDocumento
+    });
+    this.submitted = true;  
+    if (this.SignupForm.valid) {
+      const codigo = this.generateCode();
+      this.SignupForm.enable();
+  
+      const dateString: string = this.SignupForm.value.fechaNacimiento;
+      const originalDate: Date = new Date(dateString);
+      const formattedDate: string = originalDate.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+
+      let datos: Contribuyente = {
+        // uuid:this.SignupForm.value.uuid,
+        userName: this.SignupForm.value.username,
+        password: this.SignupForm.value.password,
+        tipoContribuyente: this.SignupForm.value.tipoContribuyente,
+        codigoContribuyente: this.SignupForm.value.codigoContribuyente,
+        estadoUsuario: this.SignupForm.value.estadoUsuario,
+        verificationCode: codigo,
+        nombre: this.SignupForm.value.nombre,
+        apPaterno: this.SignupForm.value.primerApellido,
+        apMaterno: this.SignupForm.value.segundoApellido,
+        sexo:this.SignupForm.value.genero,
+        fechaNac: formattedDate,
+        estadoCivil: this.SignupForm.value.estadoCivil,
+        tipoDocumento: this.SignupForm.value.tipoDocumento,
+        nroCarnet: this.SignupForm.value.nroDocumento,
+        ciExpedido:this.SignupForm.value.expedido,
+        nroNit:this.SignupForm.value.nroNit,
+        celular:this.SignupForm.value.celular,
+        correo:this.SignupForm.value.correo,
+        direccion:this.SignupForm.value.direccion,
+      };
+
+      this.userDataService.setTemporaryUserData(datos);
+      // console.log(codigo)
+      this.sendEmail(datos, '')
+        .then(() => {
+          this.router.navigate(['/auth/twostep'], { queryParams: { username: datos.userName } });
+        })
+        .catch(error => {
+          this.userDataService.setTemporaryUserData(null);
+        });
+
+    } else {
+      this.notify('Formulario Invalido!', 'error');
+      Object.keys(this.SignupForm.controls).forEach(key => {
+        const control = this.SignupForm.get(key);
+        control?.markAsTouched();
+      });
+    }
+  }
+  
+  generateCode(): string {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+  }
+
+  sendEmail(data: any, link: string): Promise<void> {
+    const email = data.correo;
+    const name = data.nombre;
+    const codigo = data.verificationCode;
+  
+    return emailjs.send("service_auth", "template_6htavso", {
+      from_name: "GAMQ-DEPORTES",
+      to_name: name,
+      message: codigo,
+      // message: `Puedes ingresar al siguiente Link: ${link}`,
+      reply_to: email,
+    }, 'X9362U1QpUzthcHGT')
+      .then((response: EmailJSResponseStatus) => {
+        this.notify("Un email fue enviado a " + email + " con el codigo de confirmacion", 'success');
+        this.submitted = false;
+        this.SignupForm.reset();   
+      })
+      .catch((error) => {
+        this.submitted = false;
+        this.notify("No se pudo enviar correctamente el e-mail", 'error');
+        throw error; 
+      });
+  }
+
+  /**
+   * Nro Documento Validator
+   */
+  nroDocumentoValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (this.usersList) {
+          const itExist = this.usersList.some(user => user.nroCarnet === control.value);
+          if (itExist) {
+            resolve({itExist: true });
+          } else { resolve(null); }
+        } else {   resolve(null); }
+      }, 300); 
+    });
+  }
+  /**
+   * Username / Password Validator
+   */
+  usernameValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (this.usersList) {
+          const isUsernameTaken = this.usersList.some(user => user.userName === control.value);
+          if (isUsernameTaken) {
+            resolve({ usernameTaken: true });
+          } else { resolve(null); }
+        } else {   resolve(null); }
+      }, 300); 
+    });
+  }
+  usernameFormatValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (!value) {
+      return null;
+    }
+    const lowercaseValue = value.toLowerCase();
+    const validFormat = /^[a-z0-9.]+$/.test(lowercaseValue);
+    if (!validFormat) {
+      return { invalidFormat: true };
+    }
+    if (value !== lowercaseValue) {
+      control.setValue(lowercaseValue, { emitEvent: false });
+    }
+    return null;
+  }
+  onPasswordFocus() {
+    var myInput = document.getElementById("password-input") as HTMLInputElement;
+    var letter = document.getElementById("pass-lower");
+    var capital = document.getElementById("pass-upper");
+    var number = document.getElementById("pass-number");
+    var length = document.getElementById("pass-length");
+    let input = document.getElementById("password-contain") as HTMLElement;
+    // myInput.onfocus = function () {
+      input.style.display = "block"
+    // };
+    myInput.onkeyup = function () {
+      let isValid = true;
+      // Validate lowercase letters
+      var lowerCaseLetters = /[a-z]/g;
+      if (myInput.value.match(lowerCaseLetters)) {
+          letter?.classList.remove("invalid");
+          letter?.classList.add("valid");
+      } else {
+          letter?.classList.remove("valid");
+          letter?.classList.add("invalid");
+          isValid = false
+      }
+      // Validate capital letters
+      var upperCaseLetters = /[A-Z]/g;
+      if (myInput.value.match(upperCaseLetters)) {
+          capital?.classList.remove("invalid");
+          capital?.classList.add("valid");
+      } else {
+          capital?.classList.remove("valid");
+          capital?.classList.add("invalid");
+          isValid = false
+      }
+      // Validate numbers
+      var numbers = /[0-9]/g;
+      if (myInput.value.match(numbers)) {
+          number?.classList.remove("invalid");
+          number?.classList.add("valid");
+      } else {
+          number?.classList.remove("valid");
+          number?.classList.add("invalid");
+          isValid = false
+      }
+      // Validate length
+      if (myInput.value.length >= 8) {
+          length?.classList.remove("invalid");
+          length?.classList.add("valid");
+      } else {
+          length?.classList.remove("valid");
+          length?.classList.add("invalid");
+          isValid =false
+      }
+      if(isValid){          
+        myInput.onblur = function () {
+          input.style.display = "none"
+        };
+      }
+    };    
+  }  
+  onPasswordBlur() {
+    let input = document.getElementById("password-contain") as HTMLElement;
+    if (this.SignupForm.get('password')?.valid) {
+      input.style.display = "none";
+    }
   }
   onUsernameFocus() {
     var inputUser = document.getElementById("username-input") as HTMLInputElement;
@@ -242,49 +372,9 @@ export class SignupComponent implements OnInit {
       inputMsg.style.display = "none";
     }
   }
-  usernameValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (this.usersList) {
-          const isUsernameTaken = this.usersList.some(user => user.userName === control.value);
-          if (isUsernameTaken) {
-            resolve({ usernameTaken: true });
-          } else { resolve(null); }
-        } else {   resolve(null); }
-      }, 300); 
-    });
-  }
-  usernameFormatValidator(control: AbstractControl): ValidationErrors | null {
-    const value = control.value;
-    if (!value) {
-      return null;
-    }
-    const lowercaseValue = value.toLowerCase();
-    const validFormat = /^[a-z0-9.]+$/.test(lowercaseValue);
-    if (!validFormat) {
-      return { invalidFormat: true };
-    }
-    if (value !== lowercaseValue) {
-      control.setValue(lowercaseValue, { emitEvent: false });
-    }
-    return null;
-  }
 
   
-  nroDocumentoValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (this.usersList) {
-          const itExist = this.usersList.some(user => user.nroCarnet === control.value);
-          if (itExist) {
-            resolve({itExist: true });
-          } else { resolve(null); }
-        } else {   resolve(null); }
-      }, 300); 
-    });
-  }
 
-  get f() { return this.SignupForm.controls; }
    /**
    * Password Hide/Show
    */
@@ -298,95 +388,21 @@ export class SignupComponent implements OnInit {
     this.confirmField = !this.confirmField;
   }
   
-  /**
-   * Form submit
-   */    
-  onSubmit() {
-    this.submitted = true;  
-    if (this.SignupForm.valid) {
-      const codigo = this.generateCode();
-      this.SignupForm.enable();
-  
-      const dateString: string = this.SignupForm.value.fechaNacimiento;
-      const originalDate: Date = new Date(dateString);
-      const formattedDate: string = originalDate.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
 
-      let datos: Contribuyente = {
-        // uuid:this.SignupForm.value.uuid,
-        userName: this.SignupForm.value.username,
-        password: this.SignupForm.value.password,
-        tipoContribuyente: this.SignupForm.value.tipoContribuyente,
-        codigoContribuyente: this.SignupForm.value.codigoContribuyente,
-        estadoUsuario: this.SignupForm.value.estadoUsuario,
-        verificationCode: codigo,
-        nombre: this.SignupForm.value.nombre,
-        apPaterno: this.SignupForm.value.primerApellido,
-        apMaterno: this.SignupForm.value.segundoApellido,
-        sexo:this.SignupForm.value.genero,
-        fechaNac: formattedDate,
-        estadoCivil: this.SignupForm.value.estadoCivil,
-        tipoDocumento: this.SignupForm.value.tipoDocumento,
-        nroCarnet: this.SignupForm.value.nroDocumento,
-        ciExpedido:this.SignupForm.value.expedido,
-        nroNit:this.SignupForm.value.nroNit,
-        celular:this.SignupForm.value.celular,
-        correo:this.SignupForm.value.correo,
-        direccion:this.SignupForm.value.direccion,
-      };
-      // Store datos in the service
-      // this.searchContribuyente(datos);
-      this.userDataService.setTemporaryUserData(datos);
-  
-      this.sendEmail(datos, '')
-        .then(() => {
-          this.router.navigate(['/auth/twostep'], { queryParams: { username: datos.userName } });
-        })
-        .catch(error => {
-          this.userDataService.setTemporaryUserData(null);
-        });
-
-    } else {
-      this.notify('Formulario Invalido!', 'error');
-      Object.keys(this.SignupForm.controls).forEach(key => {
-        const control = this.SignupForm.get(key);
-        control?.markAsTouched();
-      });
-    }
-  }
-  
-  
-  generateCode(): string {
-    return Math.floor(1000 + Math.random() * 9000).toString();
-  }
-
-  sendEmail(data: any, link: string): Promise<void> {
-    const email = data.correo;
-    const name = data.nombre;
-    const codigo = data.verificationCode;
-  
-    return emailjs.send("service_auth", "template_6htavso", {
-      from_name: "GAMQ-DEPORTES",
-      to_name: name,
-      message: codigo,
-      // message: `Puedes ingresar al siguiente Link: ${link}`,
-      reply_to: email,
-    }, 'X9362U1QpUzthcHGT')
-      .then((response: EmailJSResponseStatus) => {
-        this.notify("Un email fue enviado a " + email + " con el codigo de confirmacion", 'success');
-        this.submitted = false;
-        this.SignupForm.reset();   
-      })
-      .catch((error) => {
-        this.submitted = false;
-        this.notify("No se pudo enviar correctamente el e-mail", 'error');
-        throw error; 
+  /* API REQUESTS */
+  private getUsers() {
+    this.contribuyentesService.getAll().subscribe({
+        next: (data: any) => {
+          if (data['status'] === 'OK') {
+            this.usersList = data.payload;
+          }
+        },
+        error: (error) => {         
+        }
       });
   }
 
+  /*  */
   private notify(message: any, type: any): void {
     let timerInterval: any;
     Swal.fire({
@@ -402,17 +418,4 @@ export class SignupComponent implements OnInit {
       }
     });
   }
-  /* API REQUESTS */
-  private getUsers() {
-    this.contribuyentesService.getAll().subscribe({
-        next: (data: any) => {
-          if (data['status'] === 'OK') {
-            this.usersList = data.payload;
-          }
-        },
-        error: (error) => {         
-        }
-      });
-  }
-
 }

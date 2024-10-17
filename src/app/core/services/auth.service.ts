@@ -52,124 +52,83 @@ export class AuthenticationService {
     }
 
 
-    /**
-     * Performs the auth
-     * @param username username of user
-     * @param password password of user
-     */
-  async login(username: string, password: string): Promise<boolean> {
-    try {
-      const [empleadoResult, contribuyenteResult] = await Promise.all([
-        this.loginEmpleado(username, password),
-        this.loginContribuyente(username, password)
-      ]);
-  
-      if (empleadoResult) {
-        return true;
-      } else if (contribuyenteResult) {
-        // this.router.navigate(['/inicio/taxpayer']).then(() => {
-        //   this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
-        // });
-        return true;
-      } else {
-        return false;
-      }
-    } catch (error) {
-      console.error("Error in login:", error);
-      return false;
-    }
-  }
-  
-  private loginEmpleado(username: string, password: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      this.authUser.loginByUsername(username, password).subscribe({
-        next: (data) => {
-          this.currentUserSubject = data;
-          this.storageService.saveToken(data.token);
-          this.userHasPermission(data);
-          resolve(true);
-        },
-        error: () => resolve(false)
-      });
-    });
-  }
-  
-  private loginContribuyente(username: string, password: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      this.authContribuyente.loginByUsername(username, password).subscribe({
-        next: (data:any) => {
-          if(data['status']=== 'OK'){
-            this.currentUserSubject = data.payload;
-            this.storageService.saveToken("isContribuyente");
-            this.storageService.saveUser(this.currentUserSubject);
-            localStorage.setItem('menu', JSON.stringify(MENU_BASE));
-            this.router.navigate(['/inicio/taxpayer']).then(() => {
-              this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
-            });
-            resolve(true);
+    async loginEmpleado(username: string, password: string): Promise<any> {
+      return new Promise((resolve, reject) => {
+        this.authUser.loginByUsername(username, password).subscribe({
+          next: (data) => {
+            this.currentUserSubject = data;
+            this.storageService.saveToken(data.token);
+            // this.userHasPermission(data);
+            resolve(data);
+          },
+          error: (error) => {
+            resolve(null);
           }
-        },
-        error: () => resolve(false)
+        });
       });
-    });
-  }
-  
-  private async userHasPermission(user: any) {
-    try {
-      const [userPermissions, empleado] = await Promise.all([
-        this.permissionService.getPermisosUsuario(user.uuid).toPromise(),
-        this.designationsService.getByUserUuid(user.uuid).toPromise()
-          .then((response:any) => {
-            if (response && response.status === 'OK') {
-              return response.payload;
+    }
+    
+    async loginContribuyente(username: string, password: string): Promise<boolean> {
+      return new Promise((resolve, reject) => {
+        this.authContribuyente.loginByUsername(username, password).subscribe({
+          next: (data: any) => {
+            if (data['status'] === 'OK') {
+              this.currentUserSubject = data.payload;
+              this.storageService.saveToken("isContribuyente");
+              this.storageService.saveUser(this.currentUserSubject);
+              localStorage.setItem('menu', JSON.stringify(MENU_BASE));
+
+              resolve(true);
             } else {
-              return null;
+              resolve(false); 
             }
-          })
-          .catch(error => {
-            return null; 
-          }),
-      ]);
-      
-      if (userPermissions && Array.isArray(userPermissions) && userPermissions.length > 0) {
-        if (empleado !== null || userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin)) {
-          this.isAuthenticated = true;
-          userPermissions.forEach((menu: any) => {
-            if (!menu.permisoPadreDto) {
-              menu.isCollapsed = true;
-            }
-          });
-          this.storageService.saveUser(user);
-          localStorage.setItem('menu', JSON.stringify(userPermissions));  
-  
-          if (userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin)) {
-            this.router.navigate(['/inicio']).then(() => {
-              this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
-            });
-            return;
+          },
+          error: (error) => {            
+            resolve(false);
           }
-  
-          localStorage.setItem('assignaments', JSON.stringify(empleado));
-          this.router.navigate(['/inicio/employee']).then(() => {
-            this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
-          });
-          
-
-        } else {
-          this.storageService.signOut();
-          this.toastService.show("El usuario no cuenta con los permisos necesarios en esta aplicación, Comunicarse con Administrador");
-        }
-      } else {
-        this.storageService.signOut();
-        this.toastService.show("El usuario no cuenta con permisos");
-      }
-    } catch (error) {
-      console.error('Error in hasPermission:', error);
-      this.toastService.show("Ocurrió un error al verificar los permisos");
+        });
+      });
     }
-  }
-
+    
   
+    async userHasPermission(user: any): Promise<'isAdmin' | 'isEmpleado' | 'hasNoPermissions'> {
+      try {
+        const [userPermissions, empleado] = await Promise.all([
+          this.permissionService.getPermisosUsuario(user.uuid).toPromise(),
+          this.designationsService.getByUserUuid(user.uuid).toPromise()
+            .then((response: any) => response?.status === 'OK' ? response.payload : null)
+            .catch(error => null),
+        ]);
+    
+        if (userPermissions && Array.isArray(userPermissions) && userPermissions.length > 0) {
+          const isAdmin = userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin);
+            if (empleado !== null || isAdmin) {
+            this.isAuthenticated = true;
+            userPermissions.forEach((menu: any) => {
+              if (!menu.permisoPadreDto) {
+                menu.isCollapsed = true;
+              }
+            });
+            this.storageService.saveUser(user);
+            localStorage.setItem('menu', JSON.stringify(userPermissions));            
+            if (isAdmin) {
+              return 'isAdmin';
+            } else {
+              localStorage.setItem('assignaments', JSON.stringify(empleado));
+              return 'isEmpleado';
+            }
+          } else {
+            return 'hasNoPermissions';
+          }
+        } else {
+          return 'hasNoPermissions';
+        }
+      } catch (error) {
+        console.error('Error in hasPermission:', error);
+        throw new Error('Ocurrió un error al verificar los permisos');
+      }
+    }
+      
     /**
      * Returns the current user
      */

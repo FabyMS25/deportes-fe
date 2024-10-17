@@ -29,231 +29,212 @@
   
             <div class="row justify-content-center">
                 <div class="col-md-9 col-lg-7 col-xl-8">
-                    <div class="card mt-2">
-  
-                        <div class="card-body p-4">
+                    <div class="card">  
+                        <div class="card-body p-2 mt-2">
                             <div class="text-center ">
                                 <h5 class="text-primary">Crear cuenta nueva</h5>
                                 <p class="text-muted">Registro de contribuyente</p>
                             </div>
-                            <div class="p-2">
-                                <form [formGroup]="SignupForm" (ngSubmit)="onSubmit()">
-                                    
-                                    <div class="mt-2">
-                                        <label for="nombre-field" class="form-label">Nombre(s) <span class="text-danger">*</span></label>
-                                        <input type="text" id="nombre-field" class="form-control" placeholder="Ingresar Nombre"
-                                            required formControlName="nombre"
-                                            [ngClass]="{ 'is-invalid': submitted && f['nombre'].errors }" />
+                            <form [formGroup]="SignupForm" (ngSubmit)="onSubmit()" class="p-2">
+                                
+                                <div class="mb-2">
+                                    <label for="nombre-field" class="form-label mb-0">Nombre(s) <span class="text-danger">*</span></label>
+                                    <input type="text" id="nombre-field" class="form-control " placeholder="Ingresar Nombre"
+                                        required formControlName="nombre"
+                                        [ngClass]="{ 'is-invalid': submitted && f['nombre'].errors }" />
+                                    <div class="invalid-feedback">El campo es requerido.</div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-6 mb-2">
+                                        <label for="primerApellido-field" class="form-label mb-0">Primer Apellido <span class="text-danger">*</span></label>
+                                        <input type="text" id="primerApellido-field" class="form-control" placeholder="Primer Apellido"
+                                            required formControlName="primerApellido"
+                                            [ngClass]="{ 'is-invalid': submitted && f['primerApellido'].errors }" />
                                         <div class="invalid-feedback">El campo es requerido.</div>
                                     </div>
-                                    <div class="row mt-2">
-                                        <div class="col-lg-6">
-                                            <label for="primerApellido-field" class="form-label">Primer Apellido <span class="text-danger">*</span></label>
-                                            <input type="text" id="primerApellido-field" class="form-control" placeholder="Apellido Paterno"
-                                                required formControlName="primerApellido"
-                                                [ngClass]="{ 'is-invalid': submitted && f['primerApellido'].errors }" />
-                                            <div class="invalid-feedback">El campo es requerido.</div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <label for="segundoApellido-field" class="form-label">Segundo Apellido</label>
-                                            <input type="text" id="segundoApellido-field" class="form-control" placeholder="Apellido Materno"
-                                                formControlName="segundoApellido"
-                                                [ngClass]="{ 'is-invalid': submitted && f['segundoApellido'].errors }" />
-                                            <div class="invalid-feedback">El campo es requerido.</div>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-2">
-                                        <div class="col-lg-4">
-                                            <label for="genero-field" class="form-label">Genero  <span class="text-danger">*</span></label>
-                                            <select class="form-select" aria-label="genero"
-                                                formControlName="genero" 
-                                                [ngClass]="{'is-invalid': submitted && f['genero'].errors }">
-                                                <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                                                <option *ngFor="let item of userGender" [value]="item.id">
-                                                    {{ item.description }}
-                                                </option>
-                                            </select>
-                                            <div *ngIf="submitted && f['genero'].errors" class="invalid-feedback" align="left">
-                                                <div *ngIf="f['genero'].errors['required']">Debe seleccionar una opcion</div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-4">
-                                            <label for="fechaNacimiento-field" class="form-label">Fecha de Nacimiento <span class="text-danger">*</span></label>
-                                            <!-- <input type="date" id="fechaNacimiento-field" class="form-control" placeholder="DD/MM/YYYY"
-                                                formControlName="fechaNacimiento"
-                                                [ngClass]="{ 'is-invalid': submitted && f['fechaNacimiento'].errors }" /> -->
-                                            <input type="date" id="fechaNacimiento-field" class="form-control" 
-                                                placeholder="DD/MM/YYYY"
-                                                formControlName="fechaNacimiento"
-                                                [ngClass]="{ 'is-invalid': submitted && f['fechaNacimiento'].errors }"
-                                                [value]="f['fechaNacimiento'].value | date:'yyyy-MM-dd'" />
-                                            <div class="invalid-feedback">El campo es requerido.</div>
-                                        </div>
-                                        <div class="col-lg-4">
-                                            <label for="estadoCivil-field" class="form-label">Estado Civil  <span class="text-danger">*</span></label>
-                                            <select class="form-select" aria-label="estadoCivil"
-                                                formControlName="estadoCivil" 
-                                                [ngClass]="{'is-invalid': submitted && f['estadoCivil'].errors }">
-                                                <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                                                <option *ngFor="let item of estadoCivil" [value]="item.type">
-                                                    {{ item.description }}
-                                                </option>
-                                            </select>
-                                            <div *ngIf="submitted && f['estadoCivil'].errors" class="invalid-feedback" align="left">
-                                                <div *ngIf="f['estadoCivil'].errors['required']">Debe seleccionar opción</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-2">
-                                        <div class="col-lg-4">
-                                            <label for="tipoDocumento-field" class="form-label">Tipo Documento <span class="text-danger">*</span></label>
-                                            <select 
-                                                class="form-select" 
-                                                aria-label="tipoDocumento"
-                                                formControlName="tipoDocumento" 
-                                                [ngClass]="{'is-invalid': submitted && f['tipoDocumento'].errors }">
-                                                <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                                                <option *ngFor="let item of tipoDocs" [value]="item.type">
-                                                    {{ item.description }}
-                                                </option>
-                                            </select>
-                                            <div *ngIf="submitted && f['tipoDocumento'].errors" class="invalid-feedback" align="left">
-                                                <div *ngIf="f['tipoDocumento'].errors['required']">El campo es requerido</div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-4">
-                                            <label for="nroDocumento-field" class="form-label">Nro Documento <span class="text-danger">*</span></label>
-                                            <input type="text" id="nroDocumento-field" class="form-control" placeholder="Ingresar su Identificación"
-                                                formControlName="nroDocumento"
-                                                [ngClass]="{'is-invalid': (f['nroDocumento'].touched || submitted) && f['nroDocumento'].errors}">
-                                         
-                                            <div *ngIf="(f['nroDocumento'].touched || submitted) && f['nroDocumento'].errors" class="invalid-feedback">
-                                                <span *ngIf="f['nroDocumento'].errors?.['required']">El campo es requerido</span>
-                                                <span *ngIf="f['nroDocumento'].errors?.['itExist']">La identificacion ya se encuentra registrada.</span>
-                                            </div>
-                                        </div>   
-                                        <div class="col-lg-4">
-                                            <label for="expedido-field" class="form-label">Expedido</label><span class="text-danger">*</span>
-                                            <select class="form-select" 
-                                                aria-label="expedido"  formControlName="expedido" 
-                                                [ngClass]="{'is-invalid': submitted && f['expedido'].errors }">
-                                                <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                                                <option *ngFor="let item of cityAcronym" [value]="item.id">
-                                                    {{ item.description }}
-                                                </option>
-                                            </select>
-                                            <div *ngIf="submitted && f['expedido'].errors" class="invalid-feedback" align="left">
-                                                <div *ngIf="f['expedido'].errors['required']">El campo es requerido</div>
-                                            </div>
-                                        </div> 
-
-                                        <div id="identificacionInput" class="form-text"><!-- Si el número tiene un --> Agregar complemento si corresponde al Nro Documento,<!--  debe escribirlo separado por un guion, como por --> ejemplo: <b>12345678-1C</b><!-- , donde 1C es el complemento --></div>
-                                        
-                                    </div>
-                                    <div class="row mt-2">
-                                        <div class="col-lg-6">
-                                            <label for="nroNit-field" class="form-label">NIT </label><span class="text-muted">(opcional)</span>
-                                            <input type="text" id="nroNit-field" class="form-control" placeholder="Ingresar NIT"
-                                                formControlName="nroNit"
-                                                [ngClass]="{ 'is-invalid': submitted && f['nroNit'].errors }" />
-                                            <div class="invalid-feedback">El campo es requerido.</div>
-                                        </div>                            
-                                        <div class="col-lg-6">
-                                            <label for="celular-field" class="form-label">Celular</label><span class="text-danger">*</span>
-                                            <input type="text" id="celular-field" class="form-control" placeholder="Ingresar Celular"
-                                                mask="000-000-0000" formControlName="celular"
-                                                [ngClass]="{ 'is-invalid': submitted && f['celular'].errors }" />
-                                            <div class="invalid-feedback">El campo es requerido.</div>
-                                        </div>                                      
-                                    </div>
-                                    <div class="mt-2">
-                                        <label for="direccion-field" class="form-label">Dirección</label><span class="text-muted">(opcional)</span>
-                                        <input type="text" id="direccion-field" class="form-control" placeholder="Ingresar Dirección"
-                                            formControlName="direccion"
-                                            [ngClass]="{ 'is-invalid': submitted && f['direccion'].errors }" />
+                                    <div class="col-lg-6 mb-2">
+                                        <label for="segundoApellido-field" class="form-label mb-0">Segundo Apellido</label>
+                                        <input type="text" id="segundoApellido-field" class="form-control" placeholder="Segundo Apellido"
+                                            formControlName="segundoApellido"
+                                            [ngClass]="{ 'is-invalid': submitted && f['segundoApellido'].errors }" />
                                         <div class="invalid-feedback">El campo es requerido.</div>
-                                    </div>  
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-4 mb-2">
+                                        <label for="fechaNacimiento-field" class="form-label mb-0">Fecha de Nacimiento <span class="text-danger">*</span></label>
+                                        <input type="date" id="fechaNacimiento-field" class="form-control" 
+                                            placeholder="DD/MM/YYYY"
+                                            formControlName="fechaNacimiento"
+                                            [ngClass]="{ 'is-invalid': submitted && f['fechaNacimiento'].errors }"
+                                            [value]="f['fechaNacimiento'].value | date:'yyyy-MM-dd'" />
+                                        <div class="invalid-feedback">El campo es requerido.</div>
+                                    </div>
+                                    <div class="col-lg-4 mb-2">
+                                        <label for="genero-field" class="form-label mb-0">Genero </label>
+                                        <select class="form-select" aria-label="genero"
+                                            formControlName="genero" 
+                                            [ngClass]="{'is-invalid': submitted && f['genero'].errors }">
+                                            <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
+                                            <option *ngFor="let item of userGender" [value]="item.id">
+                                                {{ item.description }}
+                                            </option>
+                                        </select>
+                                        <div *ngIf="submitted && f['genero'].errors" class="invalid-feedback" align="left">
+                                            <div *ngIf="f['genero'].errors['required']">Debe seleccionar una opcion</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4 mb-2">
+                                        <label for="estadoCivil-field" class="form-label mb-0">Estado Civil </label>
+                                        <select class="form-select" aria-label="estadoCivil"
+                                            formControlName="estadoCivil" 
+                                            [ngClass]="{'is-invalid': submitted && f['estadoCivil'].errors }">
+                                            <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
+                                            <option *ngFor="let item of estadoCivil" [value]="item.type">
+                                                {{ item.description }}
+                                            </option>
+                                        </select>
+                                        <div *ngIf="submitted && f['estadoCivil'].errors" class="invalid-feedback" align="left">
+                                            <div *ngIf="f['estadoCivil'].errors['required']">Debe seleccionar opción</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-4 mb-2">
+                                        <label for="tipoDocumento-field" class="form-label mb-0">Tipo Documento <span class="text-danger">*</span></label>
+                                        <select class="form-select" 
+                                            aria-label="tipoDocumento" formControlName="tipoDocumento" 
+                                            [ngClass]="{'is-invalid': submitted && f['tipoDocumento'].errors }">
+                                            <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
+                                            <option *ngFor="let item of tipoDocs" [value]="item.type">
+                                                {{ item.description }}
+                                            </option>
+                                        </select>
+                                        <div *ngIf="submitted && f['tipoDocumento'].errors" class="invalid-feedback" align="left">
+                                            <div *ngIf="f['tipoDocumento'].errors['required']">El campo es requerido</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4 mb-2">
+                                        <label for="nroDocumento-field" class="form-label mb-0">Nro Documento <span class="text-danger">*</span></label>
+                                        <input type="text" id="nroDocumento-field" class="form-control" formControlName="nroDocumento"
+                                            placeholder="Documento de Identificación"
+                                            [ngClass]="{'is-invalid': (f['nroDocumento'].touched || submitted) && f['nroDocumento'].errors}">                                     
+                                        <div *ngIf="(f['nroDocumento'].touched || submitted) && f['nroDocumento'].errors" class="invalid-feedback">
+                                            <span *ngIf="f['nroDocumento'].errors?.['required']">El campo es requerido</span>
+                                            <span *ngIf="f['nroDocumento'].errors?.['itExist']">La identificacion ya se encuentra registrada.</span>
+                                        </div>
+                                        <div id="identificacionInput" class="form-text"> Agregar complemento si corresponde, ejemplo: <b>12345678-1C</b></div>
+                                    </div>   
+                                    <div class="col-lg-4 mb-2">
+                                        <label for="expedido-field" class="form-label mb-0">Expedido</label><span class="text-danger">*</span>
+                                        <select class="form-select" 
+                                            aria-label="expedido"  formControlName="expedido" 
+                                            [ngClass]="{'is-invalid': submitted && f['expedido'].errors }">
+                                            <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
+                                            <option *ngFor="let item of cityAcronym" [value]="item.id">
+                                                {{ item.description }}
+                                            </option>
+                                        </select>
+                                        <div *ngIf="submitted && f['expedido'].errors" class="invalid-feedback" align="left">
+                                            <div *ngIf="f['expedido'].errors['required']">El campo es requerido</div>
+                                        </div>
+                                    </div>                                     
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-6 mb-2">
+                                        <label for="nroNit-field" class="form-label mb-0">NIT </label><span class="text-muted">(opcional)</span>
+                                        <input type="text" id="nroNit-field" class="form-control" placeholder="Ingresar NIT"
+                                            formControlName="nroNit"
+                                            [ngClass]="{ 'is-invalid': submitted && f['nroNit'].errors }" />
+                                        <div class="invalid-feedback">El campo es requerido.</div>
+                                    </div>                            
+                                    <div class="col-lg-6 mb-2">
+                                        <label for="celular-field" class="form-label mb-0">Celular</label><span class="text-danger">*</span>
+                                        <input type="text" id="celular-field" class="form-control" placeholder="Ingresar Celular"
+                                            mask="000-000-0000" formControlName="celular"
+                                            [ngClass]="{ 'is-invalid': submitted && f['celular'].errors }" />
+                                        <div class="invalid-feedback">El campo es requerido.</div>
+                                    </div>                                      
+                                </div> 
 
-                                    <div class="mt-2">
-                                        <label for="correo-field" class="form-label">Email <span class="text-danger">*</span></label>
-                                        <input type="correo" id="correo-field" class="form-control" placeholder="Ingrese un correo valido" 
-                                            required formControlName="correo"
-                                            [ngClass]="{ 'is-invalid': submitted && f['correo'].errors }" />
-                                        <div class="invalid-feedback">Debe Ingresar un correo.</div>
-                                    </div> 
+                                <div class="mb-2">
+                                    <label for="correo-field" class="form-label mb-0">Email <span class="text-danger">*</span></label>
+                                    <input type="correo" id="correo-field" class="form-control" placeholder="Ingrese un correo valido" 
+                                        required formControlName="correo"
+                                        [ngClass]="{ 'is-invalid': submitted && f['correo'].errors }" />
+                                    <div class="invalid-feedback">Debe Ingresar un correo.</div>
                                     <div id="emailInput" class="form-text">Asegúrese de tener acceso al correo, <b>Se le enviara el codigo de confirmación </b></div>
-                             
-                                    <div class="mt-2">
-                                        <label class="form-label" for="username-input">Usuario</label>
-                                        <div class="position-relative auth-pass-inputgroup"><!-- pattern="/^[a-z0-9.]+$/" -->
-                                            <input type="text" class="form-control pe-5 username-input" 
-                                                   placeholder="Ingresar Usuario" aria-describedby="usernameInput" formControlName="username"  
-                                                   id="username-input" (focus)="onUsernameFocus()" (blur)="onUsernameBlur()"
-                                                   [ngClass]="{'is-invalid': (SignupForm.get('username')?.touched || submitted) && SignupForm.get('username')?.errors}">
-                                            
-                                            <div *ngIf="(SignupForm.get('username')?.touched || submitted) && SignupForm.get('username')?.errors" class="invalid-feedback">
-                                                <span *ngIf="SignupForm.get('username')?.errors?.['required']">Por favor ingrese su Usuario</span>
-                                                <!-- <span *ngIf="SignupForm.get('username')?.errors?.['usernameTaken']">Este usuario ya existe.</span>
-                                                <span *ngIf="SignupForm.get('username')?.errors?.['minlength']">El usuario debe tener al menos 6 caracteres</span>
-                                                <span *ngIf="SignupForm.get('username')?.errors?.['invalidFormat']">El usuario solo puede contener letras, números y puntos</span> -->
-                                            </div>
-                                        </div>        
-                                        <div id="username-contain" class="p-3 bg-light mb-2 rounded" >
-                                            <h5 class="fs-13">El Username debe ser único</h5>
-                                            <p id="user-taken" class="fs-12 mb-2"
-                                                [ngClass]="{'invalid': SignupForm.get('username')?.errors?.['usernameTaken'], 
-                                                            'valid': !SignupForm.get('username')?.errors?.['usernameTaken'] && SignupForm.get('username')?.valid,
-                                                            'pending': SignupForm.get('username')?.pending}">
-                                                <span *ngIf="SignupForm.get('username')?.pending">Verificando disponibilidad...</span>
-                                                <span *ngIf="SignupForm.get('username')?.errors?.['usernameTaken']">Este Usuario ya existe. Por favor escoja otro.</span>
-                                                <span *ngIf="!SignupForm.get('username')?.errors?.['usernameTaken'] &&  SignupForm.get('username')?.valid">Usuario disponible.</span>
-                                            </p>
-                                            <p id="user-length" class="invalid fs-12 mb-2">Mínimo <b>6 caracteres</b></p>
-                                            <p id="user-pattern" class="invalid fs-12 mb-2">El usuario solo puede contener <b>letras, números y puntos</b> (a-z)</p>
-                                        </div>
-                                    </div>
+                                </div> 
+                         
+                                <div class="mb-2">
+                                    <label for="direccion-field" class="form-label mb-0">Dirección</label><span class="text-muted">(opcional)</span>
+                                    <input type="text" id="direccion-field" class="form-control" placeholder="Ingresar Dirección"
+                                        formControlName="direccion"
+                                        [ngClass]="{ 'is-invalid': submitted && f['direccion'].errors }" />
+                                    <div class="invalid-feedback">El campo es requerido.</div>
+                                </div> 
 
-                                    <div class="mt-2">
-                                        <label class="form-label" for="password-input">Contraseña</label>
-                                        <div class="position-relative auth-pass-inputgroup">
-                                            <input [type]="passwordField ? 'text' : 'password'" class="form-control pe-5 password-input" 
-                                            placeholder="Ingresar contraseña" aria-describedby="passwordInput" 
-                                            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" required formControlName="password"
-                                            id="password-input" 
-                                            [ngClass]="{ 'is-invalid': submitted && f['password'].errors }">
-                                            <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button"
-                                                id="password-addon"><i class="ri-eye-fill align-middle" [ngClass]="{'mdi-eye-off-outline': !passwordField, 'mdi-eye-outline': passwordField
-                                            }" (click)="togglepasswordField()"></i></button>
-                                            @if(submitted && f['password'].errors){
-                                            <div class="invalid-feedback">
-                                                @if(f['password'].errors['required']){
-                                                    <span>Porfavor ingrese su contraseña</span>
-                                                }
-                                            </div>
-                                            }                                            
+                                <div class="mb-2" hidden>
+                                    <label class="form-label" for="username-input">Usuario</label>
+                                    <div class="position-relative auth-pass-inputgroup">
+                                        <input type="text" class="form-control pe-5 username-input" 
+                                               placeholder="Ingresar Usuario" aria-describedby="usernameInput" formControlName="username"  
+                                               id="username-input" (focus)="onUsernameFocus()" (blur)="onUsernameBlur()"
+                                               [ngClass]="{ 'is-invalid': submitted && f['username'].errors }">
+                                               <!-- [ngClass]="{'is-invalid': (SignupForm.get('username')?.touched || submitted) && SignupForm.get('username')?.errors}"> -->
+                                        
+                                        <div *ngIf="(SignupForm.get('username')?.touched || submitted) && SignupForm.get('username')?.errors" class="invalid-feedback">
+                                            <span *ngIf="SignupForm.get('username')?.errors?.['required']">Por favor ingrese su Usuario</span>
                                         </div>
-                                        <div id="passwordInput" class="form-text">Debe tener un mínimo de <b>8 caracteres</b></div>
-                                    </div>            
-                                    <div class="mt-2">
-                                        <label class="form-label" for="confirm-password-input">Confirmar Contraseña</label>
-                                        <div class="position-relative auth-pass-inputgroup mb-3">
-                                            <input [type]="confirmField ? 'text' : 'password'" class="form-control pe-5 password-input" 
-                                            placeholder="Confirmar contraseña" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" 
-                                            id="confirm-password-input" required formControlName="cpassword"
-                                            [ngClass]="{ 'is-invalid': submitted && f['cpassword'].errors }">
-                                            <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" 
-                                            type="button" id="confirm-password-input"><i class="ri-eye-fill align-middle" 
-                                            [ngClass]="{'mdi-eye-off-outline': !passwordField, 'mdi-eye-outline': passwordField
-                                            }" (click)="toggleconfirmField()"></i></button>
-                                            @if(submitted && f['cpassword'].errors){
-                                                <div class="invalid-feedback">
-                                                    <span *ngIf="f['cpassword'].errors['required']">Confirme su contraseña</span>
-                                                    <span *ngIf="f['cpassword'].errors['mustMatch']">Las contraseñas no coinciden</span>
-                                            </div>
-                                            }
-                                        </div>
+                                    </div>        
+                                    <div id="username-contain" class="p-3 bg-light mb-2 rounded" >
+                                        <h5 class="fs-13">El Username debe ser único</h5>
+                                        <p id="user-taken" class="fs-12 mb-2"
+                                            [ngClass]="{'invalid': SignupForm.get('username')?.errors?.['usernameTaken'], 
+                                                        'valid': !SignupForm.get('username')?.errors?.['usernameTaken'] && SignupForm.get('username')?.valid,
+                                                        'pending': SignupForm.get('username')?.pending}">
+                                            <span *ngIf="SignupForm.get('username')?.pending">Verificando disponibilidad...</span>
+                                            <span *ngIf="SignupForm.get('username')?.errors?.['usernameTaken']">Este Usuario ya existe. Por favor escoja otro.</span>
+                                            <span *ngIf="!SignupForm.get('username')?.errors?.['usernameTaken'] &&  SignupForm.get('username')?.valid">Usuario disponible.</span>
+                                        </p>
+                                        <p id="user-length" class="invalid fs-12 mb-2">Mínimo <b>6 caracteres</b></p>
+                                        <p id="user-pattern" class="invalid fs-12 mb-2">El usuario solo puede contener <b>letras, números y puntos</b> (a-z)</p>
                                     </div>
-                                    
+                                </div>
+
+                                <div class="mb-2" hidden>
+                                    <label class="form-label" for="password-input">Contraseña</label>
+                                    <div class="position-relative auth-pass-inputgroup">
+                                        <input [type]="passwordField ? 'text' : 'password'" class="form-control pe-5 password-input" 
+                                        placeholder="Ingresar contraseña" aria-describedby="passwordInput" formControlName="password"
+                                         required 
+                                        id="password-input"  (focus)="onPasswordFocus()" (blur)="onPasswordBlur()"
+                                        [ngClass]="{ 'is-invalid': submitted && f['password'].errors }"><!-- pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" -->
+                                        <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button"
+                                            id="password-addon"><i class="ri-eye-fill align-middle" [ngClass]="{'mdi-eye-off-outline': !passwordField, 'mdi-eye-outline': passwordField
+                                        }" (click)="togglepasswordField()"></i></button>
+                                        <div *ngIf="(SignupForm.get('password')?.touched || submitted) && SignupForm.get('password')?.errors" class="invalid-feedback">
+                                            <span *ngIf="SignupForm.get('password')?.errors?.['required']">Por favor ingrese su Usuario</span>
+                                        </div>                                        
+                                    </div>
+                                    <div id="passwordInput" class="form-text">Debe tener un mínimo de <b>8 caracteres</b></div>
+                                    <label class="form-label" for="confirm-password-input">Confirmar Contraseña</label>
+                                    <div class="position-relative auth-pass-inputgroup mb-3">
+                                        <input [type]="confirmField ? 'text' : 'password'" class="form-control pe-5 password-input" 
+                                        placeholder="Confirmar contraseña" 
+                                        id="confirm-password-input" required formControlName="cpassword"
+                                        [ngClass]="{ 'is-invalid': submitted && f['cpassword'].errors }"><!-- pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"  -->
+                                        <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" 
+                                        type="button" id="confirm-password-input"><i class="ri-eye-fill align-middle" 
+                                        [ngClass]="{'mdi-eye-off-outline': !passwordField, 'mdi-eye-outline': passwordField}" 
+                                        (click)="toggleconfirmField()"></i></button>
+                                        @if(submitted && f['cpassword'].errors){
+                                            <div class="invalid-feedback">
+                                                <span *ngIf="f['cpassword'].errors['required']">Confirme su contraseña</span>
+                                                <span *ngIf="f['cpassword'].errors['mustMatch']">Las contraseñas no coinciden</span>
+                                        </div>
+                                        }
+                                    </div>
                                     <div id="password-contain" class="p-3 bg-light mb-2 rounded">
                                         <h5 class="fs-13">La contraseña debe contener:</h5>
                                         <p id="pass-length" class="invalid fs-12 mb-2">Mínimo <b>8 caracteres</b></p>
@@ -261,22 +242,20 @@
                                         <p id="pass-upper" class="invalid fs-12 mb-2">Al menos una <b>letra mayúscula</b> (A-Z)</p>
                                         <p id="pass-number" class="invalid fs-12 mb-0">Al menos un <b>número</b> (0-9)</p>
                                     </div>
-                                    
-                                    <div class="mb-4">
-                                        <p class="mb-0 fs-12 text-muted fst-italic">
-                                            Al registrarte, aceptas los 
-                                            <a routerLink="/pages/terms-condition" class="text-primary text-decoration-underline fst-normal fw-medium"> Términos de Uso </a>
-                                            del GAMQ
-                                        </p>
-                                    </div>
-  
-                                    <div class="mt-4">
-                                        <button class="btn btn-secondary w-100" type="submit">Crear Cuenta</button>
-                                    </div>
-                                </form>  
-                            </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <p class="mb-0 fs-12 text-muted fst-italic">
+                                        Al registrarte, aceptas los 
+                                        <a routerLink="/pages/terms-condition" class="text-primary text-decoration-underline fst-normal fw-medium"> Términos de Uso </a>
+                                        del GAMQ
+                                    </p>
+                                </div>
+                                <div class="mt-2">
+                                    <button class="btn btn-secondary w-100" type="submit">Crear Cuenta</button>
+                                </div>
+                            </form>
                         </div>
-                        <!-- end card body -->
                     </div>
                     <!-- end card -->
                       
