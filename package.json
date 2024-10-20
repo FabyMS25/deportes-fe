@@ -83,6 +83,7 @@
     "leaflet-utfgrid": "^0.3.0",
     "lottie-web": "^5.12.2",
     "masonry-layout": "^4.2.2",
+    "mermaid": "^11.3.0",
     "metismenujs": "^1.4.0",
     "ng-apexcharts": "^1.8.0",
     "ng-otp-input": "^1.9.3",

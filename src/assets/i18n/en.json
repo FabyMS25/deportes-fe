@@ -19,7 +19,33 @@
   "Categorias": "Categories",
   "Superficies": "Surfaces",
 
+  
+  "Lista de Administracion": "Administration list",
+  "Lista de Reservas": "Reservations list",
+  "Lista de Contribuyentes": "Taxpayers list",
+  "Lista de Reportes": "Reports list",
+  "Lista de Encargados": "Employes list",
+  "Lista de Complejos Deportivos": "Facilities list",
+  "Lista de Campos Deportivos": "Sport Fields list",
+  "Lista de Categorias": "Categories list",
+  "Lista de Superficies": "Surfaces list",
 
+  "Agregar": "Add",
+  "Editar": "Edit",
+  "Guardar": "Save",
+  "Eliminar": "Delete",
+  "Ver": "View",
+  "Generar": "Generate",
+  "Importar": "Import",
+  "Exportar": "Export",
+  "Buscar": "Buscar",
+  "Cancelar": "Cancel",
+  "Cerrar": "Close",
+  "Confirmar": "Confirm",
+  "Siguiente": "Next",
+  "Anterior": "Previous",
+  "Atras": "Back",
+  
 
   "DASHBOARDS": {
       "ADMIN": "Dashboard",

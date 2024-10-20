@@ -1,6 +1,7 @@
 {
     "t-menu":"Menú",
     "t-dashboards":"Panel de Control",
+    "t-administration" :"Administración",
     "t-analytics":"Analítica",
     "t-crm":"CRM",
     "t-ecommerce":"Comercio electrónico",
@@ -9,7 +10,6 @@
     "t-nft": "NFT",
     "t-job": "Trabajo",
     "t-apps" :"aplicaciones",
-    "t-administration" :"Administración",
     "t-calendar":"Calendario",
     "t-chat":"Chat",
     "t-email": "Correo electrónico",

@@ -4,26 +4,28 @@
 
 <div class="row">
     <div class="col-lg-12">
-        <div class="card" *ngIf="canActivate.includes('CREAR') || (canActivate.includes('EXPORTAR') && selectedItems.length>0)">
-            <div class="card-header">
-                <div class="d-flex align-items-center flex-wrap gap-2">
-                    <div class="flex-grow-1">
-                        <button type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal" 
-                            (click)="openModal(undefined,content,'')">
-                            <i class="ri-add-circle-line align-middle"></i> 
-                            {{"Agregar" | translate}}
+        <div class="card mb-2">  
+            <div class="card-header d-flex flex-wrap align-items-center">
+                <h5 class="card-title flex-grow-1">{{'Lista de '+title|translate }}</h5>
+                <div class="flex-shrink-0">
+                    <div class="d-flex gap-1 flex-wrap ">
+                        <button *ngIf="canActivate.includes('CREAR')" (click)="openModal(undefined,'','lg')"
+                          type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal">
+                          <i class="ri-add-circle-line align-middle"></i> 
+                          {{"Agregar" | translate}}
+                        </button>   
+                        <button *ngIf="canActivate.includes('CREAR')" (click)="openModalImport()" 
+                            class="btn btn-soft-primary" >
+                            <i class="ri-file-upload-line align-bottom"></i>
+                            {{"Importar" | translate}}
+                        </button>                    
+                        <button *ngIf="canActivate.includes('VER')" (click)="csvFileExport()" 
+                            class="btn btn-soft-info" id="remove-actions" style="display: none">
+                            <i class="ri-file-download-line align-bottom"></i>
+                            {{"Exportar" | translate}}
                         </button>
                     </div>
-                    <div class="flex-shrink-0">
-                        <div class="hstack text-nowrap gap-2" ngbDropdown>
-                            <button class="btn btn-soft-info" (click)="csvFileExport()"
-                                id="remove-actions" style="display: none">
-                                <i class="ri-file-download-line align-bottom me-1"></i>Exportar</button>
-                            <button class="btn btn-soft-primary" (click)="openModalImport()">
-                                <i class="ri-file-upload-line align-bottom me-1"></i>Importar</button>
-                        </div>
-                    </div>
-                </div>
+                </div>                
             </div>
         </div>
     </div>
@@ -31,10 +33,10 @@
         <div class="card">
             <div class="card-header">
                 <div class="row g-2">
-                    <div class="col-6">
+                    <div class="col-12 col-lg-6">
                         <div class="search-box">
-                            <input type="text" name="searchTerm" class="form-control"
-                                placeholder="Buscar por ..." [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
+                            <input type="text" name="searchTerm" class="form-control" placeholder="Buscar por ..." 
+                                [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
                             <i class="ri-search-line search-icon"></i>
                         </div>
                     </div>
@@ -51,10 +53,10 @@
                     [delete]="canActivate.includes('ELIMINAR')"
                     (showItemEmitter)="openModal($event,content,'show')"
                     (editItemEmitter)="openModal($event,content,'edit')"
-                    (deleteItemEmitter)="deleteModal(deleteModel,$event)"   
-                    (selectedItemEmitter)="getSelectedItems($event)"              
-                >
-                </app-data-table>  
+                    (deleteItemEmitter)="deleteModal(deleteModel,$event)" 
+                    [multiCheck]="canActivate.includes('VER')"
+                    (selectedItemEmitter)="getSelectedItems($event)"    
+                ></app-data-table>  
             </div>
         </div>
 

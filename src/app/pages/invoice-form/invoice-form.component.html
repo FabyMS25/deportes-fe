@@ -186,13 +186,13 @@
                                                         </ng-container>                                                    
                                                         <div *ngIf="slots.morningSlots.length > 0" class="col-sm-6">
                                                             <div *ngFor="let horario of slots.morningSlots" class="align-items-center d-flex">
-                                                                <span class="flex-grow-1">{{ horario.time }}</span>
-                                                                <div class="flex-shrink-0 p-1">
-                                                                    <button *ngIf="horario.isAvailable" type="button" class="btn btn-info btn-sm" [ngxScrollTo]="'invoice_form'"
+                                                                <span class="flex-grow-1" *ngIf="horario.isAvailable">{{ horario.time }}</span>
+                                                                <div class="flex-shrink-0 p-1" *ngIf="horario.isAvailable">
+                                                                    <button *ngIf="!horario.isReserved" type="button" class="btn btn-info btn-sm" [ngxScrollTo]="'invoice_form'"
                                                                       (click)="setReserve(horario.time.split(' - ')[0], horario.time.split(' - ')[1])">
                                                                       Reservar
                                                                     </button>
-                                                                    <button *ngIf="!horario.isAvailable" type="button" class="btn btn-danger btn-sm" disabled>
+                                                                    <button *ngIf="horario.isReserved" type="button" class="btn btn-danger btn-sm" disabled>
                                                                       Reservado
                                                                     </button>
                                                                 </div>
@@ -200,13 +200,13 @@
                                                         </div>                                                    
                                                         <div *ngIf="slots.afternoonSlots.length > 0" class="col-sm-6">
                                                             <div *ngFor="let horario of slots.afternoonSlots" class="align-items-center d-flex">
-                                                                <span class="flex-grow-1">{{ horario.time }}</span>
-                                                                <div class="flex-shrink-0 p-1">
-                                                                    <button *ngIf="horario.isAvailable" type="button" class="btn btn-info btn-sm" [ngxScrollTo]="'invoice_form'"
+                                                                <span class="flex-grow-1" *ngIf="horario.isAvailable">{{ horario.time }}</span>
+                                                                <div class="flex-shrink-0 p-1" *ngIf="horario.isAvailable">
+                                                                    <button *ngIf="!horario.isReserved" type="button" class="btn btn-info btn-sm" [ngxScrollTo]="'invoice_form'"
                                                                       (click)="setReserve(horario.time.split(' - ')[0], horario.time.split(' - ')[1])">
                                                                       Reservar
                                                                     </button>
-                                                                    <button *ngIf="!horario.isAvailable" type="button" class="btn btn-danger btn-sm" disabled>
+                                                                    <button *ngIf="horario.isReserved" type="button" class="btn btn-danger btn-sm" disabled>
                                                                       Reservado
                                                                     </button>
                                                                 </div>
@@ -561,9 +561,12 @@
                         <label for="exampleFormControlTextarea1"
                             class="form-label text-muted text-uppercase fw-semibold">Terminos</label>
                         <textarea class="form-control alert alert-info" id="exampleFormControlTextarea1"
-                            placeholder="Notes" rows="2" disabled
-                            required> En calidad de contribuyente, y en cumplimiento a normativa vigente, declaro que los datos fueron revisados antes de su registro y asumiendo por mi parte, la responsabilidad por la exactitud de la presente declaración 
+                            placeholder="Notes" rows="2" disabled required> 
+                            En calidad de contribuyente, y en cumplimiento a normativa vigente, 
+                            declaro que los datos fueron revisados antes de su registro y asumiendo por mi parte, 
+                            la responsabilidad por la exactitud de la presente declaración 
                         </textarea>
+                        [ ] Autorizo al GAMQ a generar la tasa correspondiente a esta reserva a través del sistema RUAT.
                     </div>
                     <div class="form-check">
                         <input type="checkbox" class="form-check-input" id="check" name="check"

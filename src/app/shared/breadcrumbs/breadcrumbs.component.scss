@@ -1,0 +1,21 @@
+
+.cel-card {
+    margin-left: 4px;
+    margin-right: 4px;
+    display: flex;
+    flex-direction: column;
+  }
+  @media (max-width: 767px) {
+    .cel-card {
+      margin: -14px;
+      padding: 0;
+    }
+    
+    .card-header {
+      padding: 10px 15px;
+    }
+    .card-body {
+      flex-grow: 1;
+      padding: 0 ;
+    }
+  }

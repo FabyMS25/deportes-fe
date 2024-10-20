@@ -17,7 +17,13 @@ const routes: Routes = [
   },
   {
     path: 'terms-condition',
-    component: TermsConditionComponent
+    component: TermsConditionComponent,
+    data: { contentType: 'terms' }
+  },
+  {
+    path: 'policy-privacy',
+    component: TermsConditionComponent,
+    data: { contentType: 'policy' }
   },
   { path: '', loadChildren: () => import('./errors/errors.module').then(m => m.ErrorsModule)},
 ];

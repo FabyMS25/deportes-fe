@@ -4,46 +4,46 @@
 
 <div class="row">
     <div class="col-lg-12">
-        <div class="card" *ngIf="canActivate.includes('CREAR') || (canActivate.includes('EXPORTAR') && selectedItems.length>0)">
-            <div class="card-header">
-                <div class="d-flex align-items-center flex-wrap gap-2">
-                    <div class="flex-grow-1">
-                        <button type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal" 
-                            (click)="openModal(undefined,'','lg')">
-                            <i class="ri-add-circle-line align-middle"></i> 
-                            {{"Agregar" | translate}}
+        <div class="card mb-2">  
+            <div class="card-header d-flex flex-wrap align-items-center">
+                <h5 class="card-title flex-grow-1">{{'Lista de '+title|translate }}</h5>
+                <div class="flex-shrink-0">
+                    <div class="d-flex gap-1 flex-wrap ">
+                        <button *ngIf="canActivate.includes('CREAR')" (click)="openModal(undefined,'','lg')"
+                          type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal">
+                          <i class="ri-add-circle-line align-middle"></i> 
+                          {{"Agregar" | translate}}
+                        </button>   
+                        <button *ngIf="canActivate.includes('CREAR')" (click)="openModalImport()" 
+                            class="btn btn-soft-primary" >
+                            <i class="ri-file-upload-line align-bottom"></i>
+                            {{"Importar" | translate}}
+                        </button>                    
+                        <button *ngIf="canActivate.includes('VER')" (click)="csvFileExport()" 
+                            class="btn btn-soft-info" id="remove-actions" style="display: none">
+                            <i class="ri-file-download-line align-bottom"></i>
+                            {{"Exportar" | translate}}
                         </button>
                     </div>
-                    <div class="flex-shrink-0">
-                        <div class="hstack text-nowrap gap-2" ngbDropdown>
-                            <button class="btn btn-soft-info" (click)="csvFileExport()"
-                                id="remove-actions" style="display: none">
-                                <i class="ri-file-download-line align-bottom me-1"></i>Exportar
-                            </button>
-                            <button class="btn btn-soft-primary" (click)="openModalImport()">
-                                <i class="ri-file-upload-line align-bottom me-1"></i>Importar</button>
-                        </div>
-                    </div>
-                </div>
+                </div>                
             </div>
         </div>
     </div>
-    <!--end col-->
-    <div class="col-xxl-9">
+    <div class="col-lg-9">
         <div class="card">
             <div class="card-header">
-                <div class="row g-2">
-                    <div class="col-6">
+                <div class="row">
+                    <div class="col-10 col-lg-6">
                         <div class="search-box">
-                            <input type="text" name="searchTerm" class="form-control"
-                                placeholder="Buscar por ..." [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
+                            <input type="text" name="searchTerm" class="form-control" placeholder="Buscar por ..." 
+                                [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
                             <i class="ri-search-line search-icon"></i>
                         </div>
                     </div>
-                    <div class="col-md-auto ms-auto">
+                    <div class="col-2 col-lg-1 col-sm-1 ms-md-auto">
                         <div class="d-flex align-items-center gap-2">
                           <div class="hstack gap-2">
-                            <span class="dropdown d-none d-md-inline-block" ngbDropdown>
+                            <span class="dropdown d-md-inline-block" ngbDropdown>
                               <button class="btn btn-soft-info btn-icon fs-14 arrow-none d-block" type="button"
                                       id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false"
                                       ngbDropdownToggle>
@@ -79,10 +79,10 @@
                     [delete]="canActivate.includes('ELIMINAR')"
                     (showItemEmitter)="viewDataGet($event)"
                     (editItemEmitter)="openModal($event,'edit','lg')"
-                    (deleteItemEmitter)="deleteModal(deleteModel,$event)"    
-                    (selectedItemEmitter)="getSelectedItems($event)" 
-                >
-                </app-data-table>  
+                    (deleteItemEmitter)="deleteModal(deleteModel,$event)"
+                    [multiCheck]="canActivate.includes('VER')"
+                    (selectedItemEmitter)="getSelectedItems($event)"    
+                ></app-data-table>  
             </div>
         </div>
     </div>
@@ -95,10 +95,10 @@
                     <span class="contact-active position-absolute rounded-circle bg-success"></span>
                     <span class="visually-hidden"></span>
                 </div>
-                <h5 class="mt-4 mb-1">{{funcionarioSelected.nombre}}</h5>
+                <h5 class="mt-2 mb-1">{{funcionarioSelected.nombre}}</h5>
                 <p class="text-muted">{{funcionarioSelected.nombreUnidad}}</p>
 
-                <ul class="list-inline mb-0">
+                <ul class="list-inline mb-1">
                     <li class="list-inline-item avatar-xs">
                         <a href="javascript:void(0);" class="avatar-title bg-success-subtle text-success fs-15 rounded">
                             <i class="ri-phone-line"></i>
@@ -117,30 +117,37 @@
                 </ul>
             </div>
             <div class="card-body">
-                <h6 class="text-muted text-uppercase fw-semibold mb-3">Información personal</h6>
+                <h6 class="text-muted text-uppercase fw-semibold mb-3">Información Cargo</h6>
                 <p class="text-muted mb-4"></p>
                 <div class="table-responsive table-card">
                     <table class="table table-borderless mb-0">
                         <tbody>
-                            <tr>
-                                <td class="fw-medium" scope="row">Complejo: </td>
+                            <tr scope="row">
+                                <td class="fw-medium" >Complejo: </td>
                                 <td class="designation">{{funcionarioSelected.complejoDto.nombre}}</td>
                             </tr>
-                            <tr>
-                                <td class="fw-medium" scope="row">Telefono: </td>
+                            <tr scope="row">
+                                <td class="fw-medium" >Telefono: </td>
                                 <td class="tags-list">
+                                    <span class="badge bg-primary-subtle text-primary">{{funcionarioSelected.telefono}}</span>
+                                </td>
+                            </tr>
+                            <tr scope="row">
+                                <td class="fw-medium" >Horario: </td>
+                                <td class="contacted_date">
                                     <div class="d-flex gap-1">
-                                        <span class="badge bg-primary-subtle text-primary">{{funcionarioSelected.telefono}}</span>
+                                        <span class="badge bg-primary-subtle text-primary">{{ funcionarioSelected.horaEntrada.slice(0, 5) }}</span>
+                                        <span class="badge bg-primary-subtle text-primary">{{funcionarioSelected.horaSalida.slice(0,5)}}</span>
                                     </div>
                                 </td>
                             </tr>
-                            <tr>
-                                <td class="fw-medium" scope="row">Fechas Designadas</td>
-                                <td class="contacted_date">{{funcionarioSelected.fechaInicio}} - {{funcionarioSelected.fechaFin}}<small class="text-muted"></small></td>
-                            </tr>
-                            <tr>
-                                <td class="fw-medium" scope="row">Horario: </td>
-                                <td class="contacted_date">{{funcionarioSelected.horaEntrada}} - {{funcionarioSelected.horaSalida}}<small class="text-muted"></small></td>
+                            <tr scope="row">
+                                <td class="fw-medium" >Asignación: </td>
+                                <td class="contacted_date">
+                                    <span class="">{{funcionarioSelected.fechaInicio}}</span>
+                                    <span class="">{{funcionarioSelected.fechaFin}}</span>
+                                        <small class="text-muted"></small>
+                                </td>
                             </tr>
                         </tbody>
                     </table>

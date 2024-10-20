@@ -3,150 +3,133 @@
 <!-- End Breadcrumbs -->
 
 <div class="row">
-    <div class="col-lg-12">
-        <div class="card" *ngIf="canActivate.includes('CREAR') || (canActivate.includes('EXPORTAR') && selectedItems.length>0)">
-            <div class="card-header  border-0">
-                <div class="d-md-flex align-items-center">
-                    <h5 class="card-title mb-3 mb-md-0 flex-grow-1">Lista de Reservas</h5>
-                    <div class="flex-shrink-0">
-                        <div class="d-flex gap-1 flex-wrap">
-                            <button *ngIf="canActivate.includes('CREAR')" 
-                                type="button" class="btn btn-secondary add-btn"
-                                (click)="redirectTo()">
-                                <i class="ri-add-circle-line align-middle"></i> 
-                                {{"Agregar" | translate}}
-                            </button>
-                        
-                            <button (click)="csvFileExport()"
-                              class="btn btn-soft-info" id="remove-actions" style="display: none">
-                              <i class="ri-file-download-line align-bottom me-1"></i>Exportar
-                            </button>
-                            <button class="btn btn-soft-primary" [style.display]="selectedItems.length > 0 ? 'inline-block' : 'none'"
-                                (click)="consultModal(undefined,consultModel)">
-                                <i class="ri-restart-fill fs-16 "></i> Consultar
-                            </button>
-                        </div>
-                    </div>
+  <div class="col-lg-12">    
+    <div class="card">    
+        <div class="card-header border-0 d-flex flex-wrap align-items-center">
+            <h5 class="card-title flex-grow-1">{{'Lista de '+title|translate }}</h5>
+            <div class="flex-shrink-0">
+                <div class="d-flex gap-1 flex-wrap ">
+                    <button *ngIf="canActivate.includes('CREAR')" (click)="openModal(undefined,'','lg')"
+                      type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal">
+                      <i class="ri-add-circle-line align-middle"></i> 
+                      {{"Agregar" | translate}}
+                    </button>                    
+                    <button *ngIf="canActivate.includes('VER')" (click)="csvFileExport()" 
+                        class="btn btn-soft-info" id="remove-actions" style="display: none">
+                        <i class="ri-file-download-line align-bottom"></i>
+                        {{"Exportar" | translate}}
+                    </button>
                 </div>
-            </div>
-            <!-- Filters -->
-            <div class="card-body border border-dashed border-end-0 border-start-0">
-                <form (ngSubmit)="applyFilters()">
-                    <div class="row g-3">
-                        <div class="col-xxl-5 col-sm-6">
-                            <div class="search-box">
-                                <input type="text" class="form-control search" placeholder="Buscar reservas ..." name="searchTerm"
+            </div>                
+        </div>
+        <div class="card-header border border-dashed border-end-0 border-start-0">
+            <form (ngSubmit)="applyFilters()">
+                <div class="row g-1">
+                    <div class="col-xxl-4 col-md-6 col-sm-6">
+                        <div class="search-box">
+                            <input type="text" class="form-control search" name="searchTerm"
+                                placeholder="Buscar reservas ..." 
                                 [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
                                 <i class="ri-search-line search-icon"></i>
-                            </div>
-                        </div>
-                        <div class="col-xxl-2 col-sm-6">
-                            <div>
-                                <input type="text" class="form-control" mwlFlatpickr placeholder="Fecha de Reserva" name="date"
-                                    [convertModelValue]="true"     
-                                    mode="range"                                 
-                                    [(ngModel)]="date"                                     
-                                    [altInput]="true"
-                                    [altFormat]="'F j, Y'"
-                                    dateFormat="Y-m-d">
-                            </div>
-                        </div>
-                        <div class="col-xxl-2 col-sm-4">
-                            <div>
-                                <select class="form-control" data-choices data-choices-search-false name="status" id="idStatus" 
-                                [(ngModel)]="status">
-                                    <option value="" selected>Todo</option>                                
-                                    <option value="Pendiente">Pendiente</option>
-                                    <option value="Pagado">Pagado</option>
-                                    <option value="Vencido">Vencido</option>
-                                    <option value="Anulado">Anulado</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-xxl-2 col-sm-4">
-                            <div>
-                                <select class="form-control" data-choices data-choices-search-false 
-                                        name="category" id="idCategory" [(ngModel)]="category">
-                                    <option value="" selected>Todo</option>
-                                    <option *ngFor="let category of categoryList" [value]="category.nombre">
-                                        {{category.nombre}}
-                                    </option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-xxl-1 col-sm-4">
-                            <div>
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="ri-equalizer-fill mx-1 align-bottom"></i>
-                                    Filtrar
-                                </button>
-                            </div>
                         </div>
                     </div>
-                </form>
-            </div>
-            
-            <div class="card-body pt-0">
-                <div>
-                    <ul ngbNav #nav="ngbNav" [activeId]="1" (navChange)="onNavChange($event)" class="nav nav-tabs nav-tabs-custom nav-success mb-3" role="tablist">
-                        <li [ngbNavItem]="1" class="nav-item">
-                            <a ngbNavLink class="nav-link All py-3" data-bs-toggle="tab" id="All" href="javascript:void(0);" role="tab" aria-selected="true">
-                                Todas las Reservas<span class="badge bg-danger align-middle ms-1">{{temp.length}}</span>
-                            </a>
-                        </li>
-                        <li [ngbNavItem]="2" class="nav-item">
-                            <a ngbNavLink class="nav-link py-3 New" data-bs-toggle="tab" id="Pendiente" href="javascript:void(0);" role="tab" aria-selected="false">
-                                Pendiente
-                            </a>
-                        </li>
-                        <li [ngbNavItem]="3" class="nav-item">
-                            <a ngbNavLink class="nav-link py-3 Pending" data-bs-toggle="tab" id="Pagado" href="javascript:void(0);" role="tab" aria-selected="false">
-                                Pagado 
-                            </a>
-                        </li>
-                        <li [ngbNavItem]="4" class="nav-item">
-                            <a ngbNavLink class="nav-link py-3 Approved" data-bs-toggle="tab" id="Vencido" href="javascript:void(0);" role="tab" aria-selected="false">
-                                Vencido
-                            </a>
-                        </li>
-                        <li [ngbNavItem]="5" class="nav-item">
-                            <a ngbNavLink class="nav-link py-3 Rejected" data-bs-toggle="tab" id="Anulado" href="javascript:void(0);" role="tab" aria-selected="false">
-                                Anulado
-                            </a>
-                        </li>
-                    </ul>
-                    <app-data-table
-                        [loading]="loading"
-                        [itemsList]="itemsList"
-                        [allcontent]="temp"
-                        [content]="reservasList"
-                        [show]="canActivate.includes('VER')"
-                        [consult]="canActivate.includes('ACTUALIZAR')"
-                        [delete]="canActivate.includes('ANULAR')"
-                        [ticket]="true"
-                        (showItemEmitter)="openModal($event,'show','md')"
-                        (editItemEmitter)="openModal($event,'edit','md')"
-                        (consultItemEmitter)="consultModal($event,consultModel)"    
-                        (deleteItemEmitter)="openModal($event,'annularModel','')"   
-                        (selectedItemEmitter)="getSelectedItems($event)"    
-                        (ticketEmitter)="showTicket($event)"
-                    >
-                    </app-data-table>     
-                    <!-- Loading Spinner -->
-                    <div id="elmLoader" *ngIf="showLoading">
-                        <div class="spinner-border text-primary avatar-sm" role="status">
-                          <span class="visually-hidden">Cargando...</span>
-                        </div>
-                    </div>    
+                    <div class="col-xxl-2 col-md-6 col-sm-6">
+                        <input type="text" class="form-control" mwlFlatpickr name="date" mode="range"
+                            placeholder="Fecha de Reserva"                       
+                            [convertModelValue]="true"                
+                            [(ngModel)]="date"                                     
+                            [altInput]="true"
+                            [altFormat]="'F j, Y'"
+                            dateFormat="Y-m-d">
+                    </div>
+                    <div class="col-xxl-2 col-md-3 col-sm-3">
+                        <select class="form-control" data-choices data-choices-search-false name="status" id="idStatus" 
+                        [(ngModel)]="status">
+                            <option value="" selected>Todo</option>                                
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="Pagado">Pagado</option>
+                            <option value="Vencido">Vencido</option>
+                            <option value="Anulado">Anulado</option>
+                        </select>
+                    </div>
+                    <div class="col-xxl-2 col-md-3 col-sm-3">
+                        <select class="form-control" data-choices data-choices-search-false 
+                                name="category" id="idCategory" [(ngModel)]="category">
+                            <option value="" selected>Todo</option>
+                            <option *ngFor="let category of categoryList" [value]="category.nombre">
+                                {{category.nombre}}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-xxl-2 col-md-6 col-sm-6">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="ri-equalizer-fill align-bottom"></i>
+                            Filtrar
+                        </button>
+                    </div>
                 </div>
+            </form>
+        </div>
+            
+        <div class="card-body pt-0">
+            <div>
+                <ul ngbNav #nav="ngbNav" [activeId]="1" (navChange)="onNavChange($event)" class="nav nav-tabs nav-tabs-custom nav-success mb-3" role="tablist">
+                    <li [ngbNavItem]="1" class="nav-item">
+                        <a ngbNavLink class="nav-link All py-3" data-bs-toggle="tab" id="All" href="javascript:void(0);" role="tab" aria-selected="true">
+                            Todas las Reservas<span class="badge bg-danger align-middle ms-1">{{temp.length}}</span>
+                        </a>
+                    </li>
+                    <li [ngbNavItem]="2" class="nav-item">
+                        <a ngbNavLink class="nav-link py-3 New" data-bs-toggle="tab" id="Pendiente" href="javascript:void(0);" role="tab" aria-selected="false">
+                            Pendiente
+                        </a>
+                    </li>
+                    <li [ngbNavItem]="3" class="nav-item">
+                        <a ngbNavLink class="nav-link py-3 Pending" data-bs-toggle="tab" id="Pagado" href="javascript:void(0);" role="tab" aria-selected="false">
+                            Pagado 
+                        </a>
+                    </li>
+                    <li [ngbNavItem]="4" class="nav-item">
+                        <a ngbNavLink class="nav-link py-3 Approved" data-bs-toggle="tab" id="Vencido" href="javascript:void(0);" role="tab" aria-selected="false">
+                            Vencido
+                        </a>
+                    </li>
+                    <li [ngbNavItem]="5" class="nav-item">
+                        <a ngbNavLink class="nav-link py-3 Rejected" data-bs-toggle="tab" id="Anulado" href="javascript:void(0);" role="tab" aria-selected="false">
+                            Anulado
+                        </a>
+                    </li>
+                </ul>
+                <app-data-table
+                    [loading]="loading"
+                    [itemsList]="itemsList"
+                    [allcontent]="temp"
+                    [content]="reservasList"
+                    [show]="canActivate.includes('VER')"
+                    [consult]="canActivate.includes('ACTUALIZAR')"
+                    [delete]="canActivate.includes('ANULAR')"
+                    [ticket]="true"
+                    (showItemEmitter)="openModal($event,'show','md')"
+                    (editItemEmitter)="openModal($event,'edit','md')"
+                    (consultItemEmitter)="consultModal($event,consultModel)"    
+                    (deleteItemEmitter)="openModal($event,'annularModel','')"   
+                    (ticketEmitter)="showTicket($event)"
+                    [multiCheck]="canActivate.includes('VER')"
+                    (selectedItemEmitter)="getSelectedItems($event)"    
+                ></app-data-table>  
+                <!-- Loading Spinner -->
+                <div id="elmLoader" *ngIf="showLoading">
+                    <div class="spinner-border text-primary avatar-sm" role="status">
+                      <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>    
             </div>
         </div>
     </div>
-    <!--end col-->
+  </div>
 </div>
 
 <!-- Modals -->
-
 <ng-template #consultModel role="document" let-modal>
     <div class="modal-body">
       <div class="modal-header">

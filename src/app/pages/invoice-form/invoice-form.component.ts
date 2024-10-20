@@ -76,7 +76,7 @@ export class InvoiceFormComponent implements OnInit  {
   activeDayName: string = '';
   currentWeekStart!: Date;
   currentWeekEnd!: Date;  
-  allSlots: { [key: string]: { morningSlots: { time: string, isAvailable: boolean }[], afternoonSlots: { time: string, isAvailable: boolean }[] } } = {};
+  allSlots: { [key: string]: { morningSlots: { time: string, isAvailable: boolean,isReserved: boolean }[], afternoonSlots: { time: string, isAvailable: boolean,isReserved: boolean }[] } } = {};
 
   constructor(private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
@@ -245,13 +245,13 @@ export class InvoiceFormComponent implements OnInit  {
     return this.allSlots[dayString];
   }
 
-  private getTimeSlots(date:Date,day: string, period: string): { time: string, isAvailable: boolean }[] {
+  private getTimeSlots(date:Date,day: string, period: string): { time: string, isAvailable: boolean, isReserved:boolean}[] {
     const horariosAtencion: any[] = this.dataField.horarioDtoList;
     this.timetables = horariosAtencion.filter(horario => (horario.dia.toLowerCase() === day.toLowerCase() && horario.abierto));    
     if (this.timetables.length === 0) {
       return [];
     }  
-    const slots: { time: string, isAvailable: boolean }[] = []; 
+    const slots: { time: string, isAvailable: boolean , isReserved:boolean}[] = []; 
     for (const horario of this.timetables) {
       const startTime = horario.horaInicio > this.tariff.desde ? this.tariff.desde : horario.horaInicio;
       const endTime = horario.horaFin > this.tariff.hasta ? this.tariff.hasta : horario.horaFin;  
@@ -260,14 +260,13 @@ export class InvoiceFormComponent implements OnInit  {
         const slotStartDate = new Date(date);
         slotStartDate.setHours(hour, 0, 0, 0);      
         let isAvailable = slotStartDate >= (new Date());
-        if(isAvailable){
           
           let [slotStart, slotEnd] = slotTime.split(' - ');
           slotStart = `${slotStart}:00`;
           slotEnd = `${slotEnd}:00`;
-          isAvailable = this.isAvailable(slotStart,slotEnd);
-        }
-        slots.push({ time: slotTime , isAvailable: isAvailable});     
+          let isReserved = !this.isReserved(slotStart,slotEnd);
+        
+        slots.push({ time: slotTime , isAvailable: isAvailable, isReserved:isReserved});     
       }      
     }  
     if (period === 'morning') {
@@ -278,7 +277,7 @@ export class InvoiceFormComponent implements OnInit  {
     return slots;
   }
   
-  private isAvailable(slotStart: any , slotEnd:any): boolean {
+  private isReserved(slotStart: any , slotEnd:any): boolean {
     const fechaReserva = this.InvoiceForm.get('fechaReserva')?.value;
     return !this.reservationsList.some((reservation: any) => {
       const reservationStart = reservation.horaEntrada;
@@ -335,7 +334,7 @@ export class InvoiceFormComponent implements OnInit  {
           return { timeRange: true };
         }
         if (this.reservationsList.length > 0) {
-          const isReserved = !this.isAvailable(`${horaEntrada}:00`, `${horaSalida}:00`);
+          const isReserved = !this.isReserved(`${horaEntrada}:00`, `${horaSalida}:00`);
           if (isReserved) {
             return { isReserved: true };
           }

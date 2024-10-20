@@ -7,10 +7,7 @@ import { Component, Input } from '@angular/core';
   styleUrls: ['./privacy-policy.component.scss'],
   standalone: true,
   imports: [
-    // FormsModule,
     CommonModule,
-    // NgbModule,
-    // SharedModule,
   ],
 })
 export class PrivacyPolicyComponent {

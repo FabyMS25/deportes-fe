@@ -35,6 +35,7 @@ export class ListComponent {
      private contribuyentesService: ContribuyentesService,
   ) {
       this.canActivate = this.authService.hasPermission(this.title);
+      console.log(this.canActivate)
   }
 
   ngOnInit(): void {
@@ -44,7 +45,7 @@ export class ListComponent {
     ];
     this.itemsList = [
       {name: 'Nombre', prop: 'nombre',visible:true},
-      {name: 'Primer Apellido', prop: 'apPaterno',visible:false},
+      {name: 'Primer Apellido', prop: 'apPaterno',visible:true},
       {name: 'Segundo Apellido', prop: 'apMaterno',visible:false},
       {name: 'Nro Carnet',prop: 'nroCarnet',visible:true},
       {name: 'Celular', prop: 'celular',visible:true},

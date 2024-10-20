@@ -28,6 +28,7 @@ export class DataTableComponent {
   @Output() showItemEmitter = new EventEmitter();
   @Output() editItemEmitter = new EventEmitter();
   @Output() deleteItemEmitter = new EventEmitter();
+
   @Output() consultItemEmitter = new EventEmitter(); 
   @Output() ticketEmitter = new EventEmitter();
 
@@ -52,6 +53,9 @@ export class DataTableComponent {
   public deleteItem(item: any) {
     this.deleteItemEmitter.emit(item);
   }
+  
+  // Search Data
+  searchTerm: string = '';
 
   public consultItem(item: any) {
     this.consultItemEmitter.emit(item);
@@ -124,19 +128,6 @@ checkUncheckAll(e: any) {
     column.visible = !column.visible;
   }
   
-  // Search Data
-  searchTerm: any;
-  performSearch(): void {
-    const searchResults = this.content.filter(item =>
-      this.itemsList.some(column =>
-        column.visible && (
-          (item[column.prop] && item[column.prop].toString().toLowerCase().includes(this.searchTerm.toLowerCase())) ||
-          (column.tag && item[column.prop] && item[column.prop].toLowerCase().includes(this.searchTerm.toLowerCase()))
-        )
-      )
-    );
-    this.content = this.service.changePage(searchResults,this.itemsPerPage)
-  }
 
   /**
    * ******* to sort ******* 

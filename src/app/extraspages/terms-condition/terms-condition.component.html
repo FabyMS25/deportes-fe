@@ -35,8 +35,10 @@
                         </svg>
                     </div>
                 </div>
-                <app-terms-conditions>
+                <app-terms-conditions *ngIf="contentType === 'terms'">
                 </app-terms-conditions>
+                <app-privacy-policy *ngIf="contentType === 'policy'">                    
+                </app-privacy-policy>
             </div>
         </div>
       </div>

@@ -47,7 +47,7 @@ export class CategoriesComponent {
 
   ngOnInit(): void {
     this.breadCrumbItems = [
-      { label: 'Administracion' },
+      { label: 'Administración' },
       { label: this.title, active: true }
     ];
 
