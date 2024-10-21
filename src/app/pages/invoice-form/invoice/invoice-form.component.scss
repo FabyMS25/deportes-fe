@@ -16,3 +16,13 @@
 .detail-value {
     color: #6c757d; /* This is the Bootstrap text-muted color */
 }
+@media (max-width: 767px) {
+    .card {
+      margin: -15px;
+      border-radius: 3;
+    }
+    
+    .card-header {
+      padding: 10px 15px;
+    }
+  }

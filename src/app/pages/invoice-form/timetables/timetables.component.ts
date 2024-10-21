@@ -11,28 +11,28 @@ import { Reserva } from 'src/app/core/models/reserva.models';
   styleUrl: './timetables.component.scss'
 })
 
-
-
-
 export class TimeTablesComponent {
 
   @Input() horariosAtencion: any[]=[];
   @Input() tariff: any;
   @Input() reservationsList: any[] = [];
-  @Input() reservationDate!: Date;
-  @Output() selectedDay = new EventEmitter<Date>();
-  @Output() reserveEvent = new EventEmitter<{ start: string, end: string }>();
+  @Input() reservationDate:Date = new Date();
+  // @Output() selectedDay = new EventEmitter<Date>();
+  @Output() reserveEvent = new EventEmitter<{date:any, start: string, end: string }>();
 
   weekDays: { name: string, date: Date }[] = [];
   activeDayName: string = '';
   currentWeekStart!: Date;
   currentWeekEnd!: Date;  
-  allSlots: { [key: string]: { morningSlots: { time: string, isAvailable: boolean }[], afternoonSlots: { time: string, isAvailable: boolean }[] } } = {};
+  allSlots: { [key: string]: { morningSlots: { time: string, isAvailable: boolean,isReserved: boolean }[], afternoonSlots: { time: string, isAvailable: boolean,isReserved: boolean }[] } } = {};
 
   ngOnInit() {
     console.log(this.reservationsList)
-    this.goToToday();
-    this.activeDayName = format(this.reservationDate, 'EEE', { locale: es }).toLowerCase();
+    // this.goToToday();
+    // this.activeDayName = format(this.reservationDate, 'EEE', { locale: es }).toLowerCase();
+    this.allSlots={}
+    this.setWeekRange(this.reservationDate);
+    this.setSelectedDay(this.reservationDate);
   }
   
   goToToday() {
@@ -64,14 +64,15 @@ export class TimeTablesComponent {
     
   }
 
-  // setSelectedDay(date: Date) {
+  setSelectedDay(date: Date) {
     // if (this.InvoiceForm) {
     //   this.InvoiceForm.patchValue({
     //     fechaReserva: date
     //   });
     // }
-  //     this.activeDayName = format(date, 'EEE', { locale: es }).toLowerCase();
-  // }
+    this.reservationDate = date
+      this.activeDayName = format(date, 'EEE', { locale: es }).toLowerCase();
+  }
   // setReserve(start: string, end:string) {
   //   this.reserve.emit({start, end});
     // if (this.InvoiceForm) {
@@ -81,18 +82,22 @@ export class TimeTablesComponent {
     //   });
     // }
   // }
-  setSelectedDay(date: Date) {
-    this.selectedDay.emit(date);
-    this.activeDayName = format(date, 'EEE', { locale: es }).toLowerCase();
+  // setSelectedDay(date: Date) {
+  //   this.selectedDay.emit(date);
+  //   this.activeDayName = format(date, 'EEE', { locale: es }).toLowerCase();
+  // }
+  
+  setReserve(date:any,start: string, end: string) {
+    this.reserveEvent.emit({ date ,start, end });
   }
   
-  setReserve(start: string, end: string) {
-    this.reserveEvent.emit({ start, end });
-  }
+  
   getTimeSlotsForDay(date: Date) {
     const dayString = date ? new Date(date).toLocaleString('es-ES', { weekday: 'long' }).toLowerCase() : '';    
     if (!this.allSlots[dayString]) {
       this.setSelectedDay(date);
+      // this.reservationDate = date
+
       const morningSlots = this.getTimeSlots(date,dayString, 'morning');
       const afternoonSlots = this.getTimeSlots(date,dayString, 'afternoon');      
       this.allSlots[dayString] = { morningSlots, afternoonSlots };
@@ -101,13 +106,13 @@ export class TimeTablesComponent {
   }
 
   timetables!:any[];
-  private getTimeSlots(date:Date,day: string, period: string): { time: string, isAvailable: boolean }[] {
+  private getTimeSlots(date:Date,day: string, period: string): { time: string, isAvailable: boolean, isReserved:boolean}[] {
     // const horariosAtencion: any[] = this.dataField.horarioDtoList;
     this.timetables = this.horariosAtencion.filter(horario => (horario.dia.toLowerCase() === day.toLowerCase() && horario.abierto));    
     if (this.timetables.length === 0) {
       return [];
     }  
-    const slots: { time: string, isAvailable: boolean }[] = []; 
+    const slots: { time: string, isAvailable: boolean , isReserved:boolean}[] = []; 
     for (const horario of this.timetables) {
       const startTime = horario.horaInicio > this.tariff.desde ? this.tariff.desde : horario.horaInicio;
       const endTime = horario.horaFin > this.tariff.hasta ? this.tariff.hasta : horario.horaFin;  
@@ -116,14 +121,14 @@ export class TimeTablesComponent {
         const slotStartDate = new Date(date);
         slotStartDate.setHours(hour, 0, 0, 0);      
         let isAvailable = slotStartDate >= (new Date());
+        let isReserved = false;
         if(isAvailable){
-          
           let [slotStart, slotEnd] = slotTime.split(' - ');
           slotStart = `${slotStart}:00`;
           slotEnd = `${slotEnd}:00`;
-          isAvailable = this.isAvailable(slotStart,slotEnd);
+          isReserved = !this.isReserved(slotStart,slotEnd);
         }
-        slots.push({ time: slotTime , isAvailable: isAvailable});     
+        slots.push({ time: slotTime , isAvailable: isAvailable, isReserved:isReserved});     
       }      
     }  
     if (period === 'morning') {
@@ -134,13 +139,16 @@ export class TimeTablesComponent {
     return slots;
   }
   
-  private isAvailable(slotStart: any , slotEnd:any): boolean {
+  private isReserved(slotStart: any , slotEnd:any): boolean {
     const fechaReserva = this.reservationDate//this.InvoiceForm.get('fechaReserva')?.value;
+    console.log("selected",fechaReserva.getDate())
     return !this.reservationsList.some((reservation: any) => {
       const reservationStart = reservation.horaEntrada;
       const reservationEnd = reservation.horaSalida;
       const reservationDate = new Date(reservation.fechaReserva);
+      console.log("reserved ",reservationDate.getDate())
       if (reservationDate.getDate() === fechaReserva.getDate()) {  
+        console.log("enter")
         return (slotStart < reservationEnd && slotEnd > reservationStart); 
         // return (
         //   (slotStart >= reservationStart && slotStart < reservationEnd) &&
@@ -149,8 +157,7 @@ export class TimeTablesComponent {
       }      
     return false; 
     });
-  }
-
+  }  
 
   private getTime(time: string): number {
     return parseInt(time.split(':')[0], 10);

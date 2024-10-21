@@ -3,8 +3,9 @@ import { RouterModule, Routes } from '@angular/router';
 
 // Component pages
 import { AuthGuard } from '../core/guards/auth.guard';
-import { InvoiceFormComponent } from './invoice-form/invoice-form.component';
+import { InvoiceFormComponent } from './invoice-form/invoice/invoice-form.component';
 import { TicketComponent } from './invoice-form/ticket/ticket.component';
+import { DetailsComponent } from './invoice-form/details/details.component';
 
 const routes: Routes = [
     {
@@ -26,7 +27,7 @@ const routes: Routes = [
       path: 'reports', loadChildren: () => import('./reports/reports.module').then(m => m.ReportsModule), canActivate: [AuthGuard]
     },
     {
-      path: "reservations/details", component: InvoiceFormComponent
+      path: "reservations/details",  component: InvoiceFormComponent
     },
     {
       path: "reservations/ticket", component: TicketComponent

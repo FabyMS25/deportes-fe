@@ -28,18 +28,20 @@ import { WidgetModule } from '../shared/widget/widget.module';
 // Pages Routing
 import { PagesRoutingModule } from "./pages-routing.module";
 //compoments
-import { InvoiceFormComponent } from './invoice-form/invoice-form.component';
+import { InvoiceFormComponent } from './invoice-form/invoice/invoice-form.component';
 import { CommentsComponent } from './invoice-form/comments/comments.component';
 import { ModalComponent } from './taxpayers/modal/modal.component';
 
 import { TimeTablesComponent } from './invoice-form/timetables/timetables.component';
 import { TicketComponent } from './invoice-form/ticket/ticket.component';
+import { DetailsComponent } from './invoice-form/details/details.component';
 
 
 @NgModule({
   declarations: [
     TimeTablesComponent,
     InvoiceFormComponent,
+    DetailsComponent,
     TicketComponent,
     CommentsComponent,
     ModalComponent

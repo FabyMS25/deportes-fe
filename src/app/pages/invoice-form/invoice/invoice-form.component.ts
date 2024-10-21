@@ -21,9 +21,9 @@ import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.serv
 import { Tarifa } from 'src/app/core/models/tarifa.model';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { addDays, subDays,  startOfWeek, endOfWeek, format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { da, es } from 'date-fns/locale';
+import { GlobalComponent } from 'src/app/global-component';
 
-import { GlobalComponent } from "../../global-component";
 
 @Component({
   selector: 'app-invoice-form',
@@ -35,6 +35,7 @@ import { GlobalComponent } from "../../global-component";
 export class InvoiceFormComponent implements OnInit  {
 
   breadCrumbItems!: Array<{}>;
+  step:number=1;
   currentTime!: string;
   globalAdmin = GlobalComponent.admin_deportes;
   
@@ -104,23 +105,21 @@ export class InvoiceFormComponent implements OnInit  {
       this.getTaxpayers();
     }  
     this.dataComplejo = history.state.data;  
-    if (this.dataComplejo) {
-      this.initMap(this.dataComplejo.latitud, this.dataComplejo.longitud);
-    }
   
-    try {
-      const data: any = await firstValueFrom(this.fieldService.getByComplejo(this.dataComplejo));
-      if (data?.status === 'OK') {
-        this.fieldsList = data.payload;
-        if (this.fieldsList.length>0) {
-          this.setField(this.fieldsList[0], this.fieldsList[0].tarifasDtoList[0]);
-        }        
-      } else {
-        this.notify('No se encontraron canchas en este Complejo','error');
-      }
-    } catch (error) {
-      console.error('Error fetching fields:', error);
-    }  
+
+    // try {
+    //   const data: any = await firstValueFrom(this.fieldService.getByComplejo(this.dataComplejo));
+    //   if (data?.status === 'OK') {
+    //     this.fieldsList = data.payload;
+    //     if (this.fieldsList.length>0) {
+    //       this.setField(this.fieldsList[0], this.fieldsList[0].tarifasDtoList[0]);
+    //     }        
+    //   } else {
+    //     this.notify('No se encontraron canchas en este Complejo','error');
+    //   }
+    // } catch (error) {
+    //   console.error('Error fetching fields:', error);
+    // }  
     
     // Initialize the form
     this.InvoiceForm = this.formBuilder.group({
@@ -142,10 +141,10 @@ export class InvoiceFormComponent implements OnInit  {
       check: ['', [Validators.required]],
     }, { validators: this.timeRangeValidator() });
 
-    if (this.dataField) {
-      this.setField(this.dataField,undefined);
-      this.goToToday();
-    }  
+    // if (this.dataField) {
+    //   this.setField(this.dataField,undefined);
+    //   this.goToToday();
+    // }  
     this.InvoiceForm.get('fechaReserva')?.valueChanges.subscribe(() => {
       const date = this.InvoiceForm.get('fechaReserva')?.value;
       this.allSlots={}
@@ -160,6 +159,10 @@ export class InvoiceFormComponent implements OnInit  {
     this.InvoiceForm.get('totalPersonas')?.valueChanges.subscribe(() => {
       this.calculateTotalTimeAndPago();
     });
+  }
+
+  get form() {
+    return this.InvoiceForm.controls;
   }
   
   goToToday() {
@@ -177,24 +180,33 @@ export class InvoiceFormComponent implements OnInit  {
   }
   private setWeekRange(date: Date) {
     this.currentWeekStart = startOfWeek(date, { weekStartsOn: 1 });
-    this.currentWeekEnd = endOfWeek(date, { weekStartsOn: 1 });
-  
+    this.currentWeekEnd = endOfWeek(date, { weekStartsOn: 1 });  
     this.weekDays = Array.from({ length: 7 }, (_, i) => {
       const currentDate = addDays(this.currentWeekStart, i);
       return {
         name: format(currentDate, 'EEE', { locale: es }).toLowerCase(),
         date: currentDate
       };
-    });
-  
+    });  
     this.activeDayName = format(date, 'EEE', { locale: es }).toLowerCase();
   }
 
-  get form() {
-    return this.InvoiceForm.controls;
+    
+  isEvent(cancha:any):boolean{
+    const result = cancha.tarifasDtoList.every((tar:any) => tar.categoriaDtoList[0].categoriaDto.tipo === 'Evento')
+    if(result){
+      this.step=3;
+      // const start = this.tarifa.desde? this.tarifa.desde: ''
+      // const end = this.tarifa.hasta? this.tarifa.hasta: ''
+      // this.reserve(start,end)
+    }else{
+      this.step=2;
+    }
+    return result;
   }
-  
+
   setField(field: any, tarifa:any | undefined) {
+    console.log(field,tarifa)
     this.getReservationsByField(field.uuid).then(() => {  
       this.allSlots={}
     })
@@ -215,6 +227,7 @@ export class InvoiceFormComponent implements OnInit  {
             .map(categoria => categoria.categoriaDto.nombre).join(', ')
       });
     }
+      this.goToToday();
   }
   setReserve(start: string, end:string) {
     if (this.InvoiceForm) {
@@ -223,6 +236,18 @@ export class InvoiceFormComponent implements OnInit  {
         horaSalida: end,
       });
     }
+    this.modalService.dismissAll(); 
+    this.step=this.step+1;
+  }
+  getReservation(date:Date,start: string, end:string) {   
+    if (this.InvoiceForm) {
+      this.InvoiceForm.patchValue({
+        fechaReserva: date,
+        horaEntrada: start,
+        horaSalida: end,
+      });
+    }
+    this.modalService.dismissAll(); 
   }
   setSelectedDay(date: Date) {
     if (this.InvoiceForm) {
@@ -344,17 +369,6 @@ export class InvoiceFormComponent implements OnInit  {
     };
   }
   
-  
-  
-  isEvent(cancha:any):boolean{
-    const result = cancha.tarifasDtoList.every((tar:any) => tar.categoriaDtoList[0].categoriaDto.tipo === 'Evento')
-    // if(result){
-    //   const start = this.tarifa.desde? this.tarifa.desde: ''
-    //   const end = this.tarifa.hasta? this.tarifa.hasta: ''
-    //   this.reserve(start,end)
-    // }
-    return result;
-  }
   calculateTotalTimeAndPago() {
     if(this.tariff.categoriaDtoList[0].categoriaDto.tipo === 'Evento'){
       const totalTime = `allDay`;
@@ -505,37 +519,6 @@ export class InvoiceFormComponent implements OnInit  {
     });
   }
 
-  /* general functions */
-  map:any; 
-  private initMap(lat:any,long:any) {
-    if (this.map) {
-      this.map.remove();
-    }  
-    const main = L.tileLayer(
-      "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoidGhlbWVzYnJhbmQiLCJhIjoiY2xmbmc3bTV4MGw1ejNzbnJqOWpubzhnciJ9.DNkdZVKLnQ6I9NOz7EED-w",
-      {
-        maxZoom: 30,
-        id: "mapbox/streets-v11",
-        tileSize: 512,
-        zoomOffset: -1,
-      }
-    );
-    const field = L.circle([lat, long],
-      { color: "#435fe3",
-        opacity: 0.5,
-        weight: 8,
-        fillColor: "#435fe3",
-        fillOpacity: 1,
-        radius: 10,
-      }
-    );
-    this.map = L.map('mapa', {
-      center: [lat, long],
-      zoom: 17,
-      layers: [main, field]
-    });
-  }
-
 
     private getTime(time: string): number {
       return parseInt(time.split(':')[0], 10);
@@ -573,4 +556,12 @@ export class InvoiceFormComponent implements OnInit  {
     getAvatar(employee:any): string {
       return 'avatar-admin-m.png';
     }
+
+    next(){
+      this.step=this.step+1
+    }
+    back(){
+      this.step=this.step-1
+    }
+
 }
