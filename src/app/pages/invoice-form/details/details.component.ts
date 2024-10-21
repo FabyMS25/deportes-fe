@@ -36,7 +36,7 @@ export class DetailsComponent {
     // private route: ActivatedRoute ,
     // private ruatService: RuatRequestsService,
     // private contribuyenteService: ContribuyentesService, 
-    private router: Router 
+    // private router: Router 
   ) { }
 
 

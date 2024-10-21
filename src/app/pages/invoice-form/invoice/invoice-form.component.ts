@@ -188,7 +188,7 @@ export class InvoiceFormComponent implements OnInit  {
         date: currentDate
       };
     });  
-    this.activeDayName = format(date, 'EEE', { locale: es }).toLowerCase();
+    // this.activeDayName = format(date, 'EEE', { locale: es }).toLowerCase();
   }
 
     
@@ -199,9 +199,10 @@ export class InvoiceFormComponent implements OnInit  {
       // const start = this.tarifa.desde? this.tarifa.desde: ''
       // const end = this.tarifa.hasta? this.tarifa.hasta: ''
       // this.reserve(start,end)
-    }else{
-      this.step=2;
     }
+    // else{
+    //   this.step=2;
+    // }
     return result;
   }
 
@@ -227,7 +228,10 @@ export class InvoiceFormComponent implements OnInit  {
             .map(categoria => categoria.categoriaDto.nombre).join(', ')
       });
     }
+    // if(!this.dataField){
       this.goToToday();
+    // }
+    this.step=2;
   }
   setReserve(start: string, end:string) {
     if (this.InvoiceForm) {
@@ -237,7 +241,7 @@ export class InvoiceFormComponent implements OnInit  {
       });
     }
     this.modalService.dismissAll(); 
-    this.step=this.step+1;
+    this.step=3;
   }
   getReservation(date:Date,start: string, end:string) {   
     if (this.InvoiceForm) {

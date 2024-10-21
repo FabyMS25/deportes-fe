@@ -8,7 +8,13 @@
         <div class="card-header border-0 d-flex flex-wrap align-items-center">
             <h5 class="card-title flex-grow-1">{{'Lista de '+title|translate }}</h5>
             <div class="flex-shrink-0">
-                <div class="d-flex gap-1 flex-wrap ">
+                <div class="d-flex gap-1 flex-wrap ">                            
+                    <button class="btn btn-soft-primary" 
+                        [style.display]="selectedItems.length > 0 ? 'inline-block' : 'none'"
+                        (click)="consultModal(undefined,consultModel)">
+                        <i class="ri-restart-fill fs-16 "></i> 
+                        {{"Consultar" | translate}}
+                    </button>
                     <button *ngIf="canActivate.includes('CREAR')" (click)="openModal(undefined,'','lg')"
                       type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal">
                       <i class="ri-add-circle-line align-middle"></i> 
