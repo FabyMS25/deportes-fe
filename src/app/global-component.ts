@@ -1,6 +1,8 @@
 export const GlobalComponent = {
     
-    URL : 'http://deportes-gamq.gob.bo/',
+    // URL : 'http://deportes-gamq.gob.bo/',
+    // URL : 'http://181.177.143.187:4205',
+    URL : 'http://localhost:4200',
     headerToken : {'Authorization': `Bearer ${sessionStorage.getItem('token')}`},
 
     admin_deportes:{

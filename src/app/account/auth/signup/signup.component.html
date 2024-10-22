@@ -162,8 +162,12 @@
                                     <input type="correo" id="correo-field" class="form-control" placeholder="Ingrese un correo valido" 
                                         required formControlName="correo"
                                         [ngClass]="{ 'is-invalid': submitted && f['correo'].errors }" />
-                                    <div class="invalid-feedback">Debe Ingresar un correo.</div>
+                                    <!-- <div class="invalid-feedback">Debe Ingresar un correo.</div>                                     -->
+                                    <span *ngIf="SignupForm.get('correo')?.pending">Verificando disponibilidad...</span>
+                                    <span class="invalid-feedback" *ngIf="SignupForm.get('correo')?.errors?.['required']">Debe ingresar un correo</span>
+                                    <span class="invalid-feedback" *ngIf="SignupForm.get('correo')?.errors?.['emailTaken']">Este Email ya cuenta con un usuario en el sistema.</span>
                                     <div id="emailInput" class="form-text">Asegúrese de tener acceso al correo, <b>Se le enviara el codigo de confirmación </b></div>
+                                
                                 </div> 
                          
                                 <div class="mb-2">

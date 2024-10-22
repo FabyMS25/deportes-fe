@@ -234,6 +234,20 @@ export class SignupComponent implements OnInit {
       }, 300); 
     });
   }
+
+  
+  emailValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (this.usersList) {
+          const isEmailTaken = this.usersList.some(user => user.email === control.value);
+          if (isEmailTaken) {
+            resolve({ emailTaken: true });
+          } else { resolve(null); }
+        } else {   resolve(null); }
+      }, 300); 
+    });
+  }
   /**
    * Username / Password Validator
    */

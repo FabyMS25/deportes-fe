@@ -1,6 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MustMatch } from './must-match';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
+import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { PassResetsService } from 'src/app/core/services/api/pass-resets.service';
 
 @Component({
   selector: 'app-pass-create',
@@ -10,6 +14,7 @@ import { MustMatch } from './must-match';
 
 export class PassCreateComponent implements OnInit {
 
+  token: string | null = null;
    // Login Form
    passresetForm!: UntypedFormGroup;
    submitted = false;
@@ -20,12 +25,32 @@ export class PassCreateComponent implements OnInit {
    // set the current year
    year: number = new Date().getFullYear();
  
-   constructor(private formBuilder: UntypedFormBuilder) { }
+   constructor(
+      private formBuilder: UntypedFormBuilder, 
+      private route: ActivatedRoute,
+      private router: Router,
+      private userService: ContribuyentesService,
+      private passResetService: PassResetsService
+    ) { }
  
-   ngOnInit(): void {
-     /**
-      * Form Validatyion
-      */
+    async ngOnInit() {    
+      this.route.queryParams.subscribe(params => {
+        this.token = params['token']; 
+      });
+      if (this.token) {
+        try {
+          const valid = await this.validateToken(this.token); 
+          if (!valid) {
+            this.router.navigate(['/pages/404-basic']);
+          }
+        } catch (error) {
+          console.error("Error during token validation", error);
+          this.router.navigate(['/pages/404-basic']);
+        }
+      }else{
+        this.router.navigate(['/pages/404-basic']);
+      } 
+
       this.passresetForm = this.formBuilder.group({
        password: ['', [Validators.required]],
        cpassword: ['', [Validators.required]]       
@@ -101,14 +126,80 @@ export class PassCreateComponent implements OnInit {
    /**
     * Form submit
     */
-    onSubmit() {
-     this.submitted = true;
-      console.log()
+   async onSubmit() {
+    this.submitted = true;  
+    try {
+      const password = this.f['password'].value;  
+      if (this.passresetForm.valid &&this.token) {
+        const user = await this.getUser(this.token);  
+        if (user) {
+          user.password = password
+          this.resetPassword(user)
+          
+        } else {
+          this.passresetForm.setErrors({ NoUser: true });
+        }
+      } else {
+        this.passresetForm.markAllAsTouched();
+      }
+    } catch (error:any) {
+      this.passresetForm.setErrors({ serverError: true });
+    }
+  }
 
-     if (this.passresetForm.valid) {
-       console.log("is valid")
-     }
-   }
+
+
+  private async validateToken(token: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      this.passResetService.validateToken(token).subscribe({
+        next: (data:any) => {  
+          console.log(data);        
+          if(data.status === 'OK' ){
+            resolve(true);
+          }else{
+            resolve(false);
+          }
+        },
+        error: (error) => {
+          resolve(false);
+        }
+      });
+    });
+  }
+
+  private resetPassword(data: Contribuyente) {   
+    this.userService.update(data).subscribe({
+      next: (response:any) => {
+        if(response.status === 'OK'){        
+          this.router.navigate(['/auth/login']).then(() => {
+            console.log('Password reset successful');
+            // this.toastService.show('¡Bienvenido Empleado!', 'Inicio de sesión exitoso');
+          });
+        }
+      },
+      error: (err) => {
+        
+        console.error('Password reset failed:', err);
+      }
+    });
+  }
+  
+  private async getUser(token: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.passResetService.getUserByToken(token).subscribe({
+        next: (data:any) => {          
+          if(data.status === 'OK' ){
+            resolve(data.payload);
+          }else{
+            resolve(null);
+          }
+        },
+        error: (error) => {
+          resolve(null);
+        }
+      });
+    });
+  }
 
    /**
    * Password Hide/Show

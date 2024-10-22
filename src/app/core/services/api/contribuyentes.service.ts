@@ -62,6 +62,10 @@ export class ContribuyentesService {
     return this.http.get<Contribuyente>(`${this.apiUrl}/${uuid}`)
   }
 
+  getByEmail(email: String): Observable<Contribuyente> {
+    return this.http.get<Contribuyente>(`${this.apiUrl}/email/${email}`)
+  }
+
   save(data: Contribuyente): Observable<Contribuyente> {
     return this.http.post<Contribuyente>(`${this.apiUrl}`, data);
   }

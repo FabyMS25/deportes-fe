@@ -3,6 +3,9 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import Swal from 'sweetalert2';
 
 import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
+import { PassResetsService } from 'src/app/core/services/api/pass-resets.service';
+import { environment } from 'src/environments/environment';
+import { GlobalComponent } from 'src/app/global-component';
 
 @Component({
   selector: 'app-pass-reset',
@@ -14,7 +17,7 @@ import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
  * Pass-Reset pass-reset Component
  */
 export class PassResetComponent implements OnInit {
-
+  link= GlobalComponent.URL+'/auth/pass-create'
   // Login Form
   passresetForm!: UntypedFormGroup;
   submitted = false;
@@ -24,18 +27,14 @@ export class PassResetComponent implements OnInit {
   // set the current year
   year: number = new Date().getFullYear();
 
-  constructor(private formBuilder: UntypedFormBuilder) { }
+  constructor(private formBuilder: UntypedFormBuilder, private resetService: PassResetsService) { }
 
   ngOnInit(): void {
-    /**
-     * Form Validatyion
-     */
      this.passresetForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]]
     });
   }
 
-  // convenience getter for easy access to form fields
   get f() { return this.passresetForm.controls; }
 
   
@@ -44,26 +43,39 @@ export class PassResetComponent implements OnInit {
   }
     // return bin2hex(random_bytes($length));
   
-  /**
-   * Form submit
-   */
+    
    onSubmit() {
     this.submitted = true;
     if (this.passresetForm.valid) {
-      this.sendEmail(this.passresetForm.value.email,'')
+      this.resetService.save(this.passresetForm.value.email).subscribe(
+        (result: any) => {
+          if(result.status === 'OK'){
+            const resp = result.payload
+            this.sendEmail(this.passresetForm.value.email, resp.token);
+            this.notify(result.message, 'success');
+          }else{
+            this.notify(result, 'error');
+          }
+        },
+        (error: any) => {
+          this.notify(error.error.message, 'error');
+        }
+      );
+
+      // this.sendEmail(this.passresetForm.value.email,'')
     }
   }
 
-  sendEmail(email:string, name:string){
+  sendEmail(email:string, token:string){
     const reply_to = email;  
-    const to_name = name;    
-    const token = this.generateToken();
+    // const to_name = name;    
+    // const token = this.generateToken();
     //storeToken($email, $token);
-    const resetLink = "http://localhost:4200/auth/pass-create?token=$token";
+    const resetLink = this.link+"?token="+token;
     
     emailjs.send("service_auth","template_m93u8sa",{
         from_name: "GAMQ-DEPORTES",
-        to_name: to_name,
+        to_name: email,
         // message: "Un cambio de contraseña fue solicitado para el email: " + codigo,
         message: resetLink,
         reply_to: reply_to,
@@ -83,7 +95,7 @@ export class PassResetComponent implements OnInit {
       Swal.fire({
         title: message,
         icon: type,
-        timer: 2000,
+        timer: 5000,
         timerProgressBar: true,
         willClose: () => {
           clearInterval(timerInterval);
