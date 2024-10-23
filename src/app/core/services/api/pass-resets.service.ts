@@ -6,7 +6,7 @@ import { map, Observable, switchMap } from 'rxjs';
 
 
 import { GlobalComponent } from "../../../global-component";
-import { AuthUserService } from '../api-users/auth.service';
+import { UserService } from '../api-users/users.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +16,7 @@ export class PassResetsService {
   apiUrl = environment.backendUrl + '/passresets';
   user=GlobalComponent.super_admin;
 
-  constructor(private http: HttpClient , private authService:AuthUserService) { }
+  constructor(private http: HttpClient , private authService:UserService) { }
 
   getAll(): Observable<Reserva[]> {
     return this.http.get<Reserva[]>(`${this.apiUrl}`);

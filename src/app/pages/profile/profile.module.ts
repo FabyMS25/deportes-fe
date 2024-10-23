@@ -27,11 +27,13 @@ import { ProfileComponent } from './profile/profile.component';
 import { SettingsComponent } from './settings/settings.component';
 import { ProfileRoutingModule } from './profile-routing.module';
 import { TranslateModule } from '@ngx-translate/core';
+import { PassResetComponent } from './password-reset/pass-reset.component';
 
 @NgModule({
   declarations: [
     ProfileComponent,
     SettingsComponent,
+    PassResetComponent
   ],
   imports: [
     CommonModule,

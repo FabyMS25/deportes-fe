@@ -141,14 +141,11 @@ export class TimeTablesComponent {
   
   private isReserved(slotStart: any , slotEnd:any): boolean {
     const fechaReserva = this.reservationDate//this.InvoiceForm.get('fechaReserva')?.value;
-    console.log("selected",fechaReserva.getDate())
     return !this.reservationsList.some((reservation: any) => {
       const reservationStart = reservation.horaEntrada;
       const reservationEnd = reservation.horaSalida;
       const reservationDate = new Date(reservation.fechaReserva);
-      console.log("reserved ",reservationDate.getDate())
-      if (reservationDate.getDate() === fechaReserva.getDate()) {  
-        console.log("enter")
+      if (reservationDate.getDate() === fechaReserva.getDate()) {
         return (slotStart < reservationEnd && slotEnd > reservationStart); 
         // return (
         //   (slotStart >= reservationStart && slotStart < reservationEnd) &&

@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { Contribuyente } from 'src/app/core/models/contribuyente.models';
 import { PassResetsService } from 'src/app/core/services/api/pass-resets.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-pass-create',
@@ -34,6 +35,15 @@ export class PassCreateComponent implements OnInit {
     ) { }
  
     async ngOnInit() {    
+      
+      this.passresetForm = this.formBuilder.group({
+        password: ['', [Validators.required]],
+        cpassword: ['', [Validators.required]]       
+       }, {
+         validator: MustMatch('password', 'cpassword')
+       });
+
+       
       this.route.queryParams.subscribe(params => {
         this.token = params['token']; 
       });
@@ -44,19 +54,11 @@ export class PassCreateComponent implements OnInit {
             this.router.navigate(['/pages/404-basic']);
           }
         } catch (error) {
-          console.error("Error during token validation", error);
           this.router.navigate(['/pages/404-basic']);
         }
       }else{
         this.router.navigate(['/pages/404-basic']);
       } 
-
-      this.passresetForm = this.formBuilder.group({
-       password: ['', [Validators.required]],
-       cpassword: ['', [Validators.required]]       
-      }, {
-        validator: MustMatch('password', 'cpassword')
-      });
 
       // Password Validation set
       var myInput = document.getElementById("password-input") as HTMLInputElement;
@@ -130,12 +132,11 @@ export class PassCreateComponent implements OnInit {
     this.submitted = true;  
     try {
       const password = this.f['password'].value;  
-      if (this.passresetForm.valid &&this.token) {
+      if (this.passresetForm.valid && this.token) {
         const user = await this.getUser(this.token);  
         if (user) {
           user.password = password
-          this.resetPassword(user)
-          
+          this.resetPassword(user)          
         } else {
           this.passresetForm.setErrors({ NoUser: true });
         }
@@ -152,8 +153,7 @@ export class PassCreateComponent implements OnInit {
   private async validateToken(token: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
       this.passResetService.validateToken(token).subscribe({
-        next: (data:any) => {  
-          console.log(data);        
+        next: (data:any) => {         
           if(data.status === 'OK' ){
             resolve(true);
           }else{
@@ -171,15 +171,14 @@ export class PassCreateComponent implements OnInit {
     this.userService.update(data).subscribe({
       next: (response:any) => {
         if(response.status === 'OK'){        
+          this.notify("Su contraseña se ha restablecido correctamente. Por favor inicie sesión con su nueva", 'success');
           this.router.navigate(['/auth/login']).then(() => {
-            console.log('Password reset successful');
-            // this.toastService.show('¡Bienvenido Empleado!', 'Inicio de sesión exitoso');
+            this.notify("Su contraseña se ha restablecido correctamente. Por favor inicie sesión con su nueva", 'success');
           });
         }
       },
       error: (err) => {
-        
-        console.error('Password reset failed:', err);
+        this.notify("Ocurrio un error al restablecer su contraseña. ", 'error');
       }
     });
   }
@@ -214,5 +213,20 @@ export class PassCreateComponent implements OnInit {
     toggleconfirmField() {
       this.confirmField = !this.confirmField;
     }
-
+    /* repetitive functions */
+    private notify(message: string, type: 'success' | 'error' | 'warning' | 'info' | 'question') {
+      let timerInterval: any;
+      Swal.fire({
+        title: message,
+        icon: type,
+        timer: 5000,
+        timerProgressBar: true,
+        willClose: () => {
+          clearInterval(timerInterval);
+        },
+      }).then((result) => {
+        if (result.dismiss === Swal.DismissReason.timer) {
+        }
+      });
+    }
 }

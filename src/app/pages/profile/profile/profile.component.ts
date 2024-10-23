@@ -1,13 +1,11 @@
-import { Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import {DecimalPipe} from '@angular/common';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { FormGroup, UntypedFormBuilder, Validators} from '@angular/forms';
 
 import {CityAcronym}  from 'src/app/core/constants/Places';
-// import { DesignacionFuncionario } from 'src/app/core/models/designacion-funcionario';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { UserService } from 'src/app/core/services/api-users/users.service';
-import Swal from 'sweetalert2';
+import { PassResetComponent } from '../password-reset/pass-reset.component';
 
 @Component({
   selector: 'app-profile',
@@ -16,31 +14,20 @@ import Swal from 'sweetalert2';
   providers: [ DecimalPipe]
 })
 
-/**
- * Profile Component
- */
 export class ProfileComponent {
 
-  @ViewChild('showModal') modal: any;
   CityAcronym=CityAcronym;
+  userType:string='';
   userData: any;
+  persona:any = null;
   funcionario!:any;//DesignacionFuncionario;
   avatar="default-profile1.png";
   // userRol =UserRol;
-  persona:any = null;
 
-passwordForm!: FormGroup;
-passwordData = {
-  currentPassword: '',
-  newPassword: '',
-  confirmPassword: ''
-};
   constructor(
     private authService:AuthenticationService, 
-    private userService:UserService,
-    private formBuilder: UntypedFormBuilder, private modalService: NgbModal) {
-
-   }
+    private modalService: NgbModal
+  ) {}
 
   ngOnInit(): void {
       const token = window.sessionStorage.getItem('auth-token');
@@ -49,26 +36,24 @@ passwordData = {
       this.avatar=this.authService.getAvatar();
       if(token==='isContribuyente'){
         this.persona =this.userData;
+        this.userType='Contribuyente';
       }else{
+        this.userType='Administrador';
         this.persona =this.userData.designacion.personaDto;
         const funcionarioString = localStorage.getItem('assignaments');
         this.funcionario =funcionarioString ? JSON.parse(funcionarioString) : null;
-      }
-      
-    if(this.userData){
-      this.passwordForm = this.formBuilder.group({
-        currentPassword: ['', [Validators.required, this.validateCurrentPassword.bind(this)]],
-        newPassword: ['', [Validators.required]],
-        confirmPassword: ['', [Validators.required]]
-      });
+        if(this.funcionario)this.userType='Encargado'; 
       }
   }
 
-  validateCurrentPassword(control: any): { [key: string]: string } | null {
-    if (control.value !== this.userData.password) {
-      return { 'invalidCurrentPassword': 'Contraseña incorrecta' };
-    }
-    return null;
+  // openModal(content:any) {
+  //   this.modalService.open(content, { centered: true });
+  // }
+  public openModal() {
+    const modalRef = this.modalService.open(PassResetComponent, {
+        backdrop: 'static',
+    });
+    modalRef.componentInstance.userData = this.userData;
   }
 
 
@@ -81,47 +66,8 @@ passwordData = {
     });
     return acronym;
   }
-
-  changePassword() {
-    if (this.passwordForm.controls['newPassword'].value !== this.passwordForm.controls['confirmPassword'].value) {
-      this.notify('error','Los campos Nueva Contraseña y Confirmar Contraseña no coinciden')
-      return;
-    }
-
-    this.userService.changePassword(this.userData.uuid, this.passwordForm.controls['newPassword'].value).subscribe(
-      (response) => {
-        this.notify('success','La contraseña fue actualizada exitosamente')
-        this.passwordForm.reset();
-      },
-      (error) => {
-        this.notify('error','Ocurrió un error inesperado al cambiar la contraseña')
-      }
-    );
-  }
-  private notify(type:any, message:string){
-    let timerInterval: any;
-    Swal.fire({
-      title: message,
-      icon: type,
-      timer: 2000,
-      timerProgressBar: true,
-      willClose: () => {
-        clearInterval(timerInterval);
-      },
-    }).then((result) => {
-      if (result.dismiss === Swal.DismissReason.timer) {
-      }
-    });
-  }
-
-  openModal(content:any) {
-    this.modalService.open(content, { centered: true });
-    
-    // Swal.fire({ text: 'Please select at least one checkbox', confirmButtonColor: '#299cdb', });  
-  }
   
   getCityDescription(ciExpedido: any): string {
-    console.log(ciExpedido)
     const cityById = CityAcronym.find(c => c.id === ciExpedido);  
     if (cityById) {
       return cityById.description;
@@ -132,23 +78,5 @@ passwordData = {
     // }  
     return ciExpedido;
   }
-      
-  public campoValido(campo: string): boolean {
-    return this.passwordForm.controls[campo].valid;
-  }
-  campoInvalido(campo: string): string {
-    if (this.passwordForm.controls[campo].touched) {
-      if (this.passwordForm.controls[campo].hasError('required')) {
-        return 'Campo requerido';
-      } else if (this.passwordForm.controls[campo].hasError('invalidCurrentPassword')) {
-        return 'Contraseña incorrecta';
-      } else if (campo === "confirmPassword") {
-        if (this.passwordForm.controls['newPassword'].value !== this.passwordForm.controls['confirmPassword'].value) {
-          return 'Los campos no coinciden';
-          
-        }
-      }
-    }
-    return '';
-  }
+   
 }

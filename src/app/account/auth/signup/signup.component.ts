@@ -71,7 +71,7 @@ export class SignupComponent implements OnInit {
       estadoCivil: [''],
       nroNit:[''],
       celular:['', [Validators.required]],      
-      correo: ['', [Validators.required, Validators.email]],
+      correo: ['', [Validators.required, Validators.email], [this.emailValidator.bind(this)]],
       direccion:[''],
     }, {
       validator: MustMatch('password', 'cpassword')
@@ -173,7 +173,6 @@ export class SignupComponent implements OnInit {
       };
 
       this.userDataService.setTemporaryUserData(datos);
-      // console.log(codigo)
       this.sendEmail(datos, '')
         .then(() => {
           this.router.navigate(['/auth/twostep'], { queryParams: { username: datos.userName } });
@@ -240,7 +239,7 @@ export class SignupComponent implements OnInit {
     return new Promise((resolve) => {
       setTimeout(() => {
         if (this.usersList) {
-          const isEmailTaken = this.usersList.some(user => user.email === control.value);
+          const isEmailTaken = this.usersList.some(user => user.correo === control.value);
           if (isEmailTaken) {
             resolve({ emailTaken: true });
           } else { resolve(null); }

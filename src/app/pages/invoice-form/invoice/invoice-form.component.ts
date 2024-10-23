@@ -207,7 +207,6 @@ export class InvoiceFormComponent implements OnInit  {
   }
 
   setField(field: any, tarifa:any | undefined) {
-    console.log(field,tarifa)
     this.getReservationsByField(field.uuid).then(() => {  
       this.allSlots={}
     })

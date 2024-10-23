@@ -4,10 +4,14 @@
         <div class="overlay-content">
             <div class="text-end p-3">
                 <div class="p-0 ms-auto rounded-circle profile-photo-edit">
-                    <input id="profile-foreground-img-file-input" type="file" class="profile-foreground-img-file-input">
+                    <!-- <input id="profile-foreground-img-file-input" type="file" class="profile-foreground-img-file-input">
                     <label for="profile-foreground-img-file-input" class="profile-photo-edit btn btn-light">
                         <i class="ri-image-edit-line align-bottom me-1"></i> Cambiar Portada
-                    </label>
+                    </label> -->                    
+                    <button class="btn btn-primary add-btn" (click)="openModal()">
+                        <i class="ri-edit-fill me-1 align-bottom"></i> 
+                        Cambiar Contraseña
+                    </button>
                 </div>
             </div>
         </div>
@@ -50,9 +54,7 @@
                             Datos Personales
                         </a>
                         <ng-template ngbNavContent>
-                            <form (ngSubmit)="updatePersona()" #userForm="ngForm" class="tablelist-form" >
-                            <!-- <form action="updatePersona()"> -->
-                                
+                            <form (ngSubmit)="updatePersona()" #userForm="ngForm" class="tablelist-form" >                                
                                 <div class="row">
                                     <div class="col-lg-6">
                                         <div class="mb-3">
@@ -60,21 +62,21 @@
                                             <input type="text" class="form-control" id="nombre"
                                                 placeholder="Ingresa tu Nombre" value="{{persona.nombre}}">
                                         </div>
-                                    </div><!--end col-->
+                                    </div>
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label for="apPaterno" class="form-label">Apellido Paterno</label>
                                             <input type="text" class="form-control" id="apPaterno"
                                                 placeholder="Ingresa tu Apellido Paterno" value="{{persona.apPaterno}}">
                                         </div>
-                                    </div><!--end col-->
+                                    </div>
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label for="apMaterno" class="form-label">Apellido Materno</label>
                                             <input type="text" class="form-control" id="apMaterno"
                                                 placeholder="Ingresa tu Apellido Paterno" value="{{persona.apMaterno}}">
                                         </div>
-                                    </div><!--end col-->
+                                    </div>
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label for="sexo" class="form-label">Genero:</label>    
@@ -85,7 +87,7 @@
                                                 <option value="F">Femenino</option>
                                             </select>
                                         </div>
-                                    </div><!--end col-->
+                                    </div>
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label for="nroCarnet" class="form-label">Nro Carnet:</label>
@@ -93,11 +95,11 @@
                                                 id="nroCarnet" placeholder="Ingresar Numero de Carnet"
                                                 value="{{persona.nroCarnet}}">
                                         </div>
-                                    </div><!--end col-->
+                                    </div>
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label for="ciExpedido" class="form-label">Expedido</label>          
-                                            <select class="form-select" required id="ciExpedido" name="ciExpedido" [(ngModel)]="persona.ciExpedido">
+                                            <select class="form-select" required id="ciExpedido" name="ciExpedido" [(ngModel)]="persona.ciExpedito">
                                                 <option *ngFor="let ex of CityAcronym" [ngValue]="ex.description">
                                                 {{ex.description}}
                                                 </option>
@@ -158,96 +160,7 @@
                             </form>
                         </ng-template>
                     </li>
-                    <li [ngbNavItem]="2" class="nav-item">
-                        <a ngbNavLink class="nav-link" data-bs-toggle="tab" role="tab">
-                            <i class="far fa-user"></i>
-                            Cambiar contraseña
-                        </a>
-                        <ng-template ngbNavContent>
-                            <form (ngSubmit)="changePassword()" [formGroup]="passwordForm">
-                                <div class="row g-2">
-                                    <div class="col-lg-4">
-                                        <div>
-                                            <label for="currentPassword" class="form-label">Actual Contraseña*</label>
-                                            <input type="password" class="form-control" 
-                                                id="currentPassword" formControlName="currentPassword"
-                                                placeholder="Ingresa tu contraseña actual" 
-                                                [ngClass]="{ 'is-invalid': form['currentPassword'].touched && form['currentPassword'].errors }"
-                                              />
-                                              @if (form['currentPassword'].touched && form['currentPassword'].errors) {
-                                              <div class="invalid-feedback">
-                                                @if (form['currentPassword'].errors['required']) {
-                                                <div>Debe ingresar su contraseña actual </div>
-                                                }
-                                                @if (form['currentPassword'].errors['invalidCurrentPassword']) {
-                                                <div>Contraseña Incorecta </div>
-                                                }
-                                              </div>
-                                              }
-                                        </div>
-                                    </div><!--end col-->
-                                    <div class="col-lg-4">
-                                        <div>
-                                            <label for="newPassword" class="form-label">Nueva Contraseña*</label>
-                                            <input type="password" class="form-control" 
-                                                id="newPassword" formControlName="newPassword"
-                                                placeholder="Ingresa Nueva Contraseña" 
-                                                [ngClass]="{ 'is-invalid': form['newPassword'].touched && form['newPassword'].errors }"
-                                              />
-                                              @if (form['newPassword'].touched && form['newPassword'].errors) {
-                                              <div class="invalid-feedback">
-                                                @if (form['newPassword'].errors['required']) {
-                                                <div>El campo es requerido</div>
-                                                }
-                                                @if (form['newPassword'].errors['minlength']) {
-                                                <div>La contraseña debe tener al menos 6 caracteres</div>
-                                                }
-                                                @if (form['newPassword'].errors['maxlength']) {
-                                                <div>La contraseña no debe exceder de 120 caracteres</div>
-                                                }
-                                              </div>
-                                              }
-                                        </div>
-                                    </div><!--end col-->
-                                    <div class="col-lg-4">
-                                        <div>
-                                            <label for="confirmPassword" class="form-label">Confirmar Contraseña*
-                                            </label>
-                                            <input type="password" class="form-control" 
-                                                id="confirmPassword" formControlName="confirmPassword"
-                                                placeholder="Confirmar Contraseña"
-                                                [ngClass]="{ 'is-invalid': form['confirmPassword'].touched && form['confirmPassword'].errors }"
-                                              />
-                                              @if (form['confirmPassword'].touched && form['confirmPassword'].errors) {
-                                              <div class="invalid-feedback">
-                                                @if (form['confirmPassword'].errors['required']) {
-                                                <div>El campo es requerido</div>
-                                                }
-                                                @if (form['confirmPassword'].value != form['newPassword'].value ) {
-                                                <div>La contraseña no coincide</div>
-                                                }
-                                              </div>
-                                              }
-                                        </div>
-                                    </div><!--end col-->
-                                    <div class="col-lg-12">
-                                        <div class="mb-3">
-                                            <a href="/auth/pass-reset"
-                                                class="link-primary text-decoration-underline">Olvidaste tu Contraseña ?</a>
-                                        </div>
-                                    </div><!--end col-->
-                                    <div class="col-lg-12">
-                                        <div class="text-end">
-                                            <button type="submit" [disabled]="!passwordForm.valid"  class="btn btn-secondary">
-                                                Cambiar contraseña
-                                            </button>
-                                        </div>
-                                    </div><!--end col-->
-                                </div><!--end row-->
-                            </form>
-                        </ng-template>
-                    </li>
-                    <li [ngbNavItem]="3" class="nav-item" *ngIf="userData.designacion">
+                    <li [ngbNavItem]="2" class="nav-item" *ngIf="userData.designacion">
                         <a ngbNavLink class="nav-link" data-bs-toggle="tab" role="tab">
                             <i class="far fa-envelope"></i>
                             Datos de Designacion
@@ -294,17 +207,16 @@
                             </form>
                         </ng-template>
                     </li>
-                    <li [ngbNavItem]="4" class="nav-item">
+                    <li [ngbNavItem]="3" class="nav-item">
                         <a ngbNavLink class="nav-link" data-bs-toggle="tab" role="tab">
                             <i class="far fa-envelope"></i>
-                            Politicas y Privacidad
+                            Terminos y Condiciones de Uso
                         </a>
                         <ng-template ngbNavContent>
                             <app-terms-conditions
-                                [buttons]="false"
-                            >                                
-                            </app-terms-conditions>
-                            <div class="px-4">
+                                [buttons]="userType !='Contribuyente'"
+                            ></app-terms-conditions>
+                            <div class="px-4" *ngIf="userType ==='Contribuyente'">
                                 <h5 class="card-title text-decoration-underline mb-3">Eliminar esta cuenta:</h5>
                                 <p class="text-muted">
                                     Una vez elimine su cuenta no podra recuperar sus Datos.
@@ -312,16 +224,26 @@
                                 </p>
                                 <div>
                                     <input type="password" class="form-control" id="passwordInput"
-                                        placeholder="Ingresa tu contraseña" value="make@321654987"
+                                        placeholder="Ingresa tu contraseña" 
                                         style="max-width: 265px;">
                                 </div>
                                 <div class="hstack gap-2 mt-3 justify-end">
                                     <a href="javascript:void(0);" class="btn btn-soft-danger">
                                         Cerrar & Eliminar esta cuenta
                                     </a>
-                                    <a href="/" class="btn btn-light">Cancelar</a>
+                                    <a (click)="goBack()" class="btn btn-light">Volver</a>
                                 </div>
                             </div>
+                        </ng-template>
+                    </li>
+                    <li [ngbNavItem]="4" class="nav-item">
+                        <a ngbNavLink class="nav-link" data-bs-toggle="tab" role="tab">
+                            <i class="far fa-envelope"></i>
+                            Politicas y Privacidad
+                        </a>
+                        <ng-template ngbNavContent>
+                            <app-privacy-policy
+                            ></app-privacy-policy>
                         </ng-template>
                     </li>
                 </ul>

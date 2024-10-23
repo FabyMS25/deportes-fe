@@ -4,7 +4,6 @@ import {  Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 const usersUrl = `${environment.apiLoginUrl}`;
-const httpOptions = { headers: new HttpHeaders({ 'Content-Type': 'application/json' })  };
 
 @Injectable({ providedIn: 'root' })
 
@@ -12,6 +11,10 @@ export class UserService {
 
     constructor(private http: HttpClient ) {}
   
+    loginByUsername(username: String, password: String) {
+        return this.http.post<any>(`${usersUrl}/auth/signin`, {username, password});
+    }
+
     getAllUsers(): Observable<any[]> {
         return this.http.get<any[]>(`${usersUrl}/listar/usuarios`);
     } 

@@ -6,7 +6,6 @@ import { RegisterSuccess, loginFailure, loginSuccess, logout, logoutSuccess } fr
 import { Router } from '@angular/router';
 import { ToastService } from 'src/app/account/auth/login/toast-service';
 import { TokenStorageService } from './token-storage.service';
-import { AuthUserService } from './api-users/auth.service';
 import { PermissionUserService } from './api-users/permission-user.service';
 
 import { UserRol } from 'src/app/core/constants/UserData';
@@ -14,6 +13,7 @@ import { EncargadoService } from './api/encargado.service';
 import { MENU_BASE } from 'src/app/core/data/menu';
 import { ContribuyentesService } from './api/contribuyentes.service';
 import { of } from 'rxjs';
+import { UserService } from './api-users/users.service';
 
 const AUTH_API = ""//GlobalComponent.AUTH_API;
 
@@ -37,7 +37,7 @@ export class AuthenticationService {
     userRol:any[]=[];
 
     constructor(private http: HttpClient, private store: Store,
-        private authUser: AuthUserService,
+        private authUser: UserService,
         private authContribuyente: ContribuyentesService,
         private permissionService: PermissionUserService,
         private designationsService: EncargadoService,

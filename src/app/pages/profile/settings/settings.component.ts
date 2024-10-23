@@ -7,8 +7,10 @@ import {CityAcronym}  from 'src/app/core/constants/Places';
 import { UserService } from 'src/app/core/services/api-users/users.service';
 import Swal from 'sweetalert2';
 import { AbstractControl, AsyncValidatorFn, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
-import { AuthUserService } from 'src/app/core/services/api-users/auth.service';
 import { Observable, catchError, map, of } from 'rxjs';
+import { PassResetComponent } from '../password-reset/pass-reset.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Location } from '@angular/common';
 @Component({
   selector: 'app-settings',
   templateUrl: './settings.component.html',
@@ -20,10 +22,12 @@ import { Observable, catchError, map, of } from 'rxjs';
  */
 export class SettingsComponent implements OnInit {
 
-  userData:any;
-  avatar="default-profile1.png";
-  persona:any;
   CityAcronym=CityAcronym;
+  avatar="default-profile1.png";
+  userType:string='';
+  userData: any;
+  persona:any = null;
+  funcionario!:any;
 
   submitted = false;
   passwordForm: FormGroup = this.formBuilder.group({
@@ -39,6 +43,8 @@ export class SettingsComponent implements OnInit {
     private formBuilder: FormBuilder,
     private authService:AuthenticationService,
     private userService:UserService,
+    private modalService: NgbModal,
+    private location: Location
    ) { }
 
   ngOnInit(): void {    
@@ -48,11 +54,13 @@ export class SettingsComponent implements OnInit {
     this.avatar=this.authService.getAvatar();
     if(token==='isContribuyente'){
       this.persona =this.userData;
+      this.userType='Contribuyente';
     }else{
+      this.userType='Administrador';
       this.persona =this.userData.designacion.personaDto;
-      this.persona.ciExpedido = this.persona.ciExpedito
       const funcionarioString = localStorage.getItem('assignaments');
-      // this.funcionario =funcionarioString ? JSON.parse(funcionarioString) : null;
+      this.funcionario =funcionarioString ? JSON.parse(funcionarioString) : null;
+      if(this.funcionario)this.userType='Encargado'; 
     }
   }
 
@@ -64,7 +72,12 @@ export class SettingsComponent implements OnInit {
    get form() {
     return this.passwordForm.controls;
   }
-
+  public openModal() {
+    const modalRef = this.modalService.open(PassResetComponent, {
+        backdrop: 'static',
+    });
+    modalRef.componentInstance.userData = this.userData;
+  }
    getAcronymCity(city: string): string {
     let acronym = '';
     CityAcronym.forEach(element => {
@@ -78,15 +91,16 @@ export class SettingsComponent implements OnInit {
    /* API Services */
    updatePersona() {    
     this.persona['ciExpedido'] = this.getAcronymCity(this.persona['ciExpedido']);
-    this.userService.updatePersona(this.persona).subscribe({
-      next:(data) => {
-          this.persona = data;
-          this.notify('success','Registro actualizado con exito');
-      },
-      error: (error) => {
-          this.notify('error','No se puedo actualizar el Registro');
-      }
-    });
+    console.log(this.persona);
+    // this.userService.updatePersona(this.persona).subscribe({
+    //   next:(data) => {
+    //       this.persona = data;
+    //       this.notify('success','Registro actualizado con exito');
+    //   },
+    //   error: (error) => {
+    //       this.notify('error','No se puedo actualizar el Registro');
+    //   }
+    // });
    }
   changePassword() {
     this.submitted = true;
@@ -122,5 +136,8 @@ export class SettingsComponent implements OnInit {
       if (result.dismiss === Swal.DismissReason.timer) {
       }
     });
+  }
+  goBack() {
+    this.location.back();
   }
 }
