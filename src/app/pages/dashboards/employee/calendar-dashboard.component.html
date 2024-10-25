@@ -41,3 +41,17 @@
     </div>
   </div>
   
+
+<ng-template #confirmModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Confirmación</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <p>¿Está seguro de realizar una reserva para este día?</p>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Cancelar</button>
+    <button type="button" class="btn btn-primary" (click)="confirmReservation(); modal.close()">Confirmar</button>
+  </div>
+</ng-template>

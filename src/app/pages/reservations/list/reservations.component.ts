@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgbModal, NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
-import Swal from 'sweetalert2';
 import { ngxCsv } from 'ngx-csv';
+import Swal from 'sweetalert2';
 
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
@@ -11,8 +11,8 @@ import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
 import { PagoService } from 'src/app/core/services/api/pago.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
-import { ModalComponent } from '../modal/modal.component';
 import { Reserva } from 'src/app/core/models/reserva.models';
+import { ModalComponent } from '../modal/modal.component';
 
 @Component({
   selector: 'app-reservations',
@@ -162,6 +162,7 @@ export class ReservationsComponent implements OnInit {
     modalRef.componentInstance.emitList.subscribe(() => {
       this.getReservations();
     });
+    
   }
   
   showLoading: boolean = false;

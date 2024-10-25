@@ -15,11 +15,13 @@
                         <i class="ri-restart-fill fs-16 "></i> 
                         {{"Consultar" | translate}}
                     </button>
-                    <button *ngIf="canActivate.includes('CREAR')" (click)="openModal(undefined,'','lg')"
-                      type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal">
-                      <i class="ri-add-circle-line align-middle"></i> 
-                      {{"Agregar" | translate}}
-                    </button>                    
+                    <a routerLink="/inicio/taxpayer">
+                        <button *ngIf="canActivate.includes('CREAR')" 
+                            type="button" class="btn btn-soft-secondary">
+                            <i class="ri-add-circle-line align-middle"></i> 
+                            {{"Agregar" | translate}}
+                        </button>
+                    </a>
                     <button *ngIf="canActivate.includes('VER')" (click)="csvFileExport()" 
                         class="btn btn-soft-info" id="remove-actions" style="display: none">
                         <i class="ri-file-download-line align-bottom"></i>
@@ -112,6 +114,7 @@
                     [allcontent]="temp"
                     [content]="reservasList"
                     [show]="canActivate.includes('VER')"
+                    [edit]="canActivate.includes('CAMBIAR-HORARIO')"
                     [consult]="canActivate.includes('ACTUALIZAR')"
                     [delete]="canActivate.includes('ANULAR')"
                     [ticket]="true"

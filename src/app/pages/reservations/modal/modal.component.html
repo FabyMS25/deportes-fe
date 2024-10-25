@@ -5,23 +5,32 @@
           <span class="visually-hidden">Cargando...</span>
         </div>
     </div> 
-        <!-- <div class="modal-header bg-info-subtle"> -->
-    <div class="modal-header" [ngClass]="{'bg-info-subtle p-2' : accion===''|| accion==='edit' || accion==='show'}">
-        <h5 class="modal-title" *ngIf="accion === ''"> Agregar Reserva</h5>
-        <h5 class="modal-title" *ngIf="accion === 'edit' || accion==='show'">
-            Reserva en: {{ row.canchasDto.complejoDto.nombre || 'Sin Nombre' }}
-        </h5>
-        <button type="button" class="btn-close" id="btn-close"
-            data-bs-dismiss="modal" aria-label="Close"
-            (click)="onCloseModal()">
-        </button>
-    </div>
-    <ng-container>
+    <div class="modal-header border  p-2" *ngIf="accion === 'edit' || accion === 'show'">
+        <div class="mini-stats-wid d-flex w-100  justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0 avatar-sm">
+              <span class="mini-stat-icon avatar-title rounded-circle text-success bg-success-subtle fs-4">
+                <img src="assets/icons/logos/logo-sm.png" class="card-logo card-logo-dark user-profile-image img-fluid">
+              </span>
+            </div>
+            <h5 class="modal-title ms-2">
+              Reserva: {{ row.canchasDto.complejoDto.nombre }}
+            </h5>
+          </div>
+          <div class="d-flex align-items-center">
+            <label for="numeroTasa" class="me-2">Tasa:</label> 
+            <input type="text" class="form-control form-control tasa-input" 
+            [value]="row.numeroTasa" disabled />
+          </div>
+          <button type="button" class="btn-close ms-2" id="btn-close" 
+            data-bs-dismiss="modal" aria-label="Cerrar" (click)="onCloseModal()">
+          </button>
+        </div>
+      </div>
+      
         <div class="modal-body">
             @if(accion==='show'){
-                <div class="text-end" *ngIf="canActivate.includes('ACTUALIZAR')">
-                        <!-- <a href="javascript:void(0);" class="btn btn-sm btn-soft-primary" id="edit-event-btn" data-id="edit-event" 
-                        (click)="showeditEvent()" role="button">Editar</a> -->
+                <div class="text-end" *ngIf="canActivate.includes('ACTUALIZAR') && row.estadoReserva === 'Pendiente'">
                     <a class="btn btn-soft-primary" id="edit-event-btn" data-id="edit-event" 
                         (click)="consultModal(consultModel,$event)" role="button">Consultar</a>
                 </div>
@@ -129,110 +138,79 @@
                     </div>
                 </div>
             }
-              @if (!row) {
-                <form [formGroup]="contentForm"  class="needs-validation" >
-                <div class="row event-form">
-                    <div class="mb-3 d-none" id="modal-id">
-                        <label for="uuid" class="form-label">UUID</label>
-                        <input type="hidden" id="uuid" class="form-control" placeholder="UUID" formControlName="uuid" readonly />
-                    </div>        
-                    <div class="mb-3">
-                        <div>
-                            <label for="cancha-field" class="form-label">Cancha</label>
-                            <ng-select 
-                                [items]="canchasList" bindLabel="codigo" bindValue="uuid"
-                                formControlName="uuidCancha" 
-                                placeholder="Seleccione una Cancha" 
-                                [disabled]="form['uuidCancha'].disabled"
-                                [ngClass]="{'is-invalid': submitted && form['uuidCancha'].errors }">
-                            </ng-select>
-                            @if(submitted && form['uuidCancha'].errors){ 
-                            <div class="invalid-feedback"  align="left">
-                                @if(form['uuidCancha'].errors['required']){ 
-                                <div>Debe seleccionar una Opcion
-                                </div>
-                                }
-                            </div>
-                            }                
+            @if (accion === 'edit') {
+                <form [formGroup]="reservationForm">     
+                                        
+                    <div class="form-group">
+                        <label class="form-label mb-0 mt-2">Complejo/Cancha:</label>
+                        <input type="text" class="form-control" disabled 
+                        [value]="row.canchasDto.complejoDto.nombre+' - '+ row.superficie"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label mb-0 mt-2">Contribuyente:</label>
+                        <input type="text"  class="form-control" disabled
+                        [value]="row.contribuyenteDto.nombre+' '+row.contribuyenteDto.apPaterno+' '+row.contribuyenteDto.apMaterno"/>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label mb-0 mt-2">Total Pago:</label>
+                            <input type="number" class="form-control" disabled 
+                            [value]="row.totalPago"/>
                         </div>
-                    </div>            
-                    <div class="mb-3">
-                        <div>
-                            <label for="contribuyente-field" class="form-label">Contribuyente</label>
-                            <ng-select 
-                                [items]="contribuyentesList" bindLabel="nombre" bindValue="uuid"
-                                formControlName="uuidContribuyente"
-                                placeholder="Seleccione un Contribuyente" 
-                                [disabled]="form['uuidContribuyente'].disabled"
-                                [ngClass]="{'is-invalid': submitted && form['uuidContribuyente'].errors }">
-                            </ng-select>
-                            @if(submitted && form['uuidContribuyente'].errors){ 
-                            <div class="invalid-feedback"  align="left">
-                                @if(form['uuidContribuyente'].errors['required']){ 
-                                <div>Debe seleccionar una Opcion
-                                </div>
-                                }
-                            </div>
-                            }  
+                        <div class="col-6 align-items-center justify-items-end mt-5">
+                            <span [ngClass]="{
+                                'bg-success-subtle text-success': row.estadoReserva ==='Pagado', 
+                                'bg-secondary-subtle text-secondary': row.estadoReserva==='Pendiente', 
+                                'bg-danger-subtle text-danger': row.estadoReserva==='Vencido', 
+                                'bg-warning-subtle text-warning': row.estadoReserva==='Anulado'}">
+                                {{row.estadoReserva}}
+                            </span>
                         </div>
-                    </div>            
-                    <div class="mb-3">
-                            <div>
-                                <label for="totalPago-field" class="form-label">Total</label>
-                                <input type="number" id="totalPago-field" class="form-control" placeholder="" formControlName="totalPago" required />
-                            </div>
-                    </div>        
-                    <div class="col-12">
-                        <div class="mb-3">
-                            <label for="fechaReserva-field" class="form-label">Fecha Reserva</label>
+                    </div>
+                    <div>
+                        <label class="form-label mb-0 mt-2">Fecha Reserva</label>
+                        <div class="input-group">
+                            <input type="date" class="form-control" formControlName="fechaReserva" 
+                            mwlFlatpickr [altInput]="true" altFormat="d/m/Y" [convertModelValue]="true">
+                            <span class="input-group-text"><i class="ri-calendar-event-line"></i></span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label mb-0 mt-2">Hora Entrada</label>
                             <div class="input-group">
-                                <input type="text" id="fechaReserva-field" class="form-control flatpickr flatpickr-input" mwlFlatpickr 
-                                [altInput]="true" altFormat="d/m/Y" [convertModelValue]="true" formControlName="fechaReserva" 
-                                placeholder="Seleccionar Fecha" readonly required>
-                                <span class="input-group-text"><i class="ri-calendar-event-line"></i></span>
+                                <input type="time" class="form-control" formControlName="horaEntrada" 
+                                    mwlFlatpickr [dateFormat]="'H:i'" [noCalendar]="true" [enableTime]="true" />
+                                <span class="input-group-text"><i class="ri-time-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label mb-0 mt-2">Hora Salida</label>
+                            <div class="input-group">
+                                <input type="time" class="form-control" formControlName="horaSalida"
+                                mwlFlatpickr [dateFormat]="'H:i'" [noCalendar]="true" [enableTime]="true" />
+                                <span class="input-group-text"><i class="ri-time-line"></i></span>
                             </div>
                         </div>
                     </div>
-                    <div class="col-12" id="event-time">
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Hora Entrada</label>
-                                    <div class="input-group">
-                                        <input id="horaEntrada" type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'" 
-                                        formControlName="horaEntrada" class="form-control flatpickr flatpickr-input" placeholder="Hora Entrada" readonly>
-                                        <span class="input-group-text"><i class="ri-time-line"></i></span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Hora Salida</label>
-                                    <div class="input-group">
-                                        <input id="horaSalida" type="text" mwlFlatpickr [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'" 
-                                        formControlName="horaSalida" class="form-control flatpickr flatpickr-input" placeholder="Hora Salida" readonly>
-                                        <span class="input-group-text"><i class="ri-time-line"></i></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div><!--end row-->
-                    </div>
-                </div>
-            </form>
-              }
-            <div class="hstack gap-2 justify-content-end">
-                <button *ngIf="canActivate.includes('ANULAR') && this.accion==='show'" 
-                    type="button" class="btn btn-soft-danger" id="btn-delete-event" 
-                    (click)="deleteModal('annularModel',$event)">
-                    <i class="ri-close-line align-bottom"></i> Anular
-                </button>
-                <button type="button" class="btn btn-light" id="btn-cancel-event" 
-                    (click)="onCloseModal()">Cancelar</button>
-                <button type="submit" class="btn btn-success" id="btn-save-event"
-                    (click)="saveData()">Guardar</button>  
-            </div>
+                </form>  
+            }
         </div>
-    </ng-container> 
+        <div class="modal-footer">
+            <button type="button" class="btn btn-light" id="btn-cancel-event" 
+            (click)="onCloseModal()">Cancelar</button>
+            <button *ngIf="canActivate.includes('ANULAR') && this.accion==='show' && row.estadoReserva === 'Pendiente'" 
+                type="button" class="btn btn-soft-danger" id="btn-delete-event" 
+                (click)="deleteModal('annularModel',$event)">
+                <i class="ri-close-line align-bottom"></i> Anular
+            </button>
+            <button *ngIf="canActivate.includes('CAMBIAR-HORARIO') && this.accion==='edit' && row.estadoReserva === 'Pendiente'" 
+                type="submit" class="btn btn-success" id="btn-save-event"
+                [disabled]="!reservationForm.valid"
+                (click)="saveData()">Guardar
+            </button>  
+        </div>
+</div>      
 
 <!-- Modals -->
 <ng-template #consultModel role="document" let-modal>
@@ -355,6 +333,5 @@
         </div>
     </div> 
 </ng-container>
-<!--end modal -->
-</div>
+
 

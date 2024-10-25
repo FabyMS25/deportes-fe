@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Reserva } from 'src/app/core/models/reserva.models';
-import { FormControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import Swal from 'sweetalert2';
@@ -20,14 +20,14 @@ export class ModalComponent {
 
   @Input() accion!: string;
   @Input() row!: Reserva;
-  @Input() cancha: any = '';
-  @Input() contribuyente: any = '';
+  // @Input() cancha: any = '';
+  // @Input() contribuyente: any = '';
   @Input() canActivate!: any[] 
   @Output() emitList = new EventEmitter();
 
-  CityAcronym = CityAcronym
+  CityAcronym = CityAcronym;
 
-  contentForm!: UntypedFormGroup;
+  reservationForm!: FormGroup;
   submitted = false;
 
   canchasList=[];
@@ -45,106 +45,41 @@ export class ModalComponent {
   ) {}
 
    
-  ngOnInit(): void {
-    if(this.row){
-      this.cancha= this.row.canchasDto.uuid;
-      this.contribuyente = this.row.contribuyenteDto.uuid
-    }
-    if(this.accion==='' || this.accion ==='edit'){
+  ngOnInit(): void {    
       this.getFields();
       this.getTaxpayers();
       this.initForm();
-      if(this.accion==='edit') {this.formDataSet();}
-    }else{
-      setTimeout(() => {
-        document.getElementById('form-event')?.classList.add('view-event');
-        (document.getElementById('btn-save-event') as HTMLElement).setAttribute("hidden", "true");
-        (document.getElementById('btn-cancel-event') as HTMLElement).setAttribute("hidden", "true");
-      }, 100);
-
-    }
   }
-  
-  /**
-   * Form data get
-   */
-  get form() {
-    return this.contentForm.controls;
-  }
-  /**
-   * Form Validation
-   */
+ 
   private initForm(){
-    this.contentForm = this.formBuilder.group({
-      uuid: [''],
-      numeroTasa: [''],
-      fechaReserva: ['', [Validators.required]],
-      horaEntrada: ['', [Validators.required]],
-      horaSalida: ['', [Validators.required]],
-      totalPago: [0, [Validators.required]],
-      pagossDto: [null],
-      estadoReserva: ['', [Validators.required]],
-      uuidCancha: [{ value: this.cancha, disabled: !!this.cancha }, [Validators.required]],
-      canchasDto: new FormControl(),
-      uuidContribuyente: [{ value: this.contribuyente, disabled: !!this.contribuyente }, [Validators.required]],
-      contribuyenteDto: new FormControl(),
-    });}
-  private formDataSet() {
-    this.contentForm.patchValue({
-        uuid:this.row.uuid,
-        nroTasa: this.row.numeroTasa,
-        fechaReserva: this.row.fechaReserva,
-        horaEntrada:this.row.horaEntrada,
-        horaSalida: this.row.horaSalida,
-        totalPago: this.row.totalPago,
-        contribuyenteDto: this.row.contribuyenteDto,
-        canchasDto:this.row.canchasDto,
-        pagosDto: this.row.pagosDto,
-        uuidCancha: this.row.canchasDto.uuid,
-        uuidContribuyente: this.row.contribuyenteDto.uuid,
+    console.log(this.row)
+    this.reservationForm = this.formBuilder.group({
+      fechaReserva: [this.row.fechaReserva, Validators.required],
+      horaEntrada: [this.row.horaEntrada, [Validators.required]],
+      horaSalida: [this.row.horaSalida, [Validators.required]],
     });
   }
-  
-  showeditEvent() {
-    if (document.querySelector('#edit-event-btn')?.innerHTML == 'Cancelar') {
-      document.getElementById('form-event')?.classList.add('view-event');
-      var editbtn = document.querySelector('#edit-event-btn') as HTMLAreaElement;
-      editbtn.innerHTML = 'Editar';
-      (document.getElementById('btn-save-event') as HTMLElement).setAttribute("hidden", "true");
-    } else {
-      document.getElementById('form-event')?.classList.remove('view-event');
-      (document.getElementById('btn-save-event') as HTMLElement).removeAttribute("hidden");
-      (document.getElementById('btn-cancel-event') as HTMLElement).removeAttribute("hidden");
 
-      var modalbtn = document.querySelector('#btn-save-event') as HTMLAreaElement;
-      modalbtn.innerHTML = "Actualizar"
-      var editbtn = document.querySelector('#edit-event-btn') as HTMLAreaElement;
-      editbtn.innerHTML = 'Cancelar'
-    }
+  get form() {
+    return this.reservationForm.controls;
   }
+ 
   /**
   * Save
   */
   saveData() {
     this.submitted = true;
-    if (this.contentForm.valid) {
-      this.contentForm.enable()
+    if (this.reservationForm.valid) {
       let datos: any = {
-        // codigo: this.contentForm.value.codigo,
-        fechaReserva: this.contentForm.value.fechaReserva,
-        horaEntrada:this.contentForm.value.horaEntrada,
-        horaSalida: this.contentForm.value.horaSalida,
-        totalPago: this.contentForm.value.totalPago,
-        contribuyenteDto:  { uuid: this.contentForm.value.uuidContribuyente },
-        canchasDto: { uuid: this.contentForm.value.uuidCancha },
-        pagosDto: this.contentForm.value.pagosDto,
+        ...this.row,
+        ...this.reservationForm.value,
       };
-      if (this.contentForm.get('uuid')?.value) {
-          datos.uuid=this.contentForm.value.uuid,
+      
+      if (this.reservationForm.get('uuid')?.value) {
+          datos.uuid=this.reservationForm.value.uuid,
           this.updateData(datos);
-      } else {
-          this.addData(datos);
-      }
+      } 
+      
     }else {
         this.notify('Formulario Invalido!', 'error');
     }
@@ -226,20 +161,7 @@ export class ModalComponent {
       });
     });
   }
-  addData(datos:Reserva){
-    this.reservasService.save(datos).subscribe({
-      next:(data:Reserva)=>{
-        this.position();
-        this.submitted=false;
-        this.notify('Datos Registrados exitosamente!','success'); 
-        this.onCloseModal();
-        this.emitList.emit();       
-      },
-      error: (error) => {
-        this.notify('No se pudo Guardar los datos! '+error, 'error');
-      }
-    })
-  }
+
   updateData(datosUnit:Reserva) {
       this.reservasService.update(datosUnit).subscribe({
           next: (data: Reserva) => {
@@ -363,9 +285,9 @@ async consultData(item: any): Promise<any> {
   /* commun functions */ 
   public onCloseModal() {
     this.accion = '';    
-    if (this.contentForm) {
-      this.contentForm.enable();
-      this.contentForm.reset();
+    if (this.reservationForm) {
+      this.reservationForm.enable();
+      this.reservationForm.reset();
     }  
     this.modalService.dismissAll();
   }

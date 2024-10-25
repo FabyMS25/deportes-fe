@@ -33,13 +33,11 @@ export class SignupCheckComponent {
 
   ngOnInit(): void {
     this.authRuat()
-    /**
-     * Form Validatyion
-     */
+    
      this.SignupForm = this.formBuilder.group({
       tipoDocumento:['', [Validators.required]],
       nroDocumento:['', [Validators.required]],
-      expedido:['', [Validators.required]],
+      expedido:[''],
     });
     
   }

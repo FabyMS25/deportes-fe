@@ -1,18 +1,18 @@
-import { Component, OnInit } from '@angular/core';
-import { CalendarOptions, EventApi, EventClickArg, EventInput } from '@fullcalendar/core';
-import interactionPlugin, { Draggable } from '@fullcalendar/interaction';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { CalendarOptions, EventApi, EventClickArg } from '@fullcalendar/core';
+import interactionPlugin from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import multiMonthPlugin from '@fullcalendar/multimonth'
 import esLocale from '@fullcalendar/core/locales/es';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { ModalComponent } from '../../reservations/modal/modal.component';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-calendar-dashboard',
@@ -35,6 +35,8 @@ export class CalendarDashboardComponent implements OnInit {
   filterArray: any;
   filterEvents: any = [];
   allcalendarEvents: any;
+
+  @ViewChild('confirmModal') confirmModal!: TemplateRef<any>; 
 
   constructor( private modalService: NgbModal,
     private reservasService: ReservaService,
@@ -165,6 +167,14 @@ export class CalendarDashboardComponent implements OnInit {
   }
 
   public redirectTo() {
+    
+    this.modalService.open(this.confirmModal);
+    // const isConfirmed = window.confirm('¿Está seguro de realizar una reserva ese día?');
+    // if (isConfirmed) {
+    //   this.router.navigate(['/inicio/taxpayer']);
+    // }
+  }
+  confirmReservation() {
     this.router.navigate(['/inicio/taxpayer']);
   }
 }
