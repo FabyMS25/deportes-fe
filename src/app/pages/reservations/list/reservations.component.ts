@@ -49,6 +49,9 @@ export class ReservationsComponent implements OnInit {
     if (window.sessionStorage.getItem("auth-token") === 'isContribuyente') {
       const currentUser = window.sessionStorage.getItem("currentUser");
       this.contribuyente = currentUser ? JSON.parse(currentUser) : null;
+      if(this.contribuyente.estadoUsuario!=='Activo'){
+        this.canActivate=["VER"];
+      }
     }  
     await this.getReservations();
     await this.getCategories();
@@ -58,7 +61,7 @@ export class ReservationsComponent implements OnInit {
     ];
     this.itemsList = [
       {name: 'Complejo  ',prop: 'canchasDto.complejoDto.nombre',visible:true},
-      {name: 'Contribuyente', prop: 'contribuyenteDto.nombre',visible:false},
+      {name: 'Contribuyente', prop: 'contribuyenteDto.nombre',visible:!this.contribuyente},
       {name: 'Superficie', prop: 'superficie',visible:true},
       {name: 'Fecha Reserva',prop: 'fechaReserva', date:true,visible:true},
       {name: 'Estado', prop: 'estadoReserva', tag:true,visible:true},

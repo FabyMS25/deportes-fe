@@ -24,6 +24,7 @@ import { NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 export class MapDashboardComponent implements OnInit {
 
     temp:any=[]
+    userData: any;
     complexList:any[]=[];
     surfaceList:any[]=[];
     categoryList:any[]=[];
@@ -51,6 +52,12 @@ export class MapDashboardComponent implements OnInit {
       this.initializeData();
     }    
     async initializeData() {
+      const token = window.sessionStorage.getItem('auth-token');      
+      if(token==='isContribuyente'){
+        const userString = window.sessionStorage.getItem('currentUser');
+        this.userData =userString ? JSON.parse(userString) : null;
+      }
+
       await this.getComplexes();   
       await this.getSurfaces();
       await this.getFields();      
@@ -147,6 +154,8 @@ export class MapDashboardComponent implements OnInit {
       const popupContent = document.createElement('div');
       const canchasDescriptions = element.canchasDtoList? element.canchasDtoList.map((c:any) => c.superficieDto.descripcion).join(', '): '' ; // Join descriptions with a comma
 
+      const showButton = this.userData? this.userData.estadoUsuario === 'Activo':true;
+
       popupContent.innerHTML = `
         <b>${element.nombre}</b><br />
         <b>Encargado: </b>${element.encargadosDtoList[0] ? element.encargadosDtoList[0]?.nombre : ''}<br />
@@ -155,9 +164,10 @@ export class MapDashboardComponent implements OnInit {
         <b>Ubicación: </b>${element.ubicacion}<br />
         <b>Canchas: </b>${canchasDescriptions}<br /> 
         <br>
-        <button class="btn btn-secondary">
-          <i class="ri-edit-box-line align-bottom"></i> Realizar reserva
-        </button>
+        ${showButton ? 
+          '<button class="btn btn-secondary"><i class="ri-edit-box-line align-bottom"></i> Realizar reserva</button>' 
+          : ''        
+        }
       `;
 
       const button = popupContent.querySelector('button');

@@ -564,7 +564,8 @@ export class InvoiceFormComponent implements OnInit  {
       this.step=this.step+1
     }
     back(){
-      this.step=this.step-1
+      this.router.navigate(['/inicio/taxpayer']);
+      // this.step=this.step-1
     }
 
 }

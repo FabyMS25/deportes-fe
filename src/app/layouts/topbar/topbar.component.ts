@@ -1,28 +1,25 @@
 import { Component, OnInit, EventEmitter, Output, Inject, ViewChild, TemplateRef } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
-import { EventService } from '../../core/services/event.service';
-
-//Logout
-import { environment } from '../../../environments/environment';
-import { AuthenticationService } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
+import { DOCUMENT } from '@angular/common';
+import { CookieService } from 'ngx-cookie-service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { LanguageService } from '../../core/services/language.service';
+
+import { EventService } from '../../core/services/event.service';
+import { AuthenticationService } from '../../core/services/auth.service';
 import { TokenStorageService } from '../../core/services/token-storage.service';
 
 // Language
-import { CookieService } from 'ngx-cookie-service';
-import { LanguageService } from '../../core/services/language.service';
-import { TranslateService } from '@ngx-translate/core';
-import { allNotification } from './data'
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-
 @Component({
   selector: 'app-topbar',
   templateUrl: './topbar.component.html',
   styleUrls: ['./topbar.component.scss']
 })
 export class TopbarComponent implements OnInit {
+  menuItems:any[]=[];
   
-  messages: any
+  messages: any;
   element: any;
   mode: string | undefined;
   @Output() mobileMenuButtonClicked = new EventEmitter();
@@ -51,6 +48,8 @@ export class TopbarComponent implements OnInit {
     this.element = document.documentElement;
 
     this.avatar=this.authService.getAvatar();
+    const menu = localStorage.getItem('menu');
+    this.menuItems =menu ? JSON.parse(menu) : null;
 
     // Cookies wise Language set
     this.cookieValue = this._cookiesService.get('lang');
@@ -62,7 +61,7 @@ export class TopbarComponent implements OnInit {
       this.flagvalue = val.map(element => element.flag);
     }
 
-    this.allnotifications = allNotification;
+    
 
   }
 
@@ -145,12 +144,12 @@ export class TopbarComponent implements OnInit {
   listLang = [
     { text: 'English', flag: 'assets/icons/flags/us.svg', lang: 'en' },
     { text: 'Español', flag: 'assets/icons/flags/spain.svg', lang: 'es' },
-    { text: 'Deutsche', flag: 'assets/icons/flags/germany.svg', lang: 'de' },
-    { text: 'Italiana', flag: 'assets/icons/flags/italy.svg', lang: 'it' },
-    { text: 'русский', flag: 'assets/icons/flags/russia.svg', lang: 'ru' },
-    { text: '中国人', flag: 'assets/icons/flags/china.svg', lang: 'ch' },
-    { text: 'français', flag: 'assets/icons/flags/french.svg', lang: 'fr' },
-    { text: 'Arabic', flag: 'assets/icons/flags/ar.svg', lang: 'ar' },
+    // { text: 'Deutsche', flag: 'assets/icons/flags/germany.svg', lang: 'de' },
+    // { text: 'Italiana', flag: 'assets/icons/flags/italy.svg', lang: 'it' },
+    // { text: 'русский', flag: 'assets/icons/flags/russia.svg', lang: 'ru' },
+    // { text: '中国人', flag: 'assets/icons/flags/china.svg', lang: 'ch' },
+    // { text: 'français', flag: 'assets/icons/flags/french.svg', lang: 'fr' },
+    // { text: 'Arabic', flag: 'assets/icons/flags/ar.svg', lang: 'ar' },
   ];
 
   /***
@@ -192,6 +191,7 @@ export class TopbarComponent implements OnInit {
   }
 
   toggleDropdown(event: Event) {
+    
     event.stopPropagation();
     if (this.isDropdownOpen) {
       this.isDropdownOpen = false;
@@ -201,41 +201,28 @@ export class TopbarComponent implements OnInit {
   }
   // Search Topbar
   Search() {
-    var searchOptions = document.getElementById("search-close-options") as HTMLAreaElement;
-    var dropdown = document.getElementById("search-dropdown") as HTMLAreaElement;
-    var input: any, filter: any, ul: any, li: any, a: any | undefined, i: any, txtValue: any;
-    input = document.getElementById("search-options") as HTMLAreaElement;
-    filter = input.value.toUpperCase();
-    var inputLength = filter.length;
-
+    const searchOptions = document.getElementById("search-close-options") as HTMLElement;
+    const dropdown = document.getElementById("search-dropdown") as HTMLElement;
+    const input = document.getElementById("search-options") as HTMLInputElement;
+    const filter = input.value.toUpperCase();
+    const inputLength = filter.length;
+  
     if (inputLength > 0) {
       dropdown.classList.add("show");
       searchOptions.classList.remove("d-none");
-      var inputVal = input.value.toUpperCase();
-      var notifyItem = document.getElementsByClassName("notify-item");
-
-      Array.from(notifyItem).forEach(function (element: any) {
-        var notifiTxt = ''
-        if (element.querySelector("h6")) {
-          var spantext = element.getElementsByTagName("span")[0].innerText.toLowerCase()
-          var name = element.querySelector("h6").innerText.toLowerCase()
-          if (name.includes(inputVal)) {
-            notifiTxt = name
-          } else {
-            notifiTxt = spantext
-          }
-        } else if (element.getElementsByTagName("span")) {
-          notifiTxt = element.getElementsByTagName("span")[0].innerText.toLowerCase()
-        }
-        if (notifiTxt)
-          element.style.display = notifiTxt.includes(inputVal) ? "block" : "none";
-
+  
+      const notifyItems = document.getElementsByClassName("notify-item") as HTMLCollectionOf<HTMLElement>;
+  
+      Array.from(notifyItems).forEach((element) => {
+        const spanText = element.querySelector("span")?.innerText.toLowerCase() || '';
+        element.style.display = spanText.includes(filter.toLowerCase()) ? "block" : "none";
       });
     } else {
       dropdown.classList.remove("show");
       searchOptions.classList.add("d-none");
     }
   }
+  
 
   /**
    * Search Close Btn

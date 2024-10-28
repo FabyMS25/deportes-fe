@@ -55,7 +55,7 @@
                         </a>
                         <ng-template ngbNavContent>
                             <!-- persona-form.component.html -->
-                            <form [formGroup]="personaForm" (ngSubmit)="updatePersona()" class="tablelist-form">
+                            <form [formGroup]="personaForm" (ngSubmit)="saveData()" class="tablelist-form">
                                 <div class="row">
                                 <div class="col-lg-6">
                                     <div class="mb-3">
@@ -120,7 +120,6 @@
                                     <div class="mb-3">                                          
                                         <label for="expedido" class="form-label">Expedido</label>
                                         <input type="text" class="form-control" formControlName="expedido" readonly 
-                                            placeholder="Ingresar Numero de Carnet" 
                                             [ngClass]="{'is-invalid': personaForm.get('expedido')?.touched && personaForm.get('expedido')?.invalid}">
                                         <!-- <select class="form-control" formControlName="expedido" id="expedido" [disabled]="true"
                                             [ngClass]="{'is-invalid': personaForm.get('expedido')?.touched && personaForm.get('expedido')?.invalid}">
@@ -248,10 +247,11 @@
                                 <div>
                                     <input type="password" class="form-control" id="passwordInput"
                                         placeholder="Ingresa tu contraseña" 
-                                        style="max-width: 265px;">
+                                        style="max-width: 265px;" 
+                                        [(ngModel)]="password"> 
                                 </div>
                                 <div class="hstack gap-2 mt-3 justify-end">
-                                    <a href="javascript:void(0);" class="btn btn-soft-danger">
+                                    <a (click)="deleteAccount()" class="btn btn-soft-danger">
                                         Cerrar & Eliminar esta cuenta
                                     </a>
                                     <a (click)="goBack()" class="btn btn-light">Volver</a>

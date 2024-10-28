@@ -14,17 +14,19 @@ export const GlobalComponent = {
 
     super_admin:{
         username:'faby25',
-        password:'password'
+        password:'password',
+        whatsApp:'+59172248669',
+        email:'moralessfaby.dev@gmail.com'
     },
 
     /* RUAT CREDENTIALS TEST */
-    // apiRuatUrl: "https://verificacionjboss.ruat.gob.bo", 
-    // RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
-    // RUAT_clave: "fIH1z30a1SpB",
-    /* RUAT CREDENTIALS PRODUCTION */
-    apiRuatUrl: "https://aplicaciones.ruat.gob.bo",
+    apiRuatUrl: "https://verificacionjboss.ruat.gob.bo", 
     RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
-    RUAT_clave: "Gam#1209",
+    RUAT_clave: "fIH1z30a1SpB",
+    /* RUAT CREDENTIALS PRODUCTION */
+    // apiRuatUrl: "https://aplicaciones.ruat.gob.bo",
+    // RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
+    // RUAT_clave: "Gam#1209",
 
     /* RUAT DATA */
     RUAT_token : `${sessionStorage.getItem('ruatToken')}`,  

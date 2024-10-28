@@ -2,19 +2,14 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 
 // Component pages
-import { FaqsComponent } from "./faqs/faqs.component";
 import { ExtraPagesComponent } from './extra-pages-in/extra-pages-layout.component';
+import { FaqsComponent } from 'src/app/shared/extraspages/faqs/faqs.component';
 
 const routes: Routes = [
   {
     path: 'faqs',
     component: FaqsComponent
   },
-  // {
-  //   path: 'faqs',
-  //   component: ExtraPagesComponent,
-  //   data: { pageType: 'faqs', title: 'Frequently Asked Questions' }
-  // },
   {
     path: 'privacy-policy-in',
     component: ExtraPagesComponent,

@@ -73,7 +73,7 @@ export class ContribuyentesService {
   update(data: Contribuyente): Observable<Contribuyente> {
     return this.http.put<Contribuyente>(`${this.apiUrl}`, data);
   }
-  delete(uuid: String) {
+  delete(uuid: string) {
     return this.http.delete(`${this.apiUrl}/${uuid}`);
   }
 }

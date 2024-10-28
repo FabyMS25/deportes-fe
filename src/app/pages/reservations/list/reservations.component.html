@@ -31,6 +31,10 @@
             </div>                
         </div>
         <div class="card-header border border-dashed border-end-0 border-start-0">
+            <div class="bg-danger-subtle text-danger rounded-3 justify-content-center align-items-center p-2"  *ngIf="contribuyente && contribuyente.estadoUsuario !== 'Activo'">
+                <h4 class="text-danger text-center">Su cuenta no se encuentra activa, solo puede ver el historial de sus reservas y no realizar reservas nuevas</h4>
+                <p class="text-center"> para reactivar su cuenta comuniquese con el administrador</p>
+            </div>            
             <form (ngSubmit)="applyFilters()">
                 <div class="row g-1">
                     <div class="col-xxl-4 col-md-6 col-sm-6">

@@ -1,24 +1,27 @@
 
     <div class="row g-0">
       <div class="col-12">
-        <div class="card map-card">
-          <div class="card-header">
-            <h4 class="card-title mb-0">PANEL DE CONTROL DE COMPLEJOS DEPORTIVOS</h4>
-          </div>
-          
-          <div class="card-body p-0">
-            <div id="map" class="map-container"></div>
-          </div>
+        <div class="card map-card">  
+            <div class="card-header border-0 d-flex flex-wrap align-items-center">
+                <h5 class="card-title flex-grow-1 mb-0">PANEL DE CONTROL DE COMPLEJOS DEPORTIVOS</h5>
+                <div class="flex-shrink-0">
+                    <div class="d-flex gap-1 flex-wrap ">
+                        <!-- <button type="button" class="btn btn-primary" data-bs-toggle="offcanvas"
+                        href="javascript:void(0);" (click)="openEnd(filtetcontent)"><i
+                        class="ri-filter-3-line align-bottom me-1"></i>Filtrar
+                        </button>       -->
+                    </div>
+                </div>                
+            </div>          
+            <div class="card-body p-0">
+                <div id="map" class="map-container"></div>
+            </div>
         </div>
       </div>
     </div>
 <script src="https://unpkg.com/leaflet-geosearch@latest/dist/bundle.min.js"></script>
 
 <!--  -->
-<button type="button" class="btn btn-primary" data-bs-toggle="offcanvas"
-href="javascript:void(0);" (click)="openEnd(filtetcontent)"><i
-class="ri-filter-3-line align-bottom me-1"></i>Filtrar
-</button>
 <!-- Right Sidebar Filter Section  -->
 <ng-template #filtetcontent let-offcanvas>
   <div class="offcanvas-header bg-light">
