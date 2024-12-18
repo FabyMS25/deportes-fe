@@ -116,9 +116,7 @@
           "serve": {
             "builder": "@angular-devkit/build-angular:dev-server",
             "options": {
-              "buildTarget": "deportes-gamq:build",
-              "host": "deportes-gamq.gob.bo",
-              "port": 80
+              "buildTarget": "deportes-gamq:build"
             },
             "configurations": {
               "production": {
