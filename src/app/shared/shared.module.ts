@@ -56,9 +56,7 @@ import { PrivacyPolicyComponent } from './extraspages/privacy-policy/privacy-pol
     TermsConditionsComponent,
     PrivacyPolicyComponent
   ],
-  providers: [
-    DatePipe
-  ],
+  providers: [ DatePipe ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [BreadcrumbsComponent, 
           DataTableComponent,

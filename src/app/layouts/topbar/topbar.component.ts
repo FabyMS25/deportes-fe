@@ -18,6 +18,7 @@ import { TokenStorageService } from '../../core/services/token-storage.service';
 })
 export class TopbarComponent implements OnInit {
   menuItems:any[]=[];
+  avatar="default-profile1.png";
   
   messages: any;
   element: any;
@@ -37,7 +38,6 @@ export class TopbarComponent implements OnInit {
   isDropdownOpen = false;
   @ViewChild('removenotification') removenotification !: TemplateRef<any>;
   notifyId: any;
-  avatar="default-profile1.png";
 
   constructor(@Inject(DOCUMENT) private document: any, private eventService: EventService, public languageService: LanguageService, private modalService: NgbModal,
     public _cookiesService: CookieService, public translate: TranslateService, private authService: AuthenticationService, 

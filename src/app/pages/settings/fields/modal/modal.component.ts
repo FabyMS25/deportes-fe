@@ -199,13 +199,23 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
     tarifa.get('categorias')?.updateValueAndValidity();
   }
 
-  openScheduleModal(row: campoDeportivo | undefined, accion: string, size: string) {
+  openScheduleModal(row: campoDeportivo | undefined, accion: string, size: string): Promise<any> {
     const modalRef = this.modalService.open(ModalScheduleComponent, {
-        backdrop: 'static',
-        size:size
+      backdrop: 'static',
+      size: size
     });
+  
     modalRef.componentInstance.row = row;
     modalRef.componentInstance.accion = accion;
+    return new Promise((resolve, reject) => {
+      modalRef.componentInstance.emitList.subscribe(() => {
+        // if (success) {
+          resolve(true); // Action was successful
+        // } else {
+          // reject(false); // Action failed
+        // }
+      });
+    });
   }
 
   addTariffForm() {
@@ -382,11 +392,15 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
 
   private addField(datos: campoDeportivo): Observable<any> {
     return this.canchaService.save(datos).pipe(
-      switchMap((result: any) => {
+      switchMap(async (result: any) => {
         if(result.status === 'OK'){
           this.submitted = false;
-          this.openScheduleModal(result.payload, 'edit', 'md');
-          return this.saveTarifasCat(result.payload)
+          const modalResult = await this.openScheduleModal(result.payload, 'edit', 'md');
+          if (modalResult) {
+            return this.saveTarifasCat(result.payload);
+          } else {
+            return of(null);
+          }
         }else{
           return of(null);
         }
@@ -400,13 +414,19 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
       })
     );
   }  
+
+  
   private updateField(canchaData: campoDeportivo): Observable<any> {
     return this.canchaService.update(canchaData).pipe(
-      switchMap((updatedCancha: any) => {
+      switchMap(async (updatedCancha: any) => {
         if(updatedCancha.status ==='OK'){
           this.submitted = false;
-          this.openScheduleModal(updatedCancha.payload,'edit','md')
-          return this.saveTarifasCat(updatedCancha.payload );
+          const modalResult = await this.openScheduleModal(updatedCancha.payload, 'edit', 'md');
+          if (modalResult) {
+            return this.saveTarifasCat(updatedCancha.payload);
+          } else {
+            return of(null);
+          }
         }else{
           return of(null);
         }

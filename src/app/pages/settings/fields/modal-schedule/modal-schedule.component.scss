@@ -1,0 +1,14 @@
+.clear-icon {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #6c757d; /* Adjust color to match the theme */
+  }
+  
+  .clear-icon:hover {
+    color: #000; /* Darker on hover for feedback */
+  }
+  

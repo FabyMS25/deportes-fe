@@ -6,6 +6,7 @@ import { UserService } from 'src/app/core/services/api-users/users.service';
 import { Encargado } from 'src/app/core/models/encargado';
 import { EncargadoService } from 'src/app/core/services/api/encargado.service';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { UserRol } from 'src/app/core/constants/UserData';
 
 @Component({
   selector: 'app-modalEmployee',
@@ -37,15 +38,15 @@ export class ModalEmployeeComponent {
      * Form Validation
      */
     this.contentForm = this.formBuilder.group({
-      image_src: [''],
       uuid: [''],
+      avatar:['multi-user.jpg'],
       uuidUsuario: ['', [Validators.required]],
       // fechaInicio: ['', [Validators.required]],
       // fechaFin: ['', [Validators.required]],
       horaEntrada: ['', [Validators.required]],
       horaSalida: ['', [Validators.required]],
       nombre: [''],
-      telefono: [''],
+      telefono: ['', [Validators.pattern('^\\+?[0-9]{7,15}$'),Validators.minLength(7), Validators.maxLength(15)]],
       uuidCancha: [''],
       canchaDto: new FormControl(),
     });
@@ -62,7 +63,7 @@ export class ModalEmployeeComponent {
     if (this.accion != '') {
         this.contentForm.patchValue({
             uuid:this.row.uuid,
-            image_src: [''],
+            avatar: this.row.avatar,
             uuidUsuario: this.row.userUuid,
             // fechaInicio: this.row.fechaInicio,
             // fechaFin: this.row.fechaFin,
@@ -77,17 +78,26 @@ export class ModalEmployeeComponent {
   }
 
 onUserSelectHandler(event: any) {
+  let avatar='';
   const selectedUuid = event.target.value;
   const selectedUser = this.usersList.find(user => user.uuid === selectedUuid);
   if (selectedUser) {
     this.user = selectedUser;
+    const type = selectedUser.permisoDtos?.find((menu:any) => 
+      menu.modulo === 'DEPORTESAPP' && menu.nombreMenu === 'Administracion')? 0 : 1;
+    const foundItem = UserRol.find(item => item.tipo === type);  
+    if (foundItem) {
+      avatar = foundItem.avatarM;
+      if ( selectedUser.designacionFuncionarioDto.personaDto.sexo === 'F') {
+        avatar = foundItem.avatarF;
+      }
+    }
     this.contentForm.patchValue({
-      nombre: selectedUser.designacionFuncionarioDto.personaDto.fullName
+      nombre: selectedUser.designacionFuncionarioDto.personaDto.fullName,
+      avatar: avatar
     });
   }
 }
-
-
   // File Upload
   imageURL: string | undefined;
   fileChange(event: any) {
@@ -95,8 +105,7 @@ onUserSelectHandler(event: any) {
     let file: File = fileList.files[0];
     document.getElementById('')
     this.contentForm.patchValue({
-      // image_src: file.name
-      image_src: 'brands/dribbble.png'
+      avatar: 'brands/dribbble.png'
     });
     const reader = new FileReader();
     reader.onload = () => {
@@ -131,9 +140,8 @@ onUserSelectHandler(event: any) {
   saveData() {
     this.submitted = true;
     if (this.contentForm.valid) {
-      this.contentForm.enable();
-      
-      let datos: Encargado = {
+      this.contentForm.enable();      
+      let datos: any = {
         userUuid: this.contentForm.value.uuidUsuario,
         // fechaInicio: this.contentForm.value.fechaInicio,
         // fechaFin: this.contentForm.value.fechaFin,
@@ -154,8 +162,9 @@ onUserSelectHandler(event: any) {
       this.notify('Formulario Invalido!', 'error');
     }
   }
-  
-  addData(datos:Encargado){
+
+  /* API Requests */
+  private addData(datos:Encargado){
     this.encargadoCanchaService.save(datos).subscribe({
       next:(data:Encargado)=>{
         this.submitted=false;
@@ -169,7 +178,7 @@ onUserSelectHandler(event: any) {
       }
     })
   }
-  updateData(datosUnit:Encargado) {
+  private updateData(datosUnit:Encargado) {
       this.encargadoCanchaService.update(datosUnit).subscribe({
           next: (data: Encargado) => {
             this.submitted = false;
@@ -185,7 +194,7 @@ onUserSelectHandler(event: any) {
           }
       })
   }
-  
+  /* Commun functions */
   public closeModal() {
     this.accion = '';
     this.contentForm.enable();

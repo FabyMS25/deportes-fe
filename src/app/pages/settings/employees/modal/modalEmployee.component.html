@@ -27,14 +27,17 @@
                                     </div>
                                 </div>
                             </label>
-                            <input class="form-control d-none" id="company-logo-input" type="file"
+                            <!-- <input class="form-control d-none" id="company-logo-input" type="file"
                                 accept="image/png, image/gif, image/jpeg"
-                                (change)="fileChange($event)">
+                                (change)="fileChange($event)"> -->
                         </div>
                         <div class="avatar-lg p-1">
                             <div class="avatar-title bg-light rounded-circle">
-                                <img src="assets/icons/users/multi-user.jpg" id="companylogo-img"
+                                <img [src]="'assets/icons/users/' + form['avatar'].value" id="companylogo-img"
                                     class="avatar-md rounded-circle object-fit-cover" />
+                                <!-- <img [src]="'assets/icons/users/'+funcionarioSelected.avatar" alt="Avatar" class="avatar-lg rounded-circle img-thumbnail">
+                                <span class="contact-active position-absolute rounded-circle bg-success"></span>
+                                <span class="visually-hidden"></span> -->
                             </div>
                         </div>
                     </div>
@@ -69,7 +72,6 @@
                     <label for="uuidCancha" class="form-label">Complejo</label>
                     <select class="form-control mb-0" data-choices data-choices-search-false
                         id="uuidCancha" formControlName="uuidCancha" required
-                        (change)="onUserSelectHandler($event)"
                         [ngClass]="{ 'is-invalid': submitted && form['uuidCancha'].errors }"> 
                         <option [value]="''" disabled>Seleccione opcion</option>
                         @for (item of canchasList; track $index) {
@@ -78,10 +80,10 @@
                         </option>
                         }
                     </select>
-                    @if(submitted && form['canchaDto'].errors){ 
+                    @if(submitted && form['uuidCancha'].errors){ 
                     <div class="invalid-feedback"
                         align="left">
-                        @if(form['canchaDto'].errors['required']){ 
+                        @if(form['uuidCancha'].errors['required']){ 
                             <div>El campo es requerido </div>
                         }
                     </div>
@@ -108,20 +110,26 @@
               <div>
                 <label for="horaEntrada-field" class="form-label">Hora Entrada</label>
                 <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                       [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                       placeholder="Ingresar hora inicio" formControlName="horaEntrada">
+                   [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
+                   placeholder="Ingresar hora inicio" formControlName="horaEntrada">
+                @if(submitted && form['horaEntrada'].errors){ 
+                    <div class="invalid-feedback" align="left">
+                        @if(form['horaEntrada'].errors['required']){ 
+                             <div>El campo es requerido </div>
+                        }
+                    </div>
+                }
               </div>
             </div>
             <div class="col-lg-6">
               <div>
                 <label for="horaSalida-field" class="form-label">Hora Salida</label>
                 <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                       [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                       placeholder="Ingresar hora final" formControlName="horaSalida"
-                       [ngClass]="{ 'is-invalid': submitted && form['horaSalida'].errors }" />
+                    [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
+                    placeholder="Ingresar hora final" formControlName="horaSalida"
+                    [ngClass]="{ 'is-invalid': submitted && form['horaSalida'].errors }" />
                    @if(submitted && form['horaSalida'].errors){ 
-                   <div class="invalid-feedback"
-                       align="left">
+                   <div class="invalid-feedback" align="left">
                        @if(form['horaSalida'].errors['required']){ 
                         <div>El campo es requerido </div>
                        }
@@ -132,10 +140,27 @@
             <div class="col-lg-6">
                 <div>
                     <label for="telefono-field" class="form-label">Telefono</label>
-                    <input type="da" id="telefono-field" class="form-control"
-                        placeholder="Es telefono" formControlName="telefono" />
+                    <input 
+                        type="text" class="form-control" 
+                        id="telefono-field" formControlName="telefono"                        
+                        placeholder="Ingrese un telefono/celular"                         
+                    />
+                    <div *ngIf="form['telefono'].errors && (form['telefono'].touched || submitted)">
+                        <small class="text-danger" *ngIf="form['telefono'].errors['required']">
+                            El teléfono es obligatorio.
+                        </small>
+                        <small class="text-danger" *ngIf="form['telefono'].errors['pattern']">
+                            Ingrese un número de teléfono válido (7-15 dígitos, opcional +).
+                        </small>                        
+                        <small class="text-danger" *ngIf="form['telefono'].errors['minlength']">
+                            El número debe tener al menos 7 dígitos.
+                        </small>
+                        <small class="text-danger" *ngIf="form['telefono'].errors['maxlength']">
+                            El número no puede exceder los 15 dígitos.
+                        </small>
+                    </div>
                 </div>
-            </div>    
+            </div>
         </div>
     </div>
     <div class="modal-footer">

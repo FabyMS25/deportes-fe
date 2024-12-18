@@ -100,7 +100,8 @@ export class ListComponent {
     });
     modalRef.componentInstance.row = content;
     modalRef.componentInstance.accion = accion;
-    modalRef.componentInstance.itemsList.subscribe(() => {
+    modalRef.componentInstance.clientsList = this.contribuyentesList;
+    modalRef.componentInstance.emitList.subscribe(() => {
       this.getTaxpayers();
     });
   }

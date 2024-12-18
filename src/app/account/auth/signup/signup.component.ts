@@ -1,16 +1,16 @@
 import { Component, OnInit } from '@angular/core';
-import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { Observable } from 'rxjs';
+import Swal from 'sweetalert2';
+import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
+
 import { CityAcronym } from 'src/app/core/constants/Places';
-import { UserStates , UserCivilStatus, UserDocType, UserGender} from 'src/app/core/constants/UserData';
+import { UserStatus , UserCivilStatus, IdentityTypes, UserSex} from 'src/app/core/constants/UserData';
+import { MustMatch } from '../pass-create/must-match';
+import { UserDataService } from './user-data.service';
 import { Contribuyente } from 'src/app/core/models/contribuyente.models';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
-import Swal from 'sweetalert2';
-
-import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
-import { MustMatch } from '../pass-create/must-match';
-import { ActivatedRoute, Router } from '@angular/router';
-import { UserDataService } from './user-data.service';
-import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-signup',
@@ -30,11 +30,11 @@ export class SignupComponent implements OnInit {
   confirmField!: boolean;
   year: number = new Date().getFullYear();
   
-  estadoCivil = UserCivilStatus
-  tipoDocs = UserDocType
+  civilStatus = UserCivilStatus
+  identityTypes = IdentityTypes
   cityAcronym= CityAcronym
-  userState= UserStates
-  userGender= UserGender
+  userStatus= UserStatus
+  userSex= UserSex
 
   usersList!:any[];
   userExist=false;
@@ -51,28 +51,29 @@ export class SignupComponent implements OnInit {
   ngOnInit(): void {
     // this.authRuat()
     this.getUsers(); 
+    
      this.SignupForm = this.formBuilder.group({
       uuid: [''],
       username: ['', [Validators.required, Validators.minLength(6),this.usernameFormatValidator]],
       password: ['', [Validators.required]], 
       cpassword: ['', [Validators.required]], 
-      tipoContribuyente:['NA'],
-      codigoContribuyente:[''],
-      estadoUsuario:['Pendiente'],
       verificationCode:[null],
-      nombre: ['', [Validators.required]],
-      primerApellido: ['', [Validators.required]],
-      segundoApellido: [''],
-      tipoDocumento:['', [Validators.required]],
-      nroDocumento:['', [Validators.required], [this.nroDocumentoValidator.bind(this)]],
-      expedido:['', [Validators.required]],
-      fechaNacimiento: ['', [Validators.required]],
-      genero: [''],
-      estadoCivil: [''],
-      nroNit:[''],
-      celular:['', [Validators.required]],      
-      correo: ['', [Validators.required, Validators.email], [this.emailValidator.bind(this)]],
-      direccion:[''],
+      userState:['Pendiente'],
+      contribuyentType:['NA'],
+      contribuyentCode:[''],
+      name: ['', [Validators.required]],
+      firstSurname: ['', [Validators.required]],
+      secondSurname: [''],
+      identityType:['', [Validators.required]],
+      identityNumber:['', [Validators.required], [this.identityNumberValidator.bind(this)]],
+      expedite:['', [Validators.required]],
+      birthDate: ['', [Validators.required]],
+      sex: [''],
+      civilStatus: [''],
+      nitNumber:[''],
+      phone:['', [Validators.required]],      
+      email: ['', [Validators.required, Validators.email], [this.emailValidator.bind(this)]],
+      address:[''],
     }, {
       validator: MustMatch('password', 'cpassword')
     });
@@ -88,14 +89,14 @@ export class SignupComponent implements OnInit {
   }
   
   private formDataSet(data:any) {
-    const contribuyente = data.contribuyente
-    const doc = UserDocType.find(d => d.description === contribuyente.tipoDocumento);    
-    const civ = UserCivilStatus.find(d => d.description === contribuyente.estadoCivil);
-    const exp = CityAcronym.find(d => d.description === contribuyente.expedido);    
-    const gen = UserGender.find(d => d.description === contribuyente.genero);
+    const client = data.contribuyente
+    const doc = IdentityTypes.find(d => d.description === client.tipoDocumento);    
+    const civ = UserCivilStatus.find(d => d.description === client.estadoCivil);
+    const exp = CityAcronym.find(d => d.description === client.expedido);    
+    const gen = UserSex.find(d => d.description === client.genero);
     let dateObject ='';
-    if(contribuyente.fechaNacimiento){
-      const [day, month, year] = contribuyente.fechaNacimiento.split('/').map(Number);
+    if(client.fechaNacimiento){
+      const [day, month, year] = client.fechaNacimiento.split('/').map(Number);
       const date = new Date(+year, +month - 1, +day);
       dateObject = date.toISOString().split('T')[0]
     }  
@@ -103,45 +104,44 @@ export class SignupComponent implements OnInit {
     this.SignupForm.patchValue({
     // userName: this.SignupForm.value.username,
     // password: this.SignupForm.value.password,
-    // estadoUsuario: this.SignupForm.value.estadoUsuario,
+    // userState: this.SignupForm.value.userState,
     // verificationCode: codigo,
-    tipoContribuyente: contribuyente.tipoContribuyente,
-    codigoContribuyente: data.codigoContribuyente,
-    nombre: contribuyente.nombre,
-    primerApellido: contribuyente.primerApellido,
-    segundoApellido: contribuyente.segundoApellido,
-    genero:gen ? gen.id : '',
-    fechaNacimiento: dateObject,
-    estadoCivil: civ ? civ.type : '',
-    tipoDocumento: doc ? doc.type : '',
-    nroDocumento: contribuyente.numeroDocumento,
-    expedido:exp ? exp.id : '',
-    // nroNit:this.SignupForm.value.nroNit,
-    // celular:this.SignupForm.value.celular,
-    // correo:this.SignupForm.value.correo,
-    // direccion:this.SignupForm.value.direccion,
+    contribuyentType: client.tipoContribuyente,
+    contribuyentCode: data.codigoContribuyente,
+    name: client.nombre,
+    firstSurname: client.primerApellido,
+    secondSurname: client.segundoApellido,
+    sex:gen ? gen.id : '',
+    birthDate: dateObject,
+    civilStatus: civ ? civ.type : '',
+    identityType: doc ? doc.type : '',
+    identityNumber: client.numeroDocumento,
+    expedite:exp ? exp.id : '',
+    // nitNumber:this.SignupForm.value.nitNumber,
+    // phone:this.SignupForm.value.phone,
+    // email:this.SignupForm.value.email,
+    // address:this.SignupForm.value.address,
 
     });
   }
 
   get f() { return this.SignupForm.controls; }
-  
 
   /**
    * Form submit
    */    
   onSubmit() {
     this.SignupForm.patchValue({
-      username: this.SignupForm.value.nroDocumento,
-      password: this.SignupForm.value.nroDocumento,
-      cpassword:this.SignupForm.value.nroDocumento
+      username: this.SignupForm.value.identityNumber,
+      password: this.SignupForm.value.identityNumber,
+      cpassword:this.SignupForm.value.identityNumber
     });
     this.submitted = true;  
     if (this.SignupForm.valid) {
-      const codigo = this.generateCode();
+      const code = this.generateCode();
       this.SignupForm.enable();
   
-      const dateString: string = this.SignupForm.value.fechaNacimiento;
+      const dateString: string = this.SignupForm.value.birthDate;
       const originalDate: Date = new Date(dateString);
       const formattedDate: string = originalDate.toLocaleDateString('es-ES', {
         day: '2-digit',
@@ -153,25 +153,24 @@ export class SignupComponent implements OnInit {
         // uuid:this.SignupForm.value.uuid,
         userName: this.SignupForm.value.username,
         password: this.SignupForm.value.password,
-        tipoContribuyente: this.SignupForm.value.tipoContribuyente,
-        codigoContribuyente: this.SignupForm.value.codigoContribuyente,
-        estadoUsuario: this.SignupForm.value.estadoUsuario,
-        verificationCode: codigo,
-        nombre: this.SignupForm.value.nombre,
-        apPaterno: this.SignupForm.value.primerApellido,
-        apMaterno: this.SignupForm.value.segundoApellido,
-        sexo:this.SignupForm.value.genero,
+        tipoContribuyente: this.SignupForm.value.contribuyentType,
+        codigoContribuyente: this.SignupForm.value.contriybuyentCode,
+        estadoUsuario: this.SignupForm.value.userState,
+        verificationCode: code,
+        nombre: this.SignupForm.value.name,
+        apPaterno: this.SignupForm.value.firstSurname,
+        apMaterno: this.SignupForm.value.secondSurname,
+        sexo:this.SignupForm.value.sex,
         fechaNac: formattedDate,
-        estadoCivil: this.SignupForm.value.estadoCivil,
-        tipoDocumento: this.SignupForm.value.tipoDocumento,
-        nroCarnet: this.SignupForm.value.nroDocumento,
-        ciExpedido:this.SignupForm.value.expedido,
-        nroNit:this.SignupForm.value.nroNit,
-        celular:this.SignupForm.value.celular,
-        correo:this.SignupForm.value.correo,
-        direccion:this.SignupForm.value.direccion,
+        estadoCivil: this.SignupForm.value.civilStatus,
+        tipoDocumento: this.SignupForm.value.identityType,
+        nroCarnet: this.SignupForm.value.identityNumber,
+        ciExpedido:this.SignupForm.value.expedite,
+        nroNit:this.SignupForm.value.nitNumber,
+        celular:this.SignupForm.value.phone,
+        correo:this.SignupForm.value.email,
+        direccion:this.SignupForm.value.address,
       };
-
       this.userDataService.setTemporaryUserData(datos);
       this.sendEmail(datos, '')
         .then(() => {
@@ -221,7 +220,7 @@ export class SignupComponent implements OnInit {
   /**
    * Nro Documento Validator
    */
-  nroDocumentoValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
+  identityNumberValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
     return new Promise((resolve) => {
       setTimeout(() => {
         if (this.usersList) {
@@ -234,7 +233,6 @@ export class SignupComponent implements OnInit {
     });
   }
 
-  
   emailValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -386,8 +384,6 @@ export class SignupComponent implements OnInit {
     }
   }
 
-  
-
    /**
    * Password Hide/Show
    */
@@ -400,8 +396,7 @@ export class SignupComponent implements OnInit {
   toggleconfirmField() {
     this.confirmField = !this.confirmField;
   }
-  
-
+ 
   /* API REQUESTS */
   private getUsers() {
     this.contribuyentesService.getAll().subscribe({

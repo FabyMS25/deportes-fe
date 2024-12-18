@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
-import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder } from '@angular/forms';
+import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { HorariosService } from 'src/app/core/services/api/horarios.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
@@ -53,6 +53,8 @@ export class ModalScheduleComponent {
         canchasDto:[this.row]
       }))
     );  
+    
+    this.addDynamicValidations();
     this.form = this.formBuilder.group({
       fieldsForm: this.fieldsForm
     });
@@ -77,14 +79,40 @@ export class ModalScheduleComponent {
       });
     }
   }
+  addDynamicValidations() {
+    this.fieldsForm.controls.forEach((control) => {
+      const group = control as FormGroup; // Explicitly cast to FormGroup
+      const abiertoControl = group.get('abierto');
+      const horaInicioControl = group.get('horaInicio');
+      const horaFinControl = group.get('horaFin');
+  
+      // Listen for changes in "abierto"
+      abiertoControl?.valueChanges.subscribe((isOpen: boolean) => {
+        if (isOpen) {
+          // If "abierto" is true, make "horaInicio" and "horaFin" required
+          horaInicioControl?.setValidators([Validators.required]);
+          horaFinControl?.setValidators([Validators.required]);
+        } else {
+          // If "abierto" is false, clear validations
+          horaInicioControl?.clearValidators();
+          horaFinControl?.clearValidators();
+        }
+  
+        // Update validation status
+        horaInicioControl?.updateValueAndValidity();
+        horaFinControl?.updateValueAndValidity();
+      });
+    });
+  }
+  
   
   saveData() {
     const formArray = this.form.get('fieldsForm') as FormArray;
     const saveObservables :any[]= [];
+    if (formArray.valid) {
   
     formArray.controls.forEach((control: AbstractControl) => {
-      // const control = abstractControl as FormGroup;
-      if (control.value.abierto) {
+      if (control.value.abierto || control.value.uuid) {
         const horarioData: Horario = {
           // uuid: control.value.uuid,
           dia: control.value.dia,
@@ -107,15 +135,24 @@ export class ModalScheduleComponent {
       next: (results) => {
         this.notify('Todos los horarios han sido guardados exitosamente', 'success');
         this.fieldsForm.reset();
-        this.emitList.emit();
         this.modalService.dismissAll();
+        this.emitList.emit();
       },
       error: (error) => {
         this.notify('Error en proceso de Guardar: ' + error, 'error');
       }
     });
+    }else {
+      this.notify('Formulario Invalido!', 'error');
+    }
   }
 
+  clearValue(index: number, controlName: string) {
+    const fieldsFormArray = this.form.get('fieldsForm') as FormArray;
+    const group = fieldsFormArray.at(index) as FormGroup;
+    group.get(controlName)?.setValue('');
+  }
+  
   /* API requests */
 private addSchedule(datos: Horario): Observable<any> {
   return this.horariosService.save(datos).pipe(

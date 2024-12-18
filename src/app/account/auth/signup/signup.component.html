@@ -38,143 +38,143 @@
                             <form [formGroup]="SignupForm" (ngSubmit)="onSubmit()" class="p-2">
                                 
                                 <div class="mb-2">
-                                    <label for="nombre-field" class="form-label mb-0">Nombre(s) <span class="text-danger">*</span></label>
-                                    <input type="text" id="nombre-field" class="form-control " placeholder="Ingresar Nombre"
-                                        required formControlName="nombre"
-                                        [ngClass]="{ 'is-invalid': submitted && f['nombre'].errors }" />
+                                    <label for="name-field" class="form-label mb-0">Nombre(s) <span class="text-danger">*</span></label>
+                                    <input type="text" id="name-field" class="form-control " placeholder="Ingresar Nombre"
+                                        required formControlName="name"
+                                        [ngClass]="{ 'is-invalid': submitted && f['name'].errors }" />
                                     <div class="invalid-feedback">El campo es requerido.</div>
                                 </div>
                                 <div class="row">
                                     <div class="col-lg-6 mb-2">
-                                        <label for="primerApellido-field" class="form-label mb-0">Primer Apellido <span class="text-danger">*</span></label>
-                                        <input type="text" id="primerApellido-field" class="form-control" placeholder="Primer Apellido"
-                                            required formControlName="primerApellido"
-                                            [ngClass]="{ 'is-invalid': submitted && f['primerApellido'].errors }" />
+                                        <label for="firstSurname-field" class="form-label mb-0">Primer Apellido <span class="text-danger">*</span></label>
+                                        <input type="text" id="firstSurname-field" class="form-control" placeholder="Primer Apellido"
+                                            required formControlName="firstSurname"
+                                            [ngClass]="{ 'is-invalid': submitted && f['firstSurname'].errors }" />
                                         <div class="invalid-feedback">El campo es requerido.</div>
                                     </div>
                                     <div class="col-lg-6 mb-2">
-                                        <label for="segundoApellido-field" class="form-label mb-0">Segundo Apellido</label>
-                                        <input type="text" id="segundoApellido-field" class="form-control" placeholder="Segundo Apellido"
-                                            formControlName="segundoApellido"
-                                            [ngClass]="{ 'is-invalid': submitted && f['segundoApellido'].errors }" />
+                                        <label for="secondSurname-field" class="form-label mb-0">Segundo Apellido</label>
+                                        <input type="text" id="secondSurname-field" class="form-control" placeholder="Segundo Apellido"
+                                            formControlName="secondSurname"
+                                            [ngClass]="{ 'is-invalid': submitted && f['secondSurname'].errors }" />
                                         <div class="invalid-feedback">El campo es requerido.</div>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-lg-4 mb-2">
-                                        <label for="fechaNacimiento-field" class="form-label mb-0">Fecha de Nacimiento <span class="text-danger">*</span></label>
-                                        <input type="date" id="fechaNacimiento-field" class="form-control" 
+                                        <label for="birthDate-field" class="form-label mb-0">Fecha de Nacimiento <span class="text-danger">*</span></label>
+                                        <input type="date" id="birthDate-field" class="form-control" 
                                             placeholder="DD/MM/YYYY"
-                                            formControlName="fechaNacimiento"
-                                            [ngClass]="{ 'is-invalid': submitted && f['fechaNacimiento'].errors }"
-                                            [value]="f['fechaNacimiento'].value | date:'yyyy-MM-dd'" />
+                                            formControlName="birthDate"
+                                            [ngClass]="{ 'is-invalid': submitted && f['birthDate'].errors }"
+                                            [value]="f['birthDate'].value | date:'yyyy-MM-dd'" />
                                         <div class="invalid-feedback">El campo es requerido.</div>
                                     </div>
                                     <div class="col-lg-4 mb-2">
-                                        <label for="genero-field" class="form-label mb-0">Genero </label>
-                                        <select class="form-select" aria-label="genero"
-                                            formControlName="genero" 
-                                            [ngClass]="{'is-invalid': submitted && f['genero'].errors }">
+                                        <label for="sex-field" class="form-label mb-0">Genero </label>
+                                        <select class="form-select" aria-label="sex"
+                                            formControlName="sex" 
+                                            [ngClass]="{'is-invalid': submitted && f['sex'].errors }">
                                             <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                                            <option *ngFor="let item of userGender" [value]="item.id">
+                                            <option *ngFor="let item of userSex" [value]="item.id">
                                                 {{ item.description }}
                                             </option>
                                         </select>
-                                        <div *ngIf="submitted && f['genero'].errors" class="invalid-feedback" align="left">
-                                            <div *ngIf="f['genero'].errors['required']">Debe seleccionar una opcion</div>
+                                        <div *ngIf="submitted && f['sex'].errors" class="invalid-feedback" align="left">
+                                            <div *ngIf="f['sex'].errors['required']">Debe seleccionar una opcion</div>
                                         </div>
                                     </div>
                                     <div class="col-lg-4 mb-2">
-                                        <label for="estadoCivil-field" class="form-label mb-0">Estado Civil </label>
-                                        <select class="form-select" aria-label="estadoCivil"
-                                            formControlName="estadoCivil" 
-                                            [ngClass]="{'is-invalid': submitted && f['estadoCivil'].errors }">
+                                        <label for="civilStatus-field" class="form-label mb-0">Estado Civil </label>
+                                        <select class="form-select" aria-label="civilStatus"
+                                            formControlName="civilStatus" 
+                                            [ngClass]="{'is-invalid': submitted && f['civilStatus'].errors }">
                                             <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                                            <option *ngFor="let item of estadoCivil" [value]="item.type">
+                                            <option *ngFor="let item of civilStatus" [value]="item.type">
                                                 {{ item.description }}
                                             </option>
                                         </select>
-                                        <div *ngIf="submitted && f['estadoCivil'].errors" class="invalid-feedback" align="left">
-                                            <div *ngIf="f['estadoCivil'].errors['required']">Debe seleccionar opción</div>
+                                        <div *ngIf="submitted && f['civilStatus'].errors" class="invalid-feedback" align="left">
+                                            <div *ngIf="f['civilStatus'].errors['required']">Debe seleccionar opción</div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-lg-4 mb-2">
-                                        <label for="tipoDocumento-field" class="form-label mb-0">Tipo Documento <span class="text-danger">*</span></label>
+                                        <label for="identityType-field" class="form-label mb-0">Tipo Documento <span class="text-danger">*</span></label>
                                         <select class="form-select" 
-                                            aria-label="tipoDocumento" formControlName="tipoDocumento" 
-                                            [ngClass]="{'is-invalid': submitted && f['tipoDocumento'].errors }">
+                                            aria-label="identityType" formControlName="identityType" 
+                                            [ngClass]="{'is-invalid': submitted && f['identityType'].errors }">
                                             <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                                            <option *ngFor="let item of tipoDocs" [value]="item.type">
+                                            <option *ngFor="let item of identityTypes" [value]="item.type">
                                                 {{ item.description }}
                                             </option>
                                         </select>
-                                        <div *ngIf="submitted && f['tipoDocumento'].errors" class="invalid-feedback" align="left">
-                                            <div *ngIf="f['tipoDocumento'].errors['required']">El campo es requerido</div>
+                                        <div *ngIf="submitted && f['identityType'].errors" class="invalid-feedback" align="left">
+                                            <div *ngIf="f['identityType'].errors['required']">El campo es requerido</div>
                                         </div>
                                     </div>
                                     <div class="col-lg-4 mb-2">
-                                        <label for="nroDocumento-field" class="form-label mb-0">Nro Documento <span class="text-danger">*</span></label>
-                                        <input type="text" id="nroDocumento-field" class="form-control" formControlName="nroDocumento"
+                                        <label for="identityNumber-field" class="form-label mb-0">Nro Documento <span class="text-danger">*</span></label>
+                                        <input type="text" id="identityNumber-field" class="form-control" formControlName="identityNumber"
                                             placeholder="Documento de Identificación"
-                                            [ngClass]="{'is-invalid': (f['nroDocumento'].touched || submitted) && f['nroDocumento'].errors}">                                     
-                                        <div *ngIf="(f['nroDocumento'].touched || submitted) && f['nroDocumento'].errors" class="invalid-feedback">
-                                            <span *ngIf="f['nroDocumento'].errors?.['required']">El campo es requerido</span>
-                                            <span *ngIf="f['nroDocumento'].errors?.['itExist']">La identificacion ya se encuentra registrada.</span>
+                                            [ngClass]="{'is-invalid': (f['identityNumber'].touched || submitted) && f['identityNumber'].errors}">                                     
+                                        <div *ngIf="(f['identityNumber'].touched || submitted) && f['identityNumber'].errors" class="invalid-feedback">
+                                            <span *ngIf="f['identityNumber'].errors?.['required']">El campo es requerido</span>
+                                            <span *ngIf="f['identityNumber'].errors?.['itExist']">La identificacion ya se encuentra registrada.</span>
                                         </div>
                                         <div id="identificacionInput" class="form-text"> Agregar complemento si corresponde, ejemplo: <b>12345678-1C</b></div>
                                     </div>   
                                     <div class="col-lg-4 mb-2">
-                                        <label for="expedido-field" class="form-label mb-0">Expedido</label><span class="text-danger">*</span>
+                                        <label for="expedite-field" class="form-label mb-0">Expedido</label><span class="text-danger">*</span>
                                         <select class="form-select" 
-                                            aria-label="expedido"  formControlName="expedido" 
-                                            [ngClass]="{'is-invalid': submitted && f['expedido'].errors }">
+                                            aria-label="expedite"  formControlName="expedite" 
+                                            [ngClass]="{'is-invalid': submitted && f['expedite'].errors }">
                                             <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
                                             <option *ngFor="let item of cityAcronym" [value]="item.id">
                                                 {{ item.description }}
                                             </option>
                                         </select>
-                                        <div *ngIf="submitted && f['expedido'].errors" class="invalid-feedback" align="left">
-                                            <div *ngIf="f['expedido'].errors['required']">El campo es requerido</div>
+                                        <div *ngIf="submitted && f['expedite'].errors" class="invalid-feedback" align="left">
+                                            <div *ngIf="f['expedite'].errors['required']">El campo es requerido</div>
                                         </div>
                                     </div>                                     
                                 </div>
                                 <div class="row">
                                     <div class="col-lg-6 mb-2">
-                                        <label for="nroNit-field" class="form-label mb-0">NIT </label><span class="text-muted">(opcional)</span>
-                                        <input type="text" id="nroNit-field" class="form-control" placeholder="Ingresar NIT"
-                                            formControlName="nroNit"
-                                            [ngClass]="{ 'is-invalid': submitted && f['nroNit'].errors }" />
+                                        <label for="nitNumber-field" class="form-label mb-0">NIT </label><span class="text-muted">(opcional)</span>
+                                        <input type="text" id="nitNumber-field" class="form-control" placeholder="Ingresar NIT"
+                                            formControlName="nitNumber"
+                                            [ngClass]="{ 'is-invalid': submitted && f['nitNumber'].errors }" />
                                         <div class="invalid-feedback">El campo es requerido.</div>
                                     </div>                            
                                     <div class="col-lg-6 mb-2">
-                                        <label for="celular-field" class="form-label mb-0">Celular</label><span class="text-danger">*</span>
-                                        <input type="text" id="celular-field" class="form-control" placeholder="Ingresar Celular"
-                                            mask="000-000-0000" formControlName="celular"
-                                            [ngClass]="{ 'is-invalid': submitted && f['celular'].errors }" />
+                                        <label for="phone-field" class="form-label mb-0">Celular</label><span class="text-danger">*</span>
+                                        <input type="text" id="phone-field" class="form-control" placeholder="Ingresar Celular"
+                                            mask="000-000-0000" formControlName="phone"
+                                            [ngClass]="{ 'is-invalid': submitted && f['phone'].errors }" />
                                         <div class="invalid-feedback">El campo es requerido.</div>
                                     </div>                                      
                                 </div> 
 
                                 <div class="mb-2">
-                                    <label for="correo-field" class="form-label mb-0">Email <span class="text-danger">*</span></label>
-                                    <input type="correo" id="correo-field" class="form-control" placeholder="Ingrese un correo valido" 
-                                        required formControlName="correo"
-                                        [ngClass]="{ 'is-invalid': submitted && f['correo'].errors }" />
+                                    <label for="email-field" class="form-label mb-0">Email <span class="text-danger">*</span></label>
+                                    <input type="email" id="email-field" class="form-control" placeholder="Ingrese un correo valido" 
+                                        required formControlName="email"
+                                        [ngClass]="{ 'is-invalid': submitted && f['email'].errors }" />
                                     <!-- <div class="invalid-feedback">Debe Ingresar un correo.</div>                                     -->
-                                    <span *ngIf="SignupForm.get('correo')?.pending">Verificando disponibilidad...</span>
-                                    <span class="invalid-feedback" *ngIf="SignupForm.get('correo')?.errors?.['required']">Debe ingresar un correo</span>
-                                    <span class="invalid-feedback" *ngIf="SignupForm.get('correo')?.errors?.['emailTaken']">Este Email ya cuenta con un usuario en el sistema.</span>
+                                    <span *ngIf="SignupForm.get('email')?.pending">Verificando disponibilidad...</span>
+                                    <span class="invalid-feedback" *ngIf="SignupForm.get('email')?.errors?.['required']">Debe ingresar un correo</span>
+                                    <span class="invalid-feedback" *ngIf="SignupForm.get('email')?.errors?.['emailTaken']">Este Email ya cuenta con un usuario en el sistema.</span>
                                     <div id="emailInput" class="form-text">Asegúrese de tener acceso al correo, <b>Se le enviara el codigo de confirmación </b></div>
                                 
                                 </div> 
                          
                                 <div class="mb-2">
-                                    <label for="direccion-field" class="form-label mb-0">Dirección</label><span class="text-muted">(opcional)</span>
-                                    <input type="text" id="direccion-field" class="form-control" placeholder="Ingresar Dirección"
-                                        formControlName="direccion"
-                                        [ngClass]="{ 'is-invalid': submitted && f['direccion'].errors }" />
+                                    <label for="address-field" class="form-label mb-0">Dirección</label><span class="text-muted">(opcional)</span>
+                                    <input type="text" id="address-field" class="form-control" placeholder="Ingresar Dirección"
+                                        formControlName="address"
+                                        [ngClass]="{ 'is-invalid': submitted && f['address'].errors }" />
                                     <div class="invalid-feedback">El campo es requerido.</div>
                                 </div> 
 

@@ -6,6 +6,7 @@ export interface  Encargado{
     estado?:boolean;
 
     userUuid: String;
+    avatar?:String;
 
     fechaInicio?: Date;
     fechaFin?:Date;
@@ -14,7 +15,7 @@ export interface  Encargado{
     horaSalida: string; // "HH:mm:ss"
     nombre: string;
     telefono?:string;
-    complejoDto: {uuid:string}
+    complejoDto: Complejo;//{uuid:string}
 
   }
   

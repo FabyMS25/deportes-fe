@@ -25,18 +25,33 @@
                   <input type="checkbox" class="form-check-input" [id]="'abierto' + i" formControlName="abierto">
                 </div>
               </div>
+              
               <div class="col-lg-3">
                 <div>
-                  <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                         [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                         placeholder="Hora inicio" formControlName="horaInicio">
+                  <div class="input-group">
+                    <div class="input-group position-relative">
+                      <input class="form-control flatpickr-input" type="text" mwlFlatpickr
+                             [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
+                             placeholder="Hora inicio" formControlName="horaInicio">
+                      <!-- <span class="clear-icon" (click)="clearValue(i, 'horaInicio')">&times;</span> -->
+                      <div *ngIf="control.get('horaFin')?.errors?.['required'] && control.get('abierto')?.touched">
+                        <span class="text-danger">Hora es requerida.</span>
+                      </div>
+                    </div>                    
+                  </div>
                 </div>
               </div>
               <div class="col-lg-3">
                 <div>
-                  <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                         [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                         placeholder="Hora final" formControlName="horaFin">
+                  <div class="input-group position-relative">
+                    <input class="form-control flatpickr-input" type="text" mwlFlatpickr
+                           [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
+                           placeholder="Hora Fin" formControlName="horaFin">
+                    <!-- <span class="clear-icon" (click)="clearValue(i, 'horaFin')">&times;</span> -->
+                    <div *ngIf="control.get('horaFin')?.errors?.['required'] && control.get('abierto')?.touched">
+                      <span class="text-danger">Hora es requerida.</span>
+                    </div>
+                  </div>   
                 </div>
               </div>
             </div>
@@ -50,4 +65,4 @@
         <button type="submit" class="btn btn-success" id="add-btn">Guardar</button>
       </div>
     </div>
-  </form>
+</form>

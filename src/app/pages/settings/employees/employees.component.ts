@@ -21,6 +21,8 @@ import { UserService } from 'src/app/core/services/api-users/users.service';
 import { UserRol } from 'src/app/core/constants/UserData';
 import { EncargadoService } from 'src/app/core/services/api/encargado.service';
 import { ModalImportComponent } from './modal-import/modal-import.component';
+import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
+import { Encargado } from 'src/app/core/models/encargado';
 
 @Component({
   selector: 'app-employees',
@@ -43,7 +45,7 @@ export class EmployeesComponent implements OnInit {
 
   userRol =UserRol;
   userList:any;
-  employeesList:any[]= [];//Employees;
+  employeesList:Encargado[]= [];//Employees;
   funcionarioSelected!:any;
 
   @ViewChild('viewModel') viewModel!: ElementRef;
@@ -151,18 +153,31 @@ export class EmployeesComponent implements OnInit {
 
   // Csv File Export
   csvFileExport() {
-    var orders = {
+    const lista = this.selectedItems.flatMap((item:Encargado) => {
+      const data = {
+        user: item.userUuid,
+        name: item.nombre,
+        phone: item.telefono,
+        avatar: item.avatar,
+        Complejo:item.complejoDto.nombre,
+        checkIn:item.horaEntrada,
+        checkOut:item.horaSalida
+      };    
+      return [{...data}];      
+    });
+    var xlsxData = {
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalseparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Lista de Encargados',
+      title: 'Lista de '+ this.title,
       useBom: true,
       noDownload: false,
-      headers: ["uuid", "userUuid", "Hora Entrada", "Hora Salida","Telefono","Nombre", "Estado", "Complejo", "avatar"]
+      headers: ["userUuid", "Nombre","Telefono","avatar" , 
+          "Complejo","Hora Entrada", "Hora Salida"]
     };
-    new ngxCsv(this.selectedItems, "Encargados", orders);
+    new ngxCsv(this.selectedItems, "Lista de "+ this.title, xlsxData);
   }
 
   /* API Services */

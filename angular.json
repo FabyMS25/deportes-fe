@@ -35,9 +35,9 @@
                 "node_modules/flatpickr/dist/flatpickr.css",
                 "src/styles.scss",
                 "node_modules/@ctrl/ngx-emoji-mart/picker.css",
-                "src/assets/scss/config/corporate/bootstrap.scss",
                 "node_modules/slick-carousel/slick/slick.scss",
                 "node_modules/slick-carousel/slick/slick-theme.scss",
+                "src/assets/scss/config/corporate/bootstrap.scss",
                 "src/assets/scss/config/corporate/app.scss",
                 "src/assets/scss/icons.scss"
               ],

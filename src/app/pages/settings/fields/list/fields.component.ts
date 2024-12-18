@@ -211,13 +211,13 @@ export class FieldsComponent {
       }));
     });
   
-    const data = {
+    const xlsxData = {
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalseparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Lista de Campos Deportivos',
+      title: 'Lista de '+this.title,
       useBom: true,
       noDownload: false,
       headers: [
@@ -226,9 +226,8 @@ export class FieldsComponent {
         "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"
       ]
     };  
-    new ngxCsv(lista, "Lista de Campos Deportivos", data);
+    new ngxCsv(lista, "Lista de "+this.title, xlsxData);
   }
-  
 
   /* API Services */
   private getCategories(){
@@ -279,7 +278,7 @@ export class FieldsComponent {
         }
       });
     }
-
+/* commun functions */
   private notify(message: any, type: any): void {
     let timerInterval: any;
     Swal.fire({

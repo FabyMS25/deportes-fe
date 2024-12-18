@@ -48,7 +48,7 @@
                                                 formControlName="tipoDocumento" 
                                                 [ngClass]="{'is-invalid': submitted && f['tipoDocumento'].errors }">
                                                 <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                                                <option *ngFor="let item of tipoDocs" [value]="item.type">
+                                                <option *ngFor="let item of identityTypes" [value]="item.type">
                                                     {{ item.description }}
                                                 </option>
                                             </select>

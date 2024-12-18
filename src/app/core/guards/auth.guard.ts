@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 
-// Auth Services
 import { AuthenticationService } from '../services/auth.service';
 
 @Injectable({ providedIn: 'root' })
@@ -18,10 +17,10 @@ export class AuthGuard  {
         const currentUser =   window.sessionStorage.getItem("currentUser");
         if(currentUser){ 
         // if (this.authService.isAuthenticated()) {
-          if (state.url === '/') {
-            const dashboardUrl = this.authService.getDashboardUrl();
-            this.router.navigate([dashboardUrl]);
-                return false;
+            if (state.url === '/') {
+                const dashboardUrl = this.authService.getDashboardUrl();
+                this.router.navigate([dashboardUrl]);
+                    return false;
             }
             const hasPermission = this.authService.hasRoutePermission(baseUrl);
             return hasPermission;     

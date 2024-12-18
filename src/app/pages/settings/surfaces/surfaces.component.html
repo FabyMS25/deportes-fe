@@ -9,7 +9,7 @@
                 <h5 class="card-title flex-grow-1">{{'Lista de '+title|translate }}</h5>
                 <div class="flex-shrink-0">
                     <div class="d-flex gap-1 flex-wrap ">
-                        <button *ngIf="canActivate.includes('CREAR')" (click)="openModal(undefined,'','lg')"
+                        <button *ngIf="canActivate.includes('CREAR')" (click)="openModal(undefined,content,'lg')"
                           type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal">
                           <i class="ri-add-circle-line align-middle"></i> 
                           {{"Agregar" | translate}}

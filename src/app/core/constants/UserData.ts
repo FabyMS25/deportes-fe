@@ -22,7 +22,7 @@ const UserRol = [
     }
 ]
 
-const UserStates = [
+const UserStatus = [
     {
         "id":0,
         "state": "Pendiente",
@@ -49,7 +49,7 @@ const UserStates = [
     }
 ]
 
-const UserGender = [
+const UserSex = [
     {
         "id":"F",
         "description": "FEMENINO",
@@ -80,7 +80,7 @@ const UserCivilStatus = [
     }
 ]
 
-const UserDocType = [
+const IdentityTypes = [
     {
         "type":"CI",
         "description": "CEDULA DE IDENTIDAD",
@@ -91,4 +91,4 @@ const UserDocType = [
     }
 ]
 
-export{ UserRol , UserStates , UserGender, UserCivilStatus, UserDocType};
+export{ UserRol , UserStatus , UserSex, UserCivilStatus, IdentityTypes};

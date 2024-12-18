@@ -2,8 +2,8 @@ import { Component, OnInit, EventEmitter, Output, ViewChild, ElementRef } from '
 import { NavigationEnd, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 
-import { MenuItem } from '../../core/data/menu.model';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
+import { MenuItem } from '../../core/data/menu.model';
 
 @Component({
   selector: 'app-sidebar',
@@ -19,8 +19,9 @@ export class SidebarComponent implements OnInit {
   @Output() mobileMenuButtonClicked = new EventEmitter();
 
   userData: any;
-  funcionario!:any;//DesignacionFuncionario;
+  funcionario!:any;
   avatar="default-profile1.png";
+
   constructor(private router: Router, public translate: TranslateService,
     private authService:AuthenticationService
   ) {
@@ -168,7 +169,6 @@ export class SidebarComponent implements OnInit {
       if (menuItem.ruta && menuItem.ruta === pathname) {
         return menuItem;
       }
-
       if (menuItem.permisoHijoListDto) {
         const foundItem = this.findMenuItem(pathname, menuItem.permisoHijoListDto);
         if (foundItem) {
@@ -176,11 +176,10 @@ export class SidebarComponent implements OnInit {
         }
       }
     }
-
     return null;
   }
+  
   /**
-   * Returns true or false if given menu item has child or not
    * @param item menuItem
    */
   hasItems(item: MenuItem) {

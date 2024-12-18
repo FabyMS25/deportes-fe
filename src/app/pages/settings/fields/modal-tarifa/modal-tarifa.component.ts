@@ -146,6 +146,8 @@ export class ModalTarifaComponent {
     const formArray = this.form.get('fieldsForm') as FormArray;
     const saveObservables :any[]= [];
     formArray.controls.forEach((control: AbstractControl) => {
+      console.log("1:::: ", control.value.categoriaDtoList)
+      console.log("2::::", control.value.categorias)
       const tarifaData:Tarifa = {
         costo: control.value.costo,
         desde: control.value.desde,
@@ -153,10 +155,12 @@ export class ModalTarifaComponent {
         descripcion: control.value.descripcion,
         canchasDto: this.row,
         categoriaDtoList: this.mergeCategories(control.value.categoriaDtoList, control.value.categorias)
-      };      
+      };   
+
+      console.log(tarifaData)   
       if (control.value.uuid) {
         tarifaData.uuid = control.value.uuid;
-        saveObservables.push(this.updateTariff(tarifaData));
+        // saveObservables.push(this.updateTariff(tarifaData));
       } else {
         saveObservables.push(this.addTariff(tarifaData));
       }
@@ -177,29 +181,41 @@ export class ModalTarifaComponent {
   }
   
   mergeCategories(categoriaTarifaDtoList: any[], categorias: any[]): any[] {
+    console.log("list ::::: ", categoriaTarifaDtoList )
+    console.log("categories",categorias)
     const mergedList: any[] = [];
     const existingCategoriaTarifaMap = new Map(
       categoriaTarifaDtoList.map(item => [item.categoriaDto.uuid, item])
     );
+  
     existingCategoriaTarifaMap.forEach(element => {
-      if(!categorias.find((categoria:any) => categoria.uuid === element.categoriaDto.uuid)){
-        console.log("delete", element.uuid)
-        this.tarifaCategoryService.delete(element.uuid).subscribe()
+      if (!categorias.find((categoria: any) => categoria.uuid === element.categoriaDto.uuid)) {        
+        this.tarifaCategoryService.delete(element.uuid).subscribe({
+          next: () => {
+            console.log(`Category with UUID ${element.uuid} deleted successfully.`);
+          },
+          error: (err) => {
+            this.notify('Ocurrio un error al intentar quitar la relacion con la categoria' + err, 'error');
+          },
+        });
       }
     });
+  
     categorias.forEach(categoria => {
-      const existingItem = existingCategoriaTarifaMap.get(categoria.uuid);  
+      const existingItem = existingCategoriaTarifaMap.get(categoria.uuid);
       if (!existingItem) {
         mergedList.push({
           uuid: '',
           estado: false,
           categoriaDto: categoria,
-          // tarifaDto: null 
+          // tarifaDto: null
         });
       }
-    });  
+    });
+  
     return mergedList;
   }
+  
 
 /* API requests  */
 private addTariff(datos: Tarifa): Observable<any> {

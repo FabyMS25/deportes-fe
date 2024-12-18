@@ -4,7 +4,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import Swal from 'sweetalert2';
 
 import { CityAcronym } from 'src/app/core/constants/Places';
-import { UserDocType} from 'src/app/core/constants/UserData';
+import { IdentityTypes} from 'src/app/core/constants/UserData';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { UserDataService } from '../signup/user-data.service';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
@@ -20,7 +20,7 @@ export class SignupCheckComponent {
   submitted = false;
   year: number = new Date().getFullYear();
   
-  tipoDocs = UserDocType
+  identityTypes = IdentityTypes
   cityAcronym= CityAcronym
 
   constructor(private formBuilder: UntypedFormBuilder,
