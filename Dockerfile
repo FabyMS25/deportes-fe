@@ -9,7 +9,8 @@ RUN npm run build
 
 # Stage 2: Serve the application using Nginx
 FROM nginx:alpine
+COPY default.conf /etc/nginx/conf.d
 COPY --from=build /app/dist/deportes-gamq /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/nginx.conf
+# COPY nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 80

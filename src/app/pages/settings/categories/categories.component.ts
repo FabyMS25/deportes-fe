@@ -41,7 +41,7 @@ export class CategoriesComponent {
     private authService: AuthenticationService,
     public translate: TranslateService,
     private deportesService: CategoriasService,
-    private formBuilder: UntypedFormBuilder,) {      
+    private formBuilder: UntypedFormBuilder,) {
       this.canActivate = this.authService.hasPermission(this.title);
   }
 
@@ -54,9 +54,9 @@ export class CategoriesComponent {
     this.itemsList = [
       {name: 'Codigo', prop: 'codigo',visible:false},
       {name: 'Nombre', prop: 'nombre',visible:true},
-      {name: 'Tipo Cobro', prop: 'tipo', tag:true,visible:true},
+      {name: 'Tipo Cobro', prop: 'tipo',  visible:true},
     ];
-    
+
     this.contentForm = this.formBuilder.group({
       uuid: [''],
       estado:[''],
@@ -111,7 +111,7 @@ export class CategoriesComponent {
     }
     this.modalService.open(content, { size: 'md', centered: true });
   }
-  
+
   camposImport: any[] =[];
   public openModalImport() {
     this.camposImport = [
@@ -128,7 +128,7 @@ export class CategoriesComponent {
         this.getCategories();
     });
   }
-  
+
   // Csv File Export
   csvFileExport() {
     var data = {
@@ -195,14 +195,14 @@ export class CategoriesComponent {
           Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
         }
       });
-  }      
+  }
   private addData(datos:Categoria){
     this.deportesService.save(datos).subscribe({
       next:(data:any)=>{
         console.log(data)
         this.submitted=false;
-        this.notify('Datos Registrados exitosamente!','success'); 
-        this.closeModal();     
+        this.notify('Datos Registrados exitosamente!','success');
+        this.closeModal();
       },
       error: (error) => {
         this.notify('No se pudo Guardar los datos! '+error, 'error');
@@ -239,7 +239,7 @@ export class CategoriesComponent {
     });
   }
 
-  /* commun functions */  
+  /* commun functions */
   public closeModal() {
     // this.accion = '';
     this.modalService.dismissAll();
