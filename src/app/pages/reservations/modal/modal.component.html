@@ -1,10 +1,10 @@
-<div class="modal-content">
+<div class="modal-content" *ngIf="accion !== 'annularModel'">
     <!-- Loading Spinner -->
     <div id="elmLoader" *ngIf="showLoading">
         <div class="spinner-border text-primary avatar-sm" role="status">
           <span class="visually-hidden">Cargando...</span>
         </div>
-    </div> 
+    </div>
     <div class="modal-header border  p-2" *ngIf="accion === 'edit' || accion === 'show'">
         <div class="mini-stats-wid d-flex w-100  justify-content-between">
           <div class="d-flex align-items-center">
@@ -18,20 +18,20 @@
             </h5>
           </div>
           <div class="d-flex align-items-center">
-            <label for="numeroTasa" class="me-2">Tasa:</label> 
-            <input type="text" class="form-control form-control tasa-input" 
+            <label for="numeroTasa" class="me-2">Tasa:</label>
+            <input type="text" class="form-control form-control tasa-input"
             [value]="row.numeroTasa" disabled />
           </div>
-          <button type="button" class="btn-close ms-2" id="btn-close" 
+          <button type="button" class="btn-close ms-2" id="btn-close"
             data-bs-dismiss="modal" aria-label="Cerrar" (click)="onCloseModal()">
           </button>
         </div>
       </div>
-      
+
         <div class="modal-body">
             @if(accion==='show'){
                 <div class="text-end" *ngIf="canActivate.includes('ACTUALIZAR') && row.estadoReserva === 'Pendiente'">
-                    <a class="btn btn-soft-primary" id="edit-event-btn" data-id="edit-event" 
+                    <a class="btn btn-soft-primary" id="edit-event-btn" data-id="edit-event"
                         (click)="consultModal(consultModel,$event)" role="button">Consultar</a>
                 </div>
                 <div class="">
@@ -41,7 +41,7 @@
                         </div>
                         <div class="flex-grow-1">
                             <h6 class="fw-semibold">
-                                TASA: 
+                                TASA:
                                 <span class="text-muted"> {{row.numeroTasa}}</span>
                             </h6>
                         </div>
@@ -53,7 +53,7 @@
                         <div class="flex-grow-1">
                             <h6 class="d-block fw-semibold mb-0">
                                 Total:
-                                <span class="text-muted">Bs. {{row.totalPago}}</span>  
+                                <span class="text-muted">Bs. {{row.totalPago}}</span>
                             </h6>
                         </div>
                         <div class="flex-shrink-0 me-3">
@@ -61,9 +61,9 @@
                         </div>
                         <div class="flex-grow-1">
                             <span [ngClass]="{
-                                'bg-success-subtle text-success': row.estadoReserva ==='Pagado', 
-                                'bg-secondary-subtle text-secondary': row.estadoReserva==='Pendiente', 
-                                'bg-danger-subtle text-danger': row.estadoReserva==='Vencido', 
+                                'bg-success-subtle text-success': row.estadoReserva ==='Pagado',
+                                'bg-secondary-subtle text-secondary': row.estadoReserva==='Pendiente',
+                                'bg-danger-subtle text-danger': row.estadoReserva==='Vencido',
                                 'bg-warning-subtle text-warning': row.estadoReserva==='Anulado'}">
                                 {{row.estadoReserva}}
                             </span>
@@ -83,7 +83,7 @@
                         </div>
                         <div class="flex-grow-1">
                             <h6 class="d-block fw-semibold mb-0">
-                                {{row.horaEntrada }} - {{row.horaSalida }} 
+                                {{row.horaEntrada }} - {{row.horaSalida }}
                             </h6>
                         </div>
                     </div>
@@ -139,11 +139,11 @@
                 </div>
             }
             @if (accion === 'edit') {
-                <form [formGroup]="reservationForm">     
-                                        
+                <form [formGroup]="reservationForm">
+
                     <div class="form-group">
                         <label class="form-label mb-0 mt-2">Complejo/Cancha:</label>
-                        <input type="text" class="form-control" disabled 
+                        <input type="text" class="form-control" disabled
                         [value]="row.canchasDto.complejoDto.nombre+' - '+ row.superficie"/>
                     </div>
                     <div class="form-group">
@@ -154,14 +154,14 @@
                     <div class="row">
                         <div class="col-6">
                             <label class="form-label mb-0 mt-2">Total Pago:</label>
-                            <input type="number" class="form-control" disabled 
+                            <input type="number" class="form-control" disabled
                             [value]="row.totalPago"/>
                         </div>
                         <div class="col-6 align-items-center justify-items-end mt-5">
                             <span [ngClass]="{
-                                'bg-success-subtle text-success': row.estadoReserva ==='Pagado', 
-                                'bg-secondary-subtle text-secondary': row.estadoReserva==='Pendiente', 
-                                'bg-danger-subtle text-danger': row.estadoReserva==='Vencido', 
+                                'bg-success-subtle text-success': row.estadoReserva ==='Pagado',
+                                'bg-secondary-subtle text-secondary': row.estadoReserva==='Pendiente',
+                                'bg-danger-subtle text-danger': row.estadoReserva==='Vencido',
                                 'bg-warning-subtle text-warning': row.estadoReserva==='Anulado'}">
                                 {{row.estadoReserva}}
                             </span>
@@ -170,7 +170,7 @@
                     <div>
                         <label class="form-label mb-0 mt-2">Fecha Reserva</label>
                         <div class="input-group">
-                            <input type="date" class="form-control" formControlName="fechaReserva" 
+                            <input type="date" class="form-control" formControlName="fechaReserva"
                             mwlFlatpickr [altInput]="true" altFormat="d/m/Y" [convertModelValue]="true">
                             <span class="input-group-text"><i class="ri-calendar-event-line"></i></span>
                         </div>
@@ -179,7 +179,7 @@
                         <div class="col-6">
                             <label class="form-label mb-0 mt-2">Hora Entrada</label>
                             <div class="input-group">
-                                <input type="time" class="form-control" formControlName="horaEntrada" 
+                                <input type="time" class="form-control" formControlName="horaEntrada"
                                     mwlFlatpickr [dateFormat]="'H:i'" [noCalendar]="true" [enableTime]="true" />
                                 <span class="input-group-text"><i class="ri-time-line"></i></span>
                             </div>
@@ -193,30 +193,30 @@
                             </div>
                         </div>
                     </div>
-                </form>  
+                </form>
             }
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-light" id="btn-cancel-event" 
+            <button type="button" class="btn btn-light" id="btn-cancel-event"
             (click)="onCloseModal()">Cancelar</button>
-            <button *ngIf="canActivate.includes('ANULAR') && this.accion==='show' && row.estadoReserva === 'Pendiente'" 
-                type="button" class="btn btn-soft-danger" id="btn-delete-event" 
+            <button *ngIf="canActivate.includes('ANULAR') && this.accion==='show' && row.estadoReserva === 'Pendiente'"
+                type="button" class="btn btn-soft-danger" id="btn-delete-event"
                 (click)="deleteModal('annularModel',$event)">
                 <i class="ri-close-line align-bottom"></i> Anular
             </button>
-            <button *ngIf="canActivate.includes('CAMBIAR-HORARIO') && this.accion==='edit' && row.estadoReserva === 'Pendiente'" 
+            <button *ngIf="canActivate.includes('CAMBIAR-HORARIO') && this.accion==='edit' && row.estadoReserva === 'Pendiente'"
                 type="submit" class="btn btn-success" id="btn-save-event"
                 [disabled]="!reservationForm.valid"
                 (click)="saveData()">Guardar
-            </button>  
+            </button>
         </div>
-</div>      
+</div>
 
 <!-- Modals -->
 <ng-template #consultModel role="document" let-modal>
     <div class="modal-body">
       <div class="modal-header">
-          <button type="button" class="btn-close" id="btn-close"  
+          <button type="button" class="btn-close" id="btn-close"
             data-bs-dismiss="modal" aria-label="Close"
             (click)="modal.dismiss('Cross click')"></button>
       </div>
@@ -229,7 +229,7 @@
             </div>
             <div class="mt-4 pt-2 fs-15">
                 <h4 class="fs-20 fw-semibold text-info ">Se realizo la Consulta!</h4>
-                
+
                 <ul>
                     <li *ngFor="let result of consultResults" class="fs-14 px-5 text-start">
                         La Reserva al complejo <b>{{result.item.canchasDto.complejoDto.nombre}}</b> con Tasa <b>{{result.item.numeroTasa}}</b> se encuentra
@@ -250,7 +250,7 @@
                             <b>Observacion:</b> {{pago.observacion}}<br/>
                             </div>
                         </ng-container>
-                         
+
                         <ng-template #noPayment>
                             <p [ngClass]="{
                                 'text-success': result.type === 'success' ,
@@ -264,7 +264,7 @@
             </div>
         </div>
         <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
-            <button type="button" class="swal2-confirm btn btn-primary mb-1" aria-label="" 
+            <button type="button" class="swal2-confirm btn btn-primary mb-1" aria-label=""
                 (click)="modal.dismiss('Cross click')">OK</button>
         </div>
         <div class="swal2-footer" *ngIf="consultResults.length>0">
@@ -284,12 +284,12 @@
                 <h4>Estas seguro de Anular la Reserva?</h4>
             </div>
         </div>
-        
-        <form #annulForm="ngForm" (ngSubmit)="annularData(annulForm.value)">                 
+
+        <form #annulForm="ngForm" (ngSubmit)="annularData(annulForm.value)">
             <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
                 <div>
                     <label for="motivo">Indique el motivo de la Anulacion</label>
-                    <select class="form-control" data-choices 
+                    <select class="form-control" data-choices
                         name="motivo" id="idCategory" [(ngModel)]="motivo" required #motivoCtrl="ngModel">
                         <option value="">Seleccione un motivo</option>
                         <option value="A SOLICITUD DEL CONTRIBUYENTE">A SOLICITUD DEL CONTRIBUYENTE</option>
@@ -300,7 +300,7 @@
                         El motivo es requerido.
                     </div>
                 </div>
-            
+
                 <div>
                     <label for="observation">Escriba la Observación de la Reserva</label>
                     <input type="text" class="form-control" placeholder="minimo 10 caracteres" name="observation"
@@ -313,13 +313,13 @@
             </div>
             <p class="text-muted  mb-0 fs-15 mx-4 mx-sm-5">
                 Al Confirmar no podra reactivar esta reserva nuevamente.
-            </p>                            
+            </p>
             <div class="d-flex gap-2 justify-content-center mt-2 mb-2">
                 <button class="btn btn-link link-success fw-medium text-decoration-none" data-bs-dismiss="modal"
                     id="deleteRecord-close" (click)="onCloseModal()">
                     <i class="ri-close-line me-1 align-middle"></i> Cancelar
-                </button>            
-                <button type="submit" class="btn w-sm btn-danger" id="delete-button" 
+                </button>
+                <button type="submit" class="btn w-sm btn-danger" id="delete-button"
                     [disabled]="annulForm.invalid">
                     Anular!
                 </button>
@@ -331,7 +331,7 @@
         <div class="spinner-border text-primary avatar-sm" role="status">
           <span class="visually-hidden">Cargando...</span>
         </div>
-    </div> 
+    </div>
 </ng-container>
 
 

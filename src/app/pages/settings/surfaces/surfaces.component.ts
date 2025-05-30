@@ -63,7 +63,7 @@ export class SurfacesComponent {
             descripcion: row.descripcion,
         });
   }
-  
+
   get form() {
     return this.contentForm.controls;
   }
@@ -99,7 +99,7 @@ export class SurfacesComponent {
     }
     this.modalService.open(content, { size: 'md', centered: true });
   }
-  
+
   /**
    * Delete model
    */
@@ -119,7 +119,7 @@ export class SurfacesComponent {
         backdrop: 'static'
     });
     modalRef.componentInstance.titles = this.camposImport;
-    modalRef.componentInstance.itemsList = this.superficiesList;
+    modalRef.componentInstance.itemsList = this.temp;
     modalRef.componentInstance.emitList.subscribe(() => {
         this.getSurfaces();
     });
@@ -139,7 +139,7 @@ export class SurfacesComponent {
     };
     new ngxCsv(this.selectedItems, "Superficies", data);
   }
-  
+
   /**
   * Save
   */
@@ -181,14 +181,14 @@ export class SurfacesComponent {
         }
       });
   }
-      
+
   private addData(datos:Superficie){
     this.superficiesService.save(datos).subscribe({
       next:(data:Superficie)=>{
         this.submitted=false;
-        this.notify('Datos Registrados exitosamente!','success'); 
+        this.notify('Datos Registrados exitosamente!','success');
         this.closeModal();
-        this.getSurfaces();      
+        this.getSurfaces();
       },
       error: (error) => {
         this.notify('No se pudo Guardar los datos! '+error, 'error');

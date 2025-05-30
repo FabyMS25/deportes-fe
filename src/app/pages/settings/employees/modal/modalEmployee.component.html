@@ -49,7 +49,7 @@
                     <select class="form-control mb-0" data-choices data-choices-search-false
                         id="uuidUsuario" formControlName="uuidUsuario" required
                         (change)="onUserSelectHandler($event)"
-                        [ngClass]="{ 'is-invalid': submitted && form['uuidUsuario'].errors }"> 
+                        [ngClass]="{ 'is-invalid': submitted && form['uuidUsuario'].errors }">
                         <option [value]="''" disabled>Seleccione opcion</option>
                         @for (user of usersList; track $index) {
                         <option  [value]="user.uuid" >
@@ -57,10 +57,10 @@
                         </option>
                         }
                     </select>
-                    @if(submitted && form['uuidUsuario'].errors){ 
+                    @if(submitted && form['uuidUsuario'].errors){
                     <div class="invalid-feedback"
                         align="left">
-                        @if(form['uuidUsuario'].errors['required']){ 
+                        @if(form['uuidUsuario'].errors['required']){
                         <div>Debe seleccionar un Usuario</div>
                         }
                     </div>
@@ -72,7 +72,7 @@
                     <label for="uuidCancha" class="form-label">Complejo</label>
                     <select class="form-control mb-0" data-choices data-choices-search-false
                         id="uuidCancha" formControlName="uuidCancha" required
-                        [ngClass]="{ 'is-invalid': submitted && form['uuidCancha'].errors }"> 
+                        [ngClass]="{ 'is-invalid': submitted && form['uuidCancha'].errors }">
                         <option [value]="''" disabled>Seleccione opcion</option>
                         @for (item of canchasList; track $index) {
                         <option  [value]="item.uuid" >
@@ -80,10 +80,10 @@
                         </option>
                         }
                     </select>
-                    @if(submitted && form['uuidCancha'].errors){ 
+                    @if(submitted && form['uuidCancha'].errors){
                     <div class="invalid-feedback"
                         align="left">
-                        @if(form['uuidCancha'].errors['required']){ 
+                        @if(form['uuidCancha'].errors['required']){
                             <div>El campo es requerido </div>
                         }
                     </div>
@@ -96,10 +96,10 @@
                     <input type="date" id="fechaInicio-field" class="form-control"
                         placeholder="Es fechaInicio" required formControlName="fechaInicio"
                         [ngClass]="{ 'is-invalid': submitted && form['fechaInicio'].errors }" />
-                    @if(submitted && form['fechaInicio'].errors){ 
+                    @if(submitted && form['fechaInicio'].errors){
                     <div class="invalid-feedback"
                         align="left">
-                        @if(form['fechaInicio'].errors['required']){ 
+                        @if(form['fechaInicio'].errors['required']){
                         <div>Debe seleccionar la Fecha de Arjudicación </div>
                         }
                     </div>
@@ -112,9 +112,9 @@
                 <input class="form-control flatpickr-input" type="text" mwlFlatpickr
                    [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
                    placeholder="Ingresar hora inicio" formControlName="horaEntrada">
-                @if(submitted && form['horaEntrada'].errors){ 
+                @if(submitted && form['horaEntrada'].errors){
                     <div class="invalid-feedback" align="left">
-                        @if(form['horaEntrada'].errors['required']){ 
+                        @if(form['horaEntrada'].errors['required']){
                              <div>El campo es requerido </div>
                         }
                     </div>
@@ -128,22 +128,22 @@
                     [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
                     placeholder="Ingresar hora final" formControlName="horaSalida"
                     [ngClass]="{ 'is-invalid': submitted && form['horaSalida'].errors }" />
-                   @if(submitted && form['horaSalida'].errors){ 
+                   @if(submitted && form['horaSalida'].errors){
                    <div class="invalid-feedback" align="left">
-                       @if(form['horaSalida'].errors['required']){ 
+                       @if(form['horaSalida'].errors['required']){
                         <div>El campo es requerido </div>
                        }
                    </div>
                    }
               </div>
-            </div>  
+            </div>
             <div class="col-lg-6">
                 <div>
                     <label for="telefono-field" class="form-label">Telefono</label>
-                    <input 
-                        type="text" class="form-control" 
-                        id="telefono-field" formControlName="telefono"                        
-                        placeholder="Ingrese un telefono/celular"                         
+                    <input
+                        type="text" class="form-control"
+                        id="telefono-field" formControlName="telefono"
+                        placeholder="Ingrese un telefono/celular"
                     />
                     <div *ngIf="form['telefono'].errors && (form['telefono'].touched || submitted)">
                         <small class="text-danger" *ngIf="form['telefono'].errors['required']">
@@ -151,7 +151,7 @@
                         </small>
                         <small class="text-danger" *ngIf="form['telefono'].errors['pattern']">
                             Ingrese un número de teléfono válido (7-15 dígitos, opcional +).
-                        </small>                        
+                        </small>
                         <small class="text-danger" *ngIf="form['telefono'].errors['minlength']">
                             El número debe tener al menos 7 dígitos.
                         </small>
@@ -167,7 +167,7 @@
         <div class="hstack gap-2 justify-content-end">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal"
                 (click)="closeModal()">Cerrar</button>
-            <button type="submit" class="btn btn-success" id="add-btn">Agregar</button>
+            <button type="submit" class="btn btn-success" id="add-btn">Guardar</button>
         </div>
     </div>
 </form>

@@ -8,7 +8,7 @@
                             <th scope="col" style="width: 50px;">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="checkAll" value="checkAll"
-                                        [(ngModel)]="masterSelected" (change)="checkUncheckAll($event)">  
+                                        [(ngModel)]="masterSelected" (change)="checkUncheckAll($event)">
                                 </div>
                             </th>
                         }
@@ -29,12 +29,12 @@
                             <td>
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox"
-                                    [checked]="checkedValGet.includes(data)" 
+                                    [checked]="checkedValGet.includes(data)"
                                     (change)="onCheckboxChange($event, data)">
                                 </div>
                             </td>
                         }
-                        @for (column of itemsList; track column.prop) {   
+                        @for (column of itemsList; track column.prop) {
                         @if (column.visible) {
                                 <!-- <td>{{ data[column.prop] }}</td> -->
                             <td [ngClass]="{'status': column.tag, 'date': column.date, 'name': !column.tag && !column.date}">
@@ -47,7 +47,7 @@
                                         <ngb-highlight [result]="value | date:'longDate'" [term]="searchTerm"></ngb-highlight>
                                     } @else {
                                         @if (column.avatar && data.avatar) {
-                                            <img [src]="'assets/icons/users/' + data.avatar" 
+                                            <img [src]="'assets/icons/users/' + data.avatar"
                                                 alt="" class="avatar-xs rounded-circle">
                                         }
                                         <a (click)="showItem(data)">{{value}}</a>
@@ -66,12 +66,12 @@
                                     <a class="" (click)="showItem(data)">
                                         <i class="ri-eye-fill align-bottom me-2 float-start"></i>
                                     </a>
-                                </li>   
+                                </li>
                                 <li *ngIf="ticket" class="list-inline-item" ngbTooltip="Ticket" placement="top">
                                     <a class="" (click)="ticketItem(data)">
                                         <i class="ri-file-list-3-line align-bottom me-2 float-start"></i>
                                     </a>
-                                </li>                                                        
+                                </li>
                                 <li *ngIf="edit || (edit && data.estadoReserva && data.estadoReserva ==='Pendiente')"
                                     class="list-inline-item edit" ngbTooltip="Editar" placement="top">
                                     <a href="javascript:void(0);" data-bs-toggle="modal"
@@ -79,8 +79,8 @@
                                         (click)="editItem(data)">
                                         <i class="ri-pencil-fill fs-16"></i>
                                     </a>
-                                </li>                                                  
-                                <li *ngIf="consult" 
+                                </li>
+                                <li *ngIf="consult"
                                     class="list-inline-item edit" ngbTooltip="Consultar" placement="top">
                                     <a href="javascript:void(0);" data-bs-toggle="modal"
                                         class="text-primary d-inline-block edit-item-btn"
@@ -88,7 +88,7 @@
                                         <i class="ri-restart-fill fs-16"></i>
                                     </a>
                                 </li>
-                                <li *ngIf="(delete && !data.estadoReserva) || (delete && data.estadoReserva && data.estadoReserva ==='Pendiente')" 
+                                <li *ngIf="(delete && !data.estadoReserva) || (delete && data.estadoReserva && data.estadoReserva ==='Pendiente')"
                                     class="list-inline-item me-0" ngbTooltip="Anular" placement="top">
                                     <a class="text-danger d-inline-block remove-item-btn"
                                         data-bs-toggle="modal" data-bs-toggle="modal"
@@ -102,7 +102,7 @@
                                     </a>
                                 </li>
                                 <li *ngIf="comment" class="list-inline-item edit" ngbTooltip="Message" placement="top">
-                                    <a href="https://api.whatsapp.com/send?phone=+59172248669&text=MENSAJE DESDE SISTEMA DE DEPORTES" 
+                                    <a href="https://api.whatsapp.com/send?phone=+59172248669&text=MENSAJE DESDE SISTEMA DE DEPORTES"
                                         class="text-muted d-inline-block">
                                         <i class="ri-question-answer-line fs-16"></i>
                                     </a>
@@ -123,11 +123,11 @@
                         </td>
                         }
                     </tr>
-                    }           
-                </tbody>            
-            </table> 
+                    }
+                </tbody>
+            </table>
 
-        <!-- Mobile view -->     
+        <!-- Mobile view -->
             <!-- <table class="table table-borderless d-sm-none">
                 <thead class="table-light">
                 </thead>
@@ -135,11 +135,11 @@
                 @for (data of content; track data.uuid) {
                 <div class="card px-2">
                     <tr>
-                        <div class="d-flex justify-content-between mb-2"> 
+                        <div class="d-flex justify-content-between mb-2">
                             @if(multiCheck){
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox"
-                                    [checked]="checkedValGet.includes(data)" 
+                                    [checked]="checkedValGet.includes(data)"
                                     (change)="onCheckboxChange($event, data)">
                                 </div>
                             }
@@ -154,7 +154,7 @@
                                         <a class="" (click)="ticketItem(data)">
                                             <i class="ri-file-list-3-line align-bottom me-2 float-start"></i>
                                         </a>
-                                    </li>                                                                
+                                    </li>
                                     <li *ngIf="edit || (edit && data.estadoReserva && data.estadoReserva ==='Pendiente')"
                                         class="list-inline-item edit" ngbTooltip="Editar" placement="top">
                                         <a href="javascript:void(0);" data-bs-toggle="modal"
@@ -162,8 +162,8 @@
                                             (click)="editItem(data)">
                                             <i class="ri-pencil-fill fs-16"></i>
                                         </a>
-                                    </li>                                                  
-                                    <li *ngIf="consult" 
+                                    </li>
+                                    <li *ngIf="consult"
                                         class="list-inline-item edit" ngbTooltip="Consultar" placement="top">
                                         <a href="javascript:void(0);" data-bs-toggle="modal"
                                             class="text-primary d-inline-block edit-item-btn"
@@ -171,7 +171,7 @@
                                             <i class="ri-restart-fill fs-16"></i>
                                         </a>
                                     </li>
-                                    <li *ngIf="delete || (delete && data.estadoReserva && data.estadoReserva ==='Pendiente')" 
+                                    <li *ngIf="delete || (delete && data.estadoReserva && data.estadoReserva ==='Pendiente')"
                                         class="list-inline-item me-0" ngbTooltip="Anular" placement="top">
                                         <a class="text-danger d-inline-block remove-item-btn"
                                             data-bs-toggle="modal" data-bs-toggle="modal"
@@ -185,7 +185,7 @@
                                         </a>
                                     </li>
                                     <li *ngIf="comment" class="list-inline-item edit" ngbTooltip="Message" placement="top">
-                                        <a href="https://api.whatsapp.com/send?phone=+59172248669&text=MENSAJE DESDE SISTEMA DE DEPORTES" 
+                                        <a href="https://api.whatsapp.com/send?phone=+59172248669&text=MENSAJE DESDE SISTEMA DE DEPORTES"
                                             class="text-muted d-inline-block">
                                             <i class="ri-question-answer-line fs-16"></i>
                                         </a>
@@ -196,7 +196,7 @@
                     </tr>
                     <tr>
                     @for (column of itemsList; track column.prop) {
-                        <div class="d-flex justify-content-between mb-2"> 
+                        <div class="d-flex justify-content-between mb-2">
                             <strong class="details-grid ">{{column.name}}:</strong>
                             <span [ngClass]="{'status': column.tag, 'date': column.date}">
                                 <ng-container *ngIf="getPropertyValue(data, column.prop) as value; else emptyValue">
@@ -206,7 +206,7 @@
                                     {{value | date:'longDate'}}
                                 } @else {
                                     <div class="d-flex justify-content-end">
-                                        <img *ngIf="column.avatar && data.avatar" [src]="'assets/icons/users/' + data.avatar" 
+                                        <img *ngIf="column.avatar && data.avatar" [src]="'assets/icons/users/' + data.avatar"
                                             alt="" class="avatar-xs rounded-circle me-2">
                                         <span class="expandable-text" (click)="toggleExpand(data, column.prop)">
                                             <span [class.truncate]="!isExpanded(data, column.prop)">{{value}}</span>
@@ -226,17 +226,17 @@
                 </tbody>
             </table> -->
         </div>
-        
+
         <!-- Loading Spinner -->
         <div id="elmLoader" *ngIf="loading">
         <div class="spinner-border text-primary avatar-sm" role="status">
             <span class="visually-hidden">Cargando...</span>
         </div>
-        </div>  
+        </div>
         <!-- No Results Found -->
         <div class="noresult" *ngIf="!loading && allcontent.length === 0">
         <div class="text-center">
-            <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop" 
+            <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop"
             colors="primary:#405189,secondary:#0ab39c" style="width:75px;height:75px">
             </lord-icon>
             <h5 class="mt-2">Lo Sentimos! No Se encontró ningún Dato </h5>
@@ -245,15 +245,15 @@
         </div>
         <!-- Pagination -->
         <div class="row align-items-md-center mt-3">
-            <div class="col col-xxl-1" *ngIf="allcontent && allcontent.length>0">                        
-                <div class="text-sm-left float-start listjs-pagination">     
+            <div class="col col-xxl-1" *ngIf="allcontent && allcontent.length>0">
+                <div class="text-sm-left float-start listjs-pagination">
                         <div class="d-flex">
                             <select class="form-control mb-0" (change)="onTableSizeChange($event)">
-                                <option *ngFor="let size of tableSizes" [value]="size">                
+                                <option *ngFor="let size of tableSizes" [value]="size">
                                     {{size}}
-                                </option>                
-                            </select>             
-                        </div>      
+                                </option>
+                            </select>
+                        </div>
                 </div>
             </div>
             <div class="col col-xxl-5 d-none d-sm-table" *ngIf="allcontent && allcontent.length>0">
@@ -261,18 +261,18 @@
                     <span style="color:slategray">
                         {{content.length}} Registros, de un total de {{ allcontent.length }}
                     </span>
-                </div>            
-            </div> 
+                </div>
+            </div>
             <div class="col col-xxl-6">
                 <div class="text-sm-right float-sm-end listjs-pagination">
-                    <ngb-pagination 
-                        [collectionSize]="allcontent.length" 
-                        [(page)]="service.page" 
-                        [pageSize]="itemsPerPage" 
+                    <ngb-pagination
+                        [collectionSize]="allcontent.length"
+                        [(page)]="service.page"
+                        [pageSize]="itemsPerPage"
                         (pageChange)="changePage()">
                     </ngb-pagination>
                 </div>
             </div>
-        </div> 
-        <!-- End Pagination -->     
+        </div>
+        <!-- End Pagination -->
     </div>

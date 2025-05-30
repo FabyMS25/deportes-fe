@@ -26,7 +26,7 @@ export class ReservationsComponent implements OnInit {
   canActivate:string[];
   itemsList:any[]=[];
 
-  reservasList:any[]=[];
+  reservasList:Reserva[]=[];
   temp:any[]=[];
   categoryList:any[]=[];
   dataSelected!:any;
@@ -45,14 +45,14 @@ export class ReservationsComponent implements OnInit {
   }
 
   async ngOnInit() {
-    
+
     if (window.sessionStorage.getItem("auth-token") === 'isContribuyente') {
       const currentUser = window.sessionStorage.getItem("currentUser");
       this.contribuyente = currentUser ? JSON.parse(currentUser) : null;
       if(this.contribuyente.estadoUsuario!=='Activo'){
         this.canActivate=["VER"];
       }
-    }  
+    }
     await this.getReservations();
     await this.getCategories();
     this.breadCrumbItems = [
@@ -60,15 +60,24 @@ export class ReservationsComponent implements OnInit {
       { label: this.title, active: true }
     ];
     this.itemsList = [
-      {name: 'Complejo  ',prop: 'canchasDto.complejoDto.nombre',visible:true},
       {name: 'Contribuyente', prop: 'contribuyenteDto.nombre',visible:!this.contribuyente},
+      {name: 'Complejo  ',prop: 'canchasDto.complejoDto.nombre',visible:true},
+      {name: 'Cancha  ',prop: 'canchasDto.codigo',visible:false},
       {name: 'Superficie', prop: 'superficie',visible:true},
+      {name: 'Categoría',prop: 'categoria',visible:false},
+      {name: 'Fecha Creada',prop: 'fechaCreated', date:true,visible:false},
       {name: 'Fecha Reserva',prop: 'fechaReserva', date:true,visible:true},
+      {name: 'Tasa',prop: 'numeroTasa',visible:true},
       {name: 'Estado', prop: 'estadoReserva', tag:true,visible:true},
-      {name: 'Hora',prop: 'horaEntrada',visible:true},
+      {name: 'Hora 1',prop: 'horaEntrada',visible:false},
+      {name: 'Hora 2',prop: 'horaSalida',visible:false},
+      {name: 'Personas',prop: 'totalPersonas',visible:false},
+      {name: 'Total',prop: 'totalPago',visible:false},
+      {name: 'Observación',prop: 'observacion',visible:false},
+      // {name: 'Pago  ',prop: 'pagosDto.',visible:true},
     ];
-    
-    this.authRuat();  
+
+    this.authRuat();
     setInterval(() => this.getReservations(), 5 * 60 * 1000);// checks periodically (e.g., every 5 minutes)
   }
 
@@ -80,8 +89,8 @@ export class ReservationsComponent implements OnInit {
   category: string = '';
   applyFilters() {
     this.reservasList = this.temp.filter(item => {
-      const searchMatch = !this.searchTerm || 
-        Object.values(item).some((val:any) => 
+      const searchMatch = !this.searchTerm ||
+        Object.values(item).some((val:any) =>
           val.toString().toLowerCase().includes(this.searchTerm.toLowerCase())) ||
         item.canchasDto.complejoDto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.contribuyenteDto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
@@ -99,11 +108,11 @@ export class ReservationsComponent implements OnInit {
         dateMatch = itemDate >= fromDate && itemDate <= toDate;
       }
 
-      const statusMatch = !this.status || item.estadoReserva === this.status;      
+      const statusMatch = !this.status || item.estadoReserva === this.status;
       // category filter
-      const categoryMatch = !this.category || 
-      item.canchasDto.tarifasDtoList.some((tarifa: any) => 
-        tarifa.categoriaDtoList.some((cat: any) => 
+      const categoryMatch = !this.category ||
+      item.canchasDto.tarifasDtoList.some((tarifa: any) =>
+        tarifa.categoriaDtoList.some((cat: any) =>
           cat.categoriaDto.nombre === this.category
         )
       );
@@ -111,17 +120,17 @@ export class ReservationsComponent implements OnInit {
       return searchMatch && dateMatch && statusMatch && categoryMatch;
     });
   }
- 
+
   performSearch(): void {
-    this.searchResults = this.temp.filter((item: any) => {
-      return ( 
-        Object.values(item).some((val:any) => 
+    this.reservasList = this.temp.filter((item: any) => {
+      return (
+        Object.values(item).some((val:any) =>
           val.toString().toLowerCase().includes(this.searchTerm.toLowerCase())) ||
           item.canchasDto.complejoDto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
           item.contribuyenteDto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
-    this.reservasList = this.service.changePage(this.searchResults,8)
+    // this.reservasList = this.service.changePage(this.searchResults,8)
   }
 
   onNavChange(changeEvent: NgbNavChangeEvent) {
@@ -144,7 +153,7 @@ export class ReservationsComponent implements OnInit {
   public redirectTo() {
     this.router.navigate(['/inicio/taxpayer']);
   }
-  
+
   public showTicket(data:any) {
     this.router.navigate(['/reservations/ticket'], { state: { data: data } });
   }
@@ -165,26 +174,26 @@ export class ReservationsComponent implements OnInit {
     modalRef.componentInstance.emitList.subscribe(() => {
       this.getReservations();
     });
-    
+
   }
-  
+
   showLoading: boolean = false;
   async consultModal( data: any,content: any) {
     if (this.selectedItems.length === 0) {
-      this.selectedItems.push(data); 
-    }    
+      this.selectedItems.push(data);
+    }
     this.consultResults = [];
     for (const item of this.selectedItems) {
-      this.showLoading = true;      
+      this.showLoading = true;
       try {
         this.showLoading = true;
-        const result = await this.consultData(item); 
+        const result = await this.consultData(item);
         this.consultResults.push(result);
       } catch (error) {
         console.error("Error during consultation:", error);
       } finally {
         this.showLoading = false;
-        this.modalService.open(content, { centered: true });        
+        this.modalService.open(content, { centered: true });
         this.selectedItems = [];
         this.getReservations();
           // this.modalService.dismissAll('close click');
@@ -212,7 +221,7 @@ export class ReservationsComponent implements OnInit {
   }
 
   private async checkAndUpdateExpiredReservas(reservas: Reserva[]): Promise<Reserva[]> {
-    const updatedReservas: Reserva[] = [];  
+    const updatedReservas: Reserva[] = [];
     for (const reserva of reservas) {
       if (this.isReservaExpired(reserva) && reserva.estadoReserva === 'Pendiente') {
         reserva.estadoReserva = 'Vencido';
@@ -227,37 +236,37 @@ export class ReservationsComponent implements OnInit {
           if (updatedReserva) {
             updatedReservas.push(updatedReserva);
           } else {
-            updatedReservas.push(reserva); 
+            updatedReservas.push(reserva);
           }
         } catch (error) {
           console.error('Error updating expired reserva:', error);
-          updatedReservas.push(reserva); 
+          updatedReservas.push(reserva);
         }
       } else {
         updatedReservas.push(reserva);
       }
-    }  
+    }
     return updatedReservas;
   }
 
   private isReservaExpired(reserva: Reserva): boolean {
-    const now = new Date();  
+    const now = new Date();
     const fechaCreated = new Date(reserva.fechaCreated);
     const fourHoursLater = new Date(fechaCreated.getTime() + 4 * 60 * 60 * 1000);
     return now > fourHoursLater;  // This line remains unchanged
   }
-  
+
   /* API Services */
   loading: boolean = true;
   private async getReservations() {
     try {
       this.loading = true;
-      const data: any = await this.reservasService.getAll().toPromise();      
-      if (data['status'] === 'OK') {  
+      const data: any = await this.reservasService.getAll().toPromise();
+      if (data['status'] === 'OK') {
         let list: Reserva[] = data.payload;
         if(this.contribuyente){
           list = data.payload.filter((item: any) => item.contribuyenteDto.uuid === this.contribuyente.uuid);
-        }      
+        }
         const assignaments = localStorage.getItem("assignaments");
         const employee = assignaments ? JSON.parse(assignaments) : null;
         if(employee){
@@ -276,7 +285,7 @@ export class ReservationsComponent implements OnInit {
       this.loading = false;
     }
   }
-  
+
   private getCategories(){
     this.categoriesService.getAll().subscribe({
         next: (data: any) => {
@@ -295,7 +304,7 @@ export class ReservationsComponent implements OnInit {
   /* API RUAT Services */
   private authRuat() {
     this.ruatService.authenticate().subscribe({
-      next: (response) => {          
+      next: (response) => {
         window.sessionStorage.setItem('ruatToken', response.token);
       },
       error: (error) => {
@@ -308,24 +317,24 @@ export class ReservationsComponent implements OnInit {
   async consultData(item: any): Promise<any> {
     if (!item) {
       return { item, text: 'No se pudo obtener el dato seleccionado', type: 'warning' };
-    }  
+    }
     try {
       const nroTasa = item.numeroTasa;
       const resp: any = await this.ruatService.consultaPagoTasa(nroTasa).toPromise();
-  
+
       if (resp['status'] !== 'OK') {
         return { item, text: "La Tasa y Otro Ingreso no tiene pagos", type: 'warning' };
       }
       if (!resp.payload.continuarFlujo) {
         return { item, text: resp.payload.observacion, type: 'warning' };
       }
-  
-      let text = resp.payload.observacion;  
+
+      let text = resp.payload.observacion;
       if (item.estadoReserva === 'Pendiente') {
         let pago = resp.payload.pagoTasa;
         const [day, month, year] = pago.fechaPago.split('/');
         pago.fechaPago = `${year}-${month}-${day}`;
-        pago.reservasDto = item;  
+        pago.reservasDto = item;
         try {
           const pagoResp: any = await this.pagoService.save(pago).toPromise();
           if (pagoResp.status === 'OK') {
@@ -353,22 +362,22 @@ export class ReservationsComponent implements OnInit {
           cancha: item.canchasDto.codigo,
           superficie: item.superficie,
           desde: item.horaEntrada,
-          hasta: item.horaSalida, 
-          categoria: item.categoria, 
+          hasta: item.horaSalida,
+          categoria: item.categoria,
           fechaCreado: item.fechaCreated,
           fecha: item.fechaReserva,
           tasa: item.numeroTasa,
           estado: item.estadoReserva,
           totalPersonas: item.totalPersonas? item.totalPersonas: '-',
-          totalPago: item.totalPago, 
+          totalPago: item.totalPago,
           contribuyente: item.contribuyenteDto.nombre + item.contribuyenteDto.apPaterno + item.contribuyenteDto.apMaterno,
           carnet: item.contribuyenteDto.nroCarnet,
           celular: item.contribuyenteDto.celular,
           email: item.contribuyenteDto.correo,
           tipoContribuyente: item.contribuyenteDto.tipoContribuyente,
           codigoContribuyente: item.contribuyenteDto.codigoContribuyente,
-        };    
-        return [{...baseData}];      
+        };
+        return [{...baseData}];
       });
       var data = {
         fieldSeparator: ',',
@@ -380,7 +389,7 @@ export class ReservationsComponent implements OnInit {
         useBom: true,
         noDownload: false,
         headers: ["Complejo","Cancha","Superficie","Desde","Hasta", "Categoria",
-          "Fecha Creado","Fecha Reserva","Tasa","Estado ", "Total Personas","Total Pago", 
+          "Fecha Creado","Fecha Reserva","Tasa","Estado ", "Total Personas","Total Pago",
           "Contribuyente","Carnet","Celular", "Email", "Tipo Contribuyente","Codigo Contribuyente"]
       };
       new ngxCsv(lista, "Reservas", data);

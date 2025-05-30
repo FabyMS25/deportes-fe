@@ -115,9 +115,9 @@ export class CategoriesComponent {
   camposImport: any[] =[];
   public openModalImport() {
     this.camposImport = [
-        {prop: 'Codigo', name: 'Codigo'},
-        {prop: 'Tipo Cobro', name: 'Tipo Cobro'},
-        {prop: 'Nombre', name: 'Nombre'},
+        {prop: 'Código', name: 'Código',visible:true},
+        {prop: 'Tipo Cobro', name: 'Tipo Cobro',visible:true},
+        {prop: 'Nombre', name: 'Nombre',visible:true},
     ];
     const modalRef = this.modalService.open(ModalImportComponent, {
         size: 'lg', backdrop: 'static'

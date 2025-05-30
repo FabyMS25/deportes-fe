@@ -39,9 +39,9 @@ export class DashboardComponent implements OnInit {
     const userString = window.sessionStorage.getItem('currentUser');
     this.userData = userString ? JSON.parse(userString) : null;
     if (sessionStorage.getItem('toast')) {
-      this.toastService.show('Logged in Successfully.', { classname: 'bg-success text-center text-white', delay: 5000 });
+      this.toastService.show('¡Bienvenido!, Inicio de sesión exitoso', { classname: 'bg-success text-center text-white', delay: 5000 });
       sessionStorage.removeItem('toast');
-    }  
+    }
     try {
       await this.getReservations();
       this.setRevenueValue('all');
@@ -52,8 +52,8 @@ export class DashboardComponent implements OnInit {
     }
   }
   /**
- * Incomes By Complex Chart
- */
+  * Incomes By Complex Chart
+  */
   filteredReservations: any[] = [];
   onDateRangeChange(range: string): void {
     this.filteredReservations = this.processReservations(range);
@@ -64,23 +64,23 @@ export class DashboardComponent implements OnInit {
     let startDate: Date;
     let endDate: Date;
     switch (filter) {
-      case 'Today': 
+      case 'Today':
         startDate = new Date(now.setHours(0, 0, 0, 0));
         endDate = new Date(now.setHours(23, 59, 59, 999));
         break;
       case 'Weekly':
-        const dayOfWeek = now.getDay(); 
-        const diffToMonday = (dayOfWeek + 6) % 7; 
+        const dayOfWeek = now.getDay();
+        const diffToMonday = (dayOfWeek + 6) % 7;
         startDate = new Date(now);
-        startDate.setDate(now.getDate() - diffToMonday); 
+        startDate.setDate(now.getDate() - diffToMonday);
         startDate.setHours(0, 0, 0, 0);
         endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 6); 
+        endDate.setDate(startDate.getDate() + 6);
         endDate.setHours(23, 59, 59, 999);
         break;
       case 'Monthly':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
-        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0); 
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         endDate.setHours(23, 59, 59, 999);
         break;
       case 'Year':
@@ -111,14 +111,14 @@ export class DashboardComponent implements OnInit {
       }
       return acc;
     }, {} as Record<string, any>);
-    const result = Object.values(groupedByComplex);  
+    const result = Object.values(groupedByComplex);
     result.sort((a, b) => b.totalIncome - a.totalIncome);
     return result;
   }
 
   /**
- * Reservations Analytics Chart
- */
+  * Reservations Analytics Chart
+  */
   reservationsList: Reserva[] = [];
   totalReservations: number = 0;
   totalCancellations : number = 0;
@@ -128,7 +128,7 @@ export class DashboardComponent implements OnInit {
     const currentDate = new Date();
     let temp: Reserva[] = [];
     let startDate: Date;
-    let endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);  
+    let endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
     switch (value) {
       case 'all':
         temp = this.reservationsList;
@@ -148,17 +148,17 @@ export class DashboardComponent implements OnInit {
       default:
         temp = this.reservationsList;
     }
-    this.initChart(value,temp); 
+    this.initChart(value,temp);
   }
   private filterReservations(startDate: Date, endDate: Date): Reserva[] {
     startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 59, 59, 999); 
+    endDate.setHours(23, 59, 59, 999);
     return this.reservationsList.filter(reserva => {
       const reservaDate = new Date(reserva.fechaReserva);
       return reservaDate >= startDate && reservaDate <= endDate;
     });
   }
-  
+
   private processMonthlyData(reservas: Reserva[], labels: string[]) {
     const monthlyData  = {
       reservas: new Array(12).fill(0),
@@ -171,10 +171,10 @@ export class DashboardComponent implements OnInit {
     };
     reservas.forEach((reserva: Reserva) => {
       const month = new Date(reserva.fechaReserva).getMonth();
-      monthlyData.reservas[month]++;      
+      monthlyData.reservas[month]++;
       if (reserva.estadoReserva === 'Pagado') {
         monthlyData.ingresos[month] += reserva.totalPago;
-      }      
+      }
       if (reserva.estadoReserva === 'Anulado' || reserva.estadoReserva === 'Vencido') {
         monthlyData.cancelaciones[month]++;
       }
@@ -183,7 +183,7 @@ export class DashboardComponent implements OnInit {
       reservas: [] as number[],
       ingresos: [] as number[],
       cancelaciones: [] as number[],
-    };  
+    };
     labels.forEach((label) => {
       const monthIndex = monthNameToIndex[label];
       if (monthIndex !== undefined) {
@@ -195,15 +195,15 @@ export class DashboardComponent implements OnInit {
         alignedData.ingresos.push(0);
         alignedData.cancelaciones.push(0);
       }
-    });     
+    });
     // Calculate totals for display
     this.totalReservations = alignedData.reservas.reduce((acc, curr) => acc + curr, 0);
     this.totalIncome = alignedData.ingresos.reduce((acc, curr) => acc + curr, 0);
     this.totalCancellations  = alignedData.cancelaciones.reduce((acc, curr) => acc + curr, 0);
     this.conversionRatio = this.totalReservations > 0 ? ((this.totalReservations -this.totalCancellations ) / this.totalReservations) * 100 : 0;
-    
-    return alignedData; 
-  }  
+
+    return alignedData;
+  }
   private getLabels(value:string): string[] {
     const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
     const currentDate = new Date();
@@ -261,7 +261,7 @@ export class DashboardComponent implements OnInit {
         { title: { text: "Reservas" } },
         { opposite: true, title: { text: "Ingresos" } },
       ],
-      colors: colors , 
+      colors: colors ,
       chart: {
           type: "line",
           height: 370,
@@ -425,7 +425,7 @@ export class DashboardComponent implements OnInit {
       const data: any = await this.reservasService.getAll().toPromise();
       if (data['status'] === 'OK') {
         this.reservationsList = data.payload;
-        // this.setRevenueValue('todo'); 
+        // this.setRevenueValue('todo');
         // this.filteredReservations = this.processReservations('Year');
       } else {
         Swal.fire({ text: data.status, confirmButtonColor: '#299cdb' });
@@ -437,5 +437,5 @@ export class DashboardComponent implements OnInit {
       this.loading = false;
     }
   }
-  
+
 }

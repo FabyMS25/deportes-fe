@@ -10,5 +10,4 @@ export const environment = {
   recaptcha: {
     siteKey: '6LcDpuIpAAAAAIAyzT8MyfVAZYc48aZUJeDDeBH4',
   },
-
 };

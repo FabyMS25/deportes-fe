@@ -54,7 +54,7 @@ export class SettingsComponent implements OnInit {
     private userService: ContribuyentesService
    ) { }
 
-  ngOnInit(): void {    
+  ngOnInit(): void {
     const token = window.sessionStorage.getItem('auth-token');
     const userString = window.sessionStorage.getItem('currentUser');
     this.userData =userString ? JSON.parse(userString) : null;
@@ -68,15 +68,15 @@ export class SettingsComponent implements OnInit {
       const persona =this.userData.designacion.personaDto;
       const funcionarioString = localStorage.getItem('assignaments');
       this.funcionario =funcionarioString ? JSON.parse(funcionarioString) : null;
-      if(this.funcionario)this.userType='Encargado'; 
+      if(this.funcionario)this.userType='Encargado';
       this.loadPersonaData(persona);
     }
   }
-   
+
   private loadPersonaData(persona:any) {
     if (persona) {
       this.personaForm.patchValue({
-        uuid: persona.uuid, 
+        uuid: persona.uuid,
         nombre: persona.nombre,
         apPaterno: persona.apPaterno,
         apMaterno: persona.apMaterno,
@@ -94,7 +94,7 @@ export class SettingsComponent implements OnInit {
     return this.personaForm.controls;
   }
   getExpedidoDescription(expedido: string): string {
-    const city = this.CityAcronym.find(c => c.acromyn === expedido || c.id === expedido || c.description === expedido);
+    const city = this.CityAcronym.find(c => c.acronym === expedido || c.id === expedido || c.description === expedido);
     return city ? city.description : '';
   }
   public openModal() {
@@ -107,11 +107,11 @@ export class SettingsComponent implements OnInit {
     let acronym = '';
     CityAcronym.forEach(element => {
       if (element['description'] === city) {
-        acronym = element['acromyn'];
+        acronym = element['acronym'];
       }
     });
     return acronym;
-   }   
+   }
    getIdCity(city: string): string {
     let acronym = '';
     CityAcronym.forEach(element => {
@@ -122,11 +122,11 @@ export class SettingsComponent implements OnInit {
     return acronym;
    }
 
-   async saveData() {    
+   async saveData() {
     this.submitted = true;
     if (this.personaForm.valid) {
     if(this.userType==='Contribuyente'){
-      const persona:Contribuyente = {        
+      const persona:Contribuyente = {
         uuid: this.personaForm.value.uuid,
         nombre: this.personaForm.value.nombre,
         apPaterno: this.personaForm.value.apPaterno,
@@ -148,7 +148,7 @@ export class SettingsComponent implements OnInit {
         userName:this.userData.userName,
         password:this.userData.password,
       }
-      
+
       try {
         await this.updateUser(persona);
         this.notify('success', 'Sus datos fueron actualizados con éxito');
@@ -156,9 +156,9 @@ export class SettingsComponent implements OnInit {
         this.notify('error', 'No se pudo actualizar sus datos');
       }
     }else {
-      const persona: any = { ...this.personaForm.value }; 
+      const persona: any = { ...this.personaForm.value };
       persona.ciExpedito = this.getAcronymCity(persona.expedido);
-      delete persona.expedido; 
+      delete persona.expedido;
       this.updatePersona(persona);
     }
     }else{
@@ -187,14 +187,14 @@ export class SettingsComponent implements OnInit {
       this.notify('error', 'La contraseña ingresada es incorrecta.');
     }
   }
-  
-  
 
- 
-  
+
+
+
+
 
    /* API Services */
-   private updatePersona(persona:any) {    
+   private updatePersona(persona:any) {
     this.employeeService.updatePersona(persona).subscribe({
       next:(data) => {
           this.notify('success','Registro actualizado con exito');
@@ -222,7 +222,7 @@ export class SettingsComponent implements OnInit {
       });
     });
   }
-   private deleteUser(uuid:string) {    
+   private deleteUser(uuid:string) {
     this.userService.delete(uuid).subscribe({
       next:(data:any) => {
         if(data.status==='OK'){

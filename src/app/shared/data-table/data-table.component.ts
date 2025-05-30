@@ -29,7 +29,7 @@ export class DataTableComponent {
   @Output() editItemEmitter = new EventEmitter();
   @Output() deleteItemEmitter = new EventEmitter();
 
-  @Output() consultItemEmitter = new EventEmitter(); 
+  @Output() consultItemEmitter = new EventEmitter();
   @Output() ticketEmitter = new EventEmitter();
 
   @Output() selectedItemEmitter = new EventEmitter();
@@ -39,7 +39,7 @@ export class DataTableComponent {
   private expandedItems: Set<string> = new Set();
 
   constructor( public service: PaginationService){}
-  
+
   ngOnChanges() {
       this.content = this.service.changePage(this.content,this.itemsPerPage)
   }
@@ -53,7 +53,7 @@ export class DataTableComponent {
   public deleteItem(item: any) {
     this.deleteItemEmitter.emit(item);
   }
-  
+
   // Search Data
   searchTerm: string = '';
 
@@ -78,7 +78,7 @@ onCheckboxChange(e: any, item: any) {
     }
 
     this.selectedItemEmitter.emit(this.checkedValGet);
-    this.checkedValGet.length > 0 
+    this.checkedValGet.length > 0
         ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block"
         : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
 }
@@ -94,14 +94,14 @@ checkUncheckAll(e: any) {
       this.checkedValGet = [];
   }
   this.selectedItemEmitter.emit(this.checkedValGet);
-  this.checkedValGet.length > 0 
+  this.checkedValGet.length > 0
       ? (document.getElementById("remove-actions") as HTMLElement).style.display = "block"
       : (document.getElementById("remove-actions") as HTMLElement).style.display = "none";
 }
 
   getPropertyValue(obj: any, prop: String): any {
     return prop.split('.').reduce((o, p) => o && o[p], obj);
-  }    
+  }
   public getBadgeClass(value:any) {
     switch (value) {
     case 'Activo' : return 'bg-success-subtle text-success';
@@ -110,7 +110,7 @@ checkUncheckAll(e: any) {
     case 'Pendiente' : return 'bg-secondary-subtle text-secondary';
     case 'Vencido' : return 'bg-danger-subtle text-danger';
     case 'Anulado' : return 'bg-warning-subtle text-warning';
-    default: 
+    default:
       return 'bg-info-subtle text-info';
     }
  }
@@ -127,10 +127,10 @@ checkUncheckAll(e: any) {
   toggleColumn(column: any) {
     column.visible = !column.visible;
   }
-  
+
 
   /**
-   * ******* to sort ******* 
+   * ******* to sort *******
    */
   onSort(column: any) {
     this.content = this.service.onSort(column, this.content)
@@ -143,7 +143,7 @@ checkUncheckAll(e: any) {
     this.content = this.service.changePage(this.allcontent,this.itemsPerPage)
   }
 
-  itemsPerPage: number = this.service.pageSize; 
+  itemsPerPage: number = this.service.pageSize;
   tableSizes:number[]= [8,10,15,20];
   public onTableSizeChange(event:any): void {
     this.itemsPerPage = Number(event.target.value);

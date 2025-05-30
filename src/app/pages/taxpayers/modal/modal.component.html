@@ -1,346 +1,345 @@
-<div id="event-modal" >
-    <div class="modal-content border-0">
-        <div class="modal-header bg-info-subtle  p-3">
-        <!-- <div class="modal-header bg-light p-3"> -->
-            <h5 class="modal-title" id="modal-title">Contribuyente</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" 
-                (click)="closeModal()" id="close-modal"></button>
-        </div>
-
-        <div class="modal-body p-4">
-            <form [formGroup]="contentForm" (ngSubmit)="saveData()" class="needs-validation" name="event-form" id="form-event" >
-                @if(accion==='show'){
-                    <!-- <div class="text-end">
-                        <a href="javascript:void(0);" class="btn btn-sm btn-soft-primary" id="edit-event-btn" data-id="edit-event" (click)="showeditEvent()" role="button">Editar</a>
-                    </div> -->
-                }
-                @if(row){
-                <div class="event-details">
-                    <div class="d-flex mb-3">
-                        <div class="flex-shrink-0 me-3">
-                            <i class="ri-discuss-line text-muted fs-lg"></i> Nombre:
-                        </div>
-                        <div class="flex-grow-1">
-                            <p class="d-block mb-0" id="event-description-tag">{{row.nombre}} {{row.apPaterno}} {{row.apMaterno}}</p>
-                        </div>
-                    </div>
-                    <div class="d-flex mb-3">
-                        <div class="flex-shrink-0 me-3">
-                            <i class="ri-discuss-line text-muted fs-lg"></i> Genero:
-                        </div>
-                        <div class="flex-grow-1">
-                            <p class="d-block mb-0" id="event-description-tag">{{row.sexo}}</p>
-                        </div>
-                    </div>
-                    <div class="d-flex mb-2">
-                        <div class="flex-grow-1 d-flex align-items-center">
-                            <div class="flex-shrink-0 me-3">
-                                <i class="ri-calendar-event-line text-muted fs-lg"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="d-block fw-semibold mb-0" id="event-start-date-tag">{{row.fechaNac}}</h6>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="flex-shrink-0 me-3">
-                            <i class="ri-time-line text-muted fs-lg"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                                <h6 class="d-block fw-semibold mb-0">
-                                    <span id="event-timepicker1-tag"></span> {{row.nroCarnet }} - {{row.ciExpedido }} 
-                                </h6>
-                                <h6 class="d-block fw-semibold mb-0">
-                                </h6>
-                        </div>
-                        <!-- <ng-select 
-                                [items]="cityAcronym" bindLabel="nombre" bindValue="id"
-                                formControlName="ciExpedido">
-                            </ng-select> -->
-
-                    </div>
-                    <div class="d-flex mb-3">
-                        <div class="flex-shrink-0 me-3">
-                            <i class="ri-discuss-line text-muted fs-lg"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <p class="d-block text-muted mb-0" id="event-description-tag">{{row.correo}}</p>
-                        </div>
-                    </div>
-                    <div class="d-flex mb-3">
-                        <div class="flex-shrink-0 me-3">
-                            <i class="ri-discuss-line text-muted fs-lg"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <p class="d-block text-muted mb-0" id="event-description-tag">{{row.celular}}</p>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="flex-shrink-0 me-3">
-                            <i class="ri-map-pin-line text-muted fs-lg"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="d-block fw-semibold mb-0"> <span id="event-location-tag">{{row.direccion}}</span></h6>
-                        </div>
-                    </div>
-                </div>
-                }
-                <!-- <div class="hstack gap-2 justify-content-end">
-                    <button type="button" class="btn btn-light" id="btn-cancel-event" (click)="closeModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-success" id="btn-save-event">Guardar</button>  
-                </div> -->
-            </form>
-        </div>
-    </div> <!-- end modal-content-->
-</div> 
-
-<form (ngSubmit)="saveData()" [formGroup]="contentForm" *ngIf="accion==='edit' || accion===''"
-    class="tablelist-form" autocomplete="off">
-    <div class="modal-body">
-        <div class="mb-2">
-            <label for="name-field" class="form-label mb-0">Nombre(s) <span class="text-danger">*</span></label>
-            <input type="text" id="name-field" class="form-control " placeholder="Ingresar Nombre"
-                required formControlName="name"
-                [ngClass]="{ 'is-invalid': submitted && form['name'].errors }" />
-            <div class="invalid-feedback">El campo es requerido.</div>
-        </div>
-        <div class="row">
-            <div class="col-lg-6 mb-2">
-                <label for="firstSurname-field" class="form-label mb-0">Primer Apellido <span class="text-danger">*</span></label>
-                <input type="text" id="firstSurname-field" class="form-control" placeholder="Primer Apellido"
-                    required formControlName="firstSurname"
-                    [ngClass]="{ 'is-invalid': submitted && form['firstSurname'].errors }" />
-                <div class="invalid-feedback">El campo es requerido.</div>
-            </div>
-            <div class="col-lg-6 mb-2">
-                <label for="secondSurname-field" class="form-label mb-0">Segundo Apellido</label>
-                <input type="text" id="secondSurname-field" class="form-control" placeholder="Segundo Apellido"
-                    formControlName="secondSurname"
-                    [ngClass]="{ 'is-invalid': submitted && form['secondSurname'].errors }" />
-                <div class="invalid-feedback">El campo es requerido.</div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-4 mb-2">
-                <label for="birthDate-field" class="form-label mb-0">Fecha de Nacimiento <span class="text-danger">*</span></label>
-                <input type="date" id="birthDate-field" class="form-control" 
-                    placeholder="DD/MM/YYYY"
-                    formControlName="birthDate"
-                    [ngClass]="{ 'is-invalid': submitted && form['birthDate'].errors }"
-                    [value]="form['birthDate'].value | date:'yyyy-MM-dd'" />
-                <div class="invalid-feedback">El campo es requerido.</div>
-            </div>
-            <div class="col-lg-4 mb-2">
-                <label for="sex-field" class="form-label mb-0">Genero </label>
-                <select class="form-select" aria-label="sex"
-                    formControlName="sex" 
-                    [ngClass]="{'is-invalid': submitted && form['sex'].errors }">
-                    <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                    <option *ngFor="let item of userSex" [value]="item.id">
-                        {{ item.description }}
-                    </option>
-                </select>
-                <div *ngIf="submitted && form['sex'].errors" class="invalid-feedback" align="left">
-                    <div *ngIf="form['sex'].errors['required']">Debe seleccionar una opcion</div>
-                </div>
-            </div>
-            <div class="col-lg-4 mb-2">
-                <label for="civilStatus-field" class="form-label mb-0">Estado Civil </label>
-                <select class="form-select" aria-label="civilStatus"
-                    formControlName="civilStatus" 
-                    [ngClass]="{'is-invalid': submitted && form['civilStatus'].errors }">
-                    <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                    <option *ngFor="let item of civilStatus" [value]="item.type">
-                        {{ item.description }}
-                    </option>
-                </select>
-                <div *ngIf="submitted && form['civilStatus'].errors" class="invalid-feedback" align="left">
-                    <div *ngIf="form['civilStatus'].errors['required']">Debe seleccionar opción</div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-4 mb-2">
-                <label for="identityType-field" class="form-label mb-0">Tipo Documento <span class="text-danger">*</span></label>
-                <select class="form-select" 
-                    aria-label="identityType" formControlName="identityType" 
-                    [ngClass]="{'is-invalid': submitted && form['identityType'].errors }">
-                    <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                    <option *ngFor="let item of identityTypes" [value]="item.type">
-                        {{ item.description }}
-                    </option>
-                </select>
-                <div *ngIf="submitted && form['identityType'].errors" class="invalid-feedback" align="left">
-                    <div *ngIf="form['identityType'].errors['required']">El campo es requerido</div>
-                </div>
-            </div>
-            <div class="col-lg-4 mb-2">
-                <label for="identityNumber-field" class="form-label mb-0">Nro Documento <span class="text-danger">*</span></label>
-                <input type="text" id="identityNumber-field" class="form-control" formControlName="identityNumber"
-                    placeholder="Documento de Identificación"
-                    [ngClass]="{'is-invalid': (form['identityNumber'].touched || submitted) && form['identityNumber'].errors}">                                     
-                <div *ngIf="(form['identityNumber'].touched || submitted) && form['identityNumber'].errors" class="invalid-feedback">
-                    <span *ngIf="form['identityNumber'].errors?.['required']">El campo es requerido</span>
-                    <span *ngIf="form['identityNumber'].errors?.['itExist']">La identificacion ya se encuentra registrada.</span>
-                </div>
-                <div id="identificacionInput" class="form-text"> Agregar complemento si corresponde, ejemplo: <b>12345678-1C</b></div>
-            </div>   
-            <div class="col-lg-4 mb-2">
-                <label for="expedite-field" class="form-label mb-0">Expedido</label><span class="text-danger">*</span>
-                <select class="form-select" 
-                    aria-label="expedite"  formControlName="expedite" 
-                    [ngClass]="{'is-invalid': submitted && form['expedite'].errors }">
-                    <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                    <option *ngFor="let item of cityAcronym" [value]="item.id">
-                        {{ item.description }}
-                    </option>
-                </select>
-                <div *ngIf="submitted && form['expedite'].errors" class="invalid-feedback" align="left">
-                    <div *ngIf="form['expedite'].errors['required']">El campo es requerido</div>
-                </div>
-            </div>                                     
-        </div>
-        <div class="row">
-            <div class="col-lg-6 mb-2">
-                <label for="nitNumber-field" class="form-label mb-0">NIT </label><span class="text-muted">(opcional)</span>
-                <input type="text" id="nitNumber-field" class="form-control" placeholder="Ingresar NIT"
-                    formControlName="nitNumber"
-                    [ngClass]="{ 'is-invalid': submitted && form['nitNumber'].errors }" />
-                <div class="invalid-feedback">El campo es requerido.</div>
-            </div>                            
-            <div class="col-lg-6 mb-2">
-                <label for="phone-field" class="form-label mb-0">Celular</label><span class="text-danger">*</span>
-                <input type="text" id="phone-field" class="form-control" placeholder="Ingresar Celular"
-                    mask="000-000-0000" formControlName="phone"
-                    [ngClass]="{ 'is-invalid': submitted && form['phone'].errors }" />
-                <div class="invalid-feedback">El campo es requerido.</div>
-            </div>                                      
-        </div> 
-
-        <div class="mb-2">
-            <label for="email-field" class="form-label mb-0">Email <span class="text-danger">*</span></label>
-            <input type="email" id="email-field" class="form-control" placeholder="Ingrese un correo valido" 
-                required formControlName="email"
-                [ngClass]="{ 'is-invalid': submitted && form['email'].errors }" />
-            <!-- <div class="invalid-feedback">Debe Ingresar un correo.</div>                                     -->
-            <span *ngIf="contentForm.get('email')?.pending">Verificando disponibilidad...</span>
-            <span class="invalid-feedback" *ngIf="contentForm.get('email')?.errors?.['required']">Debe ingresar un correo</span>
-            <span class="invalid-feedback" *ngIf="contentForm.get('email')?.errors?.['emailTaken']">Este Email ya cuenta con un usuario en el sistema.</span>
-            <div id="emailInput" class="form-text">Asegúrese de tener acceso al correo, <b>Se le enviara el codigo de confirmación </b></div>
-        
-        </div> 
- 
-        <div class="mb-2">
-            <label for="address-field" class="form-label mb-0">Dirección</label><span class="text-muted">(opcional)</span>
-            <input type="text" id="address-field" class="form-control" placeholder="Ingresar Dirección"
-                formControlName="address"
-                [ngClass]="{ 'is-invalid': submitted && form['address'].errors }" />
-            <div class="invalid-feedback">El campo es requerido.</div>
-        </div> 
-
-        <div class="mb-2" hidden>
-            <label class="form-label" for="username-input">Usuario</label>
-            <div class="position-relative auth-pass-inputgroup">
-                <input type="text" class="form-control pe-5 username-input" 
-                       placeholder="Ingresar Usuario" aria-describedby="usernameInput" formControlName="username"  
-                       id="username-input" (focus)="onUsernameFocus()" (blur)="onUsernameBlur()"
-                       [ngClass]="{ 'is-invalid': submitted && form['username'].errors }">
-                       <!-- [ngClass]="{'is-invalid': (contentForm.get('username')?.touched || submitted) && contentForm.get('username')?.errors}"> -->
-                
-                <div *ngIf="(contentForm.get('username')?.touched || submitted) && contentForm.get('username')?.errors" class="invalid-feedback">
-                    <span *ngIf="contentForm.get('username')?.errors?.['required']">Por favor ingrese su Usuario</span>
-                </div>
-            </div>        
-            <div id="username-contain" class="p-3 bg-light mb-2 rounded" >
-                <h5 class="fs-13">El Username debe ser único</h5>
-                <p id="user-taken" class="fs-12 mb-2"
-                    [ngClass]="{'invalid': contentForm.get('username')?.errors?.['usernameTaken'], 
-                                'valid': !contentForm.get('username')?.errors?.['usernameTaken'] && contentForm.get('username')?.valid,
-                                'pending': contentForm.get('username')?.pending}">
-                    <span *ngIf="contentForm.get('username')?.pending">Verificando disponibilidad...</span>
-                    <span *ngIf="contentForm.get('username')?.errors?.['usernameTaken']">Este Usuario ya existe. Por favor escoja otro.</span>
-                    <span *ngIf="!contentForm.get('username')?.errors?.['usernameTaken'] &&  contentForm.get('username')?.valid">Usuario disponible.</span>
-                </p>
-                <p id="user-length" class="invalid fs-12 mb-2">Mínimo <b>6 caracteres</b></p>
-                <p id="user-pattern" class="invalid fs-12 mb-2">El usuario solo puede contener <b>letras, números y puntos</b> (a-z)</p>
-            </div>
-        </div>
-
-        <div class="mb-2" hidden>
-            <label class="form-label" for="password-input">Contraseña</label>
-            <div class="position-relative auth-pass-inputgroup">
-                <input [type]="passwordField ? 'text' : 'password'" class="form-control pe-5 password-input" 
-                placeholder="Ingresar contraseña" aria-describedby="passwordInput" formControlName="password"
-                 required 
-                id="password-input"  (focus)="onPasswordFocus()" (blur)="onPasswordBlur()"
-                [ngClass]="{ 'is-invalid': submitted && form['password'].errors }"><!-- pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" -->
-                <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button"
-                    id="password-addon"><i class="ri-eye-fill align-middle" [ngClass]="{'mdi-eye-off-outline': !passwordField, 'mdi-eye-outline': passwordField
-                }" (click)="togglepasswordField()"></i></button>
-                <div *ngIf="(contentForm.get('password')?.touched || submitted) && contentForm.get('password')?.errors" class="invalid-feedback">
-                    <span *ngIf="contentForm.get('password')?.errors?.['required']">Por favor ingrese su Usuario</span>
-                </div>                                        
-            </div>
-            <div id="passwordInput" class="form-text">Debe tener un mínimo de <b>8 caracteres</b></div>
-            <label class="form-label" for="confirm-password-input">Confirmar Contraseña</label>
-            <div class="position-relative auth-pass-inputgroup mb-3">
-                <input [type]="confirmField ? 'text' : 'password'" class="form-control pe-5 password-input" 
-                placeholder="Confirmar contraseña" 
-                id="confirm-password-input" required formControlName="cpassword"
-                [ngClass]="{ 'is-invalid': submitted && form['cpassword'].errors }"><!-- pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"  -->
-                <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" 
-                type="button" id="confirm-password-input"><i class="ri-eye-fill align-middle" 
-                [ngClass]="{'mdi-eye-off-outline': !passwordField, 'mdi-eye-outline': passwordField}" 
-                (click)="toggleconfirmField()"></i></button>
-                @if(submitted && form['cpassword'].errors){
-                    <div class="invalid-feedback">
-                        <span *ngIf="form['cpassword'].errors['required']">Confirme su contraseña</span>
-                        <span *ngIf="form['cpassword'].errors['mustMatch']">Las contraseñas no coinciden</span>
-                </div>
-                }
-            </div>
-            <div id="password-contain" class="p-3 bg-light mb-2 rounded">
-                <h5 class="fs-13">La contraseña debe contener:</h5>
-                <p id="pass-length" class="invalid fs-12 mb-2">Mínimo <b>8 caracteres</b></p>
-                <p id="pass-lower" class="invalid fs-12 mb-2">Al menos una <b>letra minúscula</b> (a-z)</p>
-                <p id="pass-upper" class="invalid fs-12 mb-2">Al menos una <b>letra mayúscula</b> (A-Z)</p>
-                <p id="pass-number" class="invalid fs-12 mb-0">Al menos un <b>número</b> (0-9)</p>
-            </div>
-        </div>
-
-        <div class="d-flex mt-2">
-            <div class="flex-shrink-0 me-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="feather feather-check-circle text-success icon-dual-success icon-xs">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-            </div>
-            <div class="flex-grow-1 mt-1">
-                <p class="mb-0 fs-12 text-muted fst-italic">
-                    Al registrarte, aceptas los 
-                    <a routerLink="/pages/terms-condition" class="text-primary text-decoration-underline fst-normal fw-medium">Términos y Condiciones de Uso</a>
-                     y las                                         
-                    <a routerLink="/pages/policy-privacy" class="text-primary text-decoration-underline fst-normal fw-medium">Políticas de Seguridad</a>
-                     del GAMQ
-                </p>
-            </div>
-        </div>
+<div id="event-modal" *ngIf="accion!=='delete'">
+<div class="modal-content border-0">
+    <div class="modal-header bg-info-subtle  p-3">
+      <!-- <div class="modal-header bg-light p-3"> -->
+        <h5 class="modal-title" id="modal-title">Contribuyente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"
+              (click)="closeModal()" id="close-modal"></button>
     </div>
-    <div class="modal-footer">
+    <form [formGroup]="contentForm" (ngSubmit)="saveData()" class="needs-validation" name="event-form" id="form-event" >
+      <div class="modal-body">
+        @if(accion==='show'){
+          <div class="d-flex align-items-center mb-3">
+            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
+              <i class="ri-shield-user-fill text-muted fs-5 me-2"></i>
+              <span class="fw-semibold">Tipo de Contribuyente:</span>
+            </div>
+            <div class="flex-grow-1">
+              <p class="mb-0">{{ row.tipoContribuyente==='NA'?'CONTRIBUYENTE NATURAL':'CONTRIBUYENTE JURIDICO' }}</p>
+            </div>
+          </div>
+          <div class="d-flex align-items-center mb-3">
+            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
+              <i class="ri-contacts-fill text-muted fs-5 me-2"></i>
+              <span class="fw-semibold">Nombre:</span>
+            </div>
+            <div class="flex-grow-1">
+              <p class="mb-0">{{ row.nombre }} {{ row.apPaterno }} {{ row.apMaterno }}</p>
+            </div>
+          </div>
+          <div class="d-flex align-items-center mb-2">
+            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
+              <i class="bx bx-id-card text-muted fs-5 me-2"></i>
+              <span class="fw-semibold">{{ row.tipoDocumento }}:</span>
+            </div>
+            <div class="flex-grow-1">
+              <h6 class="mb-0 fw-semibold">{{ row.nroCarnet }} - {{ getDepartmentName(row.ciExpedido) }}</h6>
+            </div>
+          </div>
+          <div class="d-flex align-items-center mb-3">
+            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
+              <i class="ri-open-arm-fill text-muted fs-5 me-2"></i>
+              <span class="fw-semibold">Género:</span>
+            </div>
+            <div class="flex-grow-1">
+              <p class="mb-0">{{ row.sexo === 'F' ? 'FEMENINO' : row.sexo === 'M' ? 'MASCULINO' : '' }}</p>
+            </div>
+          </div>
+          <div class="d-flex align-items-center mb-3">
+            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
+              <i class="ri-calendar-event-line text-muted fs-5 me-2"></i>
+              <span class="fw-semibold">Fecha Nacimiento:</span>
+            </div>
+            <div class="flex-grow-1">
+              <h6 class="mb-0 fw-semibold">{{ row.fechaNac }}</h6>
+            </div>
+          </div>
+          <div class="d-flex align-items-center mb-3">
+            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
+              <i class="ri-user-heart-fill text-muted fs-5 me-2"></i>
+              <span class="fw-semibold">Estado Civil:</span>
+            </div>
+            <div class="flex-grow-1">
+              <h6 class="mb-0 fw-semibold">{{ getCivilStatus(row.estadoCivil) }}</h6>
+            </div>
+          </div>
+          <div class="d-flex align-items-center mb-3">
+            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
+              <i class="bx bx-mail-send text-muted fs-5 me-2"></i>
+              <span class="fw-semibold">Email:</span>
+            </div>
+            <div class="flex-grow-1">
+              <p class="mb-0 text-muted">{{ row.correo }}</p>
+            </div>
+          </div>
+          <div class="d-flex align-items-center mb-3">
+            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
+              <i class="ri-phone-fill text-muted fs-5 me-2"></i>
+              <span class="fw-semibold">Teléfono:</span>
+            </div>
+            <div class="flex-grow-1">
+              <p class="mb-0 text-muted">{{ row.celular }}</p>
+            </div>
+          </div>
+
+          <!-- Dirección -->
+          <div class="d-flex align-items-center mb-2">
+            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
+              <i class="ri-map-pin-line text-muted fs-5 me-2"></i>
+              <span class="fw-semibold">Dirección:</span>
+            </div>
+            <div class="flex-grow-1">
+              <h6 class="mb-0 fw-semibold">{{ row.direccion }}</h6>
+            </div>
+          </div>
+        }@else{
+          <div class="mb-2">
+              <label for="name-field" class="form-label mb-0">Nombre(s) <span class="text-danger">*</span></label>
+              <input type="text" id="name-field" class="form-control " placeholder="Ingresar Nombre"
+                  required formControlName="name"
+                  [ngClass]="{ 'is-invalid': submitted && form['name'].errors }" />
+              <div class="invalid-feedback">El campo es requerido.</div>
+          </div>
+          <div class="row">
+              <div class="col-lg-6 mb-2">
+                  <label for="firstSurname-field" class="form-label mb-0">Primer Apellido <span class="text-danger">*</span></label>
+                  <input type="text" id="firstSurname-field" class="form-control" placeholder="Primer Apellido"
+                      required formControlName="firstSurname"
+                      [ngClass]="{ 'is-invalid': submitted && form['firstSurname'].errors }" />
+                  <div class="invalid-feedback">El campo es requerido.</div>
+              </div>
+              <div class="col-lg-6 mb-2">
+                  <label for="secondSurname-field" class="form-label mb-0">Segundo Apellido</label>
+                  <input type="text" id="secondSurname-field" class="form-control" placeholder="Segundo Apellido"
+                      formControlName="secondSurname"
+                      [ngClass]="{ 'is-invalid': submitted && form['secondSurname'].errors }" />
+                  <div class="invalid-feedback">El campo es requerido.</div>
+              </div>
+          </div>
+          <div class="row">
+              <div class="col-lg-4 mb-2">
+                  <label for="birthDate-field" class="form-label mb-0">Fecha de Nacimiento <span class="text-danger">*</span></label>
+                  <input type="date" id="birthDate-field" class="form-control"
+                      placeholder="DD/MM/YYYY"
+                      formControlName="birthDate"
+                      [ngClass]="{ 'is-invalid': submitted && form['birthDate'].errors }"
+                      [value]="form['birthDate'].value | date:'yyyy-MM-dd'" />
+                  <div class="invalid-feedback">El campo es requerido.</div>
+              </div>
+              <div class="col-lg-4 mb-2">
+                  <label for="sex-field" class="form-label mb-0">Genero </label>
+                  <select class="form-select" aria-label="sex"
+                      formControlName="sex"
+                      [ngClass]="{'is-invalid': submitted && form['sex'].errors }">
+                      <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
+                      <option *ngFor="let item of userSex" [value]="item.id">
+                          {{ item.description }}
+                      </option>
+                  </select>
+                  <div *ngIf="submitted && form['sex'].errors" class="invalid-feedback" align="left">
+                      <div *ngIf="form['sex'].errors['required']">Debe seleccionar una opcion</div>
+                  </div>
+              </div>
+              <div class="col-lg-4 mb-2">
+                  <label for="civilStatus-field" class="form-label mb-0">Estado Civil </label>
+                  <select class="form-select" aria-label="civilStatus"
+                      formControlName="civilStatus"
+                      [ngClass]="{'is-invalid': submitted && form['civilStatus'].errors }">
+                      <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
+                      <option *ngFor="let item of civilStatus" [value]="item.type">
+                          {{ item.description }}
+                      </option>
+                  </select>
+                  <div *ngIf="submitted && form['civilStatus'].errors" class="invalid-feedback" align="left">
+                      <div *ngIf="form['civilStatus'].errors['required']">Debe seleccionar opción</div>
+                  </div>
+              </div>
+          </div>
+          <div class="row">
+              <div class="col-lg-4 mb-2">
+                  <label for="identityType-field" class="form-label mb-0">Tipo Documento <span class="text-danger">*</span></label>
+                  <select class="form-select"
+                      aria-label="identityType" formControlName="identityType"
+                      [ngClass]="{'is-invalid': submitted && form['identityType'].errors }">
+                      <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
+                      <option *ngFor="let item of identityTypes" [value]="item.type">
+                          {{ item.description }}
+                      </option>
+                  </select>
+                  <div *ngIf="submitted && form['identityType'].errors" class="invalid-feedback" align="left">
+                      <div *ngIf="form['identityType'].errors['required']">El campo es requerido</div>
+                  </div>
+              </div>
+              <div class="col-lg-4 mb-2">
+                  <label for="identityNumber-field" class="form-label mb-0">Nro Documento <span class="text-danger">*</span></label>
+                  <input type="text" id="identityNumber-field" class="form-control" formControlName="identityNumber"
+                      placeholder="Documento de Identificación"
+                      [ngClass]="{'is-invalid': (form['identityNumber'].touched || submitted) && form['identityNumber'].errors}">
+                  <div *ngIf="(form['identityNumber'].touched || submitted) && form['identityNumber'].errors" class="invalid-feedback">
+                      <span *ngIf="form['identityNumber'].errors?.['required']">El campo es requerido</span>
+                      <span *ngIf="form['identityNumber'].errors?.['itExist']">La identificacion ya se encuentra registrada.</span>
+                  </div>
+                  <div id="identificacionInput" class="form-text"> Agregar complemento si corresponde, ejemplo: <b>12345678-1C</b></div>
+              </div>
+              <div class="col-lg-4 mb-2">
+                  <label for="expedite-field" class="form-label mb-0">Expedido</label><span class="text-danger">*</span>
+                  <select class="form-select"
+                      aria-label="expedite"  formControlName="expedite"
+                      [ngClass]="{'is-invalid': submitted && form['expedite'].errors }">
+                      <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
+                      <option *ngFor="let item of cityAcronym" [value]="item.id">
+                          {{ item.description }}
+                      </option>
+                  </select>
+                  <div *ngIf="submitted && form['expedite'].errors" class="invalid-feedback" align="left">
+                      <div *ngIf="form['expedite'].errors['required']">El campo es requerido</div>
+                  </div>
+              </div>
+          </div>
+          <div class="row">
+              <div class="col-lg-6 mb-2">
+                  <label for="nitNumber-field" class="form-label mb-0">NIT </label><span class="text-muted">(opcional)</span>
+                  <input type="text" id="nitNumber-field" class="form-control" placeholder="Ingresar NIT"
+                      formControlName="nitNumber"
+                      [ngClass]="{ 'is-invalid': submitted && form['nitNumber'].errors }" />
+                  <div class="invalid-feedback">El campo es requerido.</div>
+              </div>
+              <div class="col-lg-6 mb-2">
+                  <label for="phone-field" class="form-label mb-0">Celular</label><span class="text-danger">*</span>
+                  <input type="text" id="phone-field" class="form-control" placeholder="Ingresar Celular"
+                      mask="000-000-0000" formControlName="phone"
+                      [ngClass]="{ 'is-invalid': submitted && form['phone'].errors }" />
+                  <div class="invalid-feedback">El campo es requerido.</div>
+              </div>
+          </div>
+
+          <div class="mb-2">
+              <label for="email-field" class="form-label mb-0">Email <span class="text-danger">*</span></label>
+              <input type="email" id="email-field" class="form-control" placeholder="Ingrese un correo valido"
+                  required formControlName="email"
+                  [ngClass]="{ 'is-invalid': submitted && form['email'].errors }" />
+              <!-- <div class="invalid-feedback">Debe Ingresar un correo.</div>                                     -->
+              <span *ngIf="contentForm.get('email')?.pending">Verificando disponibilidad...</span>
+              <span class="invalid-feedback" *ngIf="contentForm.get('email')?.errors?.['required']">Debe ingresar un correo</span>
+              <span class="invalid-feedback" *ngIf="contentForm.get('email')?.errors?.['emailTaken']">Este Email ya cuenta con un usuario en el sistema.</span>
+              <div id="emailInput" class="form-text">Asegúrese de tener acceso al correo, <b>Se le enviara el codigo de confirmación </b></div>
+
+          </div>
+
+          <div class="mb-2">
+              <label for="address-field" class="form-label mb-0">Dirección</label><span class="text-muted">(opcional)</span>
+              <input type="text" id="address-field" class="form-control" placeholder="Ingresar Dirección"
+                  formControlName="address"
+                  [ngClass]="{ 'is-invalid': submitted && form['address'].errors }" />
+              <div class="invalid-feedback">El campo es requerido.</div>
+          </div>
+
+          <div class="mb-2" hidden>
+              <label class="form-label" for="username-input">Usuario</label>
+              <div class="position-relative auth-pass-inputgroup">
+                  <input type="text" class="form-control pe-5 username-input"
+                        placeholder="Ingresar Usuario" aria-describedby="usernameInput" formControlName="username"
+                        id="username-input" (focus)="onUsernameFocus()" (blur)="onUsernameBlur()"
+                        [ngClass]="{ 'is-invalid': submitted && form['username'].errors }">
+                        <!-- [ngClass]="{'is-invalid': (contentForm.get('username')?.touched || submitted) && contentForm.get('username')?.errors}"> -->
+
+                  <div *ngIf="(contentForm.get('username')?.touched || submitted) && contentForm.get('username')?.errors" class="invalid-feedback">
+                      <span *ngIf="contentForm.get('username')?.errors?.['required']">Por favor ingrese su Usuario</span>
+                  </div>
+              </div>
+              <div id="username-contain" class="p-3 bg-light mb-2 rounded" >
+                  <h5 class="fs-13">El Username debe ser único</h5>
+                  <p id="user-taken" class="fs-12 mb-2"
+                      [ngClass]="{'invalid': contentForm.get('username')?.errors?.['usernameTaken'],
+                                  'valid': !contentForm.get('username')?.errors?.['usernameTaken'] && contentForm.get('username')?.valid,
+                                  'pending': contentForm.get('username')?.pending}">
+                      <span *ngIf="contentForm.get('username')?.pending">Verificando disponibilidad...</span>
+                      <span *ngIf="contentForm.get('username')?.errors?.['usernameTaken']">Este Usuario ya existe. Por favor escoja otro.</span>
+                      <span *ngIf="!contentForm.get('username')?.errors?.['usernameTaken'] &&  contentForm.get('username')?.valid">Usuario disponible.</span>
+                  </p>
+                  <p id="user-length" class="invalid fs-12 mb-2">Mínimo <b>6 caracteres</b></p>
+                  <p id="user-pattern" class="invalid fs-12 mb-2">El usuario solo puede contener <b>letras, números y puntos</b> (a-z)</p>
+              </div>
+          </div>
+
+          <div class="mb-2" hidden>
+              <label class="form-label" for="password-input">Contraseña</label>
+              <div class="position-relative auth-pass-inputgroup">
+                  <input [type]="passwordField ? 'text' : 'password'" class="form-control pe-5 password-input"
+                  placeholder="Ingresar contraseña" aria-describedby="passwordInput" formControlName="password"
+                  required
+                  id="password-input"  (focus)="onPasswordFocus()" (blur)="onPasswordBlur()"
+                  [ngClass]="{ 'is-invalid': submitted && form['password'].errors }"><!-- pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" -->
+                  <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button"
+                      id="password-addon"><i class="ri-eye-fill align-middle" [ngClass]="{'mdi-eye-off-outline': !passwordField, 'mdi-eye-outline': passwordField
+                  }" (click)="togglepasswordField()"></i></button>
+                  <div *ngIf="(contentForm.get('password')?.touched || submitted) && contentForm.get('password')?.errors" class="invalid-feedback">
+                      <span *ngIf="contentForm.get('password')?.errors?.['required']">Por favor ingrese su Usuario</span>
+                  </div>
+              </div>
+              <div id="passwordInput" class="form-text">Debe tener un mínimo de <b>8 caracteres</b></div>
+              <label class="form-label" for="confirm-password-input">Confirmar Contraseña</label>
+              <div class="position-relative auth-pass-inputgroup mb-3">
+                  <input [type]="confirmField ? 'text' : 'password'" class="form-control pe-5 password-input"
+                  placeholder="Confirmar contraseña"
+                  id="confirm-password-input" required formControlName="cpassword"
+                  [ngClass]="{ 'is-invalid': submitted && form['cpassword'].errors }"><!-- pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"  -->
+                  <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
+                  type="button" id="confirm-password-input"><i class="ri-eye-fill align-middle"
+                  [ngClass]="{'mdi-eye-off-outline': !passwordField, 'mdi-eye-outline': passwordField}"
+                  (click)="toggleconfirmField()"></i></button>
+                  @if(submitted && form['cpassword'].errors){
+                      <div class="invalid-feedback">
+                          <span *ngIf="form['cpassword'].errors['required']">Confirme su contraseña</span>
+                          <span *ngIf="form['cpassword'].errors['mustMatch']">Las contraseñas no coinciden</span>
+                  </div>
+                  }
+              </div>
+              <div id="password-contain" class="p-3 bg-light mb-2 rounded">
+                  <h5 class="fs-13">La contraseña debe contener:</h5>
+                  <p id="pass-length" class="invalid fs-12 mb-2">Mínimo <b>8 caracteres</b></p>
+                  <p id="pass-lower" class="invalid fs-12 mb-2">Al menos una <b>letra minúscula</b> (a-z)</p>
+                  <p id="pass-upper" class="invalid fs-12 mb-2">Al menos una <b>letra mayúscula</b> (A-Z)</p>
+                  <p id="pass-number" class="invalid fs-12 mb-0">Al menos un <b>número</b> (0-9)</p>
+              </div>
+          </div>
+
+          <div class="d-flex mt-2">
+              <div class="flex-shrink-0 me-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="feather feather-check-circle text-success icon-dual-success icon-xs">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+              </div>
+              <div class="flex-grow-1 mt-1">
+                  <p class="mb-0 fs-12 text-muted fst-italic">
+                      Al registrarte, aceptas los
+                      <a routerLink="/pages/terms-condition" class="text-primary text-decoration-underline fst-normal fw-medium">Términos y Condiciones de Uso</a>
+                      y las
+                      <a routerLink="/pages/policy-privacy" class="text-primary text-decoration-underline fst-normal fw-medium">Políticas de Seguridad</a>
+                      del GAMQ
+                  </p>
+              </div>
+          </div>
+        }
+      </div>
+      <div class="modal-footer" *ngIf="accion==='edit'" >
         <div class="hstack gap-2 justify-content-end">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal"
                 (click)="closeModal()">Cancelar</button>
-            <button type="submit" class="btn btn-success" id="add-btn">Agregar</button>
+            <button type="submit" class="btn btn-success" id="add-btn">Guardar</button>
         </div>
-    </div>
-</form>
+      </div>
+    </form>
+</div>
+</div>
 
 <!-- <ng-template #deleteModel let-modal> -->
     <div class="modal-content" *ngIf="accion==='delete'">
         <div class="modal-header">
-            <button type="button" class="btn-close" id="close-modal" 
+            <button type="button" class="btn-close" id="close-modal"
             data-bs-dismiss="modal" aria-label="Close"
             (click)="closeModal()"></button>
                 <!-- (click)="modal.dismiss('Cross click')"></button> -->
@@ -360,7 +359,7 @@
                 <button class="btn btn-link link-success fw-medium text-decoration-none" id="deleteRecord-close"
                     data-bs-dismiss="modal" (click)="closeModal()">
                     <i class="ri-close-line me-1 align-middle"></i> Cancelar</button>
-                <button type="button" class="btn w-sm btn-danger " id="delete-product" 
+                <button type="button" class="btn w-sm btn-danger " id="delete-product"
                     (click)="blockUser()" (click)="closeModal()">Si, Bloquear!</button>
             </div>
         </div>

@@ -23,9 +23,9 @@ export class LeafletComponent implements  OnInit {
   provider!: any;
 
       icon= L.icon({
-        iconUrl: 'assets/icon/pin-Map_icon.svg ', 
+        iconUrl: 'assets/icon/pin-Map_icon.svg ',
         //       iconUrl: 'assets/images/marker-icon.png',
-        //       shadowUrl: 'assets/images/marker-shadow.png',    
+        //       shadowUrl: 'assets/images/marker-shadow.png',
         iconSize: [28, 41],
         iconAnchor: [12, 41],
         popupAnchor: [1, -34],
@@ -52,7 +52,7 @@ export class LeafletComponent implements  OnInit {
   public cargarMapa() {
     let mapa = map('map').setView([this.latitud, this.longitud], 14);
     let marcadores = featureGroup();
-    let capa = tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    let capa = tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19
     });
 
@@ -137,13 +137,13 @@ export class LeafletComponent implements  OnInit {
     this.latitud = lat;
     this.longitud = lng;
   }
-getAddress(lat: number, lng: number) {
-  this.http.get(`https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=7fc648af73b44797bbf7e52b584cea51`)
-    .subscribe((response:any) => {
-      const address = response['results'][0]['formatted'];
+  getAddress(lat: number, lng: number) {
+    this.http.get(`https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=7fc648af73b44797bbf7e52b584cea51`)
+      .subscribe((response:any) => {
+        const address = response['results'][0]['formatted'];
       this.direccion=address
-    });
-}
+      });
+  }
 
   public guardarUbicacion() {
     let latLng = {

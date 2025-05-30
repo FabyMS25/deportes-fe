@@ -4,28 +4,28 @@
 
 <div class="row">
     <div class="col-lg-12">
-        <div class="card mb-2">  
+        <div class="card mb-2">
             <div class="card-header d-flex flex-wrap align-items-center">
                 <h5 class="card-title flex-grow-1">{{'Lista de '+title|translate }}</h5>
                 <div class="flex-shrink-0">
                     <div class="d-flex gap-1 flex-wrap ">
-                        <button *ngIf="canActivate.includes('CREAR')" (click)="openModal(undefined,content,'lg')"
+                        <button *ngIf="canActivate.includes('CREAR')" (click)="openModal(undefined,content,'')"
                           type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal">
-                          <i class="ri-add-circle-line align-middle"></i> 
+                          <i class="ri-add-circle-line align-middle"></i>
                           {{"Agregar" | translate}}
-                        </button>   
-                        <button *ngIf="canActivate.includes('CREAR')" (click)="openModalImport()" 
+                        </button>
+                        <button *ngIf="canActivate.includes('CREAR')" (click)="openModalImport()"
                             class="btn btn-soft-primary" >
                             <i class="ri-file-upload-line align-bottom"></i>
                             {{"Importar" | translate}}
-                        </button>                    
-                        <button *ngIf="canActivate.includes('VER')" (click)="csvFileExport()" 
+                        </button>
+                        <button *ngIf="canActivate.includes('VER')" (click)="csvFileExport()"
                             class="btn btn-soft-info" id="remove-actions" style="display: none">
                             <i class="ri-file-download-line align-bottom"></i>
                             {{"Exportar" | translate}}
                         </button>
                     </div>
-                </div>                
+                </div>
             </div>
         </div>
     </div>
@@ -35,7 +35,7 @@
                 <div class="row g-2">
                     <div class="col-12 col-lg-6">
                         <div class="search-box">
-                            <input type="text" name="searchTerm" class="form-control" placeholder="Buscar por ..." 
+                            <input type="text" name="searchTerm" class="form-control" placeholder="Buscar por ..."
                                 [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
                             <i class="ri-search-line search-icon"></i>
                         </div>
@@ -53,10 +53,10 @@
                     [delete]="canActivate.includes('ELIMINAR')"
                     (showItemEmitter)="openModal($event,content,'show')"
                     (editItemEmitter)="openModal($event,content,'edit')"
-                    (deleteItemEmitter)="deleteModal(deleteModel,$event)" 
+                    (deleteItemEmitter)="deleteModal(deleteModel,$event)"
                     [multiCheck]="canActivate.includes('VER')"
-                    (selectedItemEmitter)="getSelectedItems($event)"    
-                ></app-data-table>  
+                    (selectedItemEmitter)="getSelectedItems($event)"
+                ></app-data-table>
             </div>
         </div>
 
@@ -64,11 +64,12 @@
 </div>
 <!--end row-->
 
-<!-- Modals --> 
+<!-- Modals -->
 <ng-template #content role="document" let-modal>
     <div class="modal-header bg-light p-3">
         <h5 class="modal-title" class="tablelist-form" autocomplete="off" *ngIf="accion === ''" ngbAutofocus>Agregar Superficie</h5>
         <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>Editar Datos</h5>
+        <h5 class="modal-title" *ngIf="accion === 'show'" ngbAutofocus>Superficie</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
             id="close-modal" (click)="closeModal()"></button>
     </div>
@@ -99,7 +100,7 @@
             <div class="hstack gap-2 justify-content-end">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal"
                     (click)="closeModal()">Cerrar</button>
-                <button type="submit" class="btn btn-primary" id="add-btn">Agregar</button>
+                <button type="submit" class="btn btn-primary" id="add-btn">Guardar</button>
             </div>
         </div>
     </form>

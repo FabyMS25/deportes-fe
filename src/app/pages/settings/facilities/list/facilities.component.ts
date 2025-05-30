@@ -27,18 +27,18 @@ export class FacilitiesComponent {
   itemsList:any[]=[];
   temp:any[]=[];
   dataSelected!:Complejo;
- 
-  categoryList:any[]=[]; 
+
+  categoryList:any[]=[];
   facilitiesList:any[]=[]
   distictList=Districts
   ceilingList=Ceiling
 
   @ViewChild('viewModel') viewModel!: ElementRef;
-  
+
   constructor(private modalService: NgbModal,
     private complejosService: ComplejosService,
     private categoriasService: CategoriasService,
-    private authService: AuthenticationService, 
+    private authService: AuthenticationService,
     private datePipe: DatePipe,) {
       this.canActivate = this.authService.hasPermission(this.title);
   }
@@ -59,7 +59,7 @@ export class FacilitiesComponent {
     this.getCategories();
     this.getFacilities()
   }
-  
+
   selectedItems:any[] =[];
   getSelectedItems(items: any[]) {
     this.selectedItems = items;
@@ -82,7 +82,7 @@ export class FacilitiesComponent {
     SearchData() {
       var date = document.getElementById("isDate") as HTMLInputElement;
       var dateVal = date.value ? this.datePipe.transform(new Date(date.value), "yyyy-MM-dd") : '';
-  
+
       if (dateVal != '') {
         this.leads = this.temp.filter((order: any) => {
           return this.datePipe.transform(new Date(order.date), "yyyy-MM-dd") == dateVal;
@@ -98,12 +98,12 @@ export class FacilitiesComponent {
    * View Data Get
    */
   viewDataGet(data: any) {
-    this.dataSelected=data;    
+    this.dataSelected=data;
     const element = this.viewModel.nativeElement;
     const elementTop = element.getBoundingClientRect().top + window.scrollY;
-    const middleOffset = elementTop - (window.innerHeight / 2) + (element.offsetHeight / 2);    
+    const middleOffset = elementTop - (window.innerHeight / 2) + (element.offsetHeight / 2);
     window.scrollTo({top: middleOffset, behavior: 'smooth' });
-  } 
+  }
 
   /**
    * Open modal
@@ -120,7 +120,7 @@ export class FacilitiesComponent {
     modalRef.componentInstance.emitList.subscribe(() => {
       this.getFacilities();
     });
-  }  
+  }
 
   /**
    * Delete model
@@ -134,15 +134,15 @@ export class FacilitiesComponent {
   camposImport: any[] =[];
   public openModalImport() {
     this.camposImport = [
-        {prop: 'Nombre', name: 'Nombre'},
-        {prop: 'Techado', name: 'Techado'},
-        {prop: 'Distrito', name: 'Distrito'},
-        {prop: 'Ubicacion', name: 'Ubicacion'},
-        {prop: 'Latitud', name: 'Latitud'},
-        {prop: 'Longitud', name: 'Longitud'},
+        {prop: 'Nombre', name: 'Nombre',visible:true},
+        {prop: 'Techado', name: 'Techado',visible:true},
+        {prop: 'Distrito', name: 'Distrito',visible:true},
+        {prop: 'Ubicación', name: 'Ubicación',visible:true},
+        {prop: 'Latitud', name: 'Latitud',visible:true},
+        {prop: 'Longitud', name: 'Longitud',visible:true},
     ];
     const modalRef = this.modalService.open(ModalImportComponent, {
-        size: 'lg',
+        size: 'xl',
         backdrop: 'static'
     });
     modalRef.componentInstance.titles = this.camposImport;
@@ -162,7 +162,7 @@ export class FacilitiesComponent {
         latitud: item.latitud,
         longitud: item.longitud,
       };
-    
+
       if (!item.encargadosDtoList || item.encargadosDtoList.length === 0) {
         return [{
           ...baseData,
@@ -176,7 +176,7 @@ export class FacilitiesComponent {
         telefono: encargado.telefono || '',
       }));
     });
-  
+
     var data = {
       fieldSeparator: ',',
       quoteStrings: '"',
@@ -186,7 +186,7 @@ export class FacilitiesComponent {
       title: 'Lista de Complejos',
       useBom: true,
       noDownload: false,
-      headers: [ "Nombre","Techado","Dirección", "Distrito", "Latitud", "Longitud",  
+      headers: [ "Nombre","Techado","Dirección", "Distrito", "Latitud", "Longitud",
                 "Encargado(Nombre)","Encargado(Teléfono)"]
     };
     new ngxCsv(lista, "Lista de Complejos", data);

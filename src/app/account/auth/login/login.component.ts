@@ -49,26 +49,26 @@ export class LoginComponent implements OnInit {
 
   /**
    * Form submit
-   */  
+   */
   async onSubmit() {
-    this.submitted = true;  
+    this.submitted = true;
     try {
       const username = this.form['username'].value;
-      const password = this.form['password'].value;  
-  
+      const password = this.form['password'].value;
+
       if (this.loginForm.valid) {
         const [empleadoResult, contribuyenteResult] = await Promise.all([
           this.authenticationService.loginEmpleado(username, password),
           this.authenticationService.loginContribuyente(username, password)
         ]);
-  
+
         if (empleadoResult) {
           const permissionStatus = await this.authenticationService.userHasPermission(empleadoResult);
           if (permissionStatus === 'isAdmin') {
             this.router.navigate(['/inicio']).then(() => {
               this.toastService.show('¡Bienvenido Admin!', 'Inicio de sesión exitoso');
             });
-          } else if (permissionStatus === 'isEmpleado') {
+          } else if (permissionStatus === 'isEmployee') {
             this.router.navigate(['/inicio/employee']).then(() => {
               this.toastService.show('¡Bienvenido Empleado!', 'Inicio de sesión exitoso');
             });
@@ -89,7 +89,7 @@ export class LoginComponent implements OnInit {
       this.loginForm.setErrors({ serverError: true });
     }
   }
-  
+
 
   /**
    * Password Hide/Show

@@ -42,11 +42,11 @@ export class ModalComponent {
     private ruatService: RuatRequestsService
   ) {}
 
-  
+
   ngOnInit(): void {
     this.formInit();
     this.formDataSet();
-    
+
     if(this.accion==='show'){
       setTimeout(() => {
         document.getElementById('form-event')?.classList.add('view-event');
@@ -59,7 +59,7 @@ export class ModalComponent {
 
     }
   }
-  
+
   /**
    * Form data
    */
@@ -67,8 +67,8 @@ export class ModalComponent {
     this.contentForm = this.formBuilder.group({
       uuid: [''],
       username: ['', [Validators.required, Validators.minLength(6),this.usernameFormatValidator]],
-      password: ['', [Validators.required]], 
-      cpassword: ['', [Validators.required]], 
+      password: ['', [Validators.required]],
+      cpassword: ['', [Validators.required]],
       verificationCode:[1010],
       userState:['Pendiente'],
       contribuyentType:['NA'],
@@ -83,7 +83,7 @@ export class ModalComponent {
       sex: [''],
       civilStatus: [''],
       nitNumber:[''],
-      phone:['', [Validators.required]],      
+      phone:['', [Validators.required]],
       email: ['', [Validators.required, Validators.email], [this.emailValidator.bind(this)]],
       address:[''],
     }, {
@@ -97,9 +97,9 @@ export class ModalComponent {
         const [day, month, year] = this.row.fechaNac.split('/').map(Number);
         const date = new Date(+year, +month - 1, +day);
         dateObject = date.toISOString().split('T')[0]
-      } 
+      }
       this.contentForm.patchValue({
-          uuid:this.row.uuid,            
+          uuid:this.row.uuid,
           userName: this.row.userName,
           password: this.row.password,
           userState: this.row.estadoUsuario,
@@ -137,7 +137,7 @@ export class ModalComponent {
             resolve({itExist: true });
           } else { resolve(null); }
         } else {   resolve(null); }
-      }, 300); 
+      }, 300);
     });
   }
   emailValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
@@ -149,7 +149,7 @@ export class ModalComponent {
             resolve({ emailTaken: true });
           } else { resolve(null); }
         } else {   resolve(null); }
-      }, 300); 
+      }, 300);
     });
   }
   usernameValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
@@ -161,7 +161,7 @@ export class ModalComponent {
             resolve({ usernameTaken: true });
           } else { resolve(null); }
         } else {   resolve(null); }
-      }, 300); 
+      }, 300);
     });
   }
   usernameFormatValidator(control: AbstractControl): ValidationErrors | null {
@@ -179,13 +179,20 @@ export class ModalComponent {
     }
     return null;
   }
-  
-  
+
+
   generateCode(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
   }
 
-
+  getDepartmentName(id: string): string {
+    const found = this.cityAcronym.find(item => item.id === id);
+    return found ? found.description : id;
+  }
+  getCivilStatus(acronym: string): string {
+    const found = this.civilStatus.find(item => item.type === acronym);
+    return found ? found.description : acronym;
+  }
 
   /**
   * Actions
@@ -227,20 +234,20 @@ export class ModalComponent {
       } else {
         datos.verificationCode= this.generateCode()
         const ruatResp = await this.registerContribuyente(datos)
-          if(ruatResp){  
+          if(ruatResp){
             datos.codigoContribuyente = ruatResp.codigoContribuyente
             datos.estadoUsuario = 'Activo';
-            const client:any = await this.addData(datos);          
+            const client:any = await this.addData(datos);
             // const user = await this.registerUser(resp , client.nroDocumento, client.nroDocumento);
             if(client){
               this.sendEmail(client, client.nroDocumento, client.nroDocumento)
               // this.form.reset();
               // this.dynamicDialogRef.close(client);
-              // this.notify('Sus Datos fueron registrados!','success'); 
-              
-              this.notify('Datos Registrados exitosamente!','success'); 
+              // this.notify('Sus Datos fueron registrados!','success');
+
+              this.notify('Datos Registrados exitosamente!','success');
               this.closeModal();
-              this.emitList.emit();  
+              this.emitList.emit();
             }else{
               this.notify('No se pudo registrar al Contribuyente', 'error');
             }
@@ -257,12 +264,12 @@ export class ModalComponent {
     }, 2000);
     // this.submitted = true
   }
-    
+
   private sendEmail(userData:any,username:string,password:string): Promise<void> {
     const email = userData.correo;
     const name = userData.nombre;
     const message = 'USUARIO: '+ username +', CONTRASEÑA: '+ password;
-  
+
     return emailjs.send("service_auth", "template_6htavso", {
       from_name: "GAMQ-DEPORTES",
       to_name: name,
@@ -274,7 +281,7 @@ export class ModalComponent {
       })
       .catch((error) => {
         this.notify("No se pudo enviar correctamente el e-mail", 'error');
-        throw error; 
+        throw error;
       });
   }
 
@@ -283,7 +290,7 @@ export class ModalComponent {
       ...this.row
     }
     datos.estadoUsuario='Bloqueado';
-    
+
     this.updateData(datos);
   }
   /* API REQUESTS */
@@ -292,9 +299,9 @@ export class ModalComponent {
       this.contribuyentesService.save(datos).subscribe({
         next:(data:any)=>{
           this.submitted=false;
-          if (data['status'] === 'OK') { 
-            const user = data.payload;     
-            resolve(user)     
+          if (data['status'] === 'OK') {
+            const user = data.payload;
+            resolve(user)
           }else{
             this.notify(data.payload, 'error');
             resolve(null);
@@ -312,9 +319,9 @@ export class ModalComponent {
   //   this.contribuyentesService.save(datos).subscribe({
   //     next:(data:Contribuyente)=>{
   //       this.submitted=false;
-  //       this.notify('Datos Registrados exitosamente!','success'); 
+  //       this.notify('Datos Registrados exitosamente!','success');
   //       this.closeModal();
-  //       this.emitList.emit();       
+  //       this.emitList.emit();
   //     },
   //     error: (error) => {
   //       this.notify('No se pudo Guardar los datos! '+error, 'error');
@@ -353,29 +360,29 @@ export class ModalComponent {
     });
     }
   }
- 
+
   /* RUAT API Requests */
   private async registerContribuyente(data:any): Promise<any>{
     return new Promise((resolve, reject) => {
-      this.ruatService.registerContribuyente(data ).subscribe({    
+      this.ruatService.registerContribuyente(data ).subscribe({
         next: (resp: any) => {
           if(resp['status']==='OK'){
             const response = resp.payload
             if(response.continuarFlujo){
               // this.userData.codigoContribuyente = response.codigoContribuyente
-              // this.addData(this.userData);  
+              // this.addData(this.userData);
               // this.notify("Usted se encuentra registrado en el Ruat",'success')
-              resolve(response); 
+              resolve(response);
             }else{
               this.notify(response.mensaje,'error')
-              resolve(null); 
+              resolve(null);
             }
           }else{
             this.notify(resp.payload,'error')
-            resolve(null); 
+            resolve(null);
           }
         },
-        error: (error) => {    
+        error: (error) => {
           resolve(error);
         }
       });
@@ -384,7 +391,6 @@ export class ModalComponent {
 
   /* Commun Actions */
   public closeModal() {
-    this.accion = '';
     this.contentForm.enable();
     this.modalService.dismissAll();
     this.contentForm.reset();
@@ -404,7 +410,7 @@ export class ModalComponent {
       }
     });
   }
-  
+
 
   showeditEvent() {
     if (document.querySelector('#edit-event-btn')?.innerHTML == 'Cancelar') {
@@ -486,13 +492,13 @@ export class ModalComponent {
           length?.classList.add("invalid");
           isValid =false
       }
-      if(isValid){          
+      if(isValid){
         myInput.onblur = function () {
           input.style.display = "none"
         };
       }
-    };    
-  }  
+    };
+  }
   onPasswordBlur() {
     let input = document.getElementById("password-contain") as HTMLElement;
     if (this.contentForm.get('password')?.valid) {
@@ -508,7 +514,7 @@ export class ModalComponent {
       // inputUser.onfocus = function () {
         inputMsg.style.display = "block"
       // };
-      inputUser.onkeyup = () => {        
+      inputUser.onkeyup = () => {
         var patternValue = /^[a-z0-9.]+$/;
         if (inputUser.value.match(patternValue)) {
             pattern?.classList.remove("invalid");
@@ -520,23 +526,23 @@ export class ModalComponent {
         if (inputUser.value.length >= 6) {
             uLength?.classList.remove("invalid");
             uLength?.classList.add("valid");
-            
+
             if (this.contentForm.get('username')?.pending) {
               message?.classList.remove("valid", "invalid");
               message?.classList.add("pending");
             } else if (this.contentForm.get('username')?.hasError('usernameTaken')) {
               message?.classList.remove("valid", "pending");
               message?.classList.add("invalid");
-            } else{ 
+            } else{
               message?.classList.remove("invalid", "pending");
               message?.classList.add("valid");
             }
         } else {
             uLength?.classList.remove("valid");
             uLength?.classList.add("invalid");
-        }        
+        }
       };
-  }  
+  }
   onUsernameBlur() {
     let inputMsg = document.getElementById("username-contain") as HTMLElement;
     if (this.contentForm.get('username')?.valid) {

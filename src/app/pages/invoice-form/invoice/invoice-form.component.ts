@@ -6,7 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SlickCarouselComponent } from 'ngx-slick-carousel';
 import Swal from 'sweetalert2';
 import * as L from 'leaflet';
-import { debounceTime, firstValueFrom, switchMap } from 'rxjs';
+import { debounceTime, firstValueFrom, Observable, switchMap } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
 
 import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
@@ -38,11 +38,11 @@ export class InvoiceFormComponent implements OnInit  {
   step:number=1;
   currentTime!: string;
   globalAdmin = GlobalComponent.admin_deportes;
-  
+
   contribuyente : any;
   dataComplejo!:Complejo;
   dataField!:campoDeportivo
-  tariff!:Tarifa;  
+  tariff!:Tarifa;
 
   fieldsList:any[]=[];
   contribuyentesList: Contribuyente[] = [];
@@ -72,21 +72,22 @@ export class InvoiceFormComponent implements OnInit  {
     slidesToScroll: 1,
     autoplay: true,
   }
-  
+
   weekDays: { name: string, date: Date }[] = [];
   activeDayName: string = '';
   currentWeekStart!: Date;
-  currentWeekEnd!: Date;  
+  currentWeekEnd!: Date;
   allSlots: { [key: string]: { morningSlots: { time: string, isAvailable: boolean,isReserved: boolean }[], afternoonSlots: { time: string, isAvailable: boolean,isReserved: boolean }[] } } = {};
 
+  reservationsList=[]
   constructor(private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
     private fieldService: CamposDeportivoService,
     private reservaService: ReservaService,
     private route: ActivatedRoute ,
     private ruatService: RuatRequestsService,
-    private contribuyenteService: ContribuyentesService, 
-    private router: Router 
+    private contribuyenteService: ContribuyentesService,
+    private router: Router
   ) { }
 
 
@@ -100,12 +101,12 @@ export class InvoiceFormComponent implements OnInit  {
     if (window.sessionStorage.getItem("auth-token") === 'isContribuyente') {
       const currentUser = window.sessionStorage.getItem("currentUser");
       this.contribuyente = currentUser ? JSON.parse(currentUser) : null;
-    }else{    
+    }else{
       this.contribuyente = null;
       this.getTaxpayers();
-    }  
-    this.dataComplejo = history.state.data;  
-  
+    }
+    this.dataComplejo = history.state.data;
+
 
     // try {
     //   const data: any = await firstValueFrom(this.fieldService.getByComplejo(this.dataComplejo));
@@ -113,21 +114,21 @@ export class InvoiceFormComponent implements OnInit  {
     //     this.fieldsList = data.payload;
     //     if (this.fieldsList.length>0) {
     //       this.setField(this.fieldsList[0], this.fieldsList[0].tarifasDtoList[0]);
-    //     }        
+    //     }
     //   } else {
     //     this.notify('No se encontraron canchas en este Complejo','error');
     //   }
     // } catch (error) {
     //   console.error('Error fetching fields:', error);
-    // }  
-    
+    // }
+
     // Initialize the form
     this.InvoiceForm = this.formBuilder.group({
       uuid: [''],
       categoria: [''],
       superficie: [''],
       totalPersonas: [],
-      fechaCreated: [new Date()], 
+      fechaCreated: [new Date()],
       fechaReserva: [new Date(), [Validators.required, this.futureDateValidator()]],
       horaEntrada: ['', [Validators.required, this.timeValidator.bind(this)]],
       horaSalida: ['', [Validators.required, this.timeValidator.bind(this)]],
@@ -137,19 +138,19 @@ export class InvoiceFormComponent implements OnInit  {
       estadoReserva: ['Pendiente'],
       canchasDto: ['', [Validators.required]],
       contribuyenteDto: [this.contribuyente, [Validators.required]],
-      observacion: ['Reserva de Cancha Deportiva GAMQ', [Validators.required]], 
+      observacion: ['Reserva de Cancha Deportiva GAMQ', [Validators.required]],
       check: ['', [Validators.required]],
     }, { validators: this.timeRangeValidator() });
 
     // if (this.dataField) {
     //   this.setField(this.dataField,undefined);
     //   this.goToToday();
-    // }  
+    // }
     this.InvoiceForm.get('fechaReserva')?.valueChanges.subscribe(() => {
       const date = this.InvoiceForm.get('fechaReserva')?.value;
       this.allSlots={}
       this.setWeekRange(date);
-    });  
+    });
     this.InvoiceForm.valueChanges.pipe(debounceTime(300)).subscribe(() => {
       const { horaEntrada, horaSalida } = this.InvoiceForm.controls;
       if (horaEntrada.valid && horaSalida.valid) {
@@ -164,7 +165,7 @@ export class InvoiceFormComponent implements OnInit  {
   get form() {
     return this.InvoiceForm.controls;
   }
-  
+
   goToToday() {
     this.allSlots={}
     const today = new Date();
@@ -173,25 +174,25 @@ export class InvoiceFormComponent implements OnInit  {
   }
   moveWeek(direction: number) {
     this.allSlots={}
-    const newStartDate = direction > 0 
-      ? addDays(this.currentWeekStart, 7) 
+    const newStartDate = direction > 0
+      ? addDays(this.currentWeekStart, 7)
       : subDays(this.currentWeekStart, 7);
     this.setWeekRange(newStartDate);
   }
   private setWeekRange(date: Date) {
     this.currentWeekStart = startOfWeek(date, { weekStartsOn: 1 });
-    this.currentWeekEnd = endOfWeek(date, { weekStartsOn: 1 });  
+    this.currentWeekEnd = endOfWeek(date, { weekStartsOn: 1 });
     this.weekDays = Array.from({ length: 7 }, (_, i) => {
       const currentDate = addDays(this.currentWeekStart, i);
       return {
         name: format(currentDate, 'EEE', { locale: es }).toLowerCase(),
         date: currentDate
       };
-    });  
+    });
     // this.activeDayName = format(date, 'EEE', { locale: es }).toLowerCase();
   }
 
-    
+
   isEvent(cancha:any):boolean{
     const result = cancha.tarifasDtoList.every((tar:any) => tar.categoriaDtoList[0].categoriaDto.tipo === 'Evento')
     if(result){
@@ -207,18 +208,18 @@ export class InvoiceFormComponent implements OnInit  {
   }
 
   setField(field: any, tarifa:any | undefined) {
-    this.getReservationsByField(field.uuid).then(() => {  
+    this.getReservationsByField(field.uuid).then(() => {
       this.allSlots={}
     })
     this.dataField = field;
     this.tariff = tarifa? tarifa :field.tarifasDtoList[0];
-    if(this.tariff.categoriaDtoList[0].categoriaDto.tipo === 'Evento'){    
-      this.setReserve(this.tariff.desde,this.tariff.hasta)    
+    if(this.tariff.categoriaDtoList[0].categoriaDto.tipo === 'Evento'){
+      this.setReserve(this.tariff.desde,this.tariff.hasta)
     }else{
       if(!tarifa){
         this.setReserve(this.tariff.desde, this.tariff.hasta)
       }
-    }    
+    }
     if (this.InvoiceForm) {
       this.InvoiceForm.patchValue({
         canchasDto: field,
@@ -239,10 +240,10 @@ export class InvoiceFormComponent implements OnInit  {
         horaSalida: end,
       });
     }
-    this.modalService.dismissAll(); 
+    this.modalService.dismissAll();
     this.step=3;
   }
-  getReservation(date:Date,start: string, end:string) {   
+  getReservation(date:Date,start: string, end:string) {
     if (this.InvoiceForm) {
       this.InvoiceForm.patchValue({
         fechaReserva: date,
@@ -250,7 +251,7 @@ export class InvoiceFormComponent implements OnInit  {
         horaSalida: end,
       });
     }
-    this.modalService.dismissAll(); 
+    this.modalService.dismissAll();
   }
   setSelectedDay(date: Date) {
     if (this.InvoiceForm) {
@@ -260,67 +261,68 @@ export class InvoiceFormComponent implements OnInit  {
     }
       this.activeDayName = format(date, 'EEE', { locale: es }).toLowerCase();
   }
-  
+
   timetables!:any[];
   getTimeSlotsForDay(date: Date) {
-    const dayString = date ? new Date(date).toLocaleString('es-ES', { weekday: 'long' }).toLowerCase() : '';    
+    const dayString = date ? new Date(date).toLocaleString('es-ES', { weekday: 'long' }).toLowerCase() : '';
     if (!this.allSlots[dayString]) {
       this.setSelectedDay(date);
       const morningSlots = this.getTimeSlots(date,dayString, 'morning');
-      const afternoonSlots = this.getTimeSlots(date,dayString, 'afternoon');      
+      const afternoonSlots = this.getTimeSlots(date,dayString, 'afternoon');
       this.allSlots[dayString] = { morningSlots, afternoonSlots };
-    }  
+    }
     return this.allSlots[dayString];
   }
 
   private getTimeSlots(date:Date,day: string, period: string): { time: string, isAvailable: boolean, isReserved:boolean}[] {
+    console.log(this.dataField)
     const horariosAtencion: any[] = this.dataField.horarioDtoList;
-    this.timetables = horariosAtencion.filter(horario => (horario.dia.toLowerCase() === day.toLowerCase() && horario.abierto));    
+    this.timetables = horariosAtencion.filter(horario => (horario.dia.toLowerCase() === day.toLowerCase() && horario.abierto));
     if (this.timetables.length === 0) {
       return [];
-    }  
-    const slots: { time: string, isAvailable: boolean , isReserved:boolean}[] = []; 
+    }
+    const slots: { time: string, isAvailable: boolean , isReserved:boolean}[] = [];
     for (const horario of this.timetables) {
       const startTime = horario.horaInicio > this.tariff.desde ? this.tariff.desde : horario.horaInicio;
-      const endTime = horario.horaFin > this.tariff.hasta ? this.tariff.hasta : horario.horaFin;  
+      const endTime = horario.horaFin > this.tariff.hasta ? this.tariff.hasta : horario.horaFin;
       for (let hour = this.getTime(startTime); hour < this.getTime(endTime); hour++) {
-        const slotTime  = `${this.pad(hour)}:00 - ${this.pad(hour + 1)}:00`;  
+        const slotTime  = `${this.pad(hour)}:00 - ${this.pad(hour + 1)}:00`;
         const slotStartDate = new Date(date);
-        slotStartDate.setHours(hour, 0, 0, 0);      
+        slotStartDate.setHours(hour, 0, 0, 0);
         let isAvailable = slotStartDate >= (new Date());
-          
+
           let [slotStart, slotEnd] = slotTime.split(' - ');
           slotStart = `${slotStart}:00`;
           slotEnd = `${slotEnd}:00`;
           let isReserved = !this.isReserved(slotStart,slotEnd);
-        
-        slots.push({ time: slotTime , isAvailable: isAvailable, isReserved:isReserved});     
-      }      
-    }  
+
+        slots.push({ time: slotTime , isAvailable: isAvailable, isReserved:isReserved});
+      }
+    }
     if (period === 'morning') {
       return slots.filter(slot => this.getTime(slot.time.split(':')[0]) < 12);
     } else if (period === 'afternoon') {
       return slots.filter(slot => this.getTime(slot.time.split(':')[0]) >= 12);
-    }  
+    }
     return slots;
   }
-  
+
   private isReserved(slotStart: any , slotEnd:any): boolean {
     const fechaReserva = this.InvoiceForm.get('fechaReserva')?.value;
     return !this.reservationsList.some((reservation: any) => {
       const reservationStart = reservation.horaEntrada;
       const reservationEnd = reservation.horaSalida;
       const reservationDate = new Date(reservation.fechaReserva);
-      if (reservationDate.getDate() === fechaReserva.getDate()) {  
-        return (slotStart < reservationEnd && slotEnd > reservationStart); 
+      if (reservationDate.getDate() === fechaReserva.getDate()) {
+        return (slotStart < reservationEnd && slotEnd > reservationStart);
         // return (
         //   (slotStart >= reservationStart && slotStart < reservationEnd) &&
-        //   (slotEnd > reservationStart && slotEnd <= reservationEnd) 
+        //   (slotEnd > reservationStart && slotEnd <= reservationEnd)
         // );
-      }      
-    return false; 
+      }
+    return false;
     });
-  }  
+  }
   private futureDateValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const selectedDate = new Date(control.value);
@@ -333,10 +335,10 @@ export class InvoiceFormComponent implements OnInit  {
     const time = control.value;
     if (!time) return null;
     const fechaReserva = this.InvoiceForm.get('fechaReserva')?.value;
-    if (!fechaReserva) return null;  
+    if (!fechaReserva) return null;
     const selectedDate = new Date(fechaReserva);
-    const [hours, minutes] = time.split(':').map(Number);        
-    if (!this.timetables) return null;  
+    const [hours, minutes] = time.split(':').map(Number);
+    if (!this.timetables) return null;
     const start = this.getTime(this.timetables[0].horaInicio);
     const end = this.getTime(this.timetables[0].horaFin);
       if ((hours < start) || (hours > end) || (hours === end && minutes > 0)) {
@@ -349,12 +351,12 @@ export class InvoiceFormComponent implements OnInit  {
     }
     return  null;
   }
-  
+
   timeRangeValidator(): ValidatorFn {
     return (formGroup: AbstractControl): ValidationErrors | null => {
       const horaEntrada = formGroup.get('horaEntrada')?.value;
       const horaSalida = formGroup.get('horaSalida')?.value;
-  
+
       if (horaEntrada && horaSalida) {
         const [entradaHours, entradaMinutes] = horaEntrada.split(':').map(Number);
         const [salidaHours, salidaMinutes] = horaSalida.split(':').map(Number);
@@ -371,11 +373,11 @@ export class InvoiceFormComponent implements OnInit  {
       return null;
     };
   }
-  
+
   calculateTotalTimeAndPago() {
     if(this.tariff.categoriaDtoList[0].categoriaDto.tipo === 'Evento'){
       const totalTime = `allDay`;
-      const totalPago = this.tariff.costo;      
+      const totalPago = this.tariff.costo;
       this.InvoiceForm.patchValue({
         totalTime,
         totalPago,
@@ -396,11 +398,11 @@ export class InvoiceFormComponent implements OnInit  {
         const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
         const diffMinutes = Math.round((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
-        const totalTime = `${this.pad(diffHours)}:${this.pad(diffMinutes)}`;        
-    
+        const totalTime = `${this.pad(diffHours)}:${this.pad(diffMinutes)}`;
+
         if(this.tariff.categoriaDtoList[0].categoriaDto.tipo === 'Persona'){
           const personas = this.InvoiceForm.get('totalPersonas')?.value;
-          const totalPago = this.tariff.costo*personas;          
+          const totalPago = this.tariff.costo*personas;
           this.InvoiceForm.patchValue({
             totalTime,
             totalPago,
@@ -428,26 +430,103 @@ export class InvoiceFormComponent implements OnInit  {
     this.submitted = false;
     this.modalService.open(content, { size: 'md', centered: true });
   }
-  
-  saveData(): void {
-    this.submitted = true;
-    if (this.InvoiceForm.valid) {
-      this.InvoiceForm.enable();
-      const formData = {...this.InvoiceForm.value};
-      const ruatData = {
-        codigoContribuyente: formData.contribuyenteDto.codigoContribuyente,
-        monto: formData.totalPago,
-        observacion: formData.observacion
-        // codigoClasificador: reserva.codigoClasificador,
-        // canchasDto: reserva.canchasDto,
+
+  // saveData(): void {
+  //   this.submitted = true;
+  //   if (this.InvoiceForm.valid) {
+  //     this.InvoiceForm.enable();
+  //     const formData = {...this.InvoiceForm.value};
+  //     const ruatData = {
+  //       codigoContribuyente: formData.contribuyenteDto.codigoContribuyente,
+  //       monto: formData.totalPago,
+  //       observacion: formData.observacion
+  //       // codigoClasificador: reserva.codigoClasificador,
+  //       // canchasDto: reserva.canchasDto,
+  //     };
+  //     this.registerInRuat(ruatData, formData);
+  //   } else {
+  //     this.notify('Formulario Invalido!', 'error');
+  //   }
+  // }
+saveData(): void {
+  this.submitted = true;
+  if (this.InvoiceForm.valid) {
+    this.InvoiceForm.enable();
+    const formData = { ...this.InvoiceForm.value };
+
+    const ruatData = {
+      codigoContribuyente: formData.contribuyenteDto.codigoContribuyente,
+      monto: formData.totalPago,
+      observacion: formData.observacion
+    };
+
+    this.registerInRuat(ruatData).subscribe(numeroTasa => {
+      const reservaData: Reserva = {
+        ...formData,
+        numeroTasa
       };
-      this.registerInRuat(ruatData, formData);
-    } else {
-      this.notify('Formulario Invalido!', 'error');
-    }
+      this.addReservation(reservaData);
+    });
+
+  } else {
+    this.notify('Formulario Invalido!', 'error');
   }
-  
-  /* API requests */
+}
+
+
+  /* Register with RUAT */
+  private registerInRuat(ruatData: any): Observable<string> {
+    return new Observable(observer => {
+      this.ruatService.createTasa(ruatData).subscribe({
+        next: (response: any) => {
+          if (response.status === 'OK') {
+            observer.next(response.payload.numeroTasa);
+          } else {
+            this.notify('No se pudo guardar en RUAT. Se usará una tasa provisional.', 'warn');
+            observer.next('PENDIENTE');
+          }
+          observer.complete();
+        },
+        error: (error) => {
+          this.notify('Error al conectar con RUAT. Se usará una tasa provisional.', 'warn');
+          observer.next('PENDIENTE');
+          observer.complete();
+        }
+      });
+    });
+  }
+
+
+  // private registerInRuat(ruatData: any, reserva: any): void {
+  //   this.ruatService.createTasa(ruatData).subscribe({
+  //     next: (response: any) =>{
+  //       if (response.status === 'OK') {
+  //         const reservaData: Reserva = {
+  //           ...reserva,
+  //           numeroTasa: response.payload.numeroTasa
+  //         };
+  //         this.addReservation(reservaData);
+  //       } else {
+  //         this.notify('No se pudo Guardar los datos en RUAT! ' + response.payload, 'error');
+  //       }
+  //     },
+  //     error: (error) => {
+  //       this.notify('No se pudo Guardar los datos en RUAT!' + ' ' + error.message, 'error');
+  //     }
+  //   });
+  // }
+  private authRuat() {
+    this.ruatService.authenticate().subscribe({
+      next: (response) => {
+        window.sessionStorage.setItem('ruatToken', response.token);
+      },
+      error: (error) => {
+        this.notify("Falla en la coneccion con el RUAT, porfavor intente mas tarde",'error')
+      }
+    });
+  }
+  /* API Requests */
+
   private addReservation(datos: Reserva): void {
     this.reservaService.save(datos).subscribe({
       next: (data: any) => {
@@ -460,7 +539,6 @@ export class InvoiceFormComponent implements OnInit  {
       }
     });
   }
-  reservationsList=[]
   private getReservationsByField(uuid: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.reservaService.getByField(uuid).subscribe({
@@ -479,7 +557,6 @@ export class InvoiceFormComponent implements OnInit  {
       });
     });
   }
-
   private getTaxpayers(){
     this.contribuyenteService.getAll().subscribe({
       next: (data: any) => {
@@ -491,37 +568,6 @@ export class InvoiceFormComponent implements OnInit  {
       }
     });
   }
-  /* API RUAT Requests */
-  private authRuat() {
-    this.ruatService.authenticate().subscribe({
-      next: (response) => {          
-        window.sessionStorage.setItem('ruatToken', response.token);
-      },
-      error: (error) => {
-        this.notify("Falla en la coneccion con el RUAT, porfavor intente mas tarde",'error')
-      }
-    });
-  }
-  /* Register with RUAT */
-  private registerInRuat(ruatData: any, reserva: any): void {
-    this.ruatService.createTasa(ruatData).subscribe({
-      next: (response: any) =>{
-        if (response.status === 'OK') {
-          const reservaData: Reserva = {
-            ...reserva,
-            numeroTasa: response.payload.numeroTasa
-          };
-          this.addReservation(reservaData);
-        } else {
-          this.notify('No se pudo Guardar los datos en RUAT! ' + response.payload, 'error');
-        }
-      },
-      error: (error) => {
-        this.notify('No se pudo Guardar los datos en RUAT!' + ' ' + error.message, 'error');
-      }
-    });
-  }
-
 
     private getTime(time: string): number {
       return parseInt(time.split(':')[0], 10);
@@ -530,7 +576,7 @@ export class InvoiceFormComponent implements OnInit  {
     slickChange(event: any) {
       const swiper = document.querySelectorAll('.swiperlist')
     }
-  
+
     slidePreview(id: any, event: any) {
       const swiper = document.querySelectorAll('.swiperlist')
       swiper.forEach((el: any) => {

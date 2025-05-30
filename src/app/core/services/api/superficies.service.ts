@@ -5,9 +5,9 @@ import { HttpClient } from '@angular/common/http';
 
 /**Enviroments */
 import { environment } from 'src/environments/environment';
-import { Superficie } from '../../models/superficie.model';
 
 /**Models */
+import { Superficie } from '../../models/superficie.model';
 
 @Injectable({
   providedIn: 'root'
@@ -25,7 +25,7 @@ export class SuperficiesService {
   getByUuid(uuid:string):Observable<Superficie>{
     return this.http.get<Superficie>(`${this.apiUrl}/${uuid}`);
   }
-  save(data: Superficie): Observable<Superficie> {    
+  save(data: Superficie): Observable<Superficie> {
     return this.http.post<Superficie>(`${this.apiUrl}`, data);
   }
 

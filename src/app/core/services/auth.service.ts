@@ -20,7 +20,7 @@ const AUTH_API = ""//GlobalComponent.AUTH_API;
 const httpOptions = {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
   };
-  
+
 
 @Injectable({ providedIn: 'root' })
 
@@ -67,7 +67,7 @@ export class AuthenticationService {
         });
       });
     }
-    
+
     async loginContribuyente(username: string, password: string): Promise<boolean> {
       return new Promise((resolve, reject) => {
         this.authContribuyente.loginByUsername(username, password).subscribe({
@@ -80,29 +80,29 @@ export class AuthenticationService {
 
               resolve(true);
             } else {
-              resolve(false); 
+              resolve(false);
             }
           },
-          error: (error) => {            
+          error: (error) => {
             resolve(false);
           }
         });
       });
     }
-    
-  
-    async userHasPermission(user: any): Promise<'isAdmin' | 'isEmpleado' | 'hasNoPermissions'> {
+
+
+    async userHasPermission(user: any): Promise<'isAdmin' | 'isEmployee' | 'hasNoPermissions'> {
       try {
-        const [userPermissions, empleado] = await Promise.all([
+        const [userPermissions, userAssignations] = await Promise.all([
           this.permissionService.getPermisosUsuario(user.uuid).toPromise(),
           this.designationsService.getByUserUuid(user.uuid).toPromise()
             .then((response: any) => response?.status === 'OK' ? response.payload : null)
             .catch(error => null),
         ]);
-    
+
         if (userPermissions && Array.isArray(userPermissions) && userPermissions.length > 0) {
           const isAdmin = userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin);
-            if (empleado !== null || isAdmin) {
+            if (userAssignations !== null || isAdmin) {
             this.isAuthenticated = true;
             userPermissions.forEach((menu: any) => {
               if (!menu.permisoPadreDto) {
@@ -110,12 +110,12 @@ export class AuthenticationService {
               }
             });
             this.storageService.saveUser(user);
-            localStorage.setItem('menu', JSON.stringify(userPermissions));            
+            localStorage.setItem('menu', JSON.stringify(userPermissions));
             if (isAdmin) {
               return 'isAdmin';
             } else {
-              localStorage.setItem('assignaments', JSON.stringify(empleado));
-              return 'isEmpleado';
+              localStorage.setItem('assignaments', JSON.stringify(userAssignations));
+              return 'isEmployee';
             }
           } else {
             return 'hasNoPermissions';
@@ -128,7 +128,7 @@ export class AuthenticationService {
         throw new Error('Ocurrió un error al verificar los permisos');
       }
     }
-      
+
     /**
      * Returns the current user
      */
@@ -153,8 +153,8 @@ export class AuthenticationService {
 
         this.store.dispatch(logoutSuccess());
         return of(undefined).pipe(
-        
-        );    
+
+        );
     }
 
     /**
@@ -168,26 +168,26 @@ export class AuthenticationService {
         // });
     }
 
-    
+
     isAdmin():boolean{
       const menuString = localStorage.getItem('menu');
-      const menu: any[] = menuString ? JSON.parse(menuString) : null;      
+      const menu: any[] = menuString ? JSON.parse(menuString) : null;
       return menu.some(permission => permission.nombreMenu === this.permisoAdmin)
-    }    
-    // getRouteDB():string{      
+    }
+    // getRouteDB():string{
     //   if(this.storageService.getToken()==="isContribuyente"){
     //     return 'taxpayer'
     //   }else{
     //     if (!this.isAdmin()) {
     //       return 'employee'
     //     }
-    //   }      
+    //   }
     //   return ''
     // }
     getDashboardUrl(): string {
-      const dashboardRoutes = ['/inicio', '/inicio/employee', '/inicio/taxpayer'];      
+      const dashboardRoutes = ['/inicio', '/inicio/employee', '/inicio/taxpayer'];
       const storedMenu = localStorage.getItem('menu');
-      const userMenu = storedMenu ? JSON.parse(storedMenu) : null;      
+      const userMenu = storedMenu ? JSON.parse(storedMenu) : null;
       const userDashboard = userMenu.find((item:any) => dashboardRoutes.includes(item.ruta));
       return userDashboard ? userDashboard.ruta : '/auth/login';
     }
@@ -206,7 +206,7 @@ export class AuthenticationService {
     }
 
 
-    public getAvatar(): string{    
+    public getAvatar(): string{
       let avatar="default-profile1.png";
       let tipoUser;
       const menuString = localStorage.getItem('menu');
@@ -218,7 +218,7 @@ export class AuthenticationService {
             if (this.currentUserSubject.sexo === 'F') {
                 avatar = tipoUser.avatarF;
             }
-        }  
+        }
       }else{
         if (menu.some(permission => permission.nombreMenu === this.permisoAdmin)) {
           tipoUser = UserRol.find(item => item.tipo === 0);//ADMINISTRADOR
@@ -230,7 +230,7 @@ export class AuthenticationService {
             if (this.currentUserSubject.designacion.personaDto.sexo === 'F') {
                 avatar = tipoUser.avatarF;
             }
-        }  
+        }
       }
       return avatar
     }

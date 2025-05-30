@@ -1,13 +1,13 @@
 export const CityAcronym = [
-    { id: "1", acromyn: "CH", description: "CHUQUISACA" },
-    { id: "2", acromyn: "LP", description: "LA PAZ" },
-    { id: "3", acromyn: "CB", description: "COCHABAMBA" },
-    { id: "4", acromyn: "OR", description: "ORURO"  },
-    { id: "5", acromyn: "PT", description: "POTOSI" },
-    { id: "6", acromyn: "TJ", description: "TARIJA"  },
-    { id: "7", acromyn: "SC", description: "SANTA CRUZ" },
-    { id: "8", acromyn: "BN", description: "BENI" },
-    { id: "9", acromyn: "CO", description: "COBIJA" },
+    { id: "1", acronym: "CH", description: "CHUQUISACA" },
+    { id: "2", acronym: "LP", description: "LA PAZ" },
+    { id: "3", acronym: "CB", description: "COCHABAMBA" },
+    { id: "4", acronym: "OR", description: "ORURO"  },
+    { id: "5", acronym: "PT", description: "POTOSI" },
+    { id: "6", acronym: "TJ", description: "TARIJA"  },
+    { id: "7", acronym: "SC", description: "SANTA CRUZ" },
+    { id: "8", acronym: "BN", description: "BENI" },
+    { id: "9", acronym: "CO", description: "COBIJA" },
     // { "id":"9", "acromyn": "PN",  "description": "PANDO" }
 ]
 
@@ -24,4 +24,3 @@ export const Districts =
     {distrito:'Distrito 9 (Misicuni)',area: 'Ámbito rural-cordillera', comprende: 'todas las comunidades situadas en la Cordillera, con escasa densidad poblacional y accesibilidad.'},
     {distrito:'Distrito 10 (Ámbito urbano)'}
 ]
-  

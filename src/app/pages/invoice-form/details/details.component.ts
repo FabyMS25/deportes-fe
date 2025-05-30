@@ -22,12 +22,12 @@ export class DetailsComponent {
 
   @Input() dataComplejo!: Complejo;
   @Output() fieldEmitter = new EventEmitter();
-  
+
   dataField!:campoDeportivo
-  tariff!:Tarifa;  
+  tariff!:Tarifa;
 
   fieldsList:any[]=[];
-  
+
   constructor(
     // private modalService: NgbModal,
     // private formBuilder: UntypedFormBuilder,
@@ -35,35 +35,36 @@ export class DetailsComponent {
     private reservaService: ReservaService,
     // private route: ActivatedRoute ,
     // private ruatService: RuatRequestsService,
-    // private contribuyenteService: ContribuyentesService, 
-    // private router: Router 
+    // private contribuyenteService: ContribuyentesService,
+    // private router: Router
   ) { }
 
 
-  async ngOnInit(): Promise<void> {  
+  async ngOnInit(): Promise<void> {
     if (this.dataComplejo) {
       this.initMap(this.dataComplejo.latitud, this.dataComplejo.longitud);
     }
-  
+
     try {
       const data: any = await firstValueFrom(this.fieldService.getByComplejo(this.dataComplejo));
       if (data?.status === 'OK') {
         this.fieldsList = data.payload;
+        console.log(this.fieldsList)
         if (this.fieldsList.length>0) {
           // this.setField(this.fieldsList[0], this.fieldsList[0].tarifasDtoList[0]);
-        }        
+        }
       }
     } catch (error) {
       console.error('Error fetching fields:', error);
-    }  
-    
+    }
+
     // Initialize the form
     // this.InvoiceForm = this.formBuilder.group({
     //   uuid: [''],
     //   categoria: [''],
     //   superficie: [''],
     //   totalPersonas: [],
-    //   fechaCreated: [new Date()], 
+    //   fechaCreated: [new Date()],
     //   fechaReserva: [new Date(), [Validators.required, this.futureDateValidator()]],
     //   horaEntrada: ['', [Validators.required, this.timeValidator.bind(this)]],
     //   horaSalida: ['', [Validators.required, this.timeValidator.bind(this)]],
@@ -73,19 +74,19 @@ export class DetailsComponent {
     //   estadoReserva: ['Pendiente'],
     //   canchasDto: ['', [Validators.required]],
     //   contribuyenteDto: [this.contribuyente, [Validators.required]],
-    //   observacion: ['Reserva de Cancha Deportiva GAMQ', [Validators.required]], 
+    //   observacion: ['Reserva de Cancha Deportiva GAMQ', [Validators.required]],
     //   check: ['', [Validators.required]],
     // }, { validators: this.timeRangeValidator() });
 
     // if (this.dataField) {
     //   this.setField(this.dataField,undefined);
       // this.goToToday();
-    // }  
+    // }
     // this.InvoiceForm.get('fechaReserva')?.valueChanges.subscribe(() => {
     //   const date = this.InvoiceForm.get('fechaReserva')?.value;
     //   this.allSlots={}
       // this.setWeekRange(date);
-    // });  
+    // });
     // this.InvoiceForm.valueChanges.pipe(debounceTime(300)).subscribe(() => {
     //   const { horaEntrada, horaSalida } = this.InvoiceForm.controls;
     //   if (horaEntrada.valid && horaSalida.valid) {
@@ -99,19 +100,18 @@ export class DetailsComponent {
 
 
   setField(field: any, tariff:any | undefined) {
-      this.getReservationsByField(field.uuid).then(() => {  
+      this.getReservationsByField(field.uuid).then(() => {
         // this.allSlots={}
       })
     this.dataField = field;
     this.tariff = tariff? tariff :field.tarifasDtoList[0];
-    if(this.tariff.categoriaDtoList[0].categoriaDto.tipo === 'Evento'){    
-      // this.setReserve(this.reservationDate,this.tariff.desde,this.tariff.hasta)    
+    if(this.tariff.categoriaDtoList[0].categoriaDto.tipo === 'Evento'){
+      // this.setReserve(this.reservationDate,this.tariff.desde,this.tariff.hasta)
     }else{
       if(!tariff){
         // this.setReserve(this.reservationDate,this.tariff.desde, this.tariff.hasta)
       }
-    }    
-      
+    }
     this.fieldEmitter.emit({field:field,tariff:tariff})
   }
 
@@ -136,15 +136,15 @@ export class DetailsComponent {
   }
 
   /* general functions */
-  map:any; 
+  map:any;
   private initMap(lat:any,long:any) {
     if (this.map) {
       this.map.remove();
-    }  
+    }
     const main = L.tileLayer(
-      "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoidGhlbWVzYnJhbmQiLCJhIjoiY2xmbmc3bTV4MGw1ejNzbnJqOWpubzhnciJ9.DNkdZVKLnQ6I9NOz7EED-w",
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       {
-        maxZoom: 30,
+        maxZoom: 25,
         id: "mapbox/streets-v11",
         tileSize: 512,
         zoomOffset: -1,

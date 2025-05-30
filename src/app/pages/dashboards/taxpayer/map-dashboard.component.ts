@@ -33,13 +33,13 @@ export class MapDashboardComponent implements OnInit {
     map:any;
     layerControl:any;
     icon= L.icon({
-      iconUrl: 'assets/icons/pin-location.png',     
+      iconUrl: 'assets/icons/pin-location.png',
       iconSize: [44, 52],
       // iconAnchor: [12, 41],
       popupAnchor: [1, -34],
       shadowSize: [41, 41]
     })
- 
+
     constructor(private router: Router,
       private categoriesService: CategoriasService,
       private complexService: ComplejosService,
@@ -50,31 +50,31 @@ export class MapDashboardComponent implements OnInit {
 
     ngOnInit(): void {
       this.initializeData();
-    }    
+    }
     async initializeData() {
-      const token = window.sessionStorage.getItem('auth-token');      
+      const token = window.sessionStorage.getItem('auth-token');
       if(token==='isContribuyente'){
         const userString = window.sessionStorage.getItem('currentUser');
         this.userData =userString ? JSON.parse(userString) : null;
       }
 
-      await this.getComplexes();   
+      await this.getComplexes();
       await this.getSurfaces();
-      await this.getFields();      
-      await this.getCategories();  
-      this.setMaps();              
+      await this.getFields();
+      await this.getCategories();
+      this.setMaps();
     }
- 
-    configDefaultMap(){    
+
+    configDefaultMap(){
       this.map = L.map('map', {
         zoom: 14,
         // center: [-17.4092000, -66.2871000],//cell
         center: [-17.4010000, -66.2871000],//
         layers: [this.main,this.mainList]
       });
-        
+
       this.layerControl = L.control.layers(this.baseMaps,this.overlayMaps).addTo(this.map);
-      
+
       const provider = new GeoSearch.OpenStreetMapProvider();
       const searchControl = new (GeoSearch.GeoSearchControl as any)({
         provider: provider,
@@ -102,15 +102,15 @@ export class MapDashboardComponent implements OnInit {
     overlayMaps2:any;
     main : any;
     setMaps() {
-      this.main = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoidGhlbWVzYnJhbmQiLCJhIjoiY2xmbmc3bTV4MGw1ejNzbnJqOWpubzhnciJ9.DNkdZVKLnQ6I9NOz7EED-w",
+        // let capa = tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        //   maxZoom: 19
+        // });
+      this.main = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
-          maxZoom: 18,
-          id: "mapbox/streets-v11",
-          tileSize: 512,
-          zoomOffset: -1,
+          maxZoom: 19,
         }
       )
-      const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
       });
       const osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
@@ -122,29 +122,29 @@ export class MapDashboardComponent implements OnInit {
       });
       this.baseMaps = {
         "Mapa Basico": this.main,
-        "Mapa Calles": osm,
+        // "Mapa Calles": osm,
       };
       // this.layerControl.addBaseLayer(openTopoMap, "OpenTopoMap");
     }
-    
+
     mainList:any;
-    private setMarkers(){   
-      let listMarkers:any[]=[]   
+    private setMarkers(){
+      let listMarkers:any[]=[]
 
       this.complexList.forEach(element => {
-        const complex = this.setPopup(element); 
-        listMarkers.push(complex);      
+        const complex = this.setPopup(element);
+        listMarkers.push(complex);
       });
       this.mainList = L.layerGroup(listMarkers);
 
       let filteredMarkers: any[] = this.getFilteredList();
-      
+
       this.overlayMaps = {
           "<span style='color: blue'>Todo</span>": this.mainList,
           ...filteredMarkers,
       };
 
-      // this.layerControl.addOverlay(colList, "Coliseos");   
+      // this.layerControl.addOverlay(colList, "Coliseos");
       (window as any).handleButtonClick = this.handleButtonClick.bind(this);
       this.configDefaultMap();
     }
@@ -162,11 +162,11 @@ export class MapDashboardComponent implements OnInit {
         <b>Tipo Techado: </b>${element.techado}<br />
         <b>Distrito: </b>${element.distrito}<br />
         <b>Ubicación: </b>${element.ubicacion}<br />
-        <b>Canchas: </b>${canchasDescriptions}<br /> 
+        <b>Canchas: </b>${canchasDescriptions}<br />
         <br>
-        ${showButton ? 
-          '<button class="btn btn-secondary"><i class="ri-edit-box-line align-bottom"></i> Realizar reserva</button>' 
-          : ''        
+        ${showButton ?
+          '<button class="btn btn-secondary"><i class="ri-edit-box-line align-bottom"></i> Realizar reserva</button>'
+          : ''
         }
       `;
 
@@ -181,50 +181,50 @@ export class MapDashboardComponent implements OnInit {
     handleButtonClick(data:any):void {
       this.router.navigate(['/reservations/details'], { state: { data: data } });// , data.uuid // ,canActivate: this.canActivate
     }
-    
+
     getListByCategory(category: any): any[] {
       const filteredComplejos: any[] = [];
-  
+
       this.fieldList.forEach((field:any) => {
-          let found = false;  
+          let found = false;
           field.tarifasDtoList.forEach((tarifa:any) => {
               tarifa.categoriaDtoList.forEach((item:any) => {
                   if (item.categoriaDto.nombre === category.nombre) {
                       found = true;
                   }
               });
-          });  
+          });
           if (found) {
               const complejo = field.complejoDto;
               if (!filteredComplejos.some(c => c.uuid === complejo.uuid)) {
                   filteredComplejos.push(complejo);
               }
           }
-      });  
+      });
       return filteredComplejos;
-  }  
+  }
 
   getFilteredList(): any[] {
     let filteredMarkers: any[] =[]
-    this.surfaceList.forEach(item => {       
-  
-      const complexesBySurface = this.complexList.filter(complex => 
+    this.surfaceList.forEach(item => {
+
+      const complexesBySurface = this.complexList.filter(complex =>
           complex.canchasDtoList.some((c:any) => c.superficieDto.descripcion === item.descripcion)
       );
-  
-      const mergedList = [...new Set([...complexesBySurface])]; 
-  
+
+      const mergedList = [...new Set([...complexesBySurface])];
+
       const markers = mergedList.map(element => {
-          const complex = this.setPopup(element);    
+          const complex = this.setPopup(element);
           return complex;
       });
-      
+
       filteredMarkers[item.descripcion] = L.layerGroup(markers);
   });
     return filteredMarkers;
   }
 
-    /* API Services */    
+    /* API Services */
     private getComplexes(){
       this.complexService.getAll().subscribe({
         next: (data: any) => {
@@ -290,7 +290,7 @@ export class MapDashboardComponent implements OnInit {
     openEnd(content: TemplateRef<any>) {
       this.offcanvasService.open(content, { position: 'end' });
     }
-    
+
   // Filtering
   isstatus?: any
   leads:any

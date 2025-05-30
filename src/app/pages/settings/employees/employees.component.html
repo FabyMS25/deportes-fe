@@ -4,28 +4,28 @@
 
 <div class="row">
     <div class="col-lg-12">
-        <div class="card mb-2">  
+        <div class="card mb-2">
             <div class="card-header d-flex flex-wrap align-items-center">
                 <h5 class="card-title flex-grow-1">{{'Lista de '+title|translate }}</h5>
                 <div class="flex-shrink-0">
                     <div class="d-flex gap-1 flex-wrap ">
                         <button *ngIf="canActivate.includes('CREAR')" (click)="openModal(undefined,'','lg')"
                           type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal">
-                          <i class="ri-add-circle-line align-middle"></i> 
+                          <i class="ri-add-circle-line align-middle"></i>
                           {{"Agregar" | translate}}
-                        </button>   
-                        <button *ngIf="canActivate.includes('CREAR')" (click)="openModalImport()" 
+                        </button>
+                        <button *ngIf="canActivate.includes('CREAR')" (click)="openModalImport()"
                             class="btn btn-soft-primary" >
                             <i class="ri-file-upload-line align-bottom"></i>
                             {{"Importar" | translate}}
-                        </button>                    
-                        <button *ngIf="canActivate.includes('VER')" (click)="csvFileExport()" 
+                        </button>
+                        <button *ngIf="canActivate.includes('VER')" (click)="csvFileExport()"
                             class="btn btn-soft-info" id="remove-actions" style="display: none">
                             <i class="ri-file-download-line align-bottom"></i>
                             {{"Exportar" | translate}}
                         </button>
                     </div>
-                </div>                
+                </div>
             </div>
         </div>
     </div>
@@ -35,7 +35,7 @@
                 <div class="row">
                     <div class="col-10 col-lg-6">
                         <div class="search-box">
-                            <input type="text" name="searchTerm" class="form-control" placeholder="Buscar por ..." 
+                            <input type="text" name="searchTerm" class="form-control" placeholder="Buscar por ..."
                                 [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
                             <i class="ri-search-line search-icon"></i>
                         </div>
@@ -44,7 +44,7 @@
                         <div class="d-flex align-items-center gap-2">
                           <div class="hstack gap-2">
                             <span class="dropdown d-md-inline-block" ngbDropdown>
-                              <button class="btn btn-soft-info btn-icon fs-14 arrow-none d-block" type="button"
+                              <button class="btn btn-soft-info btn-icon fs-14 arrow-none d-block" type="button" title="dropdown"
                                       id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false"
                                       ngbDropdownToggle>
                                 <i class="ri-settings-4-line"></i>
@@ -81,8 +81,8 @@
                     (editItemEmitter)="openModal($event,'edit','lg')"
                     (deleteItemEmitter)="deleteModal(deleteModel,$event)"
                     [multiCheck]="canActivate.includes('VER')"
-                    (selectedItemEmitter)="getSelectedItems($event)"    
-                ></app-data-table>  
+                    (selectedItemEmitter)="getSelectedItems($event)"
+                ></app-data-table>
             </div>
         </div>
     </div>
@@ -113,7 +113,7 @@
                         <a href="https://api.whatsapp.com/send?phone=+591{{funcionarioSelected.telefono}}&text=MENSAJE DESDE SISTEMA DE DEPORTES" class="avatar-title bg-warning-subtle text-warning fs-15 rounded">
                             <i class="lab la-whatsapp"></i>
                         </a>
-                    </li>                    
+                    </li>
                 </ul>
             </div>
             <div class="card-body">

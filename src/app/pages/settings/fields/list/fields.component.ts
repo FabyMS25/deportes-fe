@@ -34,9 +34,9 @@ export class FieldsComponent {
 
   categoryList:any[]=[];
   fieldsList:any[]=[];
-  
+
   dataSelected!:campoDeportivo;
-  
+
   @ViewChild('viewModel') viewModel!: ElementRef;
 
   constructor(private modalService: NgbModal,
@@ -70,24 +70,24 @@ export class FieldsComponent {
   performSearch(): void {
     this.fieldsList = this.temp.filter((item: any) => {
       return (
-        item.codigo.toLowerCase().includes(this.searchTerm.toLowerCase()) || 
-        item.tipo.toLowerCase().includes(this.searchTerm.toLowerCase()) || 
+        item.codigo.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.tipo.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.superficieDto.descripcion.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.complejoDto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
   }
-  
+
   /**
    * View Data Get
    */
   viewDataGet(data: any) {
-    this.dataSelected=data;    
+    this.dataSelected=data;
     const element = this.viewModel.nativeElement;
     const elementTop = element.getBoundingClientRect().top + window.scrollY;
-    const middleOffset = elementTop - (window.innerHeight / 2) + (element.offsetHeight / 2);    
+    const middleOffset = elementTop - (window.innerHeight / 2) + (element.offsetHeight / 2);
     window.scrollTo({top: middleOffset, behavior: 'smooth' });
-  } 
+  }
 
   /**
    * Open modal
@@ -113,8 +113,8 @@ export class FieldsComponent {
    deleteModal(content: any, data: any) {
      this.deleteId = data.uuid;
      this.modalService.open(content, { centered: true });
-   }  
-   
+   }
+
   public openScheduleModal(row: campoDeportivo | undefined, accion: string, size: string) {
     const modalRef = this.modalService.open(ModalScheduleComponent, {
         backdrop: 'static',
@@ -143,24 +143,24 @@ export class FieldsComponent {
   camposImport: any[] =[];
   public openModalImport() {
     this.camposImport = [
-      {prop: 'Complejo', name: 'Complejo'},
-      {prop: 'Codigo', name: 'Codigo'},
-      {prop: 'Superficie', name: 'Superficie'},
-      {prop: 'Categorias', name: 'Categorias'},
-      {prop: 'Tipo Cobro', name: 'Tipo Cobro'},
-      {prop: 'Costo', name: 'Costo'},
-      {prop: 'Desde', name: 'Desde'},
-      {prop: 'Hasta', name: 'Hasta'},
-      {prop: 'Lunes', name: 'Lunes'},
-      {prop: 'Martes', name: 'Martes'},
-      {prop: 'Miercoles', name: 'Miercoles'},
-      {prop: 'Jueves', name: 'Jueves'},
-      {prop: 'Viernes', name: 'Viernes'},
-      {prop: 'Sabado', name: 'Sabado'},
-      {prop: 'Domingo', name: 'Domingo'},
+      {prop: 'Complejo', name: 'Complejo',visible:true},
+      {prop: 'Código', name: 'Código',visible:true},
+      {prop: 'Superficie', name: 'Superficie',visible:true},
+      {prop: 'Categorías', name: 'Categorías',visible:true},
+      {prop: 'Tipo Cobro', name: 'Tipo Cobro',visible:true},
+      {prop: 'Costo', name: 'Costo',visible:true},
+      {prop: 'Desde', name: 'Desde',visible:true},
+      {prop: 'Hasta', name: 'Hasta',visible:true},
+      {prop: 'Lunes', name: 'Lunes',visible:true},
+      {prop: 'Martes', name: 'Martes',visible:true},
+      {prop: 'Miércoles', name: 'Miércoles',visible:true},
+      {prop: 'Jueves', name: 'Jueves',visible:true},
+      {prop: 'Viernes', name: 'Viernes',visible:true},
+      {prop: 'Sábado', name: 'Sábado',visible:true},
+      {prop: 'Domingo', name: 'Domingo',visible:true},
     ];
     const modalRef = this.modalService.open(ModalImportComponent, {
-        size: 'lg',
+        size: 'xl',
         backdrop: 'static'
     });
     modalRef.componentInstance.titles = this.camposImport;
@@ -170,10 +170,10 @@ export class FieldsComponent {
       this.getFields()
     });
   }
-  
+
   // Csv File Export
   csvFileExport() {
-    const daysOrder = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];    
+    const daysOrder = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
     const lista = this.selectedItems.flatMap((item: any) => {
       const baseData = {
         complejo: item.complejoDto.nombre,
@@ -182,17 +182,17 @@ export class FieldsComponent {
         categorias: "",
         tipo: item.tipo || '',
       };
-  
-      const sortedHorarios = item.horarioDtoList.sort((a:any, b:any) => 
+
+      const sortedHorarios = item.horarioDtoList.sort((a:any, b:any) =>
         daysOrder.indexOf(a.dia) - daysOrder.indexOf(b.dia)
       );
-  
+
       const horarios: Record<string, string> = daysOrder.reduce((acc, day) => {
         const horario = sortedHorarios.find((h:any) => h.dia === day);
         acc[day] = horario ? `${horario.horaInicio}-${horario.horaFin}` : '';
         return acc;
       }, {} as Record<string, string>);
-  
+
       if (!item.tarifasDtoList || item.tarifasDtoList.length === 0) {
         return [{
           ...baseData,
@@ -210,7 +210,7 @@ export class FieldsComponent {
         ...horarios
       }));
     });
-  
+
     const xlsxData = {
       fieldSeparator: ',',
       quoteStrings: '"',
@@ -221,11 +221,11 @@ export class FieldsComponent {
       useBom: true,
       noDownload: false,
       headers: [
-        "Complejo", "Codigo", "Superficie", "Categorias", "Tipo Cobro", 
-        "Costo", "Desde", "Hasta", 
+        "Complejo", "Codigo", "Superficie", "Categorias", "Tipo Cobro",
+        "Costo", "Desde", "Hasta",
         "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"
       ]
-    };  
+    };
     new ngxCsv(lista, "Lista de "+this.title, xlsxData);
   }
 

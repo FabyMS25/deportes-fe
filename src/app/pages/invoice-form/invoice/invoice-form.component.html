@@ -6,12 +6,12 @@
         <!-- Complex details -->
         <app-details *ngIf="step===1"
             [dataComplejo]="dataComplejo"
-            (fieldEmitter)="setField($event.field,$event.tariff)"        
+            (fieldEmitter)="setField($event.field,$event.tariff)"
         ></app-details>
         <!-- fields tariffs schedules -->
         @if (dataField && !isEvent(dataField)) {
         <div class="card" *ngIf="tariff && step===2">
-                <!-- <app-timetables 
+                <!-- <app-timetables
                     [horariosAtencion]="dataField.horarioDtoList"
                     [tariff]="tariff"
                     [reservationsList]="reservationsList"
@@ -36,7 +36,7 @@
                     </div>
                 </div>
                 <div class="row mt-2 align-items-end px-1">
-                    <ul ngbNav #Header="ngbNav" [activeId]="activeDayName" 
+                    <ul ngbNav #Header="ngbNav" [activeId]="activeDayName"
                     class="nav nav-pills nav-pills-tab d-flex flex-shrink">
                         <li *ngFor="let day of weekDays" [ngbNavItem]="day.name" >
                             <div class="bg-primary-subtle rounded-3 me-1">
@@ -49,7 +49,7 @@
                                 <ng-container *ngIf="getTimeSlotsForDay(day.date) as slots">
                                     <ng-container *ngIf="slots.morningSlots.length === 0 && slots.afternoonSlots.length === 0">
                                     <p>No se encontraron horarios disponibles para {{day.name}}.</p>
-                                    </ng-container>                                                    
+                                    </ng-container>
                                     <div *ngIf="slots.morningSlots.length > 0" class="col-sm-6">
                                         <div *ngFor="let horario of slots.morningSlots" class="align-items-center d-flex">
                                             <span class="flex-grow-1" *ngIf="horario.isAvailable">{{ horario.time }}</span>
@@ -63,7 +63,7 @@
                                                 </button>
                                             </div>
                                         </div>
-                                    </div>                                                    
+                                    </div>
                                     <div *ngIf="slots.afternoonSlots.length > 0" class="col-sm-6">
                                         <div *ngFor="let horario of slots.afternoonSlots" class="align-items-center d-flex">
                                         <span class="flex-grow-1" *ngIf="horario.isAvailable">{{ horario.time }}</span>
@@ -78,7 +78,7 @@
                                         </div>
                                         </div>
                                     </div>
-                                </ng-container>                                                            
+                                </ng-container>
                             </div>
                             </ng-template>
                         </li>
@@ -100,13 +100,13 @@
                         <div class="flex-shrink-0 avatar-sm">
                             <span class="mini-stat-icon avatar-title rounded-circle text-success bg-success-subtle fs-4">
                                 <img src="assets/icons/logos/logo-sm.png"
-                                    class="card-logo card-logo-dark user-profile-image img-fluid">                            
+                                    class="card-logo card-logo-dark user-profile-image img-fluid">
                             </span>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h4>Realizar Reserva</h4> 
+                            <h4>Realizar Reserva</h4>
                         </div>
-                    </div>       
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="live-preview px-md-4">
@@ -121,9 +121,9 @@
                                     data-bs-target="javascript:void(0);" aria-expanded="false" aria-controls="collapseWithicon2"
                                     (click)="FieldCollapse.toggle()" [attr.aria-expanded]="!FCollapsed">
                                     <i class="ri-arrow-down-s-fill"></i>
-                                </button>                                
+                                </button>
                             </div>
-                        </div>         
+                        </div>
                         <div class="collapse" id="collapseWithicon" #FieldCollapse="ngbCollapse" [(ngbCollapse)]="FCollapsed">
                             <div class="details-grid px-3">
                                 <div class="detail-item">
@@ -136,14 +136,14 @@
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label gap-3 text-muted">Distrito:</span>
-                                    <span class="detail-value">{{dataComplejo.distrito}}</span> 
+                                    <span class="detail-value">{{dataComplejo.distrito}}</span>
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label gap-3 text-muted">Ubicacion:</span>
                                     <span class="detail-value">{{dataComplejo.ubicacion}}</span>
                                 </div>
-                            </div> 
-                        </div> 
+                            </div>
+                        </div>
                         <!-- taxpayer -->
                         <div class="d-flex align-items-center mt-2">
                             <div class=" flex-grow-1 d-flex gap-3">
@@ -158,7 +158,7 @@
                                     <option [ngValue]="item" *ngFor="let item of contribuyentesList">
                                         {{item.nombre}} {{item.apPaterno}} {{item.apMaterno}}
                                     </option>
-                                </select>                                
+                                </select>
                                 <div *ngIf="submitted && form['contribuyenteDto'].errors" class="invalid-feedback" align="left">
                                     <div *ngIf="form['contribuyenteDto'].errors['required']">Debe seleccionar una opción</div>
                                 </div>
@@ -171,7 +171,7 @@
                                     <i class=" ri-arrow-down-s-fill"></i>
                                 </button>
                             </div>
-                        </div>   
+                        </div>
                         <div class="collapse" id="collapseWithicon2" #CtbCollapse="ngbCollapse" [(ngbCollapse)]="CCollapsed">
                             <div class="details-grid px-3" *ngIf="contribuyente">
                                 <div class="detail-item">
@@ -184,7 +184,7 @@
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label gap-3 text-muted">Expedido:</span>
-                                    <span class="detail-value">{{contribuyente.ciExpedido}}</span> 
+                                    <span class="detail-value">{{contribuyente.ciExpedido}}</span>
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label gap-3 text-muted">Celular:</span>
@@ -192,24 +192,24 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- date -->                             
+                        <!-- date -->
                         <div class="d-flex align-items-center mt-2">
                             <div class=" flex-grow-1 d-flex gap-5">
                                 <label class="form-label">Fecha: </label>
                                 <div class="input-group">
-                                    <input type="text" id="fechaReserva-field" class="form-control  flatpickr flatpickr-input rounded-3" 
+                                    <input type="text" id="fechaReserva-field" class="form-control  flatpickr flatpickr-input rounded-3"
                                         mwlFlatpickr [altInput]="true" altFormat="d/m/Y" [convertModelValue]="true"
-                                        placeholder="Seleccionar Fecha" readonly required formControlName="fechaReserva">                                
+                                        placeholder="Seleccionar Fecha" readonly required formControlName="fechaReserva">
                                     <span class="input-group-text"><i class="ri-calendar-event-line"></i></span>
                                 </div>
                                 <div *ngIf="InvoiceForm.get('fechaReserva')?.errors">
                                     <span class="text-danger">Seleccione una Fecha Valida.</span>
                                 </div>
                             </div>
-                        </div> 
+                        </div>
                     </div>
                     <div class="row px-md-4 mt-2 gap-2 d-flex">
-                        @if(tariff.categoriaDtoList[0].categoriaDto.tipo === 'Evento'){                                 
+                        @if(tariff.categoriaDtoList[0].categoriaDto.tipo === 'Evento'){
                             <div class="col-12 col-md-6 col-sm-6 col-lg-4 border border-dashed">
                                 <div class="d-flex align-items-center  ">
                                     <div class="flex-shrink ">
@@ -226,11 +226,11 @@
                                                     </span>
                                                 </h6>
                                                 <small class="text-muted">Categoría(s)</small>
-                                            </div>                                                        
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>  
+                            </div>
                             <div class="col-5 col-md-2 col-sm-6 col-lg-3 border border-dashed ">
                                 <div class="d-flex align-items-center">
                                     <div class="avatar-sm">
@@ -239,11 +239,11 @@
                                         </div>
                                     </div>
                                     <div class="ms-2">
-                                        <h6 class="fs-14 mb-0">                                                                
-                                            {{tariff.desde.slice(0, 5)}} - {{tariff.hasta.slice(0, 5)}}                                                               
+                                        <h6 class="fs-14 mb-0">
+                                            {{tariff.desde.slice(0, 5)}} - {{tariff.hasta.slice(0, 5)}}
                                         </h6>
                                         <small class="text-muted">Horario</small>
-                                    </div>                                                        
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-5 col-md-2 col-sm-6 col-lg-3 border border-dashed">
@@ -254,24 +254,24 @@
                                         </div>
                                     </div>
                                     <div class="ms-2">
-                                        <h6 class="fs-14 mb-0">            
-                                            <span class="text-success">Bs. {{tariff.costo}}  </span>                                                             
+                                        <h6 class="fs-14 mb-0">
+                                            <span class="text-success">Bs. {{tariff.costo}}  </span>
                                         </h6>
                                         <small class="text-muted">
                                             Tarifa por {{tariff.categoriaDtoList[0].categoriaDto.tipo}}
                                         </small>
                                     </div>
                                 </div>
-                            </div>               
+                            </div>
                             <!-- <div class="d-flex align-items-center mt-2">
                                 <div class=" flex-grow-1 d-flex gap-3">
                                     <label class="form-label">Categoría: </label>
-                                    <input type="text" class="form-control bg-light border-0" 
-                                        id="categoria" formControlName="categoria" readonly 
+                                    <input type="text" class="form-control bg-light border-0"
+                                        id="categoria" formControlName="categoria" readonly
                                         placeholder="{{tariff.categoriaDtoList[0].categoriaDto.nombre}}" />
                                 </div>
                             </div>          -->
-                            <!-- <div class="mt-2"> 
+                            <!-- <div class="mt-2">
                                 <div class="col-lg-4 col-sm-6">
                                     <div class="d-flex">
                                         <div>
@@ -298,7 +298,7 @@
                                                 Horario Invalido.
                                                 </div>
                                             </div>
-                                        </div>                                    
+                                        </div>
                                     </div>
                                 </div>
                                 <label class="form-label col">Costo del Evento</label>
@@ -332,7 +332,7 @@
                                                 @if(tariff.categoriaDtoList[0].categoriaDto.tipo === 'Hora'){
                                                     <i class="ri-timer-line"></i> Duración}
                                                 @if(tariff.categoriaDtoList[0].categoriaDto.tipo === 'Persona'){
-                                                    <i class="ri-group-line"></i> Personas}  
+                                                    <i class="ri-group-line"></i> Personas}
                                             </th>
                                         </tr>
                                     </thead>
@@ -348,7 +348,7 @@
                                             <div class="input-group">
                                                 <input class="form-control flatpickr-input" type="text" mwlFlatpickr [inline]="false"
                                                     [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                                                    id="horaEntrada" formControlName="horaEntrada"                                                   
+                                                    id="horaEntrada" formControlName="horaEntrada"
                                                     [ngClass]="{'is-invalid': submitted && InvoiceForm.get('horaEntrada')?.errors }">
                                                 <div *ngIf="InvoiceForm.get('horaEntrada')?.errors" class="text-danger" align="left">
                                                     <div *ngIf="InvoiceForm.get('horaEntrada')?.errors?.['required']">Ingrese Horario</div>
@@ -369,14 +369,14 @@
                                                     <div *ngIf="InvoiceForm.get('horaSalida')?.errors?.['pastTime']">No Disponible</div>
                                                 </div>
                                             </div>
-                                            </td>                                        
+                                            </td>
                                             <div *ngIf="InvoiceForm.errors?.['timeRange']" class="text-danger" align="left">
                                                 La hora de salida debe ser mayor que la hora de entrada.
                                             </div>
                                             <div *ngIf="InvoiceForm.errors?.['isReserved']" class="text-danger" align="left">
                                                 El rango de horas no se encuentra disponible.
                                             </div>
-                                            
+
                                             <td class="text-center ">
                                                 <div class="mb-2">
                                                     @if(tariff.categoriaDtoList[0].categoriaDto.tipo === 'Hora'){
@@ -432,14 +432,14 @@
                             <label for="exampleFormControlTextarea1"
                                 class="form-label text-muted text-uppercase fw-semibold">Terminos</label>
                             <textarea class="form-control alert alert-info" id="exampleFormControlTextarea1"
-                                placeholder="Notes" rows="3" disabled required>  En calidad de contribuyente, y en cumplimiento a normativa vigente, declaro que los datos fueron revisados antes de su registro y asumiendo por mi parte, la responsabilidad por la exactitud de la presente declaración 
+                                placeholder="Notes" rows="3" disabled required>  En calidad de contribuyente, y en cumplimiento a normativa vigente, declaro que los datos fueron revisados antes de su registro y asumiendo por mi parte, la responsabilidad por la exactitud de la presente declaración
                             </textarea>
                             <div class="form-check mt-0">
                                 <input type="checkbox" class="form-check-input" id="check" name="check"
                                     formControlName="check"
                                     [ngClass]="{ 'is-invalid': submitted && form['check'].errors }" />
                                 <label class="form-check-label" for="check">
-                                    Acepto Todos los                             
+                                    Acepto Todos los
                                 </label>
                                 <a routerLink="/pages/terms-condition-in" class="text-primary text-decoration-underline"> Términos y condiciones de Uso </a> y
                                 autorizo al GAMQ a generar la tasa correspondiente a esta reserva.
@@ -515,9 +515,9 @@
                         </li>
                     </ul>
                 </div>
-            </div>      
+            </div>
         </div>
-        <div class="col-xl-12 col-md-6 ">   
+        <div class="col-xl-12 col-md-6 " *ngIf="dataField">
             <div class="card">
                 <div class="card-body text-center">
                     <lord-icon src="https://cdn.lordicon.com/kbtmbyzy.json" trigger="loop"
@@ -568,13 +568,13 @@
                 (click)="modal.dismiss('Cross click')"></button>
         </div>
         <div class="modal-body">
-            <app-timetables 
+            <app-timetables
                 [horariosAtencion]="dataField.horarioDtoList"
                 [tariff]="tariff"
                 [reservationsList]="reservationsList"
                 [reservationDate]="InvoiceForm.get('fechaReserva')?.value"
                 (reserveEvent)="getReservation($event.date, $event.start, $event.end) "
-            ></app-timetables> 
+            ></app-timetables>
         </div>
     </div>
 </ng-template>
