@@ -102,9 +102,6 @@ export class MapDashboardComponent implements OnInit {
     overlayMaps2:any;
     main : any;
     setMaps() {
-        // let capa = tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        //   maxZoom: 19
-        // });
       this.main = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
           maxZoom: 19,
