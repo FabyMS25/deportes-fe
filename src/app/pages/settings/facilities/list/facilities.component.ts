@@ -124,9 +124,9 @@ export class FacilitiesComponent {
         backdrop: 'static', size:size
     });
     modalRef.componentInstance.row = row;
-    modalRef.componentInstance.action = action;
+    modalRef.componentInstance.accion = action;
     modalRef.componentInstance.itemsList=this.temp;
-    modalRef.componentInstance.actionCompleted.subscribe(()=>{
+    modalRef.componentInstance.emitList.subscribe(()=>{
       this.getFacilities();
     })
   }

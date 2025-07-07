@@ -62,9 +62,9 @@
                   show: canActivate.includes('VER'),
                   edit: canActivate.includes('ACTUALIZAR'),
                   delete: canActivate.includes('ELIMINAR'),}"
-                (showItemEmitter)="openModal($event,'show','md')"
-                (editItemEmitter)="openModal($event,'edit','md')"
-                (deleteItemEmitter)="deleteModal(deleteModel,$event)" 
+                    (showItemEmitter)="viewDataGet($event)"
+                    (editItemEmitter)="openModal($event,'edit','lg')"
+                    (deleteItemEmitter)="deleteModal(deleteModel,$event)" 
                 [multiCheck]="canActivate.includes('CREAR')"
                 (selectedItemEmitter)="getSelectedItems($event)" 
                 [viewMode]="viewMode"   

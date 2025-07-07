@@ -79,7 +79,7 @@
                 <div>
                     <label for="distrito-field" class="form-label">Distrito</label>
                     <ng-select 
-                        [items]="distictList" bindLabel="distrito" bindValue="distrito"
+                        [items]="distictList" bindLabel="value" bindValue="distrito"
                         formControlName="distrito"
                         placeholder="Seleccione un distrito" 
                         [ngClass]="{'is-invalid': submitted && form['distrito'].errors }">
