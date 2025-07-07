@@ -69,20 +69,21 @@
                 </div>
             </div>
             <div class="card-body">
-                <app-data-table
-                    [loading]="loading"
-                    [itemsList]="itemsList"
-                    [allcontent]="temp"
-                    [content]="employeesList"
-                    [show]="canActivate.includes('VER')"
-                    [edit]="canActivate.includes('ACTUALIZAR')"
-                    [delete]="canActivate.includes('ELIMINAR')"
-                    (showItemEmitter)="viewDataGet($event)"
-                    (editItemEmitter)="openModal($event,'edit','lg')"
-                    (deleteItemEmitter)="deleteModal(deleteModel,$event)"
-                    [multiCheck]="canActivate.includes('VER')"
-                    (selectedItemEmitter)="getSelectedItems($event)"
-                ></app-data-table>
+            <app-data-table
+                [loading]="loading"
+                [itemsList]="itemsList"
+                [allcontent]="employeesList"
+                [actions]="{
+                  show: canActivate.includes('VER'),
+                  edit: canActivate.includes('ACTUALIZAR'),
+                  delete: canActivate.includes('ELIMINAR'),}"
+                (showItemEmitter)="viewDataGet($event)"
+                (editItemEmitter)="openModal($event,'edit','lg')"
+                (deleteItemEmitter)="deleteModal(deleteModel,$event)"
+                [multiCheck]="canActivate.includes('CREAR')"
+                (selectedItemEmitter)="getSelectedItems($event)" 
+                [viewMode]="viewMode"   
+            ></app-data-table>
             </div>
         </div>
     </div>

@@ -30,9 +30,6 @@ import { Encargado } from 'src/app/core/models/encargado';
   styleUrls: ['./employees.component.scss']
 })
 
-/**
- * Contacts Component
- */
 export class EmployeesComponent implements OnInit {
   title='Encargados'
   breadCrumbItems!: Array<{}>;
@@ -40,6 +37,7 @@ export class EmployeesComponent implements OnInit {
   canActivate:string[];
   itemsList:any[]=[];
   temp: any[] = [];
+  viewMode: 'table' | 'cards' = 'table';
 
   submitted = false;
 
@@ -58,6 +56,10 @@ export class EmployeesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    const savedViewMode = localStorage.getItem('dataTableViewMode');
+    if (savedViewMode === 'table' || savedViewMode === 'cards') {
+      this.viewMode = savedViewMode;
+    }
     this.breadCrumbItems = [
       { label: 'Administración' },
       { label: this.title, active: true }
