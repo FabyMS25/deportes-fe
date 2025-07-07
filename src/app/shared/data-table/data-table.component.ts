@@ -78,13 +78,24 @@ export class DataTableComponent implements OnChanges {
     return [
       ...(this.actions.show ? [{ tooltip: 'Ver', icon: 'ri-eye-fill', handler: () => this.showItem(data), buttonClass: '' }] : []),
       ...(this.actions.records ? [{ tooltip: 'Historial', icon: 'ri-file-list-3-line', handler: () => this.recordsItem(data), buttonClass: '' }] : []),
-      ...(this.actions.ticket ? [{ tooltip: 'Ticket', icon: 'ri-file-list-3-line', handler: () => this.consultItem(data), buttonClass: '' }] : []),
-      ...(this.actions.consult ? [{ tooltip: 'Consultar', icon: 'ri-file-list-3-line', handler: () => this.ticketItem(data), buttonClass: '' }] : []),
-      ...(this.actions.edit ? [{ tooltip: 'Editar', icon: 'ri-pencil-fill', handler: () => this.editItem(data), buttonClass: 'text-primary edit-item-btn' }] : []),
-      ...(this.actions.delete ? [{ tooltip: 'Eliminar', icon: 'ri-close-circle-line', handler: () => this.deleteItem(data), buttonClass: 'text-danger remove-item-btn' }] : []),
+      ...(this.actions.ticket ? [{ tooltip: 'Ticket', icon: 'ri-file-list-3-line', handler: () => this.ticketItem(data), buttonClass: '' }] : []),
+      ...(this.actions.consult ? [{ tooltip: 'Consultar', icon: 'ri-restart-fill', handler: () => this.consultItem(data), buttonClass: 'text-primary d-inline-block edit-item-btn' }] : []),
+      ...(this.actions.edit || (this.actions.edit && data.estadoReserva && data.estadoReserva ==='Pendiente')? [{ tooltip: 'Editar', icon: 'ri-pencil-fill', handler: () => this.editItem(data), buttonClass: 'text-primary edit-item-btn' }] : []),
+      ...(((this.actions.delete && !data.estadoReserva) || (this.actions.delete && data.estadoReserva && data.estadoReserva ==='Pendiente')) ? [{ tooltip: 'Eliminar', icon: 'ri-close-circle-line', handler: () => this.deleteItem(data), buttonClass: 'text-danger remove-item-btn' }] : []),
       ...(this.actions.notify && this.canShow(data) ? [{ tooltip: 'Notificar', icon: 'ri-mail-send-fill', handler: () => this.notifyItem(data), buttonClass: 'text-success' }] : []),
     ];  
   }  
+                                // <li *ngIf="telf" class="list-inline-item edit" ngbTooltip="Call" placement="top">
+                                //     <a href="javascript:void(0);" class="text-muted d-inline-block">
+                                //         <i class="ri-phone-line fs-16"></i>
+                                //     </a>
+                                // </li>
+                                // <li *ngIf="comment" class="list-inline-item edit" ngbTooltip="Message" placement="top">
+                                //     <a href="https://api.whatsapp.com/send?phone=+59172248669&text=MENSAJE DESDE SISTEMA DE DEPORTES" 
+                                //         class="text-muted d-inline-block">
+                                //         <i class="ri-question-answer-line fs-16"></i>
+                                //     </a>
+                                // </li>
   canShow(data: any): boolean {
     return !data.resultado;
   }
@@ -151,20 +162,19 @@ export class DataTableComponent implements OnChanges {
   }
   getBadgeStatus(value: any): string {
     const statuses: Record<string, string> = {
-      ACTIVO: 'success', INACTIVO: 'warning',
-      OBLIGATORIO: 'success', OPCIONAL: 'warning',
-      APROBADO: 'success', REPROBADO: 'danger',
+      Activo: 'success', Bloqueado: 'warning',
+      Pagado: 'success', Pendiente: 'secondary',
+      Vencido: 'danger', Anulado: 'warning',
       ENVIADA: 'success', PENDIENTE: 'warning', 
       ENTREGADA: 'success', PROGRAMADA: 'primary',
       NO_ENTREGADO: 'danger', VENCIDA: 'danger',
-      CUMPLIDA: 'success', 
-      DENUNCIA: 'warning',OBSERVACIÓN: 'danger',
       VALIDO: 'success', INVALIDO: 'danger', 
       SI: 'success', NO: 'danger'
     };
     return statuses[value] || 'info';
   }
-    public getBadgeClass(value:any) {
+  
+  public getBadgeClass(value:any) {
     switch (value) {
     case 'Activo' : return 'bg-success-subtle text-success';
     case 'Bloqueado' : return 'bg-warning-subtle text-warning';
