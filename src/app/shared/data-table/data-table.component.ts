@@ -23,6 +23,7 @@ interface TableActions {
   telf?: boolean;
   notify?: boolean;
   consult?:boolean
+  ticket?:boolean
   // [key: string]: boolean | undefined;
 }
 
@@ -70,14 +71,15 @@ export class DataTableComponent implements OnChanges {
   deleteItem(item: any): void { this.deleteItemEmitter.emit(item); }
   recordsItem(item: any): void { this.recordsEmitter.emit(item); }
   notifyItem(item: any): void { this.notifyItemEmitter.emit(item); }
-  public consultItem(item: any) {this.consultItemEmitter.emit(item);
-  }
-  public ticketItem(item: any) { this.ticketEmitter.emit(item);}
+  consultItem(item: any) {this.consultItemEmitter.emit(item);}
+  ticketItem(item: any) { this.ticketEmitter.emit(item);}
 
   showActions(data: any): { tooltip: string; icon: string; handler: (data: any) => void; buttonClass: string }[] {
     return [
       ...(this.actions.show ? [{ tooltip: 'Ver', icon: 'ri-eye-fill', handler: () => this.showItem(data), buttonClass: '' }] : []),
       ...(this.actions.records ? [{ tooltip: 'Historial', icon: 'ri-file-list-3-line', handler: () => this.recordsItem(data), buttonClass: '' }] : []),
+      ...(this.actions.ticket ? [{ tooltip: 'Ticket', icon: 'ri-file-list-3-line', handler: () => this.consultItem(data), buttonClass: '' }] : []),
+      ...(this.actions.consult ? [{ tooltip: 'Consultar', icon: 'ri-file-list-3-line', handler: () => this.ticketItem(data), buttonClass: '' }] : []),
       ...(this.actions.edit ? [{ tooltip: 'Editar', icon: 'ri-pencil-fill', handler: () => this.editItem(data), buttonClass: 'text-primary edit-item-btn' }] : []),
       ...(this.actions.delete ? [{ tooltip: 'Eliminar', icon: 'ri-close-circle-line', handler: () => this.deleteItem(data), buttonClass: 'text-danger remove-item-btn' }] : []),
       ...(this.actions.notify && this.canShow(data) ? [{ tooltip: 'Notificar', icon: 'ri-mail-send-fill', handler: () => this.notifyItem(data), buttonClass: 'text-success' }] : []),

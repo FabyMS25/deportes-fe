@@ -85,7 +85,7 @@ export class ModalImportComponent {
     const val = event.target.value.toLowerCase();
     const temp = this.listaTemporal.filter((l) => {
         return (
-          l['Código'].toLowerCase().indexOf(val) !== -1 ||
+          l.Codigo.toLowerCase().indexOf(val) !== -1 ||
           l.Superficie.toLowerCase().indexOf(val) !== -1 ||
           !val
         );
@@ -133,7 +133,7 @@ export class ModalImportComponent {
       mergeMap(() => {
         return from(xlsxData).pipe(
           mergeMap((data:any, i) => {
-            const categoryNames = data['Categoías'].split(',').map((nombre: string) => nombre.trim());    
+            const categoryNames = data.Categorias.split(',').map((nombre: string) => nombre.trim());    
             const categorias = categoryNames.map((nombre: string) => {
               const foundItem = this.categoryList.find(item => item.nombre === nombre);
               if (!foundItem) {
@@ -166,7 +166,7 @@ export class ModalImportComponent {
       const xlsxData = canchaGroupedData[canchaKey];
       // for (let i = 0; i < xlsxData.length; i++) {
         let record: any = {
-            codigo: '' + xlsxData[0]['Código'],
+            codigo: '' + xlsxData[0].Codigo,
             tipo: '' + xlsxData[0]['Tipo Cobro'],
             complejoDto: null,
             superficieDto: null
@@ -198,7 +198,7 @@ export class ModalImportComponent {
   }
   private groupByCancha(xlsxData: any[]): { [key: string]: any[] } {
     return xlsxData.reduce((acc, item) => {
-      const key = item['Código']; // Group by "Codigo" or other unique identifier for cancha
+      const key = item.Codigo; // Group by "Codigo" or other unique identifier for cancha
       if (!acc[key]) {
         acc[key] = [];
       }
@@ -245,8 +245,11 @@ export class ModalImportComponent {
         descripcion: "",
         canchasDto: cancha,
         // categoriaDtoList: datos.processedCategories        
-      };  
-      const categorias = datos.processedCategories;  
+      };
+  
+      const categorias = datos.processedCategories;
+      console.log("tarifadata", tarifaData);
+  
       // Save the tariff and then associate categories with it
       return this.tarifaService.save(tarifaData).pipe(
         switchMap((savedTarifa: any) => {

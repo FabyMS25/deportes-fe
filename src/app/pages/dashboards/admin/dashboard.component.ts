@@ -428,7 +428,7 @@ export class DashboardComponent implements OnInit {
         // this.setRevenueValue('todo');
         // this.filteredReservations = this.processReservations('Year');
       } else {
-        Swal.fire({ text: data.status, confirmButtonColor: '#299cdb' });
+        // Swal.fire({ text: data.status, confirmButtonColor: '#299cdb' });
       }
     } catch (error) {
       console.error('Error al obtener las reservas:', error);

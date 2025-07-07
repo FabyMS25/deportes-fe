@@ -146,33 +146,17 @@
                   show: canActivate.includes('VER'),
                   edit: canActivate.includes('CAMBIAR-HORARIO'),
                   consult:canActivate.includes('ACTUALIZAR'),
-                  delete: canActivate.includes('ANULAR'),}"
-                    (showItemEmitter)="openModal($event,'show','md')"
-                    (editItemEmitter)="openModal($event,'edit','md')"
-                    (consultItemEmitter)="consultModal($event,consultModel)"
-                    (deleteItemEmitter)="openModal($event,'annularModel','')"
-                [multiCheck]="canActivate.includes('CREAR')"
-                (selectedItemEmitter)="getSelectedItems($event)" 
-                [viewMode]="viewMode"   
-            ></app-data-table>
-                <app-data-table
-                    [loading]="loading"
-                    [itemsList]="itemsList"
-                    [allcontent]="temp"
-                    [content]="reservasList"
-                    [show]="canActivate.includes('VER')"
-                    [edit]="canActivate.includes('CAMBIAR-HORARIO')"
-                    [consult]="canActivate.includes('ACTUALIZAR')"
-                    [delete]="canActivate.includes('ANULAR')"
-                    [ticket]="true"
+                  delete: canActivate.includes('ANULAR'),
+                  ticket:true}"
                     (showItemEmitter)="openModal($event,'show','md')"
                     (editItemEmitter)="openModal($event,'edit','md')"
                     (consultItemEmitter)="consultModal($event,consultModel)"
                     (deleteItemEmitter)="openModal($event,'annularModel','')"
                     (ticketEmitter)="showTicket($event)"
-                    [multiCheck]="canActivate.includes('VER')"
-                    (selectedItemEmitter)="getSelectedItems($event)"
-                ></app-data-table>
+                [multiCheck]="canActivate.includes('CREAR')"
+                (selectedItemEmitter)="getSelectedItems($event)" 
+                [viewMode]="viewMode"   
+            ></app-data-table>
                 <!-- Loading Spinner -->
                 <div id="elmLoader" *ngIf="showLoading">
                     <div class="spinner-border text-primary avatar-sm" role="status">

@@ -142,7 +142,7 @@ export class FieldsComponent {
     });
   }
 
-  headersImport = ['Complejo','Código', 'Superficie', 'Categorías',
+  headersImport = ['Complejo','Codigo', 'Superficie', 'Categorias',
     'Tipo Cobro','Costo','Desde','Hasta',
     'Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
   public openModalImport() {
