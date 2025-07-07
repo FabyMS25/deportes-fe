@@ -57,20 +57,20 @@ export class ProfileComponent {
   }
 
 
+
   getAcronymCity(city: string): string {
     let acronym = '';
     CityAcronym.forEach(element => {
-      if (element['description'] === city) {
-        acronym = element['id'];
+      if (element['value'] === city) {
+        acronym = element['acronym'];
       }
     });
     return acronym;
   }
-  
   getCityDescription(ciExpedido: any): string {
     const cityById = CityAcronym.find(c => c.id === ciExpedido);  
     if (cityById) {
-      return cityById.description;
+      return cityById.value;
     }
     // const cityByDescription = CityAcronym.find(c => c.description === ciExpedido);
     // if (cityByDescription) {

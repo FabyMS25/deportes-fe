@@ -8,17 +8,14 @@ import { ngxCsv } from 'ngx-csv';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
 import { Superficie } from 'src/app/core/models/superficie.model';
-import { ModalImportComponent } from './modal-import/modal-import.component';
-
+import { ModalImportComponent } from 'src/app/shared/modal-import/modal-import.component';
 
 @Component({
   selector: 'app-surfaces',
   templateUrl: './surfaces.component.html',
   styleUrls: ['./surfaces.component.scss']
 })
-/**
- * Leads Component
- */
+
 export class SurfacesComponent {
 
   breadCrumbItems!: Array<{}>;
@@ -26,6 +23,7 @@ export class SurfacesComponent {
   canActivate:string[];
   itemsList:any[]=[];
   temp:any[]=[];
+  viewMode: 'table' | 'cards' = 'table';
 
   submitted = false;
   contentForm!: UntypedFormGroup;
@@ -39,6 +37,10 @@ export class SurfacesComponent {
   }
 
   ngOnInit(): void {
+    const savedViewMode = localStorage.getItem('dataTableViewMode');
+    if (savedViewMode === 'table' || savedViewMode === 'cards') {
+      this.viewMode = savedViewMode;
+    }
     this.breadCrumbItems = [
       { label: 'Administración' },
       { label: this.title, active: true }
@@ -108,36 +110,47 @@ export class SurfacesComponent {
     this.deleteId = data.uuid;
     this.modalService.open(content, { centered: true });
   }
-
-  camposImport: any[] =[];
+  headersImport = ['Descripcion'];
   public openModalImport() {
-    this.camposImport = [
-        {prop: 'Descripcion', name: 'Descripcion',visible:true},
-    ];
     const modalRef = this.modalService.open(ModalImportComponent, {
-        size: 'lg',
-        backdrop: 'static'
+      size: 'lg', backdrop: 'static'
     });
-    modalRef.componentInstance.titles = this.camposImport;
+    modalRef.componentInstance.titles = this.headersImport.map(header => 
+      ({ prop: header, name: header, visible: true}));
     modalRef.componentInstance.itemsList = this.temp;
-    modalRef.componentInstance.emitList.subscribe(() => {
-        this.getSurfaces();
+    modalRef.componentInstance.checkExistsFn = (registro:Superficie) =>
+      this.temp.some(item =>
+        item.descripcion === registro.descripcion
+      );
+    modalRef.componentInstance.mapRowFn = (row: any, lookupData: any): Superficie => {
+      return {
+        descripcion: '' + row['Descripcion'],
+      };
+    };
+    modalRef.componentInstance.createRecordFn = (record:Superficie) =>
+      this.superficiesService.save(record).toPromise();
+    modalRef.componentInstance.actionCompleted.subscribe(() => {
+      this.getSurfaces();
     });
   }
   // Csv File Export
-  csvFileExport() {
+  public csvFileExport() {
+    const lista = this.selectedItems.flatMap((item: Superficie) => {
+    return {
+      value: item.descripcion
+    };});
     var data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de Superficies',
-      useBom: true,
-      noDownload: false,
-      headers: ["uuid", "Descripcion", "status"]
+    fieldSeparator: ',',
+    quoteStrings: '"',
+    decimalseparator: '.',
+    showLabels: true,
+    showTitle: true,
+    title: 'Lista de '+ this.title,
+    useBom: true,
+    noDownload: false,
+    headers: this.headersImport
     };
-    new ngxCsv(this.selectedItems, "Superficies", data);
+    new ngxCsv(lista, this.title, data);
   }
 
   /**
@@ -170,9 +183,6 @@ export class SurfacesComponent {
           if (data['status'] === 'OK') {
             this.superficiesList = data.payload;
             this.temp = this.superficiesList
-          }else{
-            this.loading = false;
-            Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
           }
         },
         error: (error) => {

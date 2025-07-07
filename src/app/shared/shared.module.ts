@@ -18,6 +18,7 @@ import { LeafletComponent } from './map/leaflet.component';
 /* extrapages stanalone */
 import { TermsConditionsComponent } from './extraspages/terms-conditions/terms-conditions.component';
 import { PrivacyPolicyComponent } from './extraspages/privacy-policy/privacy-policy.component';
+import { DataHeaderComponent } from './data-header/data-header.component';
 
 @NgModule({
   declarations: [
@@ -25,8 +26,9 @@ import { PrivacyPolicyComponent } from './extraspages/privacy-policy/privacy-pol
     // ScrollspyDirective,
     // LandingScrollspyDirective,
 
+    DataHeaderComponent,
     DataTableComponent,
-    LeafletComponent
+    LeafletComponent,
   ],
   imports: [
     CommonModule,
@@ -59,7 +61,7 @@ import { PrivacyPolicyComponent } from './extraspages/privacy-policy/privacy-pol
   providers: [ DatePipe ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [BreadcrumbsComponent, 
-          DataTableComponent,
+          DataTableComponent, DataHeaderComponent,
           TermsConditionsComponent, PrivacyPolicyComponent
   ]
 })

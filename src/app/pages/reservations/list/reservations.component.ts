@@ -25,6 +25,7 @@ export class ReservationsComponent implements OnInit {
   title='Reservas';
   canActivate:string[];
   itemsList:any[]=[];
+  viewMode: 'table' | 'cards' = 'table';
 
   reservasList:Reserva[]=[];
   temp:any[]=[];
@@ -45,6 +46,10 @@ export class ReservationsComponent implements OnInit {
   }
 
   async ngOnInit() {
+    const savedViewMode = localStorage.getItem('dataTableViewMode');
+    if (savedViewMode === 'table' || savedViewMode === 'cards') {
+      this.viewMode = savedViewMode;
+    }
 
     if (window.sessionStorage.getItem("auth-token") === 'isContribuyente') {
       const currentUser = window.sessionStorage.getItem("currentUser");
@@ -275,8 +280,6 @@ export class ReservationsComponent implements OnInit {
         const updatedReservas = await this.checkAndUpdateExpiredReservas(list);
         this.reservasList = updatedReservas;
         this.temp = updatedReservas;
-      } else {
-        Swal.fire({ text: data.status, confirmButtonColor: '#299cdb' });
       }
     } catch (error) {
       console.error('Error fetching reservas:', error);
@@ -291,8 +294,6 @@ export class ReservationsComponent implements OnInit {
         next: (data: any) => {
           if (data['status'] === 'OK') {
             this.categoryList = data.payload;
-          }else{
-            Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
           }
         },
         error: (error) => {

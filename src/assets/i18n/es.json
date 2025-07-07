@@ -7,8 +7,8 @@
   
   "Panel de Control": "Panel de Control",
   "Dashboard de Admin": "Panel de Control",
-  "Dashboard de Empleado": "Panel de Control",
-  "Dashboard de Contribuyente": "Panel de Control",
+  "Calendario": "Calendario",
+  "Mapa": "Mapa",
   "Administracion": "Administración",
   "Reservas": "Reservas",
   "Contribuyentes": "Contribuyentes",
@@ -37,6 +37,7 @@
   "Generar": "Generar",
   "Importar": "Importar",
   "Exportar": "Exportar",
+  "Descargar plantilla": "Descargar plantilla",
   "Buscar": "Buscar",
   "Cancelar": "Cancelar",
   "Cerrar": "Cerrar",

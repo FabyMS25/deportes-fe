@@ -26,15 +26,13 @@ export class FieldsComponent {
   canActivate:string[];
   temp:any[]=[];
   itemsList:any[]=[];
+  viewMode: 'table' | 'cards' = 'table';
 
   submitted = false;
   fieldsForm!: UntypedFormGroup;
-
   searchTerm: any;
-
   categoryList:any[]=[];
   fieldsList:any[]=[];
-
   dataSelected!:campoDeportivo;
 
   @ViewChild('viewModel') viewModel!: ElementRef;
@@ -47,6 +45,10 @@ export class FieldsComponent {
   }
 
   ngOnInit(): void {
+    const savedViewMode = localStorage.getItem('dataTableViewMode');
+    if (savedViewMode === 'table' || savedViewMode === 'cards') {
+      this.viewMode = savedViewMode;
+    }
     this.breadCrumbItems = [
       { label: 'Administración' },
       { label: this.title, active: true }
@@ -140,31 +142,17 @@ export class FieldsComponent {
     });
   }
 
-  camposImport: any[] =[];
+  headersImport = ['Complejo','Código', 'Superficie', 'Categorías',
+    'Tipo Cobro','Costo','Desde','Hasta',
+    'Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
   public openModalImport() {
-    this.camposImport = [
-      {prop: 'Complejo', name: 'Complejo',visible:true},
-      {prop: 'Código', name: 'Código',visible:true},
-      {prop: 'Superficie', name: 'Superficie',visible:true},
-      {prop: 'Categorías', name: 'Categorías',visible:true},
-      {prop: 'Tipo Cobro', name: 'Tipo Cobro',visible:true},
-      {prop: 'Costo', name: 'Costo',visible:true},
-      {prop: 'Desde', name: 'Desde',visible:true},
-      {prop: 'Hasta', name: 'Hasta',visible:true},
-      {prop: 'Lunes', name: 'Lunes',visible:true},
-      {prop: 'Martes', name: 'Martes',visible:true},
-      {prop: 'Miércoles', name: 'Miércoles',visible:true},
-      {prop: 'Jueves', name: 'Jueves',visible:true},
-      {prop: 'Viernes', name: 'Viernes',visible:true},
-      {prop: 'Sábado', name: 'Sábado',visible:true},
-      {prop: 'Domingo', name: 'Domingo',visible:true},
-    ];
     const modalRef = this.modalService.open(ModalImportComponent, {
-        size: 'xl',
-        backdrop: 'static'
-    });
-    modalRef.componentInstance.titles = this.camposImport;
-    modalRef.componentInstance.itemsList = this.fieldsList;
+        size: 'lg', backdrop: 'static'
+      });
+    modalRef.componentInstance.titles = this.headersImport.map(header => 
+      ({ prop: header, name: header, visible: true}));
+    modalRef.componentInstance.itemsList = this.temp;
+    
     modalRef.componentInstance.emitList.subscribe(() => {
       this.getCategories();
       this.getFields()
@@ -211,22 +199,18 @@ export class FieldsComponent {
       }));
     });
 
-    const xlsxData = {
+    var data = {
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalseparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Lista de '+this.title,
+      title: 'Lista de '+ this.title,
       useBom: true,
       noDownload: false,
-      headers: [
-        "Complejo", "Codigo", "Superficie", "Categorias", "Tipo Cobro",
-        "Costo", "Desde", "Hasta",
-        "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"
-      ]
+      headers: this.headersImport
     };
-    new ngxCsv(lista, "Lista de "+this.title, xlsxData);
+    new ngxCsv(lista, this.title, data);
   }
 
   /* API Services */
@@ -250,8 +234,6 @@ export class FieldsComponent {
           if (this.fieldsList) {
               this.dataSelected = this.fieldsList[0];
           }
-        }else{
-          Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
         }
       },
       error: (error) => {
@@ -260,7 +242,7 @@ export class FieldsComponent {
       }
     });
   }
-    // Delete Data
+  
     deleteData() {
       let uuid = this.deleteId;
       this.fieldsService.delete(uuid).subscribe({

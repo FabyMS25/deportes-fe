@@ -4,7 +4,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import Swal from 'sweetalert2';
 
 import { CityAcronym } from 'src/app/core/constants/Places';
-import { IdentityTypes} from 'src/app/core/constants/UserData';
+import { UserDocType} from 'src/app/core/constants/UserData';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { UserDataService } from '../signup/user-data.service';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
@@ -20,7 +20,7 @@ export class SignupCheckComponent {
   submitted = false;
   year: number = new Date().getFullYear();
   
-  identityTypes = IdentityTypes
+  identityTypes = UserDocType
   cityAcronym= CityAcronym
 
   constructor(private formBuilder: UntypedFormBuilder,
@@ -120,6 +120,7 @@ export class SignupCheckComponent {
 
   ruatData: any;
   searchContribuyente(data:any){
+    console.log(data)
     this.ruatService.getContribuyentePorCi(data.nroCarnet,data.tipoDocumento, data.ciExpedido ).subscribe({    
       next: (resp: any) => {
         if(resp['status']==='OK'){

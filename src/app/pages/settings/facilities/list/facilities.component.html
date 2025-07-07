@@ -3,32 +3,16 @@
 <!-- End Breadcrumbs -->
 
 <div class="row">
-    <div class="col-lg-12">
-        <div class="card mb-2">  
-            <div class="card-header d-flex flex-wrap align-items-center">
-                <h5 class="card-title flex-grow-1">{{'Lista de '+title|translate }}</h5>
-                <div class="flex-shrink-0">
-                    <div class="d-flex gap-1 flex-wrap ">
-                        <button *ngIf="canActivate.includes('CREAR')" (click)="openModal(undefined,'','lg')"
-                          type="button" class="btn btn-secondary add-btn" data-bs-toggle="modal">
-                          <i class="ri-add-circle-line align-middle"></i> 
-                          {{"Agregar" | translate}}
-                        </button>   
-                        <button *ngIf="canActivate.includes('CREAR')" (click)="openModalImport()" 
-                            class="btn btn-soft-primary" >
-                            <i class="ri-file-upload-line align-bottom"></i>
-                            {{"Importar" | translate}}
-                        </button>                    
-                        <button *ngIf="canActivate.includes('VER')" (click)="csvFileExport()" 
-                            class="btn btn-soft-info" id="remove-actions" style="display: none">
-                            <i class="ri-file-download-line align-bottom"></i>
-                            {{"Exportar" | translate}}
-                        </button>
-                    </div>
-                </div>                
-            </div>
-        </div>
-    </div>
+    <app-data-header
+        [title]="title"
+        [headersImport]="headersImport"
+        [newShow]="canActivate.includes('CREAR')"
+        [importShow]="canActivate.includes('CREAR')"
+        [exportShow]="canActivate.includes('VER')"
+        (createEmitter)="openModal( undefined,'','md')"
+        (importEmitter)="openModalImport()"
+        (exportEmitter)="csvFileExport()"
+    ></app-data-header>
     <!--end col-->
     <div class="col-xxl-9">
         <div class="card">
@@ -70,20 +54,21 @@
                 </div>
             </div>
             <div class="card-body">
-                <app-data-table
-                    [loading]="loading"
-                    [itemsList]="itemsList"
-                    [allcontent]="temp"
-                    [content]="facilitiesList"
-                    [show]="canActivate.includes('VER')"
-                    [edit]="canActivate.includes('ACTUALIZAR')"
-                    [delete]="canActivate.includes('ELIMINAR')"
-                    (showItemEmitter)="viewDataGet($event)"
-                    (editItemEmitter)="openModal($event,'edit','lg')"
-                    (deleteItemEmitter)="deleteModal(deleteModel,$event)" 
-                    [multiCheck]="canActivate.includes('VER')"
-                    (selectedItemEmitter)="getSelectedItems($event)"    
-                ></app-data-table>  
+            <app-data-table
+                [loading]="loading"
+                [itemsList]="itemsList"
+                [allcontent]="facilitiesList"
+                [actions]="{
+                  show: canActivate.includes('VER'),
+                  edit: canActivate.includes('ACTUALIZAR'),
+                  delete: canActivate.includes('ELIMINAR'),}"
+                (showItemEmitter)="openModal($event,'show','md')"
+                (editItemEmitter)="openModal($event,'edit','md')"
+                (deleteItemEmitter)="deleteModal(deleteModel,$event)" 
+                [multiCheck]="canActivate.includes('CREAR')"
+                (selectedItemEmitter)="getSelectedItems($event)" 
+                [viewMode]="viewMode"   
+            ></app-data-table>
             </div>
         </div>
     </div>

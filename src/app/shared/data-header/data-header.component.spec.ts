@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ModalImportComponent } from './modal-import.component';
+import { DataHeaderComponent } from './data-header.component';
 
-describe('ModalImportComponent', () => {
-  let component: ModalImportComponent;
-  let fixture: ComponentFixture<ModalImportComponent>;
+describe('DataHeaderComponent', () => {
+  let component: DataHeaderComponent;
+  let fixture: ComponentFixture<DataHeaderComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ModalImportComponent]
+      declarations: [ DataHeaderComponent ]
     })
     .compileComponents();
-    
-    fixture = TestBed.createComponent(ModalImportComponent);
+
+    fixture = TestBed.createComponent(DataHeaderComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

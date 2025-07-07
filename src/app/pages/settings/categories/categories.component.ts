@@ -11,8 +11,8 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { Categoria } from 'src/app/core/models/categoria.model';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ModalImportComponent } from './modal-import/modal-import.component';
-
+import { ModalImportComponent } from 'src/app/shared/modal-import/modal-import.component';
+import { TipoCobro } from 'src/app/core/constants/TipoCobro';
 
 @Component({
   selector: 'app-categories',
@@ -28,6 +28,7 @@ export class CategoriesComponent {
   canActivate:string[];
   itemsList:any[]=[];
   temp:any[]=[];
+  viewMode: 'table' | 'cards' = 'table';
 
   categoryList:any[]=[];
   submitted = false;
@@ -40,12 +41,16 @@ export class CategoriesComponent {
   constructor(private modalService: NgbModal,
     private authService: AuthenticationService,
     public translate: TranslateService,
-    private deportesService: CategoriasService,
+    private categoriesService: CategoriasService,
     private formBuilder: UntypedFormBuilder,) {
       this.canActivate = this.authService.hasPermission(this.title);
   }
 
   ngOnInit(): void {
+    const savedViewMode = localStorage.getItem('dataTableViewMode');
+    if (savedViewMode === 'table' || savedViewMode === 'cards') {
+      this.viewMode = savedViewMode;
+    }
     this.breadCrumbItems = [
       { label: 'Administración' },
       { label: this.title, active: true }
@@ -112,37 +117,64 @@ export class CategoriesComponent {
     this.modalService.open(content, { size: 'md', centered: true });
   }
 
-  camposImport: any[] =[];
+  headersImport = ['Código','Nombre', 'Tipo Cobro'];
   public openModalImport() {
-    this.camposImport = [
-        {prop: 'Código', name: 'Código',visible:true},
-        {prop: 'Tipo Cobro', name: 'Tipo Cobro',visible:true},
-        {prop: 'Nombre', name: 'Nombre',visible:true},
-    ];
     const modalRef = this.modalService.open(ModalImportComponent, {
-        size: 'lg', backdrop: 'static'
+      size: 'lg', backdrop: 'static'
     });
-    modalRef.componentInstance.titles = this.camposImport;
-    modalRef.componentInstance.itemsList = this.categoryList;
-    modalRef.componentInstance.emitList.subscribe(() => {
-        this.getCategories();
+    modalRef.componentInstance.titles = this.headersImport.map(header => 
+      ({ prop: header, name: header, visible: true}));
+    modalRef.componentInstance.itemsList = this.temp;
+    modalRef.componentInstance.lookupData = {
+      typeList: TipoCobro
+    };
+      modalRef.componentInstance.checkExistsFn = (registro:Categoria) =>
+        this.temp.some(item =>
+          item.nombre === registro.nombre
+        );
+      modalRef.componentInstance.mapRowFn = (row: any, lookupData: any): Categoria => {
+        const value = (row['Tipo Cobro'] || '').trim();
+        const type = lookupData.typeList.find(
+          (t: any) => t.trim() === value
+        );
+        const missingFields = [];
+        if (!type) missingFields.push('TipoCobro');
+        if (missingFields.length > 0) {
+          throw { missingFields };
+        }
+        return {
+          codigo: '' + row['Código'],
+          nombre: '' + row['Nombre'],
+          tipo: type
+        };
+      };
+    modalRef.componentInstance.createRecordFn = (record:Categoria) =>
+      this.categoriesService.save(record).toPromise();
+    modalRef.componentInstance.actionCompleted.subscribe(() => {
+      this.getCategories();
     });
   }
 
   // Csv File Export
-  csvFileExport() {
+  public csvFileExport() {
+    const lista = this.selectedItems.flatMap((item: Categoria) => {
+    return {
+      code: item.codigo,
+      name: item.nombre,
+      type: item.tipo
+    };});
     var data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de Categorias',
-      useBom: true,
-      noDownload: false,
-      headers: ["uuid", "Codigo","Tipo Cobro", "Nombre","estado"]
+    fieldSeparator: ',',
+    quoteStrings: '"',
+    decimalseparator: '.',
+    showLabels: true,
+    showTitle: true,
+    title: 'Lista de '+ this.title,
+    useBom: true,
+    noDownload: false,
+    headers: this.headersImport
     };
-    new ngxCsv(this.selectedItems, "Categorias", data);
+    new ngxCsv(lista, this.title, data);
   }
 
   /**
@@ -180,14 +212,12 @@ export class CategoriesComponent {
   /* API Services */
   loading: boolean = true;
   private getCategories(){
-    this.deportesService.getAll().subscribe({
+    this.categoriesService.getAll().subscribe({
         next: (data: any) => {
           this.loading = false;
           if (data['status'] === 'OK') {
             this.categoryList = data.payload;
             this.temp = this.categoryList
-          }else{
-            Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
           }
         },
         error: (error) => {
@@ -197,7 +227,7 @@ export class CategoriesComponent {
       });
   }
   private addData(datos:Categoria){
-    this.deportesService.save(datos).subscribe({
+    this.categoriesService.save(datos).subscribe({
       next:(data:any)=>{
         console.log(data)
         this.submitted=false;
@@ -210,7 +240,7 @@ export class CategoriesComponent {
     })
   }
   private updateData(datosUnit:Categoria) {
-      this.deportesService.update(datosUnit).subscribe({
+      this.categoriesService.update(datosUnit).subscribe({
           next: (data: Categoria) => {
             this.submitted = false;
             this.closeModal();
@@ -224,7 +254,7 @@ export class CategoriesComponent {
   // Delete Data
   deleteData() {
     let uuid = this.deleteId;
-    this.deportesService.delete(uuid).subscribe({
+    this.categoriesService.delete(uuid).subscribe({
       next: (data:any) => {
             this.submitted = false;
             if(data['status'] === 'OK') {

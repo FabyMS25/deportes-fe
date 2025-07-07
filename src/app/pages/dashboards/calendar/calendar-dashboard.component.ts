@@ -53,9 +53,6 @@ export class CalendarDashboardComponent implements OnInit {
     this._fetchData();
   }
 
-  /**
-   * Fetches the data
-   */
   private _fetchData() {    
     this.reservasService.getAll().subscribe({
       next: (data: any) => {
@@ -78,8 +75,6 @@ export class CalendarDashboardComponent implements OnInit {
                   row: evt, // ubicacion: evt.canchasDto.ubicacion, description: evt.contribuyenteDto.nombre
                 }
             })
-        } else {
-          Swal.fire({ text: data.status, confirmButtonColor: '#299cdb' });
         }
       }
     });

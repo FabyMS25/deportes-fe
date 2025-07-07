@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
 
 import { CityAcronym } from 'src/app/core/constants/Places';
-import { UserStatus , UserCivilStatus, IdentityTypes, UserSex} from 'src/app/core/constants/UserData';
+import { UserStatus , UserCivilStatus, UserDocType, UserGender} from 'src/app/core/constants/UserData';
 import { MustMatch } from 'src/app/account/auth/pass-create/must-match';
 
 import { Contribuyente } from 'src/app/core/models/contribuyente.models';
@@ -26,10 +26,10 @@ export class ModalComponent {
   @Output() emitList = new EventEmitter();
 
   civilStatus = UserCivilStatus
-  identityTypes = IdentityTypes
+  identityTypes = UserDocType
   cityAcronym= CityAcronym
   userStatus= UserStatus
-  userSex= UserSex
+  userSex= UserGender
 
   contentForm!: UntypedFormGroup;
   submitted = false;
@@ -186,8 +186,8 @@ export class ModalComponent {
   }
 
   getDepartmentName(id: string): string {
-    const found = this.cityAcronym.find(item => item.id === id);
-    return found ? found.description : id;
+    const found = this.cityAcronym.find(item => ''+item.id === id);
+    return found ? found.value : id;
   }
   getCivilStatus(acronym: string): string {
     const found = this.civilStatus.find(item => item.type === acronym);

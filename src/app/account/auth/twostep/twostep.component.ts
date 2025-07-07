@@ -9,6 +9,7 @@ import { UserDataService } from '../signup/user-data.service';
 
 import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
+import { GlobalComponent } from 'src/app/global-component';
 
 @Component({
   selector: 'app-twostep',
@@ -16,34 +17,12 @@ import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.serv
   styleUrls: ['./twostep.component.scss']
 })
 
-/**
- * Two Step Component
- */
 export class TwoStepComponent implements OnInit {
 
   year: number = new Date().getFullYear();
   @ViewChild(NgOtpInputComponent, { static: false }) otpComponent?: NgOtpInputComponent;
 
   userData: any;
-
-  constructor( private router: Router, 
-    private route: ActivatedRoute,
-    private userDataService : UserDataService,
-    private contribuyentesService: ContribuyentesService,
-    // private ruatService: RuatCallsService,
-    private ruatService: RuatRequestsService,
-  ) {  }
-
-  ngOnInit(): void {
-    this.route.queryParams.subscribe(params => {
-      const username = params['username'];
-      this.userData = this.userDataService.getTemporaryUserData();
-    });
-  }
-
-   /**
-   * Confirm Otp Verification
-   */
     config = {
       allowNumbersOnly: true,
       length: 4,
@@ -56,100 +35,120 @@ export class TwoStepComponent implements OnInit {
       }
     };
 
-    async confirmar() {
-      const enteredOtp = this.otpComponent?.currentVal;
-      
-      if (enteredOtp?.length !== this.config.length) {
-        alert('Por favor, ingrese el código completo.');
-        return;
-      }  
-      if (enteredOtp === this.userData.verificationCode) {
-        if(!this.userData.codigoContribuyente){
-          const ruatResp = await this.registerContribuyente(this.userData)
-          if(ruatResp){
-            this.userData.estadoUsuario = 'Activo';
-            await this.addData(this.userData);
-            this.sendEmail(this.userData.userName, this.userData.password)
-            this.userDataService.setTemporaryUserData(null);
-            this.notify('Sus Datos fueron registrados!','success'); 
-            this.router.navigate(['/auth/success-msg'], { queryParams: { username: this.userData.userName } });
-          }else{
-            this.notify('No se pudo registrar en el Ruat', 'error');
-            // await this.addData(this.userData);
-            // this.sendEmail(this.userData.userName, this.userData.password)
-            // this.router.navigate(['/auth/success-msg'], { queryParams: { username: this.userData.userName } });
-          }
-        }else{
-            this.addData(this.userData);
-        }
-      } else {
-          this.notify('Código incorrecto. Por favor, inténtelo de nuevo.','success');  
-        this.otpComponent?.setValue(''); 
-      }
-    }
+  constructor( private router: Router, 
+    private route: ActivatedRoute,
+    private userDataService : UserDataService,
+    private contribuyentesService: ContribuyentesService,
+    private ruatService: RuatRequestsService,
+  ) {  }
 
-    private sendEmail(username:string,password:string): Promise<void> {
-      const email = this.userData.correo;
-      const name = this.userData.nombre;
-      const message = 'USUARIO: '+ username +', CONTRASEÑA: '+ password;
-    
-      return emailjs.send("service_auth", "template_6htavso", {
-        from_name: "GAMQ-DEPORTES",
-        to_name: name,
-        message: message,
-        reply_to: email,
-      }, 'X9362U1QpUzthcHGT')
-        .then((response: EmailJSResponseStatus) => {
-          this.notify("Un email fue enviado a " + email + " con su USUARIO y CONTRASEÑA ", 'success');
-        })
-        .catch((error) => {
-          this.notify("No se pudo enviar correctamente el e-mail", 'error');
-          throw error; 
-        });
+  ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const username = params['username'];
+      this.userData = this.userDataService.getTemporaryUserData();
+      console.log(this.userData)
+    });
+  }
+
+  async confirmar() {
+    const enteredOtp = this.otpComponent?.currentVal;
+    if (!enteredOtp || enteredOtp.length !== this.config.length) {
+      this.notify('Por favor, ingrese el código completo.', 'error');
+      return;
     }
-  
-    resendEmail(): Promise<void> {
-      const email = this.userData.correo;
-      const name = this.userData.nombre;
-      const codigo = this.userData.verificationCode;
-    
-      return emailjs.send("service_auth", "template_6htavso", {
-        from_name: "GAMQ-DEPORTES",
-        to_name: name,
-        message: codigo,
-        reply_to: email,
-      }, 'X9362U1QpUzthcHGT')
-        .then((response: EmailJSResponseStatus) => {
-          this.notify("Un email fue enviado a " + email + " con el codigo de confirmacion", 'success');
-        })
-        .catch((error) => {
-          this.notify("No se pudo enviar correctamente el e-mail", 'error');
-          throw error; 
-        });
+    if (enteredOtp !== this.userData.verificationCode) {
+      this.notify('Código incorrecto. Por favor, inténtelo de nuevo.', 'error');
+      this.otpComponent?.setValue('');
+      return;
     }
+    try {
+      if (!this.userData.codigoContribuyente) {
+        const ruatResp = await this.registerContribuyente(this.userData);
+        if (!ruatResp) {
+          this.notify('No se pudo registrar en el Ruat', 'error');
+          return;
+        }
+        this.userData.estadoUsuario = 'Activo';
+      }
+
+      const savedUser = await this.addData(this.userData);
+      if (!savedUser) return;
+
+      await this.sendEmail(this.userData.userName, this.userData.password);
+
+      this.userDataService.setTemporaryUserData(null);
+      this.notify('Sus Datos fueron registrados!', 'success');
+      this.router.navigate(['/auth/success-msg'], { queryParams: { username: this.userData.userName } });
+
+    } catch (error) {
+      console.error('Error durante la confirmación:', error);
+      this.notify('Ocurrió un error inesperado durante el registro.', 'error');
+    }
+  }
+
+  private sendEmail(username: string, password: string): Promise<void> {
+    const email = this.userData.correo;
+    const name = this.userData.nombre;
+    const message = `USUARIO: ${username}, CONTRASEÑA: ${password}`;
+
+    return emailjs.send(GlobalComponent.EmailJS.idService, GlobalComponent.EmailJS.idTemplate, {
+      from_name: "GAMQ-DEPORTES",
+      to_name: name,
+      message: message,
+      reply_to: email,
+    }, GlobalComponent.EmailJS.publicKey)
+      .then(() => {
+        this.notify(`Un email fue enviado a ${email} con su USUARIO y CONTRASEÑA`, 'success');
+      })
+        // .then((response: EmailJSResponseStatus) => {
+        //   this.notify("Un email fue enviado a " + email + " con su USUARIO y CONTRASEÑA ", 'success');
+        // })
+      .catch((error) => {
+        this.notify("No se pudo enviar correctamente el e-mail", 'error');
+        throw error;
+      });
+  }
+  resendEmail(): Promise<void> {
+    const email = this.userData.correo;
+    const name = this.userData.nombre;
+    const codigo = this.userData.verificationCode;
+    const message = `Su código de verificación es: ${codigo}`;
+
+    return emailjs.send(GlobalComponent.EmailJS.idService, GlobalComponent.EmailJS.idTemplate, {
+      from_name: "GAMQ-DEPORTES",
+      to_name: name,
+      message: message,
+      reply_to: email,
+    }, GlobalComponent.EmailJS.publicKey)
+      .then(() => {
+        this.notify(`Un email fue enviado a ${email} con el código de confirmación`, 'success');
+      })
+      .catch((error) => {
+        this.notify("No se pudo enviar correctamente el e-mail", 'error');
+        throw error;
+      });
+  }
     
   /* API Request */
-  private async addData(datos:Contribuyente){
+  private async addData(datos: Contribuyente): Promise<Contribuyente | null> {
     return new Promise((resolve, reject) => {
       this.contribuyentesService.save(datos).subscribe({
-        next:(data:any)=>{
-          if (data['status'] === 'OK') { 
-            const user = data.payload;     
-            resolve(user)     
-          }else{
-            this.notify(data.payload, 'error');
+        next: (data: any) => {
+          if (data.status === 'OK') {
+            resolve(data.payload as Contribuyente);
+          } else {
+            this.notify(data.payload || 'Error al guardar los datos', 'error');
             resolve(null);
           }
         },
         error: (error) => {
-          reject()
-          this.notify('No se pudo Guardar los datos! '+error, 'error');
+          this.notify('No se pudo guardar los datos: ' + error.message, 'error');
+          reject(error);
         }
-      })
-    })
+      });
+    });
   }
   
-
   /* RUAT API Requests */
   private async registerContribuyente(data:any): Promise<any>{
     return new Promise((resolve, reject) => {
@@ -171,8 +170,9 @@ export class TwoStepComponent implements OnInit {
             resolve(null); 
           }
         },
-        error: (error) => {    
-          resolve(error);
+        error: (error) => {
+          this.notify('Error al registrar en RUAT: ' + error.message, 'error');
+          reject(error);
         }
       });
     })
@@ -183,7 +183,7 @@ export class TwoStepComponent implements OnInit {
     Swal.fire({
       title: message,
       icon: type,
-      timer: 2000,
+      timer: 5000,
       timerProgressBar: true,
       willClose: () => {
         clearInterval(timerInterval);

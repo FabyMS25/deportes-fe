@@ -6,11 +6,12 @@ import Swal from 'sweetalert2';
 import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
 
 import { CityAcronym } from 'src/app/core/constants/Places';
-import { UserStatus , UserCivilStatus, IdentityTypes, UserSex} from 'src/app/core/constants/UserData';
+import { UserStatus , UserCivilStatus, UserGender, UserDocType} from 'src/app/core/constants/UserData';
 import { MustMatch } from '../pass-create/must-match';
 import { UserDataService } from './user-data.service';
 import { Contribuyente } from 'src/app/core/models/contribuyente.models';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
+import { GlobalComponent } from 'src/app/global-component';
 
 @Component({
   selector: 'app-signup',
@@ -18,10 +19,6 @@ import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.
   styleUrls: ['./signup.component.scss']
 })
 
-
-/**
- * Signup Basic Component
- */
 export class SignupComponent implements OnInit {
 
   SignupForm!: UntypedFormGroup;
@@ -31,10 +28,10 @@ export class SignupComponent implements OnInit {
   year: number = new Date().getFullYear();
   
   civilStatus = UserCivilStatus
-  identityTypes = IdentityTypes
+  identityTypes = UserDocType
   cityAcronym= CityAcronym
   userStatus= UserStatus
-  userSex= UserSex
+  userSex= UserGender
 
   usersList!:any[];
   userExist=false;
@@ -89,11 +86,12 @@ export class SignupComponent implements OnInit {
   }
   
   private formDataSet(data:any) {
+    console.log(data)
     const client = data.contribuyente
-    const doc = IdentityTypes.find(d => d.description === client.tipoDocumento);    
+    const doc = UserDocType.find(d => d.description === client.tipoDocumento);    
     const civ = UserCivilStatus.find(d => d.description === client.estadoCivil);
-    const exp = CityAcronym.find(d => d.description === client.expedido);    
-    const gen = UserSex.find(d => d.description === client.genero);
+    const exp = CityAcronym.find(d => d.value === client.expedido);    
+    const gen = UserGender.find(d => d.description === client.genero);
     let dateObject ='';
     if(client.fechaNacimiento){
       const [day, month, year] = client.fechaNacimiento.split('/').map(Number);
@@ -154,7 +152,7 @@ export class SignupComponent implements OnInit {
         userName: this.SignupForm.value.username,
         password: this.SignupForm.value.password,
         tipoContribuyente: this.SignupForm.value.contribuyentType,
-        codigoContribuyente: this.SignupForm.value.contriybuyentCode,
+        codigoContribuyente: this.SignupForm.value.contribuyentCode,
         estadoUsuario: this.SignupForm.value.userState,
         verificationCode: code,
         nombre: this.SignupForm.value.name,
@@ -196,15 +194,14 @@ export class SignupComponent implements OnInit {
   sendEmail(data: any, link: string): Promise<void> {
     const email = data.correo;
     const name = data.nombre;
-    const codigo = data.verificationCode;
-  
-    return emailjs.send("service_auth", "template_6htavso", {
+    const codigo = data.verificationCode;  
+    return emailjs.send(GlobalComponent.EmailJS.idService, GlobalComponent.EmailJS.idTemplate, {
       from_name: "GAMQ-DEPORTES",
       to_name: name,
       message: codigo,
       // message: `Puedes ingresar al siguiente Link: ${link}`,
       reply_to: email,
-    }, 'X9362U1QpUzthcHGT')
+    },GlobalComponent.EmailJS.publicKey)
       .then((response: EmailJSResponseStatus) => {
         this.notify("Un email fue enviado a " + email + " con el codigo de confirmacion", 'success');
         this.submitted = false;

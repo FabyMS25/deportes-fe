@@ -93,9 +93,9 @@ export class SettingsComponent implements OnInit {
    get form() {
     return this.personaForm.controls;
   }
-  getExpedidoDescription(expedido: string): string {
-    const city = this.CityAcronym.find(c => c.acronym === expedido || c.id === expedido || c.description === expedido);
-    return city ? city.description : '';
+  getExpedidoDescription(expedido: any): any {
+    const city = this.CityAcronym.find(c => c.acronym === expedido || c.id === expedido || c.value === expedido);
+    return city ? city.value : '';
   }
   public openModal() {
     const modalRef = this.modalService.open(PassResetComponent, {
@@ -106,16 +106,16 @@ export class SettingsComponent implements OnInit {
    getAcronymCity(city: string): string {
     let acronym = '';
     CityAcronym.forEach(element => {
-      if (element['description'] === city) {
+      if (element['value'] === city) {
         acronym = element['acronym'];
       }
     });
     return acronym;
    }
-   getIdCity(city: string): string {
-    let acronym = '';
+  getIdCity(city: string): any {
+    let acronym = null;
     CityAcronym.forEach(element => {
-      if (element['description'] === city) {
+      if (element['value'] === city) {
         acronym = element['id'];
       }
     });

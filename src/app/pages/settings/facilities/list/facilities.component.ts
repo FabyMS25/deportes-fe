@@ -12,7 +12,8 @@ import { Complejo } from 'src/app/core/models/complejo.model';
 import { Districts } from 'src/app/core/constants/Places';
 import { Ceiling } from 'src/app/core/constants/Features';
 import { ModalFacilitiesComponent } from '../modal/modal.component';
-import { ModalImportComponent } from '../modal-import/modal-import.component';
+import { ModalImportComponent } from 'src/app/shared/modal-import/modal-import.component';
+// import { ModalImportComponent } from '../modal-import/modal-import.component';
 
 @Component({
   selector: 'app-facilities',
@@ -27,6 +28,7 @@ export class FacilitiesComponent {
   itemsList:any[]=[];
   temp:any[]=[];
   dataSelected!:Complejo;
+  viewMode: 'table' | 'cards' = 'table';
 
   categoryList:any[]=[];
   facilitiesList:any[]=[]
@@ -44,6 +46,10 @@ export class FacilitiesComponent {
   }
 
   ngOnInit(): void {
+    const savedViewMode = localStorage.getItem('dataTableViewMode');
+    if (savedViewMode === 'table' || savedViewMode === 'cards') {
+      this.viewMode = savedViewMode;
+    }
     this.breadCrumbItems = [
       { label: 'Administración' },
       { label: this.title, active: true }
@@ -60,6 +66,10 @@ export class FacilitiesComponent {
     this.getFacilities()
   }
 
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
+    localStorage.setItem('dataTableViewMode', this.viewMode);
+  }
   selectedItems:any[] =[];
   getSelectedItems(items: any[]) {
     this.selectedItems = items;
@@ -108,49 +118,72 @@ export class FacilitiesComponent {
   /**
    * Open modal
    * @param content modal content
-   */
-  public openModal(row: Complejo | undefined, accion: string, size: string) {
+   */  
+  public openModal(row: any | undefined, action: string, size: string) {
     const modalRef = this.modalService.open(ModalFacilitiesComponent, {
-        backdrop: 'static',
-        size:size
+        backdrop: 'static', size:size
     });
     modalRef.componentInstance.row = row;
-    modalRef.componentInstance.categoryList = this.categoryList;
-    modalRef.componentInstance.accion = accion;
-    modalRef.componentInstance.emitList.subscribe(() => {
+    modalRef.componentInstance.action = action;
+    modalRef.componentInstance.itemsList=this.temp;
+    modalRef.componentInstance.actionCompleted.subscribe(()=>{
       this.getFacilities();
-    });
+    })
   }
 
-  /**
-   * Delete model
-   */
   deleteId!: string;
   deleteModal(content: any, data: any) {
     this.deleteId = data.uuid;
     this.modalService.open(content, { centered: true });
   }
 
-  camposImport: any[] =[];
+  headersImport = ['Nombre','Techado', 'Distrito', 'Ubicación','Latitud','Longitud'];
   public openModalImport() {
-    this.camposImport = [
-        {prop: 'Nombre', name: 'Nombre',visible:true},
-        {prop: 'Techado', name: 'Techado',visible:true},
-        {prop: 'Distrito', name: 'Distrito',visible:true},
-        {prop: 'Ubicación', name: 'Ubicación',visible:true},
-        {prop: 'Latitud', name: 'Latitud',visible:true},
-        {prop: 'Longitud', name: 'Longitud',visible:true},
-    ];
     const modalRef = this.modalService.open(ModalImportComponent, {
-        size: 'xl',
-        backdrop: 'static'
+      size: 'lg', backdrop: 'static'
     });
-    modalRef.componentInstance.titles = this.camposImport;
-    modalRef.componentInstance.itemsList = this.facilitiesList;
-    modalRef.componentInstance.emitList.subscribe(() => {
-        this.getFacilities();
+    modalRef.componentInstance.titles = this.headersImport.map(header => 
+      ({ prop: header, name: header, visible: true}));
+    modalRef.componentInstance.itemsList = this.temp;
+    modalRef.componentInstance.lookupData = {
+      ceilingList: Ceiling,
+      districtsList: Districts
+    };
+    modalRef.componentInstance.checkExistsFn = (registro:Complejo) =>
+      this.temp.some(item =>
+        item.nombre === registro.nombre
+      );
+    modalRef.componentInstance.mapRowFn = (row: any, lookupData: any): Complejo => {
+      const ceilingValue = (row['Techado'] || '').trim();
+      const districtValue = (row['Distrito'] || '').trim();
+      const ceiling = lookupData.ceilingList.find(
+        (t: any) => t.trim() === ceilingValue
+      );
+      const district = lookupData.districtsList.find(
+        (r: any) => r.value.trim() === districtValue
+      );
+      const missingFields = [];
+      if (!ceiling) missingFields.push('Techado');
+      if (!district) missingFields.push('Distrito');
+      if (missingFields.length > 0) {
+        throw { missingFields };
+      }
+      return {
+        nombre: '' + row['Nombre'],
+        techado: ceiling,
+        distrito: district.value,
+        ubicacion: '' + row['Ubicación'],
+        latitud: row['Latitud'],
+        longitud: row['Longitud'],
+      };
+    };
+    modalRef.componentInstance.createRecordFn = (record:Complejo) =>
+      this.complejosService.save(record).toPromise();
+    modalRef.componentInstance.actionCompleted.subscribe(() => {
+      this.getFacilities();
     });
   }
+
   // Csv File Export
   csvFileExport() {
     const lista = this.selectedItems.flatMap((item: any) => {
@@ -176,20 +209,19 @@ export class FacilitiesComponent {
         telefono: encargado.telefono || '',
       }));
     });
-
     var data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de Complejos',
-      useBom: true,
-      noDownload: false,
-      headers: [ "Nombre","Techado","Dirección", "Distrito", "Latitud", "Longitud",
+    fieldSeparator: ',',
+    quoteStrings: '"',
+    decimalseparator: '.',
+    showLabels: true,
+    showTitle: true,
+    title: 'Lista de '+ this.title,
+    useBom: true,
+    noDownload: false,
+    headers: [ "Nombre","Techado","Dirección", "Distrito", "Latitud", "Longitud",
                 "Encargado(Nombre)","Encargado(Teléfono)"]
     };
-    new ngxCsv(lista, "Lista de Complejos", data);
+    new ngxCsv(lista, this.title, data);
   }
 
   /* API Services */
@@ -204,8 +236,6 @@ export class FacilitiesComponent {
           if (this.facilitiesList) {
               this.dataSelected = this.facilitiesList[0];
           }
-        }else{
-          this.notify(data.payload,'error')
         }
       },
       error: (error) => {

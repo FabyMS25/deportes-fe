@@ -53,9 +53,7 @@ export class ModalFacilitiesComponent {
   }
 
   ngOnInit(): void {
-    /**
-     * Form Validation
-     */
+    console.log(this.row)
     this.complejosForm = this.formBuilder.group({
       uuid: [''],
       image_src: ['brands/dribbble.png'],
@@ -78,9 +76,6 @@ export class ModalFacilitiesComponent {
     this.formDataSet();
   }
 
-  /**
-   * Form data get
-   */
   get form() {
     return this.complejosForm.controls;
   }
@@ -88,7 +83,6 @@ export class ModalFacilitiesComponent {
       return this.complejosForm.get('horariosDeAtencion') as FormArray;
   }
 
-  // Function to add a new horario entry  
   addHorario() {
     const horarioGroup = this.formBuilder.group({
       dia: ['', Validators.required],
@@ -97,8 +91,6 @@ export class ModalFacilitiesComponent {
     });
     this.horariosDeAtencion.push(horarioGroup);
   }
-
-  // Function to remove a horario entry
   removeHorario(index: number) {
       this.horariosDeAtencion.removeAt(index);
   }
@@ -122,7 +114,6 @@ export class ModalFacilitiesComponent {
     }
   }
 
-  // File Upload
   imageURL: string | undefined;
   fileChange(event: any) {
     let fileList: any = (event.target as HTMLInputElement);

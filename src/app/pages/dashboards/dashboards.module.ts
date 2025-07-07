@@ -31,8 +31,8 @@ import { WidgetModule } from '../../shared/widget/widget.module';
 
 // Component
 import { FullCalendarModule } from '@fullcalendar/angular';
-import { CalendarDashboardComponent } from './employee/calendar-dashboard.component';
-import { MapDashboardComponent } from './taxpayer/map-dashboard.component';
+import { CalendarDashboardComponent } from './calendar/calendar-dashboard.component';
+import { MapDashboardComponent } from './map/map-dashboard.component';
 import { NgPipesModule } from 'ngx-pipes';
 import { CKEditorModule } from '@ckeditor/ckeditor5-angular';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';

@@ -132,7 +132,7 @@
                                             [ngClass]="{'is-invalid': submitted && f['expedite'].errors }">
                                             <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
                                             <option *ngFor="let item of cityAcronym" [value]="item.id">
-                                                {{ item.description }}
+                                                {{ item.value }}
                                             </option>
                                         </select>
                                         <div *ngIf="submitted && f['expedite'].errors" class="invalid-feedback" align="left">

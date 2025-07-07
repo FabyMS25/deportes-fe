@@ -21,6 +21,7 @@ export class ListComponent {
   canActivate:string[];
   itemsList:any[]=[];
   temp:any[]=[];
+  viewMode: 'table' | 'cards' = 'table';
 
   contribuyentesList:any[]=[];
 
@@ -34,11 +35,14 @@ export class ListComponent {
      private authService: AuthenticationService,
      private contribuyentesService: ContribuyentesService,
   ) {
-      this.canActivate = this.authService.hasPermission(this.title);
-      console.log(this.canActivate)
+    this.canActivate = this.authService.hasPermission(this.title);
   }
 
   ngOnInit(): void {
+    const savedViewMode = localStorage.getItem('dataTableViewMode');
+    if (savedViewMode === 'table' || savedViewMode === 'cards') {
+      this.viewMode = savedViewMode;
+    }
     this.breadCrumbItems = [
       { label: '' },
       { label: this.title, active: true }
@@ -118,7 +122,7 @@ export class ListComponent {
         genero: item.sexo,
         carnet: item.nroCarnet,
         nit: item.nroNit,
-        expedido: city ? city.description : '',
+        expedido: city ? city.value : '',
         direccion: item.direccion,
         celular: item.celular,
         email: item.correo,
@@ -155,8 +159,6 @@ export class ListComponent {
         if (data['status'] === 'OK') {
           this.contribuyentesList = data.payload;
           this.temp = data.payload;
-        }else{
-          Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
         }
       },
       error: (error) => {

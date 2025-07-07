@@ -6,7 +6,7 @@ import { Injectable, Input } from '@angular/core';
 })
 export class PaginationService {
     // Pagination
-    pageSize: any = 8;
+    pageSize: any = 5;
     page: any = 1;
     startIndex: number = 1;
     endIndex: number = 9;
@@ -24,48 +24,50 @@ export class PaginationService {
         return alldata.slice(startItem - 1, endItem);
     }
 
-    // Sort Data
-    // onSort(column: any, dataList: any[]) {
-    //     if (this.direction == 'asc') {
-    //         this.direction = 'desc';
-    //     } else {
-    //         this.direction = 'asc';
-    //     }
-    //     const sortedArray = [...dataList]; // Create a new array
-    //     sortedArray.sort((a, b) => {
-    //         const res = this.compare(a[column], b[column]);
-    //         return this.direction === 'asc' ? res : -res;
-    //     });
-    //     return dataList = sortedArray;
-    // }
-    // compare(v1: string | number, v2: string | number) {
-    //     return v1 < v2 ? -1 : v1 > v2 ? 1 : 0;
-    // }
-    onSort(column: string, data: any[]): any[] {
-        if (this.sortColumn === column) {
-          this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-          this.sortColumn = column;
-          this.sortDirection = 'asc';
+    onSort(column: string, items: any[], isAscending: boolean = true): any[] {
+      return [...items].sort((a, b) => {
+        const valueA = this.getNestedProperty(a, column);
+        const valueB = this.getNestedProperty(b, column);
+        if (valueA == null && valueB == null) return 0;
+        if (valueA == null) return isAscending ? 1 : -1;
+        if (valueB == null) return isAscending ? -1 : 1;
+        if (this.isDate(valueA) || this.isDate(valueB)) {
+          const dateA = new Date(valueA).getTime();
+          const dateB = new Date(valueB).getTime();
+          return isAscending ? dateA - dateB : dateB - dateA;
         }
-    
-        return data.sort((a, b) => {
-          let valueA = this.getNestedValue(a, column);
-          let valueB = this.getNestedValue(b, column);
-    
-          if (typeof valueA === 'string') valueA = valueA.toLowerCase();
-          if (typeof valueB === 'string') valueB = valueB.toLowerCase();
-    
-          if (valueA < valueB) return this.sortDirection === 'asc' ? -1 : 1;
-          if (valueA > valueB) return this.sortDirection === 'asc' ? 1 : -1;
-          return 0;
-        });
-      }
-    
-      private getNestedValue(obj: any, path: string): any {
-        return path.split('.').reduce((prev, curr) => 
-          prev && prev[curr] !== undefined ? prev[curr] : null
-        , obj);
-      }
+        if (typeof valueA === 'number' && typeof valueB === 'number') {
+          return isAscending ? valueA - valueB : valueB - valueA;
+        }
+        if (typeof valueA === 'boolean' && typeof valueB === 'boolean') {
+          return isAscending 
+            ? (valueA === valueB ? 0 : valueA ? -1 : 1)
+            : (valueA === valueB ? 0 : valueA ? 1 : -1);
+        }
+        return isAscending 
+          ? String(valueA).localeCompare(String(valueB))
+          : String(valueB).localeCompare(String(valueA));
+      });
+    }
+
+    private isDate(value: any): boolean {
+      return value instanceof Date || 
+            (typeof value === 'string' && !isNaN(Date.parse(value)));
+    }
+
+    private getNestedProperty(obj: any, path: string): any {
+      return path.split('.').reduce((o, p) => {
+        if (o == null) return null;
+        
+        const arrayMatch = p.match(/(\w+)\[(\d+)\]/);
+        if (arrayMatch) {
+          const arrayName = arrayMatch[1];
+          const index = parseInt(arrayMatch[2]);
+          return o[arrayName]?.[index];
+        }
+        
+        return o[p];
+      }, obj);
+    }
 
 }

@@ -1,16 +1,14 @@
 export const GlobalComponent = {
-    
-    // URL : 'http://deportes-gamq.gob.bo/',
-    // URL : 'http://181.177.143.187:4205',
-    URL : 'http://localhost:4200',
+    /* STORAGE KEYs */
+    USER_KEY: 'currentUser',
+    TOKEN_KEY: 'auth-token',    
     headerToken : {'Authorization': `Bearer ${sessionStorage.getItem('token')}`},
 
-    admin_deportes:{
-        role:'Aministrador',
-        avatar:'default-profile1.png',
-        name:'Pedro Luis Sevilla Calderón',
-        telf:'60367407',
-    },
+    /* APP DETAILS */
+    CODE_APP : "SIS-013",
+    NAME_APP : "DEPORTESAPP",
+    ADMIN_MENU:'Administración',
+    URL : 'http://deportes-gamq.gob.bo/',//'http://localhost:4200',
 
     super_admin:{
         username:'faby25',
@@ -18,36 +16,39 @@ export const GlobalComponent = {
         whatsApp:'+59172248669',
         email:'moralessfaby.dev@gmail.com'
     },
+    contact_info:{
+        phone: '(591) 4 4362771-72-73',
+        email: 'gamqtdi@gmail.com',
+        address: 'Mercado Martín Cárdenas, Planta Baja, Quillacollo'
+    },
+    admin_deportes:{
+        role:'Aministrador',
+        avatar:'default-profile1.png',
+        name:'Pedro Luis Sevilla Calderón',
+        telf:'60367407',
+    },
+    EmailJS:{
+        idService:'service_auth',
+        idTemplate:'template_6htavso',
+        publicKey:'X9362U1QpUzthcHGT'
+    },
 
     /* RUAT CREDENTIALS TEST */
-    apiRuatUrl: "https://verificacionjboss.ruat.gob.bo", 
+    apiRuatUrl: "https://consolidacionjboss.ruat.gob.bo", 
     RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
-    RUAT_clave: "fIH1z30a1SpB",
+    RUAT_clave: "S1234567",
     /* RUAT CREDENTIALS PRODUCTION */
     // apiRuatUrl: "https://aplicaciones.ruat.gob.bo",
     // RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
     // RUAT_clave: "Gam#1209",
-
-    /* RUAT DATA */
+    
     RUAT_token : `${sessionStorage.getItem('ruatToken')}`,  
-    RUAT_codigoUsuario: "ERODRIGUEZ2.QUI",
+    RUAT_codigoUsuario: "PRUEBA_1.QUI", 
+    RUAT_passwordUsuario: "Ruat_123$",
     RUAT_codigoAlcaldia: "QUI",
     RUAT_motivo: "REGISTRO TASAS Y OTROS INGRESOS",
     RUAT_servicioMunicipal: "2174", //TASAS Y OTROS INGRESOS
     RUAT_tipoTasa: "TO", //TASAS Y OTROS INGRESOS
-
-    /* Api backend Calling */
-    API_BK_RUAT: "http://localhost:8085/api",
-    API_BK : 'http://181.177.143.187:8085/api',
-    CODE_APP : "SIS-013",
-    NAME_APP : "DEPORTESAPP",
-        facilities: '/complejos',
-        fields: '/canchas',
-        taxpayers: '/contribuyente',
-        employees: '/encargado',
-        categories: '/deportes',
-        reservations: '/reservas',
-        schedule:'/horario',
 
     /* RULES */
     VALID_HOURS: 4, 

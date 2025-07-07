@@ -4,6 +4,7 @@ export const environment = {
   applicationIdentifier: "uo-XSwSEFlyM",
 
   apiLoginUrl: 'http://181.177.143.185:8080/api',
+  backendRuat:'http://181.177.143.187:8085/api',
   backendUrl:'http://181.177.143.187:8085/api',
 
   leaflet_key: 'AAPKadc3f8c4eef24ed9a1661108b18757e3GCFAMQ9s5jtK-QxcX8Iyz34ROvTYWRjf8BELicUVCvNX3Dbw5NJ6KJ46CYUvYjsx',

@@ -74,17 +74,18 @@
             <app-data-table
                 [loading]="loading"
                 [itemsList]="itemsList"
-                [allcontent]="temp"
-                [content]="contribuyentesList"
-                [show]="canActivate.includes('VER')"
-                [edit]="canActivate.includes('ACTUALIZAR')"
-                [delete]="canActivate.includes('BLOQUEAR')"
+                [allcontent]="contribuyentesList"
+                [actions]="{
+                  show: canActivate.includes('VER'),
+                  edit: canActivate.includes('ACTUALIZAR'),
+                  delete: canActivate.includes('BLOQUEAR'),}"
                 (showItemEmitter)="openModal($event,'show','md')"
                 (editItemEmitter)="openModal($event,'edit','lg')"
                 (deleteItemEmitter)="openModal($event,'delete','md')" 
-                [multiCheck]="canActivate.includes('EXPORTAR')"
-                (selectedItemEmitter)="getSelectedItems($event)"    
-            ></app-data-table>  
+                [multiCheck]="canActivate.includes('CREAR')"
+                (selectedItemEmitter)="getSelectedItems($event)" 
+                [viewMode]="viewMode"   
+            ></app-data-table> 
         </div>
     </div>
   </div>

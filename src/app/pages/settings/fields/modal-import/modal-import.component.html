@@ -40,7 +40,6 @@
         *ngIf="xlsxData.length > 0"
         [loading]="loading"
         [itemsList]="titles"
-        [content]="xlsxData"
         [allcontent]="listaTemporal"
         (selectedItemEmitter)="getSeleccionados($event)">
     </app-data-table>

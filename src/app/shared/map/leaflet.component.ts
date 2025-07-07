@@ -23,7 +23,7 @@ export class LeafletComponent implements  OnInit {
   provider!: any;
 
       icon= L.icon({
-        iconUrl: 'assets/icon/pin-Map_icon.svg ',
+        iconUrl: 'assets/icons/pin-Map_icon.svg ',
         //       iconUrl: 'assets/images/marker-icon.png',
         //       shadowUrl: 'assets/images/marker-shadow.png',
         iconSize: [28, 41],

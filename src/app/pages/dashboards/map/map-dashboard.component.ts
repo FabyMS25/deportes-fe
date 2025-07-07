@@ -229,8 +229,6 @@ export class MapDashboardComponent implements OnInit {
             this.complexList = data.payload;
             this.temp = data.payload;
             this.setMarkers()
-          }else{
-            Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
           }
         },
         error: (error) => {
@@ -243,8 +241,6 @@ export class MapDashboardComponent implements OnInit {
         next: (data: any) => {
           if (data['status'] === 'OK') {
             this.fieldList = data.payload;
-          }else{
-            Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
           }
         },
         error: (error) => {
@@ -257,8 +253,6 @@ export class MapDashboardComponent implements OnInit {
           next: (data: any) => {
             if (data['status'] === 'OK') {
               this.categoryList = data.payload;
-            }else{
-              Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
             }
           },
           error: (error) => {
@@ -271,8 +265,6 @@ export class MapDashboardComponent implements OnInit {
           next: (data: any) => {
             if (data['status'] === 'OK') {
               this.surfaceList = data.payload;
-            }else{
-              Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
             }
           },
           error: (error) => {

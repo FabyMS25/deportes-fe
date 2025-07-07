@@ -1,11 +1,11 @@
 <div class="modal-header">
-    <h5>Importar Datos</h5>
+    <h5 class="modal-title" ngbAutofocus>Importar Datos</h5>
     <button
         [disabled]="loading"
         type="button"
         class="btn-close"
         aria-label="Close"
-        (click)="cerrarModal()">
+        (click)="closeModal()">
     </button>
 </div>
 <div class="modal-body">
@@ -20,8 +20,9 @@
         <div class="col-12 col-lg-6 mb-3">
             <input
                 class="form-control shadow-none rounded-3"
+                placeholder="Cargar datos desde Excel"
                 type="file"
-                (change)="cargarDatosDesdeExcel($event)"
+                (change)="loadDatafromExcel($event)"
                 [multiple]="false"
                 accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
         </div>
@@ -32,17 +33,16 @@
                     type="text"
                     class="form-control rounded-3 border-0 shadow-none"
                     placeholder="Buscar ..."
-                    (keyup)="buscarItem($event)">
+                    (keyup)="search($event)">
             </div>
         </div>
     </div>
     <app-data-table
         *ngIf="xlsxData.length > 0"
         [loading]="loading"
-        [listaItems]="titles"
-        [content]="xlsxData"
+        [itemsList]="titles"
         [allcontent]="xlsxData"
-        (seleccionarItemEmitter)="getSeleccionados($event)">
+        (selectedItemEmitter)="getSelectedItems($event)">
     </app-data-table>
 </div>
 
@@ -63,7 +63,7 @@
         [disabled]="loading"
         type="button"
         class="btn btn-outline-secondary rounded-3"
-        (click)="cerrarModal()">
+        (click)="closeModal()">
         Cancelar
     </button>
 </div>

@@ -201,9 +201,7 @@ export class EmployeesComponent implements OnInit {
             if (this.employeesList.length > 0) {
               this.funcionarioSelected = this.employeesList[0];
             }
-          } else {
-            Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb' });
-          }
+          } 
         },
         error: () => {
           this.loading = false;

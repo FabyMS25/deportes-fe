@@ -282,7 +282,8 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
           this.addField(datos).subscribe({
             next: (result) => {
               if (result !==null) {
-                this.notify('Cancha, tarifas, y categorias exitosamente creados', 'success');
+                // this.notify('Cancha, tarifas, y categorias exitosamente creados', 'success');
+                this.saveTarifasCat(result.payload)
                 this.fieldsForm.reset();
                 this.emitList.emit();
               }

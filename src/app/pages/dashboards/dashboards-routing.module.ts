@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { CalendarDashboardComponent } from './employee/calendar-dashboard.component';
-import { MapDashboardComponent } from './taxpayer/map-dashboard.component';
+import { CalendarDashboardComponent } from './calendar/calendar-dashboard.component';
+import { MapDashboardComponent } from './map/map-dashboard.component';
 import { DashboardComponent } from './admin/dashboard.component';
 
 // Component Pages

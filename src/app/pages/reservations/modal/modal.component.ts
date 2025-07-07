@@ -308,8 +308,8 @@ async consultData(item: any): Promise<any> {
     });
   }
   getCityDescription(cityId: string): string {
-    const city = this.CityAcronym.find(c => c.id === cityId);
-    return city ? city.description : 'Unknown';
+    const city = this.CityAcronym.find(c => ''+c.id === cityId);
+    return city ? city.value : 'Unknown';
   }
   /***
   * Model Position Set

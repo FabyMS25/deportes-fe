@@ -138,6 +138,23 @@
       </div>
         <div class="card-body pt-0">
             <div>
+            <app-data-table
+                [loading]="loading"
+                [itemsList]="itemsList"
+                [allcontent]="reservasList"
+                [actions]="{
+                  show: canActivate.includes('VER'),
+                  edit: canActivate.includes('CAMBIAR-HORARIO'),
+                  consult:canActivate.includes('ACTUALIZAR'),
+                  delete: canActivate.includes('ANULAR'),}"
+                    (showItemEmitter)="openModal($event,'show','md')"
+                    (editItemEmitter)="openModal($event,'edit','md')"
+                    (consultItemEmitter)="consultModal($event,consultModel)"
+                    (deleteItemEmitter)="openModal($event,'annularModel','')"
+                [multiCheck]="canActivate.includes('CREAR')"
+                (selectedItemEmitter)="getSelectedItems($event)" 
+                [viewMode]="viewMode"   
+            ></app-data-table>
                 <app-data-table
                     [loading]="loading"
                     [itemsList]="itemsList"
