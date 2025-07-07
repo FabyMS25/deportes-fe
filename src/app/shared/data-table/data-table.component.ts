@@ -173,19 +173,6 @@ export class DataTableComponent implements OnChanges {
     };
     return statuses[value] || 'info';
   }
-  
-  public getBadgeClass(value:any) {
-    switch (value) {
-    case 'Activo' : return 'bg-success-subtle text-success';
-    case 'Bloqueado' : return 'bg-warning-subtle text-warning';
-    case 'Pagado' : return 'bg-success-subtle text-success';
-    case 'Pendiente' : return 'bg-secondary-subtle text-secondary';
-    case 'Vencido' : return 'bg-danger-subtle text-danger';
-    case 'Anulado' : return 'bg-warning-subtle text-warning';
-    default:
-      return 'bg-info-subtle text-info';
-    }
- }
   //#endregion
 
   //#region On selection
