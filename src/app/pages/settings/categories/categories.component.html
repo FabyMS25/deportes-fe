@@ -68,20 +68,6 @@
                 (selectedItemEmitter)="getSelectedItems($event)" 
                 [viewMode]="viewMode"   
             ></app-data-table>
-                <app-data-table
-                    [loading]="loading"
-                    [itemsList]="itemsList"
-                    [allcontent]="temp"
-                    [content]="categoryList"
-                    [show]="canActivate.includes('VER')"
-                    [edit]="canActivate.includes('ACTUALIZAR')"
-                    [delete]="canActivate.includes('ELIMINAR')"
-                    (showItemEmitter)="openModal($event,content,'show')"
-                    (editItemEmitter)="openModal($event,content,'edit')"
-                    (deleteItemEmitter)="deleteModal(deleteModel,$event)"
-                    [multiCheck]="canActivate.includes('VER')"
-                    (selectedItemEmitter)="getSelectedItems($event)"
-                ></app-data-table>
             </div>
         </div>
     </div>
