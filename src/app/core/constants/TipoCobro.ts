@@ -1,16 +1,40 @@
-export const TipoCobro =
-[
-    "Hora","Persona","Evento"
-    // {
-    //     "id": 1,
-    //     "descripcion": "Hora"
-    // },
-    // {
-    //     "id": 2,
-    //     "descripcion": "Persona"
-    // },
-    // {
-    //     "id": 3,
-    //     "descripcion": "Evento"
-    // }
-]
+export type BookingType = 'puntual' | 'recurrente';
+export type ReservationType = 'por_hora' | 'por_persona' | 'por_evento' | 'mensualidad' | 'por_club';
+
+export const TipoCobro = [
+  {
+    id: "1",
+    value: "por_hora",
+    label: "Por Horas",
+  },
+  {
+    id: "2",
+    value: "por_persona",
+    label: "Por Persona",
+  },
+  {
+    id: "3",
+    value: "por_evento",
+    label: "Por Evento",
+  },
+  {
+    id: "4",
+    value: "por_club",
+    label: "Por Club",
+  },
+  {
+    id: "5",
+    value: "por_sesion",
+    label: "Por Sesion",
+  },
+  {
+    id: "6",
+    value: "mensualidad",
+    label: "Mensualidad",
+  }
+];
+export const frecuencia = [
+  { value: 'diaria', label: 'Diaria' },
+  { value: 'semanal', label: 'Semanal' },
+  { value: 'mensual', label: 'Mensual' }
+];

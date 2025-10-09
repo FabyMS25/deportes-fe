@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 import { addDays, subDays, startOfWeek, endOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { format } from 'date-fns';
-import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
+import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { Reserva } from 'src/app/core/models/reserva.models';
 
 @Component({

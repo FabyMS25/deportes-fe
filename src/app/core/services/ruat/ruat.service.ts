@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 import { GlobalComponent } from "../../../global-component";
-const ruatUrl = `${environment.apiRuatUrl}`;
+const ruatUrl = `${environment.backendRuat}`;
 const token = GlobalComponent.RUAT_token;
 const codigoAlcaldia = GlobalComponent.RUAT_codigoAlcaldia;
 
@@ -48,14 +48,14 @@ export class RuatService {
     );
   }
   
-  getContribuyentePorCi( nroDocumento: string, tipoDocumento: string,expedido:string): Observable<any> {
+  getContribuyentePorCi( numeroDocumento: string, tipoDocumento: string,expedido:string): Observable<any> {
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
 
     const requestData = {
       'codigoAlcaldia': codigoAlcaldia,
-      'numeroDocumento': nroDocumento,
+      'numeroDocumento': numeroDocumento,
       'tipoDocumento': tipoDocumento,
       'expedido': expedido
     };

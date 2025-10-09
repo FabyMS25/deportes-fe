@@ -28,6 +28,7 @@ import { SurfacesComponent } from './surfaces/surfaces.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { ModalScheduleComponent } from './fields/modal-schedule/modal-schedule.component';
 import { ModalTarifaComponent } from './fields/modal-tarifa/modal-tarifa.component';
+import { ClasificadoresRuatComponent } from './clasificadores-ruat/clasificadores-ruat.component';
 
 @NgModule({
   declarations: [
@@ -35,6 +36,7 @@ import { ModalTarifaComponent } from './fields/modal-tarifa/modal-tarifa.compone
     FieldsComponent,
     FacilitiesComponent,
     CategoriesComponent,
+    ClasificadoresRuatComponent,
     SurfacesComponent,
     ModalFacilitiesComponent,
     ModalFieldsComponent,

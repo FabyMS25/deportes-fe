@@ -1,0 +1,337 @@
+<div class="modal-content" *ngIf="accion !== 'annularModel'">
+    <!-- Loading Spinner -->
+    <div id="elmLoader" *ngIf="showLoading">
+        <div class="spinner-border text-primary avatar-sm" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+    <div class="modal-header border  p-2" *ngIf="accion === 'edit' || accion === 'show'">
+        <div class="mini-stats-wid d-flex w-100  justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0 avatar-sm">
+              <span class="mini-stat-icon avatar-title rounded-circle text-success bg-success-subtle fs-4">
+                <img src="assets/icons/logos/logo-sm.png" class="card-logo card-logo-dark user-profile-image img-fluid">
+              </span>
+            </div>
+            <h5 class="modal-title ms-2">
+              Reserva: {{ row.campoDeportivoDto.complejoDto.nombre }}
+            </h5>
+          </div>
+          <div class="d-flex align-items-center">
+            <label for="numeroTasa" class="me-2">Tasa:</label>
+            <input type="text" class="form-control form-control tasa-input"
+            [value]="row.numeroTasa" disabled />
+          </div>
+          <button type="button" class="btn-close ms-2" id="btn-close"
+            data-bs-dismiss="modal" aria-label="Cerrar" (click)="onCloseModal()">
+          </button>
+        </div>
+      </div>
+
+        <div class="modal-body">
+            @if(accion==='show'){
+                <div class="text-end" *ngIf="canActivate.includes('ACTUALIZAR') && row.estadoReserva === 'Pendiente'">
+                    <a class="btn btn-soft-primary" id="edit-event-btn" data-id="edit-event"
+                        (click)="consultModal(consultModel,$event)" role="button">Consultar</a>
+                </div>
+                <div class="">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="ri-barcode-line text-muted fs-lg"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="fw-semibold">
+                                TASA:
+                                <span class="text-muted"> {{row.numeroTasa}}</span>
+                            </h6>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="bx bx-dollar-circle text-muted fs-lg"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="d-block fw-semibold mb-0">
+                                Total:
+                                <span class="text-muted">Bs. {{row.montoTotal}}</span>
+                            </h6>
+                        </div>
+                        <div class="flex-shrink-0 me-3">
+                            <i class="ri-loader-2-fill text-muted fs-lg"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <span [ngClass]="{
+                                'bg-success-subtle text-success': row.estadoReserva ==='Pagado',
+                                'bg-secondary-subtle text-secondary': row.estadoReserva==='Pendiente',
+                                'bg-danger-subtle text-danger': row.estadoReserva==='Vencido',
+                                'bg-warning-subtle text-warning': row.estadoReserva==='Anulado'}">
+                                {{row.estadoReserva}}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="ri-calendar-event-line text-muted fs-lg"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="d-block fw-semibold mb-0">
+                                {{row.fechaReserva | date: 'dd MMMM,yyyy'}}
+                            </h6>
+                        </div>
+                        <div class="flex-shrink-0 me-3">
+                            <i class="ri-time-line text-muted fs-lg"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="d-block fw-semibold mb-0">
+                                <!-- {{row.horaEntrada }} - {{row.horaSalida }} -->
+                            </h6>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="ri-user-line text-muted fs-lg"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="d-block fw-semibold mb-0">Contribuyente: </h6>
+                            <p class="d-block text-muted mb-0">
+                                {{row.contribuyenteDto.nombre}} {{row.contribuyenteDto.primerApellido}} {{row.contribuyenteDto.segundoApellido}}
+                            </p>
+                            <p class="d-block text-muted mb-0">
+                                {{row.contribuyenteDto.numeroDocumento}} - {{ getCityDescription(row.contribuyenteDto.expedido) }}
+                            </p>
+                            <p class="d-block text-muted mb-0">
+                                Telf: {{row.contribuyenteDto.telefono}}
+                            </p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="flex-shrink-0 me-3">
+                            <i class=" ri-government-line text-muted fs-lg"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="d-block fw-semibold mb-0">{{row.campoDeportivoDto.complejoDto.nombre}}</h6>
+                            <p class="d-block text-muted mb-0">
+                                {{row.campoDeportivoDto.complejoDto.tipoEstructura}} - {{row.campoDeportivoDto.superficieDto.descripcion}}
+                            </p>
+                            <p class="d-block text-muted mb-0">
+                                <i class="ri-map-pin-line text-muted fs-lg"></i>
+                                {{row.campoDeportivoDto.complejoDto.ubicacion}}
+                            </p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex mb-3" *ngIf="row.campoDeportivoDto.complejoDto.encargadosDtoList && row.campoDeportivoDto.complejoDto.encargadosDtoList.length>0">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="ri-user-2-line text-muted fs-lg"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="d-block fw-semibold mb-0">Encargado: </h6>
+                            <p class="d-block text-muted mb-0">
+                                {{row.campoDeportivoDto.complejoDto.encargadosDtoList[0].nombre}}
+                            </p>
+                            <p class="d-block text-muted mb-0">
+                                Telf: {{row.campoDeportivoDto.complejoDto.encargadosDtoList[0].telefono}}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (accion === 'edit') {
+                <form [formGroup]="reservationForm">
+
+                    <div class="form-group">
+                        <label class="form-label mb-0 mt-2">Complejo/Cancha:</label>
+                        <input type="text" class="form-control" disabled
+                        [value]="row.campoDeportivoDto.complejoDto.nombre+' - '+ row.campoDeportivoDto.superficieDto.descripcion"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label mb-0 mt-2">Contribuyente:</label>
+                        <input type="text"  class="form-control" disabled
+                        [value]="row.contribuyenteDto.nombre+' '+row.contribuyenteDto.primerApellido+' '+row.contribuyenteDto.segundoApellido"/>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label mb-0 mt-2">Total Pago:</label>
+                            <input type="number" class="form-control" disabled
+                            [value]="row.montoTotal"/>
+                        </div>
+                        <div class="col-6 align-items-center justify-items-end mt-5">
+                            <span [ngClass]="{
+                                'bg-success-subtle text-success': row.estadoReserva ==='Pagado',
+                                'bg-secondary-subtle text-secondary': row.estadoReserva==='Pendiente',
+                                'bg-danger-subtle text-danger': row.estadoReserva==='Vencido',
+                                'bg-warning-subtle text-warning': row.estadoReserva==='Anulado'}">
+                                {{row.estadoReserva}}
+                            </span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label mb-0 mt-2">Fecha Reserva</label>
+                        <div class="input-group">
+                            <input type="date" class="form-control" formControlName="fechaReserva"
+                            mwlFlatpickr [altInput]="true" altFormat="d/m/Y" [convertModelValue]="true">
+                            <span class="input-group-text"><i class="ri-calendar-event-line"></i></span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label mb-0 mt-2">Hora Entrada</label>
+                            <div class="input-group">
+                                <input type="time" class="form-control" formControlName="horaEntrada"
+                                    mwlFlatpickr [dateFormat]="'H:i'" [noCalendar]="true" [enableTime]="true" />
+                                <span class="input-group-text"><i class="ri-time-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label mb-0 mt-2">Hora Salida</label>
+                            <div class="input-group">
+                                <input type="time" class="form-control" formControlName="horaSalida"
+                                mwlFlatpickr [dateFormat]="'H:i'" [noCalendar]="true" [enableTime]="true" />
+                                <span class="input-group-text"><i class="ri-time-line"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            }
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-light" id="btn-cancel-event"
+            (click)="onCloseModal()">Cancelar</button>
+            <button *ngIf="canActivate.includes('ANULAR') && this.accion==='show' && row.estadoReserva === 'Pendiente'"
+                type="button" class="btn btn-soft-danger" id="btn-delete-event"
+                (click)="deleteModal('annularModel',$event)">
+                <i class="ri-close-line align-bottom"></i> Anular
+            </button>
+            <button *ngIf="canActivate.includes('CAMBIAR-HORARIO') && this.accion==='edit' && row.estadoReserva === 'Pendiente'"
+                type="submit" class="btn btn-success" id="btn-save-event"
+                [disabled]="!reservationForm.valid"
+                (click)="saveData()">Guardar
+            </button>
+        </div>
+</div>
+
+<!-- Modals -->
+<ng-template #consultModel role="document" let-modal>
+    <div class="modal-body">
+      <div class="modal-header">
+          <button type="button" class="btn-close" id="btn-close"
+            data-bs-dismiss="modal" aria-label="Close"
+            (click)="modal.dismiss('Cross click')"></button>
+      </div>
+      <div class="text-center">
+        <div class="mt-3">
+            <div class="avatar-lg mx-auto">
+                <div class="avatar-title bg-light text-success display-5 rounded-circle">
+                    <i class=" ri-bubble-chart-line"></i>
+                </div>
+            </div>
+            <div class="mt-4 pt-2 fs-15">
+                <h4 class="fs-20 fw-semibold text-info ">Se realizo la Consulta!</h4>
+
+                <ul>
+                    <li *ngFor="let result of consultResults" class="fs-14 px-5 text-start">
+                        La Reserva al complejo <b>{{result.item.canchasDto.complejoDto.nombre}}</b> con Tasa <b>{{result.item.numeroTasa}}</b> se encuentra
+                        <span class="fw-medium"> </span>,
+                        <span class="badge " [ngClass]="{
+                            'badge bg-secondary-subtle text-secondary': result.item.estadoReserva === 'Pendiente' ,
+                            'badge bg-success-subtle text-success': result.item.estadoReserva === 'Pagado' ,
+                            'badge bg-warning-subtle text-warning': result.item.estadoReserva === 'Anulado',
+                            'badge bg-danger-subtle text-danger': result.item.estadoReserva === 'Vencido' }">
+                            <strong>{{result.item.estadoReserva}}</strong>
+                        </span> <br/>
+                        <ng-container *ngIf="result.item.pagosDtoList && result.item.pagosDtoList[0] as pago; else noPayment">
+                            <div  class=" text-muted ">
+                            <b>Fecha de Pago:</b> {{pago.fechaPago | date:'dd/MM/yyyy'}}<br/>
+                            <b>Monto Pagado:</b> {{pago.montoPago}}<br/>
+                            <b>Forma de Pago:</b> {{pago.formaPago}}<br/>
+                            <b>Entidad Financiera:</b> {{pago.entidadFinanciera}}<br/>
+                            <b>Observaciones:</b> {{pago.observaciones}}<br/>
+                            </div>
+                        </ng-container>
+
+                        <ng-template #noPayment>
+                            <p [ngClass]="{
+                                'text-success': result.type === 'success' ,
+                                'text-warning': result.type === 'warning',
+                                'text-danger': result.type === 'error' }">
+                                {{result.text}}
+                            </p>
+                        </ng-template>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+            <button type="button" class="swal2-confirm btn btn-primary mb-1" aria-label=""
+                (click)="modal.dismiss('Cross click')">OK</button>
+        </div>
+        <div class="swal2-footer" *ngIf="consultResults.length>0">
+            <p class="fs-14 text-muted">Consultas Realizadas en RUAT</p>
+        </div>
+      </div>
+    </div>
+</ng-template>
+
+<!-- removeItemModal -->
+<ng-container *ngIf="accion === 'annularModel'">
+    <div class="modal-body" [ngClass]="{'disabled': showLoading}">
+        <div class="mt-2 text-center">
+            <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
+                colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
+            <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+                <h4>Estas seguro de Anular la Reserva?</h4>
+            </div>
+        </div>
+
+        <form #annulForm="ngForm" (ngSubmit)="annularData(annulForm.value)">
+            <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+                <div>
+                    <label for="motivo">Indique el motivo de la Anulacion</label>
+                    <select class="form-control" data-choices
+                        name="motivo" id="idCategory" [(ngModel)]="motivo" required #motivoCtrl="ngModel">
+                        <option value="">Seleccione un motivo</option>
+                        <option value="A SOLICITUD DEL CONTRIBUYENTE">A SOLICITUD DEL CONTRIBUYENTE</option>
+                        <option value="NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO">NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO</option>
+                        <option value="REGISTRO DE DATOS INCONSISTENTES">REGISTRO DE DATOS INCONSISTENTES</option>
+                    </select>
+                    <div *ngIf="motivoCtrl.invalid && motivoCtrl.touched" class="text-danger">
+                        El motivo es requerido.
+                    </div>
+                </div>
+
+                <div>
+                    <label for="observation">Escriba la Observación de la Reserva</label>
+                    <input type="text" class="form-control" placeholder="minimo 10 caracteres" name="observation"
+                        [(ngModel)]="observation" required minlength="10" #observationCtrl="ngModel">
+                    <div *ngIf="observationCtrl.invalid && observationCtrl.touched" class="text-danger">
+                        <div *ngIf="observationCtrl.errors?.['required']">La observación es requerida.</div>
+                        <div *ngIf="observationCtrl.errors?.['minlength']">La observación debe tener al menos 10 caracteres.</div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-muted  mb-0 fs-15 mx-4 mx-sm-5">
+                Al Confirmar no podra reactivar esta reserva nuevamente.
+            </p>
+            <div class="d-flex gap-2 justify-content-center mt-2 mb-2">
+                <button class="btn btn-link link-success fw-medium text-decoration-none" data-bs-dismiss="modal"
+                    id="deleteRecord-close" (click)="onCloseModal()">
+                    <i class="ri-close-line me-1 align-middle"></i> Cancelar
+                </button>
+                <button type="submit" class="btn w-sm btn-danger" id="delete-button"
+                    [disabled]="annulForm.invalid">
+                    Anular!
+                </button>
+            </div>
+        </form>
+    </div>
+    <!-- Loading Spinner -->
+    <div id="elmLoader" *ngIf="showLoading">
+        <div class="spinner-border text-primary avatar-sm" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+</ng-container>
+
+

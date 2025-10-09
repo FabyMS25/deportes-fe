@@ -186,38 +186,38 @@
     </div>
     <!-- Pagination -->
     <div class="row align-items-md-center mt-3">
-        <div class="col col-xxl-1" *ngIf="allcontent && allcontent.length>0">                        
+        <div class="col col-xxl-1" *ngIf="getTotalElements() > 0">                        
             <div class="text-sm-left float-start listjs-pagination">     
-                    <div class="d-flex">
-                        <select class="form-control mb-0" (change)="onTableSizeChange($event)">
-                            <option *ngFor="let size of tableSizes" [value]="size">                
-                                {{size}}
-                            </option>                
-                        </select>             
-                    </div>      
+                <div class="d-flex">
+                    <select class="form-control mb-0" (change)="onTableSizeChange($event)">
+                        <option *ngFor="let size of tableSizes" [value]="size" [selected]="size === itemsPerPage">                
+                            {{size}}
+                        </option>                
+                    </select>             
+                </div>      
             </div>
         </div>
-        <div class="col col-xxl-5 d-none d-sm-table" *ngIf="allcontent && allcontent.length>0">
+        <div class="col col-xxl-5 d-none d-sm-table" *ngIf="getTotalElements() > 0">
             <div class="dataTables_info mb-2" id="tickets-table_info" role="status" aria-live="polite">
                 <span style="color:slategray">
-                    {{content.length}} Registros, de un total de {{ allcontent.length }}
+                    {{getDisplayContentLength()}} Registros, de un total de {{ getTotalElements() }}
+                    <span *ngIf="serverSidePagination">(Paginación del servidor)</span>
                 </span>
             </div>            
         </div> 
         <div class="col col-xxl-6">
             <div class="text-sm-right float-sm-end listjs-pagination">
                 <ngb-pagination 
-                    [collectionSize]="allcontent.length" 
+                    [collectionSize]="getTotalElements()" 
                     [(page)]="service.page" 
                     [pageSize]="itemsPerPage" 
                     [boundaryLinks]="true" 
                     [maxSize]="2" 
                     [ellipses]="true"
-                    (pageChange)="changePage()">
+                    (pageChange)="onPageChange($event)">
                 </ngb-pagination>
             </div>
         </div>
-        
     </div> 
-    <!-- End Pagination -->     
+    <!-- End Pagination -->    
 </div>

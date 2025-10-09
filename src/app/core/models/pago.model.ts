@@ -1,21 +1,24 @@
 import { Reserva } from "./reserva.models";
 
 export interface  Pago{
-
     uuid?: String;
     estado?:boolean;
+    fechaCreacion?: Date;
+    fechaActualizacion?:Date;
 
-    fechaPago: Date;  
-    montoPago: number;
-    
-    numeroTasa: string;//"21987", 
-    entidadFinanciera: string;//"BANCO SOLIDARIO S.A.-COCHABAMBA-QUILLACOLLO"
+    numeroTasa: string; //"21987", 
+    tipoTasa: string; // = "TO";
     folio: string;//"2870093262146", 
     formaPago: string;//"PAGO ORIGINAL TOTAL",
-    observacion: string//"CONSOLIDADO"
+    fechaPago: Date; // DD/MM/YYYY format
+    entidadFinanciera: string;//"BANCO SOLIDARIO S.A.-COCHABAMBA-QUILLACOLLO"
+    montoPagado: number;
+    observaciones?: string//"CONSOLIDADO"
   
-    reservasDto: Reserva;
-    // estadoPago: string;
+    estadoPago:string;// = "pendiente";
+    ultimaConsulta?: Date;
+    respuestaCompletaRuat?:string;
 
+    reservaDto: Reserva;
   }
   

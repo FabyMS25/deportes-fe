@@ -1,0 +1,375 @@
+<app-breadcrumbs   title="Reservas" [breadcrumbItems]="breadCrumbItems">
+</app-breadcrumbs>
+<div *ngIf="isLoading" 
+     class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
+     style="background-color: rgba(0,0,0,0.5); z-index: 9999;">
+  <div class="text-center text-white">
+    <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="mt-3 fw-medium">Procesando su solicitud...</p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-9 col-sm-12">
+    <div class="wizard-container">
+      <ng-container [ngSwitch]="step">
+        <app-complejo-selection
+          *ngSwitchCase="BookingStep.COMPLEJO_SELECTION"
+          [bookingType]="bookingType"
+          (complejoSelected)="onComplejoSelected($event)">
+        </app-complejo-selection>
+        <app-campo-selection
+          *ngSwitchCase="BookingStep.CAMPO_SELECTION"
+          [dataComplejo]="dataComplejo!"
+          [bookingType]="bookingType"
+          (campoSelected)="onCampoSelected($event)"
+          (goBack)="back()">
+        </app-campo-selection>
+        
+        <!-- Step 2: Schedule Selection -->
+        <ng-container *ngSwitchCase="BookingStep.HORARIO_SELECTION">
+          
+          <!-- Puntual Schedule -->
+          <app-schedule-selection
+            *ngIf="isPuntualReservation && dataField && selectedTariff"
+            [dataField]="dataField"
+            [dataTariff]="selectedTariff"
+            [reservationsList]="reservationsList"
+            [anticipationHours]="ANTICIPATION_HOURS"
+            (horarioSelected)="onHorarioSelected($event)"
+            (openScheduleModal)="openScheduleModal(content)"
+            (goBack)="back()">
+          </app-schedule-selection>
+          
+          <!-- Recurrent Schedule -->
+          <app-schedule-recurrent-selection
+            *ngIf="isRecurrentReservation && dataField && selectedTariff"
+            [dataField]="dataField"
+            [dataTariff]="selectedTariff"
+            [reservationsList]="reservationsList"
+            (scheduleCompleted)="onRecurrentScheduleCompleted($event)"
+            (goBack)="back()">
+          </app-schedule-recurrent-selection>
+          
+        </ng-container>
+        <app-reservation-form
+          *ngSwitchCase="BookingStep.RESERVATION_FORM"
+          [bookingType]="bookingType"
+          [dataComplejo]="dataComplejo!"
+          [dataField]="dataField!"
+          [selectedTariff]="selectedTariff!"
+          [selectedSchedule]="selectedSchedule"
+          [recurrentSchedule]="recurrentSchedule"
+          [bookingType]="bookingType"
+          [contribuyente]="contribuyente"
+          [reservationsList]="reservationsList"
+          [validHours]="VALID_HOURS"
+          [anticipationHours]="ANTICIPATION_HOURS"
+          (reservationCompleted)="onReservationCompleted($event)"
+          (goBack)="back()">
+        </app-reservation-form>        
+      </ng-container>
+    </div>
+  </div>
+
+  <div class="col-lg-3 d-none d-lg-block">
+    <div class="sticky-side-div">
+      <div class="card mb-3">
+        <div class="card-header py-2 bg-light">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+              <i class="ri-lightbulb-flash-line me-1"></i>
+              Información Importante
+            </h6>
+          </div>
+        </div>
+        <div class="card-body p-2">
+          <ngx-slick-carousel [config]="config" #slickModal="slick-carousel">
+            
+            <!-- Payment Warning -->
+            <div class="alert alert-warning small py-2 mb-0" 
+                 *ngIf="step === BookingStep.RESERVATION_FORM" 
+                 ngxSlickItem>
+              <i class="ri-alarm-warning-line me-1"></i>
+              <strong>Recuerde:</strong> Debe realizar el pago dentro de las próximas 
+              <strong>{{ VALID_HOURS }}</strong> hora(s) para confirmar su reserva.
+            </div>
+            
+            <!-- Recurrent Info -->
+            <div class="alert alert-info small py-2 mb-0" 
+                 *ngIf="step > BookingStep.CAMPO_SELECTION && isRecurrentReservation" 
+                 ngxSlickItem>
+              <i class="ri-information-line me-1"></i>
+              <strong>Nota:</strong> La reserva será válida para todos los días y horarios 
+              seleccionados durante el período indicado.
+            </div>
+            
+            <!-- Puntual Availability Tip -->
+            <div class="alert alert-info small py-2 mb-0" 
+                 *ngIf="step > BookingStep.CAMPO_SELECTION && isPuntualReservation" 
+                 ngxSlickItem>
+              <i class="ri-lightbulb-line me-1"></i>
+              <strong>Consejo:</strong> Los horarios en verde están disponibles para reservar. 
+              Seleccione el que más le convenga.
+            </div>
+            
+            <!-- General Requirements -->
+            <div class="alert alert-primary small py-2 mb-0" 
+                 role="alert" 
+                 ngxSlickItem>
+              <div class="d-flex">
+                <i class="ri-information-line fs-14 mt-1"></i>
+                <div class="ms-2">
+                  <h6 class="alert-heading mb-1 fs-14">Requisitos</h6>
+                  <p class="mb-1 fs-13">
+                    Reserva con <strong>{{ ANTICIPATION_HOURS }}h</strong> de anticipación mínima.
+                  </p>
+                  <small class="text-muted fs-12">
+                    Pago en <strong>{{ VALID_HOURS }}h</strong> para confirmar.
+                  </small>
+                </div>
+              </div>
+            </div>
+            
+          </ngx-slick-carousel>
+        </div>
+      </div>
+      
+      <div class="card mb-3">
+        <div class="card-header bg-success bg-opacity-10 py-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 text-success">
+              <i class="ri-bookmark-line me-1"></i>
+              Resumen de Reserva
+            </h6>
+            <small class="badge bg-primary">Paso {{ step + 1 }}/4</small>
+          </div>
+        </div>
+        <div class="card-body p-3">
+          
+          <!-- Booking Type -->
+          <div class="summary-item mb-3" *ngIf="bookingType">
+            <div class="d-flex align-items-center">
+              <i class="ri-flag-line text-primary fs-5 me-2"></i>
+              <span class="badge fs-7"
+                    [class.bg-primary]="isPuntualReservation"
+                    [class.bg-success]="isRecurrentReservation">
+                {{ isPuntualReservation ? 'Reserva Puntual' : 'Reserva Recurrente' }}
+              </span>
+            </div>
+          </div>
+          
+          <!-- Complejo Info -->
+          <ng-container *ngIf="dataComplejo">
+            <hr class="my-2">
+            <div class="summary-item mb-3">
+              <div class="d-flex align-items-start">
+                <i class="ri-building-line text-primary fs-5 me-2 mt-1"></i>
+                <div class="flex-grow-1">
+                  <div class="fw-medium mb-1">{{ dataComplejo.nombre }}</div>
+                  <small class="text-muted d-flex align-items-center">
+                    <i class="ri-map-pin-line me-1"></i>
+                    {{ dataComplejo.distrito || dataComplejo.ubicacion }}
+                  </small>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+          
+          <!-- Campo Info -->
+          <ng-container *ngIf="dataField">
+            <hr class="my-2">
+            <div class="summary-item mb-3">
+              <div class="d-flex align-items-start">
+                <i class="ri-football-line text-primary fs-5 me-2 mt-1"></i>
+                <div class="flex-grow-1">
+                  <div class="fw-medium mb-1">
+                    {{ dataField.nombre }}
+                    <small class="text-muted ms-1">({{ dataField.codigo }})</small>
+                  </div>
+                  <div class="d-flex flex-wrap gap-1">
+                    <span class="badge bg-primary-subtle text-primary">
+                      {{ dataField.categoria }}
+                    </span>
+                    <span class="badge bg-secondary-subtle text-secondary">
+                      {{ dataField.superficieDto.descripcion }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+          <hr *ngIf="dataField && selectedTariff">
+            <div class="summary-item mb-2" *ngIf="selectedTariff">
+              <div class="d-flex align-items-start">
+                <i class="ri-price-tag-3-line text-warning fs-6 mt-1"></i>
+                <div class="ms-2 flex-grow-1">
+                  <div class="fw-medium small">{{ selectedTariff.descripcion || 'Tarifa estándar' }}</div>
+                  <div class="h6 text-success mb-0">
+                    {{ selectedTariff.precioBase | currency:'BOB':'symbol-narrow':'1.2-2' }}
+                    <small class="text-muted">/{{ bookingType === 'recurrente' ? 'mes' : 'hora' }}</small>
+                  </div>
+                    <small class="text-muted d-block" *ngIf="selectedTariff.desde && selectedTariff.hasta">
+                    {{ selectedTariff.desde.slice(0,5) }} - {{ selectedTariff.hasta.slice(0,5) }}
+                    </small>
+                    
+              <!-- <div class="d-flex justify-content-between mb-2" *ngIf="!isEventTariff()">
+                <span>Tarifa base ({{ duration }}h)</span>
+                <strong>{{ (selectedTariff.precioBase || 0) * duration | currency:'BOB':'symbol-narrow':'1.2-2' }}</strong>
+              </div>
+
+              <div class="d-flex justify-content-between mb-2" *ngIf="isEventTariff()">
+                <span>Tarifa evento</span>
+                <strong>{{ selectedTariff.precioBase | currency:'BOB':'symbol-narrow':'1.2-2' }}</strong>
+              </div>
+
+              <div class="d-flex justify-content-between mb-2 small text-muted" *ngFor="let concepto of conceptos">
+                <span>{{ concepto.nombre }}</span>
+                <span>+ {{ concepto.monto | currency:'BOB':'symbol-narrow':'1.2-2' }}</span>
+              </div> -->
+                </div>
+              </div>
+            </div>
+          <hr *ngIf="selectedSchedule || recurrentSchedule">
+            <div class="summary-item" *ngIf="selectedSchedule && bookingType === 'puntual'">
+              <div class="d-flex align-items-start">
+                <!-- <i class="ri-time-line text-primary fs-6 mt-1"></i> -->
+                <button type="button" 
+                        class="btn btn-outline-primary btn-sm" 
+                        (click)="openScheduleModal(content)">
+                    <i class="ri-calendar-event-line"></i>
+                </button>
+                <div class="ms-2 flex-grow-1">
+                  <div class="fw-medium small">{{ selectedSchedule.date | date:'mediumDate':'':'es' }}</div>
+                  <div class="fw-medium small">{{ selectedSchedule.date | date:'fullDate':'':'es' }}</div>
+                  <small class="text-primary">
+                    {{ selectedSchedule.start.slice(0,5) }} - {{ selectedSchedule.end.slice(0,5) }}
+                  </small>
+                </div>
+                <app-availability-overview
+                    [fieldData]="dataField"
+                    [reservationsList]="reservationsList"
+                    [selectedTariff]="selectedTariff">
+                </app-availability-overview>
+              </div>
+            </div>
+            <div class="summary-item" *ngIf="recurrentSchedule && bookingType === 'recurrente'">
+              <div class="d-flex align-items-start">
+                <i class="ri-calendar-schedule-line text-primary fs-6 mt-1"></i>
+                <div class="ms-2 flex-grow-1">
+                  <div class="fw-medium small">{{ recurrentSchedule.cantidadSesiones }} sesiones</div>
+                  <small class="text-muted">
+                    {{ recurrentSchedule.fechaInicio | date:'dd/MM' }} - 
+                    {{ recurrentSchedule.fechaFin | date:'dd/MM' }}
+                  </small>
+                </div>
+              </div>
+            </div>
+        </div>
+      </div> 
+      <!-- Contact Tab -->
+        <div class="card mb-2">
+          <div class="card-header py-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">
+                <i class="ri-contacts-line me-1"></i>
+                Contactos
+              </h6>
+            </div>
+        </div>
+          <div class="card-body p-2">
+            <div class="contact-item mb-2" *ngIf="globalAdmin">
+              <div class="d-flex align-items-center">
+                <img [src]="'assets/icons/users/' + globalAdmin.avatar" 
+                     alt="Admin" 
+                     class="avatar-xs rounded-circle">
+                <div class="ms-2 flex-grow-1">
+                  <div class="fw-medium small">{{ globalAdmin.name }}</div>
+                <p class="text-muted mb-0 small">{{ globalAdmin.role }}</p>
+                  <a [href]="'tel:' + globalAdmin.telf" class="text-primary small">
+                    <i class="ri-phone-line me-1"></i>{{ globalAdmin.telf }}
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div class="contact-item mb-2" *ngFor="let employee of dataComplejo?.encargadosDtoList">
+              <div class="d-flex align-items-center">
+                <img [src]="'assets/icons/users/' + employee.avatar" 
+                     alt="Encargado" 
+                     class="avatar-xs rounded-circle">
+                <div class="ms-2 flex-grow-1">
+                  <div class="fw-medium small">{{ employee.nombre }}</div>
+                  <a [href]="'tel:' + employee.telefono" class="text-primary small" *ngIf="employee.telefono">
+                    <i class="ri-phone-line me-1"></i>{{ employee.telefono }}
+                  </a>
+                  <small class="badge bg-info-subtle text-info small">
+                    {{ employee.horaEntrada?.slice(0, 5) }} - {{ employee.horaSalida?.slice(0, 5) }}
+                  </small>
+                </div>
+              </div>
+            </div>
+            <div class="mt-2 p-2 bg-light rounded">
+              <small class="text-muted">
+                <i class="ri-customer-service-2-line text-primary me-1"></i>
+                ¿Necesita ayuda? Contacte al departamento de deportes.
+              </small>
+            </div>
+          </div>
+        </div>
+      <!-- Field Images (from step 2) -->
+      <div class="card">
+        <div class="card-body p-2">
+          <div class="product-img-slider">
+            <ngx-slick-carousel [config]="config" 
+                                #slickModal="slick-carousel" 
+                                (afterChange)="slickChange($event)">
+              <div *ngFor="let image of defaultImages" ngxSlickItem>
+                <img [src]="image" 
+                     alt="Imagen del campo deportivo" 
+                     class="img-fluid d-block rounded" />
+              </div>
+            </ngx-slick-carousel>
+            
+            <ngx-slick-carousel [config]="slidesConfig" class="mt-2">
+              <div *ngFor="let image of defaultImages; let i = index" 
+                   ngxSlickItem 
+                   class="swiperlist px-1" 
+                   (click)="slidePreview(i, $event)">
+                <img [src]="image" 
+                     alt="Miniatura" 
+                     class="img-fluid d-block rounded" 
+                     style="height: 60px; object-fit: cover;">
+              </div>
+            </ngx-slick-carousel>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Modal (Only for Puntual) -->
+<ng-template #content let-modal>
+  <div class="modal-content border-0">
+    <div class="modal-header bg-success-subtle">
+      <h5 class="modal-title">
+        <i class="ri-calendar-2-line me-2"></i>
+        Horarios Disponibles - {{ dataField?.nombre }}
+      </h5>
+      <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
+    </div>
+    <div class="modal-body">
+      <!-- <app-timetables
+        *ngIf="dataField"
+        [horarios]="dataField.horariosFijosDtoList"
+        [selectedTariff]="selectedTariff"
+        [reservationsList]="reservationsList"
+        [reservationDate]="selectedSchedule?.date"
+        (reserveEvent)="onHorarioSelected($event)">
+      </app-timetables> -->
+    </div>
+  </div>
+</ng-template>

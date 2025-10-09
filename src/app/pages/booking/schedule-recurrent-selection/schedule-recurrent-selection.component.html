@@ -1,0 +1,275 @@
+<div class="recurrent-schedule-container">
+  <div class="row">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title mb-0">
+            <i class="ri-calendar-2-line me-2"></i>
+            Configurar Reserva Recurrente
+          </h4>
+          <p class="text-muted small mb-0">Seleccione los días y horarios para entrenamientos programados</p>
+        </div>
+        
+        <div class="card-body">
+          <!-- Date Range -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <label class="form-label fw-medium">
+                <i class="ri-calendar-check-line me-1"></i>
+                Fecha de Inicio
+              </label>
+              <input type="date" 
+                     class="form-control" 
+                     [(ngModel)]="fechaInicio"
+                     (change)="onFechaInicioChange()">
+                     <!-- [min]="(new Date()).toISOString().split('T')[0]"> -->
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium">
+                <i class="ri-calendar-close-line me-1"></i>
+                Fecha de Fin
+              </label>
+              <input type="date" 
+                     class="form-control" 
+                     [(ngModel)]="fechaFin"
+                     (change)="onFechaFinChange()"
+                     [min]="fechaInicio">
+            </div>
+          </div>
+
+          <!-- Error Message -->
+          <div class="alert alert-danger" *ngIf="errorMessage">
+            <i class="ri-error-warning-line me-2"></i>
+            {{ errorMessage }}
+          </div>
+
+          <!-- Days of Week Selection -->
+          <div class="card bg-light mb-4">
+            <div class="card-body">
+              <h6 class="mb-3">
+                <i class="ri-calendar-event-line me-1"></i>
+                Seleccione Días y Horarios
+              </h6>
+              
+              <div class="days-grid">
+                <div *ngFor="let dia of diasSemana" class="day-selector-card">
+                  <div class="day-card" 
+                       [class.selected]="dia.selected"
+                       (click)="toggleDay(dia)">
+                    <div class="form-check">
+                      <input class="form-check-input" 
+                             type="checkbox" 
+                             [checked]="dia.selected"
+                             [id]="'dia-' + dia.dia">
+                      <label class="form-check-label fw-medium" [for]="'dia-' + dia.dia">
+                        {{ dia.diaDisplay }}
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <!-- Time Selection (only if day is selected) -->
+                  <div class="time-selection mt-2" *ngIf="dia.selected">
+                    <div class="row g-2">
+                      <div class="col-6">
+                        <label class="form-label small text-muted">Inicio</label>
+                        <input type="time" 
+                               class="form-control form-control-sm" 
+                               [(ngModel)]="dia.horaInicio"
+                               (change)="updateDayTime(dia)"
+                               [min]="minTime"
+                               [max]="maxTime">
+                      </div>
+                      <div class="col-6">
+                        <label class="form-label small text-muted">Fin</label>
+                        <input type="time" 
+                               class="form-control form-control-sm" 
+                               [(ngModel)]="dia.horaFin"
+                               (change)="updateDayTime(dia)"
+                               [min]="minTime"
+                               [max]="maxTime">
+                      </div>
+                    </div>
+                    <small class="text-muted d-block mt-1">
+                      <i class="ri-time-line me-1"></i>
+                      Duración: {{ (calculateDuration(dia.horaInicio, dia.horaFin)) | number:'1.1-1' }}h
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Calendar View -->
+<!-- Calendar View -->
+<div class="calendar-section">
+  <h6 class="mb-3">
+    <i class="ri-calendar-2-line me-1"></i>
+    Vista de Calendario
+    <small class="text-muted">(Los días resaltados serán reservados)</small>
+  </h6>
+  
+  <div *ngFor="let monthData of calendarMonths" class="calendar-month mb-4">
+    <div class="month-header text-center mb-3">
+      <h5 class="mb-0">{{ monthData.monthName }} {{ monthData.year }}</h5>
+    </div>
+    
+    <div class="calendar-grid">
+      <!-- Weekday headers -->
+      <div class="calendar-header">Dom</div>
+      <div class="calendar-header">Lun</div>
+      <div class="calendar-header">Mar</div>
+      <div class="calendar-header">Mié</div>
+      <div class="calendar-header">Jue</div>
+      <div class="calendar-header">Vie</div>
+      <div class="calendar-header">Sáb</div>
+      
+      <!-- Calendar days -->
+      <ng-container *ngFor="let week of monthData.weeks">
+        <div *ngFor="let dayCell of week" 
+             class="calendar-day"
+             [class.empty]="dayCell.empty"
+             [class.out-of-range]="dayCell.isInRange === false"
+             [class.selectable]="dayCell.isSelectable"
+             [class.has-schedule]="dayCell.hasSchedule"
+             [class.reserved]="dayCell.isReserved"
+             (click)="toggleDateInCalendar(dayCell)">
+          
+          <div class="day-content">
+            <span *ngIf="!dayCell.empty" class="day-number">{{ dayCell.day }}</span>
+            
+            <!-- Reservation indicators -->
+            <div class="reservation-indicators" *ngIf="!dayCell.empty">
+              <i *ngIf="dayCell.hasSchedule" class="ri-checkbox-circle-fill schedule-icon" title="Día programado"></i>
+              <i *ngIf="dayCell.isReserved" class="ri-alert-fill conflict-icon" title="Conflicto con reserva existente"></i>
+            </div>
+            
+            <!-- Time info for reserved days -->
+            <div *ngIf="dayCell.hasSchedule && !dayCell.empty" class="time-info">
+              <small class="time-text">{{ getDayTime(dayCell.dayName) }}</small>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+    
+    <!-- Calendar Legend -->
+    <div class="calendar-legend mt-3">
+      <div class="legend-item">
+        <div class="legend-color has-schedule"></div>
+        <span class="legend-text">Día reservado</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color reserved"></div>
+        <span class="legend-text">Conflicto de reserva</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color out-of-range"></div>
+        <span class="legend-text">Fuera del rango</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+          <!-- Actions -->
+          <div class="d-flex justify-content-between mt-4">
+            <button type="button" class="btn btn-light" (click)="back()">
+              <i class="ri-arrow-left-line me-1"></i>
+              Anterior
+            </button>
+            <button type="button" 
+                    class="btn btn-primary" 
+                    [disabled]="!canConfirm"
+                    (click)="confirmar()">
+              <i class="ri-check-line me-1"></i>
+              Confirmar Horarios
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Sidebar -->
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-header bg-success-subtle">
+          <h6 class="mb-0 text-success">
+            <i class="ri-calendar-check-line me-1"></i>
+            Resumen de Reserva Recurrente
+          </h6>
+        </div>
+        <div class="card-body">
+          <!-- Period -->
+          <div class="summary-item mb-3">
+            <label class="small text-muted d-block mb-1">Período</label>
+            <div class="d-flex align-items-center gap-2">
+              <i class="ri-calendar-line text-primary"></i>
+              <div>
+                <div class="small">{{ fechaInicio | date:'dd/MM/yyyy' }}</div>
+                <div class="small text-muted">hasta</div>
+                <div class="small">{{ fechaFin | date:'dd/MM/yyyy' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <hr>
+
+          <!-- Selected Days -->
+          <div class="summary-item mb-3">
+            <label class="small text-muted d-block mb-2">Días Seleccionados</label>
+            <div class="alert alert-info small mb-2" *ngIf="selectedDaysCount === 0">
+              <i class="ri-information-line me-1"></i>
+              Seleccione al menos un día
+            </div>
+            <div *ngIf="selectedDaysCount > 0">
+              <div *ngFor="let dia of diasSemana" class="mb-2">
+                <div *ngIf="dia.selected" class="d-flex align-items-center gap-2 p-2 bg-light rounded">
+                  <i class="ri-checkbox-circle-fill text-success"></i>
+                  <div class="flex-grow-1">
+                    <div class="fw-medium small">{{ dia.diaDisplay }}</div>
+                    <small class="text-muted">
+                      {{ dia.horaInicio }} - {{ dia.horaFin }}
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr>
+
+          <!-- Statistics -->
+          <div class="stats-grid">
+            <div class="stat-card text-center p-3 bg-light rounded">
+              <div class="stat-value text-primary h3 mb-1">{{ selectedDaysCount }}</div>
+              <div class="stat-label small text-muted">Días/Semana</div>
+            </div>
+            
+            <div class="stat-card text-center p-3 bg-light rounded">
+              <div class="stat-value text-success h3 mb-1">{{ totalSessions }}</div>
+              <div class="stat-label small text-muted">Sesiones Totales</div>
+            </div>
+            
+            <div class="stat-card text-center p-3 bg-light rounded">
+              <div class="stat-value text-info h3 mb-1">{{ totalHours | number:'1.0-0' }}</div>
+              <div class="stat-label small text-muted">Horas Totales</div>
+            </div>
+          </div>
+
+          <hr>
+
+          <!-- Tariff Info -->
+          <div class="summary-item mb-3">
+            <label class="small text-muted d-block mb-1">Tarifa Mensual</label>
+            <div class="h4 text-success mb-0">
+              {{ dataTariff.precioBase | currency:'BOB':'symbol-narrow':'1.2-2' }}
+            </div>
+            <small class="text-muted">Por mes de entrenamiento</small>
+          </div>
+
+          <!-- Info Box -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

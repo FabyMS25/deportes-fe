@@ -1,5 +1,9 @@
+import { CampoDeportivo } from "./campoDeportivo.model";
+
 export interface Superficie {
   uuid?: string;
-  estado?:string;
-  descripcion:string;
+  estado?: boolean;
+  
+  descripcion: string; 
+  campoDeportivosDtoList?:CampoDeportivo[];
 }

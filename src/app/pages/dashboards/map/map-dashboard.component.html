@@ -1,94 +1,143 @@
-
-    <div class="row g-0">
-      <div class="col-12">
+<div class="row g-0">
+    <div class="col-12">
         <div class="card map-card">
             <div class="card-header border-0 d-flex flex-wrap align-items-center">
-                <h5 class="card-title flex-grow-1 mb-0">PANEL DE CONTROL DE COMPLEJOS DEPORTIVOS</h5>
+                <h5 class="card-title flex-grow-1 mb-0">
+                    <i class="ri-map-pin-2-line"></i> PANEL DE CONTROL DE COMPLEJOS DEPORTIVOS
+                </h5>
                 <div class="flex-shrink-0">
-                    <div class="d-flex gap-1 flex-wrap ">
-                        <!-- <button type="button" class="btn btn-primary" data-bs-toggle="offcanvas"
-                        href="javascript:void(0);" (click)="openEnd(filtetcontent)"><i
-                        class="ri-filter-3-line align-bottom me-1"></i>Filtrar
-                        </button>       -->
+                    <div class="d-flex gap-2 flex-wrap">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary">{{complexList.length}} Complejos</span>
+                            <span class="badge bg-info">{{fieldList.length}} Campos</span>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-sm" 
+                                (click)="openEnd(filtetcontent)">
+                            <i class="ri-filter-3-line align-bottom me-1"></i>Filtrar
+                        </button>
                     </div>
                 </div>
             </div>
-            <div class="card-body p-0">
-                <div id="map" class="map-container"></div>
+            <div class="card-body p-0 position-relative">
+                <div *ngIf="loading" class="map-loading-overlay">
+                    <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando mapa...</span>
+                    </div>
+                </div>
+                <div id="map" class="map-container" [class.loading]="loading"></div>
             </div>
         </div>
-      </div>
     </div>
-<script src="https://unpkg.com/leaflet-geosearch@latest/dist/bundle.min.js"></script>
+</div>
 
-<!--  -->
-<!-- Right Sidebar Filter Section  -->
+<!-- Right Sidebar Filter Section -->
 <ng-template #filtetcontent let-offcanvas>
-  <div class="offcanvas-header bg-light">
-      <h5 class="offcanvas-title" id="offcanvasExampleLabel">Leads Fliters</h5>
-      <button type="button" class="btn-close text-body" data-bs-dismiss="offcanvas" aria-label="Close"
-          (click)="offcanvas.dismiss('Cross click')"></button>
-  </div>
-  <!--end offcanvas-header-->
-  <form action="" class="d-flex flex-column justify-content-end h-100">
-      <div class="offcanvas-body">
-          <div class="mb-4">
-              <label for="datepicker-range" class="form-label text-muted text-uppercase fw-semibold mb-3">Fecha</label>
-              <input class="form-control flatpickr-input" type="text" placeholder="Select Date" mwlFlatpickr
-                  [altInput]="true" id="isDate">
-          </div>
-          <div class="mb-4">
-              <label for="complejo-select"
-                  class="form-label text-muted text-uppercase fw-semibold mb-3">Complejo</label>
-              <select class="form-control" data-choices data-choices-multiple-remove="true" name="complejo-select"
-                  id="complejo-select">
-                  <option value="" selected>Seleccione Complejo</option>
+    <div class="offcanvas-header bg-light">
+        <h5 class="offcanvas-title">
+            <i class="ri-filter-3-line"></i> Filtros de Búsqueda
+        </h5>
+        <button type="button" class="btn-close" 
+                (click)="offcanvas.dismiss('Cross click')"></button>
+    </div>
 
-                  <option value="Argentina">Argentina</option>
-              </select>
-          </div>
-          <div class="mb-4">
-              <label for="distrito-select"
-                  class="form-label text-muted text-uppercase fw-semibold mb-3">Distrito</label>
-              <select class="form-control" data-choices data-choices-multiple-remove="true" name="distrito-select"
-                  id="distrito-select">
-                  <option value="" selected>Seleccionar Distrito</option>
-                  <option value="Argentina">Argentina</option>
-              </select>
-          </div>
-          <div class="mb-4">
-              <label for="status-select" class="form-label text-muted text-uppercase fw-semibold mb-3">Categorías </label>
-              <div class="row g-2">
-                  @for (item of categoryList; track $index) {
-                      <div class="col-lg-6">
-                          <div class="form-check">
-                              <input class="form-check-input" type="checkbox" id="categoria" [value]="item">
-                              <label class="form-check-label" for="categoria">{{item.nombre}}</label>
-                          </div>
-                      </div>
-                  }
-              </div>
-          </div>
-          <div class="mb-4">
-              <label for="tarifa" class="form-label text-muted text-uppercase fw-semibold mb-3">Tarifa</label>
-              <div class="row g-2 align-items-center">
-                  <div class="col-lg">
-                      <input type="number" class="form-control" id="tarifa" placeholder="0">
-                  </div>
-                  <div class="col-lg-auto">
-                      a
-                  </div>
-                  <div class="col-lg">
-                      <input type="number" class="form-control" id="tarifa" placeholder="0">
-                  </div>
-              </div>
-          </div>
-      </div>
-      <!--end offcanvas-body-->
-      <div class="offcanvas-footer border-top p-3 text-center hstack gap-2">
-          <button class="btn btn-light w-100">Borrar Filtro</button>
-          <button type="submit" class="btn btn-success w-100" (click)="SearchData();">Filtrar</button>
-      </div>
-      <!--end offcanvas-footer-->
-  </form>
+    <div class="offcanvas-body">
+        <form>
+            <!-- District Filter -->
+            <div class="mb-4">
+                <label for="distrito-select" class="form-label text-muted text-uppercase fw-semibold mb-3">
+                    <i class="ri-map-pin-line"></i> Distrito
+                </label>
+                <select class="form-select" [(ngModel)]="selectedDistrict" name="distrito">
+                    <option value="">Todos los distritos</option>
+                    <option *ngFor="let district of uniqueDistricts" [value]="district">
+                        {{district}}
+                    </option>
+                </select>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="mb-4">
+                <label class="form-label text-muted text-uppercase fw-semibold mb-3">
+                    <i class="ri-price-tag-3-line"></i> Categorías Deportivas
+                </label>
+                <div class="category-filter-grid">
+                    <div *ngFor="let category of categoryList" class="form-check mb-2">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               [id]="'cat-' + category.uuid"
+                               (change)="onCategoryChange(category.nombre, $event)"
+                               [checked]="selectedCategories.includes(category.nombre)">
+                        <label class="form-check-label" [for]="'cat-' + category.uuid">
+                            {{category.nombre}}
+                        </label>
+                    </div>
+                </div>
+                <small class="text-muted" *ngIf="categoryList.length === 0">
+                    No hay categorías disponibles
+                </small>
+            </div>
+
+            <!-- Price Range Filter -->
+            <div class="mb-4">
+                <label class="form-label text-muted text-uppercase fw-semibold mb-3">
+                    <i class="ri-money-dollar-circle-line"></i> Rango de Tarifa (Bs.)
+                </label>
+                <div class="row g-2 align-items-center">
+                    <div class="col">
+                        <input type="number" 
+                               class="form-control" 
+                               [(ngModel)]="minTarifa"
+                               name="minTarifa"
+                               placeholder="Mínimo"
+                               min="0">
+                    </div>
+                    <div class="col-auto">
+                        <span class="text-muted">a</span>
+                    </div>
+                    <div class="col">
+                        <input type="number" 
+                               class="form-control" 
+                               [(ngModel)]="maxTarifa"
+                               name="maxTarifa"
+                               placeholder="Máximo"
+                               min="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Filters Summary -->
+            <div class="alert alert-info" *ngIf="selectedCategories.length > 0 || selectedDistrict || minTarifa || maxTarifa">
+                <h6 class="alert-heading mb-2">
+                    <i class="ri-filter-2-line"></i> Filtros Activos
+                </h6>
+                <ul class="mb-0 ps-3">
+                    <li *ngIf="selectedDistrict">
+                        <strong>Distrito:</strong> {{selectedDistrict}}
+                    </li>
+                    <li *ngIf="selectedCategories.length > 0">
+                        <strong>Categorías:</strong> {{selectedCategories.join(', ')}}
+                    </li>
+                    <li *ngIf="minTarifa || maxTarifa">
+                        <strong>Precio:</strong> 
+                        {{minTarifa || '0'}} - {{maxTarifa || '∞'}} Bs.
+                    </li>
+                </ul>
+            </div>
+        </form>
+    </div>
+
+    <div class="offcanvas-footer border-top p-3">
+        <div class="d-grid gap-2">
+            <button type="button" 
+                    class="btn btn-primary" 
+                    (click)="applyFilters()">
+                <i class="ri-search-line"></i> Aplicar Filtros
+            </button>
+            <button type="button" 
+                    class="btn btn-outline-secondary" 
+                    (click)="clearFilters()">
+                <i class="ri-close-circle-line"></i> Limpiar Filtros
+            </button>
+        </div>
+    </div>
 </ng-template>

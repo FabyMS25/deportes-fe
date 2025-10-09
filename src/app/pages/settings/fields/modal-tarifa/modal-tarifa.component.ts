@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, TemplateRef, ViewChild } from '@angular/core';
-import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
+import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { BehaviorSubject, catchError, combineLatest, forkJoin, map, Observable, of, startWith, switchMap, tap } from 'rxjs';
@@ -17,7 +17,7 @@ import { Tarifa } from 'src/app/core/models/tarifa.model';
 })
 export class ModalTarifaComponent {
   @Input() accion!: string;
-  @Input() row!: campoDeportivo;
+  @Input() row!: CampoDeportivo;
   @Output() emitList = new EventEmitter();
   @Input() categoryList:Categoria[]=[];
   tipoList= TipoCobro
@@ -148,13 +148,15 @@ export class ModalTarifaComponent {
     formArray.controls.forEach((control: AbstractControl) => {
       console.log("1:::: ", control.value.categoriaDtoList)
       console.log("2::::", control.value.categorias)
-      const tarifaData:Tarifa = {
-        costo: control.value.costo,
+      const tarifaData:any = {
+        precioBase: control.value.costo,
+        fechaInicio: new Date(),
+        activo:true,
         desde: control.value.desde,
         hasta: control.value.hasta,
         descripcion: control.value.descripcion,
-        canchasDto: this.row,
-        categoriaDtoList: this.mergeCategories(control.value.categoriaDtoList, control.value.categorias)
+        campoDeportivoDto: this.row,
+        categoriasDtoList: this.mergeCategories(control.value.categoriaDtoList, control.value.categorias)
       };   
 
       console.log(tarifaData)   

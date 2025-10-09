@@ -1,7 +1,7 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SlickCarouselComponent } from 'ngx-slick-carousel';
-import { Complejo } from 'src/app/core/models/complejo.model';
+import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { ReportsService } from 'src/app/core/services/api/reportes.service';
 
 import { GlobalComponent } from 'src/app/global-component';
@@ -18,7 +18,7 @@ export class TicketComponent {
   globalAdmin = GlobalComponent.admin_deportes;
   
   contribuyente : any;
-  dataComplejo!:Complejo;
+  dataComplejo!:ComplejoDeportivo;
 
   showLoading = false;
 

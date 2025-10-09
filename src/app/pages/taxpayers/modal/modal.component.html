@@ -1,367 +1,303 @@
 <div id="event-modal" *ngIf="accion!=='delete'">
-<div class="modal-content border-0">
-    <div class="modal-header bg-info-subtle  p-3">
-      <!-- <div class="modal-header bg-light p-3"> -->
-        <h5 class="modal-title" id="modal-title">Contribuyente</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"
-              (click)="closeModal()" id="close-modal"></button>
+  <div class="modal-content border-0">
+    <div class="modal-header bg-info-subtle p-3">
+      <h5 class="modal-title" id="modal-title">
+        {{ accion === 'show' ? 'Ver' : (accion === 'edit' ? 'Editar' : 'Nuevo') }} Contribuyente
+      </h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"
+        (click)="closeModal()" id="close-modal"></button>
     </div>
-    <form [formGroup]="contentForm" (ngSubmit)="saveData()" class="needs-validation" name="event-form" id="form-event" >
+    <form [formGroup]="contentForm" (ngSubmit)="saveData()" class="needs-validation" name="event-form" id="form-event">
       <div class="modal-body">
-        @if(accion==='show'){
-          <div class="d-flex align-items-center mb-3">
-            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
-              <i class="ri-shield-user-fill text-muted fs-5 me-2"></i>
-              <span class="fw-semibold">Tipo de Contribuyente:</span>
-            </div>
-            <div class="flex-grow-1">
-              <p class="mb-0">{{ row.tipoContribuyente==='NA'?'CONTRIBUYENTE NATURAL':'CONTRIBUYENTE JURIDICO' }}</p>
+        <!-- View Mode -->
+        <div *ngIf="accion==='show'" class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-semibold">Tipo de Contribuyente:</label>
+            <p class="mb-0">{{ row.tipoContribuyente === 'NA' ? 'CONTRIBUYENTE NATURAL' : 'CONTRIBUYENTE JURÍDICO' }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-semibold">Código Contribuyente:</label>
+            <p class="mb-0">{{ row.codigoContribuyente || 'No asignado' }}</p>
+          </div>
+          
+          <div class="col-12 mb-3">
+            <label class="form-label fw-semibold">Nombre Completo:</label>
+            <p class="mb-0">{{ row.nombre }} {{ row.primerApellido }} {{ row.segundoApellido }}</p>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-semibold">{{ row.tipoDocumento }}:</label>
+            <p class="mb-0">{{ row.numeroDocumento }} - {{ getDepartmentName(row.expedido) }}</p>
+          </div>
+          
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-semibold">Género:</label>
+            <p class="mb-0">{{ row.genero === 'F' ? 'FEMENINO' : row.genero === 'M' ? 'MASCULINO' : 'NO ESPECIFICADO' }}</p>
+          </div>
+          
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-semibold">Fecha Nacimiento:</label>
+            <p class="mb-0">{{ row.fechaNacimiento }}</p>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-semibold">Estado Civil:</label>
+            <p class="mb-0">{{ getCivilStatus(row.estadoCivil) }}</p>
+          </div>
+          
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-semibold">NIT:</label>
+            <p class="mb-0">{{ row.nroNit || 'No registrado' }}</p>
+          </div>
+          
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-semibold">Teléfono:</label>
+            <p class="mb-0">{{ row.telefono }}</p>
+          </div>
+
+          <div class="col-12 mb-3">
+            <label class="form-label fw-semibold">Email:</label>
+            <p class="mb-0">{{ row.email }}</p>
+          </div>
+
+          <div class="col-12 mb-3">
+            <label class="form-label fw-semibold">Dirección:</label>
+            <p class="mb-0">{{ row.direccion || 'No registrada' }}</p>
+          </div>
+
+          <!-- New fields display -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-semibold">Deportista Elite:</label>
+            <p class="mb-0">{{ row.esDeportistaElite ? 'SÍ' : 'NO' }}</p>
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-semibold">Escuela Municipal:</label>
+            <p class="mb-0">{{ row.perteneceEscuelaMunicipal ? 'SÍ' : 'NO' }}</p>
+          </div>
+
+          <div class="col-12 mb-3" *ngIf="row.estaSancionado">
+            <div class="alert alert-warning">
+              <label class="form-label fw-semibold">Usuario Sancionado</label>
+              <p class="mb-1">Motivo: {{ row.motivoSancion }}</p>
+              <p class="mb-0">Fin de sanción: {{ row.fechaFinSancion }}</p>
             </div>
           </div>
-          <div class="d-flex align-items-center mb-3">
-            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
-              <i class="ri-contacts-fill text-muted fs-5 me-2"></i>
-              <span class="fw-semibold">Nombre:</span>
-            </div>
-            <div class="flex-grow-1">
-              <p class="mb-0">{{ row.nombre }} {{ row.apPaterno }} {{ row.apMaterno }}</p>
-            </div>
+        </div>
+
+        <!-- Edit/Create Mode -->
+        <div *ngIf="accion!=='show'" class="row">
+          <div class="col-12">
+            <h6 class="mb-3 border-bottom pb-2">Información Básica</h6>
           </div>
-          <div class="d-flex align-items-center mb-2">
-            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
-              <i class="bx bx-id-card text-muted fs-5 me-2"></i>
-              <span class="fw-semibold">{{ row.tipoDocumento }}:</span>
-            </div>
-            <div class="flex-grow-1">
-              <h6 class="mb-0 fw-semibold">{{ row.nroCarnet }} - {{ getDepartmentName(row.ciExpedido) }}</h6>
-            </div>
+
+          <div class="col-md-3 mb-2">
+            <label for="tipoContribuyente" class="form-label">Tipo Contribuyente <span class="text-danger">*</span></label>
+            <select class="form-select" id="tipoContribuyente" formControlName="tipoContribuyente"
+              [ngClass]="{'is-invalid': submitted && form['tipoContribuyente'].errors}">
+              <option value="NA">Natural</option>
+              <option value="JU">Jurídica</option>
+            </select>
           </div>
-          <div class="d-flex align-items-center mb-3">
-            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
-              <i class="ri-open-arm-fill text-muted fs-5 me-2"></i>
-              <span class="fw-semibold">Género:</span>
-            </div>
-            <div class="flex-grow-1">
-              <p class="mb-0">{{ row.sexo === 'F' ? 'FEMENINO' : row.sexo === 'M' ? 'MASCULINO' : '' }}</p>
-            </div>
+          <div class="col-md-3 mb-2">
+            <label for="tipoDocumento" class="form-label">Tipo Documento <span class="text-danger">*</span></label>
+            <select class="form-select" id="tipoDocumento" formControlName="tipoDocumento"
+              [ngClass]="{'is-invalid': submitted && form['tipoDocumento'].errors}">
+              <option value="" disabled>Seleccionar opción</option>
+              <option *ngFor="let item of identityTypes" [value]="item.type">{{ item.description }}</option>
+            </select>
           </div>
-          <div class="d-flex align-items-center mb-3">
-            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
-              <i class="ri-calendar-event-line text-muted fs-5 me-2"></i>
-              <span class="fw-semibold">Fecha Nacimiento:</span>
-            </div>
-            <div class="flex-grow-1">
-              <h6 class="mb-0 fw-semibold">{{ row.fechaNac }}</h6>
-            </div>
+
+          <div class="col-md-3 mb-2">
+            <label for="numeroDocumento" class="form-label">Nro Documento <span class="text-danger">*</span></label>
+            <input type="text" id="numeroDocumento" class="form-control" placeholder="Documento de Identificación" formControlName="numeroDocumento"
+              [ngClass]="{'is-invalid': (form['numeroDocumento'].touched || submitted) && form['numeroDocumento'].errors}">
+            <div class="form-text">Agregar complemento si corresponde, ejemplo: <b>12345678-1C</b></div>
           </div>
-          <div class="d-flex align-items-center mb-3">
-            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
-              <i class="ri-user-heart-fill text-muted fs-5 me-2"></i>
-              <span class="fw-semibold">Estado Civil:</span>
-            </div>
-            <div class="flex-grow-1">
-              <h6 class="mb-0 fw-semibold">{{ getCivilStatus(row.estadoCivil) }}</h6>
-            </div>
+
+          <div class="col-md-3 mb-2">
+            <label for="expedido" class="form-label">Expedido <span class="text-danger">*</span></label>
+            <select class="form-select" id="expedido" formControlName="expedido"
+              [ngClass]="{'is-invalid': submitted && form['expedido'].errors}">
+              <option value="" disabled>Seleccionar opción</option>
+              <option *ngFor="let item of cityAcronym" [value]="item.id">{{ item.value }}</option>
+            </select>
           </div>
-          <div class="d-flex align-items-center mb-3">
-            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
-              <i class="bx bx-mail-send text-muted fs-5 me-2"></i>
-              <span class="fw-semibold">Email:</span>
-            </div>
-            <div class="flex-grow-1">
-              <p class="mb-0 text-muted">{{ row.correo }}</p>
-            </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="codigoContribuyente" class="form-label">Código Contribuyente</label>
+            <input type="text" id="codigoContribuyente" class="form-control" formControlName="codigoContribuyente" readonly>
           </div>
-          <div class="d-flex align-items-center mb-3">
-            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
-              <i class="ri-phone-fill text-muted fs-5 me-2"></i>
-              <span class="fw-semibold">Teléfono:</span>
-            </div>
-            <div class="flex-grow-1">
-              <p class="mb-0 text-muted">{{ row.celular }}</p>
+
+          <!-- Personal Information -->
+          <div class="col-12 mt-3">
+            <h6 class="mb-3 border-bottom pb-2">Información Personal</h6>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="nombre" class="form-label">Nombre(s) <span class="text-danger">*</span></label>
+            <input type="text" id="nombre" class="form-control" placeholder="Ingresar Nombre" formControlName="nombre"
+              [ngClass]="{'is-invalid': submitted && form['nombre'].errors}">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="primerApellido" class="form-label">Primer Apellido <span class="text-danger">*</span></label>
+            <input type="text" id="primerApellido" class="form-control" placeholder="Primer Apellido" formControlName="primerApellido"
+              [ngClass]="{'is-invalid': submitted && form['primerApellido'].errors}">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="segundoApellido" class="form-label">Segundo Apellido</label>
+            <input type="text" id="segundoApellido" class="form-control" placeholder="Segundo Apellido" formControlName="segundoApellido">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="fechaNacimiento" class="form-label">Fecha Nacimiento</label>
+            <input type="date" id="fechaNacimiento" class="form-control" formControlName="fechaNacimiento">
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="genero" class="form-label">Género</label>
+            <select class="form-select" id="genero" formControlName="genero">
+              <option value="" disabled>Seleccionar opción</option>
+              <option *ngFor="let item of userSex" [value]="item.id">{{ item.description }}</option>
+            </select>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="estadoCivil" class="form-label">Estado Civil</label>
+            <select class="form-select" id="estadoCivil" formControlName="estadoCivil">
+              <option value="" disabled>Seleccionar opción</option>
+              <option *ngFor="let item of civilStatus" [value]="item.type">{{ item.description }}</option>
+            </select>
+          </div>
+
+          <!-- Contact Information -->
+          <div class="col-12 mt-3">
+            <h6 class="mb-3 border-bottom pb-2">Contacto</h6>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="nroNit" class="form-label">NIT</label>
+            <input type="text" id="nroNit" class="form-control" placeholder="Ingresar NIT" formControlName="nroNit">
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="telefono" class="form-label">Teléfono <span class="text-danger">*</span></label>
+            <input type="text" id="telefono" class="form-control" placeholder="Ingresar Teléfono" formControlName="telefono"
+              [ngClass]="{'is-invalid': submitted && form['telefono'].errors}">
+          </div>
+
+          <div class="col-12 mb-3">
+            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+            <input type="email" id="email" class="form-control" placeholder="Ingrese un correo válido" formControlName="email"
+              [ngClass]="{'is-invalid': submitted && form['email'].errors}">
+            <div class="form-text">Asegúrese de tener acceso al correo</div>
+          </div>
+
+          <div class="col-12 mb-3">
+            <label for="direccion" class="form-label">Dirección</label>
+            <textarea id="direccion" class="form-control" placeholder="Ingresar Dirección" formControlName="direccion" rows="2"></textarea>
+          </div>
+
+          <!-- Sports Information -->
+          <div class="col-12 mt-3">
+            <h6 class="mb-3 border-bottom pb-2">Información Deportiva</h6>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="esDeportistaElite" formControlName="esDeportistaElite">
+              <label class="form-check-label" for="esDeportistaElite">Deportista Elite</label>
             </div>
           </div>
 
-          <!-- Dirección -->
-          <div class="d-flex align-items-center mb-2">
-            <div class="d-flex align-items-center flex-shrink-0 me-3" style="min-width: 150px;">
-              <i class="ri-map-pin-line text-muted fs-5 me-2"></i>
-              <span class="fw-semibold">Dirección:</span>
-            </div>
-            <div class="flex-grow-1">
-              <h6 class="mb-0 fw-semibold">{{ row.direccion }}</h6>
+          <div class="col-md-6 mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="perteneceEscuelaMunicipal" formControlName="perteneceEscuelaMunicipal">
+              <label class="form-check-label" for="perteneceEscuelaMunicipal">Pertenece a Escuela Municipal</label>
             </div>
           </div>
-        }@else{
-          <div class="mb-2">
-              <label for="name-field" class="form-label mb-0">Nombre(s) <span class="text-danger">*</span></label>
-              <input type="text" id="name-field" class="form-control " placeholder="Ingresar Nombre"
-                  required formControlName="name"
-                  [ngClass]="{ 'is-invalid': submitted && form['name'].errors }" />
-              <div class="invalid-feedback">El campo es requerido.</div>
-          </div>
-          <div class="row">
-              <div class="col-lg-6 mb-2">
-                  <label for="firstSurname-field" class="form-label mb-0">Primer Apellido <span class="text-danger">*</span></label>
-                  <input type="text" id="firstSurname-field" class="form-control" placeholder="Primer Apellido"
-                      required formControlName="firstSurname"
-                      [ngClass]="{ 'is-invalid': submitted && form['firstSurname'].errors }" />
-                  <div class="invalid-feedback">El campo es requerido.</div>
-              </div>
-              <div class="col-lg-6 mb-2">
-                  <label for="secondSurname-field" class="form-label mb-0">Segundo Apellido</label>
-                  <input type="text" id="secondSurname-field" class="form-control" placeholder="Segundo Apellido"
-                      formControlName="secondSurname"
-                      [ngClass]="{ 'is-invalid': submitted && form['secondSurname'].errors }" />
-                  <div class="invalid-feedback">El campo es requerido.</div>
-              </div>
-          </div>
-          <div class="row">
-              <div class="col-lg-4 mb-2">
-                  <label for="birthDate-field" class="form-label mb-0">Fecha de Nacimiento <span class="text-danger">*</span></label>
-                  <input type="date" id="birthDate-field" class="form-control"
-                      placeholder="DD/MM/YYYY"
-                      formControlName="birthDate"
-                      [ngClass]="{ 'is-invalid': submitted && form['birthDate'].errors }"
-                      [value]="form['birthDate'].value | date:'yyyy-MM-dd'" />
-                  <div class="invalid-feedback">El campo es requerido.</div>
-              </div>
-              <div class="col-lg-4 mb-2">
-                  <label for="sex-field" class="form-label mb-0">Genero </label>
-                  <select class="form-select" aria-label="sex"
-                      formControlName="sex"
-                      [ngClass]="{'is-invalid': submitted && form['sex'].errors }">
-                      <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                      <option *ngFor="let item of userSex" [value]="item.id">
-                          {{ item.description }}
-                      </option>
-                  </select>
-                  <div *ngIf="submitted && form['sex'].errors" class="invalid-feedback" align="left">
-                      <div *ngIf="form['sex'].errors['required']">Debe seleccionar una opcion</div>
-                  </div>
-              </div>
-              <div class="col-lg-4 mb-2">
-                  <label for="civilStatus-field" class="form-label mb-0">Estado Civil </label>
-                  <select class="form-select" aria-label="civilStatus"
-                      formControlName="civilStatus"
-                      [ngClass]="{'is-invalid': submitted && form['civilStatus'].errors }">
-                      <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                      <option *ngFor="let item of civilStatus" [value]="item.type">
-                          {{ item.description }}
-                      </option>
-                  </select>
-                  <div *ngIf="submitted && form['civilStatus'].errors" class="invalid-feedback" align="left">
-                      <div *ngIf="form['civilStatus'].errors['required']">Debe seleccionar opción</div>
-                  </div>
-              </div>
-          </div>
-          <div class="row">
-              <div class="col-lg-4 mb-2">
-                  <label for="identityType-field" class="form-label mb-0">Tipo Documento <span class="text-danger">*</span></label>
-                  <select class="form-select"
-                      aria-label="identityType" formControlName="identityType"
-                      [ngClass]="{'is-invalid': submitted && form['identityType'].errors }">
-                      <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                      <option *ngFor="let item of identityTypes" [value]="item.type">
-                          {{ item.description }}
-                      </option>
-                  </select>
-                  <div *ngIf="submitted && form['identityType'].errors" class="invalid-feedback" align="left">
-                      <div *ngIf="form['identityType'].errors['required']">El campo es requerido</div>
-                  </div>
-              </div>
-              <div class="col-lg-4 mb-2">
-                  <label for="identityNumber-field" class="form-label mb-0">Nro Documento <span class="text-danger">*</span></label>
-                  <input type="text" id="identityNumber-field" class="form-control" formControlName="identityNumber"
-                      placeholder="Documento de Identificación"
-                      [ngClass]="{'is-invalid': (form['identityNumber'].touched || submitted) && form['identityNumber'].errors}">
-                  <div *ngIf="(form['identityNumber'].touched || submitted) && form['identityNumber'].errors" class="invalid-feedback">
-                      <span *ngIf="form['identityNumber'].errors?.['required']">El campo es requerido</span>
-                      <span *ngIf="form['identityNumber'].errors?.['itExist']">La identificacion ya se encuentra registrada.</span>
-                  </div>
-                  <div id="identificacionInput" class="form-text"> Agregar complemento si corresponde, ejemplo: <b>12345678-1C</b></div>
-              </div>
-              <div class="col-lg-4 mb-2">
-                  <label for="expedite-field" class="form-label mb-0">Expedido</label><span class="text-danger">*</span>
-                  <select class="form-select"
-                      aria-label="expedite"  formControlName="expedite"
-                      [ngClass]="{'is-invalid': submitted && form['expedite'].errors }">
-                      <option [value]="''" disabled class="text-muted">Seleccionar opción</option>
-                      <option *ngFor="let item of cityAcronym" [value]="item.id">
-                          {{ item.value }}
-                      </option>
-                  </select>
-                  <div *ngIf="submitted && form['expedite'].errors" class="invalid-feedback" align="left">
-                      <div *ngIf="form['expedite'].errors['required']">El campo es requerido</div>
-                  </div>
-              </div>
-          </div>
-          <div class="row">
-              <div class="col-lg-6 mb-2">
-                  <label for="nitNumber-field" class="form-label mb-0">NIT </label><span class="text-muted">(opcional)</span>
-                  <input type="text" id="nitNumber-field" class="form-control" placeholder="Ingresar NIT"
-                      formControlName="nitNumber"
-                      [ngClass]="{ 'is-invalid': submitted && form['nitNumber'].errors }" />
-                  <div class="invalid-feedback">El campo es requerido.</div>
-              </div>
-              <div class="col-lg-6 mb-2">
-                  <label for="phone-field" class="form-label mb-0">Celular</label><span class="text-danger">*</span>
-                  <input type="text" id="phone-field" class="form-control" placeholder="Ingresar Celular"
-                      mask="000-000-0000" formControlName="phone"
-                      [ngClass]="{ 'is-invalid': submitted && form['phone'].errors }" />
-                  <div class="invalid-feedback">El campo es requerido.</div>
-              </div>
+
+          <div class="col-12 mb-3">
+            <label for="registroUnicoDeportivo" class="form-label">Registro Único Deportivo</label>
+            <input type="text" id="registroUnicoDeportivo" class="form-control" placeholder="Número de registro" formControlName="registroUnicoDeportivo">
           </div>
 
-          <div class="mb-2">
-              <label for="email-field" class="form-label mb-0">Email <span class="text-danger">*</span></label>
-              <input type="email" id="email-field" class="form-control" placeholder="Ingrese un correo valido"
-                  required formControlName="email"
-                  [ngClass]="{ 'is-invalid': submitted && form['email'].errors }" />
-              <!-- <div class="invalid-feedback">Debe Ingresar un correo.</div>                                     -->
-              <span *ngIf="contentForm.get('email')?.pending">Verificando disponibilidad...</span>
-              <span class="invalid-feedback" *ngIf="contentForm.get('email')?.errors?.['required']">Debe ingresar un correo</span>
-              <span class="invalid-feedback" *ngIf="contentForm.get('email')?.errors?.['emailTaken']">Este Email ya cuenta con un usuario en el sistema.</span>
-              <div id="emailInput" class="form-text">Asegúrese de tener acceso al correo, <b>Se le enviara el codigo de confirmación </b></div>
-
+          <div class="col-md-6 mb-3">
+            <label for="descuentoAplicable" class="form-label">Descuento Aplicable (%)</label>
+            <input type="number" id="descuentoAplicable" class="form-control" min="0" max="100" formControlName="descuentoAplicable">
           </div>
 
-          <div class="mb-2">
-              <label for="address-field" class="form-label mb-0">Dirección</label><span class="text-muted">(opcional)</span>
-              <input type="text" id="address-field" class="form-control" placeholder="Ingresar Dirección"
-                  formControlName="address"
-                  [ngClass]="{ 'is-invalid': submitted && form['address'].errors }" />
-              <div class="invalid-feedback">El campo es requerido.</div>
+          <!-- Sanctions -->
+          <div class="col-12 mt-3">
+            <h6 class="mb-3 border-bottom pb-2">Sanciones</h6>
           </div>
 
-          <div class="mb-2" hidden>
-              <label class="form-label" for="username-input">Usuario</label>
-              <div class="position-relative auth-pass-inputgroup">
-                  <input type="text" class="form-control pe-5 username-input"
-                        placeholder="Ingresar Usuario" aria-describedby="usernameInput" formControlName="username"
-                        id="username-input" (focus)="onUsernameFocus()" (blur)="onUsernameBlur()"
-                        [ngClass]="{ 'is-invalid': submitted && form['username'].errors }">
-                        <!-- [ngClass]="{'is-invalid': (contentForm.get('username')?.touched || submitted) && contentForm.get('username')?.errors}"> -->
-
-                  <div *ngIf="(contentForm.get('username')?.touched || submitted) && contentForm.get('username')?.errors" class="invalid-feedback">
-                      <span *ngIf="contentForm.get('username')?.errors?.['required']">Por favor ingrese su Usuario</span>
-                  </div>
-              </div>
-              <div id="username-contain" class="p-3 bg-light mb-2 rounded" >
-                  <h5 class="fs-13">El Username debe ser único</h5>
-                  <p id="user-taken" class="fs-12 mb-2"
-                      [ngClass]="{'invalid': contentForm.get('username')?.errors?.['usernameTaken'],
-                                  'valid': !contentForm.get('username')?.errors?.['usernameTaken'] && contentForm.get('username')?.valid,
-                                  'pending': contentForm.get('username')?.pending}">
-                      <span *ngIf="contentForm.get('username')?.pending">Verificando disponibilidad...</span>
-                      <span *ngIf="contentForm.get('username')?.errors?.['usernameTaken']">Este Usuario ya existe. Por favor escoja otro.</span>
-                      <span *ngIf="!contentForm.get('username')?.errors?.['usernameTaken'] &&  contentForm.get('username')?.valid">Usuario disponible.</span>
-                  </p>
-                  <p id="user-length" class="invalid fs-12 mb-2">Mínimo <b>6 caracteres</b></p>
-                  <p id="user-pattern" class="invalid fs-12 mb-2">El usuario solo puede contener <b>letras, números y puntos</b> (a-z)</p>
-              </div>
+          <div class="col-md-6 mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="estaSancionado" formControlName="estaSancionado">
+              <label class="form-check-label" for="estaSancionado">Usuario Sancionado</label>
+            </div>
           </div>
 
-          <div class="mb-2" hidden>
-              <label class="form-label" for="password-input">Contraseña</label>
-              <div class="position-relative auth-pass-inputgroup">
-                  <input [type]="passwordField ? 'text' : 'password'" class="form-control pe-5 password-input"
-                  placeholder="Ingresar contraseña" aria-describedby="passwordInput" formControlName="password"
-                  required
-                  id="password-input"  (focus)="onPasswordFocus()" (blur)="onPasswordBlur()"
-                  [ngClass]="{ 'is-invalid': submitted && form['password'].errors }"><!-- pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" -->
-                  <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button"
-                      id="password-addon"><i class="ri-eye-fill align-middle" [ngClass]="{'mdi-eye-off-outline': !passwordField, 'mdi-eye-outline': passwordField
-                  }" (click)="togglepasswordField()"></i></button>
-                  <div *ngIf="(contentForm.get('password')?.touched || submitted) && contentForm.get('password')?.errors" class="invalid-feedback">
-                      <span *ngIf="contentForm.get('password')?.errors?.['required']">Por favor ingrese su Usuario</span>
-                  </div>
-              </div>
-              <div id="passwordInput" class="form-text">Debe tener un mínimo de <b>8 caracteres</b></div>
-              <label class="form-label" for="confirm-password-input">Confirmar Contraseña</label>
-              <div class="position-relative auth-pass-inputgroup mb-3">
-                  <input [type]="confirmField ? 'text' : 'password'" class="form-control pe-5 password-input"
-                  placeholder="Confirmar contraseña"
-                  id="confirm-password-input" required formControlName="cpassword"
-                  [ngClass]="{ 'is-invalid': submitted && form['cpassword'].errors }"><!-- pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"  -->
-                  <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
-                  type="button" id="confirm-password-input"><i class="ri-eye-fill align-middle"
-                  [ngClass]="{'mdi-eye-off-outline': !passwordField, 'mdi-eye-outline': passwordField}"
-                  (click)="toggleconfirmField()"></i></button>
-                  @if(submitted && form['cpassword'].errors){
-                      <div class="invalid-feedback">
-                          <span *ngIf="form['cpassword'].errors['required']">Confirme su contraseña</span>
-                          <span *ngIf="form['cpassword'].errors['mustMatch']">Las contraseñas no coinciden</span>
-                  </div>
-                  }
-              </div>
-              <div id="password-contain" class="p-3 bg-light mb-2 rounded">
-                  <h5 class="fs-13">La contraseña debe contener:</h5>
-                  <p id="pass-length" class="invalid fs-12 mb-2">Mínimo <b>8 caracteres</b></p>
-                  <p id="pass-lower" class="invalid fs-12 mb-2">Al menos una <b>letra minúscula</b> (a-z)</p>
-                  <p id="pass-upper" class="invalid fs-12 mb-2">Al menos una <b>letra mayúscula</b> (A-Z)</p>
-                  <p id="pass-number" class="invalid fs-12 mb-0">Al menos un <b>número</b> (0-9)</p>
-              </div>
+          <div class="col-md-6 mb-3" *ngIf="contentForm.get('estaSancionado')?.value">
+            <label for="fechaFinSancion" class="form-label">Fecha Fin Sanción</label>
+            <input type="date" id="fechaFinSancion" class="form-control" formControlName="fechaFinSancion">
           </div>
 
-          <div class="d-flex mt-2">
-              <div class="flex-shrink-0 me-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                      class="feather feather-check-circle text-success icon-dual-success icon-xs">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                  </svg>
-              </div>
-              <div class="flex-grow-1 mt-1">
-                  <p class="mb-0 fs-12 text-muted fst-italic">
-                      Al registrarte, aceptas los
-                      <a routerLink="/pages/terms-condition" class="text-primary text-decoration-underline fst-normal fw-medium">Términos y Condiciones de Uso</a>
-                      y las
-                      <a routerLink="/pages/policy-privacy" class="text-primary text-decoration-underline fst-normal fw-medium">Políticas de Seguridad</a>
-                      del GAMQ
-                  </p>
-              </div>
+          <div class="col-12 mb-3" *ngIf="contentForm.get('estaSancionado')?.value">
+            <label for="motivoSancion" class="form-label">Motivo Sanción</label>
+            <textarea id="motivoSancion" class="form-control" placeholder="Descripción del motivo de sanción" formControlName="motivoSancion" rows="2"></textarea>
           </div>
-        }
+
+          <!-- Observations -->
+          <div class="col-12 mt-3">
+            <h6 class="mb-3 border-bottom pb-2">Observaciones</h6>
+          </div>
+
+          <div class="col-12 mb-3">
+            <label for="observacionesMunicipales" class="form-label">Observaciones Municipales</label>
+            <textarea id="observacionesMunicipales" class="form-control" placeholder="Observaciones adicionales" formControlName="observacionesMunicipales" rows="3"></textarea>
+          </div>
+
+          <!-- Hidden fields for system use -->
+          <div class="d-none">
+            <input type="text" formControlName="userName">
+            <input type="password" formControlName="password">
+            <input type="password" formControlName="cpassword">
+            <input type="text" formControlName="estadoUsuario">
+            <input type="text" formControlName="apellidoEsposo">
+          </div>
+        </div>
       </div>
-      <div class="modal-footer" *ngIf="accion==='edit'" >
+
+      <div class="modal-footer">
         <div class="hstack gap-2 justify-content-end">
-            <button type="button" class="btn btn-light" data-bs-dismiss="modal"
-                (click)="closeModal()">Cancelar</button>
-            <button type="submit" class="btn btn-success" id="add-btn">Guardar</button>
+          <button type="button" class="btn btn-light" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-success" id="add-btn">Guardar</button>
         </div>
       </div>
     </form>
-</div>
+  </div>
 </div>
 
-<!-- <ng-template #deleteModel let-modal> -->
-    <div class="modal-content" *ngIf="accion==='delete'">
-        <div class="modal-header">
-            <button type="button" class="btn-close" id="close-modal"
-            data-bs-dismiss="modal" aria-label="Close"
-            (click)="closeModal()"></button>
-                <!-- (click)="modal.dismiss('Cross click')"></button> -->
-        </div>
-        <div class="modal-body">
-            <div class="mt-2 text-center">
-                <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
-                    colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
-                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
-                    <h4>Esta seguro de BLOCKEAR al contribuyente?</h4>
-                    <!-- <p class="text-muted mx-4 mb-0">
-                        Al Confirmar la eliminacion se quitara toda informacion de nuestra base de datos.
-                    </p> -->
-                </div>
-            </div>
-            <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
-                <button class="btn btn-link link-success fw-medium text-decoration-none" id="deleteRecord-close"
-                    data-bs-dismiss="modal" (click)="closeModal()">
-                    <i class="ri-close-line me-1 align-middle"></i> Cancelar</button>
-                <button type="button" class="btn w-sm btn-danger " id="delete-product"
-                    (click)="blockUser()" (click)="closeModal()">Si, Bloquear!</button>
-            </div>
-        </div>
+<!-- Delete/Block Modal -->
+<div class="modal-content" *ngIf="accion==='delete'">
+  <div class="modal-header">
+    <button type="button" class="btn-close" id="close-modal" data-bs-dismiss="modal" aria-label="Close" (click)="closeModal()"></button>
+  </div>
+  <div class="modal-body">
+    <div class="mt-2 text-center">
+      <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop" colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
+      <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+        <h4>¿Está seguro de BLOQUEAR al contribuyente?</h4>
+      </div>
     </div>
-<!-- </ng-template> -->
+    <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+      <button class="btn btn-link link-success fw-medium text-decoration-none" (click)="closeModal()">
+        <i class="ri-close-line me-1 align-middle"></i> Cancelar
+      </button>
+      <button type="button" class="btn w-sm btn-danger" (click)="blockUser()">
+        Sí, Bloquear!
+      </button>
+    </div>
+  </div>
+</div>

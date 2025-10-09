@@ -67,7 +67,6 @@ export class LeafletComponent implements  OnInit {
     });
      const basemapEnum = "arcgis/streets";
 
-    //Agregando al mapa
     marcadores.addTo(mapa);
     capa.addTo(mapa);
     marcador.addTo(mapa);
@@ -102,8 +101,6 @@ export class LeafletComponent implements  OnInit {
     this.moverMarcador(marcador, mapa, null);
   }
 
-
-
   private getCurrentPosition(): any {
     return new Observable((observer: Subscriber<any>) => {
       if (navigator.geolocation) {
@@ -129,9 +126,8 @@ export class LeafletComponent implements  OnInit {
             mapa.panTo(new LatLng(position.lat, position.lng));
             this.setLatLng(position);
         });
-    }
-
-    // private setLatLng({address, latlng}: { address: any, latlng: L.LatLng }) {
+  }
+    
   private setLatLng({ lat, lng }: { lat: number, lng: number }) {
     this.getAddress(lat,lng);
     this.latitud = lat;

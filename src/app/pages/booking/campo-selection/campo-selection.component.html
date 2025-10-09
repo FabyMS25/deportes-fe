@@ -1,0 +1,219 @@
+<div class="card border-0 shadow-sm mb-2">
+  <div class="card-header">
+    <div class="d-flex align-items-center">
+      <div class="flex-grow-1">
+        <h4 class="card-title mb-1 text-primary">
+          <i class="ri-football-line me-2 text-primary"></i>
+          Seleccionar Campo Deportivo
+        </h4>
+        <small class="text-muted">
+          {{ dataComplejo.nombre }} • {{ dataComplejo.ubicacion }}
+        </small>
+        <span class="badge bg-success-subtle text-success fs-6">
+          {{ filteredCampos.length }} disponibles
+        </span>
+      </div>
+      <div class="flex-shrink-0 d-flex align-items-center gap-2">
+        <span class="badge bg-primary-subtle text-primary fs-6 ms-2">
+          {{ bookingType === 'puntual' ? 'Reserva Puntual' : 'Reserva Recurrente' }}
+        </span>
+        <button type="button" class="btn btn-outline-secondary" 
+          (click)="back()">
+          <i class="ri-arrow-left-line me-1"></i>
+          Volver
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="card-body border border-dashed border-end-0 border-start-0 py-2">
+    <div class="row g-2">
+        <div class="col-lg-4 col-md-6">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text"><i class="ri-search-line"></i></span>
+              <input type="text" 
+                    class="form-control form-control-sm" 
+                    placeholder="Buscar campo..."
+                    [(ngModel)]="searchText">
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-3 col-6">
+          <select class="form-select form-select-sm" [(ngModel)]="filterBySuperficie">
+            <option [ngValue]="undefined">Superficie</option>
+            <option *ngFor="let sup of superficiesDisponibles" [value]="sup">{{ sup }}</option>
+          </select>
+        </div>
+        <div class="col-lg-2 col-md-3 col-6">
+          <select class="form-select form-select-sm" [(ngModel)]="filterByCategoria">
+            <option [ngValue]="undefined">Categoría</option>
+            <option *ngFor="let cat of categoriasDisponibles" [value]="cat">{{ cat }}</option>
+          </select>
+        </div>
+        <div class="col-lg-2 col-md-3 col-6">
+          <select class="form-select form-select-sm" [(ngModel)]="filterByIluminacion">
+            <option [ngValue]="undefined">Iluminación</option>
+            <option [ngValue]="true">Con iluminación</option>
+            <option [ngValue]="false">Sin iluminación</option>
+          </select>
+        </div>
+        <div class="col-lg-2 col-md-6">
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary w-100" 
+              (click)="clearFilters()"
+              [disabled]="isLoading || !hasActiveFilters()"
+              title="Limpiar filtros">
+              <i class="ri-refresh-line"></i>
+            </button>
+            <div class="btn-group" role="group">
+              <button type="button" 
+                class="btn btn-sm btn-outline-secondary"
+                [class.active]="viewMode === 'grid'"
+                (click)="viewMode = 'grid'"
+                [disabled]="isLoading"
+                title="Vista de cuadrícula">
+                <i class="ri-grid-line"></i>
+              </button>
+              <button type="button" 
+                class="btn btn-sm btn-outline-secondary"
+                [class.active]="viewMode === 'list'"
+                (click)="viewMode = 'list'"
+                [disabled]="isLoading"
+                title="Vista de lista">
+                <i class="ri-list-check"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+</div>
+<div class="campo-selection-container">
+  <div class="text-center py-3" *ngIf="showEmptyState">
+    <i class="ri-football-line display-4 text-muted opacity-25 mb-3"></i>
+    <h6 class="mb-2">No hay campos disponibles</h6>
+    <p class="text-muted small mb-3">
+      No se encontraron campos con los filtros seleccionados.
+    </p>
+    <button class="btn btn-sm btn-primary" (click)="back()">
+      <i class="ri-arrow-left-line me-1"></i>
+      Cambiar complejo
+    </button>
+  </div>
+
+  
+  <div class="row" *ngIf="!isLoading && filteredCampos.length > 0">
+    <div class="col-lg-6" *ngFor="let item of filteredCampos">
+      <div class="card campo-card" (click)="toggleCampoExpansion(item)">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="flex-grow-1">
+              <h6 class="card-title mb-1">
+                {{ item.campo.nombre }}
+                <span class="badge bg-success-subtle text-success ms-2">
+                  {{ item.campo.categoria }}
+                </span>
+              </h6>
+              <small class="text-muted">{{ item.campo.codigo }}</small>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" 
+                     type="radio" 
+                     [checked]="item.isExpanded"
+                     [id]="'campo-' + item.campo.uuid">
+            </div>
+          </div>
+          <div class="campo-info mb-3">
+            <div class="row g-2 small">
+              <div class="col-6">
+                <i class="ri-landscape-line text-primary me-1"></i>
+                <strong>Superficie:</strong>
+                <span class="d-block text-muted">
+                  {{ item.campo.superficieDto.descripcion || 'No especificada' }}
+                </span>
+              </div>
+              <div class="col-6">
+                <i class="ri-ruler-line text-primary me-1"></i>
+                <strong>Dimensiones:</strong>
+                <span class="d-block text-muted">
+                  {{ item.campo.dimensiones || 'No especificadas' }}
+                </span>
+              </div>
+              <div class="col-6">
+                <i class="ri-lightbulb-line text-primary me-1"></i>
+                <strong>Iluminación:</strong>
+                <span class="d-block" 
+                      [class.text-success]="item.campo.tieneIluminacion"
+                      [class.text-muted]="!item.campo.tieneIluminacion">
+                  {{ item.campo.tieneIluminacion ? 'Disponible' : 'No disponible' }}
+                </span>
+              </div>
+              <div class="col-6">
+                <i class="ri-time-line text-primary me-1"></i>
+                <strong>Horario:</strong>
+                <span class="d-block text-muted">
+                  {{ getHorarioDisplay(item.campo) }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tarifas disponibles -->
+          <div class="tarifas-section" *ngIf="item.isExpanded" @slideDown>
+            <hr class="my-3">
+            <h6 class="mb-2">
+              <i class="ri-price-tag-3-line me-1"></i>
+              Seleccione una tarifa:
+            </h6>
+            <div class="tarifa-option gap-2 mb-2"
+                *ngFor="let tarifa of item.tarifasActivas"
+                (click)="selectTarifa(item, tarifa)"
+                role="button"
+                tabindex="0">
+              <div class="tarifa-header">
+                <h5 class="text-primary">
+                  {{ tarifa.descripcion || 'Tarifa estándar' }}
+                </h5>
+                <div class="tarifa-price">
+                  <span class="amount">{{ tarifa.precioBase | number:'1.2-2' }}</span>
+                  <span class="currency">Bs</span>
+                </div>
+              </div>
+              
+              <div class="tarifa-meta">
+                <span class="badge bg-light text-dark">
+                  <i class="ri-user-line"></i>
+                  {{ getCategorias(tarifa) }}
+                </span>
+                <span class="badge bg-light text-dark" *ngIf="tarifa.desde && tarifa.hasta">
+                  <i class="ri-time-line"></i>
+                  {{ getTarifaRangeDisplay(tarifa) }}
+                </span>
+                      <small class="badge bg-light text-dark">
+                        <i class="ri-time-line me-1"></i>
+                        {{ tarifa.desde?.slice(0, 5) }} - {{ tarifa.hasta?.slice(0, 5) }}
+                      </small>
+                <span class="badge bg-light text-dark">
+                  <i class="ri-money-dollar-circle-line"></i>
+                  {{ getTipoCobro(tarifa) }}
+                </span>
+              </div>
+              
+              <div class="tarifa-action">
+                <span>Seleccionar</span>
+                <i class="ri-arrow-right-line"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Observaciones -->
+          <div class="mt-2" *ngIf="item.campo.observaciones">
+            <small class="text-muted">
+              <i class="ri-information-line me-1"></i>
+              {{ item.campo.observaciones }}
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

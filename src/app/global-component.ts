@@ -43,13 +43,16 @@ export const GlobalComponent = {
     // RUAT_clave: "Gam#1209",
     
     RUAT_token : `${sessionStorage.getItem('ruatToken')}`,  
-    RUAT_codigoUsuario: "PRUEBA_1.QUI", 
+    RUAT_codigoUsuario: "PRUEBAS_1.QUI", 
     RUAT_passwordUsuario: "Ruat_123$",
     RUAT_codigoAlcaldia: "QUI",
     RUAT_motivo: "REGISTRO TASAS Y OTROS INGRESOS",
-    RUAT_servicioMunicipal: "2174", //TASAS Y OTROS INGRESOS
+    RUAT_servicioMunicipal: "2453",// "2174", //TASAS Y OTROS INGRESOS
     RUAT_tipoTasa: "TO", //TASAS Y OTROS INGRESOS
 
     /* RULES */
     VALID_HOURS: 4, 
+    ANTICIPATION_PUNTUAL_HOURS: 18,
+    ANTICIPATION_EVENT_HOURS:48,
+    ANTICIPATION_RECURRENT_DAYS: 7,
 }

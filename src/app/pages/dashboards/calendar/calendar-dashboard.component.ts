@@ -11,8 +11,8 @@ import esLocale from '@fullcalendar/core/locales/es';
 import Swal from 'sweetalert2';
 
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
-import { ModalComponent } from '../../reservations/modal/modal.component';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
+import { BookingOneTimeModalComponent } from '../../booking-one-time/modal/modal.component';
 
 @Component({
     selector: 'app-calendar-dashboard',
@@ -112,7 +112,7 @@ export class CalendarDashboardComponent implements OnInit {
    */
   handleEventClick(clickInfo: EventClickArg) {
     const row = clickInfo.event.extendedProps['row'];
-    const modalRef = this.modalService.open(ModalComponent, {
+    const modalRef = this.modalService.open(BookingOneTimeModalComponent, {
         backdrop: 'static',
         size:''
     });

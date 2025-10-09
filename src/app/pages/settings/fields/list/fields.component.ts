@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ModalFieldsComponent } from '../modal/modal.component';
-import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
+import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { ModalScheduleComponent } from '../modal-schedule/modal-schedule.component';
@@ -33,7 +33,7 @@ export class FieldsComponent {
   searchTerm: any;
   categoryList:any[]=[];
   fieldsList:any[]=[];
-  dataSelected!:campoDeportivo;
+  dataSelected!:CampoDeportivo;
 
   @ViewChild('viewModel') viewModel!: ElementRef;
 
@@ -95,7 +95,7 @@ export class FieldsComponent {
    * Open modal
    * @param content modal content
    */
-  public openModal(row: campoDeportivo | undefined, accion: string, size: string) {
+  public openModal(row: CampoDeportivo | undefined, accion: string, size: string) {
     const modalRef = this.modalService.open(ModalFieldsComponent, {
         backdrop: 'static',
         size:size
@@ -117,7 +117,7 @@ export class FieldsComponent {
      this.modalService.open(content, { centered: true });
    }
 
-  public openScheduleModal(row: campoDeportivo | undefined, accion: string, size: string) {
+  public openScheduleModal(row: CampoDeportivo | undefined, accion: string, size: string) {
     const modalRef = this.modalService.open(ModalScheduleComponent, {
         backdrop: 'static',
         size:size
@@ -129,7 +129,7 @@ export class FieldsComponent {
     });
   }
 
-  public openTarifaModal(row: campoDeportivo | undefined, accion: string, size: string) {
+  public openTarifaModal(row: CampoDeportivo | undefined, accion: string, size: string) {
     const modalRef = this.modalService.open(ModalTarifaComponent, {
         backdrop: 'static',
         size:size

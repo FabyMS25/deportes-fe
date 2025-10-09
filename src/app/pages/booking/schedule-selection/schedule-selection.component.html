@@ -1,0 +1,474 @@
+<div class="card border-0 shadow-sm mb-2">
+  <div class="card-header">
+    <div class="d-flex align-items-center">
+      <div class="flex-grow-1">
+        <h4 class="card-title mb-1 text-primary">
+          <i class="ri-calendar-check-line me-2 text-primary"></i>
+          Selección de Fecha y Horario
+        </h4>
+        <small class="text-muted">
+          <i class="ri-calendar-2-line me-1"></i>
+          Semana del {{ currentWeekStart | date:'dd/MM/yyyy' }} al {{ currentWeekEnd | date:'dd/MM/yyyy' }}
+        </small>
+      </div>
+      <div class="flex-shrink-0 d-flex align-items-center gap-2">
+        <span class="badge bg-primary-subtle text-primary fs-6 ms-2">
+          Reserva Puntual
+        </span>
+        <button type="button" class="btn btn-outline-secondary" 
+          (click)="back()">
+          <i class="ri-arrow-left-line me-1"></i>
+          Volver
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="schedule-selection-container">
+  <div *ngIf="showValidationAlert && validationErrors.length > 0" 
+       class="alert alert-warning alert-dismissible fade show mb-3" 
+       role="alert">
+    <div class="d-flex">
+      <div class="flex-shrink-0">
+        <i class="ri-error-warning-line fs-20"></i>
+      </div>
+      <div class="flex-grow-1 ms-2">
+        <h6 class="alert-heading mb-2">Atención</h6>
+        <ul class="mb-0 ps-3">
+          <li *ngFor="let error of validationErrors">{{ error }}</li>
+        </ul>
+      </div>
+    </div>
+    <button type="button" 
+            class="btn-close" 
+            (click)="showValidationAlert = false"></button>
+  </div>
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="row g-2 mb-3">
+        <div class="col-lg-8">
+          <div class="bg-light rounded p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="flex-grow-1">
+                <h6 class="mb-2">
+                  <i class="ri-calendar-event-line me-1"></i>
+                  {{ fechaReserva | date:'fullDate':'':'es' }}
+                </h6>
+                
+                <ng-container *ngIf="getTimeSlotsForDay(fechaReserva) as currentSlots">
+                  <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <!-- Status Badge -->
+                    <span class="badge fs-6" 
+                          [ngClass]="currentSlots.daySchedule?.abierto ? 'bg-success' : 'bg-danger'">
+                      <i class="me-1" 
+                         [ngClass]="currentSlots.daySchedule?.abierto ? 'ri-door-open-line' : 'ri-door-closed-line'"></i>
+                      {{ currentSlots.daySchedule?.abierto ? 'Abierto' : 'Cerrado' }}
+                    </span>
+                    
+                    <!-- Schedule Hours -->
+                    <span class="text-muted" *ngIf="currentSlots.daySchedule?.abierto">
+                      <i class="ri-time-line me-1"></i>
+                      {{ currentSlots.daySchedule?.horaApertura?.slice(0, 5) }} - 
+                      {{ currentSlots.daySchedule?.horaCierre?.slice(0, 5) }}
+                    </span>
+                    
+                    <!-- Exceptions -->
+                    <span *ngIf="currentSlots.exceptions && currentSlots.exceptions.length > 0" 
+                          class="badge bg-warning-subtle text-warning">
+                      <i class="ri-alert-line me-1"></i>
+                      {{ currentSlots.exceptions[0].motivo || 'Horario especial' }}
+                    </span>
+                  </div>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-4">
+          <div class="bg-primary-subtle rounded p-3 h-100">
+            <div class="d-flex flex-column h-100 justify-content-center">
+              <label class="form-label mb-2 fw-medium">
+                <i class="ri-time-line me-1"></i>
+                Duración del intervalo
+              </label>
+              <select class="form-select" 
+                      [(ngModel)]="slotDuration" 
+                      (change)="onSlotDurationChange()">
+                <option *ngFor="let option of slotDurationOptions" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0 text-muted">
+          <i class="ri-calendar-week-line me-1"></i>
+          Seleccione un día
+        </h6>
+        <div class="btn-group" role="group">
+          <button type="button" 
+                  class="btn btn-sm btn-outline-secondary" 
+                  (click)="moveWeek(-1)"
+                  title="Semana anterior">
+            <i class="ri-arrow-left-s-line"></i>
+          </button>
+          <button type="button" 
+                  class="btn btn-sm btn-outline-primary" 
+                  (click)="goToToday()">
+            <i class="ri-home-line me-1"></i>Hoy
+          </button>
+          <button type="button" 
+                  class="btn btn-sm btn-outline-secondary" 
+                  (click)="moveWeek(1)"
+                  title="Semana siguiente">
+            <i class="ri-arrow-right-s-line"></i>
+          </button>
+        </div>
+      </div>
+        <ul ngbNav 
+          #Header="ngbNav" 
+          [activeId]="activeDayName" 
+          class="nav nav-pills nav-compact d-flex mb-2"
+          [destroyOnHide]="false">
+        
+        <li *ngFor="let day of weekDays" 
+            [ngbNavItem]="day.name" 
+            class="nav-item flex-fill">
+          <!-- <div [class]="getDayCardClasses(day)" class="compact-day-card"> -->
+          <div [class]="getDayCardClasses(day)" [class.opacity-50]="day.isPast">
+            <a ngbNavLink 
+               class="nav-link text-center p-1" 
+               [class.active]="activeDayName === day.name"
+               [class.disabled]="day.isPast"
+               (click)="canSelectDay(day) ? setSelectedDay(day.date) : null"
+               [style.cursor]="day.isPast ? 'not-allowed' : 'pointer'">
+              
+              <div class="fw-semibold mb-1">{{ day.dayName }}</div>
+              <div class="fs-5 fw-bold mb-1">{{ day.date | date:'d' }}</div>
+              <!-- <div class="small text-muted">{{ day.date | date:'MMM':'':'es' }}</div> -->
+
+
+            <!-- <a ngbNavLink 
+               class="nav-link text-center py-2 px-1" 
+               [class.active]="activeDayName === day.name"
+               [class.disabled]="day.isPast"
+               (click)="canSelectDay(day) ? setSelectedDay(day.date) : null"
+               [style.cursor]="day.isPast ? 'not-allowed' : 'pointer'">
+              
+              <div class="small fw-semibold">{{ day.dayName.slice(0,3) }}</div>
+              <div class="fs-6 fw-bold">{{ day.date | date:'d' }}</div> -->
+              
+              <div class="mt-1">
+                <span *ngIf="day.isToday" 
+                      class="badge bg-primary small">
+                  <i class="ri-calendar-check-line me-1"></i>Hoy
+                </span>
+                <span *ngIf="day.isPast" 
+                      class="badge bg-secondary small">
+                  <i class="ri-time-line me-1"></i>Pasado
+                </span>
+                <i class="fs-16" 
+                   [ngClass]="{
+                     'ri-checkbox-circle-fill text-success': !day.isPast && getTimeSlotsForDay(day.date).daySchedule?.abierto,
+                     'ri-close-circle-fill text-danger': !day.isPast && !getTimeSlotsForDay(day.date).daySchedule?.abierto,
+                     'ri-time-fill text-secondary': day.isPast
+                   }"></i>
+              </div>
+            </a>
+          </div>
+          
+          <ng-template ngbNavContent>
+            <ng-container *ngIf="getTimeSlotsForDay(day.date) as slots">
+              
+              <!-- Empty State -->
+              <ng-container *ngIf="slots.morningSlots.length === 0 && 
+                                    slots.afternoonSlots.length === 0 && 
+                                    slots.nightSlots.length === 0">
+                <div class="text-center py-4">
+                  <div class="mb-2">
+                    <i class="bx bx-calendar-x display-1 text-muted"></i>
+                  </div>
+                  <p class="text-muted small mt-2 mb-0">
+                    <strong *ngIf="!slots.daySchedule?.abierto">Campo cerrado</strong>
+                    <strong *ngIf="slots.daySchedule?.abierto">El campo no está disponible para {{ day.dayName | lowercase }}</strong>
+                  </p>
+                    <h5 class="text-muted" *ngIf="slots.daySchedule?.abierto && slots.exceptions?.length">
+                      Horario Especial
+                    </h5>
+                    <p class="text-muted" *ngIf="slots.daySchedule?.abierto && slots.exceptions?.length">
+                      <!-- {{ slots.exceptions[0].motivo }} -->
+                    </p>
+                </div>
+              </ng-container>
+              <div class="row g-2">
+                
+                <!-- Morning Slots -->
+                <div *ngIf="slots.morningSlots.length > 0" class="col-md-4">
+                  <div class="period-header-compact mb-2">
+                    <small class="fw-semibold text-muted">
+                      <i class="ri-sun-line text-warning me-1"></i>Mañana
+                      <span class="badge bg-light text-dark badge-xs ms-1">{{ slots.morningSlots.length }}</span>
+                    </small>
+                  </div>
+                  
+                  <div class="slots-grid-compact">
+                    <div *ngFor="let slot of slots.morningSlots" 
+                         class="slot-card-compact mb-1"
+                         [class.selected]="slot.isSelected"
+                         [class.unavailable]="!slot.isAvailable || slot.isReserved">
+                      
+                      <div class="slot-inner py-2 px-2 rounded border" 
+                           [class]="getSlotClasses(slot)"
+                           [style.cursor]="slot.isAvailable && !slot.isReserved ? 'pointer' : 'not-allowed'"
+                           (click)="toggleSlotSelection(slot)">
+                        
+                        <div class="d-flex align-items-center justify-content-between">
+                          <div class="flex-grow-1">
+                            <span class="small fw-semibold d-block" [class]="getSlotTextClasses(slot)">
+                              {{ slot.time }}
+                            </span>
+                          </div>
+                                <div class="small">
+                                  <span *ngIf="slot.isSelected" class="text-white">
+                                    <i class="ri-check-double-line me-1"></i>Seleccionado
+                                  </span>
+                                  <span *ngIf="slot.isPast && !slot.isSelected" class="text-muted">
+                                    <i class="ri-time-line me-1"></i>Hora pasada
+                                  </span>
+                                  <span *ngIf="slot.isReserved && slot.isAvailable && !slot.isSelected" class="text-danger">
+                                    <i class="ri-user-line me-1"></i>Reservado
+                                  </span>
+                                  <span *ngIf="slot.isAvailable && !slot.isReserved && !slot.isSelected" class="text-success">
+                                    <i class="ri-checkbox-circle-line me-1"></i>Disponible
+                                  </span>
+                                </div>
+                                
+                              <div class="flex-shrink-0 ms-2">
+                                <span *ngIf="slot.isSelected" 
+                                      class="badge bg-white text-primary fs-16">
+                                  <i class="ri-check-fill"></i>
+                                </span>
+                                <span *ngIf="slot.isReserved && !slot.isSelected" 
+                                      class="badge bg-danger-subtle text-danger">
+                                  <i class="ri-close-line"></i>
+                                </span>
+                                <span *ngIf="!slot.isAvailable && !slot.isSelected" 
+                                      class="badge bg-secondary-subtle text-secondary">
+                                  <i class="ri-time-line"></i>
+                                </span>
+                              </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Afternoon Slots -->
+                <div *ngIf="slots.afternoonSlots.length > 0" class="col-md-4">
+                  <div class="period-header-compact mb-2">
+                    <small class="fw-semibold text-muted">
+                      <i class="ri-sun-cloudy-line text-orange me-1"></i>Tarde
+                      <span class="badge bg-light text-dark badge-xs ms-1">{{ slots.afternoonSlots.length }}</span>
+                    </small>
+                  </div>
+                  
+                  <div class="slots-grid-compact">
+                    <div *ngFor="let slot of slots.afternoonSlots" 
+                         class="slot-card-compact mb-1"
+                         [class.selected]="slot.isSelected"
+                         [class.unavailable]="!slot.isAvailable || slot.isReserved">
+                      
+                      <div class="slot-inner py-2 px-2 rounded border" 
+                           [class]="getSlotClasses(slot)"
+                           [style.cursor]="slot.isAvailable && !slot.isReserved ? 'pointer' : 'not-allowed'"
+                           (click)="toggleSlotSelection(slot)">
+                        
+                        <div class="d-flex align-items-center justify-content-between">
+                          <div class="flex-grow-1">
+                            <span class="small fw-semibold d-block" [class]="getSlotTextClasses(slot)">
+                              {{ slot.time }}
+                            </span>
+                          </div>
+                                <div class="small">
+                                  <span *ngIf="slot.isSelected" class="text-white">
+                                    <i class="ri-check-double-line me-1"></i>Seleccionado
+                                  </span>
+                                  <span *ngIf="slot.isPast && !slot.isSelected" class="text-muted">
+                                    <i class="ri-time-line me-1"></i>Hora pasada
+                                  </span>
+                                  <span *ngIf="slot.isReserved && slot.isAvailable && !slot.isSelected" class="text-danger">
+                                    <i class="ri-user-line me-1"></i>Reservado
+                                  </span>
+                                  <span *ngIf="slot.isAvailable && !slot.isReserved && !slot.isSelected" class="text-success">
+                                    <i class="ri-checkbox-circle-line me-1"></i>Disponible
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div class="flex-shrink-0 ms-2">
+                                <span *ngIf="slot.isSelected" 
+                                      class="badge bg-white text-primary fs-16">
+                                  <i class="ri-check-fill"></i>
+                                </span>
+                                <span *ngIf="slot.isReserved && !slot.isSelected" 
+                                      class="badge bg-danger-subtle text-danger">
+                                  <i class="ri-close-line"></i>
+                                </span>
+                                <span *ngIf="!slot.isAvailable && !slot.isSelected" 
+                                      class="badge bg-secondary-subtle text-secondary">
+                                  <i class="ri-time-line"></i>
+                                </span>
+                              </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Night Slots -->
+                <div *ngIf="slots.nightSlots.length > 0" class="col-md-4">
+                  <div class="period-header-compact mb-2">
+                    <small class="fw-semibold text-muted">
+                      <i class="ri-moon-line text-info me-1"></i>Noche
+                      <span class="badge bg-light text-dark badge-xs ms-1">{{ slots.nightSlots.length }}</span>
+                    </small>
+                  </div>
+                  
+                  <div class="slots-grid-compact">
+                    <div *ngFor="let slot of slots.nightSlots" 
+                         class="slot-card-compact mb-1"
+                         [class.selected]="slot.isSelected"
+                         [class.unavailable]="!slot.isAvailable || slot.isReserved">
+                      
+                      <div class="slot-inner py-2 px-2 rounded border" 
+                           [class]="getSlotClasses(slot)"
+                           [style.cursor]="slot.isAvailable && !slot.isReserved ? 'pointer' : 'not-allowed'"
+                           (click)="toggleSlotSelection(slot)">
+                        
+                        <div class="d-flex align-items-center justify-content-between">
+                          <div class="flex-grow-1">
+                            <span class="small fw-semibold d-block" [class]="getSlotTextClasses(slot)">
+                              {{ slot.time }}
+                            </span>
+                          </div>
+                                <div class="small">
+                                  <span *ngIf="slot.isSelected" class="text-white">
+                                    <i class="ri-check-double-line me-1"></i>Seleccionado
+                                  </span>
+                                  <span *ngIf="slot.isPast && !slot.isSelected" class="text-muted">
+                                    <i class="ri-time-line me-1"></i>Hora pasada
+                                  </span>
+                                  <span *ngIf="slot.isReserved && slot.isAvailable && !slot.isSelected" class="text-danger">
+                                    <i class="ri-user-line me-1"></i>Reservado
+                                  </span>
+                                  <span *ngIf="slot.isAvailable && !slot.isReserved && !slot.isSelected" class="text-success">
+                                    <i class="ri-checkbox-circle-line me-1"></i>Disponible
+                                  </span>
+                                </div>
+                              <div class="flex-shrink-0 ms-2">
+                                <span *ngIf="slot.isSelected" 
+                                      class="badge bg-white text-primary fs-16">
+                                  <i class="ri-check-fill"></i>
+                                </span>
+                                <span *ngIf="slot.isReserved && !slot.isSelected" 
+                                      class="badge bg-danger-subtle text-danger">
+                                  <i class="ri-close-line"></i>
+                                </span>
+                                <span *ngIf="!slot.isAvailable && !slot.isSelected" 
+                                      class="badge bg-secondary-subtle text-secondary">
+                                  <i class="ri-time-line"></i>
+                                </span>
+                              </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+              </div>
+            </ng-container>
+          </ng-template>
+        </li>
+      </ul>
+
+      <!-- Tab Outlet -->
+      <div class="tab-content bg-white rounded-3 border p-4">
+        <div [ngbNavOutlet]="Header"></div>
+      </div>
+
+      <!-- Selection Summary -->
+      <div *ngIf="selectedSlots.length > 0" 
+           class="alert alert-primary mt-4 mb-0" 
+           role="alert">
+        <div class="d-flex align-items-center">
+          <div class="flex-shrink-0">
+            <i class="ri-calendar-check-line fs-20"></i>
+          </div>
+          <div class="flex-grow-1 ms-3">
+            <h6 class="alert-heading mb-1">Horarios Seleccionados</h6>
+            <p class="mb-0">
+              <strong>{{ getSelectedSlotsInfo() }}</strong>
+              <span class="ms-2 text-muted">
+                ({{ selectedSlots.length }} intervalo{{ selectedSlots.length > 1 ? 's' : '' }})
+              </span>
+            </p>
+          </div>
+          <div class="flex-shrink-0">
+            <button type="button" 
+                    class="btn btn-sm btn-outline-primary" 
+                    (click)="clearSelectedSlots()">
+              <i class="ri-close-line me-1"></i>Limpiar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Information Alert -->
+      <div class="alert alert-info mt-3 mb-0" role="alert">
+        <div class="d-flex">
+          <div class="flex-shrink-0">
+            <i class="ri-information-line fs-18"></i>
+          </div>
+          <div class="flex-grow-1 ms-3">
+            <h6 class="alert-heading mb-2">Información Importante</h6>
+            <ul class="mb-0 ps-3">
+              <li class="mb-1">
+                Las reservas deben realizarse con <strong>{{ anticipationHours }} horas</strong> de anticipación mínima.
+              </li>
+              <li class="mb-1">
+                Los horarios seleccionados deben ser <strong>consecutivos</strong>.
+              </li>
+              <li class="mb-1">
+                Después de crear la reserva, tendrá <strong>{{ VALID_HOURS }} horas</strong> para realizar el pago.
+              </li>
+              <li *ngIf="dataField?.requiereAprobacion && dataField?.maxDuracionAutoAprobacion">
+                Reservas mayores a <strong>{{ dataField.maxDuracionAutoAprobacion }} minutos</strong> requieren aprobación administrativa.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer bg-light">
+      <div class="d-flex justify-content-between align-items-center">
+        <button type="button" 
+                class="btn btn-outline-secondary" 
+                (click)="openScheduleModal()">
+          <i class="ri-calendar-event-line me-1"></i>
+          Ver Calendario Completo
+        </button>
+        
+        <button type="button" 
+                class="btn btn-primary" 
+                [disabled]="selectedSlots.length === 0"
+                (click)="confirmSelection()">
+          <i class="ri-check-line me-1"></i>
+          Confirmar y Continuar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

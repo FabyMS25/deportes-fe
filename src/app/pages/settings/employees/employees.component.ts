@@ -9,9 +9,6 @@ import { DatePipe } from '@angular/common';
 // Csv File Export
 import { ngxCsv } from 'ngx-csv/ngx-csv';
 
-// Rest Api Service
-import { GlobalComponent } from '../../../global-component';
-
 // Sweet Alert
 import Swal from 'sweetalert2';
 
@@ -21,8 +18,8 @@ import { UserService } from 'src/app/core/services/api-users/users.service';
 import { UserRol } from 'src/app/core/constants/UserData';
 import { EncargadoService } from 'src/app/core/services/api/encargado.service';
 import { ModalImportComponent } from './modal-import/modal-import.component';
-import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
-import { Encargado } from 'src/app/core/models/encargado';
+import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo';
+import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 
 @Component({
   selector: 'app-employees',
@@ -31,28 +28,34 @@ import { Encargado } from 'src/app/core/models/encargado';
 })
 
 export class EmployeesComponent implements OnInit {
-  title='Encargados'
+  title = 'Encargados'
   breadCrumbItems!: Array<{}>;
   
-  canActivate:string[];
-  itemsList:any[]=[];
+  canActivate: string[];
+  itemsList: any[] = [];
   temp: any[] = [];
   viewMode: 'table' | 'cards' = 'table';
 
   submitted = false;
 
-  userRol =UserRol;
-  userList:any;
-  employeesList:Encargado[]= [];//Employees;
-  funcionarioSelected!:any;
+  userRol = UserRol;
+  userList: any;
+  employeesList: EncargadoComplejo[] = [];
+  funcionarioSelected!: any;
+  complejosList: any[] = [];
 
   @ViewChild('viewModel') viewModel!: ElementRef;
-  constructor(private modalService: NgbModal,
+
+  constructor(
+    private modalService: NgbModal,
     private authService: AuthenticationService,
     private usersService: UserService,
     private employeesService: EncargadoService,
+    private complejosService: ComplejosService,
+    private datePipe: DatePipe
+    
   ) {
-      this.canActivate = this.authService.hasPermission(this.title);
+    this.canActivate = this.authService.hasPermission(this.title);
   }
 
   ngOnInit(): void {
@@ -65,11 +68,14 @@ export class EmployeesComponent implements OnInit {
       { label: this.title, active: true }
     ];
     this.itemsList = [
-      {name: 'Nombre', prop: 'nombre', avatar:true,visible:true},
-      {name: 'Complejo',prop: 'complejoDto.nombre',visible:true},
-      {name: 'Telefono', prop: 'telefono',visible:true},
-      {name: 'Entrada', prop: 'horaEntrada',visible:false},
-      {name: 'Salida', prop: 'horaSalida',visible:false},
+      { name: 'Nombre', prop: 'nombre', avatar: true, visible: true },
+      { name: 'Complejo', prop: 'complejoDto.nombre', visible: true },
+      { name: 'Telefono', prop: 'telefono', visible: true },
+      { name: 'Activo', prop: 'activo', visible: true },
+      { name: 'Fecha Asignación', prop: 'fechaAsignacion', visible: false },
+      { name: 'Fecha Fin', prop: 'fechaFinAsignacion', visible: false },
+      { name: 'Hora Entrada', prop: 'horaEntrada', visible: false },
+      { name: 'Hora Salida', prop: 'horaSalida', visible: false },
     ];
 
     this.loadData();
@@ -78,10 +84,11 @@ export class EmployeesComponent implements OnInit {
   loading: boolean = true;
   private async loadData() {
     await this.getUsers();
+    await this.getComplejos();
     await this.getEmployees();
   }
 
-  selectedItems:any[] =[];
+  selectedItems: any[] = [];
   getSelectedItems(items: any[]) {
     this.selectedItems = items;
   }
@@ -90,9 +97,12 @@ export class EmployeesComponent implements OnInit {
   searchTerm: any;
   performSearch(): void {
     this.employeesList = this.temp.filter((item: any) => {
+      const searchTermLower = this.searchTerm.toLowerCase();
       return (
-        item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.complejoDto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
+        item.nombre?.toLowerCase().includes(searchTermLower) ||
+        item.telefono?.toLowerCase().includes(searchTermLower) ||
+        (item.complejoDto?.nombre?.toLowerCase().includes(searchTermLower)) ||
+        (item.activo !== undefined && (item.activo ? 'activo' : 'inactivo').includes(searchTermLower))
       );
     });
   }
@@ -101,11 +111,11 @@ export class EmployeesComponent implements OnInit {
    * View Data Get
    */
   viewDataGet(data: any) {
-    this.funcionarioSelected=data;    
+    this.funcionarioSelected = data;    
     const element = this.viewModel.nativeElement;
     const elementTop = element.getBoundingClientRect().top + window.scrollY;
     const middleOffset = elementTop - (window.innerHeight / 2) + (element.offsetHeight / 2);    
-    window.scrollTo({top: middleOffset, behavior: 'smooth' });
+    window.scrollTo({ top: middleOffset, behavior: 'smooth' });
   }  
 
   /**
@@ -113,13 +123,15 @@ export class EmployeesComponent implements OnInit {
    */
   public openModal(row: any, accion: string, size: string) {
     const modalRef = this.modalService.open(ModalEmployeeComponent, {
-        backdrop: 'static',
-        size:size
+      backdrop: 'static',
+      size: size
     });
     modalRef.componentInstance.row = row;
     modalRef.componentInstance.accion = accion;
+    modalRef.componentInstance.complejosList = this.complejosList;
+    modalRef.componentInstance.usersList = this.userList;
     modalRef.componentInstance.itemsList.subscribe(() => {
-    this.loadData();
+      this.loadData();
     });
   }
 
@@ -132,9 +144,9 @@ export class EmployeesComponent implements OnInit {
     this.modalService.open(content, { centered: true });
   }
 
-  camposImport: any[] =[];
+  headersImport = ['Nombre', 'Telefono', 'Complejo', 'Activo', 'Fecha Asignación', 'Fecha Fin', 'Hora Entrada', 'Hora Salida'];
   public openModalImport() {
-    this.camposImport = [
+    const camposImport = [
         {prop: 'userUuid', name: 'userUuid'},
         {prop: 'Nombre', name: 'Nombre'},
         {prop: 'Telefono', name: 'Telefono'},
@@ -146,103 +158,182 @@ export class EmployeesComponent implements OnInit {
         size: 'lg',
         backdrop: 'static'
     });
-    modalRef.componentInstance.titles = this.camposImport;
+    modalRef.componentInstance.titles = camposImport;
     modalRef.componentInstance.itemsList = this.employeesList;
     modalRef.componentInstance.itemsList.subscribe(() => {
         this.getEmployees();
     });
   }
+  // public openModalImport() {
+  //   const modalRef = this.modalService.open(ModalImportComponent, {
+  //     size: 'lg',
+  //     backdrop: 'static'
+  //   });
+  //   modalRef.componentInstance.titles = this.headersImport.map(header => 
+  //     ({ prop: header, name: header, visible: true }));
+  //   modalRef.componentInstance.itemsList = this.temp;
+  //   modalRef.componentInstance.lookupData = {
+  //     complejosList: this.complejosList
+  //   };
+  //   modalRef.componentInstance.checkExistsFn = (registro: EncargadoComplejo) =>
+  //     this.temp.some(item =>
+  //       item.nombre === registro.nombre && 
+  //       item.complejoDto?.uuid === registro.complejoDto?.uuid
+  //     );
+  //   modalRef.componentInstance.mapRowFn = (row: any, lookupData: any): EncargadoComplejo => {
+  //     const complejoNombre = (row['Complejo'] || '').trim();
+  //     const complejo = lookupData.complejosList.find(
+  //       (c: any) => c.nombre?.trim() === complejoNombre
+  //     );
+
+  //     const missingFields = [];
+  //     if (!complejo) missingFields.push('Complejo');
+  //     if (missingFields.length > 0) {
+  //       throw { missingFields };
+  //     }
+
+  //     return {
+  //       nombre: '' + row['Nombre'],
+  //       avatar:'multi-user.jpg',
+  //       telefono: '' + row['Telefono'],
+  //       activo: this.parseBoolean(row['Activo']),
+  //       fechaAsignacion: row['Fecha Asignación'] ? new Date(row['Fecha Asignación']).toISOString() : new Date().toISOString(),
+  //       fechaFinAsignacion: row['Fecha Fin'] ? new Date(row['Fecha Fin']).toISOString() : undefined,
+  //       horaEntrada: row['Hora Entrada'] || '08:00:00',
+  //       horaSalida: row['Hora Salida'] || '17:00:00',
+  //       complejoDto: complejo
+  //     };
+  //   };
+  //   modalRef.componentInstance.createRecordFn = (record: EncargadoComplejo) =>
+  //     this.employeesService.save(record).toPromise();
+  //   modalRef.componentInstance.actionCompleted.subscribe(() => {
+  //     this.getEmployees();
+  //   });
+  // }
+
+  private parseBoolean(value: any): boolean {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      return value.toLowerCase() === 'true' || value.toLowerCase() === 'si' || 
+             value.toLowerCase() === 'sí' || value === '1' || value.toLowerCase() === 'activo';
+    }
+    return true; // Default to active
+  }
 
   // Csv File Export
   csvFileExport() {
-    const lista = this.selectedItems.flatMap((item:Encargado) => {
+    const lista = this.selectedItems.flatMap((item: EncargadoComplejo) => {
       const data = {
-        user: item.userUuid,
-        name: item.nombre,
-        phone: item.telefono,
-        avatar: item.avatar,
-        Complejo:item.complejoDto.nombre,
-        checkIn:item.horaEntrada,
-        checkOut:item.horaSalida
+        nombre: item.nombre,
+        telefono: item.telefono,
+        activo: item.activo ? 'Activo' : 'Inactivo',
+        fechaAsignacion: this.formatDate(item.fechaAsignacion),
+        fechaFinAsignacion: this.formatDate(item.fechaFinAsignacion),
+        horaEntrada: item.horaEntrada,
+        horaSalida: item.horaSalida,
+        complejo: item.complejoDto?.nombre,
+        userUuid: item.userUuid
       };    
-      return [{...data}];      
+      return [{ ...data }];      
     });
+    
     var xlsxData = {
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalseparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Lista de '+ this.title,
+      title: 'Lista de ' + this.title,
       useBom: true,
       noDownload: false,
-      headers: ["userUuid", "Nombre","Telefono","avatar" , 
-          "Complejo","Hora Entrada", "Hora Salida"]
+      headers: ["Nombre", "Telefono", "Activo", "Fecha Asignación", "Fecha Fin", 
+                "Hora Entrada", "Hora Salida", "Complejo", "User UUID"]
     };
-    new ngxCsv(this.selectedItems, "Lista de "+ this.title, xlsxData);
+    new ngxCsv(lista, "Lista de " + this.title, xlsxData);
+  }
+
+  formatDate(date: any): string {
+    if (!date) return '';
+    const dateObj = new Date(date);
+    return this.datePipe.transform(dateObj, 'yyyy-MM-dd') || '';
   }
 
   /* API Services */
-  private getUsers(){
-    this.usersService.getAllUsers().subscribe((data)=>{
+  private getUsers() {
+    this.usersService.getAllUsers().subscribe((data) => {
       this.userList = data;
-    })
+    });
   }
-  private getEmployees(): void {
-    setTimeout(() => {
-      this.employeesService.getAll().subscribe({
-        next: (data: any) => {
-          this.loading = false;
-          if (data.status === 'OK') {
-            this.employeesList = data.payload.map((employee: any) => ({
-              ...employee,
-              // nombreCompleto: this.getFullName(employee),
-              avatar: this.getAvatar(employee)
-            }));
-            this.temp = this.employeesList;
-            if (this.employeesList.length > 0) {
-              this.funcionarioSelected = this.employeesList[0];
-            }
-          } 
-        },
-        error: () => {
-          this.loading = false;
-          Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
+
+  private getComplejos() {
+    this.complejosService.getAll().subscribe({
+      next: (data: any) => {
+        if (data['status'] === 'OK') {
+          this.complejosList = data.payload;
         }
-      });
-      document.getElementById('elmLoader')?.classList.add('d-none');
-    }, 1200);
+      }
+    });
   }
+
+  private getEmployees(): void {
+    this.loading = true;
+    this.employeesService.getAll().subscribe({
+      next: (data: any) => {
+        this.loading = false;
+        if (data.status === 'OK') {
+          this.employeesList = data.payload
+          this.temp = this.employeesList;
+          if (this.employeesList.length > 0) {
+            this.funcionarioSelected = this.employeesList[0];
+          }
+        } 
+      },
+      error: () => {
+        this.loading = false;
+        this.notify('No se pudo recuperar los registros', 'error');
+      }
+    });
+  }
+
   // Delete Data
   deleteData() {
     let uuid = this.deleteId;
     this.employeesService.delete(uuid).subscribe({
-      next: (data:any) => {
-            this.submitted = false;
-            if(data.status=='OK'){
-              this.loadData();
-              Swal.fire({ text: data.payload, confirmButtonColor: 'success' });
-              this.modalService.dismissAll();
-            }
-       },
+      next: (data: any) => {
+        this.submitted = false;
+        if (data.status == 'OK') {
+          this.loadData();
+          this.notify(data.payload, 'success');
+          this.modalService.dismissAll();
+        }
+      },
       error: err => {
         this.submitted = false;
-      Swal.fire({ text: 'No se pudo eliminar el registro!', confirmButtonColor: 'success' });
+        this.notify('No se pudo eliminar el registro!', 'error');
       }
     });
   }
    
   private getAvatar(employee: any): string {
-    let avatar = '';
-    const user = this.userList.find((user: any) => user.uuid === employee.userUuid);
+    let avatar = 'default-avatar.png';
+    const user = this.userList?.find((user: any) => user.uuid === employee.userUuid);
     const foundItem = this.userRol.find(item => item.tipo === 1);
+    
     if (foundItem) {
       avatar = foundItem.avatarM;
-      if (user && user.designacionFuncionarioDto.personaDto.sexo === 'F') {
+      if (user && user.designacionFuncionarioDto?.personaDto?.sexo === 'F') {
         avatar = foundItem.avatarF;
       }
     }
     return avatar;
   }
-  
+
+  private notify(message: string, type: any): void {
+    Swal.fire({
+      title: message,
+      icon: type,
+      timer: 3000,
+      timerProgressBar: true,
+    });
+  }
 }

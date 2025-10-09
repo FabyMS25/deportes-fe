@@ -48,17 +48,37 @@ export class ListComponent {
       { label: this.title, active: true }
     ];
     this.itemsList = [
-      {name: 'Nombre', prop: 'nombre',visible:true},
-      {name: 'Primer Apellido', prop: 'apPaterno',visible:true},
-      {name: 'Segundo Apellido', prop: 'apMaterno',visible:false},
-      {name: 'Nro Carnet',prop: 'nroCarnet',visible:true},
-      {name: 'Celular', prop: 'celular',visible:true},
+      {name: 'Nombre Completo', prop: 'nombreCompleto',visible:true},
+      {name: 'Nombre', prop: 'nombre',visible:false},
+      {name: 'Primer Apellido', prop: 'primerApellido',visible:false},
+      {name: 'Segundo Apellido', prop: 'segundoApellido',visible:false},
+      {name: 'Apellido Esposo', prop: 'apellidoEsposo',visible:false},
+      {name: 'Tipo Contribuyente', prop: 'tipoContribuyente',visible:false},
+      {name: 'Nro Documento',prop: 'numeroDocumento',visible:true},
+      {name: 'Expedido', prop: 'expedido',visible:false},
       {name: 'NIT', prop: 'nroNit',visible:false},
-      {name: 'Genero', prop: 'sexo',visible:false},
+      {name: 'Genero', prop: 'genero',visible:false},
       {name: 'Estado Civil', prop: 'estadoCivil',visible:false},
-      {name: 'Fecha Nacimiento', prop: 'fechaNac',visible:false},
-      {name: 'Direccion', prop: 'direccion',visible:false},
-      {name: 'Estado', prop: 'estadoUsuario',tag:true,visible:true},
+      {name: 'Fecha Nacimiento', prop: 'fechaNacimiento',visible:false},
+      {name: 'Teléfono', prop: 'telefono',visible:true},
+      {name: 'Email', prop: 'email',visible:false},
+      {name: 'Dirección', prop: 'direccion',visible:false},
+      {name: 'Estado Usuario', prop: 'estadoUsuario',tag:true,visible:true},
+      {name: 'Estado Ruat', prop: 'estadoRuat',visible:true,tag:true},
+      
+      {name: 'Es Deportista Elite', prop: 'esDeportistaElite',visible:false,tag:true},
+      // {name: '', prop: 'perteneceEscuelaMunicipal',visible:true},
+      // {name: '', prop: 'registroUnicoDeportivo',visible:true},
+      // {name: '', prop: 'fechaUltimoUsoGratuito',visible:true},
+      // {name: '', prop: 'observacionesMunicipales',visible:true},
+      // {name: '', prop: 'descuentoAplicable',visible:true},
+      // {name: '', prop: 'puedeReservarGratis',visible:true},
+
+      {name: 'Fecha Creacion', prop: 'fechaCreacion',visible:false, date:true},
+      {name: 'Fecha Actualización', prop: 'fechaActualizacion',visible:false, date:true},
+      {name: 'Estado Sancionado', prop: 'estaSancionado',visible:false},
+      {name: 'Fecha fin Sancion', prop: 'fechaFinSancion',visible:false, date:false},
+      {name: 'Motivo', prop: 'motivoSancion',visible:false},
     ];
     this.getTaxpayers();
   }
@@ -75,11 +95,12 @@ export class ListComponent {
   performSearch(): void {
     this.contribuyentesList = this.temp.filter((item: any) => {
       return (
+        item.nombreCompleto.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.nombre.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.apPaterno.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.apMaterno.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.nroCarnet.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.correo.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.primerApellido.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.segundoApellido.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.numeroDocumento.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.email.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.estadoUsuario.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 /**Enviroments */
 import { environment } from 'src/environments/environment';
-import { campoDeportivo } from '../../models/campoDeportivo.model';
+import { CampoDeportivo } from '../../models/campoDeportivo.model';
 
 /**Models */
 
@@ -17,30 +17,30 @@ const httpOptions = {
   providedIn: 'root'
 })
 export class CamposDeportivoService {
-    apiUrl = environment.backendUrl + '/canchas';
+    apiUrl = environment.backendUrl + '/campoDeportivo';
 
 
   constructor(private http: HttpClient) { }
 
-  getAll(): Observable<campoDeportivo[]> {
-    return this.http.get<campoDeportivo[]>(`${this.apiUrl}`);
+  getAll(): Observable<CampoDeportivo[]> {
+    return this.http.get<CampoDeportivo[]>(`${this.apiUrl}`);
   }
 
-  getByUuid(uuid:string):Observable<campoDeportivo>{
-    return this.http.get<campoDeportivo>(`${this.apiUrl}/${uuid}`);
+  getByUuid(uuid:string):Observable<CampoDeportivo>{
+    return this.http.get<CampoDeportivo>(`${this.apiUrl}/${uuid}`);
   }
 
-  getByComplejo(data:any):Observable<campoDeportivo>{
-    return this.http.get<campoDeportivo>(`${this.apiUrl}/complejo/${data.uuid}`);
+  getByComplejo(data:any):Observable<CampoDeportivo>{
+    return this.http.get<CampoDeportivo>(`${this.apiUrl}/complejo/${data.uuid}`);
   }
 
-  save(data: campoDeportivo): Observable<campoDeportivo> {
+  save(data: CampoDeportivo): Observable<CampoDeportivo> {
     // var headerToken = {'Authorization': `Bearer `+ window.sessionStorage.getItem('auth-token')};
-    return this.http.post<campoDeportivo>(`${this.apiUrl}`, data);
+    return this.http.post<CampoDeportivo>(`${this.apiUrl}`, data);
   }
 
-  update(data: campoDeportivo): Observable<campoDeportivo> {
-    return this.http.put<campoDeportivo>(`${this.apiUrl}`, data);
+  update(data: CampoDeportivo): Observable<CampoDeportivo> {
+    return this.http.put<CampoDeportivo>(`${this.apiUrl}`, data);
   }
   delete(uuid: string) {
     return this.http.delete(`${this.apiUrl}/${uuid}`);

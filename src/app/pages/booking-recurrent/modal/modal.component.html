@@ -1,0 +1,155 @@
+<div class="modal-header bg-primary text-white">
+  <h5 class="modal-title">
+    <i class="ri-calendar-event-line me-2"></i>
+    {{ accion === 'create' ? 'Crear' : accion === 'edit' ? 'Editar' : 'Ver' }} Reserva Programada
+  </h5>
+  <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="activeModal.dismiss()"></button>
+</div>
+
+<div class="modal-body">
+  <form [formGroup]="reservaForm" *ngIf="!isViewMode; else viewModeTemplate">
+    
+    <!-- Información básica -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <label class="form-label">Fecha de Inicio</label>
+        <input type="date" class="form-control" formControlName="fechaInicio">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Fecha de Fin</label>
+        <input type="date" class="form-control" formControlName="fechaFin">
+      </div>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <label class="form-label">Categoría</label>
+        <select class="form-select" formControlName="categoria">
+          <option value="">Seleccionar categoría</option>
+          <option *ngFor="let category of categoryList" [value]="category.nombre">
+            {{ category.nombre }}
+          </option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Superficie</label>
+        <input type="text" class="form-control" formControlName="superficie">
+      </div>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <label class="form-label">Total de Personas</label>
+        <input type="number" class="form-control" formControlName="totalPersonas" min="1">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Contribuyente</label>
+        <select class="form-select" formControlName="contribuyente">
+          <option value="">Seleccionar contribuyente</option>
+          <option *ngFor="let contribuyente of contribuyentesList" [ngValue]="contribuyente">
+            {{ contribuyente.nombre }} {{ contribuyente.primerApellido }} {{ contribuyente.segundoApellido }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Calendario Semanal -->
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">Seleccionar Horarios - Semana del {{ currentWeekStart | date:'dd/MM' }} al {{ currentWeekEnd | date:'dd/MM' }}</h6>
+          <div class="btn-group">
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="moveWeek(-1)">
+              <i class="ri-arrow-left-s-line"></i>
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="goToToday()">Hoy</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="moveWeek(1)">
+              <i class="ri-arrow-right-s-line"></i>
+            </button>
+          </div>
+        </div>
+        <small class="text-muted">Seleccione primero la hora de inicio y luego la hora de fin en el mismo día</small>
+      </div>
+      
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-bordered mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 100px;">Hora</th>
+                <th *ngFor="let day of weekDays" class="text-center">
+                  {{ day.dayName }}<br>
+                  <small>{{ day.date | date:'dd/MM' }}</small>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let time of horasDisponibles; let timeIndex = index">
+                <td class="text-center fw-semibold">{{ time }}</td>
+                <td *ngFor="let day of weekDays; let dayIndex = index" 
+                    class="text-center p-1"
+                    (click)="selectTimeSlot(dayIndex, timeIndex)">
+                  <div class="time-slot"
+                       [class.available]="day.slots[timeIndex].isAvailable"
+                       [class.unavailable]="!day.slots[timeIndex].isAvailable"
+                       [class.selected]="day.slots[timeIndex].isSelected"
+                       [class.start-time]="day.slots[timeIndex].isStart"
+                       [class.end-time]="day.slots[timeIndex].isEnd"
+                       [class.in-range]="day.slots[timeIndex].isInRange">
+                    {{ day.slots[timeIndex].isAvailable ? '✓' : '✗' }}
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Horarios seleccionados -->
+    <div class="card mb-4" *ngIf="horariosFormArray.length > 0">
+      <div class="card-header bg-light">
+        <h6 class="mb-0">Horarios Seleccionados</h6>
+      </div>
+      <div class="card-body">
+        <div *ngFor="let horario of horariosFormArray; let i = index" class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+          <span>
+            <strong>{{ horario.dia }}:</strong> {{ horario.horaInicio }} - {{ horario.horaFin }}
+          </span>
+          <button type="button" class="btn btn-danger btn-sm" (click)="removeHorario(i)">
+            <i class="ri-delete-bin-line"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Observaciones</label>
+      <textarea class="form-control" formControlName="observaciones" rows="3"></textarea>
+    </div>
+
+    <!-- Validaciones -->
+    <div *ngIf="submitted && reservaForm.invalid" class="alert alert-danger">
+      <div *ngIf="reservaForm.get('horarios')?.errors">Debe seleccionar al menos un horario</div>
+      <div *ngIf="reservaForm.get('contribuyente')?.errors">Contribuyente requerido</div>
+      <div *ngIf="reservaForm.get('categoria')?.errors">Categoría requerida</div>
+    </div>
+  </form>
+
+  <!-- Modo visualización -->
+  <ng-template #viewModeTemplate>
+    <!-- ... (mismo contenido de visualización que antes) ... -->
+  </ng-template>
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-light" (click)="activeModal.dismiss()">
+    Cancelar
+  </button>
+  
+  <button *ngIf="!isViewMode" type="button" class="btn btn-primary" 
+          [disabled]="loading" (click)="saveData()">
+    <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+    {{ accion === 'create' ? 'Crear' : 'Guardar' }} Reserva
+  </button>
+</div>

@@ -9,7 +9,7 @@
         [newShow]="canActivate.includes('CREAR')"
         [importShow]="canActivate.includes('CREAR')"
         [exportShow]="canActivate.includes('VER')"
-        (createEmitter)="openModal( undefined,'','md')"
+        (createEmitter)="openModal( undefined,content,'')"
         (importEmitter)="openModalImport()"
         (exportEmitter)="csvFileExport()"
     ></app-data-header>
@@ -89,55 +89,68 @@
             <div class="row g-3">
                 <div class="col-lg-12">
                     <div>
-                        <label for="codigo-field" class="form-label">Código </label>
+                        <label for="codigo-field" class="form-label">Código</label>
                         <input type="text" id="codigo-field" class="form-control"
-                            placeholder="Ingresan el codigo del Deporte" required formControlName="codigo"
+                            placeholder="Ingrese el código de la Categoría" required formControlName="codigo"
                             [ngClass]="{ 'is-invalid': submitted && form['codigo'].errors }" />
                         @if(submitted && form['codigo'].errors){
                         <div class="invalid-feedback" align="left">
                             @if(form['codigo'].errors['required']){
-                            <div>El campo es requirido</div>
+                            <div>El campo es requerido</div>
                             }
                         </div>
                         }
                     </div>
                 </div>
-            </div>
-            <div class="row g-3">
                 <div class="col-lg-12">
                     <div>
                         <label for="nombre-field" class="form-label">Nombre</label>
                         <input type="text" id="nombre-field" class="form-control"
-                            placeholder="Ingresan el Nombre del Deporte" required formControlName="nombre"
+                            placeholder="Ingrese el nombre de la Categoría" required formControlName="nombre"
                             [ngClass]="{ 'is-invalid': submitted && form['nombre'].errors }" />
                         @if(submitted && form['nombre'].errors){
                         <div class="invalid-feedback" align="left">
                             @if(form['nombre'].errors['required']){
-                            <div>El campo es requirido</div>
+                            <div>El campo es requerido</div>
                             }
                         </div>
                         }
                     </div>
                 </div>
-            </div>
-            <div class="row g-3">
+                <div class="col-lg-12">
+                    <div>
+                        <label for="descripcion-field" class="form-label">Descripción</label>
+                        <textarea id="descripcion-field" class="form-control" rows="3"
+                            placeholder="Ingrese una descripción (opcional)" formControlName="descripcion"></textarea>
+                    </div>
+                </div>
                 <div class="col-lg-12">
                     <div>
                         <label for="tipo-field" class="form-label">Tipo de Cobro</label>
                         <select class="form-select" aria-label="tipo" formControlName="tipo"
-                             [ngClass]="{'is-invalid': submitted && form['tipo'].errors }">
-                            <option selected disabled class="text-muted">tipo de Cobro</option>
-                            <option value="Hora">Hora</option>
-                            <option value="Persona">Persona</option>
-                            <option value="Evento">Evento</option>
+                             [ngClass]="{'is-invalid': submitted && form['tipo'].errors }" required>
+                            <option selected disabled class="text-muted" value="">Seleccione tipo de Cobro</option>
+                            <option *ngFor="let item of typeList" [value]="item.value">{{item.value}}</option>
                         </select>
                         @if(submitted && form['tipo'].errors){
                         <div class="invalid-feedback" align="left">
                             @if(form['tipo'].errors['required']){
-                            <div>El campo es requirido</div>
+                            <div>El campo es requerido</div>
                             }
                         </div>
                         }
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="activo-field" formControlName="activo">
+                        <label class="form-check-label" for="activo-field">Activo</label>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="forAsociacion-field" formControlName="forAsociacion">
+                        <label class="form-check-label" for="forAsociacion-field">Para Asociación</label>
                     </div>
                 </div>
             </div>
@@ -147,7 +160,7 @@
             <div class="hstack gap-2 justify-content-end">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal"
                     (click)="closeModal()">Cerrar</button>
-                <button type="submit" class="btn btn-primary" id="add-btn">Guardar</button>
+                <button *ngIf="accion !== 'show'" type="submit" class="btn btn-primary" id="add-btn">Guardar</button>
             </div>
         </div>
     </form>
@@ -164,9 +177,9 @@
                 <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
                     colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
                 <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
-                    <h4>Estas seguro de Eliminar el Registro ?</h4>
+                    <h4>¿Estás seguro de Eliminar el Registro?</h4>
                     <p class="text-muted mx-4 mb-0">
-                        Al Confirmar la eliminacion se quitara toda informacion de nuestra base de datos.
+                        Al confirmar la eliminación se quitará toda información de nuestra base de datos.
                     </p>
                 </div>
             </div>
@@ -174,8 +187,8 @@
                 <button class="btn btn-link link-success fw-medium text-decoration-none" data-bs-dismiss="modal"
                     id="deleteRecord-close" (click)="modal.close('Close click')"><i
                         class="ri-close-line me-1 align-middle"></i> Cancelar</button>
-                <button type="button" class="btn w-sm btn-danger " id="delete-product" (click)="deleteData()"
-                    (click)="modal.close('Close click')">Si, Elmimar!</button>
+                <button type="button" class="btn w-sm btn-danger" id="delete-product" (click)="deleteData()"
+                    (click)="modal.close('Close click')">Sí, Eliminar!</button>
             </div>
         </div>
     </div>

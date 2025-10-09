@@ -7,6 +7,7 @@ import { CategoriesComponent } from "./categories/categories.component";
 import { FieldsComponent } from './fields/list/fields.component';
 import { FacilitiesComponent } from './facilities/list/facilities.component';
 import { SurfacesComponent } from './surfaces/surfaces.component';
+import { ClasificadoresRuatComponent } from './clasificadores-ruat/clasificadores-ruat.component';
 
 const routes: Routes = [
   {
@@ -28,6 +29,10 @@ const routes: Routes = [
   {
     path: "area",
     component: SurfacesComponent
+  },
+  {
+    path: "classifiers",
+    component: ClasificadoresRuatComponent
   }
 
 ];

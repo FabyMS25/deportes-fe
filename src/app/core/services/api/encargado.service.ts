@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { Observable } from 'rxjs';
-import { Encargado } from '../../models/encargado';
+import { EncargadoComplejo } from '../../models/encargadoComplejo';
 
 @Injectable({
   providedIn: 'root'
@@ -14,24 +14,24 @@ export class EncargadoService {
 
   constructor(private http: HttpClient) { }
 
-  getAll(): Observable<Encargado[]> {
-    return this.http.get<Encargado[]>(`${this.apiUrl}`);
+  getAll(): Observable<EncargadoComplejo[]> {
+    return this.http.get<EncargadoComplejo[]>(`${this.apiUrl}`);
   }
 
-  getByUuid(uuid: String): Observable<Encargado> {
-    return this.http.get<Encargado>(`${this.apiUrl}/${uuid}`)
+  getByUuid(uuid: String): Observable<EncargadoComplejo> {
+    return this.http.get<EncargadoComplejo>(`${this.apiUrl}/${uuid}`)
   }
   
-  getByUserUuid(uuid: String): Observable<Encargado> {
-    return this.http.get<Encargado>(`${this.apiUrl}/user/${uuid}`)
+  getByUserUuid(uuid: String): Observable<EncargadoComplejo> {
+    return this.http.get<EncargadoComplejo>(`${this.apiUrl}/user/${uuid}`)
   }
 
-  save(data: Encargado): Observable<Encargado> {
-    return this.http.post<Encargado>(`${this.apiUrl}`, data);
+  save(data: EncargadoComplejo): Observable<EncargadoComplejo> {
+    return this.http.post<EncargadoComplejo>(`${this.apiUrl}`, data);
   }
 
-  update(data: Encargado): Observable<Encargado> {
-    return this.http.put<Encargado>(`${this.apiUrl}`, data);
+  update(data: EncargadoComplejo): Observable<EncargadoComplejo> {
+    return this.http.put<EncargadoComplejo>(`${this.apiUrl}`, data);
   }
   delete(uuid: String) {
     return this.http.delete(`${this.apiUrl}/${uuid}`);

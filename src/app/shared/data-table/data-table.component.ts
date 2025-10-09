@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { CityAcronym } from 'src/app/core/constants/Places';
 import * as userData from 'src/app/core/constants/UserData';
@@ -26,7 +26,14 @@ interface TableActions {
   ticket?:boolean
   // [key: string]: boolean | undefined;
 }
-
+interface PaginationInfo {
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
 @Component({
   selector: 'app-data-table',
   templateUrl: './data-table.component.html',
@@ -35,12 +42,13 @@ interface TableActions {
 export class DataTableComponent implements OnChanges {
   @Input() itemsList!: ColumnDefinition[];
   @Input() actions!: TableActions;
-  @Input() allcontent!: any[];
-  /* @Input() */ content!: any[];
+  @Input() allcontent!: any[] | any; 
   @Input() loading: boolean = true;
   @Input() multiCheck: boolean = true;
   @Input() itemsPerPage: number;
   @Input() viewMode: 'table' | 'cards' = 'table';
+  @Input() serverSidePagination: boolean = false;
+  @Input() paginationInfo: PaginationInfo | null = null;
 
   @Output() showItemEmitter = new EventEmitter<any>();
   @Output() editItemEmitter = new EventEmitter<any>();
@@ -50,6 +58,12 @@ export class DataTableComponent implements OnChanges {
   @Output() selectedItemEmitter = new EventEmitter<any[]>();
   @Output() ticketEmitter = new EventEmitter<any[]>();
   @Output() consultItemEmitter = new EventEmitter<any[]>();
+  @Output() pageChange = new EventEmitter<number>();
+  @Output() pageSizeChange = new EventEmitter<number>(); 
+
+  
+  content: any[] = [];
+  totalElements: number = 0;
 
   masterSelected: boolean = false;
   searchTerm: string = '';
@@ -60,9 +74,52 @@ export class DataTableComponent implements OnChanges {
   constructor(public service: PaginationService) {
     this.itemsPerPage = this.service.pageSize;
   }
+  // ngOnChanges(): void {
+  //   this.content = this.service.changePage(this.allcontent, this.itemsPerPage);
+  // }
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['allcontent'] || changes['serverSidePagination']) {
+      this.processContent();
+    }
+  }
+  private processContent(): void {
+    if (this.serverSidePagination) {
+      this.handleServerSidePagination();
+    } else {
+      this.handleClientSidePagination();
+    }
+  }
 
-  ngOnChanges(): void {
-    this.content = this.service.changePage(this.allcontent, this.itemsPerPage);
+
+  private handleServerSidePagination(): void {
+    if (this.allcontent && this.allcontent.content && Array.isArray(this.allcontent.content)) {
+      // Spring Data pagination format
+      this.content = this.allcontent.content;
+      this.totalElements = this.allcontent.totalElements || this.content.length;
+      
+      // Update pagination info if provided
+      if (this.allcontent.pageable) {
+        this.service.page = this.allcontent.pageable.pageNumber + 1; // Convert to 1-based
+        this.itemsPerPage = this.allcontent.pageable.pageSize;
+      }
+    } else if (Array.isArray(this.allcontent)) {
+      // Fallback: direct array
+      this.content = this.allcontent;
+      this.totalElements = this.allcontent.length;
+    } else {
+      this.content = [];
+      this.totalElements = 0;
+    }
+  }
+
+  private handleClientSidePagination(): void {
+    if (Array.isArray(this.allcontent)) {
+      this.content = this.service.changePage(this.allcontent, this.itemsPerPage);
+      this.totalElements = this.allcontent.length;
+    } else {
+      this.content = [];
+      this.totalElements = 0;
+    }
   }
 
   //#region Action Handle
@@ -186,48 +243,92 @@ export class DataTableComponent implements OnChanges {
   checkUncheckAll(e: Event): void {
     const target = e.target as HTMLInputElement;
     this.masterSelected = target.checked;
-    this.checkedValGet = this.masterSelected ? [...this.allcontent] : [];
+    if (this.serverSidePagination) {
+      this.checkedValGet = this.masterSelected ? [...this.content] : [];
+    } else {
+      this.checkedValGet = this.masterSelected ? [...this.allcontent] : [];
+    }
+    
     this.updateSelectionState();
   }
+  // checkUncheckAll(e: Event): void {
+  //   const target = e.target as HTMLInputElement;
+  //   this.masterSelected = target.checked;
+  //   this.checkedValGet = this.masterSelected ? [...this.allcontent] : [];
+  //   this.updateSelectionState();
+  // }
 
   private updateSelectionState(): void {
-    this.masterSelected = this.checkedValGet.length === this.allcontent.length;
+    const totalItems = this.serverSidePagination ? this.content.length : this.allcontent.length;
+    this.masterSelected = this.checkedValGet.length === totalItems && totalItems > 0;
     this.selectedItemEmitter.emit(this.checkedValGet);
+    
     const removeActions = document.getElementById("remove-actions");
     if (removeActions) {
       removeActions.style.display = this.checkedValGet.length > 0 ? "block" : "none";
     }
   }
+  // private updateSelectionState(): void {
+  //   this.masterSelected = this.checkedValGet.length === this.allcontent.length;
+  //   this.selectedItemEmitter.emit(this.checkedValGet);
+  //   const removeActions = document.getElementById("remove-actions");
+  //   if (removeActions) {
+  //     removeActions.style.display = this.checkedValGet.length > 0 ? "block" : "none";
+  //   }
+  // }
   //#endregion
 
-  //#region Sort & Pagination
-  // Sort
+   //#region Sort & Pagination
+  // Sort - Only for client-side
   currentSortColumn: string = '';
   isSortAscending: boolean = true;
+
   onSort(column: string): void {
+    if (this.serverSidePagination) {
+      console.warn('Sorting should be handled server-side when using server-side pagination');
+      return;
+    }
+
     if (this.currentSortColumn === column) {
       this.isSortAscending = !this.isSortAscending;
     } else {
       this.currentSortColumn = column;
       this.isSortAscending = true;
     }
-    this.allcontent = this.service.onSort(column, [...this.allcontent], this.isSortAscending);    
+    this.allcontent = this.service.onSort(column, [...this.allcontent], this.isSortAscending);
     this.service.page = 1;
     this.changePage();
   }
+
   getSortDirection(column: string): string {
+    if (this.serverSidePagination) return 'none';
     if (this.currentSortColumn !== column) return 'none';
     return this.isSortAscending ? 'ascending' : 'descending';
   }
-  
+
   // Pagination
   onTableSizeChange(event: Event): void {
     const size = +(event.target as HTMLSelectElement).value;
     this.itemsPerPage = size;
-    this.changePage();
+    
+    if (this.serverSidePagination) {
+      this.pageSizeChange.emit(size);
+    } else {
+      this.changePage();
+    }
   }
+
   changePage(): void {
-    this.content = this.service.changePage(this.allcontent, this.itemsPerPage);
+    if (this.serverSidePagination) {
+      this.pageChange.emit(this.service.page);
+    } else {
+      this.content = this.service.changePage(this.allcontent, this.itemsPerPage);
+    }
+  }
+
+  onPageChange(page: number): void {
+    this.service.page = page;
+    this.changePage();
   }
   //#endregion
 
@@ -247,5 +348,18 @@ export class DataTableComponent implements OnChanges {
 
   toggleColumn(column: ColumnDefinition): void {
     column.visible = !column.visible;
+  }
+
+  // Helper to get display content length
+  getDisplayContentLength(): number {
+    return this.content.length;
+  }
+
+  // Helper to get total elements
+  getTotalElements(): number {
+    if (this.serverSidePagination) {
+      return this.totalElements;
+    }
+    return Array.isArray(this.allcontent) ? this.allcontent.length : 0;
   }
 }

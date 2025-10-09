@@ -20,22 +20,22 @@ import { GlobalComponent } from 'src/app/global-component';
 })
 
 export class SignupComponent implements OnInit {
-
   SignupForm!: UntypedFormGroup;
   submitted = false;
   passwordField!: boolean;
   confirmField!: boolean;
   year: number = new Date().getFullYear();
   
-  civilStatus = UserCivilStatus
-  identityTypes = UserDocType
-  cityAcronym= CityAcronym
-  userStatus= UserStatus
-  userSex= UserGender
+  civilStatus = UserCivilStatus;
+  identityTypes = UserDocType;
+  cityAcronym = CityAcronym;
+  userStatus = UserStatus;
+  userSex = UserGender;
 
-  usersList!:any[];
-  userExist=false;
+  usersList!: any[];
+  userExist = false;
   ruatData: any;
+  isFromRuatConsultation = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -45,82 +45,101 @@ export class SignupComponent implements OnInit {
     private userDataService: UserDataService
   ) { }
 
+
   ngOnInit(): void {
     // this.authRuat()
-    this.getUsers(); 
-    
-     this.SignupForm = this.formBuilder.group({
-      uuid: [''],
-      username: ['', [Validators.required, Validators.minLength(6),this.usernameFormatValidator]],
-      password: ['', [Validators.required]], 
-      cpassword: ['', [Validators.required]], 
-      verificationCode:[null],
-      userState:['Pendiente'],
-      contribuyentType:['NA'],
-      contribuyentCode:[''],
-      name: ['', [Validators.required]],
-      firstSurname: ['', [Validators.required]],
-      secondSurname: [''],
-      identityType:['', [Validators.required]],
-      identityNumber:['', [Validators.required], [this.identityNumberValidator.bind(this)]],
-      expedite:['', [Validators.required]],
-      birthDate: ['', [Validators.required]],
-      sex: [''],
-      civilStatus: [''],
-      nitNumber:[''],
-      phone:['', [Validators.required]],      
-      email: ['', [Validators.required, Validators.email], [this.emailValidator.bind(this)]],
-      address:[''],
-    }, {
-      validator: MustMatch('password', 'cpassword')
-    });
+    this.getUsers();
+    this.initializeForm();
     
     this.route.queryParams.subscribe(params => {
       const exist = params['userExist'];
       this.ruatData = this.userDataService.getTemporaryUserData();
-      if(exist && this.ruatData){
+      
+      if (exist && this.ruatData) {
+        this.isFromRuatConsultation = true;
         this.formDataSet(this.ruatData);
         this.userDataService.setTemporaryUserData(null);
       }
     });
   }
   
-  private formDataSet(data:any) {
-    console.log(data)
-    const client = data.contribuyente
-    const doc = UserDocType.find(d => d.description === client.tipoDocumento);    
-    const civ = UserCivilStatus.find(d => d.description === client.estadoCivil);
-    const exp = CityAcronym.find(d => d.value === client.expedido);    
-    const gen = UserGender.find(d => d.description === client.genero);
-    let dateObject ='';
-    if(client.fechaNacimiento){
-      const [day, month, year] = client.fechaNacimiento.split('/').map(Number);
-      const date = new Date(+year, +month - 1, +day);
-      dateObject = date.toISOString().split('T')[0]
-    }  
-    
-    this.SignupForm.patchValue({
-    // userName: this.SignupForm.value.username,
-    // password: this.SignupForm.value.password,
-    // userState: this.SignupForm.value.userState,
-    // verificationCode: codigo,
-    contribuyentType: client.tipoContribuyente,
-    contribuyentCode: data.codigoContribuyente,
-    name: client.nombre,
-    firstSurname: client.primerApellido,
-    secondSurname: client.segundoApellido,
-    sex:gen ? gen.id : '',
-    birthDate: dateObject,
-    civilStatus: civ ? civ.type : '',
-    identityType: doc ? doc.type : '',
-    identityNumber: client.numeroDocumento,
-    expedite:exp ? exp.id : '',
-    // nitNumber:this.SignupForm.value.nitNumber,
-    // phone:this.SignupForm.value.phone,
-    // email:this.SignupForm.value.email,
-    // address:this.SignupForm.value.address,
+  private initializeForm() {
+    this.SignupForm = this.formBuilder.group({
+      // uuid: [''],
+      userName: ['', [Validators.required, Validators.minLength(6),this.usernameFormatValidator]],
+      password: ['', [Validators.required]], 
+      cpassword: ['', [Validators.required]], 
+      verificationCode:[null],
+      estadoUsuario: ['Pendiente'],
+      
+      nombre: ['', [Validators.required]],
+      primerApellido: ['', [Validators.required]],
+      segundoApellido: [''],
+      fechaNacimiento: ['', [Validators.required]],
+      genero: ['', [Validators.required]],
+      estadoCivil: [''],
+      telefono: ['', [Validators.required]],
+      email: ['', [Validators.required, Validators.email], [this.emailValidator.bind(this)]],
+      direccion: [''],
 
+      tipoContribuyente: ['NA'],
+      codigoContribuyente: [''],
+      tipoDocumento: ['', [Validators.required]],
+      numeroDocumento: ['', [Validators.required]],
+      expedido: ['', [Validators.required]],
+      nroNit: [''],
+      // Administrative fields (set by admin later)
+      esDeportistaElite: [false],
+      perteneceEscuelaMunicipal: [false],
+      registroUnicoDeportivo: [''],
+      descuentoAplicable: [0],
+      estaSancionado: [false],
+      fechaFinSancion: [''],
+      motivoSancion: [''],
+      observacionesMunicipales: ['']
     });
+  }
+
+  private formDataSet(data: any) {
+    console.log('Setting form data from RUAT:', data);    
+    if (data && data.contribuyente) {
+      const client = data.contribuyente;
+      const doc = UserDocType.find(d => d.description === client.tipoDocumento);    
+      const civ = UserCivilStatus.find(d => d.description === client.estadoCivil);
+      const exp = CityAcronym.find(d => d.value === client.expedido);    
+      const gen = UserGender.find(d => d.description === client.genero);
+      let fechaNacimientoValue = '';
+      if (client.fechaNacimiento) {
+        const [day, month, year] = client.fechaNacimiento.split('/').map(Number);
+        const date = new Date(year, month - 1, day);
+        fechaNacimientoValue = date.toISOString().split('T')[0];
+      }
+      const username = client.numeroDocumento;
+      const password = client.numeroDocumento;
+      this.SignupForm.patchValue({
+        tipoDocumento: client.tipoDocumento,
+        numeroDocumento: client.numeroDocumento,
+        expedido: client.expedido,
+        tipoContribuyente: client.tipoContribuyente || 'NA',
+        codigoContribuyente: data.codigoContribuyente,
+        
+        nombre: client.nombre,
+        primerApellido: client.primerApellido,
+        segundoApellido: client.segundoApellido,
+        genero: client.genero,
+        fechaNacimiento: fechaNacimientoValue,
+        estadoCivil: client.estadoCivil,
+        nroNit: client.nroNit,
+        
+        userName: username,
+        password: password
+      });
+      // Make document fields readonly since they come from RUAT
+      // this.SignupForm.get('tipoDocumento')?.disable();
+      // this.SignupForm.get('numeroDocumento')?.disable();
+      // this.SignupForm.get('expedido')?.disable();
+      // this.SignupForm.get('tipoContribuyente')?.disable();
+    }
   }
 
   get f() { return this.SignupForm.controls; }
@@ -130,49 +149,52 @@ export class SignupComponent implements OnInit {
    */    
   onSubmit() {
     this.SignupForm.patchValue({
-      username: this.SignupForm.value.identityNumber,
-      password: this.SignupForm.value.identityNumber,
-      cpassword:this.SignupForm.value.identityNumber
+      userName: this.SignupForm.value.numeroDocumento,
+      password: this.SignupForm.value.numeroDocumento,
+      cpassword:this.SignupForm.value.numeroDocumento
     });
-    this.submitted = true;  
+    this.submitted = true;
+    console.log(this.SignupForm.value)
     if (this.SignupForm.valid) {
       const code = this.generateCode();
       this.SignupForm.enable();
   
-      const dateString: string = this.SignupForm.value.birthDate;
-      const originalDate: Date = new Date(dateString);
-      const formattedDate: string = originalDate.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-
-      let datos: Contribuyente = {
-        // uuid:this.SignupForm.value.uuid,
-        userName: this.SignupForm.value.username,
-        password: this.SignupForm.value.password,
-        tipoContribuyente: this.SignupForm.value.contribuyentType,
-        codigoContribuyente: this.SignupForm.value.contribuyentCode,
-        estadoUsuario: this.SignupForm.value.userState,
-        verificationCode: code,
-        nombre: this.SignupForm.value.name,
-        apPaterno: this.SignupForm.value.firstSurname,
-        apMaterno: this.SignupForm.value.secondSurname,
-        sexo:this.SignupForm.value.sex,
-        fechaNac: formattedDate,
-        estadoCivil: this.SignupForm.value.civilStatus,
-        tipoDocumento: this.SignupForm.value.identityType,
-        nroCarnet: this.SignupForm.value.identityNumber,
-        ciExpedido:this.SignupForm.value.expedite,
-        nroNit:this.SignupForm.value.nitNumber,
-        celular:this.SignupForm.value.phone,
-        correo:this.SignupForm.value.email,
-        direccion:this.SignupForm.value.address,
-      };
-      this.userDataService.setTemporaryUserData(datos);
-      this.sendEmail(datos, '')
+      const formData = this.prepareFormData();
+      formData.verificationCode = code;
+      this.userDataService.setTemporaryUserData(formData);
+      // const dateString: string = this.SignupForm.value.birthDate;
+      // const originalDate: Date = new Date(dateString);
+      // const formattedDate: string = originalDate.toLocaleDateString('es-ES', {
+      //   day: '2-digit',
+      //   month: '2-digit',
+      //   year: 'numeric'
+      // });
+      // let datos: any = {
+      //   // uuid:this.SignupForm.value.uuid,
+      //   userName: this.SignupForm.value.username,
+      //   password: this.SignupForm.value.password,
+      //   tipoContribuyente: this.SignupForm.value.contribuyentType,
+      //   codigoContribuyente: this.SignupForm.value.contribuyentCode,
+      //   estadoUsuario: this.SignupForm.value.userState,
+      //   verificationCode: code,
+      //   nombre: this.SignupForm.value.name,
+      //   primerApellido: this.SignupForm.value.firstSurname,
+      //   segundoApellido: this.SignupForm.value.secondSurname,
+      //   genero:this.SignupForm.value.sex,
+      //   fechaNacimiento: formattedDate,
+      //   estadoCivil: this.SignupForm.value.civilStatus,
+      //   tipoDocumento: this.SignupForm.value.identityType,
+      //   numeroDocumento: this.SignupForm.value.identityNumber,
+      //   expedido:this.SignupForm.value.expedite,
+      //   nroNit:this.SignupForm.value.nitNumber,
+      //   telefono:this.SignupForm.value.phone,
+      //   email:this.SignupForm.value.email,
+      //   direccion:this.SignupForm.value.address,
+      // };
+      // this.userDataService.setTemporaryUserData(datos);
+      this.sendEmail(formData, '')
         .then(() => {
-          this.router.navigate(['/auth/twostep'], { queryParams: { username: datos.userName } });
+          this.router.navigate(['/auth/twostep'], { queryParams: { username: formData.userName } });
         })
         .catch(error => {
           this.userDataService.setTemporaryUserData(null);
@@ -187,12 +209,45 @@ export class SignupComponent implements OnInit {
     }
   }
   
+  private prepareFormData(): any {
+    const formValue = this.SignupForm.getRawValue();
+    let fechaNacimientoFormatted = '';
+    if (formValue.fechaNacimiento) {
+      // If it's already a Date object from the input[type="date"]
+      const date = new Date(formValue.fechaNacimiento);
+      fechaNacimientoFormatted = date.toISOString().split('T')[0]; // "yyyy-MM-dd"
+    }
+    return {
+      ...formValue,
+      fechaNacimiento: fechaNacimientoFormatted,
+      estadoUsuario: 'Pendiente',
+      verificadoRuat: this.isFromRuatConsultation,
+      estadoRuat: this.isFromRuatConsultation ? 'ACTIVO' : 'PENDIENTE'
+    };
+  }
   generateCode(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
   }
+  markAllFieldsAsTouched() {
+    Object.keys(this.SignupForm.controls).forEach(key => {
+      const control = this.SignupForm.get(key);
+      control?.markAsTouched();
+    });
+  }
+
+  getDepartmentName(id: string): string {
+    const found = this.cityAcronym.find(item => '' + item.id === id);
+    return found ? found.value : id;
+  }
+
+  getCivilStatus(acronym: string): string {
+    const found = this.civilStatus.find(item => item.type === acronym);
+    return found ? found.description : acronym;
+  }
+
 
   sendEmail(data: any, link: string): Promise<void> {
-    const email = data.correo;
+    const email = data.email;
     const name = data.nombre;
     const codigo = data.verificationCode;  
     return emailjs.send(GlobalComponent.EmailJS.idService, GlobalComponent.EmailJS.idTemplate, {
@@ -221,7 +276,7 @@ export class SignupComponent implements OnInit {
     return new Promise((resolve) => {
       setTimeout(() => {
         if (this.usersList) {
-          const itExist = this.usersList.some(user => user.nroCarnet === control.value);
+          const itExist = this.usersList.some(user => user.numeroDocumento === control.value);
           if (itExist) {
             resolve({itExist: true });
           } else { resolve(null); }
@@ -234,7 +289,7 @@ export class SignupComponent implements OnInit {
     return new Promise((resolve) => {
       setTimeout(() => {
         if (this.usersList) {
-          const isEmailTaken = this.usersList.some(user => user.correo === control.value);
+          const isEmailTaken = this.usersList.some(user => user.email === control.value);
           if (isEmailTaken) {
             resolve({ emailTaken: true });
           } else { resolve(null); }
@@ -242,6 +297,7 @@ export class SignupComponent implements OnInit {
       }, 300); 
     });
   }
+  
   /**
    * Username / Password Validator
    */
@@ -375,8 +431,8 @@ export class SignupComponent implements OnInit {
       };
   }  
   onUsernameBlur() {
-    let inputMsg = document.getElementById("username-contain") as HTMLElement;
-    if (this.SignupForm.get('username')?.valid) {
+    let inputMsg = document.getElementById("userName-contain") as HTMLElement;
+    if (this.SignupForm.get('userName')?.valid) {
       inputMsg.style.display = "none";
     }
   }

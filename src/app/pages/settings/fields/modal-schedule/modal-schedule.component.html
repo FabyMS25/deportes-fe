@@ -32,9 +32,9 @@
                     <div class="input-group position-relative">
                       <input class="form-control flatpickr-input" type="text" mwlFlatpickr
                              [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                             placeholder="Hora inicio" formControlName="horaInicio">
-                      <!-- <span class="clear-icon" (click)="clearValue(i, 'horaInicio')">&times;</span> -->
-                      <div *ngIf="control.get('horaFin')?.errors?.['required'] && control.get('abierto')?.touched">
+                             placeholder="Hora inicio" formControlName="horaApertura">
+                      <!-- <span class="clear-icon" (click)="clearValue(i, 'horaApertura')">&times;</span> -->
+                      <div *ngIf="control.get('horaCierre')?.errors?.['required'] && control.get('abierto')?.touched">
                         <span class="text-danger">Hora es requerida.</span>
                       </div>
                     </div>                    
@@ -46,9 +46,9 @@
                   <div class="input-group position-relative">
                     <input class="form-control flatpickr-input" type="text" mwlFlatpickr
                            [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                           placeholder="Hora Fin" formControlName="horaFin">
-                    <!-- <span class="clear-icon" (click)="clearValue(i, 'horaFin')">&times;</span> -->
-                    <div *ngIf="control.get('horaFin')?.errors?.['required'] && control.get('abierto')?.touched">
+                           placeholder="Hora Fin" formControlName="horaCierre">
+                    <!-- <span class="clear-icon" (click)="clearValue(i, 'horaCierre ')">&times;</span> -->
+                    <div *ngIf="control.get('horaCierre')?.errors?.['required'] && control.get('abierto')?.touched">
                       <span class="text-danger">Hora es requerida.</span>
                     </div>
                   </div>   

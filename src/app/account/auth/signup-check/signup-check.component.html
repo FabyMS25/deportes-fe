@@ -57,14 +57,14 @@
                                             </div>
                                         </div>
                                         <div class="col-lg-4">
-                                            <label for="nroDocumento-field" class="form-label">Nro Documento <span class="text-danger">*</span></label>
-                                            <input type="text" id="nroDocumento-field" class="form-control" placeholder="Ingresar su Identificación"
-                                                formControlName="nroDocumento"
-                                                [ngClass]="{'is-invalid': (f['nroDocumento'].touched || submitted) && f['nroDocumento'].errors}">
+                                            <label for="numeroDocumento-field" class="form-label">Nro Documento <span class="text-danger">*</span></label>
+                                            <input type="text" id="numeroDocumento-field" class="form-control" placeholder="Ingresar su Identificación"
+                                                formControlName="numeroDocumento"
+                                                [ngClass]="{'is-invalid': (f['numeroDocumento'].touched || submitted) && f['numeroDocumento'].errors}">
                                          
-                                            <div *ngIf="(f['nroDocumento'].touched || submitted) && f['nroDocumento'].errors" class="invalid-feedback">
-                                                <span *ngIf="f['nroDocumento'].errors?.['required']">El campo es requerido</span>
-                                                <span *ngIf="f['nroDocumento'].errors?.['itExist']">La identificacion ya se encuentra registrada.</span>
+                                            <div *ngIf="(f['numeroDocumento'].touched || submitted) && f['numeroDocumento'].errors" class="invalid-feedback">
+                                                <span *ngIf="f['numeroDocumento'].errors?.['required']">El campo es requerido</span>
+                                                <span *ngIf="f['numeroDocumento'].errors?.['itExist']">La identificacion ya se encuentra registrada.</span>
                                             </div>
                                         </div>   
                                         <div class="col-lg-4">

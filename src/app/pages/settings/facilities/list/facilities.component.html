@@ -14,7 +14,7 @@
         (exportEmitter)="csvFileExport()"
     ></app-data-header>
     <!--end col-->
-    <div class="col-xxl-9">
+    <div class="col-xxl-8">
         <div class="card">
             <div class="card-header">
                 <div class="row">
@@ -62,9 +62,9 @@
                   show: canActivate.includes('VER'),
                   edit: canActivate.includes('ACTUALIZAR'),
                   delete: canActivate.includes('ELIMINAR'),}"
-                    (showItemEmitter)="viewDataGet($event)"
-                    (editItemEmitter)="openModal($event,'edit','lg')"
-                    (deleteItemEmitter)="deleteModal(deleteModel,$event)" 
+                (showItemEmitter)="viewDataGet($event)"
+                (editItemEmitter)="openModal($event,'edit','lg')"
+                (deleteItemEmitter)="deleteModal(deleteModel,$event)" 
                 [multiCheck]="canActivate.includes('CREAR')"
                 (selectedItemEmitter)="getSelectedItems($event)" 
                 [viewMode]="viewMode"   
@@ -73,10 +73,10 @@
         </div>
     </div>
     <!--end col-->    
-    <div class="col-xxl-3" #viewModel>
+    <div class="col-xxl-4" #viewModel>
         <div class="card" id="content-view-detail" *ngIf="dataSelected">
-            <div class="card-body text-center company-details">
-                <div class="position-relative d-inline-block">
+            <div class="card-head text-center company-details">
+                <div class="position-relative d-inline-block mt-2">
                     <div class="avatar-md">
                         <div class="avatar-title bg-light rounded-circle">
                             <img src="assets/icons/pin-location.png" alt=""
@@ -85,42 +85,70 @@
                     </div>
                 </div>
                 <h5 class="mt-2">{{dataSelected.nombre}}</h5>
+                <p class="text-muted mb-0">
+                    <span class="badge bg-{{getEstadoBadgeClass(dataSelected.estadoActual)}}">
+                        {{dataSelected.estadoActual}}
+                    </span>
+                </p>
             </div>
             <div class="card-body">
-              <div class="row">
-                    <h6 class="text-muted text-uppercase fw-semibold mb-2">Detalles del Complejo</h6>
-              </div>
-              <div class="row mb-2">
+              <h6 class="text-muted text-uppercase text-center fw-semibold mt-0 mb-4">Detalles del Complejo</h6>
+              <div class="row my-2">
                 <div class="table-responsive table-card">
-                    <table class="table table-borderless mb-0">
+                    <table class="table table-borderless">
                         <tbody>
-                            <tr *ngIf="dataSelected.encargadosDtoList">
-                                <td class="fw-medium" scope="row">Encargado</td>
+                            <tr *ngIf="dataSelected.encargadosDtoList && dataSelected.encargadosDtoList.length > 0">
+                                <td class="fw-medium py-1" scope="row">Encargado(s)</td>
                                 <td class="name">
                                     @for (item of dataSelected.encargadosDtoList; track $index) {
-                                    <p>{{item.nombre}}</p>
+                                    <p class="mb-1">{{item.nombre}} 
+                                        <span *ngIf="item.telefono" class="text-muted">({{item.telefono}})</span>
+                                    </p>
                                     }
                                 </td>
                             </tr>
                             <tr>
-                                <td class="fw-medium" scope="row">Techado</td>
-                                <td class="name">{{dataSelected.techado}}</td>
+                                <td class="fw-medium py-1" scope="row">Teléfono</td>
+                                <td class="name py-1">{{dataSelected.telefonoPrincipal || 'No especificado'}}</td>
                             </tr>
                             <tr>
-                                <td class="fw-medium" scope="row">Distrito</td>
-                                <td class="direccion">{{dataSelected.distrito}}</td>
+                                <td class="fw-medium py-1" scope="row">Tipo Estructura</td>
+                                <td class="name py-1">{{dataSelected.tipoEstructura}}</td>
                             </tr>
                             <tr>
-                                <td class="fw-medium" scope="row">Dirección</td>
-                                <td class="direccion">{{dataSelected.ubicacion}}</td>
+                                <td class="fw-medium py-1" scope="row">Distrito</td>
+                                <td class="direccion py-1">{{dataSelected.distrito}}</td>
                             </tr>
                             <tr>
-                                <td class="fw-medium" scope="row">Latitud</td>
-                                <td class="small">{{dataSelected.latitud}}</td>
+                                <td class="fw-medium py-1" scope="row">Dirección</td>
+                                <td class="direccion py-1">{{dataSelected.ubicacion}}</td>
                             </tr>
                             <tr>
-                                <td class="fw-medium" scope="row">Longitud</td>
-                                <td class="small">{{dataSelected.longitud}}</td>
+                                <td class="fw-medium py-1" scope="row">Coordenadas</td>
+                                <td class="small py-1">
+                                    Lat: {{dataSelected.latitud}}<br>
+                                    Long: {{dataSelected.longitud}}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-medium py-1" scope="row">Instalaciones</td>
+                                <td class="small py-1">
+                                    <span *ngIf="dataSelected.tieneIluminacion" class="badge bg-success me-1">Iluminación</span>
+                                    <span *ngIf="dataSelected.tieneVestuarios" class="badge bg-info me-1">Vestuarios</span>
+                                    <span *ngIf="dataSelected.tieneGraderias" class="badge bg-warning me-1">Gradarías</span>
+                                    <span *ngIf="!dataSelected.tieneIluminacion && !dataSelected.tieneVestuarios && !dataSelected.tieneGraderias" 
+                                          class="text-muted">No especificadas</span>
+                                </td>
+                            </tr>
+                            <tr *ngIf="dataSelected.observaciones">
+                                <td class="fw-medium py-1" scope="row">Observaciones</td>
+                                <td class="small text-muted py-1">{{dataSelected.observaciones}}</td>
+                            </tr>
+                            <tr *ngIf="dataSelected.camposDeportivosDtoList && dataSelected.camposDeportivosDtoList.length > 0">
+                                <td class="fw-medium py-1" scope="row">Campos Deportivos</td>
+                                <td class="small py-1">
+                                    <span class="badge bg-primary">{{dataSelected.camposDeportivosDtoList.length}} campos</span>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -132,7 +160,6 @@
     <!--end col-->
 </div>
 <!--end row-->
-
 
 <!-- removeItemModal -->
 <ng-template #deleteModel let-modal>

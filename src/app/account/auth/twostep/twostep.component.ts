@@ -68,7 +68,7 @@ export class TwoStepComponent implements OnInit {
           this.notify('No se pudo registrar en el Ruat', 'error');
           return;
         }
-        this.userData.estadoUsuario = 'Activo';
+        this.userData.estadoUsuario = 'ACTIVO';
       }
 
       const savedUser = await this.addData(this.userData);
@@ -87,14 +87,11 @@ export class TwoStepComponent implements OnInit {
   }
 
   private sendEmail(username: string, password: string): Promise<void> {
-    const email = this.userData.correo;
-    const name = this.userData.nombre;
-    const message = `USUARIO: ${username}, CONTRASEÑA: ${password}`;
-
+    const email = this.userData.email;
     return emailjs.send(GlobalComponent.EmailJS.idService, GlobalComponent.EmailJS.idTemplate, {
       from_name: "GAMQ-DEPORTES",
-      to_name: name,
-      message: message,
+      to_name:this.userData.nombre,
+      message: `USUARIO: ${username}, CONTRASEÑA: ${password}`,
       reply_to: email,
     }, GlobalComponent.EmailJS.publicKey)
       .then(() => {
@@ -109,15 +106,13 @@ export class TwoStepComponent implements OnInit {
       });
   }
   resendEmail(): Promise<void> {
-    const email = this.userData.correo;
-    const name = this.userData.nombre;
+    const email = this.userData.email;
     const codigo = this.userData.verificationCode;
-    const message = `Su código de verificación es: ${codigo}`;
 
     return emailjs.send(GlobalComponent.EmailJS.idService, GlobalComponent.EmailJS.idTemplate, {
       from_name: "GAMQ-DEPORTES",
-      to_name: name,
-      message: message,
+      to_name:  this.userData.nombre,
+      message: `Su código de verificación es: ${codigo}`,
       reply_to: email,
     }, GlobalComponent.EmailJS.publicKey)
       .then(() => {

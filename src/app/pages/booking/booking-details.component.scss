@@ -1,0 +1,403 @@
+.details-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 1rem;
+}
+
+.detail-item {
+    display: contents;
+}
+
+.detail-label {
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.detail-value {
+    color: #6c757d; /* This is the Bootstrap text-muted color */
+}
+@media (max-width: 767px) {
+    .card {
+      margin: -15px;
+      border-radius: 3;
+    }
+    
+    .card-header {
+      padding: 10px 15px;
+    }
+}
+
+.wizard-container {
+  position: relative;
+  min-height: 400px;
+}
+
+.sticky-side-div {
+  position: sticky;
+  top: 80px;
+  
+  @media (max-width: 991.98px) {
+    position: relative;
+    top: 0;
+  }
+}
+
+// Progress Steps
+.progress-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  
+  .progress-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+    
+    .step-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #dee2e6;
+      color: #6c757d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+    
+    .step-label {
+      font-weight: 500;
+      color: #6c757d;
+      transition: all 0.3s ease;
+    }
+    
+    &.active {
+      background-color: var(--bs-primary-bg-subtle);
+      
+      .step-number {
+        background-color: var(--bs-primary);
+        color: white;
+      }
+      
+      .step-label {
+        color: var(--bs-primary);
+      }
+    }
+    
+    &.completed {
+      .step-number {
+        background-color: var(--bs-success);
+        color: white;
+        
+        &::after {
+          content: "✓";
+        }
+      }
+      
+      .step-label {
+        color: var(--bs-success);
+      }
+    }
+  }
+}
+
+// Recurrent Schedule Component
+.recurrent-schedule-container {
+  .days-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    
+    @media (max-width: 767.98px) {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .day-selector-card {
+    .day-card {
+      padding: 15px;
+      border: 2px solid #dee2e6;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background-color: white;
+      
+      &:hover {
+        border-color: var(--bs-primary);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      
+      &.selected {
+        border-color: var(--bs-success);
+        background-color: var(--bs-success-bg-subtle);
+        
+        .form-check-input:checked {
+          background-color: var(--bs-success);
+          border-color: var(--bs-success);
+        }
+      }
+      
+      .form-check {
+        margin-bottom: 0;
+        
+        .form-check-label {
+          cursor: pointer;
+          user-select: none;
+        }
+      }
+    }
+    
+    .time-selection {
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 6px;
+      animation: slideDown 0.3s ease;
+    }
+  }
+  
+  // Calendar Grid
+  .calendar-month {
+    .month-header {
+      padding: 10px;
+      background-color: var(--bs-primary-bg-subtle);
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      
+      .calendar-header {
+        text-align: center;
+        font-weight: 600;
+        padding: 10px 5px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        color: #6c757d;
+      }
+      
+      .calendar-day {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        font-weight: 500;
+        position: relative;
+        transition: all 0.2s ease;
+        background-color: white;
+        
+        &.empty {
+          background-color: #f8f9fa;
+          border-color: transparent;
+        }
+        
+        &.out-of-range {
+          background-color: #f8f9fa;
+          color: #adb5bd;
+          cursor: not-allowed;
+        }
+        
+        &.selectable {
+          cursor: pointer;
+          border-color: var(--bs-success);
+          
+          &:hover {
+            background-color: var(--bs-success-bg-subtle);
+            transform: scale(1.05);
+          }
+        }
+        
+        &.has-schedule {
+          background-color: var(--bs-success);
+          color: white;
+          font-weight: 600;
+          border-color: var(--bs-success);
+          
+          .schedule-icon {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 0.75rem;
+          }
+        }
+      }
+    }
+  }
+  
+  // Stats Grid
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    
+    .stat-card {
+      transition: all 0.3s ease;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+    }
+    
+    .stat-value {
+      font-weight: 700;
+      line-height: 1;
+    }
+    
+    .stat-label {
+      font-weight: 500;
+    }
+  }
+}
+
+// Loading overlay
+.position-fixed {
+  &.top-0.start-0 {
+    z-index: 9999;
+  }
+}
+
+// Carousel
+.product-img-slider {
+  .slick-slide {
+    padding: 0 5px;
+  }
+  
+  img {
+    border-radius: 8px;
+  }
+  
+  .swiperlist {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: all 0.3s ease;
+    
+    &:hover,
+    &.swiper-slide-thumb-active {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  }
+}
+
+// Avatar images
+.avatar-xs {
+  width: 2rem;
+  height: 2rem;
+  object-fit: cover;
+}
+
+// General utilities
+.small {
+  font-size: 0.875rem;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+// Animations
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+// Summary sections styling
+.summary-item {
+  .summary-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bs-light);
+    border-radius: 8px;
+    flex-shrink: 0;
+    
+    i {
+      font-size: 1.25rem;
+    }
+  }
+}
+
+.contact-item {
+  padding-bottom: 12px;
+  
+  &:not(:last-child) {
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .avatar-xs {
+    border: 2px solid var(--bs-light);
+  }
+  
+  a {
+    text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+  .campo-card,
+  .time-slot {
+    margin-bottom: 1rem;
+  }
+  
+  .time-slots-grid {
+    .col-md-4 {
+      width: 100%;
+    }
+  }
+  
+  .progress-steps {
+    flex-direction: row;
+    overflow-x: auto;
+    
+    .progress-step {
+      flex-direction: column;
+      min-width: 80px;
+      text-align: center;
+    }
+  }
+
+
+// Print styles
+@media print {
+  .btn,
+  .sticky-side-div,
+  .wizard-container button {
+    display: none !important;
+  }
+}

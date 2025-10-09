@@ -1,21 +1,21 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
-import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder, UntypedFormGroup, Validators,ValidationErrors } from '@angular/forms';
+import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder, UntypedFormGroup, Validators, ValidationErrors } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { BehaviorSubject, Observable, Subscription,  combineLatest,  forkJoin, of, switchMap } from 'rxjs';
-import { catchError, map, startWith, tap } from 'rxjs/operators';
+import { Observable, Subscription, of } from 'rxjs';
+import { catchError, tap, map } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
 import { Categoria } from 'src/app/core/models/categoria.model';
-import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
+import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
 import { TarifaService } from 'src/app/core/services/api/tarifa.service';
-import { TarifaCategoriesService } from 'src/app/core/services/api/tarifa-categorias.service';
-import { ModalScheduleComponent } from '../modal-schedule/modal-schedule.component';
-import { Ceiling } from 'src/app/core/constants/Features';
-import { Districts } from 'src/app/core/constants/Places';
-import { TipoCobro } from 'src/app/core/constants/TipoCobro';
+import { CategoriaCampo, EstadoActual, TipoExcepcion } from 'src/app/core/constants/Features';
+import { ClasificadorRuat } from 'src/app/core/models/clasificadorRuat.model';
+import { ClasificadorRuatService } from 'src/app/core/services/api/clasificadorRuat.service';
+import { CategoriasService } from 'src/app/core/services/api/categorias.service';
+import { frecuencia, TipoCobro } from 'src/app/core/constants/TipoCobro';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
 
 @Component({
@@ -25,206 +25,313 @@ import { Tarifa } from 'src/app/core/models/tarifa.model';
 })
 export class ModalFieldsComponent implements OnInit, OnDestroy {
   @Input() accion!: string;
-  @Input() row!: campoDeportivo;
+  @Input() row!: CampoDeportivo;
   @Output() emitList = new EventEmitter();
-  @Input() categoryList:Categoria[]=[];
-  tipoList= TipoCobro
-  ceilingList= Ceiling
-  surfacesList:any[]=[];
-  distictList= Districts
-  dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+  
+  categoriaCampoList = Object.values(CategoriaCampo);
+  estadoActualList = Object.values(EstadoActual);
+  tipoExcepcionList = Object.values(TipoExcepcion);
+  diaOptions = [
+    { value: 'lunes_viernes', label: 'Lunes a Viernes' ,show:true ,open:true},
+    { value: 'lunes', label: 'Lunes',show:false ,open:true},
+    { value: 'martes', label: 'Martes',show:false ,open:true},
+    { value: 'miercoles', label: 'Miércoles',show:false ,open:true},
+    { value: 'jueves', label: 'Jueves',show:false ,open:true},
+    { value: 'viernes', label: 'Viernes',show:false ,open:true},
+    { value: 'sabado', label: 'Sábado' ,show:true ,open:false},
+    { value: 'domingo', label: 'Domingo' ,show:true ,open:false},
+    { value: 'feriado', label: 'Feriado' ,show:true, open:false}
+  ];
+  tipoCobroOptions = TipoCobro;
+  frecuenciaOptions = frecuencia;
+  
+  surfacesList: any[] = [];
+  complejosList: any[] = [];
+  clasificadoresRuatList: ClasificadorRuat[] = [];
+  categoriasList: Categoria[] = [];
 
   submitted = false;
-  masterSelected!: boolean;
-  checkedList: any;
-
-  fieldsForm!: UntypedFormGroup;
-  multiDefaultOption='';
-  complejosList:any[]=[];
+  currentStep = 1;
+  fieldsForm!: UntypedFormGroup;  
+  showObsDropdown: boolean[] = [];
 
   @ViewChild('deleteConfirmation', { static: true }) deleteConfirmation!: TemplateRef<any>;
 
-  private selectedTipoSubject = new BehaviorSubject<string | null>(null);
-  private selectedTipo$ = this.selectedTipoSubject.asObservable();
-  filteredCategories$!: Observable<any[]>;
-
   private subscription: Subscription = new Subscription();
-  constructor(private modalService: NgbModal,
+
+  constructor(
+    private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
     private complejoService: ComplejosService,
     private canchaService: CamposDeportivoService,
     private surfaceService: SuperficiesService,
     private tarifaService: TarifaService,
-    private tarifaCategoryService: TarifaCategoriesService
-  ) {
-  }
+    private clasificadoresRuatService: ClasificadorRuatService,
+    private categoriaService: CategoriasService
+  ) {}
 
   ngOnInit(): void {
     this.getFacilities();
-    this.getSurfaces()
+    this.getSurfaces();
+    this.getCategorias();
+    this.getClasificadoresRuat();
     this.initForm();
-    this.initFilteredCategories();
     this.formDataSet();
+    if (this.accion !== 'edit') {
+      this.generateCodigo();
+    }
   }
+
   ngOnDestroy() {
     this.subscription.unsubscribe();
   }
 
   initForm() {
     this.fieldsForm = this.formBuilder.group({
-      uuid: [''],
-      image_src: ['brands/dribbble.png'],
-      complejo: [, [Validators.required]],
-      codigo: ['', [Validators.required]],
-      superficie: [, [Validators.required]],
-      tipo: [],
-      tarifas : this.formBuilder.array([
-        this.createTarifaFormGroup()
-      ]),
-      horariosDeAtencion : this.formBuilder.array([
-        this.formBuilder.group({
-          dia: [""],
-          abierto: [""],
-          horaInicio: [""],
-          horaFin: [""]
-        })
-      ])
+      uuid: [null],
+      estadoActual: [EstadoActual.ACTIVO, [Validators.required]],
+      codigo: ['', [Validators.required, Validators.maxLength(50)]],
+      nombre: ['', [Validators.required, Validators.maxLength(250)]],
+      categoria: ['', [Validators.required]],
+      dimensiones: ['', [Validators.maxLength(100)]],
+      capacidadPersonas: [0, [Validators.min(0)]],
+      tieneIluminacion: [false],
+      observaciones: [''],
+      accesoLibre: [false],
+      requiereAprobacion: [false],
+      horasMinimaAprobacion:[],
+      maxDuracionAutoAprobacion:[],
+      maxPersonasAutoAprobacion:[],
+      complejoDto: [null, [Validators.required]],
+      superficieDto: [null, [Validators.required]],      
+      horariosFijosDtoList: this.formBuilder.array([]),
+      horariosExcepcionesDtoList: this.formBuilder.array([]),
+      tarifasDtoList: this.formBuilder.array([])
+    });
+    this.initializeDefaultHorariosFijos();
+  }
+
+  private initializeDefaultHorariosFijos() {
+    const horariosFijosArray = this.fieldsForm.get('horariosFijosDtoList') as FormArray;
+    this.diaOptions.forEach(dia => {
+      if(dia.show){
+        horariosFijosArray.push(this.createHorarioFijoFormGroup({
+          dia: dia.value,
+          abierto: dia.open,
+          horaApertura: dia.open?'08:00':null,
+          horaCierre: dia.open?'22:00':null
+        }));
+      }
     });
   }
 
-  createTarifaFormGroup(tarifa: any = {}): FormGroup { 
-    const tipo = tarifa.categoriaDtoList?.length > 0 ? tarifa.categoriaDtoList[0].categoriaDto.tipo : '';
+  createHorarioFijoFormGroup(horario: any = {}): FormGroup {
     return this.formBuilder.group({
-      uuid: [tarifa.uuid || ''],
-      costo: [tarifa.costo || '', Validators.required],
-      desde: [tarifa.desde || ''],
-      hasta: [tarifa.hasta || ''],
-      descripcion: [tarifa.descripcion || ''],
-      tipo: [tipo, Validators.required],
-      categorias: [tarifa.categoriaDtoList?.map((cat:any) => cat.categoriaDto) || [], [Validators.required, this.categoriasTipoValidator]],
-      categoriaDtoList: [tarifa.categoriaDtoList || []],
+      uuid: [horario.uuid || null],
+      dia: [horario.dia || '', Validators.required],
+      abierto: [horario.abierto !== undefined ? horario.abierto : true],
+      horaApertura: [this.extractTimeHHMM(horario.horaApertura), [this.conditionalTimeValidator('abierto')]],
+      horaCierre: [this.extractTimeHHMM(horario.horaCierre), [this.conditionalTimeValidator('abierto')]],
+      observaciones: [horario.observaciones || '']
     });
   }
-  // createTarCategoryFormGroup(): FormGroup {
-  //   return this.formBuilder.group({
-  //     uuid:[''],
-  //     tarifaDto: [],
-  //     categoriaDto: [, Validators.required],
-  //   });
-  // }
 
-  private formDataSet() {    
-    if (this.accion !== '' ) {
+  createHorarioExcepcionFormGroup(horario: any = {}): FormGroup {
+    return this.formBuilder.group({
+      uuid: [horario.uuid || null],
+      fecha: [horario.fecha || '', Validators.required],
+      tipoExcepcion: [horario.tipoExcepcion || '', Validators.required],
+      horaApertura: [this.extractTimeHHMM(horario.horaApertura)],
+      horaCierre: [this.extractTimeHHMM(horario.horaCierre)],
+      motivo: [horario.motivo || '']
+    });
+  }
+
+  createTarifaFormGroup(tarifa: any = {}): FormGroup {
+    return this.formBuilder.group({
+      uuid: [tarifa.uuid || null],
+      fechaInicio: [tarifa.fechaInicio || this.getTodayDate(), Validators.required],
+      fechaFin: [tarifa.fechaFin || null],
+      precioBase: [tarifa.precioBase || '', [Validators.required, Validators.min(0)]],
+      desde: [this.extractTimeHHMM(tarifa.desde)],
+      hasta: [this.extractTimeHHMM(tarifa.hasta)],
+      descripcion: [tarifa.descripcion || ''],
+      observaciones: [tarifa.observaciones || ''],
+      activo: [tarifa.activo !== undefined ? tarifa.activo : true],
+      tipoCobro: [tarifa.tipoCobro || '', Validators.required],
+      frecuencia: [tarifa.frecuencia || ''],
+      sesionesIncluidas: [tarifa.sesionesIncluidas || null],
+      clasificadorRuatDto: [tarifa.clasificadorRuatDto || null, Validators.required],
+      categoriasDtoList: [
+        tarifa.categoriasDtoList?.map((cat: any) => cat.categoriaDto || cat) || [], 
+        [Validators.required, Validators.minLength(1)]
+      ]
+    });
+  }
+
+  private extractTimeHHMM(time: string | null | undefined): string {
+    if (!time) return '';
+    if (time.length === 8 && time.split(':').length === 3) {
+      return time.substring(0, 5);
+    }
+    return time;
+  }
+
+  private formatTimeForBackend(time: string | null | undefined): string | null {
+    if (!time) return null;
+    if (time.length === 8 && time.split(':').length === 3) {
+      return time;
+    }
+    if (time.length === 5 && time.split(':').length === 2) {
+      return time + ':00';
+    }
+    return time;
+  }
+
+  private conditionalTimeValidator(dependentField: string) {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.parent) return null;
+      
+      const isOpen = control.parent.get(dependentField)?.value;
+      if (isOpen && !control.value) {
+        return { required: true };
+      }
+      return null;
+    };
+  }
+
+  private getTodayDate(): string {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  }
+
+  private formDataSet() {
+    if (this.accion === 'edit' && this.row) {
       this.fieldsForm.patchValue({
         uuid: this.row.uuid,
-        image_src: '',
+        estadoActual: this.row.estadoActual,
         codigo: this.row.codigo,
-        tipo: this.row.tipo,
-        superficie: this.row.superficieDto,
-        complejo: this.row.complejoDto,
+        nombre: this.row.nombre,
+        categoria: this.row.categoria,
+        dimensiones: this.row.dimensiones,
+        capacidadPersonas: this.row.capacidadPersonas,
+        tieneIluminacion: this.row.tieneIluminacion,
+        observaciones: this.row.observaciones,
+        accesoLibre: this.row.accesoLibre,
+        requiereAprobacion:this.row.requiereAprobacion,
+        horasMinimaAprobacion:this.row.horasMinimaAprobacion,
+        maxDuracionAutoAprobacion:this.row.maxDuracionAutoAprobacion,
+        maxPersonasAutoAprobacion:this.row.maxPersonasAutoAprobacion,
+        superficieDto: this.row.superficieDto,
+        complejoDto: this.row.complejoDto,
       });
-
-      const tarifasArray = this.fieldsForm.get('tarifas') as FormArray;
-      if (tarifasArray) {
-        tarifasArray.clear();      
-        if (this.row.tarifasDtoList && this.row.tarifasDtoList.length > 0) {
-          this.row.tarifasDtoList.forEach(tarifa => {
-            tarifasArray.push(this.createTarifaFormGroup(tarifa));
-          });
-        } else {
-          tarifasArray.push(this.createTarifaFormGroup());
-        }
-      }      
-      const horariosArray = this.fieldsForm.get('horariosDeAtencion') as FormArray;
-      horariosArray.clear();
-      const horarios = this.row.horarioDtoList? this.row.horarioDtoList : [];
-      horarios.forEach((horario) => {
-        const horarioGroup = this.formBuilder.group({
-          dia: [horario.dia],
-          abierto: [horario.abierto],
-          horaInicio: [horario.horaInicio],
-          horaFin: [horario.horaFin],
+      const horariosFijosArray = this.fieldsForm.get('horariosFijosDtoList') as FormArray;
+      horariosFijosArray.clear();
+      if (this.row.horariosFijosDtoList && this.row.horariosFijosDtoList.length > 0) {
+        this.row.horariosFijosDtoList.forEach((horario: any) => {
+          horariosFijosArray.push(this.createHorarioFijoFormGroup({
+            uuid: horario.uuid,
+            dia: horario.dia,
+            abierto: horario.abierto,
+            horaApertura: horario.horaApertura,
+            horaCierre: horario.horaCierre,
+            observaciones: horario.observaciones
+          }));
         });
-        horariosArray.push(horarioGroup);
-      });
+      } else {
+        this.initializeDefaultHorariosFijos();
+      }
+      const horariosExcepcionesArray = this.fieldsForm.get('horariosExcepcionesDtoList') as FormArray;
+      horariosExcepcionesArray.clear();
+      if (this.row.horariosExcepcionesDtoList && this.row.horariosExcepcionesDtoList.length > 0) {
+        this.row.horariosExcepcionesDtoList.forEach((horario: any) => {
+          horariosExcepcionesArray.push(this.createHorarioExcepcionFormGroup(horario));
+        });
+      }
+      const tarifasArray = this.fieldsForm.get('tarifasDtoList') as FormArray;
+      tarifasArray.clear();
+      if (this.row.tarifasDtoList && this.row.tarifasDtoList.length > 0) {
+        this.row.tarifasDtoList.forEach((tarifa: any) => {
+          tarifasArray.push(this.createTarifaFormGroup(tarifa));
+        });
+      } else {
+        tarifasArray.push(this.createTarifaFormGroup());
+      }
+    } else {
+      const tarifasArray = this.fieldsForm.get('tarifasDtoList') as FormArray;
+      if (tarifasArray.length === 0) {
+        tarifasArray.push(this.createTarifaFormGroup());
+      }
     }
   }
-  /**
-   * Form data get
-   */
+
   get form() {
     return this.fieldsForm.controls;
   }
-  get horariosDeAtencion() {
-      return this.fieldsForm.get('horariosDeAtencion') as FormArray;
-  } 
-  get tarifasCategorias() {
-    return this.fieldsForm.get('tarifas') as FormArray;
+
+  get horariosFijos() {
+    return this.fieldsForm.get('horariosFijosDtoList') as FormArray;
   }
 
-  initFilteredCategories() {
-    this.filteredCategories$ = combineLatest([
-      this.selectedTipo$,
-      this.fieldsForm.valueChanges.pipe(startWith(null))
-    ]).pipe(
-      map(([selectedTipo, _]) => {
-        if (!selectedTipo) return this.categoryList ;
-        return this.categoryList.filter(category => category.tipo === selectedTipo);
-      })
-    );
+  get horariosExcepciones() {
+    return this.fieldsForm.get('horariosExcepcionesDtoList') as FormArray;
   }
-  categoriasTipoValidator(control: AbstractControl): ValidationErrors | null {
-    const categorias = control.value;
-    const tipo = control.parent?.get('tipo')?.value;
 
-    if (!categorias || !tipo) {
-      return null;
+  get tarifas() {
+    return this.fieldsForm.get('tarifasDtoList') as FormArray;
+  }
+
+  goToStep(step: number) {
+    this.currentStep = step;
+  }
+  nextStep() {
+    if (this.currentStep < 3) {
+      this.currentStep++;
     }
-    const allCategoriesMatchTipo = categorias.every(
-      (category: any) => category.tipo === tipo
-    );
-
-    return allCategoriesMatchTipo ? null : { invalidTipo: true };
+  }
+  previousStep() {
+    if (this.currentStep > 1) {
+      this.currentStep--;
+    }
   }
 
-  onTipoChange(index: number) {
-    const tarifa = this.tarifasCategorias.at(index);
-    const selectedTipo = tarifa.get('tipo')?.value;
-    this.selectedTipoSubject.next(selectedTipo);
-    tarifa.get('categorias')?.setValue([]);
+  addHorarioFijo() {
+    this.horariosFijos.push(this.createHorarioFijoFormGroup());
   }
 
-  onCategoriesChange(index: number) {
-    const tarifa = this.tarifasCategorias.at(index);
-    tarifa.get('categorias')?.updateValueAndValidity();
+  removeHorarioFijo(index: number) {
+    if (this.horariosFijos.length > 1) {
+      this.horariosFijos.removeAt(index);
+      this.showObsDropdown.splice(index, 1);
+    }
   }
 
-  openScheduleModal(row: campoDeportivo | undefined, accion: string, size: string): Promise<any> {
-    const modalRef = this.modalService.open(ModalScheduleComponent, {
-      backdrop: 'static',
-      size: size
-    });
-  
-    modalRef.componentInstance.row = row;
-    modalRef.componentInstance.accion = accion;
-    return new Promise((resolve, reject) => {
-      modalRef.componentInstance.emitList.subscribe(() => {
-        // if (success) {
-          resolve(true); // Action was successful
-        // } else {
-          // reject(false); // Action failed
-        // }
-      });
+  toggleObservacionesDropdown(index: number) {
+    this.showObsDropdown[index] = !this.showObsDropdown[index];
+    this.showObsDropdown.forEach((val, i) => {
+      if (i !== index) this.showObsDropdown[i] = false;
     });
   }
 
-  addTariffForm() {
-    this.tarifasCategorias.push(this.createTarifaFormGroup());
+  setObservacion(index: number, text: string) {
+    const horario = this.horariosFijos.at(index);
+    horario.get('observaciones')?.setValue(text);
+    this.showObsDropdown[index] = false;
   }
-  removeTariff(index: number) {
-    const tarifaGroup = this.tarifasCategorias.at(index);
+
+  addHorarioExcepcion() {
+    this.horariosExcepciones.push(this.createHorarioExcepcionFormGroup());
+  }
+  removeHorarioExcepcion(index: number) {
+    this.horariosExcepciones.removeAt(index);
+  }
+
+  addTarifa() {
+    this.tarifas.push(this.createTarifaFormGroup());
+  }
+  removeTarifa(index: number) {
+    const tarifaGroup = this.tarifas.at(index);
     const uuid = tarifaGroup.get('uuid')?.value;
-  
     if (uuid) {
       const modalRef = this.modalService.open(this.deleteConfirmation);
       modalRef.result.then(
@@ -233,7 +340,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
             this.deleteTarifa(uuid).subscribe({
               next: (result) => {
                 if (result) {
-                  this.tarifasCategorias.removeAt(index);
+                  this.tarifas.removeAt(index);
                 }
               },
               error: (err) => {
@@ -247,125 +354,141 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
         }
       );
     } else {
-      this.tarifasCategorias.removeAt(index);
+      this.tarifas.removeAt(index);
     }
-  } 
+  }
 
   saveData() {
     this.submitted = true;
+    this.markFormGroupTouched(this.fieldsForm);
+    
     if (this.fieldsForm.valid) {
-      this.fieldsForm.enable()
-      let datos: campoDeportivo = {
-        codigo: this.fieldsForm.value.codigo,
-        tipo: this.fieldsForm.value.tarifas[0].tipo,
-        superficieDto: this.fieldsForm.value.superficie,
-        complejoDto: this.fieldsForm.value.complejo,
-        tarifasDtoList: this.fieldsForm.value.tarifas,
-        horarioDtoList: this.fieldsForm.value.horariosDeAtencion,
-      };      
-
+      const formData = this.prepareFormData();
+      
       if (this.fieldsForm.get('uuid')?.value) {
-          datos.uuid = this.fieldsForm.value.uuid;
-          this.updateField(datos).subscribe({
-            next: (result) => {
-              if (result !==null) {
-                this.notify('Cancha, tarifas, y categorias exitosamente actualizados', 'success');
-                this.fieldsForm.reset();
-                this.emitList.emit();
-              }
-            },
-            error: (error) => {
-              this.notify('Error en proceso de actualización: ' + error, 'error');
+        this.updateField(formData).subscribe({
+          next: (result) => {
+            if (result && result.status === 'OK') {
+              this.notify('Campo deportivo actualizado exitosamente', 'success');
+              this.closeModal();
+              this.emitList.emit();
             }
-          });
+          },
+          error: (error) => {
+            this.notify('Error en actualización: ' + error.message, 'error');
+            this.submitted = false;
+          }
+        });
       } else {
-          this.addField(datos).subscribe({
-            next: (result) => {
-              if (result !==null) {
-                // this.notify('Cancha, tarifas, y categorias exitosamente creados', 'success');
-                this.saveTarifasCat(result.payload)
-                this.fieldsForm.reset();
-                this.emitList.emit();
-              }
-            },
-            error: (error) => {
-              this.notify('Error en proceso de actualización: ' + error, 'error');
+        this.addField(formData).subscribe({
+          next: (result) => {
+            if (result && result.status === 'OK') {
+              this.notify('Campo deportivo creado exitosamente', 'success');
+              this.closeModal();
+              this.emitList.emit();
             }
-          });
-      }
-    } else {
-        this.notify('Formulario Invalido!', 'error');
-    }
-  }
-  
-  private saveTarifasCat(cancha: any ): Observable<any> {
-    const tarifaUpdates = this.tarifasCategorias.controls.map((control: AbstractControl) => {
-      const tarifaData:Tarifa = {
-        // ...control.value,
-        // uuid: control.value.uuid,
-        costo: control.value.costo,
-        desde: control.value.desde,
-        hasta: control.value.hasta,
-        descripcion: control.value.descripcion,
-        canchasDto: cancha,
-        categoriaDtoList: this.mergeCategories(control.value.categoriaDtoList, control.value.categorias)
-      };      
-      if (control.value.uuid) {
-        tarifaData.uuid = control.value.uuid;
-        return this.updateTariff(tarifaData);//this.tarifaService.update(tarifaData);
-      } else {
-        return this.addTariff(tarifaData);//this.tarifaService.save(tarifaData);
-      }
-    });
-    return forkJoin(tarifaUpdates)
-  }
-
-   mergeCategories(categoriaTarifaDtoList: any[], categorias: any[]): any[] {
-    const mergedList: any[] = [];
-    const existingCategoriaTarifaMap = new Map(
-      categoriaTarifaDtoList.map(item => [item.categoriaDto.uuid, item])
-    );
-    existingCategoriaTarifaMap.forEach(element => {
-      if(!categorias.find((categoria:any) => categoria.uuid === element.categoriaDto.uuid)){
-        this.tarifaCategoryService.delete(element.uuid).subscribe()
-      }
-    });
-    categorias.forEach(categoria => {
-      const existingItem = existingCategoriaTarifaMap.get(categoria.uuid);  
-      if (!existingItem) {
-        mergedList.push({
-          uuid: '',
-          estado: false,
-          categoriaDto: categoria,
-          // tarifaDto: null 
+          },
+          error: (error) => {
+            this.notify('Error en creación: ' + error.message, 'error');
+            this.submitted = false;
+          }
         });
       }
-    });  
-    return mergedList;
-  }
-  
-  /**
-  * Delete model
-  */
-  deleteId: any;
-  confirm(content: any, id: any) {
-    this.deleteId = id;
-    this.modalService.open(content, { centered: true });
+    } else {
+      this.notify('Complete todos los campos requeridos', 'warning');
+      this.currentStep = 1;
+      console.log('Form errors:', this.getFormValidationErrors());
+    }
   }
 
-  // Delete Data
-  deleteData(id: any) {
-    if (id) {
-      // this.store.dispatch(deleteCompany({ id: this.deleteId.toString() }));
-    } else {
-      // this.store.dispatch(deleteCompany({ id: this.checkedValGet.toString() }));
+  private prepareFormData(): CampoDeportivo {
+    const formValue = this.fieldsForm.value;
+    
+    const datos: CampoDeportivo = {
+      estadoActual: formValue.estadoActual,
+      codigo: formValue.codigo,
+      nombre: formValue.nombre,
+      categoria: formValue.categoria,
+      dimensiones: formValue.dimensiones,
+      capacidadPersonas: formValue.capacidadPersonas || 0,
+      tieneIluminacion: formValue.tieneIluminacion,
+      observaciones: formValue.observaciones,
+      accesoLibre: formValue.accesoLibre,
+      requiereAprobacion: formValue.requiereAprobacion,
+      horasMinimaAprobacion:formValue.horasMinimaAprobacion,
+      maxDuracionAutoAprobacion:formValue.maxDuracionAutoAprobacion,
+      maxPersonasAutoAprobacion:formValue.maxPersonasAutoAprobacion,
+      complejoDto: formValue.complejoDto,
+      superficieDto: formValue.superficieDto,
+      horariosFijosDtoList: formValue.horariosFijosDtoList.map((h: any) => ({
+        uuid: h.uuid || undefined,
+        dia: h.dia,
+        abierto: h.abierto,
+        horaApertura: this.formatTimeForBackend(h.horaApertura),
+        horaCierre: this.formatTimeForBackend(h.horaCierre),
+        observaciones: h.observaciones || null
+      })),
+      horariosExcepcionesDtoList: formValue.horariosExcepcionesDtoList.map((h: any) => ({
+        uuid: h.uuid || undefined,
+        fecha: h.fecha,
+        tipoExcepcion: h.tipoExcepcion,
+        horaApertura: this.formatTimeForBackend(h.horaApertura),
+        horaCierre: this.formatTimeForBackend(h.horaCierre),
+        motivo: h.motivo || null
+      })),
+
+      tarifasDtoList: formValue.tarifasDtoList.map((t: any) => ({
+        uuid: t.uuid || undefined,
+        precioBase: parseFloat(t.precioBase),
+        fechaInicio: t.fechaInicio,
+        fechaFin: t.fechaFin || null,
+        desde: this.formatTimeForBackend(t.desde),
+        hasta: this.formatTimeForBackend(t.hasta),
+        descripcion: t.descripcion || null,
+        observaciones: t.observaciones || null,
+        activo: t.activo,
+        tipoCobro: t.tipoCobro,
+        frecuencia: t.frecuencia || null,
+        sesionesIncluidas: t.sesionesIncluidas ? parseInt(t.sesionesIncluidas) : null,
+        clasificadorRuatDto: t.clasificadorRuatDto,
+        categoriasDtoList: t.categoriasDtoList.map((cat: any) => ({
+          categoriaDto: cat
+        })),
+        conceptosDtos: t.conceptosDtos
+      }))
+    };
+
+    if (formValue.uuid) {
+      datos.uuid = formValue.uuid;
     }
-    this.deleteId = '';
-    this.masterSelected = false;
+
+    return datos;
+  }
+
+  private markFormGroupTouched(formGroup: FormGroup | FormArray) {
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      control?.markAsTouched();
+
+      if (control instanceof FormGroup || control instanceof FormArray) {
+        this.markFormGroupTouched(control);
+      }
+    });
+  }
+
+  private getFormValidationErrors() {
+    const errors: any = {};
+    Object.keys(this.fieldsForm.controls).forEach(key => {
+      const control = this.fieldsForm.get(key);
+      if (control && control.errors) {
+        errors[key] = control.errors;
+      }
+    });
+    return errors;
   }
 
   /* API Requests */
-  private getFacilities(){
+  private getFacilities() {
     this.complejoService.getAll().subscribe({
       next: (data: any) => {
         if (data['status'] === 'OK') {
@@ -373,12 +496,19 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        this.notify('No se pudo recuperar los registros: ' + error, 'error');
+        this.notify('No se pudo recuperar los complejos', 'error');
       }
     });
   }
-    
-  private getSurfaces(){
+
+  generateCodigo() {
+    const timestamp = Date.now().toString().slice(-6);
+    const randomPart = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+    const codigo = `CAMPO-${timestamp}${randomPart}`;
+    this.fieldsForm.patchValue({ codigo: codigo });
+  }
+
+  private getSurfaces() {
     this.surfaceService.getAll().subscribe({
       next: (data: any) => {
         if (data['status'] === 'OK') {
@@ -386,128 +516,97 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        this.notify('No se pudo recuperar los registros: ' + error, 'error');
+        this.notify('No se pudo recuperar las superficies', 'error');
       }
     });
   }
 
-  private addField(datos: campoDeportivo): Observable<any> {
+  private getClasificadoresRuat() {
+    this.clasificadoresRuatService.getAll().subscribe({
+      next: (data: any) => {
+        if (data['status'] === 'OK') {
+          this.clasificadoresRuatList = data.payload;
+        }
+      },
+      error: (error) => {
+        this.notify('No se pudo recuperar los clasificadores RUAT', 'error');
+      }
+    });
+  }
+
+  private getCategorias() {
+    this.categoriaService.getAll().subscribe({
+      next: (data: any) => {
+        if (data['status'] === 'OK') {
+          this.categoriasList = data.payload;
+        }
+      },
+      error: (error) => {
+        this.notify('No se pudo recuperar las categorías', 'error');
+      }
+    });
+  }
+
+  private addField(datos: CampoDeportivo): Observable<any> {
     return this.canchaService.save(datos).pipe(
-      switchMap(async (result: any) => {
-        if(result.status === 'OK'){
-          this.submitted = false;
-          const modalResult = await this.openScheduleModal(result.payload, 'edit', 'md');
-          if (modalResult) {
-            return this.saveTarifasCat(result.payload);
-          } else {
-            return of(null);
-          }
-        }else{
-          return of(null);
+      tap((result: any) => {
+        if (result.status !== 'OK') {
+          throw new Error(result.message || 'Error al crear el campo deportivo');
         }
       }),
       catchError((error) => {
-        this.submitted = false;
-        this.modalService.dismissAll();
-        this.fieldsForm.reset();
-        this.notify('Error al crear la cancha: ' + error, 'error');
-        return of(null);
-      })
-    );
-  }  
-
-  
-  private updateField(canchaData: campoDeportivo): Observable<any> {
-    return this.canchaService.update(canchaData).pipe(
-      switchMap(async (updatedCancha: any) => {
-        if(updatedCancha.status ==='OK'){
-          this.submitted = false;
-          const modalResult = await this.openScheduleModal(updatedCancha.payload, 'edit', 'md');
-          if (modalResult) {
-            return this.saveTarifasCat(updatedCancha.payload);
-          } else {
-            return of(null);
-          }
-        }else{
-          return of(null);
-        }
-      }),
-      catchError((error) => {
-        this.submitted = false;
-        this.modalService.dismissAll();
-        this.fieldsForm.reset();
-        this.notify('Error en proceso de actualización: ' + error, 'error');
-        return of(null);
+        throw error;
       })
     );
   }
 
-  private addTariff(datos: Tarifa): Observable<any> {
-    return this.tarifaService.save(datos).pipe(
-      switchMap((result: any) => {
-        if(result.status === 'OK'){
-          return of(result);
-        }else{
-          return of(null);
+  private updateField(campoData: CampoDeportivo): Observable<any> {
+    return this.canchaService.update(campoData).pipe(
+      tap((result: any) => {
+        if (result.status !== 'OK') {
+          throw new Error(result.message || 'Error al actualizar el campo deportivo');
         }
       }),
       catchError((error) => {
-        return of(null);
+        throw error;
       })
     );
   }
-  private updateTariff(datos: Tarifa): Observable<any> {
-    return this.tarifaService.update(datos).pipe(
-      switchMap((result: any) => {
-        if(result.status === 'OK'){
-          return of(result);
-        }else{
-          return of(null);
-        }
-      }),
-      catchError((error) => {
-        return of(null);
-      })
-    );
-  }
+
   deleteTarifa(uuid: string): Observable<boolean> {
     return this.tarifaService.delete(uuid).pipe(
       tap((data: any) => {
         if (data.status === 'OK') {
           this.notify('Tarifa eliminada exitosamente', 'success');
         } else {
-          Swal.fire({ text: 'No se pudo eliminar la Tarifa', confirmButtonColor: '#299cdb' });
+          throw new Error('No se pudo eliminar la tarifa');
         }
       }),
       catchError((error) => {
-        Swal.fire({ text: 'No se pudo eliminar la Tarifa', confirmButtonColor: '#299cdb' });
+        this.notify('Error al eliminar la tarifa', 'error');
         return of(false);
       }),
       map((data: any) => data.status === 'OK')
     );
   }
+
   
-  /*  */
   public closeModal() {
     this.accion = '';
-    this.fieldsForm.enable();
-    this.modalService.dismissAll();
+    this.submitted = false;
+    this.currentStep = 1;
+    this.showObsDropdown = [];
     this.fieldsForm.reset();
+    this.modalService.dismissAll();
   }
-  private notify(message: any, type: any): void {
-    let timerInterval: any;
+
+  private notify(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
     Swal.fire({
       title: message,
       icon: type,
-      // timer: 2000,
-      // timerProgressBar: true,
-      willClose: () => {
-        clearInterval(timerInterval);
-      },
-    }).then((result) => {
-      if (result.dismiss === Swal.DismissReason.timer) {
-      }
+      timer: 3000,
+      timerProgressBar: true,
+      showConfirmButton: false
     });
   }
-  
 }

@@ -1,157 +1,433 @@
-<div class="modal-header bg-info-subtle  p-3">
+<div class="modal-header bg-info-subtle p-3">
     <h5 class="modal-title" *ngIf="accion === ''" ngbAutofocus>Agregar Campo Deportivo</h5>
     <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>Editar Campo Deportivo</h5>
-    <button type="button"
-        class="btn-close"
-        data-dismiss="modal" aria-label="Cerrar"
-        [disabled]="submitted"
-        (click)="closeModal()">
+    <button type="button" class="btn-close" data-dismiss="modal" aria-label="Cerrar"
+        [disabled]="submitted" (click)="closeModal()">
     </button>
 </div>
+
 <form (ngSubmit)="saveData()" *ngIf="accion === 'edit' || accion === ''"
-    class="tablelist-form" autocomplete="off" [formGroup]="fieldsForm">
-    <div class="modal-body">
-        <div class="row g-3">
-            <div class="col-lg-12">
-                <div>
-                    <label for="complejo-field" class="form-label">Complejo</label>
-                    <ng-select [items]="complejosList" bindLabel="nombre"
-                               formControlName="complejo" placeholder="Seleccione un complejo"
-                               [ngClass]="{'is-invalid': submitted && form['complejo'].errors }">
-                    </ng-select>
-                    <div *ngIf="submitted && form['complejo'].errors" class="invalid-feedback" align="left">
-                      <div *ngIf="form['complejo'].errors['required']">Debe seleccionar un Complejo</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-4">
-                <input type="hidden" name="uuid" value="" formControlName="uuid" />
-                <div>
-                    <label for="codigo-field" class="form-label">Codigo</label>
-                    <input type="text" id="codigo-field" class="form-control"
-                        placeholder="Ingresa el codigo de la Cancha" required formControlName="codigo"
-                        [ngClass]="{ 'is-invalid': submitted && form['codigo'].errors }" />
-                    @if(submitted && form['codigo'].errors){   
-                    <div class="invalid-feedback" align="left">
-                        @if(form['codigo'].errors['required']){  
-                        <div>El codigo es requirido</div>
-                        }
-                    </div>
-                    } 
-                </div>
-            </div>
-            <div class="col-lg-8">
-                <div>
-                    <label for="superficie-field" class="form-label">Superficie</label>
-                    <ng-select [items]="surfacesList" bindLabel="descripcion"
-                               formControlName="superficie" placeholder="Seleccione una superficie"
-                               [ngClass]="{'is-invalid': submitted && form['superficie'].errors }">
-                    </ng-select>
-                    <div *ngIf="submitted && form['superficie'].errors" class="invalid-feedback" align="left">
-                      <div *ngIf="form['superficie'].errors['required']">Debe seleccionar una Superficie</div>
-                    </div>
-                </div>
-            </div>            
-            <div>
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h6 class="card-title mb-0">Tarifas y Categorias: </h6>
-                    </div>
-                    <div class="flex-shrink-0">                        
-                    </div>
-                </div>
-                <div formArrayName="tarifas" class="collapse show" id="">                    
-                    <div *ngFor="let tarifa of tarifasCategorias.controls; let i = index" [formGroupName]="i" class="row g-2">                        
-                        <div class="d-flex">
-                            <div class="flex-shrink-0 mt-4 py-2">
-                                <i class="ri-checkbox-circle-fill text-success"></i>
-                            </div>
-                            <div class="flex-grow-1 text-muted mt-1">  
-                                <div class="row g-1">
-                                    <div class="col-lg-2">
-                                        <label for="tipo-field" class="form-label">Tipo de Cobro</label>
-                                        <ng-select [items]="tipoList" 
-                                                   formControlName="tipo" 
-                                                   placeholder="Seleccionar"
-                                                   [ngClass]="{'is-invalid': submitted && tarifa.get('tipo')?.errors }"
-                                                   (change)="onTipoChange(i)">
-                                        </ng-select>
-                                        <div *ngIf="submitted && tarifa.get('tipo')?.errors" class="invalid-feedback" align="left">
-                                          <div *ngIf="tarifa.get('tipo')?.errors?.['required']">Debe seleccionar un tipo de Cobro</div>
-                                        </div>
-                                    </div>  
-                                    <div class="col-lg-4">
-                                        <label for="categorias-field" class="form-label">Categoria(s)</label>
-                                        <ng-select [items]="filteredCategories$ | async" 
-                                            [multiple]="true" 
-                                            bindLabel="nombre"
-                                            formControlName="categorias" 
-                                            placeholder="Seleccione una o más"
-                                            [ngClass]="{'is-invalid': submitted && tarifa.get('categorias')?.errors }"
-                                            (change)="onCategoriesChange(i)"
-                                            [disabled]="!tarifa.get('tipo')?.value">
-                                        </ng-select>
-                                        <div *ngIf="submitted && tarifa.get('categorias')?.errors" class="invalid-feedback" align="left">
-                                          <div *ngIf="tarifa.get('categorias')?.errors?.['required']">Debe seleccionar al menos una categoría</div>
-                                          <div *ngIf="tarifa.get('categorias')?.errors?.['invalidTipo']">Las categorías seleccionadas no corresponden al tipo de cobro</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-2">
-                                        <label for="costo-field" class="form-label">Costo (Bs): </label>
-                                        <input type="number" step="0.1" id="costo-field" class="form-control"
-                                            placeholder="costo " formControlName="costo"
-                                            [ngClass]="{'is-invalid': submitted && tarifa.get('costo')?.errors }">
-                                        <div *ngIf="submitted && tarifa.get('costo')?.errors" class="invalid-feedback" align="left">
-                                        <div *ngIf="tarifa.get('costo')?.errors?.['required']">Debe ingresar el costo</div>
-                                        </div>
-                                    </div>
-                                      
-                                  <div class="col-lg-3">
-                                    <label for="costo-field" class="form-label">Intervalo Valido de Tarifa</label>
-                                    <div class="row g-1">
-                                        <div class="col-lg-6">
-                                          <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                                                 [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                                                 placeholder="Desde" formControlName="desde">
-                                        </div>
-                                      <div class="col-lg-6">
-                                          <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                                                 [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                                                 placeholder="Hasta" formControlName="hasta">
-                                        </div>
-                                    </div>
-                                  </div>
-                                  <div class="col-lg-1">
-                                    <div class="mt-4 py-1 flex-shrink-0">
-                                        <ul class="list-inline card-toolbar-menu d-flex align-items-center mb-0">
-                                            <li class="list-inline-item" *ngIf="tarifasCategorias.length>1">
-                                                <a class="align-middle"  (click)="removeTariff(i)">
-                                                    <i class=" ri-close-fill align-middle"></i>
-                                                </a>
-                                            </li>
-                                            <li class="list-inline-item">
-                                                <a class="align-middle btn btn-add" (click)="addTariffForm()"
-                                                 role="button" aria-expanded="false"
-                                                    aria-controls="collapseExample2">
-                                                    <i class=" ri-add-circle-line align-middle"></i>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                  </div>
-                                </div>
-                            </div>
+    class="tablelist-form" autocomplete="off" [formGroup]="fieldsForm">    
+    <!-- Tabs Navigation -->
+    <div class="modal-body p-0">
+        <ul class="nav nav-tabs nav-tabs-custom" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link" [class.active]="currentStep === 1" 
+                   (click)="goToStep(1)" role="tab">
+                    <i class="ri-information-line"></i> Información Básica
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" [class.active]="currentStep === 2"
+                   (click)="goToStep(2)" role="tab">
+                    <i class="ri-calendar-line"></i> Horarios
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" [class.active]="currentStep === 3"
+                   (click)="goToStep(3)" role="tab">
+                    <i class="ri-money-dollar-circle-line"></i> Tarifas
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content p-4" style="max-height: 60vh; overflow-y: auto;">
+            <input type="hidden" formControlName="uuid" />            
+            <!-- Step 1: Basic Information -->
+            <div class="tab-pane" [class.active]="currentStep === 1" [class.show]="currentStep === 1">
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <label class="form-label mb-0">Complejo <span class="text-danger">*</span></label>
+                        <ng-select [items]="complejosList" bindLabel="nombre"
+                                   formControlName="complejoDto" placeholder="Seleccione"
+                                   [ngClass]="{'is-invalid': submitted && form['complejoDto'].errors }">
+                        </ng-select>
+                        <div *ngIf="submitted && form['complejoDto'].errors" class="invalid-feedback d-block">
+                            <div *ngIf="form['complejoDto'].errors['required']">Campo requerido</div>
                         </div>
                     </div>
+                    
+                    <div class="col-lg-6">
+                        <label class="form-label mb-0">Superficie <span class="text-danger">*</span></label>
+                        <ng-select [items]="surfacesList" bindLabel="descripcion"
+                                   formControlName="superficieDto" placeholder="Seleccione"
+                                   [ngClass]="{'is-invalid': submitted && form['superficieDto'].errors }">
+                        </ng-select>
+                        <div *ngIf="submitted && form['superficieDto'].errors" class="invalid-feedback d-block">
+                            <div *ngIf="form['superficieDto'].errors['required']">Campo requerido</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <label class="form-label mb-0">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" placeholder="Nombre del campo"
+                               formControlName="nombre" maxlength="250"
+                               [ngClass]="{ 'is-invalid': submitted && form['nombre'].errors }" />
+                        <div *ngIf="submitted && form['nombre'].errors" class="invalid-feedback">
+                            <div *ngIf="form['nombre'].errors['required']">Campo requerido</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <label class="form-label mb-0">Código <span class="text-danger">*</span>
+                        <small class="text-muted">Auto-generado, puede editarlo</small></label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="CAMPO-001" 
+                                   formControlName="codigo" maxlength="50"
+                                   [ngClass]="{ 'is-invalid': submitted && form['codigo'].errors }" />
+                            <button class="btn btn-outline-secondary" type="button" 
+                                    (click)="generateCodigo()" 
+                                    title="Generar nuevo código">
+                                <i class="ri-refresh-line"></i>
+                            </button>
+                        </div>
+                        <div *ngIf="submitted && form['codigo'].errors" class="invalid-feedback d-block">
+                            <div *ngIf="form['codigo'].errors['required']">Campo requerido</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <label class="form-label mb-0">Categoría <span class="text-danger">*</span></label>
+                        <select class="form-select" formControlName="categoria"
+                                [ngClass]="{'is-invalid': submitted && form['categoria'].errors }">
+                            <option value="">Seleccione</option>
+                            <option *ngFor="let cat of categoriaCampoList" [value]="cat">{{cat}}</option>
+                        </select>
+                        <div *ngIf="submitted && form['categoria'].errors" class="invalid-feedback">
+                            <div *ngIf="form['categoria'].errors['required']">Campo requerido</div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <label class="form-label mb-0">Estado <span class="text-danger">*</span></label>
+                        <select class="form-select" formControlName="estadoActual"
+                                [ngClass]="{'is-invalid': submitted && form['estadoActual'].errors }">
+                            <option *ngFor="let estado of estadoActualList" [value]="estado">{{estado}}</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <label class="form-label mb-0">Capacidad</label>
+                        <input type="number" class="form-control" placeholder="0"
+                               formControlName="capacidadPersonas" min="0" />
+                    </div>
+
+                    <div class="col-lg-6">
+                        <label class="form-label mb-0">Dimensiones</label>
+                        <input type="text" class="form-control" placeholder="105m x 68m"
+                               formControlName="dimensiones" maxlength="100" />
+                    </div>
+
+                    <div class="col-lg-3">
+                        <div class="form-check form-switch mt-4">
+                            <input class="form-check-input" type="checkbox" id="tieneIluminacion" 
+                                   formControlName="tieneIluminacion">
+                            <label class="form-check-label" for="tieneIluminacion">Iluminación</label>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3">
+                        <div class="form-check form-switch mt-4">
+                            <input class="form-check-input" type="checkbox" id="accesoLibre" 
+                                   formControlName="accesoLibre">
+                            <label class="form-check-label" for="accesoLibre">Acceso Libre</label>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <label class="form-label mb-0">Observaciones</label>
+                        <textarea class="form-control" rows="2" placeholder="Observaciones"
+                                  formControlName="observaciones"></textarea>
+                    </div>
                 </div>
-            </div>     
+            </div>
+
+            <!-- Step 2: Horarios -->
+            <div class="tab-pane" [class.active]="currentStep === 2" [class.show]="currentStep === 2">
+                <!-- Horarios Fijos -->
+                <div class="mb-4">
+                    <h6 class="mb-3"><i class="ri-calendar-check-line"></i> Horarios Regulares</h6>
+                    <div formArrayName="horariosFijosDtoList" class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 20%">Día</th>
+                                    <th style="width: 12%" class="text-center">Abierto</th>
+                                    <th style="width: 20%">Apertura</th>
+                                    <th style="width: 20%">Cierre</th>
+                                    <th style="width: 20%">Observaciones</th>
+                                    <th style="width: 8%"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let horario of horariosFijos.controls; let i = index" [formGroupName]="i">
+                                    <td>
+                                        <select class="form-select form-select-sm" formControlName="dia"
+                                                [ngClass]="{'is-invalid': submitted && horario.get('dia')?.errors}">
+                                            <option value="">Seleccione</option>
+                                            <option *ngFor="let dia of diaOptions" [value]="dia.value">{{dia.label}}</option>
+                                        </select>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="form-check form-switch d-flex justify-content-center">
+                                            <input class="form-check-input" type="checkbox" formControlName="abierto"
+                                                   [id]="'abierto-' + i">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="time" class="form-control form-control-sm" 
+                                               formControlName="horaApertura"
+                                               [disabled]="!horario.get('abierto')?.value"
+                                               [ngClass]="{'is-invalid': submitted && horario.get('horaApertura')?.errors}">
+                                    </td>
+                                    <td>
+                                        <input type="time" class="form-control form-control-sm" 
+                                               formControlName="horaCierre"
+                                               [disabled]="!horario.get('abierto')?.value"
+                                               [ngClass]="{'is-invalid': submitted && horario.get('horaCierre')?.errors}">
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" class="form-control form-control-sm" 
+                                                   formControlName="observaciones"
+                                                   placeholder="Opcional"
+                                                   [id]="'obs-input-' + i">
+                                            <button class="btn btn-outline-secondary" type="button"
+                                                    (click)="toggleObservacionesDropdown(i)"
+                                                    [id]="'obs-btn-' + i">
+                                                <i class="ri-add-circle-line"></i>
+                                            </button>
+                                        </div>
+                                        <div class="dropdown-menu" [class.show]="showObsDropdown[i]"
+                                             style="position: absolute; z-index: 1000;">
+                                            <a class="dropdown-item" href="javascript:void(0)" 
+                                               (click)="setObservacion(i, 'Horario reducido')">Horario reducido</a>
+                                            <a class="dropdown-item" href="javascript:void(0)" 
+                                               (click)="setObservacion(i, 'Mantenimiento programado')">Mantenimiento programado</a>
+                                            <a class="dropdown-item" href="javascript:void(0)" 
+                                               (click)="setObservacion(i, 'Sujeto a disponibilidad')">Sujeto a disponibilidad</a>
+                                            <a class="dropdown-item" href="javascript:void(0)" 
+                                               (click)="setObservacion(i, 'Requiere reserva previa')">Requiere reserva previa</a>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-danger" 
+                                                (click)="removeHorarioFijo(i)" 
+                                                *ngIf="horariosFijos.length > 1"
+                                                [disabled]="submitted">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-primary" (click)="addHorarioFijo()" [disabled]="submitted">
+                        <i class="ri-add-line"></i> Agregar Día
+                    </button>
+                </div>
+
+                <!-- Horarios Excepciones -->
+                <div>
+                    <h6 class="mb-3"><i class="ri-calendar-event-line"></i> Excepciones</h6>
+                    <div formArrayName="horariosExcepcionesDtoList" class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 20%">Fecha</th>
+                                    <th style="width: 25%">Tipo</th>
+                                    <th style="width: 15%">Apertura</th>
+                                    <th style="width: 15%">Cierre</th>
+                                    <th style="width: 20%">Motivo</th>
+                                    <th style="width: 5%"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let horario of horariosExcepciones.controls; let i = index" [formGroupName]="i">
+                                    <td>
+                                        <input type="date" class="form-control form-control-sm" formControlName="fecha"
+                                               [ngClass]="{'is-invalid': submitted && horario.get('fecha')?.errors}">
+                                    </td>
+                                    <td>
+                                        <select class="form-select form-select-sm" formControlName="tipoExcepcion"
+                                                [ngClass]="{'is-invalid': submitted && horario.get('tipoExcepcion')?.errors}">
+                                            <option value="">Seleccione</option>
+                                            <option *ngFor="let tipo of tipoExcepcionList" [value]="tipo">{{tipo}}</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="time" class="form-control form-control-sm" formControlName="horaApertura">
+                                    </td>
+                                    <td>
+                                        <input type="time" class="form-control form-control-sm" formControlName="horaCierre">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm" 
+                                               formControlName="motivo" placeholder="Motivo">
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-danger" 
+                                                (click)="removeHorarioExcepcion(i)" [disabled]="submitted">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr *ngIf="horariosExcepciones.length === 0">
+                                    <td colspan="6" class="text-center text-muted">No hay excepciones registradas</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-warning" (click)="addHorarioExcepcion()" [disabled]="submitted">
+                        <i class="ri-add-line"></i> Agregar Excepción
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Tarifas -->
+            <div class="tab-pane" [class.active]="currentStep === 3" [class.show]="currentStep === 3">
+            <div formArrayName="tarifasDtoList">
+                <div *ngFor="let tarifa of tarifas.controls; let i = index" [formGroupName]="i" 
+                    class="card mb-3">
+                <div class="card-header bg-light d-flex align-items-center">
+                    <span class="badge bg-primary me-2">Tarifa {{i + 1}}</span>
+                    <button type="button" class="btn btn-sm btn-danger ms-auto" 
+                            (click)="removeTarifa(i)" *ngIf="tarifas.length > 1" [disabled]="submitted">
+                    <i class="ri-delete-bin-line"></i> Eliminar
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                    <div class="col-lg-4">
+                        <label class="form-label mb-0">Tipo de Cobro <span class="text-danger">*</span></label>
+                        <select class="form-select" formControlName="tipoCobro"
+                                [ngClass]="{'is-invalid': submitted && tarifa.get('tipoCobro')?.errors}">
+                        <option value="">Seleccione</option>
+                        <option *ngFor="let tipo of tipoCobroOptions" [value]="tipo.value">
+                            {{ tipo.label }}
+                        </option>
+                        </select>
+                        <div *ngIf="submitted && tarifa.get('tipoCobro')?.errors" class="invalid-feedback">
+                        <div *ngIf="tarifa.get('tipoCobro')?.errors?.['required']">Campo requerido</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4" *ngIf="tarifa.get('tipoCobro')?.value === 'mensualidad' || tarifa.get('tipoCobro')?.value === 'por_sesion'">
+                        <label class="form-label mb-0">Frecuencia</label>
+                        <select class="form-select" formControlName="frecuencia">
+                            <option value="">Seleccione</option>
+                            <option *ngFor="let freq of frecuenciaOptions" [value]="freq.value">
+                            {{ freq.label }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-lg-4" *ngIf="tarifa.get('tipoCobro')?.value === 'mensualidad' || tarifa.get('tipoCobro')?.value === 'por_club'">
+                        <label class="form-label mb-0">Sesiones Incluidas</label>
+                        <input type="number" class="form-control" placeholder="0" min="0"
+                                formControlName="sesionesIncluidas">
+                        <small class="text-muted">Para mensualidades o por club</small>
+                    </div>
+                    <div class="col-lg-6">
+                        <label class="form-label mb-0">Clasificador RUAT <span class="text-danger">*</span></label>
+                        <ng-select [items]="clasificadoresRuatList" bindLabel="nombre"
+                                formControlName="clasificadorRuatDto" placeholder="Seleccionar"
+                                [ngClass]="{'is-invalid': submitted && tarifa.get('clasificadorRuatDto')?.errors}">
+                        </ng-select>
+                        <div *ngIf="submitted && tarifa.get('clasificadorRuatDto')?.errors" class="invalid-feedback d-block">
+                        <div *ngIf="tarifa.get('clasificadorRuatDto')?.errors?.['required']">Campo requerido</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <label class="form-label mb-0">Categoría(s) <span class="text-danger">*</span></label>
+                        <ng-select [items]="categoriasList" [multiple]="true" bindLabel="nombre"
+                                formControlName="categoriasDtoList" placeholder="Seleccione"
+                                [ngClass]="{'is-invalid': submitted && tarifa.get('categoriasDtoList')?.errors}">
+                        </ng-select>
+                        <div *ngIf="submitted && tarifa.get('categoriasDtoList')?.errors" class="invalid-feedback d-block">
+                        <div *ngIf="tarifa.get('categoriasDtoList')?.errors?.['required']">Campo requerido</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <label class="form-label mb-0">Descripción</label>
+                        <input type="text" class="form-control" placeholder="Tarifa diurna"
+                            formControlName="descripcion">
+                    </div>
+                    <div class="col-lg-3">
+                        <label class="form-label mb-0">Precio (Bs) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" class="form-control" placeholder="150.00"
+                            formControlName="precioBase"
+                            [ngClass]="{'is-invalid': submitted && tarifa.get('precioBase')?.errors}">
+                        <div *ngIf="submitted && tarifa.get('precioBase')?.errors" class="invalid-feedback">
+                        <div *ngIf="tarifa.get('precioBase')?.errors?.['required']">Campo requerido</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="form-check form-switch mt-4">
+                        <input class="form-check-input" type="checkbox" formControlName="activo"
+                                [id]="'tarifa-activo-' + i">
+                        <label class="form-check-label" [for]="'tarifa-activo-' + i">Activa</label>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="row">
+                        <div class="col-lg-6">
+                            <label class="form-label mb-0">Fecha Inicio <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control form-control-sm" formControlName="fechaInicio"
+                                [ngClass]="{'is-invalid': submitted && tarifa.get('fechaInicio')?.errors}">
+                        </div>
+
+                        <div class="col-lg-6">
+                            <label class="form-label mb-0">Fecha Fin</label>
+                            <input type="date" class="form-control form-control-sm" formControlName="fechaFin">
+                        </div>
+
+                        <div class="col-lg-6">
+                            <label class="form-label mb-0">Hora Desde</label>
+                            <input type="time" class="form-control form-control-sm" formControlName="desde">
+                        </div>
+
+                        <div class="col-lg-6">
+                            <label class="form-label mb-0">Hora Hasta</label>
+                            <input type="time" class="form-control form-control-sm" formControlName="hasta">
+                        </div>
+                        </div>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="col-lg-6">
+                        <label class="form-label mb-0">Observaciones</label>
+                        <textarea class="form-control" rows="3" formControlName="observaciones"></textarea>
+                    </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+            
+            <button type="button" class="btn btn-success" (click)="addTarifa()" [disabled]="submitted">
+                <i class="ri-add-line"></i> Agregar Tarifa
+            </button>
+            </div>
         </div>
     </div>
+    
+    <!-- Footer with navigation buttons -->
     <div class="modal-footer">
-        <div class="hstack gap-2 justify-content-end">
-            <button type="button" class="btn btn-light" data-bs-dismiss="modal"
-                (click)="closeModal()">Cerrar</button>
-            <button type="submit" class="btn btn-success" id="add-btn">Guardar</button>
+        <div class="hstack gap-2 justify-content-between w-100">
+            <button type="button" class="btn btn-secondary" *ngIf="currentStep > 1"
+                    (click)="previousStep()" [disabled]="submitted">
+                <i class="ri-arrow-left-line"></i> Anterior
+            </button>
+            <div class="ms-auto hstack gap-2">
+                <button type="button" class="btn btn-light" (click)="closeModal()" [disabled]="submitted">
+                    <i class="ri-close-line"></i> Cerrar
+                </button>
+                <button type="button" class="btn btn-primary" *ngIf="currentStep < 3"
+                        (click)="nextStep()" [disabled]="submitted">
+                    Siguiente <i class="ri-arrow-right-line"></i>
+                </button>
+                <button type="submit" class="btn btn-success" *ngIf="currentStep === 3" [disabled]="fieldsForm.invalid">
+                    <span *ngIf="!submitted"><i class="ri-save-line"></i> Guardar</span>
+                    <span *ngIf="submitted">
+                        <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+                    </span>
+                </button>
+            </div>
         </div>
     </div>
 </form>
@@ -159,28 +435,24 @@
 <ng-template #deleteConfirmation let-modal>
     <div class="modal-content">
         <div class="modal-header">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="btn-close"
-                (click)="modal.dismiss('Cross click')"></button>
+            <h5 class="modal-title">Confirmar Eliminación</h5>
+            <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
         </div>
-        <div class="modal-body">
-            <div class="mt-2 text-center">
-                <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
-                    colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
-                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
-                    <h4>Esta seguro de eliminar el registro?</h4>
-                    <p class="text-muted mx-4 mb-0">
-                        Al Confirmar la eliminacion se quitara toda informacion de nuestra base de datos.
-                    </p>
-                </div>
+        <div class="modal-body text-center">
+            <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
+                colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
+            <div class="mt-4">
+                <h4>¿Está seguro de eliminar esta tarifa?</h4>
+                <p class="text-muted">Esta acción eliminará la tarifa de forma permanente.</p>
             </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-link link-success fw-medium text-decoration-none" data-bs-dismiss="modal"
-              id="deleteRecord-close" (click)="modal.dismiss('cancel')"><i
-                  class="ri-close-line me-1 align-middle"></i> Cancelar</button>
-          <button type="button" class="btn w-sm btn-danger " id="delete-product" 
-          (click)="modal.close('delete')">Si, Elmimar!</button>
+          <button class="btn btn-link link-success" (click)="modal.dismiss('cancel')">
+              <i class="ri-close-line"></i> Cancelar
+          </button>
+          <button type="button" class="btn btn-danger" (click)="modal.close('delete')">
+              <i class="ri-delete-bin-line"></i> Sí, Eliminar
+          </button>
         </div>
     </div>
 </ng-template>
-  

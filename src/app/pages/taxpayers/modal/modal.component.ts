@@ -19,151 +19,173 @@ import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.serv
   styleUrl: './modal.component.scss'
 })
 export class ModalComponent {
-
   @Input() accion!: string;
   @Input() row!: Contribuyente;
-  @Input() clientsList:Contribuyente[]=[];
+  @Input() clientsList: Contribuyente[] = [];
   @Output() emitList = new EventEmitter();
 
-  civilStatus = UserCivilStatus
-  identityTypes = UserDocType
-  cityAcronym= CityAcronym
-  userStatus= UserStatus
-  userSex= UserGender
+  civilStatus = UserCivilStatus;
+  identityTypes = UserDocType;
+  cityAcronym = CityAcronym;
+  userStatus = UserStatus;
+  userSex = UserGender;
 
   contentForm!: UntypedFormGroup;
   submitted = false;
   passwordField!: boolean;
   confirmField!: boolean;
+  today = new Date().toISOString().split('T')[0];
 
-  constructor(private modalService: NgbModal,
+  constructor(
+    private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
     private contribuyentesService: ContribuyentesService,
     private ruatService: RuatRequestsService
   ) {}
 
-
   ngOnInit(): void {
     this.formInit();
     this.formDataSet();
 
-    if(this.accion==='show'){
+    if (this.accion === 'show') {
       setTimeout(() => {
         document.getElementById('form-event')?.classList.add('view-event');
-        // (document.getElementById('btn-save-event') as HTMLElement).setAttribute("hidden", "true");
-        // (document.getElementById('btn-cancel-event') as HTMLElement).setAttribute("hidden", "true");
       }, 100);
-
-    }else{
-      // (document.getElementById('btn-delete-event') as HTMLElement).setAttribute("hidden", "true");
-
     }
   }
 
-  /**
-   * Form data
-   */
   private formInit() {
     this.contentForm = this.formBuilder.group({
       uuid: [''],
-      username: ['', [Validators.required, Validators.minLength(6),this.usernameFormatValidator]],
-      password: ['', [Validators.required]],
+      userName: ['', [Validators.required, Validators.minLength(6), this.usernameFormatValidator]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
       cpassword: ['', [Validators.required]],
-      verificationCode:[1010],
-      userState:['Pendiente'],
-      contribuyentType:['NA'],
-      contribuyentCode:[''],
-      name: ['', [Validators.required]],
-      firstSurname: ['', [Validators.required]],
-      secondSurname: [''],
-      identityType:['', [Validators.required]],
-      identityNumber:['', [Validators.required], [this.identityNumberValidator.bind(this)]],
-      expedite:['', [Validators.required]],
-      birthDate: ['', [Validators.required]],
-      sex: [''],
-      civilStatus: [''],
-      nitNumber:[''],
-      phone:['', [Validators.required]],
+      estadoUsuario: ['Pendiente'],
+      
+      tipoContribuyente: ['NA', [Validators.required]],
+      codigoContribuyente: [''],
+      
+      // Datos personales
+      nombre: ['', [Validators.required]],
+      primerApellido: ['', [Validators.required]],
+      segundoApellido: [''],
+      apellidoEsposo: [''],
+      estadoCivil: [''],
+      fechaNacimiento: [''],
+      genero: [''],
+      
+      // Documentos
+      tipoDocumento: ['CI', [Validators.required]],
+      numeroDocumento: ['', [Validators.required], [this.identityNumberValidator.bind(this)]],
+      expedido: [''],
+      nroNit: [''],
+      
+      // Contacto
+      telefono: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email], [this.emailValidator.bind(this)]],
-      address:[''],
+      direccion: [''],
+      
+      // Campos adicionales del modelo actualizado
+      verificadoRuat: [false],
+      esDeportistaElite: [false],
+      perteneceEscuelaMunicipal: [false],
+      registroUnicoDeportivo: [''],
+      descuentoAplicable: [0],
+      estaSancionado: [false],
+      fechaFinSancion: [''],
+      motivoSancion: [''],
+      observacionesMunicipales: ['']
     }, {
       validator: MustMatch('password', 'cpassword')
     });
   }
   private formDataSet() {
-    if (this.accion != '') {
-      let dateObject ='';
-      if(this.row.fechaNac){
-        const [day, month, year] = this.row.fechaNac.split('/').map(Number);
-        const date = new Date(+year, +month - 1, +day);
-        dateObject = date.toISOString().split('T')[0]
-      }
+    if (this.accion !== '' && this.row) {
+      const fechaNacimiento = this.row.fechaNacimiento ? 
+        new Date(this.row.fechaNacimiento).toISOString().split('T')[0] : '';      
+      const fechaFinSancion = this.row.fechaFinSancion ? 
+        new Date(this.row.fechaFinSancion).toISOString().split('T')[0] : '';
       this.contentForm.patchValue({
-          uuid:this.row.uuid,
-          userName: this.row.userName,
-          password: this.row.password,
-          userState: this.row.estadoUsuario,
-          // verificationCode: codigo,
-          contribuyentType: this.row.tipoContribuyente,
-          contribuyentCode: this.row.codigoContribuyente,
-          name: this.row.nombre,
-          firstSurname: this.row.apPaterno,
-          secondSurname: this.row.apMaterno,
-          sex:this.row.sexo,
-          birthDate: dateObject,
-          civilStatus: this.row.estadoCivil,
-          identityType: this.row.tipoDocumento,
-          identityNumber: this.row.nroCarnet,
-          expedite:this.row.ciExpedido,
-          nitNumber:this.row.nroNit,
-          phone:this.row.celular,
-          email:this.row.correo,
-          address:this.row.direccion,
-        });
+        uuid: this.row.uuid,
+        userName: this.row.userName,
+        password: this.row.password,
+        estadoUsuario: this.row.estadoUsuario,        
+        tipoContribuyente: this.row.tipoContribuyente,
+        codigoContribuyente: this.row.codigoContribuyente,        
+        nombre: this.row.nombre,
+        primerApellido: this.row.primerApellido,
+        segundoApellido: this.row.segundoApellido,
+        apellidoEsposo: this.row.apellidoEsposo,
+        estadoCivil: this.row.estadoCivil,
+        fechaNacimiento: fechaNacimiento,
+        genero: this.row.genero,        
+        tipoDocumento: this.row.tipoDocumento,
+        numeroDocumento: this.row.numeroDocumento,
+        expedido: this.row.expedido,
+        nroNit: this.row.nroNit,        
+        telefono: this.row.telefono,
+        email: this.row.email,
+        direccion: this.row.direccion,        
+        verificadoRuat: this.row.verificadoRuat,
+        esDeportistaElite: this.row.esDeportistaElite,
+        perteneceEscuelaMunicipal: this.row.perteneceEscuelaMunicipal,
+        registroUnicoDeportivo: this.row.registroUnicoDeportivo,
+        descuentoAplicable: this.row.descuentoAplicable,
+        estaSancionado: this.row.estaSancionado,
+        fechaFinSancion: fechaFinSancion,
+        motivoSancion: this.row.motivoSancion,
+        observacionesMunicipales: this.row.observacionesMunicipales
+      });
+      if (this.accion === 'show') {
+        this.contentForm.disable();
+      }
     }
   }
   get form() {
     return this.contentForm.controls;
   }
+
   /**
-  * Validator
-  */
+   * Validators
+   */
   identityNumberValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
     return new Promise((resolve) => {
       setTimeout(() => {
-        if (this.clientsList) {
-          const itExist = this.clientsList.some(user => user.nroCarnet === control.value);
+        if (this.clientsList && this.accion === 'create') {
+          const itExist = this.clientsList.some(user => 
+            user.numeroDocumento === control.value && user.uuid !== this.contentForm.get('uuid')?.value
+          );
           if (itExist) {
-            resolve({itExist: true });
-          } else { resolve(null); }
-        } else {   resolve(null); }
+            resolve({ itExist: true });
+          } else { 
+            resolve(null); 
+          }
+        } else { 
+          resolve(null); 
+        }
       }, 300);
     });
   }
+
   emailValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
     return new Promise((resolve) => {
       setTimeout(() => {
-        if (this.clientsList) {
-          const isEmailTaken = this.clientsList.some(user => user.correo === control.value);
+        if (this.clientsList && this.accion === 'create') {
+          const isEmailTaken = this.clientsList.some(user => 
+            user.email === control.value && user.uuid !== this.contentForm.get('uuid')?.value
+          );
           if (isEmailTaken) {
             resolve({ emailTaken: true });
-          } else { resolve(null); }
-        } else {   resolve(null); }
+          } else { 
+            resolve(null); 
+          }
+        } else { 
+          resolve(null); 
+        }
       }, 300);
     });
   }
-  usernameValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (this.clientsList) {
-          const isUsernameTaken = this.clientsList.some(user => user.userName === control.value);
-          if (isUsernameTaken) {
-            resolve({ usernameTaken: true });
-          } else { resolve(null); }
-        } else {   resolve(null); }
-      }, 300);
-    });
-  }
+
   usernameFormatValidator(control: AbstractControl): ValidationErrors | null {
     const value = control.value;
     if (!value) {
@@ -180,108 +202,89 @@ export class ModalComponent {
     return null;
   }
 
-
-  generateCode(): string {
-    return Math.floor(1000 + Math.random() * 9000).toString();
+  usernameValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (this.clientsList) {
+          const isUsernameTaken = this.clientsList.some(user => user.userName === control.value);
+          if (isUsernameTaken) {
+            resolve({ usernameTaken: true });
+          } else { resolve(null); }
+        } else {   resolve(null); }
+      }, 300);
+    });
   }
 
-  getDepartmentName(id: string): string {
-    const found = this.cityAcronym.find(item => ''+item.id === id);
-    return found ? found.value : id;
-  }
-  getCivilStatus(acronym: string): string {
-    const found = this.civilStatus.find(item => item.type === acronym);
-    return found ? found.description : acronym;
-  }
+
 
   /**
-  * Actions
-  */
+   * Actions
+   */
   async saveData() {
     this.submitted = true;
-    this.contentForm.patchValue({
-      username: this.contentForm.value.identityNumber,
-      password: this.contentForm.value.identityNumber,
-      cpassword:this.contentForm.value.identityNumber
-    });
-    if (this.contentForm.valid) {
-      this.contentForm.enable()
-      let datos: Contribuyente = {
-        uuid:this.contentForm.value.uuid,
-        userName: this.contentForm.value.username,
-        password: this.contentForm.value.password,
-        estadoUsuario: this.contentForm.value.userStatus,
-        // verificationCode: this.contentForm.value.verificationCode,
-        tipoContribuyente: this.contentForm.value.contribuyentType,
-        codigoContribuyente: this.contentForm.value.contribuyentCode,
-        nombre: this.contentForm.value.name,
-        apPaterno: this.contentForm.value.firstSurname,
-        apMaterno: this.contentForm.value.secondSurname,
-        sexo:this.contentForm.value.sex,
-        fechaNac: this.contentForm.value.birthDate,
-        estadoCivil: this.contentForm.value.civilStatus,
-        tipoDocumento: this.contentForm.value.identityType,
-        nroCarnet: this.contentForm.value.identityNumber,
-        ciExpedido:this.contentForm.value.expedite,
-        nroNit:this.contentForm.value.nitNumber,
-        celular:this.contentForm.value.phone,
-        correo:this.contentForm.value.email,
-        direccion:this.contentForm.value.address,
-      };
+    if (this.contentForm.invalid) {
+      this.notify('Por favor complete todos los campos requeridos correctamente', 'error');
+      return;
+    }
+    if (this.accion === '') {
+      this.contentForm.patchValue({
+        userName: this.contentForm.value.numeroDocumento,
+        password: this.contentForm.value.numeroDocumento,
+        cpassword: this.contentForm.value.numeroDocumento
+      });
+    }
+    const formData = this.contentForm.value;
+    const datos: Contribuyente = {
+      ...formData,
+      fechaCreacion: this.row?.fechaCreacion || new Date(),
+      fechaActualizacion: new Date(),
+      nombreCompleto: `${formData.nombre} ${formData.primerApellido} ${formData.segundoApellido || ''}`.trim(),
+      puedeReservarGratis: formData.esDeportistaElite || formData.perteneceEscuelaMunicipal,
+      estaActivo: formData.estadoUsuario === 'Activo' && !formData.estaSancionado
+    };
+    try {
       if (this.contentForm.get('uuid')?.value) {
           datos.uuid=this.contentForm.value.uuid,
           this.updateData(datos);
       } else {
         datos.verificationCode= this.generateCode()
         const ruatResp = await this.registerContribuyente(datos)
-          if(ruatResp){
-            datos.codigoContribuyente = ruatResp.codigoContribuyente
-            datos.estadoUsuario = 'Activo';
-            const client:any = await this.addData(datos);
-            // const user = await this.registerUser(resp , client.nroDocumento, client.nroDocumento);
-            if(client){
-              this.sendEmail(client, client.nroDocumento, client.nroDocumento)
-              // this.form.reset();
-              // this.dynamicDialogRef.close(client);
-              // this.notify('Sus Datos fueron registrados!','success');
-
-              this.notify('Datos Registrados exitosamente!','success');
-              this.closeModal();
-              this.emitList.emit();
-            }else{
-              this.notify('No se pudo registrar al Contribuyente', 'error');
-            }
+        if (ruatResp /* && ruatResp.continuarFlujo */) {
+          datos.codigoContribuyente = ruatResp.codigoContribuyente;
+          datos.verificadoRuat = true;
+          datos.fechaVerificacionRuat = new Date();
+          datos.estadoUsuario = 'Activo';          
+          const savedContribuyente = await this.addData(datos);
+          if (savedContribuyente) {
+            await this.sendEmail(savedContribuyente, datos.userName, datos.password);
+            this.notify('Contribuyente registrado exitosamente!', 'success');
+            this.closeModal();
+            this.emitList.emit();
           }else{
-            this.notify('No se pudo registrar los datos en el Ruat', 'error');
+              this.notify('No se pudo registrar al Contribuyente', 'error');
           }
+        } else {
+          this.notify(ruatResp?.mensaje || 'No se pudo registrar en RUAT', 'error');
+        }
       }
-    }else {
-        this.notify('Formulario Invalido!', 'error');
+    } catch (error) {
+      this.notify('Error al procesar la solicitud', 'error');
     }
-
-    setTimeout(() => {
-      // this.contentForm.reset();
-    }, 2000);
-    // this.submitted = true
   }
-
-  private sendEmail(userData:any,username:string,password:string): Promise<void> {
-    const email = userData.correo;
+  private sendEmail(userData: any, username: string, password: string): Promise<void> {
+    const email = userData.email;
     const name = userData.nombre;
-    const message = 'USUARIO: '+ username +', CONTRASEÑA: '+ password;
-
     return emailjs.send("service_auth", "template_6htavso", {
       from_name: "GAMQ-DEPORTES",
       to_name: name,
-      message: message,
+      message: `USUARIO: ${username}, CONTRASEÑA: ${password}`,
       reply_to: email,
     }, 'X9362U1QpUzthcHGT')
       .then((response: EmailJSResponseStatus) => {
         this.notify("Un email fue enviado a " + email + " con su USUARIO y CONTRASEÑA ", 'success');
       })
       .catch((error) => {
-        this.notify("No se pudo enviar correctamente el e-mail", 'error');
-        throw error;
+        this.notify("No se pudo enviar el email con las credenciales", 'warning');
       });
   }
 
@@ -293,53 +296,45 @@ export class ModalComponent {
 
     this.updateData(datos);
   }
-  /* API REQUESTS */
-  private async addData(datos:Contribuyente){
+    /**
+   * API Requests
+   */
+  private addData(datos: Contribuyente): Promise<any> {
     return new Promise((resolve, reject) => {
       this.contribuyentesService.save(datos).subscribe({
-        next:(data:any)=>{
-          this.submitted=false;
+        next: (data: any) => {
+          this.submitted = false;
           if (data['status'] === 'OK') {
-            const user = data.payload;
-            resolve(user)
-          }else{
+            resolve(data.payload);
+          } else {
             this.notify(data.payload, 'error');
             resolve(null);
           }
         },
         error: (error) => {
-          this.submitted=false;
-          reject()
-          this.notify('No se pudo Guardar los datos! '+error, 'error');
+          this.submitted = false;
+          reject(error);
+          this.notify('No se pudo guardar los datos! ' + error, 'error');
         }
-      })
-    })
+      });
+    });
   }
-  // private addData(datos:Contribuyente){
-  //   this.contribuyentesService.save(datos).subscribe({
-  //     next:(data:Contribuyente)=>{
-  //       this.submitted=false;
-  //       this.notify('Datos Registrados exitosamente!','success');
-  //       this.closeModal();
-  //       this.emitList.emit();
-  //     },
-  //     error: (error) => {
-  //       this.notify('No se pudo Guardar los datos! '+error, 'error');
-  //     }
-  //   })
-  // }
-  private updateData(datosUnit:Contribuyente) {
-      this.contribuyentesService.update(datosUnit).subscribe({
-          next: (data: Contribuyente) => {
-            this.submitted = false;
-            this.closeModal();
-            this.emitList.emit();
-            this.notify('Datos Actualizados exitosamente!', 'success');
-          },
-          error: (error) => {
-            this.notify('No se pudo Actualizar los datos! '+error, 'error');
-          }
-      })
+  private updateData(datos: Contribuyente): Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.contribuyentesService.update(datos).subscribe({
+        next: (data: any) => {
+          this.submitted = false;
+          this.notify('Datos actualizados exitosamente!', 'success');
+          this.closeModal();
+          this.emitList.emit();
+          resolve(data);
+        },
+        error: (error) => {
+          this.notify('No se pudo actualizar los datos! ' + error, 'error');
+          reject(error);
+        }
+      });
+    });
   }
   deleteData(){
     if(this.row.uuid){
@@ -361,7 +356,6 @@ export class ModalComponent {
     }
   }
 
-  /* RUAT API Requests */
   private async registerContribuyente(data:any): Promise<any>{
     return new Promise((resolve, reject) => {
       this.ruatService.registerContribuyente(data ).subscribe({
@@ -383,7 +377,7 @@ export class ModalComponent {
           }
         },
         error: (error) => {
-          resolve(error);
+          reject(error);
         }
       });
     })
@@ -411,6 +405,39 @@ export class ModalComponent {
     });
   }
 
+  getDepartmentName(id: string|undefined): string |undefined{
+    const found = this.cityAcronym.find(item => '' + item.id === id);
+    return found ? found.value : id;
+  }
+  getCivilStatus(acronym: string|undefined): string|undefined {
+    const found = this.civilStatus.find(item => item.type === acronym);
+    return found ? found.description : acronym;
+  }
+  getGenderText(genero: string): string {
+    return genero === 'F' ? 'FEMENINO' : genero === 'M' ? 'MASCULINO' : 'NO ESPECIFICADO';
+  }
+  getTipoContribuyenteText(tipo: string): string {
+    return tipo === 'NA' ? 'CONTRIBUYENTE NATURAL' : 'CONTRIBUYENTE JURÍDICO';
+  }
+  generateCode(): string {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+  }
+  // Toggle methods for password fields
+  togglePasswordField() {
+    this.passwordField = !this.passwordField;
+  }
+  toggleConfirmField() {
+    this.confirmField = !this.confirmField;
+  }
+  toggleSancion() {
+    const sancionado = !this.contentForm.get('estaSancionado')?.value;
+    this.contentForm.patchValue({
+      estaSancionado: sancionado,
+      fechaFinSancion: sancionado ? this.today : '',
+      motivoSancion: sancionado ? this.contentForm.get('motivoSancion')?.value : ''
+    });
+  }
+
 
   showeditEvent() {
     if (document.querySelector('#edit-event-btn')?.innerHTML == 'Cancelar') {
@@ -429,18 +456,8 @@ export class ModalComponent {
       editbtn.innerHTML = 'Cancelar'
     }
   }
-     /**
-   * Password Hide/Show
-   */
-     togglepasswordField() {
-      this.passwordField = !this.passwordField;
-    }
-    /**
-   * Password Hide/Show
-   */
-    toggleconfirmField() {
-      this.confirmField = !this.confirmField;
-    }
+
+  
   onPasswordFocus() {
     var myInput = document.getElementById("password-input") as HTMLInputElement;
     var letter = document.getElementById("pass-lower");

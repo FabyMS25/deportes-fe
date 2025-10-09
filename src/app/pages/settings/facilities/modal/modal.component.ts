@@ -4,14 +4,10 @@ import Swal from 'sweetalert2';
 import { FormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LeafletComponent } from 'src/app/shared/map/leaflet.component';
-import { Horario } from 'src/app/core/models/horario.model';
-import { Categoria } from 'src/app/core/models/categoria.model';
-// import { CanchaCategoria } from 'src/app/core/models/cancha-categoria.model';
-import { Complejo } from 'src/app/core/models/complejo.model';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
-import { HorariosService } from 'src/app/core/services/api/horarios.service';
-import { Ceiling, Surfaces } from 'src/app/core/constants/Features';
 import { Districts } from 'src/app/core/constants/Places';
+import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
+import { EstadoActual, TipoEstructura } from 'src/app/core/constants/Features';
 
 @Component({
   selector: 'app-modal',
@@ -20,246 +16,159 @@ import { Districts } from 'src/app/core/constants/Places';
 })
 export class ModalFacilitiesComponent {
   @Input() accion!: string;
-  @Input() row!: Complejo;
+  @Input() row!: ComplejoDeportivo;
   @Output() emitList = new EventEmitter();
-  @Input() categoryList:Categoria[]=[];
 
-  placeholder='Seleccione una opción'
-  ceilingList=Ceiling
-  surfacesList = Surfaces
-  distictList=Districts
-  dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'];
+  tipoEstructuraList = Object.values(TipoEstructura);
+  estadoComplejoList = Object.values(EstadoActual);
+  distictList = Districts;
+
+  tieneIluminacion: boolean = false;
+  tieneVestuarios: boolean = false;
+  tieneGraderias: boolean = false;
 
   submitted = false;
+  complejoForm!: UntypedFormGroup;
+
   masterSelected!: boolean;
-  checkedList: any;
-
-  complejosForm!: UntypedFormGroup;
-  multiDefaultOption='';
-  // Api Data
-  allcompany: any;
-  searchResults: any;
-  searchTerm: any;
-  canchasList:any[]=[];
-
-  constructor(private modalService: NgbModal,
-    private complejosSevice: ComplejosService,
-    // private categoriesService: CanchaDeportesService,
-    private horariosService: HorariosService,
+  
+  constructor(
+    private modalService: NgbModal,
+    private complejosService: ComplejosService,
     private formBuilder: UntypedFormBuilder,
-    // private store: Store<{ data: RootReducerState }>
-  ) {
-      
-  }
+  ) { }
 
   ngOnInit(): void {
-    console.log(this.row)
-    this.complejosForm = this.formBuilder.group({
-      uuid: [''],
-      image_src: ['brands/dribbble.png'],
-      nombre: ['', [Validators.required]],
-      // tarifa: [0, [Validators.required]],
-      techado: ['', [Validators.required]],
-      // superficie: [null, [Validators.required]],
-      distrito: [null, [Validators.required]],
-      ubicacion: ['', [Validators.required]],
-      latitud: ['', [Validators.required]],
-      longitud: ['', [Validators.required]],
-      // categorias: [[],[Validators.required]],
-      // horariosDeAtencion : this.formBuilder.array([
-      //   this.formBuilder.group({
-      //     dia: [""],
-      //     horaInicio: [""],
-      //     horaFin: [""]
-      //   })])
-    });
+    this.initForm();
     this.formDataSet();
   }
 
+  private initForm() {
+    this.complejoForm = this.formBuilder.group({
+      uuid: [''],
+      nombre: ['', [Validators.required]],
+      telefonoPrincipal: [''],
+      tipoEstructura: ['', [Validators.required]],
+      estadoActual: [EstadoActual.ACTIVO],
+      tieneIluminacion: [false],
+      tieneVestuarios: [false],
+      tieneGraderias: [false],
+      distrito: ['', [Validators.required]],
+      ubicacion: ['', [Validators.required]],
+      latitud: ['', [Validators.required]],
+      longitud: ['', [Validators.required]],
+      observaciones: ['']
+    });
+  }
+
   get form() {
-    return this.complejosForm.controls;
-  }
-  get horariosDeAtencion() {
-      return this.complejosForm.get('horariosDeAtencion') as FormArray;
+    return this.complejoForm.controls;
   }
 
-  addHorario() {
-    const horarioGroup = this.formBuilder.group({
-      dia: ['', Validators.required],
-      horaInicio: ['', Validators.required],
-      horaFin: ['', Validators.required]
-    });
-    this.horariosDeAtencion.push(horarioGroup);
-  }
-  removeHorario(index: number) {
-      this.horariosDeAtencion.removeAt(index);
-  }
-  
   private formDataSet() {
-    if (this.accion != '') {
-        this.complejosForm.patchValue({
-          uuid:this.row.uuid,
-            image_src: [''],
-            nombre: this.row.nombre,
-            // tarifa: this.row.totalxhora,
-            techado: this.row.techado,
-            // superficie: this.row.superficie,
-            ubicacion: this.row.ubicacion,
-            distrito: this.row.distrito,
-            latitud:this.row.latitud,
-            longitud:this.row.longitud,
-            encargados:this.row.encargadosDtoList,
-            canchas :this.row.canchasList
-        });
+    if (this.row && this.accion !== '') {
+      this.complejoForm.patchValue({
+        uuid: this.row.uuid,
+        nombre: this.row.nombre,
+        telefonoPrincipal: this.row.telefonoPrincipal,
+        tipoEstructura: this.row.tipoEstructura,
+        estadoActual: this.row.estadoActual || EstadoActual.ACTIVO,
+        tieneIluminacion: this.row.tieneIluminacion || false,
+        tieneVestuarios: this.row.tieneVestuarios || false,
+        tieneGraderias: this.row.tieneGraderias || false,
+        distrito: this.row.distrito,
+        ubicacion: this.row.ubicacion,
+        latitud: this.row.latitud,
+        longitud: this.row.longitud,
+        observaciones: this.row.observaciones
+      });
     }
   }
 
-  imageURL: string | undefined;
-  fileChange(event: any) {
-    let fileList: any = (event.target as HTMLInputElement);
-    let file: File = fileList.files[0];
-    document.getElementById('')
-    this.complejosForm.patchValue({
-      // image_src: file.name
-      image_src: 'brands/dribbble.png'
-    });
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.imageURL = reader.result as string;
-      (document.getElementById('companylogo-img') as HTMLImageElement).src = this.imageURL;
-    }
-    reader.readAsDataURL(file)
-  }
-  
   public openMapa() {
     const modalRef = this.modalService.open(LeafletComponent, {
         backdrop: 'static',
         size: 'lg'
     });
     modalRef.componentInstance.title = 'Buscar en Mapa';
-    modalRef.componentInstance.form=true;
-    modalRef.componentInstance.latLngEmitter.subscribe((data:any) => {
-      const latitud=data.lat;
-      const longitud=data.lng;
-      const direccion=data.dir;
-      this.complejosForm.get('ubicacion')?.patchValue(direccion);
-      this.complejosForm.get('latitud')?.patchValue(latitud);
-      this.complejosForm.get('longitud')?.patchValue(longitud);
+    modalRef.componentInstance.form = true;
+    modalRef.componentInstance.latLngEmitter.subscribe((data: any) => {
+      const latitud = data.lat;
+      const longitud = data.lng;
+      const direccion = data.dir;
+      this.complejoForm.get('ubicacion')?.patchValue(direccion);
+      this.complejoForm.get('latitud')?.patchValue(latitud);
+      this.complejoForm.get('longitud')?.patchValue(longitud);
     });
   }
 
-  /**
-  * API Services Functions
-  */ 
   saveData() {
     this.submitted = true;
-    if (this.complejosForm.valid) {
-      this.complejosForm.enable()
-      let datos: Complejo = {
-        nombre: this.complejosForm.value.nombre,
-        techado: this.complejosForm.value.techado,
-        ubicacion: this.complejosForm.value.ubicacion,
-        distrito: this.complejosForm.value.distrito,
-        latitud: this.complejosForm.value.latitud,
-        longitud: this.complejosForm.value.longitud
+    if (this.complejoForm.valid) {
+      this.complejoForm.enable();
+      console.log(this)
+      const datos: ComplejoDeportivo = {
+        nombre: this.complejoForm.value.nombre,
+        telefonoPrincipal: this.complejoForm.value.telefonoPrincipal,
+        tipoEstructura: this.complejoForm.value.tipoEstructura,
+        estadoActual: this.complejoForm.value.estadoActual,
+        tieneIluminacion: this.complejoForm.value.tieneIluminacion,
+        tieneVestuarios: this.complejoForm.value.tieneVestuarios,
+        tieneGraderias: this.complejoForm.value.tieneGraderias,
+        distrito: this.complejoForm.value.distrito,
+        ubicacion: this.complejoForm.value.ubicacion,
+        latitud: this.complejoForm.value.latitud,
+        longitud: this.complejoForm.value.longitud,
+        observaciones: this.complejoForm.value.observaciones
       };
-      if (this.complejosForm.get('uuid')?.value) {
-          datos.uuid = this.complejosForm.value.uuid;
-          this.updateData(datos);
+      console.log(datos)
+      if (this.complejoForm.get('uuid')?.value) {
+        datos.uuid = this.complejoForm.value.uuid;
+        this.updateData(datos);
       } else {
-          this.addData(datos);
+        datos.fechaCreacion = new Date();
+        this.addData(datos);
       }
     } else {
-        this.notify('Formulario Invalido!', 'error');
+      this.notify('Formulario Inválido!', 'error');
     }
-
-    setTimeout(() => {
-      // this.fieldsForm.reset();
-    }, 2000);
-    // this.submitted = true
   }
   
-  private addData(datos:Complejo){
-    this.complejosSevice.save(datos).subscribe({
-      next:(data:any)=>{
+  private addData(datos: ComplejoDeportivo) {
+    this.complejosService.save(datos).subscribe({
+      next: (data: any) => {
         if (data['status'] === 'OK') {
-          // this.saveCategories(data['payload'].uuid);
-          // this.saveServiceHours(data['payload'].uuid); 
-          this.submitted=false;
+          this.submitted = false;
           this.modalService.dismissAll();
-          this.complejosForm.reset();
+          this.complejoForm.reset();
           this.emitList.emit();       
-          this.notify('Datos Registrados exitosamente!','success');
-
-        }else{
+          this.notify('Complejo Deportivo registrado exitosamente!', 'success');
+        } else {
           this.notify(data.payload, 'error');
         }
-      },error:(error)=>{
-        this.notify(error, 'error');
+      },
+      error: (error) => {
+        this.notify('Error: ' + error.message, 'error');
       }
-    })
+    });
   }
-  private updateData(datos:Complejo) {
-      this.complejosSevice.update(datos).subscribe({
-          next: (data: Complejo) => {
-            const field=data;
-            // this.saveCategories(data.uuid);
-            this.saveServiceHours(data.uuid);
-            this.submitted = false;
-            this.modalService.dismissAll();
-            this.complejosForm.reset();
-            this.emitList.emit();
-            this.notify('Datos Actualizados exitosamente!', 'success');
-          },
-          error: (error) => {
-            this.submitted = false;
-            this.modalService.dismissAll();
-            this.complejosForm.reset();
-            this.notify('No se pudo Actualizar los datos!', 'error');
-          }
-      })
-  }
-  // private saveCategories(uuid:string | undefined){
-  //   if(uuid){
-      
-  //     const categories= this.complejosForm.value.categorias
-  //     categories.forEach((element:any) => {
-  //       let datos: CanchaCategoria = {
-  //         deporteDto:{uuid:element.uuid},
-  //         canchasDto:{uuid:uuid}
-  //       };
-  //       this.categoriesService.save(datos).subscribe({
-  //         next:(data:CanchaCategoria)=>{
-            
-  //           this.notify('Categoria Registrada','success'); 
-  //         },error:(error)=>{
-  //           this.notify('Formulario Invalido: '+error, 'error');
-  //         }
-  //       })
-        
-  //     });
-  //   }
 
-  // }
-  private saveServiceHours(uuid:string | undefined){
-    if(uuid){
-      this.form['horariosDeAtencion'].value.forEach((element:Horario) => {
-        let datos = {
-          dia: element.dia,
-          horaInicio:element.horaInicio,
-          horaFin:element.horaFin,
-          canchasDto:{uuid:uuid}
-        };
-        this.horariosService.save(datos).subscribe({
-            next:(data:Horario)=>{            
-            this.notify('Horario Registrado'+data,'success'); 
-          },error:(error)=>{
-            this.notify('Formulario Invalido: '+error, 'error');
-          }
-        })
-        
-      });
-    }
+  private updateData(datos: ComplejoDeportivo) {
+    this.complejosService.update(datos).subscribe({
+      next: (data: any) => {
+        this.submitted = false;
+        this.modalService.dismissAll();
+        this.complejoForm.reset();
+        this.emitList.emit();
+        this.notify('Complejo Deportivo actualizado exitosamente!', 'success');
+      },
+      error: (error) => {
+        this.submitted = false;
+        this.modalService.dismissAll();
+        this.complejoForm.reset();
+        this.notify('No se pudo actualizar el complejo!', 'error');
+      }
+    });
   }
 
   /**
@@ -274,57 +183,34 @@ export class ModalFacilitiesComponent {
   // Delete Data
   deleteData(id: any) {
     if (id) {
-      // this.store.dispatch(deleteCompany({ id: this.deleteId.toString() }));
+      // Implement delete logic here
     } else {
-      // this.store.dispatch(deleteCompany({ id: this.checkedValGet.toString() }));
+      // Implement bulk delete logic here
     }
     this.deleteId = '';
     this.masterSelected = false;
   }
 
-  /**
-   * Multiple Delete
-   */
-  checkedValGet: any[] = [];
-  deleteMultiple(content: any) {
-    var checkboxes: any = document.getElementsByName('checkAll');
-    var result
-    var checkedVal: any[] = [];
-    for (var i = 0; i < checkboxes.length; i++) {
-      if (checkboxes[i].checked) {
-        result = checkboxes[i].value;
-        checkedVal.push(result);
-      }
-    }
-    if (checkedVal.length > 0) {
-      this.modalService.open(content, { centered: true });
-    }
-    else {
-      Swal.fire({ text: 'Please select at least one checkbox', confirmButtonColor: '#299cdb', });
-    }
-    this.checkedValGet = checkedVal;
-  }
-
   public closeModal() {
     this.accion = '';
-    this.complejosForm.enable();
+    this.complejoForm.enable();
     this.modalService.dismissAll();
-    this.complejosForm.reset();
-}
-private notify(message: any, type: any): void {
-  let timerInterval: any;
-  Swal.fire({
-    title: message,
-    icon: type,
-    timer: 2000,
-    timerProgressBar: true,
-    willClose: () => {
-      clearInterval(timerInterval);
-    },
-  }).then((result) => {
-    if (result.dismiss === Swal.DismissReason.timer) {
-    }
-  });
-}
+    this.complejoForm.reset();
+  }
 
+  private notify(message: any, type: any): void {
+    let timerInterval: any;
+    Swal.fire({
+      title: message,
+      icon: type,
+      timer: 2000,
+      timerProgressBar: true,
+      willClose: () => {
+        clearInterval(timerInterval);
+      },
+    }).then((result) => {
+      if (result.dismiss === Swal.DismissReason.timer) {
+      }
+    });
+  }
 }

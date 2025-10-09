@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { campoDeportivo } from 'src/app/core/models/campoDeportivo.model';
+import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
-import { HorariosService } from 'src/app/core/services/api/horarios.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { catchError, forkJoin, Observable, of, switchMap } from 'rxjs';
-import { Horario } from 'src/app/core/models/horario.model';
+import { HorarioFijoService } from 'src/app/core/services/api/horarioFijo.service';
+import { HorarioFijo } from 'src/app/core/models/horarioFijo.model';
 
 @Component({
   selector: 'app-modal-schedule',
@@ -16,7 +16,7 @@ import { Horario } from 'src/app/core/models/horario.model';
 })
 export class ModalScheduleComponent {
   @Input() accion!: string;
-  @Input() row!: campoDeportivo;
+  @Input() row!: CampoDeportivo;
   @Output() emitList = new EventEmitter();
 
   dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'];
@@ -35,7 +35,7 @@ export class ModalScheduleComponent {
   complejosList:any[]=[];
 
   constructor(private modalService: NgbModal,
-    private horariosService: HorariosService,
+    private horarioFijoService: HorarioFijoService,
     private formBuilder: UntypedFormBuilder,
   ) { }
 
@@ -48,8 +48,8 @@ export class ModalScheduleComponent {
         uuid:[''],
         dia: [dia],
         abierto: [false],
-        horaInicio: [''],
-        horaFin: [''],
+        horaAperura: [''],
+        horaCierre: [''],
         canchasDto:[this.row]
       }))
     );  
@@ -62,8 +62,8 @@ export class ModalScheduleComponent {
   }
   
   private formDataSet(): void {
-    if(this.row.horarioDtoList){
-      this.row.horarioDtoList.forEach((horario) => {
+    if(this.row.horariosFijosDtoList){
+      this.row.horariosFijosDtoList.forEach((horario) => {
         const index = this.dias.indexOf(horario.dia);
         if (index !== -1) {
           const control = this.fieldsForm.at(index) as FormGroup;
@@ -71,8 +71,8 @@ export class ModalScheduleComponent {
             uuid: horario.uuid,
             dia: horario.dia,
             abierto: horario.abierto,
-            horaInicio: horario.horaInicio,
-            horaFin: horario.horaFin,
+            horaAperura: horario.horaApertura,
+            horaCierre: horario.horaCierre,
             canchasDto: this.row
           });
         }
@@ -83,24 +83,24 @@ export class ModalScheduleComponent {
     this.fieldsForm.controls.forEach((control) => {
       const group = control as FormGroup; // Explicitly cast to FormGroup
       const abiertoControl = group.get('abierto');
-      const horaInicioControl = group.get('horaInicio');
-      const horaFinControl = group.get('horaFin');
+      const horaAperuraControl = group.get('horaAperura');
+      const horaCierreControl = group.get('horaCierre');
   
       // Listen for changes in "abierto"
       abiertoControl?.valueChanges.subscribe((isOpen: boolean) => {
         if (isOpen) {
-          // If "abierto" is true, make "horaInicio" and "horaFin" required
-          horaInicioControl?.setValidators([Validators.required]);
-          horaFinControl?.setValidators([Validators.required]);
+          // If "abierto" is true, make "horaAperura" and "horaCierre" required
+          horaAperuraControl?.setValidators([Validators.required]);
+          horaCierreControl?.setValidators([Validators.required]);
         } else {
           // If "abierto" is false, clear validations
-          horaInicioControl?.clearValidators();
-          horaFinControl?.clearValidators();
+          horaAperuraControl?.clearValidators();
+          horaCierreControl?.clearValidators();
         }
   
         // Update validation status
-        horaInicioControl?.updateValueAndValidity();
-        horaFinControl?.updateValueAndValidity();
+        horaAperuraControl?.updateValueAndValidity();
+        horaCierreControl?.updateValueAndValidity();
       });
     });
   }
@@ -113,13 +113,13 @@ export class ModalScheduleComponent {
   
     formArray.controls.forEach((control: AbstractControl) => {
       if (control.value.abierto || control.value.uuid) {
-        const horarioData: Horario = {
+        const horarioData: HorarioFijo = {
           // uuid: control.value.uuid,
           dia: control.value.dia,
           abierto: control.value.abierto,
-          horaInicio: control.value.horaInicio,
-          horaFin: control.value.horaFin,
-          canchasDto: this.row
+          horaApertura: control.value.horaInicio,
+          horaCierre: control.value.horaCierre,
+          campoDeportivoDto: this.row
         };
           
         if (control.value.uuid) {
@@ -154,8 +154,8 @@ export class ModalScheduleComponent {
   }
   
   /* API requests */
-private addSchedule(datos: Horario): Observable<any> {
-  return this.horariosService.save(datos).pipe(
+private addSchedule(datos: HorarioFijo): Observable<any> {
+  return this.horarioFijoService.save(datos).pipe(
     switchMap((result: any) => {
       if(result.status === 'OK'){
         return of(result);
@@ -168,8 +168,8 @@ private addSchedule(datos: Horario): Observable<any> {
     })
   );
 }
-private updateSchedule(datos: Horario): Observable<any> {
-  return this.horariosService.update(datos).pipe(
+private updateSchedule(datos: HorarioFijo): Observable<any> {
+  return this.horarioFijoService.update(datos).pipe(
     switchMap((result: any) => {
       if(result.status === 'OK'){
         return of(result);

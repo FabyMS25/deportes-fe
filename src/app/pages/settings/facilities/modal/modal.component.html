@@ -1,8 +1,6 @@
-<div class="modal-header bg-info-subtle  p-3">
+<div class="modal-header bg-info-subtle p-3">
     <h5 class="modal-title" *ngIf="accion === ''" ngbAutofocus>Agregar Complejo Deportivo</h5>
     <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>Editar Complejo Deportivo</h5>
-    <h5 class="modal-title" *ngIf="accion === 'sub-edit'" ngbAutofocus>Actualizar Horarios de Atención </h5>
-    <h5 class="modal-title" *ngIf="accion === 'categoria'" ngbAutofocus>Actualizar campos Deportivos </h5>
     <button type="button"
         class="btn-close"
         data-dismiss="modal" aria-label="Cerrar"
@@ -10,246 +8,138 @@
         (click)="closeModal()">
     </button>
 </div>
+
 <form (ngSubmit)="saveData()" *ngIf="accion === 'edit' || accion === ''"
-    class="tablelist-form" autocomplete="off" [formGroup]="complejosForm">
+    class="tablelist-form" autocomplete="off" [formGroup]="complejoForm">
     <div class="modal-body">
         <div class="row g-3">
             <div class="col-lg-12">
-                <input type="hidden" name="uuid" value="" formControlName="uuid" />
-                <!-- 
-                <div class="text-center">
-                    <div class="position-relative d-inline-block">
-                        <div class="position-absolute bottom-0 end-0">
-                            <label for="company-logo-input" class="mb-0" data-bs-toggle="tooltip"
-                                data-bs-placement="right" title="Select Image">
-                                <div class="avatar-xs cursor-pointer">
-                                    <div
-                                        class="avatar-title bg-light border rounded-circle text-muted">
-                                        <i class="ri-image-fill"></i>
-                                    </div>
-                                </div>
-                            </label>
-                            <input class="form-control d-none" id="company-logo-input" type="file"
-                                accept="image/png, image/gif, image/jpeg"
-                                (change)="fileChange($event)">
-                        </div>
-                        <div class="avatar-lg p-1">
-                            <div class="avatar-title bg-light rounded-circle">
-                                <img src="assets/images/users/multi-user.jpg" id="companylogo-img"
-                                    class="avatar-md rounded-circle object-fit-cover" />
-                            </div>
-                        </div>
-                    </div>
-                </div> -->
+                <input type="hidden" formControlName="uuid" />
+                
                 <div>
                     <label for="nombre-field" class="form-label">Nombre</label>
                     <input type="text" id="nombre-field" class="form-control"
                         placeholder="Ingresa el Nombre del Complejo" required formControlName="nombre"
                         [ngClass]="{ 'is-invalid': submitted && form['nombre'].errors }" />
-                    @if(submitted && form['nombre'].errors){   
-                    <div class="invalid-feedback"
-                        align="left">
-                        @if(form['nombre'].errors['required']){  
-                        <div>El nombre es requirido</div>
-                        }
+                    <div *ngIf="submitted && form['nombre'].errors" class="invalid-feedback" align="left">
+                        <div *ngIf="form['nombre'].errors['required']">El nombre es requerido</div>
                     </div>
-                    } 
                 </div>
             </div>
+
             <div class="col-lg-6">
                 <div>
-                    <label for="techado-field" class="form-label">Techado</label>
-                    <ng-select 
-                        [items]="ceilingList" bindLabel="techado" bindValue="techado"
-                        formControlName="techado"
-                        placeholder="techado" 
-                        [ngClass]="{'is-invalid': submitted && form['techado'].errors }">
-                    </ng-select>
-                    @if(submitted && form['techado'].errors){ 
-                    <div class="invalid-feedback"
-                        align="left">
-                        @if(form['techado'].errors['required']){ 
-                        <div>Debe seleccionar una opcion</div>
-                        }
-                    </div>
-                    }
+                    <label for="telefonoPrincipal-field" class="form-label">Teléfono Principal</label>
+                    <input type="text" id="telefonoPrincipal-field" class="form-control"
+                        placeholder="Ingresa el teléfono" formControlName="telefonoPrincipal" />
                 </div>
             </div>
+
+            <div class="col-lg-6">
+                <div>
+                    <label for="tipoEstructura-field" class="form-label">Tipo de Estructura</label>
+                    <select id="tipoEstructura-field" class="form-control" formControlName="tipoEstructura"
+                        [ngClass]="{'is-invalid': submitted && form['tipoEstructura'].errors }">
+                        <option value="">Seleccione una opción</option>
+                        <option *ngFor="let tipo of tipoEstructuraList" [value]="tipo">{{ tipo }}</option>
+                    </select>
+                    <div *ngIf="submitted && form['tipoEstructura'].errors" class="invalid-feedback" align="left">
+                        <div *ngIf="form['tipoEstructura'].errors['required']">Debe seleccionar una opción</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div>
+                    <label for="estadoActual-field" class="form-label">Estado Actual</label>
+                    <select id="estadoActual-field" class="form-control" formControlName="estadoActual">
+                        <option *ngFor="let estado of estadoComplejoList" [value]="estado">{{ estado }}</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="col-lg-6">
                 <div>
                     <label for="distrito-field" class="form-label">Distrito</label>
-                    <ng-select 
-                        [items]="distictList" bindLabel="value" bindValue="distrito"
-                        formControlName="distrito"
-                        placeholder="Seleccione un distrito" 
+                    <select id="distrito-field" class="form-control" formControlName="distrito"
                         [ngClass]="{'is-invalid': submitted && form['distrito'].errors }">
-                    </ng-select>
-                    @if(submitted && form['distrito'].errors){ 
-                    <div class="invalid-feedback"  align="left">
-                        @if(form['distrito'].errors['required']){ 
-                        <div>Debe ingresar el Distrito
-                        </div>
-                        }
+                        <option value="">Seleccione un distrito</option>
+                        <option *ngFor="let distrito of distictList" [value]="distrito.value">{{ distrito.value }}</option>
+                    </select>
+                    <div *ngIf="submitted && form['distrito'].errors" class="invalid-feedback" align="left">
+                        <div *ngIf="form['distrito'].errors['required']">Debe seleccionar un distrito</div>
                     </div>
-                    }
                 </div>
             </div>
+
+            <!-- New Boolean Fields -->
             <div class="col-lg-12">
-                <label for="ubicacion-field" class="form-label">Ubicacion</label>
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="tieneIluminacion-field" 
+                                formControlName="tieneIluminacion">
+                            <label class="form-check-label" for="tieneIluminacion-field">
+                                ¿Tiene Iluminación?
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="tieneVestuarios-field" 
+                                formControlName="tieneVestuarios">
+                            <label class="form-check-label" for="tieneVestuarios-field">
+                                ¿Tiene Vestuarios?
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="tieneGraderias-field" 
+                                formControlName="tieneGraderias">
+                            <label class="form-check-label" for="tieneGraderias-field">
+                                ¿Tiene Gradarías?
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-12">
+                <label for="ubicacion-field" class="form-label">Ubicación</label>
                 <div class="input-group">
                     <input type="text" id="ubicacion-field" class="form-control" [disabled]="true"
-                        placeholder="Seleccione la Ubicacion lo mas exacta posible" required formControlName="ubicacion"
+                        placeholder="Seleccione la ubicación en el mapa" required formControlName="ubicacion"
                         [ngClass]="{ 'is-invalid': submitted && form['ubicacion'].errors }" />
-                   <button class="btn btn-soft-secondary fw-medium" type="button"
-                       (click)="openMapa()">Abrir Mapa 
-                   </button> 
-                   @if(submitted && form['ubicacion'].errors){ 
-                   <div class="invalid-feedback"
-                       align="left">
-                       @if(form['ubicacion'].errors['required']){ 
-                       <div>El campo Dirección es obligatorio.</div>
-                       }
-                   </div>
-                   }            
-                </div>     
-                <div class="input-group" *ngIf="form['ubicacion'].value">
-                    <label for="latitud-field" class="form-label">Latitud: </label>
-                    <p class="text-muted px-2" > {{form['latitud'].value}} </p>
-                    <label for="longitud-field" class="form-label">Longitud: </label>
-                    <p class="text-muted px-2" > {{form['longitud'].value}}</p>
+                    <button class="btn btn-soft-secondary fw-medium" type="button"
+                        (click)="openMapa()">Abrir Mapa</button>
+                    <div *ngIf="submitted && form['ubicacion'].errors" class="invalid-feedback" align="left">
+                        <div *ngIf="form['ubicacion'].errors['required']">El campo Dirección es obligatorio</div>
+                    </div>
+                </div>
+                <div class="input-group mt-2" *ngIf="form['ubicacion'].value">
+                    <small class="text-muted">
+                        Latitud: {{form['latitud'].value}} | Longitud: {{form['longitud'].value}}
+                    </small>
                 </div>
             </div>
-            <!-- <div class="d-flex align-items-center flex-wrap gap-2">
-                <div class="flex-grow-1"><h5 class="mt-2">Campos deportivos del Complejo</h5></div>                
-                <div class="flex-shrink-0">
-                    <div class="col-lg-12 mt-2">
-                        <button type="button" class="btn btn-primary  add-btn" (click)="addHorario()">
-                            <i class="las la-calendar-plus align-middle "></i>Agregar Más
-                        </button>
-                    </div>   
-                </div>         
-            </div> -->
-            <!-- <div class="row" formArrayName="horariosDeAtencion">
-                <div *ngFor="let horario of horariosDeAtencion.controls; let i = index" [formGroupName]="i" class="row g-3">
-                  <div class="col-lg-4">
-                    <div>
-                      <select id="dia" class="form-control" formControlName="dia">
-                        <option value="" disabled selected>Seleccionar día</option>
-                        <option *ngFor="let dia of dias" [value]="dia">{{ dia }}</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="col-lg-2">
-                    <div class="form-check form-switch form-switch-md" dir="ltr">
-                      <input type="checkbox" class="form-check-input" id="abierto" formGroupName="abierto">
-                      <label class="form-check-label" for="abierto">Abierto</label>
-                  </div>
-                  </div>
-                  <div class="col-lg-3">
-                    <div>
-                      <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                             [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                             placeholder="Hora inicio" formControlName="horaInicio">
-                    </div>
-                  </div>
-                  <div class="col-lg-3">
-                    <div>
-                      <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                             [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                             placeholder="Hora final" formControlName="horaFin">
-                    </div>
-                  </div>
-                  <div class="col-lg-1 mt-3">
-                    <button type="button" class="btn btn-danger" (click)="removeHorario(i)">
-                      <i class="las la-calendar-minus align-bottom"></i> 
-                    </button>
-                  </div>
-                </div>
-            </div>             -->
-        </div>
-    </div>
-    <div class="modal-footer">
-        <div class="hstack gap-2 justify-content-end">
-            <button type="button" class="btn btn-light" data-bs-dismiss="modal"
-                (click)="closeModal()">Cerrar</button>
-            <button type="submit" class="btn btn-success" id="add-btn">Agregar</button>
-        </div>
-    </div>
-</form>
 
-<form (ngSubmit)="saveData()" *ngIf="accion === 'sub-edit'"
-    class="tablelist-form" autocomplete="off" [formGroup]="complejosForm">
-    <div class="modal-body">
-        <div class="row g-3">
             <div class="col-lg-12">
-                <input type="hidden" name="uuid" value="" formControlName="uuid" />
-                <div class="input-group">
-                    <label for="nombre-field" class="form-label">Cancha: </label>
-                    <p class="px-3">{{row.nombre}}</p>
+                <div>
+                    <label for="observaciones-field" class="form-label">Observaciones</label>
+                    <textarea id="observaciones-field" class="form-control" rows="3"
+                        placeholder="Observaciones adicionales" formControlName="observaciones"></textarea>
                 </div>
             </div>
-            <div class="col-lg-12">
-                <div class="input-group">
-                    <label for="categorias-field" class="form-label">Categorias:</label>
-                    <div class="px-3">
-                        <ng-select [items]="categoryList" [multiple]="true" bindLabel="nombre"
-                                   formControlName="categorias" placeholder="Seleccione una o más Categorias"
-                                   [ngClass]="{'is-invalid': submitted && form['categorias'].errors }">
-                        </ng-select>
-                        <div *ngIf="submitted && form['categorias'].errors" class="invalid-feedback" align="left">
-                          <div *ngIf="form['categorias'].errors['required']">Debe seleccionar al menos una categoría</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="d-flex align-items-center flex-wrap gap-2">
-                <div class="flex-grow-1"><h5 class="mt-2">Horarios De atención</h5></div>                
-                <div class="flex-shrink-0">
-                    <div class="col-lg-12 mt-2">
-                        <button type="button" class="btn btn-primary  add-btn" (click)="addHorario()">
-                            <i class="las la-calendar-plus align-middle "></i>Agregar Más
-                        </button>
-                    </div>   
-                </div>         
-            </div>
-            <div class="row" formArrayName="horariosDeAtencion">
-                <div *ngFor="let horario of horariosDeAtencion.controls; let i = index" [formGroupName]="i" class="row g-3">
-                  <div class="col-lg-5">
-                    <div>
-                      <select id="dia" class="form-control" formControlName="dia">
-                        <option value="" disabled selected>Seleccionar día</option>
-                        <option *ngFor="let dia of dias" [value]="dia">{{ dia }}</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="col-lg-3">
-                    <div>
-                      <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                             [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                             placeholder="Hora inicio" formControlName="horaInicio">
-                    </div>
-                  </div>
-                  <div class="col-lg-3">
-                    <div>
-                      <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                             [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                             placeholder="Hora final" formControlName="horaFin">
-                    </div>
-                  </div>
-                  <div class="col-lg-1 mt-3">
-                    <button type="button" class="btn btn-danger" (click)="removeHorario(i)">
-                      <i class="las la-calendar-minus align-bottom"></i> 
-                    </button>
-                  </div>
-                </div>
-            </div>      
         </div>
     </div>
+    
     <div class="modal-footer">
         <div class="hstack gap-2 justify-content-end">
-            <button type="button" class="btn btn-light" data-bs-dismiss="modal"
-                (click)="closeModal()">Cerrar</button>
-            <button type="submit" class="btn btn-success" id="add-btn">Agregar</button>
+            <button type="button" class="btn btn-light" (click)="closeModal()">Cerrar</button>
+            <button type="submit" class="btn btn-success" [disabled]="submitted">
+                {{ accion === 'edit' ? 'Actualizar' : 'Agregar' }}
+            </button>
         </div>
     </div>
 </form>

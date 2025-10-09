@@ -9,7 +9,7 @@
         [newShow]="canActivate.includes('CREAR')"
         [importShow]="canActivate.includes('CREAR')"
         [exportShow]="canActivate.includes('VER')"
-        (createEmitter)="openModal( undefined,'','md')"
+        (createEmitter)="openModal( undefined,content,'')"
         (importEmitter)="openModalImport()"
         (exportEmitter)="csvFileExport()"
     ></app-data-header>

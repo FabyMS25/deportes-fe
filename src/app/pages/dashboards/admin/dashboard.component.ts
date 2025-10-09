@@ -96,16 +96,16 @@ export class DashboardComponent implements OnInit {
     const groupedByComplex: Record<string, any> = filteredReservations.reduce((acc, reservation) => {
       const reservationDate = new Date(reservation.fechaReserva);
       if (reservationDate >= startDate && reservationDate <= endDate) {
-        const complexId = reservation.canchasDto.complejoDto.uuid;
+        const complexId = reservation.campoDeportivoDto.complejoDto.uuid;
         if (complexId) {
           if (!acc[complexId]) {
             acc[complexId] = {
-              complexName: reservation.canchasDto.complejoDto.nombre,
+              complexName: reservation.campoDeportivoDto.complejoDto.nombre,
               total:0,
               totalIncome: 0
             };
           }
-          acc[complexId].totalIncome += reservation.totalPago;
+          acc[complexId].totalIncome += reservation.montoTotal;
           acc[complexId].total += 1;
         }
       }
@@ -173,7 +173,7 @@ export class DashboardComponent implements OnInit {
       const month = new Date(reserva.fechaReserva).getMonth();
       monthlyData.reservas[month]++;
       if (reserva.estadoReserva === 'Pagado') {
-        monthlyData.ingresos[month] += reserva.totalPago;
+        monthlyData.ingresos[month] += reserva.montoTotal;
       }
       if (reserva.estadoReserva === 'Anulado' || reserva.estadoReserva === 'Vencido') {
         monthlyData.cancelaciones[month]++;

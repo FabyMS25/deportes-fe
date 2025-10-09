@@ -55,3 +55,537 @@
       padding: 10px 15px;
     }
   }
+.map-container {
+    height: calc(100vh - 180px);
+    min-height: 500px;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+.map-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: none;
+}
+
+// Custom Popup Styles
+::ng-deep {
+    .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+        padding: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .leaflet-popup-content {
+        margin: 0;
+        padding: 16px;
+        font-size: 13px;
+        line-height: 1.5;
+        min-width: 280px !important;
+    }
+
+    .map-popup-content {
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            // margin-bottom: 8px;
+            
+            i {
+                font-size: 16px;
+                min-width: 20px;
+                margin-right: 8px;
+                color: #299cdb;
+                margin-top: 2px;
+            }
+            
+            span {
+                flex: 1;
+                font-size: 12px;
+            }
+        }
+
+        .campos-section {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+
+            .surface-group {
+                padding-left: 8px;
+                border-left: 3px solid #299cdb;
+            }
+        }
+
+        .price-range {
+            background-color: #fff3cd;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+
+            i {
+                color: #856404;
+                margin-right: 6px;
+            }
+        }
+
+        .facilities {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+
+            .badge {
+                font-size: 10px;
+                padding: 4px 8px;
+                font-weight: 500;
+
+                i {
+                    font-size: 11px;
+                    margin-right: 3px;
+                }
+            }
+        }
+
+        .observaciones {
+            background-color: #e7f3ff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border-left: 3px solid #299cdb;
+
+            small {
+                font-size: 11px;
+                
+                i {
+                    margin-right: 4px;
+                }
+            }
+        }
+
+        h6 {
+            font-size: 15px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        hr {
+            margin: 12px 0;
+            opacity: 0.1;
+        }
+
+        .btn {
+            font-size: 13px;
+            padding: 8px 16px;
+            
+            i {
+                margin-right: 6px;
+            }
+            
+            &.btn-reserva-puntual {
+                background: linear-gradient(135deg, #299cdb 0%, #1f7ea7 100%);
+                border: none;
+                box-shadow: 0 2px 4px rgba(41, 156, 219, 0.3);
+                
+                &:hover {
+                    background: linear-gradient(135deg, #1f7ea7 0%, #176a8f 100%);
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 8px rgba(41, 156, 219, 0.4);
+                }
+            }
+            
+            &.btn-reserva-recurrente {
+                background: linear-gradient(135deg, #28a745 0%, #20893a 100%);
+                border: none;
+                box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+                
+                &:hover {
+                    background: linear-gradient(135deg, #20893a 0%, #1a6d2f 100%);
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+                }
+            }
+            
+            small {
+                opacity: 0.9;
+                font-weight: 400;
+            }
+        }
+        
+        .reservation-info {
+            padding: 6px 10px;
+            background-color: #f0f8ff;
+            border-radius: 4px;
+            border-left: 3px solid #299cdb;
+            
+            small {
+                font-size: 11px;
+                color: #666;
+                
+                i {
+                    color: #299cdb;
+                }
+            }
+        }
+        
+        .alert-sm {
+            padding: 8px 10px;
+            font-size: 12px;
+            margin-bottom: 0;
+            border-radius: 6px;
+            
+            small {
+                margin: 0;
+            }
+            
+            &.alert-info {
+                background-color: #d1ecf1;
+                border-color: #bee5eb;
+                color: #0c5460;
+            }
+            
+            &.alert-warning {
+                background-color: #fff3cd;
+                border-color: #ffeaa7;
+                color: #856404;
+            }
+        }
+    }
+
+    // Geosearch Control Styles
+    .custom-geosearch-control {
+        position: absolute;
+        top: 80px;
+        left: 10px;
+        z-index: 1000;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+
+        input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 250px;
+
+            &:focus {
+                outline: none;
+                border-color: #299cdb;
+                box-shadow: 0 0 0 0.2rem rgba(41, 156, 219, 0.25);
+            }
+        }
+    }
+
+    // Layer Control
+    .leaflet-control-layers {
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    // Marker cluster styles (if using clustering)
+    .marker-cluster {
+        background-clip: padding-box;
+        border-radius: 20px;
+        
+        div {
+            width: 30px;
+            height: 30px;
+            margin-left: 5px;
+            margin-top: 5px;
+            text-align: center;
+            border-radius: 15px;
+            font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+        }
+        
+        span {
+            line-height: 30px;
+        }
+    }
+}
+
+// Filter Offcanvas Styles
+.offcanvas {
+    &-header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+
+        .offcanvas-title {
+            font-size: 18px;
+            font-weight: 600;
+            
+            i {
+                color: #299cdb;
+                margin-right: 8px;
+            }
+        }
+    }
+
+    &-body {
+        padding: 20px;
+
+        .form-label {
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            // margin-bottom: 12px;
+
+            i {
+                margin-right: 6px;
+                color: #299cdb;
+            }
+        }
+
+        .form-select,
+        .form-control {
+            font-size: 14px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+
+            &:focus {
+                border-color: #299cdb;
+                box-shadow: 0 0 0 0.2rem rgba(41, 156, 219, 0.25);
+            }
+        }
+
+        .category-filter-grid {
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 8px;
+
+            &::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            &::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background: #299cdb;
+                border-radius: 10px;
+
+                &:hover {
+                    background: #1f7ea7;
+                }
+            }
+
+            .form-check {
+                padding-left: 1.5rem;
+
+                .form-check-input {
+                    cursor: pointer;
+
+                    &:checked {
+                        background-color: #299cdb;
+                        border-color: #299cdb;
+                    }
+                }
+
+                .form-check-label {
+                    cursor: pointer;
+                    font-size: 13px;
+                }
+            }
+        }
+
+        .alert-info {
+            background-color: #e7f3ff;
+            border-color: #b3d9ff;
+            border-radius: 8px;
+            font-size: 13px;
+
+            .alert-heading {
+                font-size: 14px;
+                color: #004085;
+                
+                i {
+                    margin-right: 6px;
+                }
+            }
+
+            ul {
+                margin-bottom: 0;
+                font-size: 12px;
+
+                li {
+                    margin-bottom: 4px;
+
+                    &:last-child {
+                        margin-bottom: 0;
+                    }
+
+                    strong {
+                        color: #004085;
+                    }
+                }
+            }
+        }
+    }
+
+    &-footer {
+        padding: 16px;
+        background-color: #f8f9fa;
+
+        .btn {
+            font-size: 14px;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+
+            i {
+                margin-right: 6px;
+            }
+
+            &-primary {
+                background-color: #299cdb;
+                border-color: #299cdb;
+
+                &:hover {
+                    background-color: #1f7ea7;
+                    border-color: #1f7ea7;
+                }
+            }
+
+            &-outline-secondary {
+                &:hover {
+                    background-color: #6c757d;
+                    border-color: #6c757d;
+                    color: white;
+                }
+            }
+        }
+    }
+}
+
+// Card Header Badges
+.card-header {
+    .badge {
+        font-size: 12px;
+        padding: 6px 12px;
+        font-weight: 500;
+        border-radius: 6px;
+
+        &.bg-primary {
+            background-color: #299cdb !important;
+        }
+
+        &.bg-info {
+            background-color: #17a2b8 !important;
+        }
+    }
+}
+
+// Responsive Styles
+@media (max-width: 768px) {
+    .map-container {
+        height: calc(100vh - 200px);
+        min-height: 400px;
+    }
+
+    .card-header {
+        .card-title {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .flex-shrink-0 {
+            width: 100%;
+        }
+    }
+
+    ::ng-deep {
+        .leaflet-popup-content {
+            min-width: 240px !important;
+        }
+
+        .map-popup-content {
+            .info-row {
+                font-size: 11px;
+
+                i {
+                    font-size: 14px;
+                    min-width: 18px;
+                }
+            }
+
+            h6 {
+                font-size: 14px;
+            }
+
+            .btn {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+        }
+
+        .custom-geosearch-control {
+            top: 70px;
+
+            input {
+                width: 200px;
+                font-size: 13px;
+            }
+        }
+    }
+}
+
+@media (max-width: 576px) {
+    .map-container {
+        height: calc(100vh - 220px);
+    }
+
+    ::ng-deep {
+        .leaflet-popup-content {
+            min-width: 200px !important;
+        }
+
+        .custom-geosearch-control {
+            left: 50%;
+            transform: translateX(-50%);
+
+            input {
+                width: calc(100vw - 40px);
+                max-width: 300px;
+            }
+        }
+    }
+}
+
+// Loading State
+.map-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    text-align: center;
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        color: #299cdb;
+    }
+}
+
+// Empty State
+.map-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 40px;
+    text-align: center;
+    color: #6c757d;
+
+    i {
+        font-size: 64px;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    h5 {
+        margin-bottom: 10px;
+    }
+
+    p {
+        margin-bottom: 0;
+        font-size: 14px;
+    }
+}

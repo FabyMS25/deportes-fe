@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { AbstractControl, FormGroup, FormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import {read, utils} from 'xlsx';
@@ -14,7 +14,7 @@ import { TarifaService } from 'src/app/core/services/api/tarifa.service';
 import { TarifaCategoriesService } from 'src/app/core/services/api/tarifa-categorias.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
-import { HorariosService } from 'src/app/core/services/api/horarios.service';
+import { HorarioFijoService } from 'src/app/core/services/api/horarioFijo.service';
 
 @Component({
   selector: 'app-modal-import',
@@ -47,7 +47,7 @@ export class ModalImportComponent {
       private tarifaService: TarifaService,
       private categoriesService: CategoriasService,
       private TarifacategoriesService: TarifaCategoriesService,
-      private horariosService: HorariosService
+      private horariosService: HorarioFijoService
   ) {
   }
 
@@ -198,7 +198,7 @@ export class ModalImportComponent {
   }
   private groupByCancha(xlsxData: any[]): { [key: string]: any[] } {
     return xlsxData.reduce((acc, item) => {
-      const key = item.Codigo; // Group by "Codigo" or other unique identifier for cancha
+      const key = item.Codigo;
       if (!acc[key]) {
         acc[key] = [];
       }
@@ -249,15 +249,12 @@ export class ModalImportComponent {
   
       const categorias = datos.processedCategories;
       console.log("tarifadata", tarifaData);
-  
-      // Save the tariff and then associate categories with it
       return this.tarifaService.save(tarifaData).pipe(
         switchMap((savedTarifa: any) => {
-          // Save the association between the tarifa and its categories
           const categorySaveObservables = categorias.map((categoria: any) => {
             const tarifaCategoriaData = {
-              tarifaDto: { uuid: savedTarifa.payload.uuid },
-              categoriaDto: { uuid: categoria.uuid }
+              tarifaDto: savedTarifa.payload,
+              categoriaDto: categoria
             };
             return from(this.TarifacategoriesService.save(tarifaCategoriaData));
           });

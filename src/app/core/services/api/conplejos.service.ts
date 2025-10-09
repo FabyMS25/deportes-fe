@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 /**Models */
-import { Complejo } from '../../models/complejo.model';
+import { ComplejoDeportivo } from '../../models/complejoDeportivo.model';
 
 
 const httpOptions = {
@@ -22,21 +22,21 @@ export class ComplejosService {
 
   constructor(private http: HttpClient) { }
 
-  getAll(): Observable<Complejo[]> {
-    return this.http.get<Complejo[]>(`${this.apiUrl}`);
+  getAll(): Observable<ComplejoDeportivo[]> {
+    return this.http.get<ComplejoDeportivo[]>(`${this.apiUrl}`);
   }
 
-  getByUuid(uuid:string):Observable<Complejo>{
-    return this.http.get<Complejo>(`${this.apiUrl}/${uuid}`);
+  getByUuid(uuid:string):Observable<ComplejoDeportivo>{
+    return this.http.get<ComplejoDeportivo>(`${this.apiUrl}/${uuid}`);
   }
 
-  save(data: Complejo): Observable<Complejo> {  
+  save(data: ComplejoDeportivo): Observable<ComplejoDeportivo> {  
     // var headerToken = {'Authorization': `Bearer `+ window.sessionStorage.getItem('auth-token')};
-    return this.http.post<Complejo>(`${this.apiUrl}`, data);
+    return this.http.post<ComplejoDeportivo>(`${this.apiUrl}`, data);
   }
 
-  update(data: Complejo): Observable<Complejo> {
-    return this.http.put<Complejo>(`${this.apiUrl}`, data);
+  update(data: ComplejoDeportivo): Observable<ComplejoDeportivo> {
+    return this.http.put<ComplejoDeportivo>(`${this.apiUrl}`, data);
   }
   delete(uuid: string) {
     return this.http.delete(`${this.apiUrl}/${uuid}`);

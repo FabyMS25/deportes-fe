@@ -8,6 +8,7 @@ import { UserDocType} from 'src/app/core/constants/UserData';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { UserDataService } from '../signup/user-data.service';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
+import { Contribuyente } from 'src/app/core/models/contribuyente.models';
 
 @Component({
   selector: 'app-signup-check',
@@ -36,7 +37,7 @@ export class SignupCheckComponent {
     
      this.SignupForm = this.formBuilder.group({
       tipoDocumento:['', [Validators.required]],
-      nroDocumento:['', [Validators.required]],
+      numeroDocumento:['', [Validators.required]],
       expedido:[''],
     });
     
@@ -53,8 +54,8 @@ export class SignupCheckComponent {
       this.SignupForm.enable();
       let datos = {
         tipoDocumento: this.SignupForm.value.tipoDocumento,
-        nroCarnet: this.SignupForm.value.nroDocumento,
-        ciExpedido:this.SignupForm.value.expedido,
+        numeroDocumento: this.SignupForm.value.numeroDocumento,
+        expedido:this.SignupForm.value.expedido,
       };
       this.searchContribuyente(datos);
 
@@ -121,13 +122,13 @@ export class SignupCheckComponent {
   ruatData: any;
   searchContribuyente(data:any){
     console.log(data)
-    this.ruatService.getContribuyentePorCi(data.nroCarnet,data.tipoDocumento, data.ciExpedido ).subscribe({    
+    this.ruatService.getContribuyentePorCi(data.numeroDocumento,data.tipoDocumento, data.expedido ).subscribe({    
       next: (resp: any) => {
         if(resp['status']==='OK'){
           const response = resp.payload
         if(response.continuarFlujo){
           this.ruatData= response;
-          this.searchUser(data.nroCarnet)
+          this.searchUser(data.numeroDocumento)
             .then((exist) => {
               if(exist){
                 this.notify("Usted ya cuenta con un registro en Deportes- GAMQ ",'error')

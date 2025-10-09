@@ -35,13 +35,13 @@ export class SettingsComponent implements OnInit {
   personaForm:FormGroup = this.formBuilder.group({
     uuid: ['', [Validators.required]],
     nombre: ['', [Validators.required]],
-    apPaterno: ['', [Validators.required]],
-    apMaterno: ['', [Validators.required]],
-    sexo: ['M', [Validators.required]],
-    nroCarnet: ['', [Validators.required]],
+    primerApellido: ['', [Validators.required]],
+    segundoApellido: ['', [Validators.required]],
+    genero: ['M', [Validators.required]],
+    numeroDocumento: ['', [Validators.required]],
     expedido: ['',[Validators.required]],
-    nroCelular: ['', [Validators.required, Validators.pattern('^[0-9]{8}$')]],
-    correoElectronico: ['', [Validators.required, Validators.email]],
+    telefono: ['', [Validators.required, Validators.pattern('^[0-9]{8}$')]],
+    email: ['', [Validators.required, Validators.email]],
     direccion: ['']
   });
 
@@ -78,13 +78,13 @@ export class SettingsComponent implements OnInit {
       this.personaForm.patchValue({
         uuid: persona.uuid,
         nombre: persona.nombre,
-        apPaterno: persona.apPaterno,
-        apMaterno: persona.apMaterno,
-        sexo: persona.sexo,
-        nroCarnet: persona.nroCarnet,
-        expedido: this.getExpedidoDescription(persona.ciExpedido || persona.ciExpedito),
-        nroCelular: persona.nroCelular || persona.celular,
-        correoElectronico: persona.correoElectronico || persona.correo,
+        primerApellido: persona.primerApellido,
+        segundoApellido: persona.segundoApellido,
+        genero: persona.genero,
+        numeroDocumento: persona.numeroDocumento,
+        expedido: this.getExpedidoDescription(persona.expedido || persona.ciExpedito),
+        telefono: persona.telefono || persona.telefono,
+        email: persona.email || persona.email,
         direccion: persona.direccion
       });
     }
@@ -129,16 +129,23 @@ export class SettingsComponent implements OnInit {
       const persona:Contribuyente = {
         uuid: this.personaForm.value.uuid,
         nombre: this.personaForm.value.nombre,
-        apPaterno: this.personaForm.value.apPaterno,
-        apMaterno: this.personaForm.value.apMaterno,
-        nroCarnet: this.personaForm.value.nroCarnet,
-        ciExpedido: this.getIdCity(this.personaForm.value.expedido),
-        sexo: this.personaForm.value.sexo,
-        celular: this.personaForm.value.nroCelular,
-        correo: this.personaForm.value.correoElectronico,
+        primerApellido: this.personaForm.value.primerApellido,
+        segundoApellido: this.personaForm.value.segundoApellido,
+        numeroDocumento: this.personaForm.value.numeroDocumento,
+        expedido: this.getIdCity(this.personaForm.value.expedido),
+        genero: this.personaForm.value.genero,
+        telefono: this.personaForm.value.telefono,
+        email: this.personaForm.value.email,
         direccion: this.personaForm.value.direccion,
 
-        fechaNac:this.userData.fechaNac,
+        estadoRuat: this.userData.estadoRuat,
+        verificadoRuat: this.userData.verificadoRuat,
+        esDeportistaElite: this.userData.esDeportistaElite,
+        perteneceEscuelaMunicipal: this.userData.perteneceEscuelaMunicipal,
+        descuentoAplicable: this.userData.descuentoAplicable,
+        estaSancionado: this.userData.estaSancionado,
+        
+        fechaNacimiento:this.userData.fechaNacimiento,
         estadoUsuario:this.userData.estadoUsuario,
         codigoContribuyente:this.userData.codigoContribuyente,
         estadoCivil:this.userData.estadoCivil,
