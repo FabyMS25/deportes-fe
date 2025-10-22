@@ -12,7 +12,8 @@ import { Districts } from 'src/app/core/constants/Places';
 import { ModalFacilitiesComponent } from '../modal/modal.component';
 import { ModalImportComponent } from 'src/app/shared/modal-import/modal-import.component';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
-import { EstadoActual, TipoEstructura } from 'src/app/core/constants/Features';
+import { TipoEstructura } from 'src/app/core/constants/Features';
+import { EstadoActual } from 'src/app/core/constants/Estados';
 
 @Component({
   selector: 'app-facilities',
@@ -308,7 +309,7 @@ export class FacilitiesComponent {
     });
   }
 
-  getEstadoBadgeClass(estado: string): string {
+  getBadgeClass(estado: string): string {
     switch (estado) {
       case EstadoActual.ACTIVO:
         return 'success';

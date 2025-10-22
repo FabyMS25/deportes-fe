@@ -1,7 +1,0 @@
-{
-  "name": "deportes-gamq",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "custom"
-}

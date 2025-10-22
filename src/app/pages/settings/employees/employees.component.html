@@ -76,10 +76,10 @@
                 [actions]="{
                   show: canActivate.includes('VER'),
                   edit: canActivate.includes('ACTUALIZAR'),
-                  delete: canActivate.includes('ELIMINAR'),}"
+                  close: canActivate.includes('ELIMINAR')?'Eliminar':'',}"
                 (showItemEmitter)="viewDataGet($event)"
                 (editItemEmitter)="openModal($event,'edit','lg')"
-                (deleteItemEmitter)="deleteModal(deleteModel,$event)"
+                (closeItemEmitter)="deleteModal(deleteModel,$event)"
                 [multiCheck]="canActivate.includes('CREAR')"
                 (selectedItemEmitter)="getSelectedItems($event)" 
                 [viewMode]="viewMode"   

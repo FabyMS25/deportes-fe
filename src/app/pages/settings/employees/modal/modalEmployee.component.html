@@ -1,20 +1,17 @@
-<div class="modal-header bg-info-subtle p-3">
+<div class="modal-header bg-info-subtle p-2">
     <h5 class="modal-title" *ngIf="accion === ''" ngbAutofocus>
         <i class="ri-user-add-line me-2"></i>Agregar Encargado
     </h5>
     <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>
         <i class="ri-user-settings-line me-2"></i>Editar Datos de Encargado
     </h5>
-    <button type="button"
-        class="btn-close"
-        data-dismiss="modal" 
-        aria-label="Cerrar"
-        [disabled]="submitted"
-        (click)="closeModal()">
+    <button type="button" class="btn-close"
+        data-dismiss="modal" aria-label="Cerrar"
+        [disabled]="submitted" (click)="closeModal()">
     </button>
 </div>
 
-<form (ngSubmit)="saveData()" class="tablelist-form" autocomplete="off" [formGroup]="contentForm">
+<form (ngSubmit)="saveData()" [formGroup]="contentForm" autocomplete="off">
     <div class="modal-body">
         <div class="row g-3">
             <div class="col-lg-12">
@@ -38,7 +35,7 @@
                             </button>
                         </div>
                     </div>
-                    <div class="mt-2">
+                    <div class="mb-0">
                         <small class="text-muted">{{ getCurrentAvatarInfo().label }}</small>
                     </div>
                 </div>
@@ -206,17 +203,17 @@
                                [ngClass]="{ 'is-invalid': form['telefono'].errors && (form['telefono'].touched || submitted) }" />
                     </div>
                     <div *ngIf="form['telefono'].errors && (form['telefono'].touched || submitted)">
-                        <small class="text-danger d-block mt-1" *ngIf="form['telefono'].errors['pattern']">
+                        <small class="text-danger d-block" *ngIf="form['telefono'].errors['pattern']">
                             <i class="ri-error-warning-line me-1"></i>Ingrese un número válido (7-15 dígitos, opcional +)
                         </small>
-                        <small class="text-danger d-block mt-1" *ngIf="form['telefono'].errors['minlength']">
+                        <small class="text-danger d-block" *ngIf="form['telefono'].errors['minlength']">
                             <i class="ri-error-warning-line me-1"></i>Mínimo 7 dígitos
                         </small>
-                        <small class="text-danger d-block mt-1" *ngIf="form['telefono'].errors['maxlength']">
+                        <small class="text-danger d-block" *ngIf="form['telefono'].errors['maxlength']">
                             <i class="ri-error-warning-line me-1"></i>Máximo 15 dígitos
                         </small>
                     </div>
-                    <small class="form-text text-muted">
+                    <small class="form-text text-muted pb-0">
                         <i class="ri-information-line me-1"></i>Formato internacional recomendado: +591 70123456
                     </small>
             </div>
@@ -242,8 +239,7 @@
                     <label for="fechaAsignacion-field" class="form-label mb-0">
                         <i class="ri-calendar-line me-2"></i>Fecha de Asignación <span class="text-danger">*</span>
                     </label>
-                    <input type="date" 
-                           id="fechaAsignacion-field" 
+                    <input type="date" id="fechaAsignacion-field" 
                            class="form-control"
                            formControlName="fechaAsignacion"
                            [ngClass]="{ 'is-invalid': submitted && form['fechaAsignacion'].errors }" />
@@ -302,8 +298,7 @@
                     </div>
             </div>
             <div class="col-lg-12">
-                <div class="card bg-light border-0">
-                    <div class="card-body p-3">
+                <div class="card bg-light border-0 mb-0">
                         <div class="form-check form-switch">
                             <input class="form-check-input" 
                                    type="checkbox" 
@@ -318,7 +313,6 @@
                             <i class="ri-information-line me-1"></i>
                             Solo los encargados activos pueden gestionar el complejo asignado
                         </small>
-                    </div>
                 </div>
             </div>
         </div>
@@ -343,8 +337,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Enhanced Modal Footer -->
     <div class="modal-footer bg-light py-1">
         <div class="d-flex justify-content-between w-100">
             <div class="d-flex align-items-center">
@@ -354,8 +346,7 @@
                 </small>
             </div>
             <div class="hstack gap-2">
-                <button type="button" 
-                        class="btn btn-light" 
+                <button type="button" class="btn btn-light" 
                         [disabled]="submitted"
                         (click)="closeModal()">
                     <i class="ri-close-line me-1"></i>Cancelar
@@ -372,3 +363,33 @@
         </div>
     </div>
 </form>
+
+<ng-template #deleteModel let-modal>
+    <div class="modal-content" *ngIf="row.uuid">
+        <div class="modal-header">
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="btn-close"
+                (click)="modal.dismiss('Cross click')"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mt-2 text-center">
+                <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
+                    colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
+                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+                    <h4>¿Está seguro de eliminar el registro?</h4>
+                    <p class="text-muted mx-4 mb-0">
+                        Al confirmar la eliminación se quitará toda información de nuestra base de datos.
+                    </p>
+                </div>
+            </div>
+            <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+                <button class="btn btn-link link-success fw-medium text-decoration-none" data-bs-dismiss="modal"
+                    id="deleteRecord-close" (click)="modal.close('Close click')">
+                    <i class="ri-close-line me-1 align-middle"></i> Cancelar
+                </button>
+                <button type="button" class="btn w-sm btn-danger" id="delete-product" (click)="deleteData(this.row.uuid)">
+                    Sí, Eliminar!
+                </button>
+            </div>
+        </div>
+    </div>
+</ng-template>

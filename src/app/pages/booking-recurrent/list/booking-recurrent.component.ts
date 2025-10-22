@@ -184,8 +184,8 @@ export class BookingRecurrentComponent implements OnInit {
     this.router.navigate(['/inicio/taxpayer']);
   }
 
-  public showTicket(data: any) {
-    this.router.navigate(['/reservations/ticket'], { state: { data: data } });
+  public showTicket(data: ReservaRecurrente) {
+    this.router.navigate(['/reservations/ticket'], { state: { data: data.reservaDto } });
   }
 
   public agregarReserva() {

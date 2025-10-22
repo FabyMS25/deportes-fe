@@ -1,3 +1,5 @@
+import { EstadoActual } from "../constants/Estados";
+import { TipoEstructura } from "../constants/Features";
 import { CampoDeportivo } from "./campoDeportivo.model";
 import { EncargadoComplejo } from "./encargadoComplejo";
 
@@ -6,10 +8,10 @@ export interface ComplejoDeportivo {
   estado?: boolean;
   fechaCreacion?: Date;
 
-  estadoActual: string; // 'activo', 'mantenimiento', 'cerrado'
+  estadoActual: EstadoActual;
   nombre: string;
   telefonoPrincipal?: string;
-  tipoEstructura: string; // 'techado', 'abierto', 'cerrado'
+  tipoEstructura: TipoEstructura;
   tieneIluminacion: boolean;
   tieneVestuarios: boolean;
   tieneGraderias: boolean;

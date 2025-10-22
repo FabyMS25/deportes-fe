@@ -1,3 +1,5 @@
+import { EstadoReserva, EstadoValidacion } from "../constants/Estados";
+import { BookingType } from "../constants/Features";
 import { CampoDeportivo } from "./campoDeportivo.model";
 import { Contribuyente } from "./contribuyente.models";
 import { Organizacion } from "./organizacion.models";
@@ -17,10 +19,10 @@ import { Tarifa } from "./tarifa.model";
   fechaRechazo?:Date;
   motivoRechazo?:string;
   aprobadoPor?:string;
-  estadoValidacion:string; // "PENDIENTE", "APROBADA", "RECHAZADA"
+  estadoValidacion:EstadoValidacion;
   
-  estadoReserva:string;
-  tipoReserva:string; //puntual / recurente
+  estadoReserva:EstadoReserva;
+  tipoReserva:BookingType; //puntual / recurente
   numeroReserva:string;
   numeroTasa?:string;
   montoTotal:number;
@@ -36,16 +38,3 @@ import { Tarifa } from "./tarifa.model";
   pagosDtoList?:Pago[];
   auditoriasDtoList?:ReservaAuditoria;
 }
-
-            // Possible values for estadoReserva:
-            // "BORRADOR" - Draft/being created
-            // "PENDIENTE" - Submitted, awaiting approval
-            // "APROBADA" - Approved by administrator
-            // "RECHAZADA" - Rejected (with motivoRechazo)
-            // "CONFIRMADA" - Payment completed, reservation confirmed
-            // "ACTIVA" - Currently in use
-            // "COMPLETADA" - Reservation period ended successfully
-            // "CANCELADA" - Cancelled by user or system
-            // "NO_SHOW" - User didn't show up
-            // "SUSPENDIDA" - Temporarily suspended
-            // "ANULADA" - Administrative cancellation (similar to Anexo F)

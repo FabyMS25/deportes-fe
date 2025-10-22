@@ -1,13 +1,16 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
 import { Reserva } from 'src/app/core/models/reserva.models';
 import { GlobalComponent } from 'src/app/global-component';
-import { NgbModal, NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { HorarioFijo } from 'src/app/core/models/horarioFijo.model';
 import { HorarioExcepcion } from 'src/app/core/models/horarioExcepcion.model';
 import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
+import { ReservationConflictService, TimeRange } from '../reservation-conflict.service';
+import { ScheduleStateService } from '../schedule-state.service';
+import { Subject, takeUntil } from 'rxjs';
 
 interface TimeSlot {
   time: string;
@@ -18,30 +21,21 @@ interface TimeSlot {
   isPast: boolean;
   isSelected?: boolean;
   reservation?: Reserva;
+  conflictReason?: string;
 }
-
 interface DaySlots {
   morningSlots: TimeSlot[];
   afternoonSlots: TimeSlot[];
   nightSlots: TimeSlot[];
   daySchedule?: HorarioFijo;
-  exceptions?: HorarioExcepcion[];
+  exceptions?: HorarioExcepcion[]; 
 }
-
 interface WeekDay {
   name: string;
   dayName: string;
   date: Date;
   isToday: boolean;
   isPast: boolean;
-}
-
-interface ScheduleSelection {
-  date: Date;
-  startTime: string;
-  endTime: string;
-  duration: number;
-  slots: TimeSlot[];
 }
 
 @Component({
@@ -51,11 +45,11 @@ interface ScheduleSelection {
   templateUrl: './schedule-selection.component.html',
   styleUrls: ['./schedule-selection.component.scss']
 })
-export class ScheduleSelectionComponent implements OnInit, OnChanges {
+export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy {
   @Input() dataField!: CampoDeportivo;
   @Input() dataTariff!: Tarifa;
   @Input() reservationsList: Reserva[] = [];
-  @Input() anticipationHours: number = 2;
+  @Input() anticipationHours: number = 48;
   
   @Output() horarioSelected = new EventEmitter<{ date: Date; start: string; end: string }>();
   @Output() openScheduleEmitter = new EventEmitter<void>();
@@ -65,7 +59,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
   readonly MORNING_END = 12;
   readonly AFTERNOON_END = 18;
 
-  // Slot duration configuration
   slotDuration: number = 60;
   slotDurationOptions = [
     { value: 30, label: '30 minutos' },
@@ -74,31 +67,48 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
     { value: 120, label: '2 horas' }
   ];
 
-  // Week navigation
   weekDays: WeekDay[] = [];
   activeDayName: string = '';
   fechaReserva: Date = new Date();
   currentWeekStart: Date = new Date();
   currentWeekEnd: Date = new Date();
-  
-  // Selection management
+  private destroy$ = new Subject<void>();
   selectedSlots: TimeSlot[] = [];
-  currentSelection: ScheduleSelection | null = null;
-  selectionMode: 'single' | 'multiple' = 'multiple';
   
-  // Validation
   validationErrors: string[] = [];
   showValidationAlert: boolean = false;
-  
-  // Cache
+  isCheckingAvailability: boolean = false;
   private timeSlotsCache: Map<string, DaySlots> = new Map();
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private conflictService: ReservationConflictService,
+    private scheduleState: ScheduleStateService
+  ) {}
 
   ngOnInit(): void {
+    this.scheduleState.currentWeekStart$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(start => {
+        this.currentWeekStart = start;
+        this.cdr.detectChanges();
+      });
+
+    this.scheduleState.currentWeekEnd$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(end => {
+        this.currentWeekEnd = end;
+        this.cdr.detectChanges();
+      });
+
     this.initializeWeek();
     this.generateWeekDays();
     this.setDefaultSlotDuration();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -114,19 +124,18 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
       this.clearSelectedSlots();
       this.generateWeekDays();
     }
-  }
 
-  // ============================================================================
-  // INITIALIZATION
-  // ============================================================================
+    if (changes['dataField'] && !changes['dataField'].firstChange) {
+      this.clearCache();
+      this.clearSelectedSlots();
+      this.generateWeekDays();
+    }
+  }
 
   private setDefaultSlotDuration(): void {
     if (!this.dataTariff) return;
     
-    // Set default based on tariff type
-    const tipoReserva = this.dataTariff.tipoCobro;
-    
-    switch (tipoReserva) {
+    switch (this.dataTariff.tipoCobro) {
       case 'por_hora':
         this.slotDuration = 60;
         break;
@@ -180,37 +189,83 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
     }
   }
 
-  // ============================================================================
-  // SLOT DURATION MANAGEMENT
-  // ============================================================================
-
-  onSlotDurationChange(): void {
-    this.clearCache();
+  onSlotDurationChange(newDuration?: number): void {
+    if (newDuration !== undefined) {
+      this.slotDuration = newDuration;
+    }
+    if (typeof this.slotDuration === 'string') {
+      this.slotDuration = parseInt(this.slotDuration, 10);
+      console.log('Converted string to number:', this.slotDuration);
+    }
+    
+    if (!this.slotDuration || this.slotDuration <= 0) {
+      console.error('Invalid slot duration:', this.slotDuration);
+      return;
+    }
+    this.timeSlotsCache.clear();
+    console.log('Cache cleared');
+    
     this.clearSelectedSlots();
-    this.regenerateTimeSlots();
-    this.cdr.detectChanges();
+    console.log('Selected slots cleared');
+    
+    // Store current date
+    const currentDate = new Date(this.fechaReserva);
+    console.log('Stored current date:', currentDate);
+    
+    setTimeout(() => {      
+      this.weekDays = [];
+      this.generateWeekDays();      
+      const matchingDay = this.weekDays.find(d => 
+        d.date.toDateString() === currentDate.toDateString()
+      );      
+      if (matchingDay) {
+        this.fechaReserva = new Date(matchingDay.date);
+        this.activeDayName = matchingDay.name;
+        console.log('Restored matching day:', this.activeDayName);
+      } else if (this.weekDays.length > 0) {
+        this.fechaReserva = new Date(this.weekDays[0].date);
+        this.activeDayName = this.weekDays[0].name;
+        console.log('Set to first day:', this.activeDayName);
+      }
+      const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
+      console.log('Slots for selected day:', {
+        morning: daySlots.morningSlots.length,
+        afternoon: daySlots.afternoonSlots.length,
+        night: daySlots.nightSlots.length,
+        total: daySlots.morningSlots.length + daySlots.afternoonSlots.length + daySlots.nightSlots.length
+      });
+      
+      // Force UI update
+      this.cdr.detectChanges();
+      console.log('=== Slot Duration Change Completed ===');
+    }, 0);
   }
 
   private regenerateTimeSlots(): void {
+    this.timeSlotsCache.clear();
+    
+    const currentDate = new Date(this.fechaReserva);
+    const currentDayName = this.activeDayName;
+    
     this.weekDays = [];
     this.generateWeekDays();
     
     if (this.weekDays.length > 0) {
-      this.setSelectedDay(this.fechaReserva);
+      const matchingDay = this.weekDays.find(d => d.name === currentDayName);
+      if (matchingDay) {
+        this.fechaReserva = new Date(matchingDay.date);
+        this.activeDayName = matchingDay.name;
+      } else {
+        this.setSelectedDay(this.weekDays[0].date);
+      }
     }
   }
 
-  // ============================================================================
-  // TIME SLOTS GENERATION
-  // ============================================================================
-
   getTimeSlotsForDay(date: Date): DaySlots {
-    const dateKey = `${date.toISOString().split('T')[0]}-${this.slotDuration}`;
-    
+    const dateKey = `${date.toISOString().split('T')[0]}-${this.slotDuration}-${this.dataTariff?.uuid || 'no-tariff'}`;
     if (this.timeSlotsCache.has(dateKey)) {
       return this.timeSlotsCache.get(dateKey)!;
-    }
-    
+    }    
     const slots = this.generateDaySlots(date);
     this.timeSlotsCache.set(dateKey, slots);
     return slots;
@@ -218,8 +273,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
 
   private generateDaySlots(date: Date): DaySlots {
     const daySchedule = this.getHorarioForDate(date);
-    const exceptions = this.getExceptionsForDate(date);
-    
+    const exceptions = this.getExceptionsForDate(date);    
     const result: DaySlots = {
       morningSlots: [],
       afternoonSlots: [],
@@ -228,16 +282,13 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
       exceptions: exceptions
     };
 
-    // Check if day is closed
     if (!daySchedule?.abierto && (!exceptions || exceptions.length === 0)) {
       return result;
     }
 
-    // Get opening hours
     let horaApertura = daySchedule?.horaApertura || '08:00:00';
     let horaCierre = daySchedule?.horaCierre || '22:00:00';
 
-    // Apply exceptions
     if (exceptions && exceptions.length > 0) {
       const exception = exceptions[0];
       if (exception.tipoExcepcion === 'cerrado') return result;
@@ -245,7 +296,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
       if (exception.horaCierre) horaCierre = exception.horaCierre;
     }
 
-    // Apply tariff restrictions
     if (this.dataTariff?.desde) {
       const tarifaStart = this.timeToMinutes(this.dataTariff.desde);
       const scheduleStart = this.timeToMinutes(horaApertura);
@@ -258,10 +308,8 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
       if (tarifaEnd < scheduleEnd) horaCierre = this.dataTariff.hasta;
     }
 
-    // Generate time slots
     const slots = this.generateTimeSlots(date, horaApertura, horaCierre);
     
-    // Categorize slots
     slots.forEach(slot => {
       const hour = parseInt(slot.startTime.split(':')[0]);
       if (hour < this.MORNING_END) {
@@ -284,37 +332,59 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
     const startMinutes = this.timeToMinutes(startTime);
     const endMinutes = this.timeToMinutes(endTime);
 
+    console.log('Generating slots:', {
+      date: date.toISOString().split('T')[0],
+      startTime,
+      endTime,
+      startMinutes,
+      endMinutes,
+      slotDuration: this.slotDuration,
+      expectedSlots: Math.floor((endMinutes - startMinutes) / this.slotDuration)
+    });
+
     for (let minutes = startMinutes; minutes < endMinutes; minutes += this.slotDuration) {
       const slotStart = this.minutesToTime(minutes);
       const slotEnd = this.minutesToTime(Math.min(minutes + this.slotDuration, endMinutes));
       
       const slotDateTime = this.combineDateAndTime(date, slotStart);
       const isPast = slotDateTime < minReservationTime;
-      
-      const reservation = this.getReservationForSlot(date, slotStart, slotEnd);
-      const isReserved = !!reservation;
+      const timeRange: TimeRange = {
+        date: date,
+        startTime: slotStart,
+        endTime: slotEnd
+      };
 
-      slots.push({
+      const conflictResult = this.conflictService.checkConflict(
+        this.dataField.uuid!,
+        timeRange,
+        this.reservationsList
+      );
+      
+      const slot: TimeSlot = {
         time: `${slotStart.slice(0, 5)} - ${slotEnd.slice(0, 5)}`,
         startTime: slotStart,
         endTime: slotEnd,
-        isAvailable: !isPast,
-        isReserved: isReserved,
+        isAvailable: !isPast && !conflictResult.hasConflict,
+        isReserved: conflictResult.hasConflict,
         isPast: isPast,
         isSelected: false,
-        reservation: reservation
-      });
+        reservation: conflictResult.conflictingReservations[0],
+        conflictReason: conflictResult.reason
+      };
+      
+      slots.push(slot);
     }
-
     return slots;
   }
 
-  // ============================================================================
-  // SLOT SELECTION
-  // ============================================================================
-
   toggleSlotSelection(slot: TimeSlot): void {
-    if (!slot.isAvailable || slot.isReserved) return;
+    if (!slot.isAvailable || slot.isReserved) {
+      if (slot.conflictReason) {
+        this.validationErrors = [slot.conflictReason];
+        this.showValidationAlert = true;
+      }
+      return;
+    }
 
     this.validationErrors = [];
     this.showValidationAlert = false;
@@ -324,112 +394,127 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
     );
 
     if (index > -1) {
-      // Deselect slot
       this.selectedSlots.splice(index, 1);
       slot.isSelected = false;
     } else {
-      // Select slot
       this.selectedSlots.push(slot);
       slot.isSelected = true;
     }
 
-    // Sort by start time
     this.selectedSlots.sort((a, b) => 
       this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime)
     );
-
-    // Update current selection
-    this.updateCurrentSelection();
-  }
-
-  private updateCurrentSelection(): void {
-    if (this.selectedSlots.length === 0) {
-      this.currentSelection = null;
-      return;
-    }
-
-    const startTime = this.selectedSlots[0].startTime;
-    const endTime = this.selectedSlots[this.selectedSlots.length - 1].endTime;
-    const duration = this.calculateDuration(startTime, endTime);
-
-    this.currentSelection = {
-      date: this.fechaReserva,
-      startTime: startTime,
-      endTime: endTime,
-      duration: duration,
-      slots: [...this.selectedSlots]
-    };
   }
 
   clearSelectedSlots(): void {
+    // Get current day slots to clear their selection state
+    if (this.fechaReserva) {
+      try {
+        const currentDaySlots = this.getTimeSlotsForDay(this.fechaReserva);
+        const allSlots = [
+          ...currentDaySlots.morningSlots,
+          ...currentDaySlots.afternoonSlots,
+          ...currentDaySlots.nightSlots
+        ];
+        
+        allSlots.forEach(slot => {
+          slot.isSelected = false;
+        });
+      } catch (error) {
+        console.warn('Error clearing slot selection:', error);
+      }
+    }
     this.selectedSlots.forEach(slot => slot.isSelected = false);
     this.selectedSlots = [];
-    this.currentSelection = null;
     this.validationErrors = [];
     this.showValidationAlert = false;
   }
 
-  // ============================================================================
-  // VALIDATION
-  // ============================================================================
-
-  confirmSelection(): void {
+  async confirmSelection(): Promise<void> {
+    this.isCheckingAvailability = true;
     this.validationErrors = [];
     this.showValidationAlert = false;
 
-    if (!this.validateSelection()) {
+    try {
+      if (!this.validateSelection()) {
+        this.showValidationAlert = true;
+        return;
+      }
+
+      const startTime = this.selectedSlots[0].startTime;
+      const endTime = this.selectedSlots[this.selectedSlots.length - 1].endTime;
+
+      // Final validation using the conflict service
+      const timeRange: TimeRange = {
+        date: this.fechaReserva,
+        startTime: startTime,
+        endTime: endTime
+      };
+      const validation = this.conflictService.validateReservation(
+        this.dataField.uuid!,
+        timeRange,
+        this.reservationsList,
+        this.anticipationHours
+      );
+      if (!validation.isValid) {
+        this.validationErrors = validation.errors;
+        this.showValidationAlert = true;
+        this.revalidateSelection();
+        return;
+      }
+      this.horarioSelected.emit({ 
+        date: this.fechaReserva, 
+        start: startTime, 
+        end: endTime 
+      });
+
+    } catch (error) {
+      console.error('Error confirming selection:', error);
+      this.validationErrors.push('Error al verificar disponibilidad. Por favor, intente nuevamente.');
       this.showValidationAlert = true;
-      return;
+    } finally {
+      this.isCheckingAvailability = false;
     }
-
-    const startTime = this.selectedSlots[0].startTime;
-    const endTime = this.selectedSlots[this.selectedSlots.length - 1].endTime;
-
-    this.horarioSelected.emit({ 
-      date: this.fechaReserva, 
-      start: startTime, 
-      end: endTime 
-    });
   }
 
   private validateSelection(): boolean {
-    // Check if any slots selected
     if (this.selectedSlots.length === 0) {
       this.validationErrors.push('Debe seleccionar al menos un horario');
       return false;
     }
 
-    // Check if slots are consecutive
     if (!this.areConsecutiveSlots(this.selectedSlots)) {
       this.validationErrors.push('Los horarios seleccionados deben ser consecutivos');
       return false;
     }
 
-    // Check minimum duration for tariff type
     const duration = this.calculateDuration(
       this.selectedSlots[0].startTime,
       this.selectedSlots[this.selectedSlots.length - 1].endTime
     );
-
-    const tipoReserva = this.dataTariff.tipoCobro;
-    
-    if (tipoReserva === 'por_hora' && duration < 60) {
+    if (this.dataTariff.tipoCobro === 'por_hora' && duration < 60) {
       this.validationErrors.push('La duración mínima para reservas por hora es de 60 minutos');
       return false;
     }
-
-    // Check auto-approval limits
     if (this.dataField?.requiereAprobacion) {
       const maxDuration = this.dataField.maxDuracionAutoAprobacion || 120;
       if (duration > maxDuration) {
         this.validationErrors.push(
-          `Las reservas de más de ${maxDuration} minutos requieren aprobación del administrador`
+          `Las reservas de más de ${maxDuration} minutos requieren aprobación del administrador. Su reserva será revisada antes de confirmarse.`
         );
-        // This is just a warning, not an error
       }
     }
 
-    return this.validationErrors.length === 0;
+    // Validate event duration limits
+    if (this.dataTariff.tipoCobro === 'por_evento') {
+      const maxEventDuration = (GlobalComponent.MAX_DURATION_EVENT || 12) * 60;
+      if (duration > maxEventDuration) {
+        this.validationErrors.push(`La duración máxima para eventos es de ${maxEventDuration / 60} horas`);
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private areConsecutiveSlots(slots: TimeSlot[]): boolean {
@@ -446,7 +531,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
   private revalidateSelection(): void {
     if (this.selectedSlots.length === 0) return;
 
-    // Check if selected slots are still available
     const currentDaySlots = this.getTimeSlotsForDay(this.fechaReserva);
     const allSlots = [
       ...currentDaySlots.morningSlots,
@@ -472,10 +556,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
       this.showValidationAlert = true;
     }
   }
-
-  // ============================================================================
-  // HELPER METHODS
-  // ============================================================================
 
   getSelectedSlotsInfo(): string {
     if (this.selectedSlots.length === 0) return '';
@@ -521,41 +601,19 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
     return this.dataField.horariosExcepcionesDtoList.filter(exc => exc.fecha === dateStr);
   }
 
-  private getReservationForSlot(date: Date, startTime: string, endTime: string): Reserva | undefined {
-    if (!this.reservationsList || this.reservationsList.length === 0) return undefined;
-    
-    const dateStr = date.toISOString().split('T')[0];
-    
-    return this.reservationsList.find(reserva => {
-      if (!reserva.reservaPuntualDto) return false;
-      
-      const reservaDate = new Date(reserva.reservaPuntualDto.fechaUso).toISOString().split('T')[0];
-      if (reservaDate !== dateStr) return false;
-      
-      const reservaStart = reserva.reservaPuntualDto.horaInicio;
-      const reservaEnd = reserva.reservaPuntualDto.horaFin;
-      
-      return this.timesOverlap(startTime, endTime, reservaStart, reservaEnd);
-    });
-  }
-
-  private timesOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
-    const s1 = this.timeToMinutes(start1);
-    const e1 = this.timeToMinutes(end1);
-    const s2 = this.timeToMinutes(start2);
-    const e2 = this.timeToMinutes(end2);
-    return s1 < e2 && s2 < e1;
-  }
-
   private timeToMinutes(time: string): number {
-    const [hours, minutes] = time.split(':').map(Number);
-    return hours * 60 + minutes;
+    const parts = time.split(':');
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    const result = hours * 60 + minutes;
+    return result;
   }
 
   private minutesToTime(minutes: number): string {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:00`;
+    const result = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:00`;
+    return result;
   }
 
   private combineDateAndTime(date: Date, time: string): Date {
@@ -580,33 +638,50 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
   // ============================================================================
 
   moveWeek(direction: number): void {
-    const newStart = new Date(this.currentWeekStart);
-    newStart.setDate(newStart.getDate() + (direction * 7));
+    this.scheduleState.moveWeek(direction);
+    this.clearCache();
+    this.clearSelectedSlots();
+    this.generateWeekDays();
     
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (newStart >= today || direction > 0) {
-      this.currentWeekStart = newStart;
-      this.currentWeekEnd = new Date(this.currentWeekStart);
-      this.currentWeekEnd.setDate(this.currentWeekStart.getDate() + 6);
-      
-      this.clearCache();
-      this.clearSelectedSlots();
-      this.generateWeekDays();
-      
-      if (this.weekDays.length > 0) {
-        this.setSelectedDay(this.weekDays[0].date);
-      }
+    if (this.weekDays.length > 0) {
+      this.setSelectedDay(this.weekDays[0].date);
     }
   }
 
   goToToday(): void {
-    this.initializeWeek();
+    this.scheduleState.goToToday();
     this.clearCache();
     this.clearSelectedSlots();
     this.generateWeekDays();
   }
+  // moveWeek(direction: number): void {
+  //   const newStart = new Date(this.currentWeekStart);
+  //   newStart.setDate(newStart.getDate() + (direction * 7));
+    
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0);
+    
+  //   if (newStart >= today || direction > 0) {
+  //     this.currentWeekStart = newStart;
+  //     this.currentWeekEnd = new Date(this.currentWeekStart);
+  //     this.currentWeekEnd.setDate(this.currentWeekStart.getDate() + 6);
+      
+  //     this.clearCache();
+  //     this.clearSelectedSlots();
+  //     this.generateWeekDays();
+      
+  //     if (this.weekDays.length > 0) {
+  //       this.setSelectedDay(this.weekDays[0].date);
+  //     }
+  //   }
+  // }
+
+  // goToToday(): void {
+  //   this.initializeWeek();
+  //   this.clearCache();
+  //   this.clearSelectedSlots();
+  //   this.generateWeekDays();
+  // }
 
   setSelectedDay(date: Date): void {
     this.clearSelectedSlots();
@@ -621,6 +696,10 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
   // ============================================================================
   // UI HELPERS
   // ============================================================================
+
+  trackBySlot(index: number, slot: TimeSlot): string {
+    return `${slot.startTime}-${slot.endTime}`;
+  }
 
   getSlotClasses(slot: TimeSlot): string {
     if (slot.isSelected) return 'border-primary bg-primary text-white';
@@ -655,10 +734,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges {
     
     return classes.join(' ');
   }
-
-  // ============================================================================
-  // EVENT HANDLERS
-  // ============================================================================
 
   openScheduleModal(): void {
     this.openScheduleEmitter.emit();

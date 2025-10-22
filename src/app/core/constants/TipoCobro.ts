@@ -1,6 +1,3 @@
-export type BookingType = 'puntual' | 'recurrente';
-export type ReservationType = 'por_hora' | 'por_persona' | 'por_evento' | 'mensualidad' | 'por_club';
-
 export const TipoCobro = [
   {
     id: "1",
@@ -37,4 +34,10 @@ export const frecuencia = [
   { value: 'diaria', label: 'Diaria' },
   { value: 'semanal', label: 'Semanal' },
   { value: 'mensual', label: 'Mensual' }
+];
+
+export const tiposConcepto = [
+  { value: 'fijo', label: 'Monto Fijo' },
+  { value: 'porcentaje', label: 'Porcentaje' },
+  { value: 'por_hora', label: 'Por Hora' }
 ];

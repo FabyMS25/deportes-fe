@@ -58,13 +58,14 @@
                 [loading]="loading"
                 [itemsList]="itemsList"
                 [allcontent]="facilitiesList"
+                [itemsPerPage]="10"
                 [actions]="{
                   show: canActivate.includes('VER'),
                   edit: canActivate.includes('ACTUALIZAR'),
-                  delete: canActivate.includes('ELIMINAR'),}"
+                  close: canActivate.includes('ELIMINAR')?'Eliminar':'',}"
                 (showItemEmitter)="viewDataGet($event)"
                 (editItemEmitter)="openModal($event,'edit','lg')"
-                (deleteItemEmitter)="deleteModal(deleteModel,$event)" 
+                (closeItemEmitter)="deleteModal(deleteModel,$event)" 
                 [multiCheck]="canActivate.includes('CREAR')"
                 (selectedItemEmitter)="getSelectedItems($event)" 
                 [viewMode]="viewMode"   
@@ -86,7 +87,7 @@
                 </div>
                 <h5 class="mt-2">{{dataSelected.nombre}}</h5>
                 <p class="text-muted mb-0">
-                    <span class="badge bg-{{getEstadoBadgeClass(dataSelected.estadoActual)}}">
+                    <span class="badge bg-{{getBadgeClass(dataSelected.estadoActual)}}">
                         {{dataSelected.estadoActual}}
                     </span>
                 </p>

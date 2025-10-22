@@ -45,7 +45,6 @@ export class CampoSelectionComponent implements OnInit {
   camposConTarifas: CampoWithTariff[] = [];
   selectedCampoItem?: CampoWithTariff;
   
-  // Filtros
   searchText = '';
   filterByIluminacion?: boolean;
   filterBySuperficie?: string;
@@ -60,8 +59,6 @@ export class CampoSelectionComponent implements OnInit {
     }
     this.processCampos();
   }
-
-  // ==================== DATA PROCESSING ====================
 
   private processCampos(): void {
     if (!this.dataComplejo?.camposDeportivosDtoList) {
@@ -89,11 +86,7 @@ export class CampoSelectionComponent implements OnInit {
       
       const fechaInicio = new Date(tarifa.fechaInicio!);
       fechaInicio.setHours(0, 0, 0, 0);
-
-      // Check if date is valid
       if (fechaInicio > today) return false;
-
-      // Check if tariff has expired
       if (tarifa.fechaFin) {
         const fechaFin = new Date(tarifa.fechaFin);
         fechaFin.setHours(23, 59, 59, 999);
@@ -108,7 +101,7 @@ export class CampoSelectionComponent implements OnInit {
       if (this.bookingType === 'puntual') {
         return isPuntual;
       } else if (this.bookingType === 'recurrente') {
-        return !isPuntual; // mensualidad, por_club
+        return !isPuntual;
       }
       
       return false;
@@ -134,20 +127,14 @@ export class CampoSelectionComponent implements OnInit {
 
   selectTarifa(item: CampoWithTariff, tarifa: Tarifa): void {
     if (!tarifa || !item) return;
-
-    // Emit selection immediately
     this.campoSelected.emit({
       field: item.campo,
       tariff: tarifa
     });
   }
 
-  // ==================== FILTERING ====================
-
   get filteredCampos(): CampoWithTariff[] {
     let filtered = [...this.camposConTarifas];
-
-    // Search filter
     if (this.searchText?.trim()) {
       const searchLower = this.searchText.toLowerCase().trim();
       filtered = filtered.filter(item =>
@@ -157,28 +144,21 @@ export class CampoSelectionComponent implements OnInit {
         item.campo.categoria?.toLowerCase().includes(searchLower)
       );
     }
-
-    // Iluminación filter
     if (this.filterByIluminacion !== undefined) {
       filtered = filtered.filter(item =>
         item.campo.tieneIluminacion === this.filterByIluminacion
       );
     }
-
-    // Superficie filter
     if (this.filterBySuperficie) {
       filtered = filtered.filter(item =>
         item.campo.superficieDto?.descripcion === this.filterBySuperficie
       );
     }
-
-    // Categoría filter
     if (this.filterByCategoria) {
       filtered = filtered.filter(item =>
         item.campo.categoria === this.filterByCategoria
       );
     }
-
     return filtered;
   }
 
@@ -193,8 +173,6 @@ export class CampoSelectionComponent implements OnInit {
     return !!(this.searchText || this.filterByIluminacion !== undefined || 
               this.filterBySuperficie || this.filterByCategoria);
   }
-
-  // ==================== HELPERS ====================
 
   get superficiesDisponibles(): string[] {
     const superficies = new Set<string>();
@@ -216,18 +194,8 @@ export class CampoSelectionComponent implements OnInit {
     return Array.from(categorias).sort();
   }
 
-  getCategorias(tarifa: Tarifa): string {
-    if (!tarifa.categoriasDtoList || tarifa.categoriasDtoList.length === 0) {
-      return 'Todas las categorías';
-    }
-    return tarifa.categoriasDtoList
-      .map((tc: any) => tc.categoriaDto?.nombre || '')
-      .filter(Boolean)
-      .join(', ');
-  }
 
-  getTipoCobro(tarifa: Tarifa): string {
-    const tipo = tarifa.tipoCobro;
+  getTipoCobro(tipo: string): string {
     const tipoMap: Record<string, string> = {
       'por_hora': 'Por hora',
       'por_persona': 'Por persona',
@@ -269,10 +237,6 @@ export class CampoSelectionComponent implements OnInit {
 
   back(): void {
     this.goBack.emit();
-  }
-
-  get showEmptyState(): boolean {
-    return !this.isLoading && this.filteredCampos.length === 0;
   }
 
 }

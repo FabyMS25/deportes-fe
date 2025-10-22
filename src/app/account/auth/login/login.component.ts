@@ -70,7 +70,7 @@ export class LoginComponent implements OnInit {
             });
           } else if (permissionStatus === 'isEmployee') {
             this.router.navigate(['/inicio/employee']).then(() => {
-              this.toastService.show('¡Bienvenido Empleado!', 'Inicio de sesión exitoso');
+              this.toastService.show('¡Bienvenido Encargado!', 'Inicio de sesión exitoso');
             });
           } else {
             this.loginForm.setErrors({ invalidPermissions: true });

@@ -576,8 +576,6 @@ $value in $theme-colors {
 
 
 // grid js
-
-
 .table-gridjs {
 
   th,
@@ -625,10 +623,10 @@ $value in $theme-colors {
   border: $form-check-input-border;
   appearance: none;
   color-adjust: exact; // Keep themed appearance for print
-  // @include transition($form-check-transition);
+  @include transition($form-check-transition);
 
   &[type="checkbox"] {
-    // @include border-radius($form-check-input-border-radius);
+    @include border-radius($form-check-input-border-radius);
   }
 }
 
@@ -1129,4 +1127,24 @@ a.ck.ck-button.ck-on {
 
 .swiper-container {
   overflow: hidden;
+}
+
+
+::ng-deep {
+  .ng-dropdown-panel {
+    background-color: #ffffff !important;
+    border: 1px solid #ced4da !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    z-index: 1060 !important;
+  }
+  // Dark mode support
+  [data-layout-mode="dark"],
+  [data-bs-theme="dark"],
+  .dark-mode {
+    .ng-dropdown-panel {
+      background-color: #2a3042 !important;
+      border-color: #32394e !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+    }
+  }
 }

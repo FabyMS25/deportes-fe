@@ -43,7 +43,7 @@ export class ReportsService {
   getTicket(uuid: string): Observable<any> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);
-    return this.http.get<any>(`${this.apiUrl}/ticket-reserva?${params}`,
+    return this.http.get<any>(`${this.apiUrl}/ticket-reservap?${params}`,
       {
         responseType: 'arraybuffer' as 'json'
       }

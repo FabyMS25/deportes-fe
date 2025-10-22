@@ -8,6 +8,7 @@ import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportiv
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
 import { NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
+import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 
 @Component({
     selector: 'app-map-dashboard',
@@ -234,30 +235,31 @@ export class MapDashboardComponent implements OnInit {
         `;
         const btnPuntual = popupContent.querySelector('.btn-reserva-puntual');
         const btnRecurrente = popupContent.querySelector('.btn-reserva-recurrente');
-        
         if (btnPuntual) {
-            btnPuntual.addEventListener('click', () => 
-            this.router.navigate(['/reservations/details'], { 
-                state: { 
-                    data: element,
-                    tipoReserva: 'puntual'
-                } 
-            }));
+            btnPuntual.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.goToReservation(element, 'puntual');
+            });
         }
         if (btnRecurrente) {
-            btnRecurrente.addEventListener('click', () => 
-            this.router.navigate(['/reservations/details'], { 
-                state: { 
-                    data: element,
-                    tipoReserva: 'recurrente'
-                } 
-            }));
-        }
-        
+            btnRecurrente.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.goToReservation(element, 'recurrente');
+            });
+        }        
         complex.bindPopup(popupContent, { maxWidth: 350 });
         return complex;
     }
-
+    public goToReservation(complejo: ComplejoDeportivo, bookingType: string) {
+    this.router.navigate(['/reservations/details'], { 
+        state: { 
+        data: complejo,
+        tipoReserva: bookingType
+        } 
+    });
+    }
     private getCamposInfo(complejo: any): { html: string, total: number } {
         if (!complejo.camposDeportivosDtoList || complejo.camposDeportivosDtoList.length === 0) {
             return { html: '<small class="text-muted">No hay campos disponibles</small>', total: 0 };

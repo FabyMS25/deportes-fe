@@ -5,22 +5,23 @@ import { Superficie } from './superficie.model';
 import { Tarifa } from './tarifa.model';
 import { HorarioFijo } from './horarioFijo.model';
 import { Reserva } from './reserva.models';
+import { EstadoActual } from '../constants/Estados';
 export interface CampoDeportivo {
   uuid?: string;
   estado?: boolean;
   fechaCreacion?: Date;
 
-  estadoActual: string; // 'activo', 'mantenimiento', 'cerrado'
+  estadoActual: EstadoActual;
   codigo?: string;
   nombre: string;
   categoria: string; // 'A', 'B', 'ELITE'
   dimensiones?: string;
   capacidadPersonas?: number;
   tieneIluminacion?: boolean;
-  observaciones?: string;
   accesoLibre: boolean; 
+  observaciones?: string;
   
-  requiereAprobacion:Boolean;// false
+  requiereAprobacion:Boolean;// some campos may require validate any reserva but some not 
   horasMinimaAprobacion?:number;
   maxDuracionAutoAprobacion?:number;
   maxPersonasAutoAprobacion?:number;

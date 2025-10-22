@@ -1,15 +1,18 @@
 import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { PaginationService } from 'src/app/core/services/pagination.service';
-import { CityAcronym } from 'src/app/core/constants/Places';
-import * as userData from 'src/app/core/constants/UserData';
 import { Memoize } from './memoize.decorator';
+import * as userData from 'src/app/core/constants/UserData';
+import * as statusData from 'src/app/core/constants/Estados';
+import { CityAcronym } from 'src/app/core/constants/Places';
 
 interface ColumnDefinition {
   name: string;
   prop: string;
   visible: boolean;
   tag?: boolean;
+  category?: any[];
   date?: boolean;
+  color?: boolean,
   html?: boolean;
   image?: boolean;
   avatar?: boolean;
@@ -18,12 +21,14 @@ interface ColumnDefinition {
 interface TableActions {
   show?: boolean;
   edit?: boolean;
-  delete?: boolean;
-  records?: boolean;
+  close?: string;
+  check?: string;
+  process?: string;
   telf?: boolean;
   notify?: boolean;
-  consult?:boolean
-  ticket?:boolean
+  consult?:boolean;
+  validate?:boolean;
+  records?: boolean;
   // [key: string]: boolean | undefined;
 }
 interface PaginationInfo {
@@ -52,15 +57,17 @@ export class DataTableComponent implements OnChanges {
 
   @Output() showItemEmitter = new EventEmitter<any>();
   @Output() editItemEmitter = new EventEmitter<any>();
-  @Output() deleteItemEmitter = new EventEmitter<any>();
+  @Output() closeItemEmitter = new EventEmitter<any>();
+  @Output() checkItemEmitter = new EventEmitter<any>();
+  @Output() processItemEmitter = new EventEmitter<any>();
   @Output() recordsEmitter = new EventEmitter<any>();
   @Output() notifyItemEmitter = new EventEmitter<any>();
   @Output() selectedItemEmitter = new EventEmitter<any[]>();
-  @Output() ticketEmitter = new EventEmitter<any[]>();
+  // @Output() ticketEmitter = new EventEmitter<any[]>();
   @Output() consultItemEmitter = new EventEmitter<any[]>();
+  @Output() validateItemEmitter = new EventEmitter<any>();
   @Output() pageChange = new EventEmitter<number>();
   @Output() pageSizeChange = new EventEmitter<number>(); 
-
   
   content: any[] = [];
   totalElements: number = 0;
@@ -74,9 +81,7 @@ export class DataTableComponent implements OnChanges {
   constructor(public service: PaginationService) {
     this.itemsPerPage = this.service.pageSize;
   }
-  // ngOnChanges(): void {
-  //   this.content = this.service.changePage(this.allcontent, this.itemsPerPage);
-  // }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['allcontent'] || changes['serverSidePagination']) {
       this.processContent();
@@ -93,17 +98,13 @@ export class DataTableComponent implements OnChanges {
 
   private handleServerSidePagination(): void {
     if (this.allcontent && this.allcontent.content && Array.isArray(this.allcontent.content)) {
-      // Spring Data pagination format
       this.content = this.allcontent.content;
       this.totalElements = this.allcontent.totalElements || this.content.length;
-      
-      // Update pagination info if provided
       if (this.allcontent.pageable) {
-        this.service.page = this.allcontent.pageable.pageNumber + 1; // Convert to 1-based
+        this.service.page = this.allcontent.pageable.pageNumber + 1; 
         this.itemsPerPage = this.allcontent.pageable.pageSize;
       }
     } else if (Array.isArray(this.allcontent)) {
-      // Fallback: direct array
       this.content = this.allcontent;
       this.totalElements = this.allcontent.length;
     } else {
@@ -125,36 +126,44 @@ export class DataTableComponent implements OnChanges {
   //#region Action Handle
   showItem(item: any): void { this.showItemEmitter.emit(item); }
   editItem(item: any): void { this.editItemEmitter.emit(item); }
-  deleteItem(item: any): void { this.deleteItemEmitter.emit(item); }
+  closeItem(item: any): void { this.closeItemEmitter.emit(item); }
+  checkItem(item: any) {this.checkItemEmitter.emit(item);}
+  processItem(item: any) {this.processItemEmitter.emit(item);}
   recordsItem(item: any): void { this.recordsEmitter.emit(item); }
   notifyItem(item: any): void { this.notifyItemEmitter.emit(item); }
   consultItem(item: any) {this.consultItemEmitter.emit(item);}
-  ticketItem(item: any) { this.ticketEmitter.emit(item);}
+  validateItem(item: any) {this.validateItemEmitter.emit(item);}
+  sentMessage(item: any) {
+    // https://api.whatsapp.com/send?phone=+59172248669&text=MENSAJE DESDE SISTEMA DE DEPORTES"
+  }
 
   showActions(data: any): { tooltip: string; icon: string; handler: (data: any) => void; buttonClass: string }[] {
     return [
       ...(this.actions.show ? [{ tooltip: 'Ver', icon: 'ri-eye-fill', handler: () => this.showItem(data), buttonClass: '' }] : []),
       ...(this.actions.records ? [{ tooltip: 'Historial', icon: 'ri-file-list-3-line', handler: () => this.recordsItem(data), buttonClass: '' }] : []),
-      ...(this.actions.ticket ? [{ tooltip: 'Ticket', icon: 'ri-file-list-3-line', handler: () => this.ticketItem(data), buttonClass: '' }] : []),
+      ...(this.actions.validate && this.canShow('validate',data)? [{ tooltip: 'Validar', icon: ' ri-toggle-fill', handler: () => this.validateItem(data), buttonClass: 'text-primary d-inline-block edit-item-btn' }] : []),
       ...(this.actions.consult ? [{ tooltip: 'Consultar', icon: 'ri-restart-fill', handler: () => this.consultItem(data), buttonClass: 'text-primary d-inline-block edit-item-btn' }] : []),
       ...(this.actions.edit || (this.actions.edit && data.estadoReserva && data.estadoReserva ==='Pendiente')? [{ tooltip: 'Editar', icon: 'ri-pencil-fill', handler: () => this.editItem(data), buttonClass: 'text-primary edit-item-btn' }] : []),
-      ...(((this.actions.delete && !data.estadoReserva) || (this.actions.delete && data.estadoReserva && data.estadoReserva ==='Pendiente')) ? [{ tooltip: 'Eliminar', icon: 'ri-close-circle-line', handler: () => this.deleteItem(data), buttonClass: 'text-danger remove-item-btn' }] : []),
-      ...(this.actions.notify && this.canShow(data) ? [{ tooltip: 'Notificar', icon: 'ri-mail-send-fill', handler: () => this.notifyItem(data), buttonClass: 'text-success' }] : []),
+      ...((this.actions.close && this.canShow(this.actions.close,data,)) ? [{ tooltip: this.actions.close, icon: 'ri-close-circle-line', handler: () => this.closeItem(data), buttonClass: 'text-danger remove-item-btn' }] : []),
+      ...((this.actions.check && this.canShow(this.actions.check,data,)) ? [{ tooltip: this.actions.check, icon: 'ri-checkbox-circle-line', handler: () => this.checkItem(data), buttonClass: 'text-success' }] : []),
+      ...(this.actions.process ? [{ tooltip: this.actions.process, icon: ' ri-auction-line', handler: () => this.processItem(data), buttonClass: 'text-warning' }] : []),
+      ...(this.actions.notify ? [{ tooltip: 'Notificar', icon: 'ri-mail-send-fill', handler: () => this.notifyItem(data), buttonClass: 'text-success' }] : []),
+      ...(this.actions.telf ? [{ tooltip: 'Telefono', icon: 'ri-phone-line', handler: () => this.sentMessage(data), buttonClass: 'text-success' }] : []),
     ];  
-  }  
-                                // <li *ngIf="telf" class="list-inline-item edit" ngbTooltip="Call" placement="top">
-                                //     <a href="javascript:void(0);" class="text-muted d-inline-block">
-                                //         <i class="ri-phone-line fs-16"></i>
-                                //     </a>
-                                // </li>
-                                // <li *ngIf="comment" class="list-inline-item edit" ngbTooltip="Message" placement="top">
-                                //     <a href="https://api.whatsapp.com/send?phone=+59172248669&text=MENSAJE DESDE SISTEMA DE DEPORTES" 
-                                //         class="text-muted d-inline-block">
-                                //         <i class="ri-question-answer-line fs-16"></i>
-                                //     </a>
-                                // </li>
-  canShow(data: any): boolean {
-    return !data.resultado;
+  } 
+  canShow(action:string,data: any): boolean {
+    switch(action){
+      case 'validate':
+        return data.reservaDto && data.reservaDto.estadoValidacion ===statusData.EstadoValidacion.PENDIENTE;
+      case 'Anular':
+        return data.reservaDto && data.reservaDto.estadoReserva ===statusData.EstadoReserva.PENDIENTE;
+      case 'Bloquear':
+        return data.estadoUsuario === statusData.EstadoUsuario.ACTIVO;
+      case 'Desbloquear':
+        return data.estadoUsuario === statusData.EstadoUsuario.BLOQUEADO;
+      default:
+        return true;
+    }
   }
   //#endregion
 
@@ -167,8 +176,8 @@ export class DataTableComponent implements OnChanges {
     }
     const value = prop.split('.').reduce((o, p) => o?.[p], obj);
     switch (prop) {
-      case 'gasesEscapeConforme':
-      case 'examenVisualConforme':
+      case 'requiereAprobacion': case 'accesoLibre':case 'tieneIluminacion':
+      case 'puedeReservarGratis': case 'esDeportistaElite': case 'perteneceEscuelaMunicipal': case 'estaSancionado':
         return this.formatBoolean(value, 'SI', 'NO');
       case 'esValido':
         return this.formatBoolean(value, 'VALIDO', 'INVALIDO');
@@ -217,17 +226,37 @@ export class DataTableComponent implements OnChanges {
   private formatBoolean(val: any, trueText: string, falseText: string): string {
     return val === true ? trueText : val === false ? falseText : '';
   }
+
   getBadgeStatus(value: any): string {
     const statuses: Record<string, string> = {
-      Activo: 'success', Bloqueado: 'warning',
-      Pagado: 'success', Pendiente: 'secondary',
-      Vencido: 'danger', Anulado: 'warning',
-      ENVIADA: 'success', PENDIENTE: 'warning', 
-      ENTREGADA: 'success', PROGRAMADA: 'primary',
-      NO_ENTREGADO: 'danger', VENCIDA: 'danger',
-      VALIDO: 'success', INVALIDO: 'danger', 
-      SI: 'success', NO: 'danger'
+      'ENVIADA': 'success', 'ENTREGADA': 'success',
+      'PROGRAMADA': 'primary', 'NO_ENTREGADO': 'danger',
+      'VALIDO': 'success','INVALIDO': 'danger', 
+      'SI': 'success', 'NO': 'danger',
+      // Estados de Reserva
+      'BORRADOR': 'secondary', 'EXPIRADA': 'warning', 
+      'PENDIENTE': 'warning', 'CONFIRMADA': 'primary',
+      'PAGADA': 'success', 'COMPLETADA': 'success',
+      'CANCELADA': 'danger', 'RECHAZADA': 'danger',
+      'EN_CURSO': 'info', 'NO_SHOW': 'danger',
+      // Estados de Validación
+      'NO_REQUIERE': 'secondary',// 'PENDIENTE': 'warning',
+      'APROBADA': 'success', // 'RECHAZADA': 'danger',
+      'REVISION': 'info',
+      // Estados de Pago
+      'PAGADO': 'success', // 'PENDIENTE': 'warning',
+      'PARCIAL': 'info', 'VERIFICANDO': 'primary',
+      'REEMBOLSADO': 'secondary','VENCIDO': 'danger',
+      // Estados de Usuario
+      'ACTIVO': 'success', 'INACTIVO': 'secondary',
+      'PENDIENTE_VERIFICACION': 'warning',
+      'SANCIONADO': 'danger', 'BLOQUEADO': 'danger',
+      // Estados de Complejo/Campo
+      // 'ACTIVO': 'success',
+      'CERRADO': 'danger',
+      'MANTENIMIENTO': 'warning', 'EVENTO_MUNICIPAL': 'info',
     };
+    
     return statuses[value] || 'info';
   }
   //#endregion
@@ -350,12 +379,9 @@ export class DataTableComponent implements OnChanges {
     column.visible = !column.visible;
   }
 
-  // Helper to get display content length
   getDisplayContentLength(): number {
     return this.content.length;
   }
-
-  // Helper to get total elements
   getTotalElements(): number {
     if (this.serverSidePagination) {
       return this.totalElements;

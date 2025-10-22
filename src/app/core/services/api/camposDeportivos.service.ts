@@ -7,8 +7,6 @@ import { environment } from 'src/environments/environment';
 import { CampoDeportivo } from '../../models/campoDeportivo.model';
 
 /**Models */
-
-
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${window.sessionStorage.getItem('auth-token')}` })
 };
@@ -22,25 +20,25 @@ export class CamposDeportivoService {
 
   constructor(private http: HttpClient) { }
 
-  getAll(): Observable<CampoDeportivo[]> {
-    return this.http.get<CampoDeportivo[]>(`${this.apiUrl}`);
+  getAll(): Observable<any> {
+    return this.http.get<any[]>(`${this.apiUrl}`);
   }
 
-  getByUuid(uuid:string):Observable<CampoDeportivo>{
-    return this.http.get<CampoDeportivo>(`${this.apiUrl}/${uuid}`);
+  getByUuid(uuid:string):Observable<any>{
+    return this.http.get<any>(`${this.apiUrl}/${uuid}`);
   }
 
-  getByComplejo(data:any):Observable<CampoDeportivo>{
-    return this.http.get<CampoDeportivo>(`${this.apiUrl}/complejo/${data.uuid}`);
+  getByComplejo(data:any):Observable<any>{
+    return this.http.get<any>(`${this.apiUrl}/complejo/${data.uuid}`);
   }
 
-  save(data: CampoDeportivo): Observable<CampoDeportivo> {
+  save(data: any): Observable<any> {
     // var headerToken = {'Authorization': `Bearer `+ window.sessionStorage.getItem('auth-token')};
-    return this.http.post<CampoDeportivo>(`${this.apiUrl}`, data);
+    return this.http.post<any>(`${this.apiUrl}`, data);
   }
 
-  update(data: CampoDeportivo): Observable<CampoDeportivo> {
-    return this.http.put<CampoDeportivo>(`${this.apiUrl}`, data);
+  update(data: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}`, data);
   }
   delete(uuid: string) {
     return this.http.delete(`${this.apiUrl}/${uuid}`);

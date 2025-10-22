@@ -30,16 +30,11 @@ import { WidgetModule } from '../shared/widget/widget.module';
 // Pages Routing
 import { PagesRoutingModule } from "./pages-routing.module";
 //compoments
-import { CommentsComponent } from './invoice-form/comments/comments.component';
 import { ModalComponent } from './taxpayers/modal/modal.component';
 
-import { TimeTablesComponent } from './invoice-form/timetables/timetables.component';
-import { TicketComponent } from './invoice-form/ticket/ticket.component';
-import { BookingRecurrentFormRecurrentComponent } from './booking-recurrent/form/booking-recurrent-form.component';
+import { TicketComponent } from './reports/ticket/ticket.component';
 import { BookingRecurrentComponent } from './booking-recurrent/list/booking-recurrent.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { ModalRecurrentComponent } from './booking-recurrent/modal/modal.component';
-import { BookingOneTimeModalComponent } from './booking-one-time/modal/modal.component';
 import { BookingOneTimeComponent } from './booking-one-time/list/booking-one-time.component';
 import { BookingDetailsComponent } from './booking/booking-details.component';
 import { ComplejoSelectionComponent } from './booking/complejo-selection/complejo-selection.component';
@@ -47,24 +42,45 @@ import { CampoSelectionComponent } from './booking/campo-selection/campo-selecti
 import { ScheduleSelectionComponent } from './booking/schedule-selection/schedule-selection.component';
 import { ReservationFormComponent } from './booking/reservation-form/reservation-form.component';
 import { ScheduleRecurrentSelectionComponent } from './booking/schedule-recurrent-selection/schedule-recurrent-selection.component';
+import { OrganizationsComponent } from './organizations/organizations.component';
+import { EmployeesComponent } from './settings/employees/employees.component';
+import { FieldsComponent } from './settings/fields/list/fields.component';
+import { FacilitiesComponent } from './settings/facilities/list/facilities.component';
+import { CategoriesComponent } from './settings/categories/categories.component';
+import { ClasificadoresRuatComponent } from './settings/clasificadores-ruat/clasificadores-ruat.component';
+import { SurfacesComponent } from './settings/surfaces/surfaces.component';
+import { ModalFacilitiesComponent } from './settings/facilities/modal/modal.component';
+import { ModalFieldsComponent } from './settings/fields/modal/modal.component';
+import { ModalEmployeeComponent } from './settings/employees/modal/modalEmployee.component';
+import { ModalScheduleComponent } from './settings/fields/modal-schedule/modal-schedule.component';
+import { ModalTarifaComponent } from './settings/fields/modal-tarifa/modal-tarifa.component';
+import { SystemConfigurationsComponent } from './settings/system-configurations/system-configurations.component';
 
 
 @NgModule({
   declarations: [
-    TimeTablesComponent,
     TicketComponent,
-    CommentsComponent,
     ModalComponent,
 
     BookingOneTimeComponent,
     BookingRecurrentComponent,
     BookingDetailsComponent,
-    BookingRecurrentFormRecurrentComponent,
-    BookingOneTimeModalComponent,
-    ModalRecurrentComponent
+    OrganizationsComponent,
+
+        EmployeesComponent,
+        FieldsComponent,
+        FacilitiesComponent,
+        CategoriesComponent,
+        ClasificadoresRuatComponent,
+        SystemConfigurationsComponent,
+        SurfacesComponent,
+        ModalFacilitiesComponent,
+        ModalFieldsComponent,
+        ModalEmployeeComponent,
+        ModalScheduleComponent,
+        ModalTarifaComponent
   ],
   imports: [
-    WidgetModule,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
@@ -86,14 +102,14 @@ import { ScheduleRecurrentSelectionComponent } from './booking/schedule-recurren
     // FlatpickrModule,
     LeafletModule,
     SharedModule,
+    WidgetModule,
+    TranslateModule,
     
     ComplejoSelectionComponent,
     CampoSelectionComponent,
-    ScheduleSelectionComponent,
     ScheduleRecurrentSelectionComponent,
+    ScheduleSelectionComponent,
     ReservationFormComponent,
-
-    TranslateModule,
 
     ScrollToModule.forRoot(),
     FeatherModule.pick(allIcons),

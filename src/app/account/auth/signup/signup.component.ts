@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, FormGroup, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import Swal from 'sweetalert2';
 import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
@@ -9,9 +9,9 @@ import { CityAcronym } from 'src/app/core/constants/Places';
 import { UserStatus , UserCivilStatus, UserGender, UserDocType} from 'src/app/core/constants/UserData';
 import { MustMatch } from '../pass-create/must-match';
 import { UserDataService } from './user-data.service';
-import { Contribuyente } from 'src/app/core/models/contribuyente.models';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
-import { GlobalComponent } from 'src/app/global-component';
+import { environment } from 'src/environments/environment';
+import { EstadoRuat, EstadoUsuario } from 'src/app/core/constants/Estados';
 
 @Component({
   selector: 'app-signup',
@@ -35,7 +35,6 @@ export class SignupComponent implements OnInit {
   usersList!: any[];
   userExist = false;
   ruatData: any;
-  isFromRuatConsultation = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -47,16 +46,13 @@ export class SignupComponent implements OnInit {
 
 
   ngOnInit(): void {
-    // this.authRuat()
     this.getUsers();
-    this.initializeForm();
-    
+    this.initializeForm();    
     this.route.queryParams.subscribe(params => {
       const exist = params['userExist'];
       this.ruatData = this.userDataService.getTemporaryUserData();
       
       if (exist && this.ruatData) {
-        this.isFromRuatConsultation = true;
         this.formDataSet(this.ruatData);
         this.userDataService.setTemporaryUserData(null);
       }
@@ -66,79 +62,85 @@ export class SignupComponent implements OnInit {
   private initializeForm() {
     this.SignupForm = this.formBuilder.group({
       // uuid: [''],
-      userName: ['', [Validators.required, Validators.minLength(6),this.usernameFormatValidator]],
-      password: ['', [Validators.required]], 
-      cpassword: ['', [Validators.required]], 
+      userName: ['', [Validators.required, Validators.minLength(5),Validators.maxLength(150),this.usernameFormatValidator]],
+      password: ['', [Validators.required, Validators.minLength(5),Validators.maxLength(150)]], 
+      cpassword: ['', [Validators.required, Validators.minLength(5),Validators.maxLength(150)]], 
       verificationCode:[null],
-      estadoUsuario: ['Pendiente'],
-      
-      nombre: ['', [Validators.required]],
-      primerApellido: ['', [Validators.required]],
-      segundoApellido: [''],
-      fechaNacimiento: ['', [Validators.required]],
-      genero: ['', [Validators.required]],
-      estadoCivil: [''],
-      telefono: ['', [Validators.required]],
-      email: ['', [Validators.required, Validators.email], [this.emailValidator.bind(this)]],
-      direccion: [''],
-
-      tipoContribuyente: ['NA'],
+      estadoUsuario: [EstadoUsuario.PENDIENTE_VERIFICACION],
+      estadoRuat: [''],
+      verificadoRuat: [false],     
+      tipoContribuyente: ['NA', [Validators.required]],
       codigoContribuyente: [''],
       tipoDocumento: ['', [Validators.required]],
-      numeroDocumento: ['', [Validators.required]],
-      expedido: ['', [Validators.required]],
-      nroNit: [''],
-      // Administrative fields (set by admin later)
+      numeroDocumento: ['', [Validators.required,Validators.minLength(1),Validators.maxLength(20)]],
+      expedido: ['', [Validators.maxLength(20)]],
+      nroNit: ['', [Validators.maxLength(20)]],
+
+      nombre: ['', [Validators.required,Validators.minLength(1),Validators.maxLength(250)]],
+      primerApellido: ['', [Validators.required,Validators.minLength(1),Validators.maxLength(100)]],
+      segundoApellido: ['', [Validators.minLength(1),Validators.maxLength(100)]],      
+      // apellidoEsposo: ['', [Validators.maxLength(100)]],
+      estadoCivil: [''],
+      fechaNacimiento: ['', [Validators.required]],
+      genero: [''],
+      
+      telefono: ['', [Validators.required, Validators.maxLength(20)]],
+      email: ['', [Validators.required, Validators.email, Validators.maxLength(255)],
+                   [this.emailValidator.bind(this)]],
+      direccion: ['', [Validators.maxLength(250)]],
+      // Administrative fields 
       esDeportistaElite: [false],
       perteneceEscuelaMunicipal: [false],
-      registroUnicoDeportivo: [''],
+      registroUnicoDeportivo: ['', [Validators.maxLength(50)]],
+      fechaUltimoUsoGratuito:[],
+      observacionesMunicipales: [''],
       descuentoAplicable: [0],
       estaSancionado: [false],
       fechaFinSancion: [''],
       motivoSancion: [''],
-      observacionesMunicipales: ['']
+    }, {
+      validator: MustMatch('password', 'cpassword')
     });
   }
 
-  private formDataSet(data: any) {
-    console.log('Setting form data from RUAT:', data);    
+  private formDataSet(data: any) {   
     if (data && data.contribuyente) {
       const client = data.contribuyente;
-      const doc = UserDocType.find(d => d.description === client.tipoDocumento);    
-      const civ = UserCivilStatus.find(d => d.description === client.estadoCivil);
-      const exp = CityAcronym.find(d => d.value === client.expedido);    
-      const gen = UserGender.find(d => d.description === client.genero);
       let fechaNacimientoValue = '';
       if (client.fechaNacimiento) {
+      //   const [day, month, year] = client.fechaNacimiento.split('/').map(Number);
+      //   const date = new Date(year, month - 1, day);
+      //   fechaNacimientoValue = date.toISOString().split('T')[0];
+      if (client.fechaNacimiento.includes('/')) {
         const [day, month, year] = client.fechaNacimiento.split('/').map(Number);
         const date = new Date(year, month - 1, day);
         fechaNacimientoValue = date.toISOString().split('T')[0];
+      } else {
+        fechaNacimientoValue = client.fechaNacimiento;
       }
-      const username = client.numeroDocumento;
-      const password = client.numeroDocumento;
+    }
       this.SignupForm.patchValue({
-        tipoDocumento: client.tipoDocumento,
-        numeroDocumento: client.numeroDocumento,
-        expedido: client.expedido,
-        tipoContribuyente: client.tipoContribuyente || 'NA',
-        codigoContribuyente: data.codigoContribuyente,
-        
-        nombre: client.nombre,
-        primerApellido: client.primerApellido,
-        segundoApellido: client.segundoApellido,
-        genero: client.genero,
+        ...data.contribuyente,
+        codigoContribuyente: data.codigoContribuyente, 
+        estadoRuat: EstadoRuat.ACTIVO,
+        estadoUsuario: EstadoUsuario.ACTIVO,
+        verificadoRuat: true,
         fechaNacimiento: fechaNacimientoValue,
-        estadoCivil: client.estadoCivil,
-        nroNit: client.nroNit,
-        
-        userName: username,
-        password: password
+        tipoDocumento: UserDocType.find(d => d.description === client.tipoDocumento)?.type,
+        expedido: CityAcronym.find(d => d.value === client.expedido)?.id,
+        genero: UserGender.find(d => d.description === client.genero)?.id,
+        estadoCivil: UserCivilStatus.find(d => d.description === client.estadoCivil)?.type,
       });
-      // Make document fields readonly since they come from RUAT
-      // this.SignupForm.get('tipoDocumento')?.disable();
-      // this.SignupForm.get('numeroDocumento')?.disable();
-      // this.SignupForm.get('expedido')?.disable();
-      // this.SignupForm.get('tipoContribuyente')?.disable();
+      this.SignupForm.get('nombre')?.disable();
+      this.SignupForm.get('primerApellido')?.disable();
+      this.SignupForm.get('segundoApellido')?.disable();
+      this.SignupForm.get('fechaNacimiento')?.disable();
+      this.SignupForm.get('genero')?.disable();
+      this.SignupForm.get('estadoCivil')?.disable();
+      this.SignupForm.get('tipoContribuyente')?.disable();
+      this.SignupForm.get('tipoDocumento')?.disable();
+      this.SignupForm.get('numeroDocumento')?.disable();
+      this.SignupForm.get('expedido')?.disable();
     }
   }
 
@@ -147,51 +149,19 @@ export class SignupComponent implements OnInit {
   /**
    * Form submit
    */    
-  onSubmit() {
+  async onSubmit() {
+    this.submitted = true;
+    this.SignupForm.enable();  
     this.SignupForm.patchValue({
       userName: this.SignupForm.value.numeroDocumento,
       password: this.SignupForm.value.numeroDocumento,
-      cpassword:this.SignupForm.value.numeroDocumento
+      cpassword: this.SignupForm.value.numeroDocumento
     });
-    this.submitted = true;
-    console.log(this.SignupForm.value)
+    await this.waitForAsyncValidation();
     if (this.SignupForm.valid) {
-      const code = this.generateCode();
-      this.SignupForm.enable();
-  
-      const formData = this.prepareFormData();
-      formData.verificationCode = code;
-      this.userDataService.setTemporaryUserData(formData);
-      // const dateString: string = this.SignupForm.value.birthDate;
-      // const originalDate: Date = new Date(dateString);
-      // const formattedDate: string = originalDate.toLocaleDateString('es-ES', {
-      //   day: '2-digit',
-      //   month: '2-digit',
-      //   year: 'numeric'
-      // });
-      // let datos: any = {
-      //   // uuid:this.SignupForm.value.uuid,
-      //   userName: this.SignupForm.value.username,
-      //   password: this.SignupForm.value.password,
-      //   tipoContribuyente: this.SignupForm.value.contribuyentType,
-      //   codigoContribuyente: this.SignupForm.value.contribuyentCode,
-      //   estadoUsuario: this.SignupForm.value.userState,
-      //   verificationCode: code,
-      //   nombre: this.SignupForm.value.name,
-      //   primerApellido: this.SignupForm.value.firstSurname,
-      //   segundoApellido: this.SignupForm.value.secondSurname,
-      //   genero:this.SignupForm.value.sex,
-      //   fechaNacimiento: formattedDate,
-      //   estadoCivil: this.SignupForm.value.civilStatus,
-      //   tipoDocumento: this.SignupForm.value.identityType,
-      //   numeroDocumento: this.SignupForm.value.identityNumber,
-      //   expedido:this.SignupForm.value.expedite,
-      //   nroNit:this.SignupForm.value.nitNumber,
-      //   telefono:this.SignupForm.value.phone,
-      //   email:this.SignupForm.value.email,
-      //   direccion:this.SignupForm.value.address,
-      // };
-      // this.userDataService.setTemporaryUserData(datos);
+      const formData = this.SignupForm.getRawValue();
+      formData.verificationCode = this.generateCode();
+      this.userDataService.setTemporaryUserData(formData);    
       this.sendEmail(formData, '')
         .then(() => {
           this.router.navigate(['/auth/twostep'], { queryParams: { username: formData.userName } });
@@ -199,32 +169,27 @@ export class SignupComponent implements OnInit {
         .catch(error => {
           this.userDataService.setTemporaryUserData(null);
         });
-
     } else {
-      this.notify('Formulario Invalido!', 'error');
-      Object.keys(this.SignupForm.controls).forEach(key => {
-        const control = this.SignupForm.get(key);
-        control?.markAsTouched();
-      });
+      this.notify('Formulario Inválido!', 'error');
+      this.markAllFieldsAsTouched();
     }
   }
-  
-  private prepareFormData(): any {
-    const formValue = this.SignupForm.getRawValue();
-    let fechaNacimientoFormatted = '';
-    if (formValue.fechaNacimiento) {
-      // If it's already a Date object from the input[type="date"]
-      const date = new Date(formValue.fechaNacimiento);
-      fechaNacimientoFormatted = date.toISOString().split('T')[0]; // "yyyy-MM-dd"
-    }
-    return {
-      ...formValue,
-      fechaNacimiento: fechaNacimientoFormatted,
-      estadoUsuario: 'Pendiente',
-      verificadoRuat: this.isFromRuatConsultation,
-      estadoRuat: this.isFromRuatConsultation ? 'ACTIVO' : 'PENDIENTE'
-    };
+
+  private waitForAsyncValidation(): Promise<void> {
+    return new Promise((resolve) => {
+      if (this.SignupForm.pending) {
+        const subscription = this.SignupForm.statusChanges.subscribe(status => {
+          if (status !== 'PENDING') {
+            subscription.unsubscribe();
+            resolve();
+          }
+        });
+      } else {
+        resolve();
+      }
+    });
   }
+
   generateCode(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
   }
@@ -235,28 +200,17 @@ export class SignupComponent implements OnInit {
     });
   }
 
-  getDepartmentName(id: string): string {
-    const found = this.cityAcronym.find(item => '' + item.id === id);
-    return found ? found.value : id;
-  }
-
-  getCivilStatus(acronym: string): string {
-    const found = this.civilStatus.find(item => item.type === acronym);
-    return found ? found.description : acronym;
-  }
-
-
   sendEmail(data: any, link: string): Promise<void> {
     const email = data.email;
     const name = data.nombre;
     const codigo = data.verificationCode;  
-    return emailjs.send(GlobalComponent.EmailJS.idService, GlobalComponent.EmailJS.idTemplate, {
+    return emailjs.send(environment.EmailJS.idService, environment.EmailJS.idTemplate, {
       from_name: "GAMQ-DEPORTES",
       to_name: name,
       message: codigo,
       // message: `Puedes ingresar al siguiente Link: ${link}`,
       reply_to: email,
-    },GlobalComponent.EmailJS.publicKey)
+    },environment.EmailJS.publicKey)
       .then((response: EmailJSResponseStatus) => {
         this.notify("Un email fue enviado a " + email + " con el codigo de confirmacion", 'success');
         this.submitted = false;
@@ -436,16 +390,9 @@ export class SignupComponent implements OnInit {
       inputMsg.style.display = "none";
     }
   }
-
-   /**
-   * Password Hide/Show
-   */
   togglepasswordField() {
     this.passwordField = !this.passwordField;
   }
-  /**
- * Password Hide/Show
- */
   toggleconfirmField() {
     this.confirmField = !this.confirmField;
   }

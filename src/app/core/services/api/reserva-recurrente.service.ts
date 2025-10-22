@@ -12,52 +12,52 @@ export class ReservaRecurrenteService {
 
   constructor(private http: HttpClient) { }
   
-  getAll(page: number = 0, size: number = 20): Observable<ReservaRecurrente[]> {
+  getAll(page: number = 0, size: number = 20): Observable<any[]> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString());
     
-    return this.http.get<ReservaRecurrente[]>(`${this.apiUrl}`, { params });
+    return this.http.get<any[]>(`${this.apiUrl}`, { params });
   }
 
-  getByUuid(uuid: string): Observable<ReservaRecurrente> {
-    return this.http.get<ReservaRecurrente>(`${this.apiUrl}/${uuid}`);
+  getByUuid(uuid: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${uuid}`);
   }
 
-  getByReservaUuid(reservaUuid: string): Observable<ReservaRecurrente> {
-    return this.http.get<ReservaRecurrente>(`${this.apiUrl}/reserva/${reservaUuid}`);
+  getByReservaUuid(reservaUuid: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/reserva/${reservaUuid}`);
   }
 
-  getByTipoRecurrencia(tipoRecurrencia: string): Observable<ReservaRecurrente[]> {
-    return this.http.get<ReservaRecurrente[]>(`${this.apiUrl}/tipo/${tipoRecurrencia}`);
+  getByTipoRecurrencia(tipoRecurrencia: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/tipo/${tipoRecurrencia}`);
   }
 
-  getActivas(): Observable<ReservaRecurrente[]> {
-    return this.http.get<ReservaRecurrente[]>(`${this.apiUrl}/activas/vigentes`);
+  getActivas(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/activas/vigentes`);
   }
 
-  getActivasByCampo(uuidCampo: string): Observable<ReservaRecurrente[]> {
-    return this.http.get<ReservaRecurrente[]>(`${this.apiUrl}/activas/campo/${uuidCampo}`);
+  getActivasByCampo(uuidCampo: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/activas/campo/${uuidCampo}`);
   }
 
-  getActivasEnFecha(fecha: Date): Observable<ReservaRecurrente[]> {
-    return this.http.get<ReservaRecurrente[]>(`${this.apiUrl}/activas/fecha/${fecha.toISOString().split('T')[0]}`);
+  getActivasEnFecha(fecha: Date): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/activas/fecha/${fecha.toISOString().split('T')[0]}`);
   }
 
-  activar(uuid: string): Observable<ReservaRecurrente> {
-    return this.http.put<ReservaRecurrente>(`${this.apiUrl}/${uuid}/activar`, null);
+  activar(uuid: string): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${uuid}/activar`, null);
   }
 
-  desactivar(uuid: string): Observable<ReservaRecurrente> {
-    return this.http.put<ReservaRecurrente>(`${this.apiUrl}/${uuid}/desactivar`, null);
+  desactivar(uuid: string): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${uuid}/desactivar`, null);
   }
 
-  create(data: ReservaRecurrente): Observable<ReservaRecurrente> {
-    return this.http.post<ReservaRecurrente>(`${this.apiUrl}`, data);
+  create(data: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}`, data);
   }
 
-  update(data: ReservaRecurrente): Observable<ReservaRecurrente> {
-    return this.http.put<ReservaRecurrente>(`${this.apiUrl}`, data);
+  update(data: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}`, data);
   }
 
   delete(uuid: string): Observable<any> {

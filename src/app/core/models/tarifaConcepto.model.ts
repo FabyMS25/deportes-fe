@@ -7,6 +7,8 @@ export interface TarifaConcepto {
 
   concepto: string;
   tipo:string;
+  desde?:string;
+  hasta?:string;
 
   valor:number;
   activo:boolean;

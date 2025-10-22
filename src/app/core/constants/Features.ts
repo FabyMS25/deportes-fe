@@ -1,24 +1,3 @@
-export const Surfaces =
-[ 
-    'PASTO NATURAL',
-    'PISTA ATLETICA',
-    'CANCHA MULTIDISCIPLINARIA',
-    'DE TIERRA',
-    'PASTO SINTETICO',
-    'PISO PARQUET',
-    'COMPLEJO'
-    // 'Césped artificial homologadop', 
-    // 'Césped sintético',
-    // 'Césped natural', 
-    // 'Pavimento de superficie acrílica', 
-    // 'Suelos de EPDM', 
-    // 'Caucho',
-    // 'Polvo de ladrillo/Arcilla', 
-    // 'Tierra batida',
-    // 'Arena' 
-]
-
-
 export enum CategoriaCampo {
   A = 'A',
   B = 'B',
@@ -28,12 +7,6 @@ export enum CategoriaCampo {
 export enum TipoEstructura {
   TECHADO = 'Techado',
   ABIERTO = 'Abierto',
-  CERRADO = 'Cerrado'
-}
-
-export enum EstadoActual {
-  ACTIVO = 'Activo',
-  MANTENIMIENTO = 'Mantenimiento',
   CERRADO = 'Cerrado'
 }
 
@@ -54,3 +27,5 @@ export enum TipoExcepcion {
   MANTENIMIENTO = 'mantenimiento',
   EVENTO_MUNICIPAL = 'evento_municipal'
 }
+export type BookingType = 'puntual' | 'recurrente';
+export type ReservationType = 'por_hora' | 'por_persona' | 'por_evento' | 'mensualidad' |'por_sesion'| 'por_club';

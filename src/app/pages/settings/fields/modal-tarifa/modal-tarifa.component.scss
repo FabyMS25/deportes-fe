@@ -1,0 +1,74 @@
+    .tarifa-option {
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        border-color: #0d6efd;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+        
+        .tarifa-action {
+          background-color: #0d6efd;
+          color: white;
+        }
+      }
+      
+      &:active {
+        transform: translateY(0);
+      }
+      
+      .tarifa-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        
+        .tarifa-price {
+          display: flex;
+          align-items: baseline;
+          gap: 0.25rem;
+          flex-shrink: 0;
+          
+          .amount {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0d6efd;
+            line-height: 1;
+          }
+          
+          .currency {
+            font-size: 0.75rem;
+            font-weight: 300;
+            color: #6c757d;
+          }
+        }
+      }
+      
+      .tarifa-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+      }
+      
+      .tarifa-action {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0.75rem;
+        margin: 0 -1rem -1rem;
+        border-top: 1px solid #e9ecef;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #0d6efd;
+        transition: all 0.2s ease;
+        border-radius: 0 0 6px 6px;
+      }
+      
+      &:hover .tarifa-action i {
+        transform: translateX(4px);
+      }
+    }

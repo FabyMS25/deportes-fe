@@ -5,7 +5,7 @@ export interface EncargadoComplejo {
   estado?: boolean;
   fechaCreacion?: Date;
 
-  userUuid: string;
+  userUuid: string; // uuid referencial to external user system
   avatar:string;
   activo: boolean;
   nombre: string;

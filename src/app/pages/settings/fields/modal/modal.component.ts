@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder, UntypedFormGroup, Validators, ValidationErrors } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of } from 'rxjs';
@@ -11,12 +11,13 @@ import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportiv
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
 import { TarifaService } from 'src/app/core/services/api/tarifa.service';
-import { CategoriaCampo, EstadoActual, TipoExcepcion } from 'src/app/core/constants/Features';
+import { CategoriaCampo, TipoExcepcion } from 'src/app/core/constants/Features';
 import { ClasificadorRuat } from 'src/app/core/models/clasificadorRuat.model';
 import { ClasificadorRuatService } from 'src/app/core/services/api/clasificadorRuat.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
-import { frecuencia, TipoCobro } from 'src/app/core/constants/TipoCobro';
+import { frecuencia, TipoCobro, tiposConcepto } from 'src/app/core/constants/TipoCobro';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
+import { EstadoActual } from 'src/app/core/constants/Estados';
 
 @Component({
   selector: 'app-modal',
@@ -42,6 +43,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
     { value: 'domingo', label: 'Domingo' ,show:true ,open:false},
     { value: 'feriado', label: 'Feriado' ,show:true, open:false}
   ];
+  tipoConceptoOptions = tiposConcepto
   tipoCobroOptions = TipoCobro;
   frecuenciaOptions = frecuencia;
   
@@ -56,14 +58,15 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   showObsDropdown: boolean[] = [];
 
   @ViewChild('deleteConfirmation', { static: true }) deleteConfirmation!: TemplateRef<any>;
-
+  @ViewChild('deleteModel') deleteModel!: ElementRef;
+  
   private subscription: Subscription = new Subscription();
 
   constructor(
     private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
     private complejoService: ComplejosService,
-    private canchaService: CamposDeportivoService,
+    private fieldService: CamposDeportivoService,
     private surfaceService: SuperficiesService,
     private tarifaService: TarifaService,
     private clasificadoresRuatService: ClasificadorRuatService,
@@ -74,7 +77,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
     this.getFacilities();
     this.getSurfaces();
     this.getCategorias();
-    this.getClasificadoresRuat();
+    this.getClasificadoresRuat();  
     this.initForm();
     this.formDataSet();
     if (this.accion !== 'edit') {
@@ -165,10 +168,49 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
       categoriasDtoList: [
         tarifa.categoriasDtoList?.map((cat: any) => cat.categoriaDto || cat) || [], 
         [Validators.required, Validators.minLength(1)]
-      ]
+      ],
+      conceptosDtos: this.formBuilder.array([])
     });
   }
 
+  createConceptoFormGroup(concepto: any = {}): FormGroup {
+    return this.formBuilder.group({
+      uuid: [concepto.uuid || null],
+      concepto: [concepto.concepto || '', Validators.required],
+      tipo: [concepto.tipo || '', Validators.required],
+      valor: [concepto.valor || '', [Validators.required, Validators.min(0)]],
+      desde: [this.extractTimeHHMM(concepto.desde)],
+      hasta: [this.extractTimeHHMM(concepto.hasta)],
+      activo: [concepto.activo !== undefined ? concepto.activo : true]
+    });
+  }
+  showTimeFields(concepto: AbstractControl): boolean {
+    const tipo = concepto.get('tipo')?.value;
+    return tipo === 'por_hora' || tipo === 'fijo' || tipo === 'porcentaje';
+  }
+
+  getTipoConceptoDisplay(tipo: string): string {
+    const tipoMap: Record<string, string> = {
+      'fijo': 'Monto Fijo',
+      'porcentaje': 'Porcentaje', 
+      'por_hora': 'Por Hora'
+    };
+    return tipo ? tipoMap[tipo] || tipo : 'No especificado';
+  }
+  toggleTimeFields(concepto: AbstractControl) {
+    const desde = concepto.get('desde');
+    const hasta = concepto.get('hasta');
+    
+    if (desde?.value || hasta?.value) {
+      // Clear time fields
+      desde?.setValue(null);
+      hasta?.setValue(null);
+    } else {
+      // Set default time values
+      desde?.setValue('18:00');
+      hasta?.setValue('06:00');
+    }
+  }
   private extractTimeHHMM(time: string | null | undefined): string {
     if (!time) return '';
     if (time.length === 8 && time.split(':').length === 3) {
@@ -206,7 +248,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   }
 
   private formDataSet() {
-    if (this.accion === 'edit' && this.row) {
+    if (this.row) {
       this.fieldsForm.patchValue({
         uuid: this.row.uuid,
         estadoActual: this.row.estadoActual,
@@ -252,7 +294,15 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
       tarifasArray.clear();
       if (this.row.tarifasDtoList && this.row.tarifasDtoList.length > 0) {
         this.row.tarifasDtoList.forEach((tarifa: any) => {
-          tarifasArray.push(this.createTarifaFormGroup(tarifa));
+          const tarifaGroup = this.createTarifaFormGroup(tarifa);
+          // Add conceptos if they exist
+          if (tarifa.conceptosDtos && tarifa.conceptosDtos.length > 0) {
+            const conceptosArray = tarifaGroup.get('conceptosDtos') as FormArray;
+            tarifa.conceptosDtos.forEach((concepto: any) => {
+              conceptosArray.push(this.createConceptoFormGroup(concepto));
+            });
+          }
+          tarifasArray.push(tarifaGroup);
         });
       } else {
         tarifasArray.push(this.createTarifaFormGroup());
@@ -279,6 +329,10 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
 
   get tarifas() {
     return this.fieldsForm.get('tarifasDtoList') as FormArray;
+  }
+
+  getConceptos(tarifaIndex: number): FormArray {
+    return this.tarifas.at(tarifaIndex).get('conceptosDtos') as FormArray;
   }
 
   goToStep(step: number) {
@@ -356,6 +410,32 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
     } else {
       this.tarifas.removeAt(index);
     }
+  }
+
+  // Conceptos methods
+  addConcepto(tarifaIndex: number) {
+    this.getConceptos(tarifaIndex).push(this.createConceptoFormGroup());
+  }
+
+  removeConcepto(tarifaIndex: number, conceptoIndex: number) {
+    this.getConceptos(tarifaIndex).removeAt(conceptoIndex);
+  }
+
+  getTipoCobro(tipo: string): string {
+    const tipoMap: Record<string, string> = {
+      'por_hora': 'Por hora',
+      'por_persona': 'Por persona',
+      'por_evento': 'Por evento',
+      'mensualidad': 'Mensualidad',
+      'por_club': 'Por club'
+    };
+    return tipo ? tipoMap[tipo] || tipo : 'No especificado';
+  }
+
+  formatDate(date: string | Date | null): string {
+    if (!date) return '-';
+    const d = new Date(date);
+    return d.toLocaleDateString('es-BO');
   }
 
   saveData() {
@@ -453,8 +533,16 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
         clasificadorRuatDto: t.clasificadorRuatDto,
         categoriasDtoList: t.categoriasDtoList.map((cat: any) => ({
           categoriaDto: cat
-        })),
-        conceptosDtos: t.conceptosDtos
+        })),        
+        conceptosDtos: t.conceptosDtos?.map((c: any) => ({
+          uuid: c.uuid || undefined,
+          concepto: c.concepto,
+          tipo: c.tipo,
+          valor: parseFloat(c.valor),
+          desde: this.formatTimeForBackend(c.desde),
+          hasta: this.formatTimeForBackend(c.hasta),
+          activo: c.activo
+        })) || []
       }))
     };
 
@@ -485,6 +573,40 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
       }
     });
     return errors;
+  }
+
+  public openDeleteConfirmation() {
+    if (this.row && this.row.uuid) {
+      const modalRef = this.modalService.open(this.deleteModel, { 
+        centered: true,
+        backdrop: 'static'
+      });
+      
+      modalRef.result.then(
+        (result) => {
+          if (result === 'delete' && this.row.uuid) {
+            this.deleteData(this.row.uuid);
+          }
+        },
+        (reason) => {
+          console.log('Delete operation canceled', reason);
+        }
+      );
+    }
+  }
+
+  public openDeleteModal(content: any, uuid: string) {
+    const modalRef = this.modalService.open(content, { centered: true });
+    modalRef.result.then(
+      (result) => {
+        if (result === 'delete') {
+          this.deleteData(uuid);
+        }
+      },
+      (reason) => {
+        console.log('Delete operation canceled', reason);
+      }
+    );
   }
 
   /* API Requests */
@@ -548,7 +670,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   }
 
   private addField(datos: CampoDeportivo): Observable<any> {
-    return this.canchaService.save(datos).pipe(
+    return this.fieldService.save(datos).pipe(
       tap((result: any) => {
         if (result.status !== 'OK') {
           throw new Error(result.message || 'Error al crear el campo deportivo');
@@ -561,7 +683,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   }
 
   private updateField(campoData: CampoDeportivo): Observable<any> {
-    return this.canchaService.update(campoData).pipe(
+    return this.fieldService.update(campoData).pipe(
       tap((result: any) => {
         if (result.status !== 'OK') {
           throw new Error(result.message || 'Error al actualizar el campo deportivo');
@@ -571,6 +693,24 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
         throw error;
       })
     );
+  }
+  
+  deleteData(uuid: string) {
+    this.fieldService.delete(uuid).subscribe({
+      next: (data: any) => {
+        this.submitted = false;
+        if (data['status'] === 'OK') {
+          this.notify(data.payload, 'success');
+          this.modalService.dismissAll();
+          this.emitList.emit();
+          this.closeModal();
+        }
+      },
+      error: err => {
+        this.submitted = false;
+        this.notify('No se pudo eliminar el registro!', 'error');
+      }
+    });
   }
 
   deleteTarifa(uuid: string): Observable<boolean> {
@@ -590,9 +730,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
     );
   }
 
-  
   public closeModal() {
-    this.accion = '';
     this.submitted = false;
     this.currentStep = 1;
     this.showObsDropdown = [];

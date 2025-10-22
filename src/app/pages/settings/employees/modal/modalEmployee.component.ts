@@ -93,8 +93,9 @@ export class ModalEmployeeComponent {
   ) {}
 
   ngOnInit(): void {
+    this.getUsers();
+    this.getFields();
     this.initializeForm();
-    this.loadData();
   }
 
   private initializeForm(): void {
@@ -105,7 +106,7 @@ export class ModalEmployeeComponent {
       nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       telefono: ['', [Validators.pattern('^\\+?[0-9]{7,15}$'), Validators.minLength(7), Validators.maxLength(15)]],
       activo: [true],
-      fechaAsignacion: ['', [Validators.required]],
+      fechaAsignacion: [new Date(), [Validators.required]],
       fechaFinAsignacion: [''],
       horaEntrada: ['', [Validators.required]],
       horaSalida: ['', [Validators.required]],
@@ -113,11 +114,6 @@ export class ModalEmployeeComponent {
     });
     this.contentForm.setValidators(this.timeRangeValidator);
     this.formDataSet();
-  }
-
-  private loadData(): void {
-    this.getUsers();
-    this.getFields();
   }
   private timeRangeValidator = (control: AbstractControl): { [key: string]: any } | null => {
     if (!(control instanceof UntypedFormGroup)) {
@@ -327,6 +323,22 @@ export class ModalEmployeeComponent {
       }
     });
   }
+  deleteData(uuid:string) {
+    this.encargadoCanchaService.delete(uuid).subscribe({
+      next: (data: any) => {
+        this.submitted = false;
+        if (data.status == 'OK') {
+          this.getUsers();
+          this.notify(data.payload, 'success');
+          this.modalService.dismissAll();
+        }
+      },
+      error: err => {
+        this.submitted = false;
+        this.notify('No se pudo eliminar el registro!', 'error');
+      }
+    });
+  }
 
   public closeModal() {
     this.accion = '';
@@ -359,18 +371,9 @@ export class ModalEmployeeComponent {
     if (!c1 || !c2) {
       return c1 === c2;
     }
-    
-    // Compare by UUID first (most reliable)
     if (c1.uuid && c2.uuid) {
       return c1.uuid === c2.uuid;
     }
-    
-    // Fallback to ID comparison
-    if (c1.id && c2.id) {
-      return c1.id === c2.id;
-    }
-    
-    // Fallback to name comparison
     return c1.nombre === c2.nombre;
   }
   

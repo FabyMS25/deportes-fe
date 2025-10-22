@@ -1,6 +1,6 @@
+import { EstadoRuat, EstadoUsuario } from "../constants/Estados";
 import { Organizacion } from "./organizacion.models";
 import { Reserva } from "./reserva.models";
-
 export interface Contribuyente {
   uuid?: string;
   estado?: boolean;
@@ -9,11 +9,11 @@ export interface Contribuyente {
 
   userName: string;
   password: string;
-  estadoUsuario: string; //ACTIVO ,
+  estadoUsuario: EstadoUsuario;
   verificationCode?: string; //no en bk
 
-  codigoContribuyente?:string;
   tipoContribuyente:string; // NA=Natural, JU=Juridica
+  codigoContribuyente?:string;
   tipoDocumento: string; // CI, CE
   numeroDocumento: string; 
   expedido?: string; // Department code 1-9
@@ -23,18 +23,17 @@ export interface Contribuyente {
   primerApellido: String; 
   segundoApellido?: String; 
   apellidoEsposo?: String;
-  estadoCivil?: string; // SO, CA, VI, DI
   fechaNacimiento?: string;
   genero?: string; //F,M
+  estadoCivil?: string; // SO, CA, VI, DI
   telefono?: string;
   email: string;
   direccion?: string;
 
   nombreCompleto?:String;
   puedeReservarGratis?:boolean;
-  estaActivo?:boolean;
   
-  estadoRuat: string; // ACTIVO, BAJA from RUAT
+  estadoRuat: EstadoRuat;
   verificadoRuat:boolean;// = false;
   fechaVerificacionRuat?:Date|string;
 //    private boolean forAsociacion;

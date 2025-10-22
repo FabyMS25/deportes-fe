@@ -10,6 +10,8 @@ import { UserDataService } from '../signup/user-data.service';
 import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
 import { GlobalComponent } from 'src/app/global-component';
+import { environment } from 'src/environments/environment';
+import { EstadoRuat, EstadoUsuario } from 'src/app/core/constants/Estados';
 
 @Component({
   selector: 'app-twostep',
@@ -46,7 +48,6 @@ export class TwoStepComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       const username = params['username'];
       this.userData = this.userDataService.getTemporaryUserData();
-      console.log(this.userData)
     });
   }
 
@@ -62,13 +63,23 @@ export class TwoStepComponent implements OnInit {
       return;
     }
     try {
-      if (!this.userData.codigoContribuyente) {
-        const ruatResp = await this.registerContribuyente(this.userData);
+      if (!this.userData.verificadoRuat) {
+        const ruatData = { ...this.userData };
+        if (ruatData.fechaNacimiento) {
+          const date = new Date(ruatData.fechaNacimiento);
+          const day = date.getDate().toString().padStart(2, '0');
+          const month = (date.getMonth() + 1).toString().padStart(2, '0');
+          const year = date.getFullYear();
+          ruatData.fechaNacimiento = `${day}/${month}/${year}`;
+        }        
+        const ruatResp = await this.registerContribuyente(ruatData);
         if (!ruatResp) {
           this.notify('No se pudo registrar en el Ruat', 'error');
           return;
         }
-        this.userData.estadoUsuario = 'ACTIVO';
+        this.userData.estadoUsuario = EstadoUsuario.ACTIVO;
+        this.userData.estadoRuat = EstadoRuat.ACTIVO
+        this.userData.verificadoRuat = true
       }
 
       const savedUser = await this.addData(this.userData);
@@ -88,12 +99,12 @@ export class TwoStepComponent implements OnInit {
 
   private sendEmail(username: string, password: string): Promise<void> {
     const email = this.userData.email;
-    return emailjs.send(GlobalComponent.EmailJS.idService, GlobalComponent.EmailJS.idTemplate, {
+    return emailjs.send(environment.EmailJS.idService, environment.EmailJS.idTemplate, {
       from_name: "GAMQ-DEPORTES",
       to_name:this.userData.nombre,
       message: `USUARIO: ${username}, CONTRASEÑA: ${password}`,
       reply_to: email,
-    }, GlobalComponent.EmailJS.publicKey)
+    }, environment.EmailJS.publicKey)
       .then(() => {
         this.notify(`Un email fue enviado a ${email} con su USUARIO y CONTRASEÑA`, 'success');
       })
@@ -109,12 +120,12 @@ export class TwoStepComponent implements OnInit {
     const email = this.userData.email;
     const codigo = this.userData.verificationCode;
 
-    return emailjs.send(GlobalComponent.EmailJS.idService, GlobalComponent.EmailJS.idTemplate, {
+    return emailjs.send(environment.EmailJS.idService, environment.EmailJS.idTemplate, {
       from_name: "GAMQ-DEPORTES",
       to_name:  this.userData.nombre,
       message: `Su código de verificación es: ${codigo}`,
       reply_to: email,
-    }, GlobalComponent.EmailJS.publicKey)
+    }, environment.EmailJS.publicKey)
       .then(() => {
         this.notify(`Un email fue enviado a ${email} con el código de confirmación`, 'success');
       })

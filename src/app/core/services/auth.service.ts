@@ -99,7 +99,6 @@ export class AuthenticationService {
             .then((response: any) => response?.status === 'OK' ? response.payload : null)
             .catch(error => null),
         ]);
-
         if (userPermissions && Array.isArray(userPermissions) && userPermissions.length > 0) {
           const isAdmin = userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin);
             if (userAssignations !== null || isAdmin) {

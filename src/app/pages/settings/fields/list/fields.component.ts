@@ -13,6 +13,7 @@ import { CategoriasService } from 'src/app/core/services/api/categorias.service'
 import { ModalScheduleComponent } from '../modal-schedule/modal-schedule.component';
 import { ModalTarifaComponent } from '../modal-tarifa/modal-tarifa.component';
 import { ModalImportComponent } from '../modal-import/modal-import.component';
+import { EstadoActual } from 'src/app/core/constants/Estados';
 
 @Component({
   selector: 'app-fields',
@@ -56,8 +57,17 @@ export class FieldsComponent {
     this.itemsList = [
       {name: 'Complejo', prop: 'complejoDto.nombre', visible:true},
       {name: 'Cancha Codigo', prop: 'codigo', visible:false},
+      {name: 'Nombre', prop: 'nombre', visible:true},
+      {name: 'Categoría', prop: 'categoria', tag:true, visible:true},
       {name: 'Superficie',prop: 'superficieDto.descripcion', visible:true},
-      {name: 'Tipo Cobro', prop: 'tipo', tag:true, visible:true},
+      {name: 'Iluminación', prop: 'tieneIluminacion', tag:true, visible:false},
+      {name: 'Acceso Libre', prop: 'accesoLibre',tag:true, visible:false},
+      {name: 'Requiere Aprobación', prop: 'requiereAprobacion', tag:true, visible:false},
+      {name: 'Estado', prop: 'estadoActual', tag:true, visible:false},
+      {name: 'Dimensiones', prop: 'dimensiones', visible:false},
+      {name: 'Capacidad', prop: 'capacidadPersonas', visible:false},  
+      {name: 'Observaciones', prop: 'observaciones', visible:false},
+      {name: 'Fecha Creación', prop: 'fechaCreacion', date:true, visible:false},
     ];
     this.getCategories();
     this.getFields()
@@ -275,5 +285,20 @@ export class FieldsComponent {
       if (result.dismiss === Swal.DismissReason.timer) {
       }
     });
+  }
+
+  getBadgeClass(estado: string): string {
+    switch (estado) {
+      case EstadoActual.ACTIVO:
+        return 'success';
+      case EstadoActual.MANTENIMIENTO:
+        return 'warning';
+      case EstadoActual.CERRADO:
+        return 'danger';
+      case EstadoActual.EVENTO_MUNICIPAL:
+        return 'info';
+      default:
+        return 'secondary';
+    }
   }
 }

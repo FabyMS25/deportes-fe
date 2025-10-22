@@ -60,10 +60,10 @@
                 [actions]="{
                   show: canActivate.includes('VER'),
                   edit: canActivate.includes('ACTUALIZAR'),
-                  delete: canActivate.includes('ELIMINAR'),}"
+                  close: canActivate.includes('ELIMINAR')?'Eliminar':'',}"
                     (showItemEmitter)="openModal($event,content,'show')"
                     (editItemEmitter)="openModal($event,content,'edit')"
-                    (deleteItemEmitter)="deleteModal(deleteModel,$event)"
+                    (closeItemEmitter)="deleteModal(deleteModel,$event)"
                 [multiCheck]="canActivate.includes('CREAR')"
                 (selectedItemEmitter)="getSelectedItems($event)" 
                 [viewMode]="viewMode"   
@@ -76,12 +76,20 @@
 
 <!-- Modals -->
 <ng-template #content role="document" let-modal>
-    <div class="modal-header bg-light p-3">
-        <h5 class="modal-title" class="tablelist-form" autocomplete="off" *ngIf="accion === ''" ngbAutofocus>Agregar Categoría</h5>
-        <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>Editar Datos Categoría</h5>
-        <h5 class="modal-title" *ngIf="accion === 'show'" ngbAutofocus>Categoría</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-            id="close-modal" (click)="closeModal()"></button>
+    <div class="modal-header bg-info-subtle p-2">
+        <h5 class="modal-title" *ngIf="accion === ''" ngbAutofocus>
+            <i class="ri-football-line me-2"></i>Agregar Categoría
+        </h5>
+        <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>
+            <i class="ri-football-line me-2"></i>Editar Datos de Categoría
+        </h5>
+        <h5 class="modal-title" *ngIf="accion === 'show'" ngbAutofocus>
+            <i class="ri-football-line me-2"></i>Categoría
+        </h5>
+        <button type="button" class="btn-close"
+            data-dismiss="modal" aria-label="Cerrar"
+            [disabled]="submitted" (click)="closeModal()">
+        </button>
     </div>
     <form (ngSubmit)="saveData()" [formGroup]="contentForm" class="tablelist-form" autocomplete="off">
         <div class="modal-body">
@@ -89,7 +97,7 @@
             <div class="row g-3">
                 <div class="col-lg-12">
                     <div>
-                        <label for="codigo-field" class="form-label">Código</label>
+                        <label for="codigo-field" class="form-label mb-0">Código</label>
                         <input type="text" id="codigo-field" class="form-control"
                             placeholder="Ingrese el código de la Categoría" required formControlName="codigo"
                             [ngClass]="{ 'is-invalid': submitted && form['codigo'].errors }" />
@@ -104,7 +112,7 @@
                 </div>
                 <div class="col-lg-12">
                     <div>
-                        <label for="nombre-field" class="form-label">Nombre</label>
+                        <label for="nombre-field" class="form-label mb-0">Nombre</label>
                         <input type="text" id="nombre-field" class="form-control"
                             placeholder="Ingrese el nombre de la Categoría" required formControlName="nombre"
                             [ngClass]="{ 'is-invalid': submitted && form['nombre'].errors }" />
@@ -119,14 +127,14 @@
                 </div>
                 <div class="col-lg-12">
                     <div>
-                        <label for="descripcion-field" class="form-label">Descripción</label>
+                        <label for="descripcion-field" class="form-label mb-0">Descripción</label>
                         <textarea id="descripcion-field" class="form-control" rows="3"
                             placeholder="Ingrese una descripción (opcional)" formControlName="descripcion"></textarea>
                     </div>
                 </div>
                 <div class="col-lg-12">
                     <div>
-                        <label for="tipo-field" class="form-label">Tipo de Cobro</label>
+                        <label for="tipo-field" class="form-label mb-0">Tipo de Cobro</label>
                         <select class="form-select" aria-label="tipo" formControlName="tipo"
                              [ngClass]="{'is-invalid': submitted && form['tipo'].errors }" required>
                             <option selected disabled class="text-muted" value="">Seleccione tipo de Cobro</option>

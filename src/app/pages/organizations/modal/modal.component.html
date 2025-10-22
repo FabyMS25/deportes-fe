@@ -1,0 +1,395 @@
+<div class="modal-content" *ngIf="accion!=='delete';else deleteModel">
+    <div id="elmLoader" *ngIf="showLoading" class="text-center py-3">
+        <div class="spinner-border text-primary avatar-sm" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="text-muted mt-2">Procesando...</p>
+    </div>
+
+    <div class="modal-header bg-info-subtle p-2">
+        <h5 class="modal-title" *ngIf="accion === ''" ngbAutofocus>
+            <i class="ri-parent-line me-2"></i>Agregar Organización
+        </h5>
+        <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>
+            <i class="ri-parent-fill me-2"></i>Editar Datos de Organización
+        </h5>
+        <h5 class="modal-title" *ngIf="accion === 'show'" ngbAutofocus>
+            <i class="ri-eye-line me-2"></i>Ver Organización
+        </h5>
+        <button type="button"
+            class="btn-close"
+            data-dismiss="modal" 
+            aria-label="Cerrar"
+            [disabled]="showLoading"
+            (click)="closeModal()">
+        </button>
+    </div>
+
+    <form (ngSubmit)="saveData()" class="tablelist-form" autocomplete="off" [formGroup]="contentForm" *ngIf="accion !== 'show'">
+        <div class="modal-body">
+            <div class="row g-3">
+                <div class="col-lg-12">
+                    <label for="nombre-field" class="form-label mb-0">
+                        <i class="ri-building-2-line me-2"></i>Nombre de la Organización <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="nombre-field" 
+                           formControlName="nombre"
+                           placeholder="Ingrese el nombre de la organización"
+                           [ngClass]="{ 'is-invalid': submitted && form['nombre'].errors }"
+                           [readonly]="accion === 'show'" />
+                    <div *ngIf="submitted && form['nombre'].errors" class="invalid-feedback">
+                        <div *ngIf="form['nombre'].errors['required']">
+                            <i class="ri-error-warning-line me-1"></i>El nombre es requerido
+                        </div>
+                        <div *ngIf="form['nombre'].errors['minlength']">
+                            <i class="ri-error-warning-line me-1"></i>El nombre debe tener al menos 2 caracteres
+                        </div>
+                        <div *ngIf="form['nombre'].errors['maxlength']">
+                            <i class="ri-error-warning-line me-1"></i>El nombre no puede exceder 200 caracteres
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <label for="tipoOrganizacion-field" class="form-label mb-0">
+                        <i class="ri-shield-user-line me-2"></i>Tipo de Organización <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" 
+                            id="tipoOrganizacion-field" 
+                            formControlName="tipoOrganizacion"
+                            [ngClass]="{ 'is-invalid': submitted && form['tipoOrganizacion'].errors }"
+                            [disabled]="accion === 'show'">
+                        <option value="" disabled>Seleccione el tipo...</option>
+                        <option *ngFor="let tipo of tiposOrganizacion" [value]="tipo.value">
+                            {{tipo.label}}
+                        </option>
+                    </select>
+                    <div *ngIf="submitted && form['tipoOrganizacion'].errors" class="invalid-feedback">
+                        <div *ngIf="form['tipoOrganizacion'].errors['required']">
+                            <i class="ri-error-warning-line me-1"></i>El tipo de organización es requerido
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <label for="nroNit-field" class="form-label mb-0">
+                        <i class="ri-id-card-line me-2"></i>NIT
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="nroNit-field" 
+                           formControlName="nroNit"
+                           placeholder="Número de Identificación Tributaria"
+                           [ngClass]="{ 'is-invalid': submitted && form['nroNit'].errors }"
+                           [readonly]="accion === 'show'" />
+                    <div *ngIf="submitted && form['nroNit'].errors" class="invalid-feedback">
+                        <div *ngIf="form['nroNit'].errors['maxlength']">
+                            <i class="ri-error-warning-line me-1"></i>El NIT no puede exceder 20 caracteres
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <label for="telefono-field" class="form-label mb-0">
+                        <i class="ri-phone-line me-2"></i>Teléfono
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="ri-phone-fill"></i>
+                        </span>
+                        <input type="tel" 
+                               class="form-control" 
+                               id="telefono-field" 
+                               formControlName="telefono"
+                               placeholder="Ej: +591 70123456"
+                               [ngClass]="{ 'is-invalid': form['telefono'].errors && (form['telefono'].touched || submitted) }"
+                               [readonly]="accion === 'show'" />
+                    </div>
+                    <div *ngIf="form['telefono'].errors && (form['telefono'].touched || submitted)">
+                        <small class="text-danger d-block mt-1" *ngIf="form['telefono'].errors['pattern']">
+                            <i class="ri-error-warning-line me-1"></i>Ingrese un número válido (7-15 dígitos, opcional +)
+                        </small>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <label for="email-field" class="form-label mb-0">
+                        <i class="ri-mail-line me-2"></i>Email
+                    </label>
+                    <input type="email" 
+                           class="form-control" 
+                           id="email-field" 
+                           formControlName="email"
+                           placeholder="organizacion@ejemplo.com"
+                           [ngClass]="{ 'is-invalid': submitted && form['email'].errors }"
+                           [readonly]="accion === 'show'" />
+                    <div *ngIf="submitted && form['email'].errors" class="invalid-feedback">
+                        <div *ngIf="form['email'].errors['email']">
+                            <i class="ri-error-warning-line me-1"></i>Ingrese un email válido
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <label for="personeriaJuridica-field" class="form-label mb-0">
+                        <i class="ri-file-text-line me-2"></i>Personería Jurídica
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="personeriaJuridica-field" 
+                           formControlName="personeriaJuridica"
+                           placeholder="Número de personería jurídica"
+                           [ngClass]="{ 'is-invalid': submitted && form['personeriaJuridica'].errors }"
+                           [readonly]="accion === 'show'" />
+                    <div *ngIf="submitted && form['personeriaJuridica'].errors" class="invalid-feedback">
+                        <div *ngIf="form['personeriaJuridica'].errors['maxlength']">
+                            <i class="ri-error-warning-line me-1"></i>La personería jurídica no puede exceder 100 caracteres
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                            <div class="form-check form-switch mt-4 ">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       role="switch"
+                                       id="activo-field" 
+                                       formControlName="activo"
+                                       [disabled]="accion === 'show'">
+                                <label class="form-check-label fw-medium" for="activo-field">
+                                    <i class="ri-checkbox-circle-line me-2"></i>Organización Activa
+                                </label>
+                            </div>
+                </div>
+                <div class="col-lg-12">
+                    <label for="direccion-field" class="form-label mb-0">
+                        <i class="ri-map-pin-line me-2"></i>Dirección
+                    </label>
+                    <textarea class="form-control" 
+                              id="direccion-field" 
+                              formControlName="direccion"
+                              placeholder="Ingrese la dirección completa"
+                              rows="2"
+                              [ngClass]="{ 'is-invalid': submitted && form['direccion'].errors }"
+                              [readonly]="accion === 'show'"></textarea>
+                    <div *ngIf="submitted && form['direccion'].errors" class="invalid-feedback">
+                        <div *ngIf="form['direccion'].errors['maxlength']">
+                            <i class="ri-error-warning-line me-1"></i>La dirección no puede exceder 500 caracteres
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-12">
+                    <label for="representanteDto" class="form-label mb-0">
+                        <i class="ri-user-star-line me-2"></i>Representante Legal <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" 
+                            id="representanteDto" 
+                            formControlName="representanteDto" 
+                            required
+                            [compareWith]="compareContribuyente"
+                            [ngClass]="{ 'is-invalid': submitted && form['representanteDto'].errors }"
+                            [disabled]="accion === 'show'">
+                        <option value="" disabled>Seleccione un representante...</option>
+                        <option [ngValue]="contribuyente" *ngFor="let contribuyente of contribuyentesList">
+                            {{ contribuyente.nombreCompleto || (contribuyente.nombre + ' ' + contribuyente.primerApellido + ' ' + (contribuyente.segundoApellido || '')) }} 
+                            - {{ contribuyente.numeroDocumento }}
+                            <span *ngIf="contribuyente.nroNit">(NIT: {{ contribuyente.nroNit }})</span>
+                        </option>
+                    </select>
+                    <div *ngIf="submitted && form['representanteDto'].errors" class="invalid-feedback">
+                        <div *ngIf="form['representanteDto'].errors['required']">
+                            <i class="ri-error-warning-line me-1"></i>Debe seleccionar un representante
+                        </div>
+                    </div>
+                    <small class="form-text text-muted" *ngIf="accion !== 'show'">
+                        <i class="ri-information-line me-1"></i>
+                        El representante debe ser un contribuyente registrado en el sistema
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer bg-light py-2">
+            <div class="d-flex justify-content-between w-100 align-items-center">
+                <div class="d-flex align-items-center">
+                    <small class="text-muted">
+                        <i class="ri-information-line me-1"></i>
+                        <span class="text-danger">*</span> Campos obligatorios
+                    </small>
+                </div>
+                <div class="hstack gap-2">
+                    <button type="button" 
+                            class="btn btn-light" 
+                            [disabled]="showLoading"
+                            (click)="closeModal()">
+                        <i class="ri-close-line me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" 
+                            class="btn btn-success"
+                            [disabled]="showLoading || contentForm.invalid"
+                            id="add-btn">
+                        <span *ngIf="showLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        <i *ngIf="!showLoading" [class]="accion === 'edit' ? 'ri-save-line me-1' : 'ri-add-line me-1'"></i>
+                        {{ accion === 'edit' ? 'Actualizar' : 'Guardar' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="modal-body" *ngIf="accion === 'show' && row">
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0 me-3">
+                <i class="ri-information-line text-muted fs-5"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="fw-semibold mb-1">Información General</h6>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6">
+                <small class="text-muted d-block">Tipo de Organización:</small>
+                <div class="fw-medium">{{ getTipoOrganizacionLabel(row.tipoOrganizacion) }}</div>
+            </div>
+            <div class="col-sm-6">
+                <small class="text-muted d-block">NIT:</small>
+                <div class="fw-medium">{{ row.nroNit || 'No registrado' }}</div>
+            </div>
+            <div class="col-sm-6">
+                <small class="text-muted d-block">Personería Jurídica:</small>
+                <div class="fw-medium">{{ row.personeriaJuridica || 'No registrada' }}</div>
+            </div>
+            <div class="col-sm-6">
+                <small class="text-muted d-block">Estado:</small>
+                <div class="fw-medium">
+                    <span class="badge" [ngClass]="row.activo ? 'bg-success' : 'bg-danger'">
+                        {{ row.activo ? 'Activo' : 'Inactivo' }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-12">
+                <small class="text-muted d-block">Dirección:</small>
+                <div class="fw-medium">{{ row.direccion || 'No registrada' }}</div>
+            </div>
+        </div>
+        <hr>
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0 me-3">
+                <i class="ri-contacts-line text-muted fs-5"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="fw-semibold mb-1">Información de Contacto</h6>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6">
+                <small class="text-muted d-block">Teléfono:</small>
+                <div class="fw-medium">{{ row.telefono || 'No registrado' }}</div>
+            </div>
+            <div class="col-sm-6">
+                <small class="text-muted d-block">Email:</small>
+                <div class="fw-medium">{{ row.email || 'No registrado' }}</div>
+            </div>
+        </div>
+        <hr *ngIf="row.representanteDto">
+        <div *ngIf="row.representanteDto">
+            <div class="d-flex align-items-center">
+                <div class="flex-shrink-0 me-3">
+                    <i class="ri-user-star-line text-muted fs-5"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="fw-semibold mb-1">Representante Legal</h6>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-6 mb-2">
+                    <small class="text-muted d-block">Nombre Completo:</small>
+                    <div class="fw-medium">
+                        {{ row.representanteDto.nombreCompleto || 
+                          (row.representanteDto.nombre + ' ' + row.representanteDto.primerApellido + ' ' + (row.representanteDto.segundoApellido || '')) }}
+                    </div>
+                </div>
+                <div class="col-sm-6 mb-2">
+                    <small class="text-muted d-block">Documento:</small>
+                    <div class="fw-medium">
+                        {{ row.representanteDto.numeroDocumento }}
+                        <span *ngIf="row.representanteDto.expedido"> - {{ row.representanteDto.expedido }}</span>
+                    </div>
+                </div>
+                <div class="col-sm-6 mb-2" *ngIf="row.representanteDto.nroNit">
+                    <small class="text-muted d-block">NIT:</small>
+                    <div class="fw-medium">{{ row.representanteDto.nroNit }}</div>
+                </div>
+                <div class="col-sm-6 mb-2">
+                    <small class="text-muted d-block">Email:</small>
+                    <div class="fw-medium">{{ row.representanteDto.email || 'No registrado' }}</div>
+                </div>
+                <div class="col-sm-6 mb-2">
+                    <small class="text-muted d-block">Teléfono:</small>
+                    <div class="fw-medium">{{ row.representanteDto.telefono || 'No registrado' }}</div>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0 me-3">
+                <i class="ri-history-line text-muted fs-5"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="fw-semibold mb-1">Información del Sistema</h6>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6">
+                <small class="text-muted d-block">Fecha de Creación:</small>
+                <div class="fw-medium">{{ formatDate(row.fechaCreacion) }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer bg-light py-2" *ngIf="accion === 'show'">
+        <button type="button" 
+                class="btn btn-secondary"
+                (click)="closeModal()">
+            <i class="ri-close-line me-1"></i>Cerrar
+        </button>
+    </div>
+</div>
+
+<ng-template #deleteModel>
+    <div class="modal-content" *ngIf="row.uuid">
+        <div class="modal-header">
+            <button type="button" class="btn-close" 
+                    (click)="closeModal()"
+                    [disabled]="submitted"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mt-2 text-center">
+                <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
+                    colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
+                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+                    <h4>¿Está seguro de eliminar la Organización?</h4>
+                    <p class="text-muted mx-4 mb-0">
+                        Esta acción eliminará permanentemente el registro de la Organización "<strong>{{row.nombre}}</strong>" 
+                        y todo dato asociado.
+                    </p>
+                </div>
+            </div>
+            <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+                <button class="btn btn-link link-success fw-medium text-decoration-none" 
+                        (click)="closeModal()"
+                        [disabled]="submitted">
+                    <i class="ri-close-line me-1 align-middle"></i> Cancelar
+                </button>
+                <button type="button" 
+                        class="btn w-sm btn-danger" 
+                        (click)="deleteData(row.uuid)"
+                        [disabled]="submitted">
+                    <span *ngIf="!submitted">
+                        <i class="ri-delete-bin-line me-1 align-middle"></i> Sí, Eliminar
+                    </span>
+                    <span *ngIf="submitted">
+                        <span class="spinner-border spinner-border-sm me-2"></span>Eliminando...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</ng-template>

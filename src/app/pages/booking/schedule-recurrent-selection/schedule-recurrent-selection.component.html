@@ -1,33 +1,22 @@
 <div class="recurrent-schedule-container">
   <div class="row">
-    <!-- Main Content -->
     <div class="col-lg-8">
-      <div class="card">
-        <div class="card-header">
-          <h4 class="card-title mb-0">
-            <i class="ri-calendar-2-line me-2"></i>
-            Configurar Reserva Recurrente
-          </h4>
-          <p class="text-muted small mb-0">Seleccione los días y horarios para entrenamientos programados</p>
-        </div>
-        
+      <div class="card">        
         <div class="card-body">
-          <!-- Date Range -->
           <div class="row mb-4">
             <div class="col-md-6">
               <label class="form-label fw-medium">
-                <i class="ri-calendar-check-line me-1"></i>
+                <i class="bx bx-calendar-check me-1"></i>
                 Fecha de Inicio
               </label>
               <input type="date" 
                      class="form-control" 
                      [(ngModel)]="fechaInicio"
                      (change)="onFechaInicioChange()">
-                     <!-- [min]="(new Date()).toISOString().split('T')[0]"> -->
             </div>
             <div class="col-md-6">
               <label class="form-label fw-medium">
-                <i class="ri-calendar-close-line me-1"></i>
+                <i class="bx bx-calendar-x me-1"></i>
                 Fecha de Fin
               </label>
               <input type="date" 
@@ -37,23 +26,20 @@
                      [min]="fechaInicio">
             </div>
           </div>
-
-          <!-- Error Message -->
           <div class="alert alert-danger" *ngIf="errorMessage">
             <i class="ri-error-warning-line me-2"></i>
             {{ errorMessage }}
           </div>
-
-          <!-- Days of Week Selection -->
           <div class="card bg-light mb-4">
             <div class="card-body">
               <h6 class="mb-3">
                 <i class="ri-calendar-event-line me-1"></i>
                 Seleccione Días y Horarios
+                <small class="text-muted">(Puede agregar múltiples horarios por día)</small>
               </h6>
               
               <div class="days-grid">
-                <div *ngFor="let dia of diasSemana" class="day-selector-card">
+                <div *ngFor="let dia of diasSemana" class="day-selector-card mb-3">
                   <div class="day-card" 
                        [class.selected]="dia.selected"
                        (click)="toggleDay(dia)">
@@ -67,139 +53,138 @@
                       </label>
                     </div>
                   </div>
-                  
-                  <!-- Time Selection (only if day is selected) -->
-                  <div class="time-selection mt-2" *ngIf="dia.selected">
-                    <div class="row g-2">
-                      <div class="col-6">
-                        <label class="form-label small text-muted">Inicio</label>
-                        <input type="time" 
-                               class="form-control form-control-sm" 
-                               [(ngModel)]="dia.horaInicio"
-                               (change)="updateDayTime(dia)"
-                               [min]="minTime"
-                               [max]="maxTime">
-                      </div>
-                      <div class="col-6">
-                        <label class="form-label small text-muted">Fin</label>
-                        <input type="time" 
-                               class="form-control form-control-sm" 
-                               [(ngModel)]="dia.horaFin"
-                               (change)="updateDayTime(dia)"
-                               [min]="minTime"
-                               [max]="maxTime">
+                  <div class="time-slots-container" *ngIf="dia.selected">
+                    <div *ngFor="let slot of dia.horarios; let i = index" 
+                         class="time-slot-item mb-1 p-2 rounded border">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="flex-grow-1">
+                          <div class="row g-2">
+                            <div class="col-5">
+                              <label class="form-label small text-muted mb-1">Inicio</label>
+                              <input type="time" 
+                                     class="form-control form-control-sm" 
+                                     [(ngModel)]="slot.horaInicio"
+                                     (change)="updateTimeSlot(dia, slot)"
+                                     [min]="minTime"
+                                     [max]="maxTime">
+                            </div>
+                            <div class="col-5">
+                              <label class="form-label small text-muted mb-1">Fin</label>
+                              <input type="time" 
+                                     class="form-control form-control-sm" 
+                                     [(ngModel)]="slot.horaFin"
+                                     (change)="updateTimeSlot(dia, slot)"
+                                     [min]="minTime"
+                                     [max]="maxTime">
+                            </div>
+                            <div class="col-2 d-flex align-items-end">
+                              <button type="button" 
+                                      class="btn btn-sm btn-outline-danger w-100"
+                                      (click)="removeTimeSlot(dia, i)"
+                                      [disabled]="dia.horarios.length === 1"
+                                      title="Eliminar horario">
+                                <i class="ri-delete-bin-line"></i>
+                              </button>
+                            </div>
+                          </div>
+                          <small class="text-muted d-block mt-1">
+                            <i class="ri-time-line me-1"></i>
+                            Duración: {{ (calculateDuration(slot.horaInicio, slot.horaFin)) | number:'1.1-1' }}h
+                          </small>
+                        </div>
                       </div>
                     </div>
-                    <small class="text-muted d-block mt-1">
-                      <i class="ri-time-line me-1"></i>
-                      Duración: {{ (calculateDuration(dia.horaInicio, dia.horaFin)) | number:'1.1-1' }}h
-                    </small>
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-primary w-100"
+                            (click)="addTimeSlot(dia)">
+                      <i class="ri-add-line me-1"></i>
+                      Agregar otro horario
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
-          <!-- Calendar View -->
-<!-- Calendar View -->
-<div class="calendar-section">
-  <h6 class="mb-3">
-    <i class="ri-calendar-2-line me-1"></i>
-    Vista de Calendario
-    <small class="text-muted">(Los días resaltados serán reservados)</small>
-  </h6>
-  
-  <div *ngFor="let monthData of calendarMonths" class="calendar-month mb-4">
-    <div class="month-header text-center mb-3">
-      <h5 class="mb-0">{{ monthData.monthName }} {{ monthData.year }}</h5>
-    </div>
-    
-    <div class="calendar-grid">
-      <!-- Weekday headers -->
-      <div class="calendar-header">Dom</div>
-      <div class="calendar-header">Lun</div>
-      <div class="calendar-header">Mar</div>
-      <div class="calendar-header">Mié</div>
-      <div class="calendar-header">Jue</div>
-      <div class="calendar-header">Vie</div>
-      <div class="calendar-header">Sáb</div>
-      
-      <!-- Calendar days -->
-      <ng-container *ngFor="let week of monthData.weeks">
-        <div *ngFor="let dayCell of week" 
-             class="calendar-day"
-             [class.empty]="dayCell.empty"
-             [class.out-of-range]="dayCell.isInRange === false"
-             [class.selectable]="dayCell.isSelectable"
-             [class.has-schedule]="dayCell.hasSchedule"
-             [class.reserved]="dayCell.isReserved"
-             (click)="toggleDateInCalendar(dayCell)">
-          
-          <div class="day-content">
-            <span *ngIf="!dayCell.empty" class="day-number">{{ dayCell.day }}</span>
+          <div class="calendar-section">
+            <h6 class="mb-3">
+              <i class="ri-calendar-2-line me-1"></i>
+              Vista de Calendario
+              <small class="text-muted">(Los días resaltados serán reservados)</small>
+            </h6>
             
-            <!-- Reservation indicators -->
-            <div class="reservation-indicators" *ngIf="!dayCell.empty">
-              <i *ngIf="dayCell.hasSchedule" class="ri-checkbox-circle-fill schedule-icon" title="Día programado"></i>
-              <i *ngIf="dayCell.isReserved" class="ri-alert-fill conflict-icon" title="Conflicto con reserva existente"></i>
+            <div *ngFor="let monthData of calendarMonths" class="calendar-month mb-4">
+              <div class="month-header text-center mb-3">
+                <h5 class="mb-0">{{ monthData.monthName }} {{ monthData.year }}</h5>
+              </div>
+              
+              <div class="calendar-grid">
+                <!-- Weekday headers -->
+                <div class="calendar-header">Dom</div>
+                <div class="calendar-header">Lun</div>
+                <div class="calendar-header">Mar</div>
+                <div class="calendar-header">Mié</div>
+                <div class="calendar-header">Jue</div>
+                <div class="calendar-header">Vie</div>
+                <div class="calendar-header">Sáb</div>
+                
+                <!-- Calendar days -->
+                <ng-container *ngFor="let week of monthData.weeks">
+                  <div *ngFor="let dayCell of week" 
+                       class="calendar-day"
+                       [class.empty]="dayCell.empty"
+                       [class.out-of-range]="dayCell.isInRange === false"
+                       [class.selectable]="dayCell.isSelectable"
+                       [class.has-schedule]="dayCell.hasSchedule"
+                       [class.reserved]="dayCell.isReserved"
+                       (click)="toggleDateInCalendar(dayCell)">
+                    
+                    <div class="day-content">
+                      <span *ngIf="!dayCell.empty" class="day-number">{{ dayCell.day }}</span>
+                      
+                      <!-- Reservation indicators -->
+                      <div class="reservation-indicators" *ngIf="!dayCell.empty">
+                        <i *ngIf="dayCell.hasSchedule" class="ri-checkbox-circle-fill schedule-icon" title="Día programado"></i>
+                        <i *ngIf="dayCell.isReserved" class="ri-alert-fill conflict-icon" title="Conflicto con reserva existente"></i>
+                      </div>
+                      
+                      <!-- Time info for reserved days -->
+                      <div *ngIf="dayCell.hasSchedule && !dayCell.empty" class="time-info">
+                        <small class="time-text">{{ getDayTimes(dayCell.dayName) }}</small>
+                      </div>
+                    </div>
+                  </div>
+                </ng-container>
+              </div>
+              
+              <!-- Calendar Legend -->
+              <div class="calendar-legend mt-3">
+                <div class="legend-item">
+                  <div class="legend-color has-schedule"></div>
+                  <span class="legend-text">Día reservado</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color reserved"></div>
+                  <span class="legend-text">Conflicto de reserva</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color out-of-range"></div>
+                  <span class="legend-text">Fuera del rango</span>
+                </div>
+              </div>
             </div>
-            
-            <!-- Time info for reserved days -->
-            <div *ngIf="dayCell.hasSchedule && !dayCell.empty" class="time-info">
-              <small class="time-text">{{ getDayTime(dayCell.dayName) }}</small>
-            </div>
-          </div>
-        </div>
-      </ng-container>
-    </div>
-    
-    <!-- Calendar Legend -->
-    <div class="calendar-legend mt-3">
-      <div class="legend-item">
-        <div class="legend-color has-schedule"></div>
-        <span class="legend-text">Día reservado</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color reserved"></div>
-        <span class="legend-text">Conflicto de reserva</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color out-of-range"></div>
-        <span class="legend-text">Fuera del rango</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-          <!-- Actions -->
-          <div class="d-flex justify-content-between mt-4">
-            <button type="button" class="btn btn-light" (click)="back()">
-              <i class="ri-arrow-left-line me-1"></i>
-              Anterior
-            </button>
-            <button type="button" 
-                    class="btn btn-primary" 
-                    [disabled]="!canConfirm"
-                    (click)="confirmar()">
-              <i class="ri-check-line me-1"></i>
-              Confirmar Horarios
-            </button>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Summary Sidebar -->
     <div class="col-lg-4">
       <div class="card">
         <div class="card-header bg-success-subtle">
           <h6 class="mb-0 text-success">
             <i class="ri-calendar-check-line me-1"></i>
-            Resumen de Reserva Recurrente
+            Resumen de Reserva
           </h6>
         </div>
         <div class="card-body">
-          <!-- Period -->
           <div class="summary-item mb-3">
             <label class="small text-muted d-block mb-1">Período</label>
             <div class="d-flex align-items-center gap-2">
@@ -211,54 +196,52 @@
               </div>
             </div>
           </div>
-
           <hr>
-
-          <!-- Selected Days -->
           <div class="summary-item mb-3">
-            <label class="small text-muted d-block mb-2">Días Seleccionados</label>
+            <label class="small text-muted d-block mb-2">Días y Horarios Seleccionados</label>
             <div class="alert alert-info small mb-2" *ngIf="selectedDaysCount === 0">
               <i class="ri-information-line me-1"></i>
               Seleccione al menos un día
             </div>
             <div *ngIf="selectedDaysCount > 0">
               <div *ngFor="let dia of diasSemana" class="mb-2">
-                <div *ngIf="dia.selected" class="d-flex align-items-center gap-2 p-2 bg-light rounded">
-                  <i class="ri-checkbox-circle-fill text-success"></i>
-                  <div class="flex-grow-1">
-                    <div class="fw-medium small">{{ dia.diaDisplay }}</div>
-                    <small class="text-muted">
-                      {{ dia.horaInicio }} - {{ dia.horaFin }}
-                    </small>
+                <div *ngIf="dia.selected">
+                  <div class="d-flex align-items-center gap-2 p-2 bg-light rounded mb-1">
+                    <i class="ri-checkbox-circle-fill text-success"></i>
+                    <div class="flex-grow-1">
+                      <div class="fw-medium small">{{ dia.diaDisplay }}</div>
+                      <small class="text-muted">{{ dia.horarios.length }} horario(s)</small>
+                    </div>
+                  </div>
+                  <div class="ps-4">
+                    <div *ngFor="let slot of dia.horarios" class="small text-muted mb-1">
+                      <i class="ri-time-line me-1"></i>
+                      {{ slot.horaInicio }} - {{ slot.horaFin }}
+                      <span class="badge bg-secondary-subtle text-secondary ms-1">
+                        {{ calculateDuration(slot.horaInicio, slot.horaFin) | number:'1.1-1' }}h
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
           <hr>
-
-          <!-- Statistics -->
           <div class="stats-grid">
             <div class="stat-card text-center p-3 bg-light rounded">
               <div class="stat-value text-primary h3 mb-1">{{ selectedDaysCount }}</div>
               <div class="stat-label small text-muted">Días/Semana</div>
-            </div>
-            
+            </div>            
             <div class="stat-card text-center p-3 bg-light rounded">
               <div class="stat-value text-success h3 mb-1">{{ totalSessions }}</div>
               <div class="stat-label small text-muted">Sesiones Totales</div>
-            </div>
-            
+            </div>            
             <div class="stat-card text-center p-3 bg-light rounded">
               <div class="stat-value text-info h3 mb-1">{{ totalHours | number:'1.0-0' }}</div>
               <div class="stat-label small text-muted">Horas Totales</div>
             </div>
           </div>
-
           <hr>
-
-          <!-- Tariff Info -->
           <div class="summary-item mb-3">
             <label class="small text-muted d-block mb-1">Tarifa Mensual</label>
             <div class="h4 text-success mb-0">
@@ -266,8 +249,34 @@
             </div>
             <small class="text-muted">Por mes de entrenamiento</small>
           </div>
-
-          <!-- Info Box -->
+          <div class="summary-item mb-3" *ngIf="tablero.length > 0">
+            <label class="small text-muted d-block mb-2">
+              <i class="ri-list-check me-1"></i>
+              Resumen de Horarios
+            </label>
+            <div class="small">
+              <div *ngFor="let day of tablero; let i = index" class="mb-1">
+                <span class="badge bg-primary-subtle text-primary me-1">
+                  {{ i === 0 ? 'Lun' : i === 1 ? 'Mar' : i === 2 ? 'Mié' : i === 3 ? 'Jue' : i === 4 ? 'Vie' : i === 5 ? 'Sáb' : 'Dom' }}
+                </span>
+                <span *ngIf="day.length === 0" class="text-muted">Sin horarios</span>
+                <span *ngIf="day.length > 0" class="text-muted">
+                  {{ day.length }} horario(s)
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">          
+          <div class="d-flex justify-content-end">
+            <button type="button" 
+                    class="btn btn-primary" 
+                    [disabled]="!canConfirm"
+                    (click)="confirmar()">
+              <i class="ri-check-line me-1"></i>
+              Confirmar Horarios
+            </button>
+          </div>
         </div>
       </div>
     </div>

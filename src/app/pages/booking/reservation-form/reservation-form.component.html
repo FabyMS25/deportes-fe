@@ -1,460 +1,753 @@
-
-<div class="card border-0 shadow-sm mb-2">
-  <div class="card-header">
-    <div class="d-flex align-items-center">
-      <div class="flex-grow-1">
-        <h4 class="card-title mb-1 text-primary">
-          <i class="ri-calendar-check-line me-2"></i>
-          Confirmar Reserva - {{ bookingType }}
-        </h4>
-        <small class="text-muted">
-          Complete la información requerida para finalizar su reserva
-        </small>
-      </div>
-      <div class="flex-shrink-0 d-flex align-items-center gap-2">
-        <span class="badge bg-primary-subtle text-primary fs-6 ms-2">
-          {{ bookingType === 'puntual' ? 'Reserva Puntual' : 'Reserva Recurrente' }}
-        </span>
-        <button type="button" class="btn btn-outline-secondary"
-          (click)="back()">
-          <i class="ri-arrow-left-line me-1"></i>
-          Volver
-        </button>
-      </div>
+<div class="reservation-form-wrapper">
+  <div *ngIf="!reservationForm" class="text-center">
+    <div class="spinner-border text-primary mb-2" role="status">
+      <span class="visually-hidden">Cargando...</span>
     </div>
+    <p class="text-muted">Preparando formulario de reserva...</p>
   </div>
-</div>
-<div class="reservation-form-container">
-  <div *ngIf="submitted && reservationForm.invalid" class="alert alert-danger mb-4" role="alert">
-    <div class="d-flex align-items-center">
-      <i class="ri-error-warning-line fs-5 me-2"></i>
-      <div>
-        <h6 class="alert-heading mb-1">Por favor complete todos los campos requeridos</h6>
-        <p class="mb-0 small">Revise los campos marcados en rojo para continuar.</p>
-      </div>
-    </div>
-  </div>
-
-  <form [formGroup]="reservationForm" (ngSubmit)="onSubmit()" class="needs-validation" novalidate>
-    
-    <div class="card border-0 shadow-sm mb-4">
-      <div class="card-header bg-white py-3">
-        <h5 class="mb-0 text-primary">
-          <i class="ri-calendar-2-line me-2"></i>
-          {{ bookingType==='recurrente' ? 'Programación Recurrente' : 'Fecha y Horario' }}
-        </h5>
-      </div>
-      <div class="card-body">
-        
-        <!-- Field Information -->
-        <div class="row mb-4">
-          <div class="col-md-6">
-            <label class="form-label small text-muted fw-bold">Complejo Deportivo</label>
-            <div class="p-3 bg-light rounded border">
-              <strong class="text-dark">{{ dataComplejo.nombre }}</strong>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label small text-muted fw-bold">Campo Deportivo</label>
-            <div class="p-3 bg-light rounded border">
-              <strong class="text-dark">{{ dataField.nombre }}</strong>
-              <small class="text-muted d-block mt-1">
-                {{ dataField.superficieDto.descripcion }} • {{ dataField.categoria }}
-              </small>
-            </div>
-          </div>
-        </div>
-
-        <!-- Puntual Schedule -->
-        <div *ngIf="bookingType==='puntual'" class="schedule-section">
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label class="form-label fw-semibold">
-                Fecha de Reserva <span class="text-danger">*</span>
-              </label>
-              <div class="input-group">
-                <input type="date" 
-                       class="form-control" 
-                       formControlName="fechaReserva"
-                       [min]="minDate"
-                       [max]="maxDate"
-                       [class.is-invalid]="isFieldInvalid('fechaReserva')">
-                <span class="input-group-text bg-white">
-                  <i class="ri-calendar-event-line"></i>
-                </span>
-              </div>
-              <div *ngIf="getFieldError('fechaReserva')" class="invalid-feedback d-block">
-                {{ getFieldError('fechaReserva') }}
-              </div>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label fw-semibold">
-                Hora de Entrada <span class="text-danger">*</span>
-              </label>
-              <div class="input-group">
-                <input type="time" 
-                       class="form-control" 
-                       formControlName="horaEntrada"
-                       [min]="minTime"
-                       [max]="maxTime"
-                       [class.is-invalid]="isFieldInvalid('horaEntrada')">
-                <span class="input-group-text bg-white">
-                  <i class="ri-time-line"></i>
-                </span>
-              </div>
-              <small class="text-muted">Horario: {{ minTime }} - {{ maxTime }}</small>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label fw-semibold">
-                Hora de Salida <span class="text-danger">*</span>
-              </label>
-              <div class="input-group">
-                <input type="time" 
-                       class="form-control" 
-                       formControlName="horaSalida"
-                       [min]="minTime"
-                       [max]="maxTime"
-                       [class.is-invalid]="isFieldInvalid('horaSalida')">
-                <span class="input-group-text bg-white">
-                  <i class="ri-time-line"></i>
-                </span>
-              </div>
-              <div *ngIf="invalidRangeError" class="invalid-feedback d-block">
-                La hora de salida debe ser posterior a la hora de entrada
-              </div>
-            </div>
-          </div>
-
-          <!-- Duration & Validation Alerts -->
-          <div class="mt-4">
-            <div class="alert alert-info d-flex align-items-center" *ngIf="duration > 0">
-              <i class="ri-timer-line me-2 fs-5"></i>
-              <div>
-                <strong>Duración Total:</strong> {{ formatDuration(duration) }}
-                <span *ngIf="totalCost > 0" class="ms-2">
-                  • <strong>Costo Estimado:</strong> {{ totalCost | currency:'BOB':'symbol-narrow' }}
-                </span>
-              </div>
-            </div>
-
-            <div class="alert alert-warning" *ngIf="anticipationError">
-              <i class="ri-alarm-warning-line me-2"></i>
-              Las reservas requieren {{ ANTICIPATION_HOURS }} horas de anticipación mínima.
-            </div>
-
-            <div class="alert alert-danger" *ngIf="scheduleConflictError">
-              <i class="ri-error-warning-line me-2"></i>
-              Este horario ya está reservado. Por favor seleccione otro horario.
-            </div>
-          </div>
-        </div>
-
-        <!-- Recurrent Schedule Summary -->
-        <div *ngIf="bookingType==='recurrente' && recurrentScheduleData" class="recurrent-summary">
-          <div class="alert alert-info">
-            <i class="ri-information-line me-2"></i>
-            <strong>Programación Recurrente Configurada</strong>
-          </div>
-          
-          <div class="row g-3">
-            <div class="col-md-6">
-              <div class="info-card p-3 bg-light rounded border">
-                <small class="text-muted d-block">Período</small>
-                <div class="d-flex align-items-center gap-2 mt-1">
-                  <i class="ri-calendar-line text-primary"></i>
-                  <div>
-                    <strong>{{ recurrentScheduleData.fechaInicio | date:'dd/MM/yyyy' }}</strong>
-                    <small class="text-muted mx-2">a</small>
-                    <strong>{{ recurrentScheduleData.fechaFin | date:'dd/MM/yyyy' }}</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="col-md-6">
-              <div class="info-card p-3 bg-light rounded border">
-                <small class="text-muted d-block">Tipo</small>
-                <div class="d-flex align-items-center gap-2 mt-1">
-                  <i class="ri-repeat-line text-primary"></i>
-                  <strong class="text-capitalize">{{ recurrentScheduleData.tipoRecurrencia }}</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sessions Summary -->
-          <div class="row mt-3">
-            <div class="col-md-4">
-              <div class="stat-card text-center p-3 bg-primary bg-opacity-10 rounded border">
-                <div class="stat-value text-primary h4 mb-1">{{ recurrentScheduleData.diasSeleccionados.length }}</div>
-                <div class="stat-label small text-muted">Días/Semana</div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="stat-card text-center p-3 bg-success bg-opacity-10 rounded border">
-                <div class="stat-value text-success h4 mb-1">{{ recurrentScheduleData.cantidadSesiones }}</div>
-                <div class="stat-label small text-muted">Sesiones Totales</div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="stat-card text-center p-3 bg-info bg-opacity-10 rounded border">
-                <div class="stat-value text-info h4 mb-1">{{ recurrentScheduleData.duracionSesionHoras | number:'1.1-1' }}</div>
-                <div class="stat-label small text-muted">Horas/Sesión</div>
-              </div>
-            </div>
-          </div>
+  <form *ngIf="reservationForm" [formGroup]="reservationForm" (ngSubmit)="onSubmit()" novalidate>
+    <div *ngIf="submitted && reservationForm.invalid" class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+      <div class="d-flex align-items-start">
+        <i class="ri-error-warning-fill me-3 mt-1"></i>
+        <div class="flex-grow-1">
+          <h6 class="alert-heading mb-2">Formulario Incompleto</h6>
+          <p class="mb-0">Por favor revise y complete todos los campos requeridos correctamente.</p>
+          <small class="d-block mt-2 text-danger" *ngIf="getFormError()">
+            <strong>Error:</strong> {{ getFormError() }}
+          </small>
         </div>
       </div>
     </div>
-    
-    <div class="card border-0 shadow-sm mb-4">
-      <div class="card-header bg-white py-3">
-        <h5 class="mb-0 text-primary">
-          <i class="ri-user-line me-2"></i>
-          Información del Contribuyente
-        </h5>
-      </div>
-      <div class="card-body">
-        
-        <!-- Contributor Selection -->
-        <div class="mb-4">
-          <label class="form-label fw-semibold">
-            Seleccionar Contribuyente <span class="text-danger">*</span>
-          </label>
-          
-          <!-- Logged-in Contributor -->
-          <div *ngIf="contribuyente" class="alert alert-info">
-            <div class="d-flex align-items-center">
-              <i class="ri-user-follow-line me-2"></i>
-              <div>
-                <strong>Reserva a nombre de:</strong> {{ contribuyente.nombreCompleto }}
-                <small class="d-block text-muted">CI: {{ contribuyente.numeroDocumento }}</small>
+    <div class="row">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold mb-2">
+                  <i class="ri-hashtag text-primary me-1"></i>
+                  Número de Reserva
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light">
+                    <i class="ri-barcode-line"></i>
+                  </span>
+                  <input 
+                    type="text" 
+                    class="form-control fw-bold" 
+                    formControlName="numeroReserva"
+                    [readonly]="!canEditReservationNumber"
+                    [class.bg-light]="!canEditReservationNumber">
+                  <span *ngIf="!canEditReservationNumber" class="input-group-text bg-light">
+                    <i class="ri-lock-line text-muted"></i>
+                  </span>
+                </div>
+                <small class="text-muted d-block mt-1">
+                  <i class="ri-information-line me-1"></i>
+                  {{ canEditReservationNumber ? 'Puede modificar el número si lo necesita' : 'Número generado automáticamente' }}
+                </small>
               </div>
-            </div>
-          </div>
-
-          <!-- Contributor Search for Admins -->
-          <div *ngIf="!contribuyente">
-            <div class="search-container mb-3">
-              <label class="form-label small text-muted">Buscar Contribuyente</label>
-              <div class="input-group">
-                <input type="text" 
-                       class="form-control" 
-                       formControlName="searchContribuyente"
-                       placeholder="Buscar por nombre, CI o email..."
-                       #searchInput>
-                <button type="button" 
-                        class="btn btn-outline-secondary"
-                        (click)="clearContribuyenteSearch()"
-                        *ngIf="reservationForm.get('searchContribuyente')?.value">
-                  <i class="ri-close-line"></i>
-                </button>
-                <span class="input-group-text bg-white">
-                  <i class="ri-search-line"></i>
-                </span>
-              </div>
-            </div>
-
-            <!-- Search Results -->
-            <div *ngIf="filteredContribuyentes.length > 0" class="search-results">
-              <div class="list-group">
-                <button type="button"
-                        class="list-group-item list-group-item-action"
-                        *ngFor="let contrib of filteredContribuyentes"
-                        (click)="selectContribuyente(contrib)">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div class="flex-grow-1">
-                      <div class="fw-semibold">{{ contrib.nombreCompleto }}</div>
-                      <div class="small text-muted">
-                        CI: {{ contrib.numeroDocumento }} • Tel: {{ contrib.telefono || 'N/A' }} • Email: {{ contrib.email || 'N/A' }}
+              <div class="col-md-6">
+                <div class="alert mb-0" [ngClass]="requiresApproval ? 'alert-warning' : 'alert-success'">
+                  <div class="d-flex align-items-center">
+                    <i [class]="requiresApproval ? 'ri-time-line' : 'ri-checkbox-circle-line'" class="fs-4 me-2"></i>
+                    <div class="small">
+                      <strong>{{ requiresApproval ? 'Requiere Aprobación' : 'Aprobación Automática' }}</strong>
+                      <div class="text-muted mt-1">
+                        {{ requiresApproval ? 'Su reserva será revisada' : 'Confirmación inmediata' }}
                       </div>
                     </div>
-                    <i class="ri-arrow-right-s-line text-muted"></i>
                   </div>
-                </button>
-              </div>
-            </div>
-
-            <!-- Selected Contributor -->
-            <div *ngIf="reservationForm.get('contribuyenteDto')?.value" class="selected-contributor mt-3">
-              <div class="alert alert-success">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <i class="ri-checkbox-circle-fill me-2"></i>
-                    <strong>Contribuyente seleccionado:</strong> 
-                    {{ reservationForm.get('contribuyenteNombre')?.value }}
-                  </div>
-                  <button type="button" 
-                          class="btn btn-sm btn-outline-danger"
-                          (click)="reservationForm.patchValue({ contribuyenteDto: null })">
-                    <i class="ri-close-line"></i>
-                  </button>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header border-bottom py-3">
+            <h5 class="mb-0 fw-bold">
+              <i class="ri-user-line text-primary me-2"></i>
+              Información del Solicitante
+            </h5>
+          </div>
+          <div class="card-body">
+            <div *ngIf="contribuyente" class="contributor-display">
+              <div class="p-4 bg-success bg-opacity-10 rounded-3 border border-success border-opacity-25">
+                <div class="d-flex align-items-start">
+                  <div class="avatar-circle bg-success me-3">
+                    <i class="ri-user-fill fs-4"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <h6 class="mb-1 fw-bold text-dark">{{ contribuyente.nombreCompleto }}</h6>
+                    <div class="row g-2 mt-2">
+                      <div class="col-md-6">
+                        <small class="text-muted d-block">
+                          <i class="ri-id-card-line me-1"></i>
+                          <strong>CI:</strong> {{ contribuyente.numeroDocumento }}
+                        </small>
+                      </div>
+                      <div class="col-md-6">
+                        <small class="text-muted d-block">
+                          <i class="ri-phone-line me-1"></i>
+                          <strong>Tel:</strong> {{ contribuyente.telefono || 'No registrado' }}
+                        </small>
+                      </div>
+                      <div class="col-12" *ngIf="contribuyente.email">
+                        <small class="text-muted d-block">
+                          <i class="ri-mail-line me-1"></i>
+                          <strong>Email:</strong> {{ contribuyente.email }}
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="!contribuyente">
+              <div *ngIf="!showContribuyenteSearch && !selectedContribuyente" class="text-center p-4 bg-light rounded-3">
+                <i class="ri-user-search-line fs-1 text-muted mb-3 d-block"></i>
+                <p class="text-muted mb-3">Seleccione el contribuyente para esta reserva</p>
+                <button type="button" class="btn btn-primary btn" (click)="onContribuyenteSearch()">
+                  <i class="ri-search-line me-2"></i>
+                  Buscar Contribuyente
+                </button>
+              </div>
+              <div *ngIf="showContribuyenteSearch" class="search-section">
+                <div class="mb-2">
+                  <div class="input-group input-group">
+                    <span class="input-group-text">
+                      <i class="ri-search-line text-primary"></i>
+                    </span>
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      placeholder="Buscar por nombre, CI o email..."
+                      (input)="searchContribuyente($event)"
+                      #searchInput
+                      autocomplete="off">
+                    <button type="button" class="btn btn-outline-secondary" (click)="clearContribuyenteSearch()">
+                      <i class="ri-close-line"></i>
+                    </button>
+                  </div>
+                  <small class="text-muted d-block mt-2">
+                    <i class="ri-information-line me-1"></i>
+                    Escriba al menos 2 caracteres para buscar
+                  </small>
+                </div>
+                <div *ngIf="filteredContribuyentes.length > 0" class="search-results">
+                  <div class="results-header mb-2 d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                      <strong>{{ filteredContribuyentes.length }}</strong> resultado(s) encontrado(s)
+                    </small>
+                  </div>
+                  <div class="list-group shadow-sm" style="max-height: 400px; overflow-y: auto;">
+                    <button 
+                      type="button"
+                      class="list-group-item list-group-item-action p-3"
+                      *ngFor="let contrib of filteredContribuyentes"
+                      (click)="onContribuyenteSelected(contrib)">
+                      <div class="d-flex align-items-start">
+                        <div class="avatar-circle bg-primary bg-opacity-10 text-primary me-3">
+                          <i class="ri-user-line"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                          <h6 class="mb-1 fw-semibold">{{ contrib.nombreCompleto }}</h6>
+                          <div class="d-flex flex-wrap gap-3 mt-2">
+                            <small class="text-muted">
+                              <i class="ri-id-card-line me-1"></i>
+                              {{ contrib.numeroDocumento }}
+                            </small>
+                            <small class="text-muted" *ngIf="contrib.telefono">
+                              <i class="ri-phone-line me-1"></i>
+                              {{ contrib.telefono }}
+                            </small>
+                            <small class="text-muted" *ngIf="contrib.email">
+                              <i class="ri-mail-line me-1"></i>
+                              {{ contrib.email }}
+                            </small>
+                          </div>
+                        </div>
+                        <i class="ri-arrow-right-s-line text-muted fs-5"></i>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+                <div *ngIf="showContribuyenteSearch && filteredContribuyentes.length === 0 && contribuyentesList.length > 0" 
+                     class="alert alert-warning">
+                  <i class="ri-search-line me-2"></i>
+                  No se encontraron contribuyentes que coincidan con su búsqueda
+                </div>
+                <div *ngIf="showContribuyenteSearch && contribuyentesList.length === 0" class="text-center py-4">
+                  <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                  <span class="text-muted">Cargando contribuyentes...</span>
+                </div>
+              </div>
+              <div *ngIf="selectedContribuyente && !showContribuyenteSearch" class="contributor-selected">
+                <div class="p-4 bg-success bg-opacity-10 rounded-3 border border-success border-opacity-25">
+                  <div class="d-flex align-items-start justify-content-between">
+                    <div class="d-flex align-items-start flex-grow-1">
+                      <div class="avatar-circle bg-success me-3">
+                        <i class="ri-user-fill fs-4"></i>
+                      </div>
+                      <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                          <i class="ri-checkbox-circle-fill text-success"></i>
+                          <span class="badge bg-success">Seleccionado</span>
+                        </div>
+                        <h6 class="mb-1 fw-bold text-dark">{{ selectedContribuyente.nombreCompleto }}</h6>
+                        <div class="row g-2 mt-2">
+                          <div class="col-md-6">
+                            <small class="text-muted d-block">
+                              <i class="ri-id-card-line me-1"></i>
+                              <strong>CI:</strong> {{ selectedContribuyente.numeroDocumento }}
+                            </small>
+                          </div>
+                          <div class="col-md-6">
+                            <small class="text-muted d-block">
+                              <i class="ri-phone-line me-1"></i>
+                              <strong>Tel:</strong> {{ selectedContribuyente.telefono || 'No registrado' }}
+                            </small>
+                          </div>
+                          <div class="col-12" *ngIf="selectedContribuyente.email">
+                            <small class="text-muted d-block">
+                              <i class="ri-mail-line me-1"></i>
+                              <strong>Email:</strong> {{ selectedContribuyente.email }}
+                            </small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <button 
+                      type="button" 
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="selectedContribuyente = undefined; reservationForm.patchValue({ contribuyenteDto: null }); clearContribuyenteSearch()">
+                      <i class="ri-close-line"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="isFieldInvalid('contribuyenteDto')" class="invalid-feedback d-block mt-2">
+                <i class="ri-error-warning-line me-1"></i>
+                {{ getFieldError('contribuyenteDto') }}
+              </div>
+            </div>
+            <div *ngIf="canSelectOrganization" class="mt-4 pt-4 border-top">
+              <div class="form-check form-switch mb-3">
+                <input 
+                  class="form-check-input" 
+                  type="checkbox" 
+                  formControlName="esParaOrganizacion"
+                  id="esParaOrganizacion"
+                  style="cursor: pointer;">
+                <label class="form-check-label fw-semibold" for="esParaOrganizacion" style="cursor: pointer;">
+                  <i class="ri-team-line me-1"></i>
+                  Esta reserva es para una organización
+                </label>
+              </div>
+              <div *ngIf="reservationForm.get('esParaOrganizacion')?.value" class="organization-section">
+                <div *ngIf="!showOrganizationSearch && !selectedOrganization" class="text-center p-4 bg-light rounded-3">
+                  <i class="ri-building-line fs-1 text-muted mb-3 d-block"></i>
+                  <p class="text-muted mb-3">Seleccione la organización</p>
+                  <button type="button" class="btn btn-outline-primary" (click)="onOrganizationSearch()">
+                    <i class="ri-search-line me-2"></i>
+                    Buscar Organización
+                  </button>
+                </div>
+                <div *ngIf="showOrganizationSearch">
+                  <div class="mb-3">
+                    <div class="input-group">
+                      <span class="input-group-text">
+                        <i class="ri-search-line"></i>
+                      </span>
+                      <input 
+                        type="text" 
+                        class="form-control" 
+                        placeholder="Buscar organización..."
+                        (input)="searchOrganization($event)">
+                      <button type="button" class="btn btn-outline-secondary" (click)="clearOrganizationSearch()">
+                        <i class="ri-close-line"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div *ngIf="organizationsList.length > 0" class="list-group shadow-sm" style="max-height: 300px; overflow-y: auto;">
+                    <button 
+                      type="button"
+                      class="list-group-item list-group-item-action p-3"
+                      *ngFor="let org of organizationsList"
+                      (click)="onOrganizationSelected(org)">
+                      <div class="d-flex align-items-start">
+                        <div class="avatar-circle bg-info bg-opacity-10 text-info me-3">
+                          <i class="ri-building-line"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                          <h6 class="mb-1 fw-semibold">{{ org.nombre }}</h6>
+                          <div class="d-flex flex-wrap gap-3 mt-2">
+                            <small class="text-muted">
+                              <i class="ri-price-tag-3-line me-1"></i>
+                              {{ org.tipoOrganizacion }}
+                            </small>
+                            <small class="text-muted" *ngIf="org.nroNit">
+                              <i class="ri-file-text-line me-1"></i>
+                              NIT: {{ org.nroNit }}
+                            </small>
+                            <small class="text-muted" *ngIf="org.representanteDto">
+                              <i class="ri-user-line me-1"></i>
+                              {{ org.representanteDto.nombreCompleto }}
+                            </small>
+                          </div>
+                        </div>
+                        <i class="ri-arrow-right-s-line text-muted fs-5"></i>
+                      </div>
+                    </button>
+                  </div>
+                  <div *ngIf="organizationsList.length === 0" class="alert alert-info">
+                    <i class="ri-information-line me-2"></i>
+                    No hay organizaciones registradas
+                  </div>
+                </div>
+                <div *ngIf="selectedOrganization && !showOrganizationSearch">
+                  <div class="p-4 bg-info bg-opacity-10 rounded-3 border border-info border-opacity-25">
+                    <div class="d-flex align-items-start justify-content-between">
+                      <div class="d-flex align-items-start flex-grow-1">
+                        <div class="avatar-circle bg-info me-3">
+                          <i class="ri-building-fill fs-4"></i>
+                        </div>
+                        <div>
+                          <div class="d-flex align-items-center gap-2 mb-1">
+                            <i class="ri-checkbox-circle-fill text-info"></i>
+                            <span class="badge bg-info">Organización</span>
+                          </div>
+                          <h6 class="mb-1 fw-bold text-dark">{{ selectedOrganization.nombre }}</h6>
+                          <div class="d-flex flex-wrap gap-3 mt-2">
+                            <small class="text-muted">
+                              <i class="ri-price-tag-3-line me-1"></i>
+                              {{ selectedOrganization.tipoOrganizacion }}
+                            </small>
+                            <small class="text-muted" *ngIf="selectedOrganization.nroNit">
+                              <i class="ri-file-text-line me-1"></i>
+                              NIT: {{ selectedOrganization.nroNit }}
+                            </small>
+                          </div>
+                        </div>
+                      </div>
+                      <button 
+                        type="button" 
+                        class="btn btn-sm btn-outline-danger"
+                        (click)="clearOrganizationSearch()">
+                        <i class="ri-close-line"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div *ngIf="isFieldInvalid('organizacionDto')" class="invalid-feedback d-block mt-2">
+                  <i class="ri-error-warning-line me-1"></i>
+                  {{ getFieldError('organizacionDto') }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-          <div *ngIf="isFieldInvalid('contribuyenteDto')" class="invalid-feedback d-block">
-            {{ getFieldError('contribuyenteDto') }}
+        <!-- Schedule Information -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header border-bottom py-3">
+            <h5 class="mb-0 fw-bold">
+              <i class="ri-calendar-2-line text-primary me-2"></i>
+              {{ bookingType === 'puntual' ? 'Fecha y Horario' : 'Programación Recurrente' }}
+            </h5>
+          </div>
+          <div class="card-body">
+            <div *ngIf="bookingType === 'puntual'" class="puntual-schedule">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold">
+                    <i class="ri-calendar-event-line me-1"></i>
+                    Fecha de Uso <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    type="date" 
+                    class="form-control form-control" 
+                    formControlName="fechaUso"
+                    [min]="minDate"
+                    [max]="maxDate"
+                    [class.is-invalid]="isFieldInvalid('fechaUso')">
+                  <div *ngIf="getFieldError('fechaUso')" class="invalid-feedback">
+                    {{ getFieldError('fechaUso') }}
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold">
+                    <i class="ri-time-line me-1"></i>
+                    Hora de Inicio <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    type="time" 
+                    class="form-control form-control" 
+                    formControlName="horaInicio"
+                    [class.is-invalid]="isFieldInvalid('horaInicio')">
+                  <div *ngIf="getFieldError('horaInicio')" class="invalid-feedback">
+                    {{ getFieldError('horaInicio') }}
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold">
+                    <i class="ri-time-line me-1"></i>
+                    Hora de Fin <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    type="time" 
+                    class="form-control form-control" 
+                    formControlName="horaFin"
+                    [class.is-invalid]="isFieldInvalid('horaFin')">
+                  <div *ngIf="getFieldError('horaFin')" class="invalid-feedback">
+                    {{ getFieldError('horaFin') }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Duration Display -->
+              <div *ngIf="duration > 0" class="mt-3">
+                <div class="alert alert-info d-flex align-items-center mb-0">
+                  <i class="ri-timer-line fs-4 me-3"></i>
+                  <div>
+                    <strong>Duración Total:</strong> 
+                    <span class="fs-5 fw-bold ms-2">{{ formatDuration(duration) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Validation Warnings -->
+              <div class="mt-3">
+                <div *ngIf="anticipationError" class="alert alert-warning mb-2">
+                  <i class="ri-alarm-warning-line me-2"></i>
+                  {{ getFormError() }}
+                </div>
+                <div *ngIf="invalidRangeError" class="alert alert-danger mb-2">
+                  <i class="ri-error-warning-line me-2"></i>
+                  {{ getFormError() }}
+                </div>
+              </div>
+
+              <!-- Number of People -->
+              <div class="row mt-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">
+                    <i class="ri-group-line me-1"></i>
+                    Número de Personas <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    type="number" 
+                    class="form-control form-control" 
+                    formControlName="cantidadPersonas"
+                    [class.is-invalid]="isFieldInvalid('cantidadPersonas')"
+                    min="1" 
+                    [max]="dataField.capacidadPersonas || 100"
+                    placeholder="Ej: 10">
+                  <div *ngIf="getFieldError('cantidadPersonas')" class="invalid-feedback">
+                    {{ getFieldError('cantidadPersonas') }}
+                  </div>
+                  <small class="text-muted d-block mt-1" *ngIf="dataField.capacidadPersonas">
+                    <i class="ri-information-line me-1"></i>
+                    Capacidad máxima: {{ dataField.capacidadPersonas }} personas
+                  </small>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="bookingType === 'recurrente' && recurrentSchedule" class="recurrent-schedule">
+              <div class="alert alert-info mb-2">
+                <div class="d-flex align-items-center">
+                  <i class="ri-repeat-line fs-3 me-3"></i>
+                  <div>
+                    <strong class="d-block">Programación Recurrente Configurada</strong>
+                    <small class="text-muted">Los horarios se repetirán según la configuración establecida</small>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="row g-3 mb-2">
+                <div class="col-md-6">
+                  <div class="info-box p-3 bg-light rounded-3 border">
+                    <small class="text-muted d-block mb-2">
+                      <i class="ri-calendar-line me-1"></i>
+                      Período de Reserva
+                    </small>
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div>
+                        <strong class="d-block">{{ recurrentSchedule.fechaInicio | date:'dd/MM/yyyy' }}</strong>
+                        <small class="text-muted">Fecha inicio</small>
+                      </div>
+                      <i class="ri-arrow-right-line text-muted mx-3"></i>
+                      <div>
+                        <strong class="d-block">{{ recurrentSchedule.fechaFin | date:'dd/MM/yyyy' }}</strong>
+                        <small class="text-muted">Fecha fin</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-md-6">
+                  <div class="info-box p-3 bg-light rounded-3 border">
+                    <small class="text-muted d-block mb-2">
+                      <i class="ri-repeat-line me-1"></i>
+                      Tipo de Recurrencia
+                    </small>
+                    <strong class="fs-5 text-capitalize">{{ recurrentSchedule.tipoRecurrencia }}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <div class="stat-card text-center p-4 bg-primary bg-opacity-10 rounded-3 border border-primary border-opacity-25">
+                    <i class="ri-calendar-check-line fs-2 text-primary mb-2"></i>
+                    <div class="stat-value text-primary h3 mb-1 fw-bold">{{ recurrentSchedule.cantidadSesiones }}</div>
+                    <div class="stat-label text-muted">Sesiones Totales</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="stat-card text-center p-4 bg-success bg-opacity-10 rounded-3 border border-success border-opacity-25">
+                    <i class="ri-timer-line fs-2 text-success mb-2"></i>
+                    <div class="stat-value text-success h3 mb-1 fw-bold">{{ recurrentSchedule.duracionSesionHoras | number:'1.1-1' }}</div>
+                    <div class="stat-label text-muted">Horas por Sesión</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="stat-card text-center p-4 bg-info bg-opacity-10 rounded-3 border border-info border-opacity-25">
+                    <i class="ri-calendar-2-line fs-2 text-info mb-2"></i>
+                    <div class="stat-value text-info h3 mb-1 fw-bold">{{ calculateMonthsDuration(recurrentSchedule.fechaInicio, recurrentSchedule.fechaFin) }}</div>
+                    <div class="stat-label text-muted">Meses de Duración</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Price Calculation Table -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-gradient-primary py-3">
+            <h5 class="mb-0 fw-bold">
+              <i class="ri-calculator-line me-2"></i>
+              Cálculo de Pago
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <!-- Facility Info -->
+            <div class="p-4 border-bottom bg-light">
+              <div class="row">
+                <div class="col-md-8">
+                  <h6 class="fw-bold text-dark mb-2">{{ dataComplejo.nombre }}</h6>
+                  <p class="mb-2 text-muted">{{ dataField.nombre }}</p>
+                  <div class="d-flex flex-wrap gap-2">
+                    <span class="badge bg-primary bg-opacity-10 text-primary">
+                      {{ dataField.superficieDto.descripcion }}
+                    </span>
+                    <span class="badge bg-info bg-opacity-10 text-info">
+                      Categoría {{ dataField.categoria }}
+                    </span>
+                    <span class="badge bg-success bg-opacity-10 text-success" *ngIf="dataField.capacidadPersonas">
+                      Cap. {{ dataField.capacidadPersonas }} personas
+                    </span>
+                  </div>
+                </div>
+                <div class="col-md-4 text-end">
+                  <div class="tariff-info">
+                    <strong class="d-block">{{ getTariffDescription() }}</strong>
+                    <small class="text-muted">{{ getTarifaCategories() }}</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Price Breakdown Table -->
+            <div class="p-4">
+              <div class="table-responsive">
+                <table class="table table-borderless mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th width="60%">DESCRIPCIÓN</th>
+                      <th width="20%" class="text-center">CANTIDAD</th>
+                      <th width="20%" class="text-end">SUBTOTAL</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Base Price Row -->
+                    <tr class="border-bottom">
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <i class="ri-price-tag-3-line text-primary me-2"></i>
+                          <div>
+                            <strong>Tarifa Base</strong>
+                            <small class="d-block text-muted">{{ getTariffDescription() }}</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <span class="fw-semibold">{{ getBaseQuantity() }}</span>
+                      </td>
+                      <td class="text-end">
+                        <span class="fw-semibold">{{ getBasePrice() | currency:'BOB':'symbol-narrow':'1.2-2' }}</span>
+                      </td>
+                    </tr>
+
+                    <!-- Conceptos Adicionales -->
+                    <tr *ngIf="hasConceptos()" class="border-bottom">
+                      <td colspan="3" class="py-3">
+                        <h6 class="mb-3 text-primary">
+                          <i class="ri-file-list-3-line me-2"></i>
+                          Conceptos Adicionales
+                        </h6>
+                        
+                        <div *ngFor="let concepto of getConceptoDetails()" class="mb-3">
+                          <div class="row align-items-center">
+                            <div class="col-md-8">
+                              <div class="d-flex align-items-center">
+                                <i class="ri-add-circle-line text-success me-2"></i>
+                                <div>
+                                  <strong class="d-block">{{ concepto.concepto }}</strong>
+                                  <small class="text-muted">{{ concepto.description }}</small>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                              <span class="fw-semibold">{{ concepto.quantity }}</span>
+                            </div>
+                            <div class="col-md-2 text-end">
+                              <span class="fw-semibold text-success">+ {{ concepto.amount | currency:'BOB':'symbol-narrow':'1.2-2' }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+
+                    <!-- Empty row if no conceptos -->
+                    <tr *ngIf="!hasConceptos()" class="border-bottom">
+                      <td colspan="3" class="text-center py-4 text-muted">
+                        <i class="ri-information-line me-2"></i>
+                        No hay conceptos adicionales aplicados
+                      </td>
+                    </tr>
+
+                    <!-- Total Row -->
+                    <tr class="total-row">
+                      <td colspan="2" class="pt-4">
+                        <h5 class="mb-0 text-dark">TOTAL A PAGAR</h5>
+                        <small class="text-muted">Incluye todos los conceptos y tasa municipal</small>
+                      </td>
+                      <td class="text-end pt-4">
+                        <h3 class="mb-0 text-success fw-bold">
+                          {{ calculatedPrice | currency:'BOB':'symbol-narrow':'1.2-2' }}
+                        </h3>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Status Info -->
+              <div class="mt-4 p-3 rounded-3" [ngClass]="requiresApproval ? 'bg-warning bg-opacity-10' : 'bg-success bg-opacity-10'">
+                <div class="d-flex align-items-center">
+                  <i [class]="requiresApproval ? 'ri-time-line' : 'ri-checkbox-circle-line'" 
+                      class="fs-4 me-3" 
+                      [ngClass]="requiresApproval ? 'text-warning' : 'text-success'"></i>
+                  <div class="flex-grow-1">
+                    <strong class="d-block mb-1" [ngClass]="requiresApproval ? 'text-warning' : 'text-success'">
+                      {{ requiresApproval ? 'Requiere Aprobación' : 'Aprobación Automática' }}
+                    </strong>
+                    <small class="text-muted d-block">
+                      {{ requiresApproval ? 
+                        'Su reserva será revisada por el administrador antes de ser confirmada definitivamente.' : 
+                        'Su reserva será confirmada automáticamente al completar el proceso.' 
+                      }}
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Additional Information -->
-        <div class="additional-info">
-          <div class="row">
-            <div class="col-12 mb-3">
-              <label class="form-label fw-semibold">
-                Observaciones <span class="text-danger">*</span>
-              </label>
-              <textarea class="form-control" 
-                        rows="4"
-                        formControlName="observaciones"
-                        [class.is-invalid]="isFieldInvalid('observaciones')"
-                        placeholder="Describa el propósito de la reserva, requerimientos especiales, número de participantes, o cualquier información adicional importante..."></textarea>
-              <div *ngIf="getFieldError('observaciones')" class="invalid-feedback">
-                {{ getFieldError('observaciones') }}
-              </div>
-              <small class="text-muted">
-                Mínimo 10 caracteres. Esta información será incluida en la tasa municipal.
-              </small>
-            </div>
-
-            <!-- Person Count for Per-Person Tariffs -->
-            <div class="col-md-6" *ngIf="isPerPersonTariff()">
-              <label class="form-label fw-semibold">
-                Número de Personas <span class="text-danger">*</span>
-              </label>
-              <input type="number" 
-                     class="form-control" 
-                     formControlName="totalPersonas"
-                     [class.is-invalid]="isFieldInvalid('totalPersonas')"
-                     min="1" 
-                     [max]="dataField.capacidadPersonas || 100"
-                     placeholder="Ej: 10">
-              <div *ngIf="getFieldError('totalPersonas')" class="invalid-feedback">
-                {{ getFieldError('totalPersonas') }}
-              </div>
-              <small class="text-muted" *ngIf="dataField.capacidadPersonas">
-                Capacidad máxima: {{ dataField.capacidadPersonas }} personas
-              </small>
-            </div>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header border-bottom py-3">
+            <h5 class="mb-0 fw-bold">
+              <i class="ri-file-text-line text-primary me-2"></i>
+              Información Adicional
+            </h5>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card border-0 shadow-sm mb-4">
-      <div class="card-header bg-white py-3">
-        <h5 class="mb-0 text-primary">
-          <i class="ri-file-check-line me-2"></i>
-          Revisar y Confirmar
-        </h5>
-      </div>
-      <div class="card-body">
-        
-        <!-- Cost Summary -->
-        <div class="card bg-light border-0 mb-4">
           <div class="card-body">
-            <h6 class="card-title mb-3">
-              <i class="ri-file-list-3-line me-2"></i>
-              Resumen de Costos
-            </h6>
-            
-            <div class="cost-breakdown">
-              <div class="cost-item d-flex justify-content-between align-items-center py-2 border-bottom">
-                <div>
-                  <span class="fw-medium">Tarifa Base</span>
-                  <small class="text-muted d-block">
-                    {{ selectedTariff.precioBase | currency:'BOB':'symbol-narrow':'1.2-2' }} 
-                    <span *ngIf="isPerPersonTariff()">por persona</span>
-                    <span *ngIf="isPerHourTariff()">por hora</span>
-                    <span *ngIf="isEventTariff()">por evento</span>
-                  </small>
-                </div>
-                <span class="fw-medium">{{ getBaseCost() | currency:'BOB':'symbol-narrow':'1.2-2' }}</span>
-              </div>
-
-              <!-- Additional Concepts -->
-              <div *ngFor="let concepto of conceptos" 
-                   class="cost-item d-flex justify-content-between align-items-center py-2 border-bottom">
-                <div>
-                  <span class="fw-medium">{{ concepto.nombre }}</span>
-                  <small class="text-muted d-block">{{ concepto.tipo | lowercase }}: {{ concepto.valor }}{{ concepto.tipo === 'PORCENTAJE' ? '%' : '' }}</small>
-                </div>
-                <span class="fw-medium text-success">+ {{ concepto.monto | currency:'BOB':'symbol-narrow':'1.2-2' }}</span>
-              </div>
-
-              <div class="cost-total d-flex justify-content-between align-items-center py-3">
-                <div>
-                  <span class="fw-bold fs-5">Total a Pagar</span>
-                  <small class="text-muted d-block">Incluye tasa municipal</small>
-                </div>
-                <span class="fw-bold fs-4 text-primary">{{ totalCost | currency:'BOB':'symbol-narrow':'1.2-2' }}</span>
-              </div>
-
-              <!-- Monthly Cost for Recurrent -->
-              <div *ngIf="bookingType==='recurrente'" class="monthly-cost mt-3 p-3 bg-warning bg-opacity-10 rounded">
-                <div class="text-center">
-                  <small class="text-muted d-block">Costo Mensual Estimado</small>
-                  <strong class="text-warning fs-5">{{ getMonthlyCost() | currency:'BOB':'symbol-narrow':'1.2-2' }}</strong>
-                </div>
-              </div>
+            <label class="form-label fw-semibold">
+              <i class="ri-message-3-line me-1"></i>
+              Observaciones <span class="text-danger">*</span>
+            </label>
+            <textarea 
+              class="form-control" 
+              rows="4"
+              formControlName="observaciones"
+              [class.is-invalid]="isFieldInvalid('observaciones')"
+              placeholder="Describa el propósito de la reserva, eventos especiales, requerimientos específicos o cualquier información relevante que desee comunicar..."></textarea>
+            <div *ngIf="getFieldError('observaciones')" class="invalid-feedback">
+              {{ getFieldError('observaciones') }}
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+              <small class="text-muted">
+                <i class="ri-information-line me-1"></i>
+                Mínimo 10 caracteres, máximo 500
+              </small>
+              <small class="text-muted">
+                {{ reservationForm.get('observaciones')?.value?.length || 0 }} / 500
+              </small>
             </div>
           </div>
         </div>
 
         <!-- Terms and Conditions -->
-        <div class="card border-0">
+        <div class="card border-0 shadow-sm mb-4">
           <div class="card-body">
             <div class="form-check">
-              <input class="form-check-input" 
-                     type="checkbox" 
-                     formControlName="aceptaTerminos"
-                     id="terminos"
-                     [class.is-invalid]="isFieldInvalid('aceptaTerminos')">
-              <label class="form-check-label" for="terminos">
-                Acepto los <a href="/pages/terms-condition-in" target="_blank" class="text-primary text-decoration-underline">términos y condiciones de uso</a> 
-                y autorizo al GAMQ a generar la tasa municipal correspondiente a esta reserva. 
-                <span class="text-danger">*</span>
+              <input 
+                class="form-check-input" 
+                type="checkbox" 
+                formControlName="aceptaTerminos"
+                id="terminos"
+                style="cursor: pointer;"
+                [class.is-invalid]="isFieldInvalid('aceptaTerminos')">
+              <label class="form-check-label" for="terminos" style="cursor: pointer;">
+                <i class="ri-shield-check-line text-primary me-1"></i>
+                Acepto los <a href="#" class="text-primary fw-semibold">términos y condiciones</a> y autorizo 
+                al GAMQ a generar la tasa municipal correspondiente. 
+                <span class="text-danger fw-bold">*</span>
               </label>
               <div *ngIf="getFieldError('aceptaTerminos')" class="invalid-feedback d-block">
-                Debe aceptar los términos y condiciones para continuar
+                {{ getFieldError('aceptaTerminos') }}
               </div>
             </div>
           </div>
         </div>
-      </div>
-      
-      <div class="card-footer bg-white py-3">
-        <div class="d-flex justify-content-between align-items-center">
-          <button type="button" 
-                  class="btn btn-outline-secondary"
-                  (click)="back()">
-            <i class="ri-arrow-left-line me-1"></i>
-            Anterior
-          </button>
-          
-          <div class="text-end">
-            <div class="mb-2">
-              <small class="text-muted">
-                <i class="ri-shield-check-line me-1"></i>
-                Su información está protegida
-              </small>
-            </div>
-            <button type="submit" 
-                    class="btn btn-success btn-lg px-4"
-                    [disabled]="isSubmitting || reservationForm.invalid">
+
+        <!-- Submit Button -->
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center py-4">
+            <button 
+              type="submit" 
+              class="btn btn-success btn-lg px-5"
+              [disabled]="isSubmitting || reservationForm.invalid">
               <span *ngIf="!isSubmitting">
                 <i class="ri-check-double-line me-2"></i>
-                Confirmar Reserva
+                Confirmar Reserva y Generar Pago
               </span>
               <span *ngIf="isSubmitting">
                 <span class="spinner-border spinner-border-sm me-2"></span>
-                Procesando...
+                Procesando Reserva...
               </span>
             </button>
+            <div class="mt-3">
+              <small class="text-muted">
+                <i class="ri-lock-line me-1"></i>
+                Transacción segura - Tasa municipal incluida
+              </small>
+            </div>
           </div>
         </div>
       </div>

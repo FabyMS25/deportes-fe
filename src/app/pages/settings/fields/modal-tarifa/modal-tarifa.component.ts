@@ -1,108 +1,199 @@
-import { Component, EventEmitter, Input, Output, TemplateRef, ViewChild } from '@angular/core';
-import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
+import { Component, EventEmitter, Input, Output, TemplateRef, ViewChild, OnInit } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder, ValidationErrors, Validators } from '@angular/forms';
-import { BehaviorSubject, catchError, combineLatest, forkJoin, map, Observable, of, startWith, switchMap, tap } from 'rxjs';
+import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { catchError, forkJoin, Observable, of, switchMap, tap, map } from 'rxjs';
 import Swal from 'sweetalert2';
 import { TarifaService } from 'src/app/core/services/api/tarifa.service';
 import { Categoria } from 'src/app/core/models/categoria.model';
-import { TarifaCategoriesService } from 'src/app/core/services/api/tarifa-categorias.service';
-import { TipoCobro } from 'src/app/core/constants/TipoCobro';
+import { TipoCobro, frecuencia, tiposConcepto } from 'src/app/core/constants/TipoCobro';
+import { ClasificadorRuat } from 'src/app/core/models/clasificadorRuat.model';
+import { ClasificadorRuatService } from 'src/app/core/services/api/clasificadorRuat.service';
+import { CategoriasService } from 'src/app/core/services/api/categorias.service';
+import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
+import { TarifaConcepto } from 'src/app/core/models/tarifaConcepto.model';
 
 @Component({
   selector: 'app-modal-tarifa',
   templateUrl: './modal-tarifa.component.html',
   styleUrl: './modal-tarifa.component.scss'
 })
-export class ModalTarifaComponent {
+export class ModalTarifaComponent implements OnInit {
   @Input() accion!: string;
   @Input() row!: CampoDeportivo;
   @Output() emitList = new EventEmitter();
-  @Input() categoryList:Categoria[]=[];
-  tipoList= TipoCobro
+  
+  tipoCobroOptions = TipoCobro;
+  frecuenciaOptions = frecuencia;
+  tipoConceptoOptions = tiposConcepto;
+  
+  clasificadoresRuatList: ClasificadorRuat[] = [];
+  categoriasList: Categoria[] = [];
 
   submitted = false;
-
   form!: FormGroup;
-  fieldsForm!: FormArray;
 
-  
   @ViewChild('deleteConfirmation', { static: true }) deleteConfirmation!: TemplateRef<any>;
 
-  private selectedTipoSubject = new BehaviorSubject<string | null>(null);
-  private selectedTipo$ = this.selectedTipoSubject.asObservable();
-  filteredCategories$!: Observable<any[]>;
-
-  constructor(private modalService: NgbModal,
+  constructor(
+    private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
     private tarifaService: TarifaService,
-    private tarifaCategoryService: TarifaCategoriesService
+    private clasificadoresRuatService: ClasificadorRuatService,
+    private categoriaService: CategoriasService
   ) { }
 
   ngOnInit() {    
-    this.fieldsForm = this.formBuilder.array([]);
+    this.getClasificadoresRuat();
+    this.getCategorias();
+    
     this.form = this.formBuilder.group({
-      fieldsForm: this.fieldsForm
+      tarifasDtoList: this.formBuilder.array([])
     });
 
-    this.initFilteredCategories();
     this.formDataSet();
-  }
-  
-  initFilteredCategories() {
-    this.filteredCategories$ = combineLatest([
-      this.selectedTipo$,
-      this.form.valueChanges.pipe(startWith(null))
-    ]).pipe(
-      map(([selectedTipo, _]) => {
-        if (!selectedTipo) return this.categoryList ;
-        return this.categoryList.filter(category => category.tipo === selectedTipo);
-      })
-    );
+    if (this.accion === 'show') {
+      this.form.disable();
+    }
   }
 
   private formDataSet() {
+    const tarifasArray = this.form.get('tarifasDtoList') as FormArray;
+    
     if (this.row.tarifasDtoList && this.row.tarifasDtoList.length > 0) {
       this.row.tarifasDtoList.forEach((tarifa: any) => {
-        this.fieldsForm.push(this.createTarifaFormGroup(tarifa));
+        const tarifaGroup = this.createTarifaFormGroup(tarifa);
+        if (tarifa.conceptosDtos && tarifa.conceptosDtos.length > 0) {
+          const conceptosArray = tarifaGroup.get('conceptosDtos') as FormArray;
+          tarifa.conceptosDtos.forEach((concepto: any) => {
+            conceptosArray.push(this.createConceptoFormGroup(concepto));
+          });
+        }
+        
+        tarifasArray.push(tarifaGroup);
       });
-    } else {
-      this.fieldsForm.push(this.createTarifaFormGroup());
+    } else if (this.accion === 'edit') {
+      tarifasArray.push(this.createTarifaFormGroup());
     }
   }
 
-  createTarifaFormGroup(tarifa: any = {}): FormGroup { 
-    const tipo = tarifa.categoriaDtoList?.length > 0 ? tarifa.categoriaDtoList[0].categoriaDto.tipo : '';
+  createTarifaFormGroup(tarifa: any = {}): FormGroup {
     return this.formBuilder.group({
-      uuid: [tarifa.uuid || ''],
-      costo: [tarifa.costo || '', Validators.required],
-      desde: [tarifa.desde || ''],
-      hasta: [tarifa.hasta || ''],
+      uuid: [tarifa.uuid || null],
+      fechaInicio: [tarifa.fechaInicio || this.getTodayDate(), Validators.required],
+      fechaFin: [tarifa.fechaFin || null],
+      precioBase: [tarifa.precioBase || '', [Validators.required, Validators.min(0)]],
+      desde: [this.extractTimeHHMM(tarifa.desde)],
+      hasta: [this.extractTimeHHMM(tarifa.hasta)],
       descripcion: [tarifa.descripcion || ''],
-      tipo: [tipo, Validators.required],
-      categorias: [tarifa.categoriaDtoList?.map((cat:any) => cat.categoriaDto) || [], [Validators.required, this.categoriasTipoValidator]],
-      categoriaDtoList: [tarifa.categoriaDtoList || []],
+      observaciones: [tarifa.observaciones || ''],
+      activo: [tarifa.activo !== undefined ? tarifa.activo : true],
+      tipoCobro: [tarifa.tipoCobro || '', Validators.required],
+      frecuencia: [tarifa.frecuencia || ''],
+      sesionesIncluidas: [tarifa.sesionesIncluidas || null],
+      clasificadorRuatDto: [tarifa.clasificadorRuatDto || null, Validators.required],
+      categoriasDtoList: [
+        tarifa.categoriasDtoList?.map((cat: any) => cat.categoriaDto || cat) || [], 
+        [Validators.required, Validators.minLength(1)]
+      ],
+      conceptosDtos: this.formBuilder.array([])
     });
   }
 
-  categoriasTipoValidator(control: AbstractControl): ValidationErrors | null {
-    const categorias = control.value;
-    const tipo = control.parent?.get('tipo')?.value;
-    if (!categorias || !tipo) {
-      return null;
-    }
-    const allCategoriesMatchTipo = categorias.every(
-      (category: any) => category.tipo === tipo
-    );
-    return allCategoriesMatchTipo ? null : { invalidTipo: true };
+  createConceptoFormGroup(concepto: any = {}): FormGroup {
+    return this.formBuilder.group({
+      uuid: [concepto.uuid || null],
+      concepto: [concepto.concepto || '', Validators.required],
+      tipo: [concepto.tipo || '', Validators.required],
+      valor: [concepto.valor || '', [Validators.required, Validators.min(0)]],
+      desde: [this.extractTimeHHMM(concepto.desde)],
+      hasta: [this.extractTimeHHMM(concepto.hasta)],
+      activo: [concepto.activo !== undefined ? concepto.activo : true]
+    });
   }
 
-  addTariffForm() {
-    this.fieldsForm.push(this.createTarifaFormGroup());
+  showTimeFields(concepto: AbstractControl): boolean {
+    const tipo = concepto.get('tipo')?.value;
+    return tipo === 'por_hora' || tipo === 'fijo' || tipo === 'porcentaje';
   }
-  removeTariff(index: number) {
-    const tarifaGroup = this.fieldsForm.at(index);
+
+  getTipoConceptoDisplay(tipo: string): string {
+    const tipoMap: Record<string, string> = {
+      'fijo': 'Monto Fijo',
+      'porcentaje': 'Porcentaje', 
+      'por_hora': 'Por Hora'
+    };
+    return tipo ? tipoMap[tipo] || tipo : 'No especificado';
+  }
+
+  getConceptoBadgeClass(tipo: string): string {
+    switch(tipo) {
+      case 'porcentaje': return 'bg-info-subtle text-info';
+      case 'por_hora': return 'bg-warning-subtle text-warning';
+      default: return 'bg-light-subtle text-body';
+    }
+  }
+
+  toggleTimeFields(concepto: AbstractControl) {
+    const desde = concepto.get('desde');
+    const hasta = concepto.get('hasta');    
+    if (desde?.value || hasta?.value) {
+      desde?.setValue(null);
+      hasta?.setValue(null);
+    } else {
+      desde?.setValue('18:00');
+      hasta?.setValue('06:00');
+    }
+  }
+
+  private extractTimeHHMM(time: string | null | undefined): string {
+    if (!time) return '';
+    if (time.length === 8 && time.split(':').length === 3) {
+      return time.substring(0, 5);
+    }
+    return time;
+  }
+
+  private formatTimeForBackend(time: string | null | undefined): string | null {
+    if (!time) return null;
+    if (time.length === 8 && time.split(':').length === 3) {
+      return time;
+    }
+    if (time.length === 5 && time.split(':').length === 2) {
+      return time + ':00';
+    }
+    return time;
+  }
+
+  private getTodayDate(): string {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  }
+
+  get tarifas() {
+    return this.form.get('tarifasDtoList') as FormArray;
+  }
+
+  getConceptos(tarifaIndex: number): FormArray {
+    return this.tarifas.at(tarifaIndex).get('conceptosDtos') as FormArray;
+  }
+
+  addTarifa() {
+    this.tarifas.push(this.createTarifaFormGroup());
+  }
+
+  addConcepto(tarifaIndex: number) {
+    const conceptosArray = this.getConceptos(tarifaIndex);
+    conceptosArray.push(this.createConceptoFormGroup());
+  }
+
+  removeConcepto(tarifaIndex: number, conceptoIndex: number) {
+    const conceptosArray = this.getConceptos(tarifaIndex);
+    conceptosArray.removeAt(conceptoIndex);
+  }
+
+  removeTarifa(index: number) {
+    const tarifaGroup = this.tarifas.at(index);
     const uuid = tarifaGroup.get('uuid')?.value;
   
     if (uuid) {
@@ -113,7 +204,7 @@ export class ModalTarifaComponent {
             this.deleteTarifa(uuid).subscribe({
               next: (result) => {
                 if (result) {
-                  this.fieldsForm.removeAt(index);
+                  this.tarifas.removeAt(index);
                 }
               },
               error: (err) => {
@@ -127,164 +218,190 @@ export class ModalTarifaComponent {
         }
       );
     } else {
-      this.fieldsForm.removeAt(index);
+      this.tarifas.removeAt(index);
     }
-  } 
-
-  onTipoChange(index: number) {
-    const tarifa = this.fieldsForm.at(index);
-    const selectedTipo = tarifa.get('tipo')?.value;
-    this.selectedTipoSubject.next(selectedTipo);
-    tarifa.get('categorias')?.setValue([]);
   }
-  onCategoriesChange(index: number) {
-    const tarifa = this.fieldsForm.at(index);
-    tarifa.get('categorias')?.updateValueAndValidity();
+
+  getTipoCobro(tipo: string): string {
+    const tipoMap: Record<string, string> = {
+      'por_hora': 'Por hora',
+      'por_persona': 'Por persona',
+      'por_evento': 'Por evento',
+      'mensualidad': 'Mensualidad',
+      'por_club': 'Por club'
+    };
+    return tipo ? tipoMap[tipo] || tipo : 'No especificado';
+  }
+
+  formatDate(date: string | Date | null): string {
+    if (!date) return '-';
+    const d = new Date(date);
+    return d.toLocaleDateString('es-BO');
   }
   
   saveData() {
-    const formArray = this.form.get('fieldsForm') as FormArray;
-    const saveObservables :any[]= [];
-    formArray.controls.forEach((control: AbstractControl) => {
-      console.log("1:::: ", control.value.categoriaDtoList)
-      console.log("2::::", control.value.categorias)
-      const tarifaData:any = {
-        precioBase: control.value.costo,
-        fechaInicio: new Date(),
-        activo:true,
-        desde: control.value.desde,
-        hasta: control.value.hasta,
-        descripcion: control.value.descripcion,
+    this.submitted = true;
+    
+    if (!this.form.valid) {
+      this.notify('Formulario Inválido. Verifique los campos requeridos.', 'error');
+      return;
+    }
+
+    const saveObservables: any[] = [];
+
+    this.tarifas.controls.forEach((control: AbstractControl) => {
+      const tarifaData: any = {
+        precioBase: parseFloat(control.value.precioBase),
+        fechaInicio: control.value.fechaInicio,
+        fechaFin: control.value.fechaFin || null,
+        desde: this.formatTimeForBackend(control.value.desde),
+        hasta: this.formatTimeForBackend(control.value.hasta),
+        descripcion: control.value.descripcion || null,
+        observaciones: control.value.observaciones || null,
+        activo: control.value.activo,
+        tipoCobro: control.value.tipoCobro,
+        frecuencia: control.value.frecuencia || null,
+        sesionesIncluidas: control.value.sesionesIncluidas ? parseInt(control.value.sesionesIncluidas) : null,
+        clasificadorRuatDto: control.value.clasificadorRuatDto,
         campoDeportivoDto: this.row,
-        categoriasDtoList: this.mergeCategories(control.value.categoriaDtoList, control.value.categorias)
+        categoriasDtoList: control.value.categoriasDtoList.map((cat: any) => ({
+          categoriaDto: cat
+        })),
+        conceptosDtos: control.value.conceptosDtos.map((concepto: any) => ({
+          uuid: concepto.uuid || undefined,
+          concepto: concepto.concepto,
+          tipo: concepto.tipo,
+          valor: parseFloat(concepto.valor),
+          desde: this.formatTimeForBackend(concepto.desde),
+          hasta: this.formatTimeForBackend(concepto.hasta),
+          activo: concepto.activo
+        }))
       };   
 
-      console.log(tarifaData)   
       if (control.value.uuid) {
         tarifaData.uuid = control.value.uuid;
-        // saveObservables.push(this.updateTariff(tarifaData));
+        saveObservables.push(this.updateTariff(tarifaData));
       } else {
         saveObservables.push(this.addTariff(tarifaData));
       }
     });
+
+    if (saveObservables.length === 0) {
+      this.notify('No hay cambios para guardar', 'info');
+      return;
+    }
+
     forkJoin(saveObservables).subscribe({
       next: (result) => {
-        if (result !==null) {
-          this.notify('Tarifas, y categorias exitosamente creados', 'success');
-          this.fieldsForm.reset();
+        if (result !== null) {
+          this.notify('Tarifas guardadas exitosamente', 'success');
+          this.submitted = false;
+          this.form.reset();
           this.emitList.emit();
           this.modalService.dismissAll();
         }
       },
       error: (error) => {
+        this.submitted = false;
         this.notify('Error en proceso de Guardar: ' + error, 'error');
       }
     });
   }
-  
-  mergeCategories(categoriaTarifaDtoList: any[], categorias: any[]): any[] {
-    console.log("list ::::: ", categoriaTarifaDtoList )
-    console.log("categories",categorias)
-    const mergedList: any[] = [];
-    const existingCategoriaTarifaMap = new Map(
-      categoriaTarifaDtoList.map(item => [item.categoriaDto.uuid, item])
-    );
-  
-    existingCategoriaTarifaMap.forEach(element => {
-      if (!categorias.find((categoria: any) => categoria.uuid === element.categoriaDto.uuid)) {        
-        this.tarifaCategoryService.delete(element.uuid).subscribe({
-          next: () => {
-            console.log(`Category with UUID ${element.uuid} deleted successfully.`);
-          },
-          error: (err) => {
-            this.notify('Ocurrio un error al intentar quitar la relacion con la categoria' + err, 'error');
-          },
-        });
+
+  /* API requests */
+  private getClasificadoresRuat() {
+    this.clasificadoresRuatService.getAll().subscribe({
+      next: (data: any) => {
+        if (data['status'] === 'OK') {
+          this.clasificadoresRuatList = data.payload;
+        }
+      },
+      error: (error) => {
+        this.notify('No se pudo recuperar los clasificadores RUAT', 'error');
       }
     });
-  
-    categorias.forEach(categoria => {
-      const existingItem = existingCategoriaTarifaMap.get(categoria.uuid);
-      if (!existingItem) {
-        mergedList.push({
-          uuid: '',
-          estado: false,
-          categoriaDto: categoria,
-          // tarifaDto: null
-        });
-      }
-    });
-  
-    return mergedList;
   }
-  
 
-/* API requests  */
-private addTariff(datos: Tarifa): Observable<any> {
-  return this.tarifaService.save(datos).pipe(
-    switchMap((result: any) => {
-      if(result.status === 'OK'){
-        return of(result);
-      }else{ 
-        return of(null);
+  private getCategorias() {
+    this.categoriaService.getAll().subscribe({
+      next: (data: any) => {
+        if (data['status'] === 'OK') {
+          this.categoriasList = data.payload;
+        }
+      },
+      error: (error) => {
+        this.notify('No se pudo recuperar las categorías', 'error');
       }
-    }),
-    catchError((error) => {
-      return of(null);
-    })
-  );
-}
-private updateTariff(datos: Tarifa): Observable<any> {
-  return this.tarifaService.update(datos).pipe(
-    switchMap((result: any) => {
-      if(result.status === 'OK'){
-        return of(result);
-      }else{
+    });
+  }
+
+  private addTariff(datos: Tarifa): Observable<any> {
+    return this.tarifaService.save(datos).pipe(
+      switchMap((result: any) => {
+        if (result.status === 'OK') {
+          return of(result);
+        } else { 
+          return of(null);
+        }
+      }),
+      catchError((error) => {
         return of(null);
-      }
-    }),
-    catchError((error) => {
-      return of(null);
-    })
-  );
-}
-private deleteTarifa(uuid: string): Observable<boolean> {
-  return this.tarifaService.delete(uuid).pipe(
-    tap((data: any) => {
-      if (data.status === 'OK') {
-        this.notify('Tarifa eliminada exitosamente', 'success');
-      } else {
+      })
+    );
+  }
+
+  private updateTariff(datos: Tarifa): Observable<any> {
+    return this.tarifaService.update(datos).pipe(
+      switchMap((result: any) => {
+        if (result.status === 'OK') {
+          return of(result);
+        } else {
+          return of(null);
+        }
+      }),
+      catchError((error) => {
+        return of(null);
+      })
+    );
+  }
+
+  private deleteTarifa(uuid: string): Observable<boolean> {
+    return this.tarifaService.delete(uuid).pipe(
+      tap((data: any) => {
+        if (data.status === 'OK') {
+          this.notify('Tarifa eliminada exitosamente', 'success');
+        } else {
+          Swal.fire({ text: 'No se pudo eliminar la Tarifa', confirmButtonColor: '#299cdb' });
+        }
+      }),
+      catchError((error) => {
         Swal.fire({ text: 'No se pudo eliminar la Tarifa', confirmButtonColor: '#299cdb' });
+        return of(false);
+      }),
+      map((data: any) => data.status === 'OK')
+    );
+  }
+
+  public closeModal() {
+    this.accion = '';
+    this.submitted = false;
+    this.form.reset();
+    this.modalService.dismissAll();
+  }
+
+  private notify(message: any, type: any): void {
+    let timerInterval: any;
+    Swal.fire({
+      title: message,
+      icon: type,
+      timer: 2000,
+      timerProgressBar: true,
+      willClose: () => {
+        clearInterval(timerInterval);
+      },
+    }).then((result) => {
+      if (result.dismiss === Swal.DismissReason.timer) {
       }
-    }),
-    catchError((error) => {
-      Swal.fire({ text: 'No se pudo eliminar la Tarifa', confirmButtonColor: '#299cdb' });
-      return of(false);
-    }),
-    map((data: any) => data.status === 'OK')
-  );
-}
-
-public closeModal() {
-  this.accion = '';
-  this.fieldsForm.enable();
-  this.modalService.dismissAll();
-  this.fieldsForm.reset();
-}
-private notify(message: any, type: any): void {
-  let timerInterval: any;
-  Swal.fire({
-    title: message,
-    icon: type,
-    timer: 2000,
-    timerProgressBar: true,
-    willClose: () => {
-      clearInterval(timerInterval);
-    },
-  }).then((result) => {
-    if (result.dismiss === Swal.DismissReason.timer) {
-    }
-  });
-}
-
+    });
+  }
 }

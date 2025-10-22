@@ -1,4 +1,3 @@
-
 <div class="row mb-3 pb-1">
     <div class="col-12">
         <div class="d-flex align-items-lg-center flex-lg-row flex-column">
@@ -9,7 +8,7 @@
             <div class="mt-3 mt-lg-0">
                 <div class="row g-3 mb-0 align-items-center">
                     <div class="col-auto">
-                        <a routerLink="/reservations">
+                        <a routerLink="/inicio/taxpayer">
                             <button type="button" class="btn btn-soft-secondary">
                                 <i class="ri-add-circle-line align-middle me-1"></i> 
                                 Reservas
@@ -26,38 +25,62 @@
     <div class="col-xl-8">
         <div class="card">
             <div class="card-header border-0 align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">Ingresos</h4>
+                <h4 class="card-title mb-0 flex-grow-1">Análisis de Reservas</h4>
                 <div class="d-flex gap-1">
                   <button type="button" class="btn btn-soft-secondary btn-sm" (click)="setRevenueValue('all')">Todo</button>
                   <button type="button" class="btn btn-soft-secondary btn-sm" (click)="setRevenueValue('1M')">1M</button>
                   <button type="button" class="btn btn-soft-secondary btn-sm" (click)="setRevenueValue('6M')">6M</button>
-                  <button type="button" class="btn btn-soft-primary btn-sm" (click)="setRevenueValue('1Y')">1A</button>
+                  <button type="button" class="btn btn-soft-primary btn-sm" (click)="setRevenueValue('1A')">1A</button>
                 </div>
             </div>
             <div class="card-header p-0 border-0 bg-light-subtle">
                 <div class="row g-0 text-center">
-                    <div class="col-6 col-sm-3">
+                    <div class="col-6 col-sm-4 col-lg-2">
                         <div class="p-3 border border-dashed border-start-0">
-                            <h5 class="mb-1"><span [countUp]="totalReservations" class="counter-value" [options]="option"></span></h5>
-                            <p class="text-muted mb-0">Reservas</p>
+                            <h5 class="mb-1">
+                                <span [countUp]="totalReservations" class="counter-value" [options]="option"></span>
+                            </h5>
+                            <p class="text-muted mb-0 fs-11">Exitosas</p>
                         </div>
                     </div>
-                    <div class="col-6 col-sm-3">
+                    <div class="col-6 col-sm-4 col-lg-2">
                         <div class="p-3 border border-dashed border-start-0">
-                            <h5 class="mb-1"><span [countUp]="totalCancellations" class="counter-value" [options]="option"></span></h5>
-                            <p class="text-muted mb-0">Cancelaciones</p>
+                            <h5 class="mb-1 text-warning">
+                                <span [countUp]="totalPending" class="counter-value" [options]="option"></span>
+                            </h5>
+                            <p class="text-muted mb-0 fs-11">Pendientes</p>
                         </div>
                     </div>
-                    <div class="col-6 col-sm-3">
+                    <div class="col-6 col-sm-4 col-lg-2">
                         <div class="p-3 border border-dashed border-start-0">
-                            <h5 class="mb-1">Bs. <span [countUp]="totalIncome" class="counter-value" [options]="option"></span></h5>
-                            <p class="text-muted mb-0">Ingresos</p>
+                            <h5 class="mb-1 text-danger">
+                                <span [countUp]="totalCancellations" class="counter-value" [options]="option"></span>
+                            </h5>
+                            <p class="text-muted mb-0 fs-11">Canceladas</p>
                         </div>
                     </div>
-                    <div class="col-6 col-sm-3">
+                    <div class="col-6 col-sm-4 col-lg-2">
+                        <div class="p-3 border border-dashed border-start-0">
+                            <h5 class="mb-1 text-info">
+                                <span [countUp]="totalNoShow" class="counter-value" [options]="option"></span>
+                            </h5>
+                            <p class="text-muted mb-0 fs-11">No Show</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-4 col-lg-2">
+                        <div class="p-3 border border-dashed border-start-0">
+                            <h5 class="mb-1">
+                                Bs. <span [countUp]="totalIncome" class="counter-value" [options]="option"></span>
+                            </h5>
+                            <p class="text-muted mb-0 fs-11">Ingresos</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-4 col-lg-2">
                         <div class="p-3 border border-dashed border-start-0 border-end-0">
-                            <h5 class="mb-1 text-success"><span [countUp]="conversionRatio" class="counter-value" [options]="option"></span>%</h5>
-                            <p class="text-muted mb-0">Reservas Exitosas</p>
+                            <h5 class="mb-1 text-success">
+                                <span [countUp]="conversionRatio" class="counter-value" [options]="option"></span>%
+                            </h5>
+                            <p class="text-muted mb-0 fs-11">Tasa Éxito</p>
                         </div>
                     </div>
                 </div>
@@ -76,7 +99,6 @@
                         [labels]="analyticsChart.labels"
                         [legend]="analyticsChart.legend"
                         [title]="analyticsChart.title"
-                        
                         [colors]="analyticsChart.colors" 
                         [fill]="analyticsChart.fill"  
                         [plotOptions]="analyticsChart.plotOptions" 
@@ -118,20 +140,30 @@
     </div>
 </div>
 
-<!-- <div class="row">
-    <div class="col-xl-6">
+<div class="row">
+    <div class="col-xl-12">
         <div class="card">
             <div class="card-header">
-                <h4 class="card-title mb-0">Ingresos por Complejo</h4>
+                <h4 class="card-title mb-0">Estados de Reservas por Complejo (últimos 6 meses)</h4>
             </div>
             <div class="card-body">
-                <apx-chart [series]="StackedColumnChart.series" [chart]="StackedColumnChart.chart"
-                    [dataLabels]="StackedColumnChart.dataLabels" [plotOptions]="StackedColumnChart.plotOptions"
-                    [responsive]="StackedColumnChart.responsive" [xaxis]="StackedColumnChart.xaxis"
-                    [legend]="StackedColumnChart.legend" [fill]="StackedColumnChart.fill"
-                    [colors]="StackedColumnChart.colors" dir="ltr"></apx-chart>
+                <apx-chart *ngIf="reservationsList.length>0"
+                    [series]="StackedColumnChart.series" 
+                    [chart]="StackedColumnChart.chart"
+                    [dataLabels]="StackedColumnChart.dataLabels" 
+                    [plotOptions]="StackedColumnChart.plotOptions"
+                    [responsive]="StackedColumnChart.responsive" 
+                    [xaxis]="StackedColumnChart.xaxis"
+                    [yaxis]="StackedColumnChart.yaxis"
+                    [legend]="StackedColumnChart.legend" 
+                    [fill]="StackedColumnChart.fill"
+                    [colors]="StackedColumnChart.colors"
+                    [tooltip]="StackedColumnChart.tooltip"
+                    dir="ltr">
+                </apx-chart>
             </div>
         </div>
     </div>
-</div> -->
+</div>
+
 <app-toasts aria-live="polite" aria-atomic="true"></app-toasts>

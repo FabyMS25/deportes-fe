@@ -1,5 +1,10 @@
-<div class="modal-header bg-info-subtle  p-3">
-    <h5 class="modal-title" ngbAutofocus>Tarifas del Campo Deportivo : {{row.complejoDto.nombre}} - {{row.codigo}}</h5>
+<div class="modal-header bg-info-subtle p-2">
+    <h5 class="modal-title" ngbAutofocus>
+        <i class="ri-money-dollar-circle-line me-2"></i>
+        <span *ngIf="accion === 'show'">Tarifas</span>
+        <span *ngIf="accion === 'edit'">Editar Tarifas</span>
+        : {{row.complejoDto.nombre}} - <small class="text-mutted">{{row.codigo}}</small>
+    </h5>
     <button type="button"
         class="btn-close"
         data-dismiss="modal" aria-label="Cerrar"
@@ -8,126 +13,438 @@
     </button>
 </div>
 
-<form [formGroup]="form" (ngSubmit)="saveData()" *ngIf="accion === 'edit'" class="tablelist-form" autocomplete="off">
-  <div class="modal-body">
-    <div formArrayName="fieldsForm">
-      <div *ngFor="let tarifa of fieldsForm.controls; let i = index" [formGroupName]="i" class="row px-2 mb-3">
-        <div class="d-flex">
-          <div class="flex-shrink-0 mt-4 py-2">
-              <i class="ri-checkbox-circle-fill text-success"></i>
-          </div>
-          <div class="flex-grow-1 text-muted">  
-            <div class="row g-1">
-              <div class="col-lg-2">
-                  <label for="tipo-field" class="form-label">Tipo de Cobro</label>
-                  <ng-select [items]="tipoList" 
-                            formControlName="tipo" 
-                            placeholder="Seleccionar"
-                            [ngClass]="{'is-invalid': submitted && tarifa.get('tipo')?.errors }"
-                            (change)="onTipoChange(i)">
-                  </ng-select>
-                  <div *ngIf="submitted && tarifa.get('tipo')?.errors" class="invalid-feedback" align="left">
-                    <div *ngIf="tarifa.get('tipo')?.errors?.['required']">Debe seleccionar un tipo de Cobro</div>
-                  </div>
-              </div>   
-              <div class="col-lg-4">
-                  <label for="categorias-field" class="form-label">Categoria(s)</label>
-                  <ng-select [items]="(filteredCategories$ | async) || []" 
-                      [multiple]="true" 
-                      bindLabel="nombre"
-                      formControlName="categorias" 
-                      placeholder="Seleccione una o más"
-                      [ngClass]="{'is-invalid': submitted && tarifa.get('categorias')?.errors }"
-                      (change)="onCategoriesChange(i)"
-                      [disabled]="!tarifa.get('tipo')?.value">
-                  </ng-select>
-                  <div *ngIf="submitted && tarifa.get('categorias')?.errors" class="invalid-feedback" align="left">
-                    <div *ngIf="tarifa.get('categorias')?.errors?.['required']">Debe seleccionar al menos una categoría</div>
-                    <div *ngIf="tarifa.get('categorias')?.errors?.['invalidTipo']">Las categorías seleccionadas no corresponden al tipo de cobro</div>
-                  </div>
-              </div>
-              <div class="col-lg-2">
-                  <label for="costo-field" class="form-label">Costo (Bs): </label>
-                  <input type="number" step="0.1" id="costo-field" class="form-control"
-                      placeholder="costo " formControlName="costo"
-                      [ngClass]="{'is-invalid': submitted && tarifa.get('costo')?.errors }">
-                  <div *ngIf="submitted && tarifa.get('costo')?.errors" class="invalid-feedback" align="left">
-                  <div *ngIf="tarifa.get('costo')?.errors?.['required']">Debe ingresar el costo</div>
-                  </div>
-              </div>
-              <div class="col-lg-3">
-                <label for="costo-field" class="form-label">Intervalo Valido de Tarifa</label>
-                <div class="row g-1">
-                    <div class="col-lg-6">
-                      <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                             [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                             placeholder="Desde" formControlName="desde">
-                    </div>
-                  <div class="col-lg-6">
-                      <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                             [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                             placeholder="Hasta" formControlName="hasta">
-                    </div>
-                </div>
-              </div> 
-              <div class="col-lg-1">
-                <div class="mt-4 py-1 flex-shrink-0">
-                    <ul class="list-inline card-toolbar-menu d-flex align-items-center mb-0">
-                        <li class="list-inline-item" *ngIf="fieldsForm.length>1">
-                            <a class="align-middle"  (click)="removeTariff(i)">
-                                <i class=" ri-close-fill align-middle"></i>
-                            </a>
-                        </li>
-                        <li class="list-inline-item">
-                            <a class="align-middle btn btn-add" (click)="addTariffForm()"
-                             role="button" aria-expanded="false"
-                                aria-controls="collapseExample2">
-                                <i class=" ri-add-circle-line align-middle"></i>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-              </div>  
+<form [formGroup]="form" (ngSubmit)="saveData()" class="tablelist-form" autocomplete="off">
+    <div class="modal-body p-4" style="max-height: 60vh; overflow-y: auto;">
+        <div *ngIf="accion === 'show'">
+            <div *ngIf="!(this.tarifas.length > 0)" class="alert alert-info">
+                <i class="ri-information-line me-2"></i>
+                No hay tarifas registradas para este campo deportivo.
             </div>
-          </div>
+            <div *ngIf="(this.tarifas.length > 0)" formArrayName="tarifasDtoList">
+                <div *ngFor="let tarifa of tarifas.controls; let i = index" [formGroupName]="i" class="card tarifa-option gap-2 mb-2">
+                    <div class="card-header tarifa-header p-0">
+                        <div class="tarifa-title">
+                            <h5 class="text-primary mb-1">
+                                <i class="ri-price-tag-3-line"></i>
+                                {{ tarifa.get('descripcion')?.value || 'Tarifa estándar' }}
+                            </h5>
+                            <div class="tarifa-status mx-3 mb-1 small">
+                                <span class="badge" [ngClass]="tarifa.get('activo')?.value ? 'bg-success' : 'bg-secondary'">
+                                    {{ tarifa.get('activo')?.value ? 'Tarifa Activa' : 'Tarifa Inactiva' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="tarifa-price">
+                            <span class="amount">{{ tarifa.get('precioBase')?.value | number:'1.2-2' }} Bs</span>
+                            <span class="currency">Bs</span>
+                        </div>
+                    </div>  
+                    <div class="tarifa-meta mb-0">
+                        <div class="tarifa-item" *ngIf="tarifa.get('clasificadorRuatDto')?.value?.nombre">
+                            <p class="text-muted mb-0 small">
+                                <i class="ri-money-dollar-circle-line"></i> Clasificador
+                            </p>
+                            <span class="badge bg-light text-body fs-10 fw-medium">
+                                <i class="mdi mdi-star text-warning me-1"></i>{{ tarifa.get('clasificadorRuatDto')?.value?.nombre }}
+                            </span>
+                        </div>
+                        <div class="tarifa-item">
+                            <p class="text-muted mb-0 small">
+                                <i class="ri-money-dollar-circle-line"></i> Tipo de Cobro
+                            </p>
+                            <span class="badge bg-primary-subtle text-primary">
+                                {{ getTipoCobro(tarifa.get('tipoCobro')?.value) }}
+                            </span>
+                            <span class="badge bg-light-subtle text-body" *ngIf="tarifa.get('frecuencia')?.value">
+                                <i class="ri-repeat-line"></i> {{ tarifa.get('frecuencia')?.value }}
+                            </span>
+                            <span class="badge bg-light-subtle text-body" *ngIf="tarifa.get('sesionesIncluidas')?.value">
+                                {{ tarifa.get('sesionesIncluidas')?.value }} Sesiones
+                            </span>
+                        </div>
+                        <div class="tarifa-item">
+                            <p class="text-muted mb-0 small">
+                                <i class="ri-calendar-event-line"></i> Vigencia
+                            </p>
+                            <p class="mb-0">
+                                {{ formatDate(tarifa.get('fechaInicio')?.value) }}
+                                <span *ngIf="tarifa.get('fechaFin')?.value"> - {{ formatDate(tarifa.get('fechaFin')?.value) }}</span>
+                                <span *ngIf="!tarifa.get('fechaFin')?.value" class="text-muted"> - Sin fecha fin</span>
+                            </p>
+                        </div>
+                        <div *ngIf="tarifa.get('desde')?.value || tarifa.get('hasta')?.value" class="tarifa-item">
+                            <p class="text-muted mb-0 small">
+                                <i class="ri-time-line me-1"></i> Intervalo Válido
+                            </p>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-light text-dark">
+                                    {{ tarifa.get('desde')?.value || '00:00' }} - {{ tarifa.get('hasta')?.value || '23:59' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tarifa-meta m-0 p-0">
+                        <div class="d-flex gap-1 flex-wrap">
+                            <span *ngFor="let cat of tarifa.get('categoriasDtoList')?.value" 
+                                class="badge bg-success-subtle text-success">
+                                {{ cat.nombre }}
+                            </span>
+                            <span *ngIf="!tarifa.get('categoriasDtoList')?.value || tarifa.get('categoriasDtoList')?.value.length === 0" class="text-muted">
+                                Sin categorías
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Conceptos Display for Show Mode -->
+                    <div class="tarifa-meta m-0 p-0" *ngIf="tarifa.get('conceptosDtos')?.value && tarifa.get('conceptosDtos')?.value.length > 0">
+                        <p class="text-muted mb-1 small">
+                            <i class="ri-file-list-3-line"></i> Conceptos Adicionales
+                        </p>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Concepto</th>
+                                        <th>Tipo</th>
+                                        <th class="text-end">Valor</th>
+                                        <th class="text-center">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let concepto of tarifa.get('conceptosDtos')?.value">
+                                        <td>{{ concepto.concepto }}</td>
+                                        <td>
+                                            <span class="badge" [ngClass]="getConceptoBadgeClass(concepto.tipo)">
+                                                {{ getTipoConceptoDisplay(concepto.tipo) }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end">
+                                            {{ concepto.valor }}{{ concepto.tipo === 'porcentaje' ? '%' : ' Bs' }}
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge" [ngClass]="concepto.activo ? 'bg-success' : 'bg-secondary'">
+                                                {{ concepto.activo ? 'Activo' : 'Inactivo' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
+        
+        <div *ngIf="accion === 'edit'" formArrayName="tarifasDtoList">
+            <div *ngFor="let tarifa of tarifas.controls; let i = index" [formGroupName]="i" class="card mb-2">
+                <div class="card-header bg-light d-flex align-items-center p-1">
+                    <span class="badge bg-primary me-2">Tarifa {{i + 1}}</span>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" formControlName="activo"
+                            [id]="'tarifa-activo-' + i">
+                        <label class="form-check-label" [for]="'tarifa-activo-' + i">Activa</label>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-danger ms-auto" 
+                            (click)="removeTarifa(i)" *ngIf="tarifas.length > 1" [disabled]="submitted">
+                        <i class="ri-delete-bin-line"></i> Eliminar
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-lg-5">
+                            <label class="form-label mb-0">Clasificador RUAT <span class="text-danger">*</span></label>
+                            <ng-select [items]="clasificadoresRuatList" bindLabel="nombre"
+                                    formControlName="clasificadorRuatDto" placeholder="Seleccionar"
+                                    [ngClass]="{'is-invalid': submitted && tarifa.get('clasificadorRuatDto')?.errors}">
+                            </ng-select>
+                            <div *ngIf="submitted && tarifa.get('clasificadorRuatDto')?.errors" class="invalid-feedback d-block">
+                                <div *ngIf="tarifa.get('clasificadorRuatDto')?.errors?.['required']">Campo requerido</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3">
+                            <label class="form-label mb-0">Tipo de Cobro <span class="text-danger">*</span></label>
+                            <select class="form-select" formControlName="tipoCobro"
+                                    [ngClass]="{'is-invalid': submitted && tarifa.get('tipoCobro')?.errors}">
+                                <option value="">Seleccione</option>
+                                <option *ngFor="let tipo of tipoCobroOptions" [value]="tipo.value">
+                                    {{ tipo.label }}
+                                </option>
+                            </select>
+                            <div *ngIf="submitted && tarifa.get('tipoCobro')?.errors" class="invalid-feedback">
+                                <div *ngIf="tarifa.get('tipoCobro')?.errors?.['required']">Campo requerido</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-2" *ngIf="tarifa.get('tipoCobro')?.value === 'mensualidad' || tarifa.get('tipoCobro')?.value === 'por_sesion'">
+                            <label class="form-label mb-0">Frecuencia</label>
+                            <select class="form-select" formControlName="frecuencia">
+                                <option value="">Seleccione</option>
+                                <option *ngFor="let freq of frecuenciaOptions" [value]="freq.value">
+                                    {{ freq.label }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-2" *ngIf="tarifa.get('tipoCobro')?.value === 'mensualidad' || tarifa.get('tipoCobro')?.value === 'por_club'">
+                            <label class="form-label mb-0">Sesiones</label>
+                            <input type="number" class="form-control" placeholder="0" min="0"
+                                formControlName="sesionesIncluidas">
+                        </div>
+
+                        <div class="col-lg-5">
+                            <label class="form-label mb-0">Descripción</label>
+                            <input type="text" class="form-control" placeholder="Tarifa diurna"
+                                formControlName="descripcion">
+                        </div>
+                        <div class="col-lg-5">
+                            <label class="form-label mb-0">Categoría(s) <span class="text-danger">*</span></label>
+                            <ng-select [items]="categoriasList" [multiple]="true" bindLabel="nombre" 
+                                    formControlName="categoriasDtoList" placeholder="Seleccione" 
+                                    [ngClass]="{'is-invalid': submitted && tarifa.get('categoriasDtoList')?.errors}">
+                            </ng-select>
+                            <div *ngIf="submitted && tarifa.get('categoriasDtoList')?.errors" class="invalid-feedback d-block">
+                                <div *ngIf="tarifa.get('categoriasDtoList')?.errors?.['required']">Campo requerido</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-2">
+                            <label class="form-label mb-0">Precio Base<span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" class="form-control" placeholder="150.00"
+                                formControlName="precioBase"
+                                [ngClass]="{'is-invalid': submitted && tarifa.get('precioBase')?.errors}">
+                            <div *ngIf="submitted && tarifa.get('precioBase')?.errors" class="invalid-feedback">
+                                <div *ngIf="tarifa.get('precioBase')?.errors?.['required']">Campo requerido</div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <label class="form-label mb-0">Fecha Inicio <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control form-control-sm" formControlName="fechaInicio"
+                                        [ngClass]="{'is-invalid': submitted && tarifa.get('fechaInicio')?.errors}">
+                                </div>
+
+                                <div class="col-lg-6">
+                                    <label class="form-label mb-0">Fecha Fin</label>
+                                    <input type="date" class="form-control form-control-sm" formControlName="fechaFin">
+                                </div>
+
+                                <div class="col-lg-6 mt-2">
+                                    <label class="form-label mb-0">Hora Desde</label>
+                                    <input type="time" class="form-control form-control-sm" formControlName="desde">
+                                </div>
+
+                                <div class="col-lg-6 mt-2">
+                                    <label class="form-label mb-0">Hora Hasta</label>
+                                    <input type="time" class="form-control form-control-sm" formControlName="hasta">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <label class="form-label mb-0">Observaciones</label>
+                            <textarea class="form-control" rows="3" formControlName="observaciones"
+                                    placeholder="Observaciones adicionales"></textarea>
+                        </div>
+
+                        <!-- Conceptos Section -->
+                        <div class="col-12">
+                            <div class="card bg-light border">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        <i class="ri-file-list-3-line me-2"></i>Conceptos Adicionales
+                                    </h6>
+                                    <button type="button" class="btn btn-sm btn-success" 
+                                            (click)="addConcepto(i)" [disabled]="submitted">
+                                        <i class="ri-add-line"></i> Agregar Concepto
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div formArrayName="conceptosDtos">
+                                        <div *ngIf="getConceptos(i).length === 0" class="text-muted text-center py-2">
+                                            <small>No hay conceptos adicionales. Haga clic en "Agregar Concepto" para añadir uno.</small>
+                                        </div>
+                                        <div *ngFor="let concepto of getConceptos(i).controls; let j = index" 
+                                            [formGroupName]="j" class="border rounded p-2 mb-2">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <span class="badge bg-secondary">Concepto {{j + 1}}</span>
+                                                <button type="button" class="btn btn-sm btn-danger" 
+                                                        (click)="removeConcepto(i, j)" [disabled]="submitted">
+                                                    <i class="ri-delete-bin-line"></i>
+                                                </button>
+                                            </div>
+                                            <div class="row g-2">
+                                                <div class="col-lg-4">
+                                                    <label class="form-label mb-0">Concepto <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control form-control-sm" 
+                                                            placeholder="Ej: Luz, Agua, Mantenimiento, Recargo Nocturno"
+                                                            formControlName="concepto"
+                                                            [ngClass]="{'is-invalid': submitted && concepto.get('concepto')?.errors}">
+                                                    <div *ngIf="submitted && concepto.get('concepto')?.errors" class="invalid-feedback">
+                                                        Campo requerido
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-3">
+                                                    <label class="form-label mb-0">Tipo <span class="text-danger">*</span></label>
+                                                    <select class="form-select form-select-sm" formControlName="tipo"
+                                                            [ngClass]="{'is-invalid': submitted && concepto.get('tipo')?.errors}">
+                                                        <option value="">Seleccione</option>
+                                                        <option *ngFor="let tipo of tipoConceptoOptions" [value]="tipo.value">
+                                                            {{ tipo.label }}
+                                                        </option>
+                                                    </select>
+                                                    <div *ngIf="submitted && concepto.get('tipo')?.errors" class="invalid-feedback">
+                                                        Campo requerido
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-3">
+                                                    <label class="form-label mb-0">
+                                                        Valor <span class="text-danger">*</span>
+                                                        <small class="text-muted">
+                                                            ({{ concepto.get('tipo')?.value === 'porcentaje' ? '%' : 
+                                                            concepto.get('tipo')?.value === 'por_hora' ? 'Bs/h' : 'Bs' }})
+                                                        </small>
+                                                    </label>
+                                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" 
+                                                            placeholder="0.00"
+                                                            formControlName="valor"
+                                                            [ngClass]="{'is-invalid': submitted && concepto.get('valor')?.errors}">
+                                                    <div *ngIf="submitted && concepto.get('valor')?.errors" class="invalid-feedback">
+                                                        Campo requerido
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-2">
+                                                    <div class="form-check form-switch mt-4">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                            formControlName="activo"
+                                                            [id]="'concepto-activo-' + i + '-' + j">
+                                                        <label class="form-check-label" [for]="'concepto-activo-' + i + '-' + j">
+                                                            Activo
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12" *ngIf="showTimeFields(concepto)">
+                                                    <div class="card bg-light-subtle border-0">
+                                                        <div class="card-body p-2">
+                                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                <small class="text-muted">
+                                                                    <i class="ri-time-line me-1"></i>Intervalo de Horas (Opcional)
+                                                                </small>
+                                                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                                                        (click)="toggleTimeFields(concepto)">
+                                                                    <i class="ri-time-line me-1"></i>
+                                                                    {{ concepto.get('desde')?.value || concepto.get('hasta')?.value ? 'Ocultar' : 'Agregar Horario' }}
+                                                                </button>
+                                                            </div>
+                                                            
+                                                            <div class="row g-2" *ngIf="concepto.get('desde')?.value || concepto.get('hasta')?.value">
+                                                                <div class="col-lg-6">
+                                                                    <label class="form-label mb-0 small">Hora Desde</label>
+                                                                    <input type="time" class="form-control form-control-sm" 
+                                                                            formControlName="desde"
+                                                                            placeholder="HH:MM">
+                                                                    <small class="text-muted">Hora de inicio del concepto</small>
+                                                                </div>
+                                                                <div class="col-lg-6">
+                                                                    <label class="form-label mb-0 small">Hora Hasta</label>
+                                                                    <input type="time" class="form-control form-control-sm" 
+                                                                            formControlName="hasta"
+                                                                            placeholder="HH:MM">
+                                                                    <small class="text-muted">Hora de fin del concepto</small>
+                                                                </div>
+                                                                <div class="col-12">
+                                                                    <small class="text-info">
+                                                                        <i class="ri-information-line me-1"></i>
+                                                                        Este concepto aplicará solo dentro del intervalo de horas especificado.
+                                                                    </small>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Concepto Preview -->
+                                                <div class="col-12" *ngIf="concepto.valid">
+                                                    <div class="alert alert-info py-2 mb-0">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <small>
+                                                                <strong>{{ concepto.get('concepto')?.value }}</strong> - 
+                                                                {{ getTipoConceptoDisplay(concepto.get('tipo')?.value) }}: 
+                                                                {{ concepto.get('valor')?.value }}
+                                                                {{ concepto.get('tipo')?.value === 'porcentaje' ? '%' : 
+                                                                concepto.get('tipo')?.value === 'por_hora' ? 'Bs/h' : 'Bs' }}
+                                                                
+                                                                <span *ngIf="concepto.get('desde')?.value && concepto.get('hasta')?.value" class="ms-2">
+                                                                    | Horario: {{ concepto.get('desde')?.value }} - {{ concepto.get('hasta')?.value }}
+                                                                </span>
+                                                                
+                                                                <span class="badge ms-2" 
+                                                                    [ngClass]="concepto.get('activo')?.value ? 'bg-success' : 'bg-secondary'">
+                                                                    {{ concepto.get('activo')?.value ? 'Activo' : 'Inactivo' }}
+                                                                </span>
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="button" class="btn btn-success" (click)="addTarifa()" [disabled]="submitted">
+                <i class="ri-add-line"></i> Agregar Tarifa
+            </button>
+        </div>
     </div>
-  </div>
-  <div class="modal-footer">
-    <div class="hstack gap-2 justify-content-end">
-      <button type="button" class="btn btn-light" data-bs-dismiss="modal" 
-        (click)="closeModal()">Cerrar</button>
-      <button type="submit" class="btn btn-success" id="add-btn">Guardar</button>
+    
+    <div class="modal-footer bg-light py-2">
+        <div class="d-flex justify-content-between w-100 align-items-center">
+            <div class="d-flex align-items-center">
+                <small class="text-muted">
+                    <i class="ri-information-line me-1"></i>
+                    <span class="text-danger">*</span> Campos obligatorios
+                </small>
+            </div>
+            <div class="hstack gap-2 justify-content-end">
+                <button type="button" class="btn btn-light" (click)="closeModal()" [disabled]="submitted">
+                    <i class="ri-close-line"></i> Cerrar
+                </button>
+                <button *ngIf="accion === 'edit'" type="submit" class="btn btn-success" [disabled]="form.invalid || submitted">
+                    <span *ngIf="!submitted"><i class="ri-save-line"></i> Guardar</span>
+                    <span *ngIf="submitted">
+                        <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+                    </span>
+                </button>
+            </div>
+        </div>
     </div>
-  </div>
 </form>
 
-
 <ng-template #deleteConfirmation let-modal>
-  <div class="modal-content">
-      <div class="modal-header">
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="btn-close"
-              (click)="modal.dismiss('Cross click')"></button>
-      </div>
-      <div class="modal-body">
-          <div class="mt-2 text-center">
-              <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
-                  colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
-              <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
-                  <h4>Esta seguro de eliminar el registro?</h4>
-                  <p class="text-muted mx-4 mb-0">
-                      Al Confirmar la eliminacion se quitara toda informacion de nuestra base de datos.
-                  </p>
-              </div>
-          </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-link link-success fw-medium text-decoration-none" data-bs-dismiss="modal"
-            id="deleteRecord-close" (click)="modal.dismiss('cancel')"><i
-                class="ri-close-line me-1 align-middle"></i> Cancelar</button>
-        <button type="button" class="btn w-sm btn-danger " id="delete-product" 
-        (click)="modal.close('delete')">Si, Elmimar!</button>
-      </div>
-  </div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Confirmar Eliminación</h5>
+            <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
+        </div>
+        <div class="modal-body text-center">
+            <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
+                colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
+            <div class="mt-4">
+                <h4>¿Está seguro de eliminar esta tarifa?</h4>
+                <p class="text-muted">Esta acción eliminará la tarifa de forma permanente.</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-link link-success" (click)="modal.dismiss('cancel')">
+                <i class="ri-close-line"></i> Cancelar
+            </button>
+            <button type="button" class="btn btn-danger" (click)="modal.close('delete')">
+                <i class="ri-delete-bin-line"></i> Sí, Eliminar
+            </button>
+        </div>
+    </div>
 </ng-template>

@@ -48,7 +48,7 @@ export class SidebarComponent implements OnInit {
   getSubMenu(menuItems:any[]):any[]{
     const commonItems = menuItems.filter(item1 => this.menuItems.some(item2 => item1.nombreMenu === item2.nombreMenu));
     const uniqueMenuItemsMap = commonItems.reduce((map, item) => {
-      if (!map.has(item.nombreMenu)) {
+      if (!map.has(item.nombreMenu) && item.accion !=='CREAR') {
         map.set(item.nombreMenu, item);
       }
       return map;

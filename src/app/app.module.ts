@@ -11,7 +11,7 @@ import { LayoutsModule} from "./layouts/layouts.module";
 import { PagesModule } from "./pages/pages.module";
 
 // Auth
-import { HttpClientModule, HttpClient, HTTP_INTERCEPTORS  } from '@angular/common/http';
+import { HttpClientModule, HttpClient, HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { environment } from '../environments/environment';
 import { ErrorInterceptor } from './core/models/helpers/error.interceptor';
@@ -26,29 +26,21 @@ import { EffectsModule } from '@ngrx/effects';
 import { AuthenticationEffects } from './store/Authentication/authentication.effects';
 import { AuthInterceptor } from './core/models/helpers/auth.interceptor';
 
-export function createTranslateLoader(http: HttpClient): any {
-  return new TranslateHttpLoader(http, 'assets/i18n/', '.json');
-}
-
 import localeEs from '@angular/common/locales/es';
-import { HashLocationStrategy, LocationStrategy, registerLocaleData } from '@angular/common';
-
+import { registerLocaleData } from '@angular/common';
 // import { NotificationCenterModule } from '@novu/notification-center-angular';
 
 registerLocaleData(localeEs, 'es');
-// if (environment.defaultauth === 'firebase') {
-//   initFirebaseBackend(environment.firebaseConfig);
-// } else {
-//   FakeBackendInterceptor;
-// }
 
+export function createTranslateLoader(http: HttpClient): any {
+  return new TranslateHttpLoader(http, 'assets/i18n/', '.json');
+}
 @NgModule({
-  declarations: [
-    AppComponent
-  ],
+  declarations: [AppComponent],
+  bootstrap: [AppComponent],
   imports: [
     TranslateModule.forRoot({
-      defaultLanguage: 'en',
+      defaultLanguage: 'es',
       loader: {
         provide: TranslateLoader,
         useFactory: (createTranslateLoader),
@@ -56,28 +48,28 @@ registerLocaleData(localeEs, 'es');
       }
     }),
     BrowserAnimationsModule,
-    HttpClientModule,
     BrowserModule,
+    HttpClientModule,
     AppRoutingModule,
+    NgPipesModule,
     LayoutsModule,
     PagesModule,
-    NgPipesModule,
     StoreModule.forRoot(rootReducer),
     StoreDevtoolsModule.instrument({
-      maxAge: 25, // Retains last 25 states
-      logOnly: environment.production, // Restrict extension to log-only mode
+      maxAge: 25, 
+      logOnly: environment.production,
     }),
     EffectsModule.forRoot([
-      AuthenticationEffects]),
-      // NotificationCenterModule
+      AuthenticationEffects
+    ]),
+    // NotificationCenterModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   providers: [
     { provide: LOCALE_ID, useValue: 'es' },
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
-    // { provide: LocationStrategy, useClass: HashLocationStrategy }
+    provideHttpClient(withInterceptorsFromDi()),
   ],
-  bootstrap: [AppComponent]
 })
 export class AppModule { }

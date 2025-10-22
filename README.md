@@ -6,7 +6,13 @@
   </a>
 
   <h3 align="center">DEPORTES-GAMQ</h3>
-
+  <br>
+  <div align="center">
+    <h3>Desarrollador:</h3>
+    <strong>FABIOLA DANNY MORALES SILES</strong>
+    <p>moralessfaby.dev@gmail.com</p>
+  </div>
+  <br>
   <p align="center">
     Modulo de reservas de canchas deportivas del GAMQ 
     <br />

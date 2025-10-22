@@ -1,28 +1,23 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
-import { Tarifa } from 'src/app/core/models/tarifa.model';
 import { FormsModule } from '@angular/forms';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
-import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
-import { Reserva } from 'src/app/core/models/reserva.models';
 
-interface DayHorario {
-  dia: string;
-  diaDisplay: string;
-  selected: boolean;
+import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
+import { ReservaRecurrente } from 'src/app/core/models/reservaRecurrente.models';
+import { Reserva } from 'src/app/core/models/reserva.models';
+import { Tarifa } from 'src/app/core/models/tarifa.model';
+
+interface TimeSlot {
   horaInicio: string;
   horaFin: string;
 }
 
-interface RecurrentScheduleData {
-  tipoRecurrencia: 'semanal' | 'mensual';
-  fechaInicio: Date;
-  fechaFin: Date;
-  diasSeleccionados: DayHorario[];
-  tablero: string[][];
-  cantidadSesiones: number;
-  duracionSesionHoras: number;
-  diasSemana: string;
+interface DayConfig {
+  dia: string;
+  diaDisplay: string;
+  selected: boolean;
+  horarios: TimeSlot[];
 }
 
 @Component({
@@ -37,54 +32,45 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   @Input() dataTariff!: Tarifa;
   @Input() reservationsList: Reserva[] = [];
   
-  @Output() scheduleCompleted = new EventEmitter<RecurrentScheduleData>();
+  @Output() scheduleCompleted = new EventEmitter<ReservaRecurrente>();
   @Output() goBack = new EventEmitter<void>();
 
-  // Configuration
-  tipoRecurrencia: 'semanal' | 'mensual' = 'mensual';
+  tipoRecurrencia: string = '';
   fechaInicio: string = '';
   fechaFin: string = '';
   
-  // Days of week
-  diasSemana: DayHorario[] = [
-    { dia: 'lunes', diaDisplay: 'Lunes', selected: false, horaInicio: '08:00', horaFin: '09:00' },
-    { dia: 'martes', diaDisplay: 'Martes', selected: false, horaInicio: '08:00', horaFin: '09:00' },
-    { dia: 'miercoles', diaDisplay: 'Miércoles', selected: false, horaInicio: '08:00', horaFin: '09:00' },
-    { dia: 'jueves', diaDisplay: 'Jueves', selected: false, horaInicio: '08:00', horaFin: '09:00' },
-    { dia: 'viernes', diaDisplay: 'Viernes', selected: false, horaInicio: '08:00', horaFin: '09:00' },
-    { dia: 'sabado', diaDisplay: 'Sábado', selected: false, horaInicio: '08:00', horaFin: '09:00' },
-    { dia: 'domingo', diaDisplay: 'Domingo', selected: false, horaInicio: '08:00', horaFin: '09:00' }
+  diasSemana: DayConfig[] = [
+    { dia: 'lunes', diaDisplay: 'Lunes', selected: false, horarios: [{ horaInicio: '08:00', horaFin: '09:00' }] },
+    { dia: 'martes', diaDisplay: 'Martes', selected: false, horarios: [{ horaInicio: '08:00', horaFin: '09:00' }] },
+    { dia: 'miercoles', diaDisplay: 'Miércoles', selected: false, horarios: [{ horaInicio: '08:00', horaFin: '09:00' }] },
+    { dia: 'jueves', diaDisplay: 'Jueves', selected: false, horarios: [{ horaInicio: '08:00', horaFin: '09:00' }] },
+    { dia: 'viernes', diaDisplay: 'Viernes', selected: false, horarios: [{ horaInicio: '08:00', horaFin: '09:00' }] },
+    { dia: 'sabado', diaDisplay: 'Sábado', selected: false, horarios: [{ horaInicio: '08:00', horaFin: '09:00' }] },
+    { dia: 'domingo', diaDisplay: 'Domingo', selected: false, horarios: [{ horaInicio: '08:00', horaFin: '09:00' }] }
   ];
 
   // Calendar view
-  tablero: string[][] = [];
+  tablero: string[][] = []; // Starting from Monday (0=Monday, 6=Sunday)
   calendarMonths: any[] = [];
   
-  // Time constraints
   minTime = '06:00';
   maxTime = '23:00';
   
-  // Validation
   errorMessage = '';
 
   ngOnInit(): void {
+    console.log(this.reservationsList);
     this.initializeDates();
     this.loadFieldConstraints();
     this.generateCalendar();
   }
 
-  // ==================== INITIALIZATION ====================
-
   private initializeDates(): void {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
-    // Start next week
     const startDate = new Date(today);
     startDate.setDate(today.getDate() + 7);
     this.fechaInicio = this.formatDateForInput(startDate);
-    
-    // Default: 1 month
     const endDate = new Date(startDate);
     endDate.setMonth(startDate.getMonth() + 1);
     this.fechaFin = this.formatDateForInput(endDate);
@@ -107,17 +93,13 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   }
 
   private loadFieldConstraints(): void {
-    // Get available hours from field schedule
     const horarioLV = this.dataField?.horariosFijosDtoList?.find(
       h => h.dia === 'lunes_viernes' && h.abierto
-    );
-    
+    );    
     if (horarioLV) {
       this.minTime = horarioLV.horaApertura?.slice(0, 5) || '06:00';
       this.maxTime = horarioLV.horaCierre?.slice(0, 5) || '23:00';
     }
-    
-    // Apply tariff constraints
     if (this.dataTariff?.desde) {
       const tarifaMin = this.dataTariff.desde.slice(0, 5);
       if (tarifaMin > this.minTime) this.minTime = tarifaMin;
@@ -129,18 +111,12 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     }
   }
 
-  // ==================== CALENDAR GENERATION ====================
-
   generateCalendar(): void {
     if (!this.fechaInicio || !this.fechaFin) return;
-    
     this.calendarMonths = [];
     this.tablero = [];
-    
     const start = this.fechaInicioDate;
     const end = this.fechaFinDate;
-    
-    // Generate months between dates
     const current = new Date(start.getFullYear(), start.getMonth(), 1);
     const lastMonth = new Date(end.getFullYear(), end.getMonth(), 1);
     
@@ -160,14 +136,10 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     
     const weeks: any[] = [];
     let week: any[] = [];
-    
-    // Fill initial empty days
     const startDay = firstDay.getDay();
     for (let i = 0; i < startDay; i++) {
       week.push({ empty: true });
     }
-    
-    // Fill days of month
     for (let day = 1; day <= lastDay.getDate(); day++) {
       const currentDate = new Date(year, month, day);
       const isInRange = currentDate >= this.fechaInicioDate && currentDate <= this.fechaFinDate;
@@ -194,7 +166,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
       }
     }
     
-    // Fill remaining empty days
     while (week.length > 0 && week.length < 7) {
       week.push({ empty: true });
     }
@@ -211,39 +182,45 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   }
 
   private initializeTablero(): void {
-    // Tablero structure for recurrent reservations: [day_of_week][time_slot]
-    // 7 days (0=Sunday, 1=Monday, ..., 6=Saturday)
+    // Tablero structure: 7 days starting from Monday (0=Monday, 6=Sunday)
     this.tablero = Array(7).fill(null).map(() => []);
     
-    // Populate based on selected days
-    this.diasSemana.forEach((dia, index) => {
-      if (dia.selected) {
-        // Convert day name to tablero index (0=Sunday, 1=Monday, etc.)
+    // Populate based on selected days and their time slots
+    this.diasSemana.forEach((dia) => {
+      if (dia.selected && dia.horarios.length > 0) {
         const tableroIndex = this.getTableroIndex(dia.dia);
         if (tableroIndex !== -1) {
-          this.tablero[tableroIndex] = [`${dia.horaInicio}-${dia.horaFin}`];
+          // Add all time slots for this day
+          this.tablero[tableroIndex] = dia.horarios.map(
+            horario => `${horario.horaInicio}-${horario.horaFin}`
+          );
         }
       }
     });
   }
 
   private getTableroIndex(diaName: string): number {
+    // Monday = 0, Sunday = 6
     const dayMap: {[key: string]: number} = {
-      'domingo': 0,
-      'lunes': 1,
-      'martes': 2,
-      'miercoles': 3,
-      'jueves': 4,
-      'viernes': 5,
-      'sabado': 6
+      'lunes': 0,
+      'martes': 1,
+      'miercoles': 2,
+      'jueves': 3,
+      'viernes': 4,
+      'sabado': 5,
+      'domingo': 6
     };
-    return dayMap[diaName] || -1;
+    return dayMap[diaName] !== undefined ? dayMap[diaName] : -1;
   }
 
   // ==================== DAY SELECTION ====================
 
-  toggleDay(dia: DayHorario): void {
+  toggleDay(dia: DayConfig): void {
     dia.selected = !dia.selected;
+    // Ensure at least one time slot when selecting
+    if (dia.selected && dia.horarios.length === 0) {
+      dia.horarios.push({ horaInicio: '08:00', horaFin: '09:00' });
+    }
     this.generateCalendar();
     this.validateSchedule();
   }
@@ -254,21 +231,71 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     const dayConfig = this.diasSemana.find(d => d.dia === dayCell.dayName);
     if (!dayConfig) return;
     
-    // Toggle the day selection
     dayConfig.selected = !dayConfig.selected;
+    if (dayConfig.selected && dayConfig.horarios.length === 0) {
+      dayConfig.horarios.push({ horaInicio: '08:00', horaFin: '09:00' });
+    }
     this.generateCalendar();
     this.validateSchedule();
   }
 
-  updateDayTime(dia: DayHorario): void {
-    if (!this.validateTimeRange(dia.horaInicio, dia.horaFin)) {
+  // ==================== TIME SLOT MANAGEMENT ====================
+
+  addTimeSlot(dia: DayConfig): void {
+    const lastSlot = dia.horarios[dia.horarios.length - 1];
+    const newStart = lastSlot ? this.addHour(lastSlot.horaFin) : '08:00';
+    const newEnd = this.addHour(newStart);
+    
+    dia.horarios.push({
+      horaInicio: newStart,
+      horaFin: newEnd
+    });
+    this.initializeTablero();
+    this.calculateSessionInfo();
+  }
+
+  removeTimeSlot(dia: DayConfig, index: number): void {
+    if (dia.horarios.length > 1) {
+      dia.horarios.splice(index, 1);
+      this.initializeTablero();
+      this.calculateSessionInfo();
+    }
+  }
+
+  updateTimeSlot(dia: DayConfig, slot: TimeSlot): void {
+    if (!this.validateTimeRange(slot.horaInicio, slot.horaFin)) {
       this.errorMessage = 'La hora de fin debe ser mayor que la hora de inicio';
+      return;
+    }
+    
+    // Check for overlaps within the same day
+    if (this.hasTimeSlotOverlap(dia)) {
+      this.errorMessage = `Horarios superpuestos en ${dia.diaDisplay}`;
       return;
     }
     
     this.errorMessage = '';
     this.initializeTablero();
     this.calculateSessionInfo();
+  }
+
+  private hasTimeSlotOverlap(dia: DayConfig): boolean {
+    for (let i = 0; i < dia.horarios.length; i++) {
+      for (let j = i + 1; j < dia.horarios.length; j++) {
+        const slot1 = dia.horarios[i];
+        const slot2 = dia.horarios[j];
+        if (this.hasTimeConflict(slot1.horaInicio, slot1.horaFin, slot2.horaInicio, slot2.horaFin)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private addHour(time: string): string {
+    const [hours, minutes] = time.split(':').map(Number);
+    const newHours = (hours + 1) % 24;
+    return `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   }
 
   // ==================== DATE MANAGEMENT ====================
@@ -292,7 +319,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
       return;
     }
     
-    // Validate maximum duration (e.g., 6 months)
     const maxMonths = 6;
     const maxDate = new Date(startDate);
     maxDate.setMonth(maxDate.getMonth() + maxMonths);
@@ -314,24 +340,27 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     const selectedDays = this.diasSemana.filter(d => d.selected);
     if (selectedDays.length === 0) return 0;
     
-    // Calculate number of weeks between dates
     const start = this.fechaInicioDate;
     const end = this.fechaFinDate;
     const diffTime = end.getTime() - start.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     const weeks = Math.ceil(diffDays / 7);
     
-    return weeks * selectedDays.length;
+    // Total sessions = weeks * sum of all time slots across all selected days
+    const totalSlotsPerWeek = selectedDays.reduce((sum, dia) => sum + dia.horarios.length, 0);
+    return weeks * totalSlotsPerWeek;
   }
 
   calculateTotalHours(): number {
     let totalHours = 0;
+    const weeks = Math.ceil((this.fechaFinDate.getTime() - this.fechaInicioDate.getTime()) / (1000 * 60 * 60 * 24 * 7));
     
     this.diasSemana.forEach(dia => {
       if (dia.selected) {
-        const duration = this.calculateDuration(dia.horaInicio, dia.horaFin);
-        const sessions = this.calculateSessionInfo() || 0;
-        totalHours += duration * (sessions / this.diasSemana.filter(d => d.selected).length);
+        dia.horarios.forEach(slot => {
+          const duration = this.calculateDuration(slot.horaInicio, slot.horaFin);
+          totalHours += duration * weeks;
+        });
       }
     });
     
@@ -360,20 +389,30 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
       return false;
     }
     
-    // Validate each selected day has valid times
     for (const dia of selectedDays) {
-      if (!this.validateTimeRange(dia.horaInicio, dia.horaFin)) {
-        this.errorMessage = `Horario inválido para ${dia.diaDisplay}`;
+      if (dia.horarios.length === 0) {
+        this.errorMessage = `${dia.diaDisplay} no tiene horarios configurados`;
         return false;
       }
-      
-      if (!this.isTimeInRange(dia.horaInicio) || !this.isTimeInRange(dia.horaFin)) {
-        this.errorMessage = `El horario para ${dia.diaDisplay} debe estar entre ${this.minTime} y ${this.maxTime}`;
+
+      for (const slot of dia.horarios) {
+        if (!this.validateTimeRange(slot.horaInicio, slot.horaFin)) {
+          this.errorMessage = `Horario inválido para ${dia.diaDisplay}`;
+          return false;
+        }
+        
+        if (!this.isTimeInRange(slot.horaInicio) || !this.isTimeInRange(slot.horaFin)) {
+          this.errorMessage = `El horario para ${dia.diaDisplay} debe estar entre ${this.minTime} y ${this.maxTime}`;
+          return false;
+        }
+      }
+
+      if (this.hasTimeSlotOverlap(dia)) {
+        this.errorMessage = `Horarios superpuestos en ${dia.diaDisplay}`;
         return false;
       }
     }
     
-    // Check for conflicts with existing reservations
     if (this.hasConflicts()) {
       this.errorMessage = 'Existe un conflicto con reservas existentes';
       return false;
@@ -388,14 +427,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
 
   private isTimeInRange(time: string): boolean {
     return time >= this.minTime && time <= this.maxTime;
-  }
-
-  private hasScheduleForDate(date: Date): boolean {
-    const dayOfWeek = date.getDay();
-    const dayName = this.getDayName(dayOfWeek);
-    const dayConfig = this.diasSemana.find(d => d.dia === dayName);
-    
-    return !!dayConfig?.selected;
   }
 
   // ==================== CONFLICT DETECTION ====================
@@ -414,27 +445,20 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
       return false;
     }
 
-    // Check if there's any reservation conflict for this date
     return this.reservationsList.some(reserva => {
-      // Skip recurrent reservations for conflict checking (they'll be handled separately)
       if (reserva.tipoReserva === 'recurrente') return false;
       
       const reservaDate = new Date(reserva.fechaReserva);
       const reservaDateStr = reservaDate.toISOString().split('T')[0];
       
-      if (reservaDateStr === checkDate) {
-        // Check time conflict - for puntual reservations
-        if (reserva.reservaPuntualDto) {
-          const reservaStart = reserva.reservaPuntualDto?.horaInicio?.slice(0, 5) || '00:00';
-          const reservaEnd = reserva.reservaPuntualDto?.horaFin?.slice(0, 5) || '23:59';
-          
-          return this.hasTimeConflict(
-            dayConfig.horaInicio, 
-            dayConfig.horaFin, 
-            reservaStart, 
-            reservaEnd
-          );
-        }
+      if (reservaDateStr === checkDate && reserva.reservaPuntualDto) {
+        const reservaStart = reserva.reservaPuntualDto?.horaInicio?.slice(0, 5) || '00:00';
+        const reservaEnd = reserva.reservaPuntualDto?.horaFin?.slice(0, 5) || '23:59';
+        
+        // Check if any time slot conflicts with this reservation
+        return dayConfig.horarios.some(slot => 
+          this.hasTimeConflict(slot.horaInicio, slot.horaFin, reservaStart, reservaEnd)
+        );
       }
       
       return false;
@@ -446,7 +470,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   }
 
   private hasConflicts(): boolean {
-    // Check all dates in range for conflicts
     const start = this.fechaInicioDate;
     const end = this.fechaFinDate;
     const current = new Date(start);
@@ -463,10 +486,12 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
 
   // ==================== HELPERS ====================
 
-  getDayTime(dayName: string): string {
+  getDayTimes(dayName: string): string {
     const dayConfig = this.diasSemana.find(d => d.dia === dayName);
     if (dayConfig && dayConfig.selected) {
-      return `${dayConfig.horaInicio} - ${dayConfig.horaFin}`;
+      return dayConfig.horarios
+        .map(slot => `${slot.horaInicio}-${slot.horaFin}`)
+        .join(', ');
     }
     return '';
   }
@@ -495,7 +520,7 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     const totalSessions = this.calculateSessionInfo() || 0;
     const diasSemanaString = selectedDays.map(d => d.dia).join(',');
     
-    const scheduleData: RecurrentScheduleData = {
+    const scheduleData: any = {
       tipoRecurrencia: this.tipoRecurrencia,
       fechaInicio: this.fechaInicioDate,
       fechaFin: this.fechaFinDate,
@@ -513,38 +538,34 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     const selectedDays = this.diasSemana.filter(d => d.selected);
     if (selectedDays.length === 0) return 0;
     
-    const totalDuration = selectedDays.reduce((sum, dia) => {
-      return sum + this.calculateDuration(dia.horaInicio, dia.horaFin);
-    }, 0);
+    let totalDuration = 0;
+    let totalSlots = 0;
     
-    return totalDuration / selectedDays.length;
+    selectedDays.forEach(dia => {
+      dia.horarios.forEach(slot => {
+        totalDuration += this.calculateDuration(slot.horaInicio, slot.horaFin);
+        totalSlots++;
+      });
+    });
+    
+    return totalSlots > 0 ? totalDuration / totalSlots : 0;
   }
-
-  back(): void {
-    this.goBack.emit();
-  }
-
-  // ==================== GETTERS ====================
 
   get selectedDaysCount(): number {
     return this.diasSemana.filter(d => d.selected).length;
   }
-
   get totalSessions(): number {
     return this.calculateSessionInfo() || 0;
   }
-
   get totalHours(): number {
     return this.calculateTotalHours();
   }
-
   get diasSeleccionadosString(): string {
     return this.diasSemana
       .filter(d => d.selected)
       .map(d => d.diaDisplay)
       .join(', ');
   }
-
   get canConfirm(): boolean {
     return this.selectedDaysCount > 0 && !this.errorMessage;
   }

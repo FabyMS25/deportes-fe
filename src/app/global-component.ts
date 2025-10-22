@@ -27,32 +27,33 @@ export const GlobalComponent = {
         name:'Pedro Luis Sevilla Calderón',
         telf:'60367407',
     },
-    EmailJS:{
-        idService:'service_auth',
-        idTemplate:'template_6htavso',
-        publicKey:'X9362U1QpUzthcHGT'
-    },
 
     /* RUAT CREDENTIALS TEST */
-    apiRuatUrl: "https://consolidacionjboss.ruat.gob.bo", 
-    RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
-    RUAT_clave: "S1234567",
-    /* RUAT CREDENTIALS PRODUCTION */
-    // apiRuatUrl: "https://aplicaciones.ruat.gob.bo",
+    // apiRuatUrl: "https://consolidacionjboss.ruat.gob.bo", 
     // RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
-    // RUAT_clave: "Gam#1209",
+    // RUAT_clave: "S1234567",
+    // RUAT_codigoUsuario: "PRUEBAS_1.QUI", 
+    // RUAT_passwordUsuario: "Ruat_123$",
+    /* RUAT CREDENTIALS PRODUCTION */
+    apiRuatUrl: "https://aplicaciones.ruat.gob.bo",
+    RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
+    RUAT_clave: "Gam#1209",
+    RUAT_codigoUsuario: "ERODRIGUEZ2.QUI", 
     
     RUAT_token : `${sessionStorage.getItem('ruatToken')}`,  
-    RUAT_codigoUsuario: "PRUEBAS_1.QUI", 
-    RUAT_passwordUsuario: "Ruat_123$",
     RUAT_codigoAlcaldia: "QUI",
     RUAT_motivo: "REGISTRO TASAS Y OTROS INGRESOS",
-    RUAT_servicioMunicipal: "2453",// "2174", //TASAS Y OTROS INGRESOS
-    RUAT_tipoTasa: "TO", //TASAS Y OTROS INGRESOS
+    RUAT_servicioMunicipal: "2174",// "2174", 
+    RUAT_tipoTasa: "TO", 
 
     /* RULES */
-    VALID_HOURS: 4, 
-    ANTICIPATION_PUNTUAL_HOURS: 18,
-    ANTICIPATION_EVENT_HOURS:48,
-    ANTICIPATION_RECURRENT_DAYS: 7,
+    VALID_HOURS : 4, // Hours to complete payment
+    ANTICIPATION_PUNTUAL_HOURS : 48, // Minimum advance booking for puntual (por_hora, por_persona)
+    ANTICIPATION_EVENT_HOURS : 168, // 7 days in hours for events
+    ANTICIPATION_EVENT_DAYS : 7, // 7 days in hours for events
+    ANTICIPATION_RECURRENT_DAYS : 15, // Days in advance for recurrent
+
+  /* ==================== DURATION LIMITS ==================== */
+    MAX_DURATION_PUNTUAL_DEFAULT : 5, // Default max hours for puntual auto-approval
+    MAX_DURATION_EVENT : 12, // Maximum duration for events
 }

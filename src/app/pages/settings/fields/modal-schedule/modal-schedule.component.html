@@ -1,68 +1,284 @@
-<div class="modal-header bg-info-subtle  p-3">
-    <h5 class="modal-title" ngbAutofocus>Horarios de Atención :: {{row.complejoDto.nombre}} - {{row.codigo}}</h5>
-    <button type="button"
-        class="btn-close"
-        data-dismiss="modal" aria-label="Cerrar"
-        [disabled]="submitted"
-        (click)="closeModal()">
-    </button>
-</div>
-
-<form [formGroup]="form" (ngSubmit)="saveData()" *ngIf="accion === 'edit'" class="tablelist-form" autocomplete="off">
-    <div formArrayName="fieldsForm">
-      <div class="modal-body">
-        <div class="row g-3">
-          <div class="row">
-            <div *ngFor="let control of fieldsForm.controls; let i = index" [formGroupName]="i" class="row g-1">
-              <div class="col-lg-3">
-                <div>
-                    <span class="form-control-plaintext">{{ dias[i] }}</span>
-                </div>
+<div class="modal-content">
+  <div class="modal-header bg-info-subtle p-2">
+      <h5 class="modal-title" ngbAutofocus>
+        <i class="ri-calendar-line me-2"></i>
+        <span *ngIf="accion === 'show'">Horarios de Atención</span>
+        <span *ngIf="accion === 'edit'">Editar Horarios de Atención</span>
+        :: {{row.complejoDto.nombre}} - {{row.codigo}}
+      </h5>
+      <button type="button"
+          class="btn-close"
+          data-dismiss="modal" aria-label="Cerrar"
+          [disabled]="submitted"
+          (click)="closeModal()">
+      </button>
+  </div>
+  <form [formGroup]="form" (ngSubmit)="saveData()" class="tablelist-form" autocomplete="off">
+      <div class="modal-body p-0">
+          <div *ngIf="accion === 'show'" class="p-4" style="max-height: 60vh; overflow-y: auto;">
+              <div *ngIf="!hasAnySchedule()" class="alert alert-info">
+                  <i class="ri-information-line me-2"></i>
+                  No hay horarios configurados para este campo deportivo.
               </div>
-              <div class="col-lg-3">
-                <label class="text-muted mb-0" [for]="'abierto' + i">Abierto:</label>
-                <div class="form-check form-switch form-switch-md" dir="ltr">
-                  <input type="checkbox" class="form-check-input" [id]="'abierto' + i" formControlName="abierto">
-                </div>
-              </div>
-              
-              <div class="col-lg-3">
-                <div>
-                  <div class="input-group">
-                    <div class="input-group position-relative">
-                      <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                             [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                             placeholder="Hora inicio" formControlName="horaApertura">
-                      <!-- <span class="clear-icon" (click)="clearValue(i, 'horaApertura')">&times;</span> -->
-                      <div *ngIf="control.get('horaCierre')?.errors?.['required'] && control.get('abierto')?.touched">
-                        <span class="text-danger">Hora es requerida.</span>
+              <div *ngIf="horariosFijos.length > 0" class="mb-4">
+                  <h6 class="mb-3"><i class="ri-calendar-check-line"></i> Horarios Regulares</h6>
+                  <div class="row g-3" formArrayName="horariosFijosDtoList">
+                      <div *ngFor="let horario of horariosFijos.controls; let i = index" [formGroupName]="i" class="col-md-6">
+                          <div class="card border" [ngClass]="horario.get('abierto')?.value ? 'border-success' : 'border-secondary'">
+                              <div class="card-body p-3">
+                                  <div class="d-flex align-items-center mb-2">
+                                      <h6 class="card-title mb-0 flex-grow-1">
+                                          <i class="ri-calendar-check-line me-1"></i>
+                                          {{ getDiaLabel(horario.get('dia')?.value) }}
+                                      </h6>
+                                      <span class="badge" [ngClass]="horario.get('abierto')?.value ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">
+                                          {{ horario.get('abierto')?.value ? 'Abierto' : 'Cerrado' }}
+                                      </span>
+                                  </div>
+                                  <div *ngIf="horario.get('abierto')?.value" class="mt-2">
+                                      <div class="d-flex align-items-center text-muted">
+                                          <i class="ri-time-line me-2"></i>
+                                          <span class="fw-medium">{{ horario.get('horaApertura')?.value || '-' }}</span>
+                                          <i class="ri-arrow-right-line mx-2"></i>
+                                          <span class="fw-medium">{{ horario.get('horaCierre')?.value || '-' }}</span>
+                                      </div>
+                                      <div *ngIf="horario.get('observaciones')?.value" class="mt-2 text-muted small">
+                                          <i class="ri-information-line me-1"></i>
+                                          {{ horario.get('observaciones')?.value }}
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
                       </div>
-                    </div>                    
                   </div>
-                </div>
               </div>
-              <div class="col-lg-3">
-                <div>
-                  <div class="input-group position-relative">
-                    <input class="form-control flatpickr-input" type="text" mwlFlatpickr
-                           [noCalendar]="true" [enableTime]="true" [dateFormat]="'H:i'"
-                           placeholder="Hora Fin" formControlName="horaCierre">
-                    <!-- <span class="clear-icon" (click)="clearValue(i, 'horaCierre ')">&times;</span> -->
-                    <div *ngIf="control.get('horaCierre')?.errors?.['required'] && control.get('abierto')?.touched">
-                      <span class="text-danger">Hora es requerida.</span>
-                    </div>
-                  </div>   
-                </div>
+
+              <!-- Horarios Excepciones Display -->
+              <div *ngIf="horariosExcepciones.length > 0">
+                  <h6 class="mb-3"><i class="ri-calendar-event-line"></i> Excepciones</h6>
+                  <div class="table-responsive">
+                      <table class="table table-bordered" formArrayName="horariosExcepcionesDtoList">
+                          <thead class="table-light">
+                              <tr>
+                                  <th>Fecha</th>
+                                  <th>Tipo</th>
+                                  <th>Horario</th>
+                                  <th>Motivo</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              <tr *ngFor="let excepcion of horariosExcepciones.controls; let i = index" [formGroupName]="i">
+                                  <td>{{ excepcion.get('fecha')?.value | date:'dd/MM/yyyy' }}</td>
+                                  <td>
+                                      <span class="badge bg-warning-subtle text-warning">
+                                          {{ excepcion.get('tipoExcepcion')?.value }}
+                                      </span>
+                                  </td>
+                                  <td>
+                                      <span *ngIf="excepcion.get('horaApertura')?.value || excepcion.get('horaCierre')?.value">
+                                          {{ excepcion.get('horaApertura')?.value || '-' }} - {{ excepcion.get('horaCierre')?.value || '-' }}
+                                      </span>
+                                      <span *ngIf="!excepcion.get('horaApertura')?.value && !excepcion.get('horaCierre')?.value" class="text-muted">
+                                          Todo el día
+                                      </span>
+                                  </td>
+                                  <td>{{ excepcion.get('motivo')?.value || '-' }}</td>
+                              </tr>
+                          </tbody>
+                      </table>
+                  </div>
               </div>
+          </div>
+
+          <!-- Edit Mode: Tabs -->
+          <div *ngIf="accion === 'edit'">
+              <ul class="nav nav-tabs nav-tabs-custom" role="tablist">
+                  <li class="nav-item">
+                      <a class="nav-link" [class.active]="currentTab === 'fijos'" 
+                        (click)="switchTab('fijos')" role="tab">
+                          <i class="ri-calendar-check-line"></i> Horarios Regulares
+                      </a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link" [class.active]="currentTab === 'excepciones'"
+                        (click)="switchTab('excepciones')" role="tab">
+                          <i class="ri-calendar-event-line"></i> Excepciones
+                      </a>
+                  </li>
+              </ul>
+
+              <div class="tab-content p-4" style="max-height: 60vh; overflow-y: auto;">
+                  <!-- Tab 1: Horarios Fijos -->
+                  <div class="tab-pane" [class.active]="currentTab === 'fijos'" [class.show]="currentTab === 'fijos'">
+                      <div formArrayName="horariosFijosDtoList" class="table-responsive">
+                          <table class="table table-sm table-bordered align-middle">
+                              <thead class="table-light">
+                                  <tr>
+                                      <th style="width: 20%">Día</th>
+                                      <th style="width: 12%" class="text-center">Abierto</th>
+                                      <th style="width: 20%">Apertura</th>
+                                      <th style="width: 20%">Cierre</th>
+                                      <th style="width: 20%">Observaciones</th>
+                                      <th style="width: 8%"></th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+                                  <tr *ngFor="let horario of horariosFijos.controls; let i = index" [formGroupName]="i">
+                                      <td>
+                                          <select class="form-select form-select-sm" formControlName="dia"
+                                                  [ngClass]="{'is-invalid': submitted && horario.get('dia')?.errors}">
+                                              <option value="">Seleccione</option>
+                                              <option *ngFor="let dia of diaOptions" [value]="dia.value">{{dia.label}}</option>
+                                          </select>
+                                      </td>
+                                      <td class="text-center">
+                                          <div class="form-check form-switch d-flex justify-content-center">
+                                              <input class="form-check-input" type="checkbox" formControlName="abierto"
+                                                    [id]="'abierto-' + i">
+                                          </div>
+                                      </td>
+                                      <td>
+                                          <input type="time" class="form-control form-control-sm" 
+                                                formControlName="horaApertura"
+                                                [disabled]="!horario.get('abierto')?.value"
+                                                [ngClass]="{'is-invalid': submitted && horario.get('horaApertura')?.errors}">
+                                      </td>
+                                      <td>
+                                          <input type="time" class="form-control form-control-sm" 
+                                                formControlName="horaCierre"
+                                                [disabled]="!horario.get('abierto')?.value"
+                                                [ngClass]="{'is-invalid': submitted && horario.get('horaCierre')?.errors}">
+                                      </td>
+                                      <td>
+                                          <div class="input-group input-group-sm">
+                                              <input type="text" class="form-control form-control-sm" 
+                                                    formControlName="observaciones"
+                                                    placeholder="Opcional"
+                                                    [id]="'obs-input-' + i">
+                                              <button class="btn btn-outline-secondary" type="button"
+                                                      (click)="toggleObservacionesDropdown(i)"
+                                                      [id]="'obs-btn-' + i">
+                                                  <i class="ri-add-circle-line"></i>
+                                              </button>
+                                          </div>
+                                          <div class="dropdown-menu" [class.show]="showObsDropdown[i]"
+                                              style="position: absolute; z-index: 1000;">
+                                              <a class="dropdown-item" href="javascript:void(0)" 
+                                                (click)="setObservacion(i, 'Horario reducido')">Horario reducido</a>
+                                              <a class="dropdown-item" href="javascript:void(0)" 
+                                                (click)="setObservacion(i, 'Mantenimiento programado')">Mantenimiento programado</a>
+                                              <a class="dropdown-item" href="javascript:void(0)" 
+                                                (click)="setObservacion(i, 'Sujeto a disponibilidad')">Sujeto a disponibilidad</a>
+                                              <a class="dropdown-item" href="javascript:void(0)" 
+                                                (click)="setObservacion(i, 'Requiere reserva previa')">Requiere reserva previa</a>
+                                          </div>
+                                      </td>
+                                      <td class="text-center">
+                                          <button type="button" class="btn btn-sm btn-danger" 
+                                                  (click)="removeHorarioFijo(i)" 
+                                                  *ngIf="horariosFijos.length > 1"
+                                                  [disabled]="submitted">
+                                              <i class="ri-delete-bin-line"></i>
+                                          </button>
+                                      </td>
+                                  </tr>
+                              </tbody>
+                          </table>
+                      </div>
+                      <button type="button" class="btn btn-sm btn-primary" (click)="addHorarioFijo()" [disabled]="submitted">
+                          <i class="ri-add-line"></i> Agregar Día
+                      </button>
+                  </div>
+                  <!-- Tab 2: Horarios Excepciones -->
+                  <div class="tab-pane" [class.active]="currentTab === 'excepciones'" [class.show]="currentTab === 'excepciones'">
+                      <div formArrayName="horariosExcepcionesDtoList" class="table-responsive">
+                          <table class="table table-sm table-bordered align-middle">
+                              <thead class="table-light">
+                                  <tr>
+                                      <th style="width: 20%">Fecha</th>
+                                      <th style="width: 25%">Tipo</th>
+                                      <th style="width: 15%">Apertura</th>
+                                      <th style="width: 15%">Cierre</th>
+                                      <th style="width: 20%">Motivo</th>
+                                      <th style="width: 5%"></th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+                                  <tr *ngFor="let horario of horariosExcepciones.controls; let i = index" [formGroupName]="i"
+                                      [class.table-secondary]="isPastException(i)">
+                                      <td>
+                                          <input type="date" class="form-control form-control-sm" formControlName="fecha"
+                                                [ngClass]="{'is-invalid': submitted && horario.get('fecha')?.errors}"
+                                                [title]="isPastException(i) ? 'Excepción pasada - Solo lectura' : ''">
+                                          <small *ngIf="isPastException(i)" class="text-muted">(Pasada)</small>
+                                      </td>
+                                      <td>
+                                          <select class="form-select form-select-sm" formControlName="tipoExcepcion"
+                                                  [ngClass]="{'is-invalid': submitted && horario.get('tipoExcepcion')?.errors}"
+                                                  [title]="isPastException(i) ? 'Excepción pasada - Solo lectura' : ''">
+                                              <option value="">Seleccione</option>
+                                              <option *ngFor="let tipo of tipoExcepcionList" [value]="tipo">{{tipo}}</option>
+                                          </select>
+                                      </td>
+                                      <td>
+                                          <input type="time" class="form-control form-control-sm" formControlName="horaApertura"
+                                                [title]="isPastException(i) ? 'Excepción pasada - Solo lectura' : ''">
+                                      </td>
+                                      <td>
+                                          <input type="time" class="form-control form-control-sm" formControlName="horaCierre"
+                                                [title]="isPastException(i) ? 'Excepción pasada - Solo lectura' : ''">
+                                      </td>
+                                      <td>
+                                          <input type="text" class="form-control form-control-sm" 
+                                                formControlName="motivo" placeholder="Motivo"
+                                                [title]="isPastException(i) ? 'Excepción pasada - Solo lectura' : ''">
+                                      </td>
+                                      <td class="text-center">
+                                          <button type="button" class="btn btn-sm btn-danger" 
+                                                  (click)="removeHorarioExcepcion(i)" [disabled]="submitted || isPastException(i)"
+                                                  [title]="isPastException(i) ? 'No se pueden eliminar excepciones pasadas' : 'Eliminar'">
+                                              <i class="ri-delete-bin-line"></i>
+                                          </button>
+                                      </td>
+                                  </tr>
+                                  <tr *ngIf="horariosExcepciones.length === 0">
+                                      <td colspan="6" class="text-center text-muted">No hay excepciones registradas</td>
+                                  </tr>
+                              </tbody>
+                          </table>
+                      </div>
+                      <button type="button" class="btn btn-sm btn-warning" (click)="addHorarioExcepcion()" [disabled]="submitted">
+                          <i class="ri-add-line"></i> Agregar Excepción
+                      </button>
+                  </div>
+              </div>
+          </div>
+      </div>
+      <div class="modal-footer bg-light py-2">
+            <div class="d-flex justify-content-between w-100 align-items-center">
+                <div class="d-flex align-items-center">
+                    <small class="text-muted">
+                        <i class="ri-information-line me-1"></i>
+                        <span class="text-danger">*</span> Campos obligatorios
+                    </small>
+                </div>
+                <div class="hstack gap-2">
+                    <button type="button" class="btn btn-light" 
+                        data-bs-dismiss="modal" (click)="closeModal()">
+                        <i class="ri-close-line me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success" *ngIf="accion === 'edit'"
+                        [disabled]="submitted">
+                        <span *ngIf="!submitted"><i class="ri-save-line"></i> Guardar</span>
+                        <span *ngIf="submitted">
+                          <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+                        </span>
+                        <!-- <span *ngIf="submitted" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        <i *ngIf="!submitted" [class]="accion === 'edit' ? 'ri-save-line me-1' : 'ri-add-line me-1'"></i>
+                        {{ accion === 'edit' ? 'Actualizar' : 'Guardar' }} -->
+                    </button>
+                </div>
             </div>
-          </div>      
-        </div>
       </div>
-    </div>
-    <div class="modal-footer">
-      <div class="hstack gap-2 justify-content-end">
-        <button type="button" class="btn btn-light" data-bs-dismiss="modal" (click)="closeModal()">Cerrar</button>
-        <button type="submit" class="btn btn-success" id="add-btn">Guardar</button>
-      </div>
-    </div>
-</form>
+  </form>
+</div>

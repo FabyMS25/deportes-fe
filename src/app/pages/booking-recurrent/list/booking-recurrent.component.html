@@ -179,14 +179,15 @@
                   show: canActivate.includes('VER'),
                   edit: canActivate.includes('CAMBIAR-HORARIO'),
                   consult: canActivate.includes('ACTUALIZAR'),
-                  delete: canActivate.includes('ANULAR'),
-                  ticket: true
-                }"
+                  validate: canActivate.includes('VALIDAR'),
+                  records: true,
+                  close: canActivate.includes('ANULAR')?'Anular':'',}"
                 (showItemEmitter)="openModal($event,'show','md')"
                 (editItemEmitter)="openModal($event,'edit','md')"
                 (consultItemEmitter)="consultModal($event,consultModel)"
-                (deleteItemEmitter)="openModal($event,'annularModel','')"
-                (ticketEmitter)="showTicket($event)"
+                (closeItemEmitter)="openModal($event,'annularModel','')"
+                (validateItemEmitter)="openModal($event,'validateModel','')"
+                (recordsEmitter)="showTicket($event)"
                 (pageChange)="onPageChange($event)"
                 (pageSizeChange)="onPageSizeChange($event)"
                 [multiCheck]="canActivate.includes('CREAR')"

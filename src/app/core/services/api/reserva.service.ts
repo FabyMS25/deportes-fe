@@ -12,7 +12,7 @@ export class ReservaService {
 
   constructor(private http: HttpClient) { }
 
-  getAll(page: number = 0, size: number = 20): Observable<Reserva[]> {
+  getAll(page: number = 0, size: number = 20): Observable<any> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString());
@@ -42,15 +42,15 @@ export class ReservaService {
     return this.http.get<Reserva[]>(`${this.apiUrl}/campo/${uuidCampo}`);
   }
 
-  getByContribuyente(uuidContribuyente: string): Observable<Reserva[]> {
+  getByContribuyente(uuidContribuyente: string): Observable<any[]> {
     return this.http.get<Reserva[]>(`${this.apiUrl}/contribuyente/${uuidContribuyente}`);
   }
 
-  getByEstado(estadoReserva: string): Observable<Reserva[]> {
+  getByEstado(estadoReserva: string): Observable<any[]> {
     return this.http.get<Reserva[]>(`${this.apiUrl}/estado/${estadoReserva}`);
   }
 
-  getByTipo(tipoReserva: string): Observable<Reserva[]> {
+  getByTipo(tipoReserva: string): Observable<any> {
     return this.http.get<Reserva[]>(`${this.apiUrl}/tipo/${tipoReserva}`);
   }
 
@@ -63,12 +63,12 @@ export class ReservaService {
   }
 
   // Approval Workflow Methods
-  aprobarReserva(uuid: string, aprobadoPor: string): Observable<Reserva> {
+  aprobarReserva(uuid: String, aprobadoPor: string): Observable<Reserva> {
     let params = new HttpParams().set('aprobadoPor', aprobadoPor);
     return this.http.put<Reserva>(`${this.apiUrl}/${uuid}/aprobar`, null, { params });
   }
 
-  rechazarReserva(uuid: string, motivoRechazo: string, aprobadoPor: string): Observable<Reserva> {
+  rechazarReserva(uuid: String, motivoRechazo: string, aprobadoPor: string): Observable<Reserva> {
     let params = new HttpParams()
       .set('motivoRechazo', motivoRechazo)
       .set('aprobadoPor', aprobadoPor);

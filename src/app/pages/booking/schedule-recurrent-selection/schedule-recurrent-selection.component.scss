@@ -1,21 +1,16 @@
 .calendar-section {
   .calendar-month {
-    background: #fff;
     border: 1px solid #e9ecef;
     border-radius: 8px;
-    padding: 1rem;
+    padding: 0.5rem;
   }
 
   .month-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 0.5rem;
-    border-radius: 6px;
+    padding: 0.2rem;
+    border-radius: 4px;
     margin: -1rem -1rem 1rem -1rem;
-    
-    h5 {
-      font-weight: 600;
-    }
   }
 
   .calendar-grid {
@@ -27,7 +22,7 @@
 
   .calendar-header {
     background: #f8f9fa;
-    padding: 0.5rem;
+    padding: 0.7rem;
     text-align: center;
     font-weight: 600;
     font-size: 0.85rem;
@@ -37,7 +32,7 @@
 
   .calendar-day {
     position: relative;
-    min-height: 80px;
+    min-height: 40px;
     border: 2px solid transparent;
     border-radius: 6px;
     padding: 0.25rem;

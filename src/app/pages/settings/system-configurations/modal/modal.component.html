@@ -1,0 +1,591 @@
+<div class="modal-content" *ngIf="accion!=='delete';else deleteModel">
+    <div id="elmLoader" *ngIf="showLoading" class="text-center py-3">
+        <div class="spinner-border text-primary avatar-sm" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="text-muted mt-2">Procesando...</p>
+    </div>
+
+    <div class="modal-header bg-info-subtle p-2">
+        <h5 class="modal-title" *ngIf="accion === ''" ngbAutofocus>
+            <i class="ri-settings-3-line me-2"></i>Agregar Configuración
+        </h5>
+        <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>
+            <i class="ri-settings-2-line me-2"></i>Editar Configuración
+        </h5>
+        <h5 class="modal-title" *ngIf="accion === 'show'" ngbAutofocus>
+            <i class="ri-eye-line me-2"></i>Ver Configuración
+        </h5>
+        <button type="button"
+            class="btn-close"
+            data-dismiss="modal" 
+            aria-label="Cerrar"
+            [disabled]="showLoading"
+            (click)="closeModal()">
+        </button>
+    </div>
+
+    <form (ngSubmit)="saveData()" class="tablelist-form" autocomplete="off" [formGroup]="contentForm" *ngIf="accion !== 'show'">
+        <div class="modal-body">
+            <div class="row g-3">
+                <!-- Clave -->
+                <div class="col-lg-6">
+                    <label for="clave-field" class="form-label mb-0">
+                        <i class="ri-key-2-line me-2"></i>Clave <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" 
+                            id="clave-field" 
+                            formControlName="clave"
+                            [ngClass]="{ 'is-invalid': submitted && form['clave'].errors }"
+                            [disabled]="accion === 'show' || accion === 'edit'">
+                        <option value="" disabled>Seleccione una clave...</option>
+                        <option *ngFor="let clave of clavesDisponibles" [value]="clave">
+                            {{clave}}
+                        </option>
+                        <option value="CUSTOM">[Personalizada]</option>
+                    </select>
+                    <div *ngIf="submitted && form['clave'].errors" class="invalid-feedback">
+                        <div *ngIf="form['clave'].errors['required']">
+                            <i class="ri-error-warning-line me-1"></i>La clave es requerida
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clave Personalizada -->
+                <div class="col-lg-6" *ngIf="form['clave'].value === 'CUSTOM'">
+                    <label for="claveCustom-field" class="form-label mb-0">
+                        <i class="ri-edit-2-line me-2"></i>Clave Personalizada <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="claveCustom-field" 
+                           formControlName="claveCustom"
+                           placeholder="Ej: MI_CONFIGURACION_PERSONAL"
+                           [ngClass]="{ 'is-invalid': submitted && form['claveCustom'].errors }"
+                           pattern="^[A-Z][A-Z0-9_]*$" />
+                    <div *ngIf="submitted && form['claveCustom'].errors" class="invalid-feedback">
+                        <div *ngIf="form['claveCustom'].errors['required']">
+                            <i class="ri-error-warning-line me-1"></i>La clave personalizada es requerida
+                        </div>
+                        <div *ngIf="form['claveCustom'].errors['pattern']">
+                            <i class="ri-error-warning-line me-1"></i>Formato: MAYÚSCULAS, números y guiones bajos
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categoría -->
+                <div class="col-lg-6">
+                    <label for="categoria-field" class="form-label mb-0">
+                        <i class="ri-folder-2-line me-2"></i>Categoría <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" 
+                            id="categoria-field" 
+                            formControlName="categoria"
+                            [ngClass]="{ 'is-invalid': submitted && form['categoria'].errors }"
+                            [disabled]="accion === 'show'">
+                        <option value="" disabled>Seleccione la categoría...</option>
+                        <option *ngFor="let categoria of categorias" [value]="categoria">
+                            {{getCategoriaLabel(categoria)}}
+                        </option>
+                    </select>
+                    <div *ngIf="submitted && form['categoria'].errors" class="invalid-feedback">
+                        <div *ngIf="form['categoria'].errors['required']">
+                            <i class="ri-error-warning-line me-1"></i>La categoría es requerida
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nombre -->
+                <div class="col-lg-12">
+                    <label for="nombre-field" class="form-label mb-0">
+                        <i class="ri-text me-2"></i>Nombre <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="nombre-field" 
+                           formControlName="nombre"
+                           placeholder="Nombre descriptivo de la configuración"
+                           [ngClass]="{ 'is-invalid': submitted && form['nombre'].errors }"
+                           [readonly]="accion === 'show'" />
+                    <div *ngIf="submitted && form['nombre'].errors" class="invalid-feedback">
+                        <div *ngIf="form['nombre'].errors['required']">
+                            <i class="ri-error-warning-line me-1"></i>El nombre es requerido
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Descripción -->
+                <div class="col-lg-12">
+                    <label for="descripcion-field" class="form-label mb-0">
+                        <i class="ri-file-text-line me-2"></i>Descripción
+                    </label>
+                    <textarea class="form-control" 
+                              id="descripcion-field" 
+                              formControlName="descripcion"
+                              placeholder="Descripción detallada de la configuración y su propósito..."
+                              rows="2"
+                              [ngClass]="{ 'is-invalid': submitted && form['descripcion'].errors }"
+                              [readonly]="accion === 'show'"></textarea>
+                </div>
+
+                <!-- Tipo de Valor -->
+                <div class="col-lg-6">
+                    <label for="tipoValor-field" class="form-label mb-0">
+                        <i class="ri-database-2-line me-2"></i>Tipo de Valor <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" 
+                            id="tipoValor-field" 
+                            formControlName="tipoValor"
+                            (change)="onTipoValorChange()"
+                            [ngClass]="{ 'is-invalid': submitted && form['tipoValor'].errors }"
+                            [disabled]="accion === 'show'">
+                        <option value="" disabled>Seleccione el tipo...</option>
+                        <option *ngFor="let tipo of tiposValor" [value]="tipo">
+                            {{getTipoValorLabel(tipo)}}
+                        </option>
+                    </select>
+                    <div *ngIf="submitted && form['tipoValor'].errors" class="invalid-feedback">
+                        <div *ngIf="form['tipoValor'].errors['required']">
+                            <i class="ri-error-warning-line me-1"></i>El tipo de valor es requerido
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unidad de Medida -->
+                <div class="col-lg-6" *ngIf="mostrarUnidadMedida">
+                    <label for="unidadMedida-field" class="form-label mb-0">
+                        <i class="ri-ruler-line me-2"></i>Unidad de Medida
+                    </label>
+                    <select class="form-select" 
+                            id="unidadMedida-field" 
+                            formControlName="unidadMedida"
+                            [disabled]="accion === 'show'">
+                        <option value="">Sin unidad</option>
+                        <option *ngFor="let unidad of unidadesMedida" [value]="unidad">
+                            {{getUnidadMedidaLabel(unidad)}}
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Campos de Valor Dinámicos -->
+                <div class="col-lg-12" *ngIf="form['tipoValor'].value === 'TEXTO'">
+                    <label for="valorTexto-field" class="form-label mb-0">
+                        <i class="ri-input-field me-2"></i>Valor Texto
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="valorTexto-field" 
+                           formControlName="valorTexto"
+                           placeholder="Ingrese el valor en texto"
+                           [readonly]="accion === 'show'" />
+                </div>
+
+                <div class="col-lg-6" *ngIf="form['tipoValor'].value === 'NUMERICO'">
+                    <label for="valorNumerico-field" class="form-label mb-0">
+                        <i class="ri-number-1 me-2"></i>Valor Numérico
+                    </label>
+                    <input type="number" 
+                           class="form-control" 
+                           id="valorNumerico-field" 
+                           formControlName="valorNumerico"
+                           placeholder="Ingrese el valor numérico"
+                           step="0.01"
+                           [readonly]="accion === 'show'" />
+                </div>
+
+                <div class="col-lg-6" *ngIf="form['tipoValor'].value === 'NUMERICO'">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label for="valorMinimo-field" class="form-label mb-0">
+                                <i class="ri-arrow-down-line me-2"></i>Valor Mínimo
+                            </label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="valorMinimo-field" 
+                                   formControlName="valorMinimo"
+                                   placeholder="Mínimo"
+                                   step="0.01"
+                                   [readonly]="accion === 'show'" />
+                        </div>
+                        <div class="col-6">
+                            <label for="valorMaximo-field" class="form-label mb-0">
+                                <i class="ri-arrow-up-line me-2"></i>Valor Máximo
+                            </label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="valorMaximo-field" 
+                                   formControlName="valorMaximo"
+                                   placeholder="Máximo"
+                                   step="0.01"
+                                   [readonly]="accion === 'show'" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6" *ngIf="form['tipoValor'].value === 'BOOLEANO'">
+                    <label class="form-label mb-0 d-block">
+                        <i class="ri-toggle-line me-2"></i>Valor Boolean
+                    </label>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               role="switch"
+                               id="valorBoolean-field" 
+                               formControlName="valorBoolean"
+                               [readonly]="accion === 'show'">
+                        <label class="form-check-label fw-medium" for="valorBoolean-field">
+                            {{ form['valorBoolean'].value ? 'Verdadero' : 'Falso' }}
+                        </label>
+                    </div>
+                </div>
+
+                <div class="col-lg-12" *ngIf="form['tipoValor'].value === 'JSON'">
+                    <label for="valorJson-field" class="form-label mb-0">
+                        <i class="ri-braces-line me-2"></i>Valor JSON
+                    </label>
+                    <textarea class="form-control" 
+                              id="valorJson-field" 
+                              formControlName="valorJson"
+                              placeholder='{"key": "value", "array": [1, 2, 3]}'
+                              rows="4"
+                              [readonly]="accion === 'show'"></textarea>
+                    <small class="form-text text-muted">
+                        <i class="ri-information-line me-1"></i>
+                        Formato JSON válido requerido
+                    </small>
+                </div>
+
+                <!-- Ámbito de Aplicación -->
+                <div class="col-lg-6">
+                    <label for="aplicaA-field" class="form-label mb-0">
+                        <i class="ri-global-line me-2"></i>Ámbito de Aplicación <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" 
+                            id="aplicaA-field" 
+                            formControlName="aplicaA"
+                            (change)="onAplicaAChange()"
+                            [ngClass]="{ 'is-invalid': submitted && form['aplicaA'].errors }"
+                            [disabled]="accion === 'show'">
+                        <option value="" disabled>Seleccione el ámbito...</option>
+                        <option *ngFor="let ambito of ambitosAplicacion" [value]="ambito">
+                            {{getAmbitoAplicacionLabel(ambito)}}
+                        </option>
+                    </select>
+                    <div *ngIf="submitted && form['aplicaA'].errors" class="invalid-feedback">
+                        <div *ngIf="form['aplicaA'].errors['required']">
+                            <i class="ri-error-warning-line me-1"></i>El ámbito de aplicación es requerido
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Referencia UUID -->
+                <div class="col-lg-6" *ngIf="mostrarReferenciaUuid">
+                    <label for="referenciaUuid-field" class="form-label mb-0">
+                        <i class="ri-link me-2"></i>UUID de Referencia
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="referenciaUuid-field" 
+                           formControlName="referenciaUuid"
+                           placeholder="UUID del elemento específico"
+                           [readonly]="accion === 'show'" />
+                    <small class="form-text text-muted" *ngIf="accion !== 'show'">
+                        <i class="ri-information-line me-1"></i>
+                        UUID del {{form['aplicaA'].value | lowercase}} específico
+                    </small>
+                </div>
+
+                <!-- Configuraciones de Control -->
+                <div class="col-lg-12">
+                    <div class="row g-3">
+                        <div class="col-lg-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       role="switch"
+                                       id="activo-field" 
+                                       formControlName="activo"
+                                       [disabled]="accion === 'show'">
+                                <label class="form-check-label fw-medium" for="activo-field">
+                                    <i class="ri-checkbox-circle-line me-2"></i>Configuración Activa
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       role="switch"
+                                       id="modificablePorUsuario-field" 
+                                       formControlName="modificablePorUsuario"
+                                       [disabled]="accion === 'show'">
+                                <label class="form-check-label fw-medium" for="modificablePorUsuario-field">
+                                    <i class="ri-user-settings-line me-2"></i>Modificable por Usuario
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       role="switch"
+                                       id="requiereAprobacion-field" 
+                                       formControlName="requiereAprobacion"
+                                       [disabled]="accion === 'show'">
+                                <label class="form-check-label fw-medium" for="requiereAprobacion-field">
+                                    <i class="ri-shield-check-line me-2"></i>Requiere Aprobación
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Valores Posibles (para selección) -->
+                <div class="col-lg-12" *ngIf="form['tipoValor'].value === 'TEXTO'">
+                    <label for="valoresPosibles-field" class="form-label mb-0">
+                        <i class="ri-list-check me-2"></i>Valores Posibles (JSON Array)
+                    </label>
+                    <textarea class="form-control" 
+                              id="valoresPosibles-field" 
+                              formControlName="valoresPosibles"
+                              placeholder='["valor1", "valor2", "valor3"]'
+                              rows="2"
+                              [readonly]="accion === 'show'"></textarea>
+                    <small class="form-text text-muted" *ngIf="accion !== 'show'">
+                        <i class="ri-information-line me-1"></i>
+                        Array JSON de valores permitidos (opcional)
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer bg-light py-2">
+            <div class="d-flex justify-content-between w-100 align-items-center">
+                <div class="d-flex align-items-center">
+                    <small class="text-muted">
+                        <i class="ri-information-line me-1"></i>
+                        <span class="text-danger">*</span> Campos obligatorios
+                    </small>
+                </div>
+                <div class="hstack gap-2">
+                    <button type="button" 
+                            class="btn btn-light" 
+                            [disabled]="showLoading"
+                            (click)="closeModal()">
+                        <i class="ri-close-line me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" 
+                            class="btn btn-success"
+                            [disabled]="showLoading || contentForm.invalid"
+                            id="add-btn">
+                        <span *ngIf="showLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        <i *ngIf="!showLoading" [class]="accion === 'edit' ? 'ri-save-line me-1' : 'ri-add-line me-1'"></i>
+                        {{ accion === 'edit' ? 'Actualizar' : 'Guardar' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Vista de Solo Lectura -->
+    <div class="modal-body" *ngIf="accion === 'show' && row">
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0 me-3">
+                <i class="ri-information-line text-muted fs-5"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="fw-semibold mb-1">Información General</h6>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6">
+                <small class="text-muted d-block">Clave:</small>
+                <div class="fw-medium font-monospace">{{ row.clave }}</div>
+            </div>
+            <div class="col-sm-6">
+                <small class="text-muted d-block">Categoría:</small>
+                <div class="fw-medium">
+                    <span class="badge bg-primary">{{ getCategoriaLabel(row.categoria) }}</span>
+                </div>
+            </div>
+            <div class="col-sm-6" *ngIf="row.aplicaA">
+                <small class="text-muted d-block">Ámbito:</small>
+                <div class="fw-medium">
+                    <span class="badge bg-info">{{ getAmbitoAplicacionLabel(row.aplicaA) }}</span>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <small class="text-muted d-block">Estado:</small>
+                <div class="fw-medium">
+                    <span class="badge" [ngClass]="row.activo ? 'bg-success' : 'bg-danger'">
+                        {{ row.activo ? 'Activo' : 'Inactivo' }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-12" *ngIf="row.descripcion">
+                <small class="text-muted d-block">Descripción:</small>
+                <div class="fw-medium">{{ row.descripcion }}</div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0 me-3">
+                <i class="ri-database-2-line text-muted fs-5"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="fw-semibold mb-1">Valor de Configuración</h6>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6" *ngIf="row.valorTexto">
+                <small class="text-muted d-block">Valor Texto:</small>
+                <div class="fw-medium">{{ row.valorTexto }}</div>
+            </div>
+            <div class="col-sm-6" *ngIf="row.valorNumerico !== null">
+                <small class="text-muted d-block">Valor Numérico:</small>
+                <div class="fw-medium">
+                    {{ row.valorNumerico }} 
+                    <span *ngIf="row.unidadMedida" class="text-muted">({{ getUnidadMedidaLabel(row.unidadMedida) }})</span>
+                </div>
+            </div>
+            <div class="col-sm-6" *ngIf="row.valorBoolean !== null">
+                <small class="text-muted d-block">Valor Boolean:</small>
+                <div class="fw-medium">
+                    <span class="badge" [ngClass]="row.valorBoolean ? 'bg-success' : 'bg-secondary'">
+                        {{ row.valorBoolean ? 'Verdadero' : 'Falso' }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-12" *ngIf="row.valorJson">
+                <small class="text-muted d-block">Valor JSON:</small>
+                <div class="fw-medium">
+                    <pre class="bg-light p-2 rounded border">{{ row.valorJson | json }}</pre>
+                </div>
+            </div>
+            <div class="col-sm-6" *ngIf="row.valorMinimo !== null">
+                <small class="text-muted d-block">Valor Mínimo:</small>
+                <div class="fw-medium">{{ row.valorMinimo }}</div>
+            </div>
+            <div class="col-sm-6" *ngIf="row.valorMaximo !== null">
+                <small class="text-muted d-block">Valor Máximo:</small>
+                <div class="fw-medium">{{ row.valorMaximo }}</div>
+            </div>
+            <div class="col-12" *ngIf="row.valoresPosibles">
+                <small class="text-muted d-block">Valores Posibles:</small>
+                <div class="fw-medium">
+                    <pre class="bg-light p-2 rounded border">{{ row.valoresPosibles | json }}</pre>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0 me-3">
+                <i class="ri-settings-3-line text-muted fs-5"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="fw-semibold mb-1">Configuraciones de Control</h6>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-4">
+                <small class="text-muted d-block">Modificable por Usuario:</small>
+                <div class="fw-medium">
+                    <span class="badge" [ngClass]="row.modificablePorUsuario ? 'bg-info' : 'bg-secondary'">
+                        {{ row.modificablePorUsuario ? 'Sí' : 'No' }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <small class="text-muted d-block">Requiere Aprobación:</small>
+                <div class="fw-medium">
+                    <span class="badge" [ngClass]="row.requiereAprobacion ? 'bg-warning' : 'bg-secondary'">
+                        {{ row.requiereAprobacion ? 'Sí' : 'No' }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-4" *ngIf="row.referenciaUuid">
+                <small class="text-muted d-block">Referencia UUID:</small>
+                <div class="fw-medium font-monospace small">{{ row.referenciaUuid }}</div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0 me-3">
+                <i class="ri-history-line text-muted fs-5"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="fw-semibold mb-1">Información del Sistema</h6>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6">
+                <small class="text-muted d-block">Fecha de Creación:</small>
+                <div class="fw-medium">{{ formatDate(row.fechaCreacion) }}</div>
+            </div>
+            <div class="col-sm-6" *ngIf="row.ultimaModificacion">
+                <small class="text-muted d-block">Última Modificación:</small>
+                <div class="fw-medium">{{ formatDate(row.ultimaModificacion) }}</div>
+            </div>
+            <div class="col-sm-6" *ngIf="row.modificadoPor">
+                <small class="text-muted d-block">Modificado Por:</small>
+                <div class="fw-medium">{{ row.modificadoPor }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer bg-light py-2" *ngIf="accion === 'show'">
+        <button type="button" 
+                class="btn btn-secondary"
+                (click)="closeModal()">
+            <i class="ri-close-line me-1"></i>Cerrar
+        </button>
+    </div>
+</div>
+
+<ng-template #deleteModel>
+    <div class="modal-content" *ngIf="row.uuid">
+        <div class="modal-header">
+            <button type="button" class="btn-close" 
+                    (click)="closeModal()"
+                    [disabled]="submitted"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mt-2 text-center">
+                <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
+                    colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
+                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+                    <h4>¿Está seguro de eliminar la Configuración?</h4>
+                    <p class="text-muted mx-4 mb-0">
+                        Esta acción eliminará permanentemente la configuración "<strong>{{row.nombre}}</strong>" 
+                        ({{row.clave}}) del sistema.
+                    </p>
+                </div>
+            </div>
+            <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+                <button class="btn btn-link link-success fw-medium text-decoration-none" 
+                        (click)="closeModal()"
+                        [disabled]="submitted">
+                    <i class="ri-close-line me-1 align-middle"></i> Cancelar
+                </button>
+                <button type="button" 
+                        class="btn w-sm btn-danger" 
+                        (click)="deleteData(row.uuid)"
+                        [disabled]="submitted">
+                    <span *ngIf="!submitted">
+                        <i class="ri-delete-bin-line me-1 align-middle"></i> Sí, Eliminar
+                    </span>
+                    <span *ngIf="submitted">
+                        <span class="spinner-border spinner-border-sm me-2"></span>Eliminando...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</ng-template>

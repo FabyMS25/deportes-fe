@@ -1,22 +1,21 @@
 import { Reserva } from "./reserva.models";
 import { Tablero } from "./tablero.models";
-
 export interface ReservaRecurrente {
   uuid?: string;
   estado?: boolean;
   fechaCreacion?: Date;
 
-  tipoRecurrencia:string; //menusal / semanal
+  tipoRecurrencia:string; //menusal / semanal .. 
   fechaInicio: Date;
   fechaFin: Date;
-  cantidadPersonas?:number;
   diasSemana:string;
-  cantidadSesiones:number;
   duracionSesionHoras:number;
+  cantidadPersonas?:number;
+  cantidadSesiones:number;
   tarifaMensual?:number;
   activo:Boolean;
-  categoria?: string; //saved to identify later
-  superficie?: string; //saved to identify later
+  categoria?: string; //saved concatenado to show later like categoria1, categoria 2
+  superficie?: string; //saved to show later
   observaciones?: string;
   
   tableroDto: Tablero;

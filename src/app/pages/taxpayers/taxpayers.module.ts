@@ -21,10 +21,11 @@ import { TaxpayersRoutingModule } from './taxpayers-routing.module';
 import { SharedModule } from 'src/app/shared/shared.module';
 // Component
 import { ListComponent } from './list/list.component';
+import { ModalComponent } from './modal/modal.component';
 
 @NgModule({
   declarations: [
-    ListComponent
+    ListComponent,
   ],
   imports: [
     CommonModule,

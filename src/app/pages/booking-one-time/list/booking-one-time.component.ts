@@ -13,6 +13,7 @@ import { CategoriasService } from 'src/app/core/services/api/categorias.service'
 import { BookingOneTimeModalComponent } from '../modal/modal.component';
 import { ReservaPuntualService } from 'src/app/core/services/api/reserva-puntual.service';
 import { ReservaPuntual } from 'src/app/core/models/reservaPuntual.models';
+import { EstadoReserva } from 'src/app/core/constants/Estados';
 
 @Component({
   selector: 'app-booking-one-time',
@@ -100,43 +101,96 @@ export class BookingOneTimeComponent implements OnInit {
   }
 
   applyFilters() {
-    this.reservasList = this.temp.filter(item => {
-      const searchMatch = !this.searchTerm ||
-        Object.values(item).some((val: any) =>
-          val?.toString().toLowerCase().includes(this.searchTerm.toLowerCase())) ||
-        item.reservaDto?.campoDeportivoDto?.nombre?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.reservaDto?.contribuyenteDto?.nombre?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.reservaDto?.contribuyenteDto?.apPaterno?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.reservaDto?.contribuyenteDto?.apMaterno?.toLowerCase().includes(this.searchTerm.toLowerCase());
+    if (!this.temp || this.temp.length === 0) return;
 
+    this.reservasList = this.temp.filter(item => {
+      // Search term filter
+      const searchMatch = !this.searchTerm || this.searchInReserva(item, this.searchTerm);
+
+      // Date range filter
       let dateMatch = true;
       if (this.date && this.date.from && this.date.to) {
         const itemDate = new Date(item.fechaUso);
         const fromDate = new Date(this.date.from);
         const toDate = new Date(this.date.to);
+        
+        // Reset time part for date comparison only
         itemDate.setHours(0, 0, 0, 0);
         fromDate.setHours(0, 0, 0, 0);
         toDate.setHours(0, 0, 0, 0);
+        
         dateMatch = itemDate >= fromDate && itemDate <= toDate;
       }
 
-      const estadoValidacionMatch = !this.estadoValidacion || item.reservaDto?.estadoValidacion === this.estadoValidacion;
-      const estadoReservaMatch = !this.estadoReserva || item.reservaDto?.estadoReserva === this.estadoReserva;
-      const categoriaMatch = !this.categoria || item.categoria === this.categoria;
+      // Estado Validacion filter
+      const estadoValidacionMatch = !this.estadoValidacion || 
+        item.reservaDto?.estadoValidacion === this.estadoValidacion;
+
+      // Estado Reserva filter
+      const estadoReservaMatch = !this.estadoReserva || 
+        item.reservaDto?.estadoReserva === this.estadoReserva;
+
+      // Categoria filter
+      const categoriaMatch = !this.categoria || 
+        item.categoria?.toLowerCase().includes(this.categoria.toLowerCase());
 
       return searchMatch && dateMatch && estadoValidacionMatch && estadoReservaMatch && categoriaMatch;
     });
   }
 
+  private searchInReserva(item: ReservaPuntual, searchTerm: string): boolean {
+    if (!searchTerm) return true;
+    
+    const term = searchTerm.toLowerCase();
+    
+    // Search in basic fields
+    if (item.categoria?.toLowerCase().includes(term) ||
+        item.superficie?.toLowerCase().includes(term) ||
+        item.observaciones?.toLowerCase().includes(term) ||
+        item.horaInicio?.toLowerCase().includes(term) ||
+        item.horaFin?.toLowerCase().includes(term)) {
+      return true;
+    }
+
+    // Search in reservaDto fields
+    if (item.reservaDto) {
+      const reserva = item.reservaDto;
+      
+      if (reserva.numeroTasa?.toLowerCase().includes(term) ||
+          reserva.numeroReserva?.toLowerCase().includes(term) ||
+          reserva.montoTotal?.toString().includes(term)) {
+        return true;
+      }
+
+      // Search in campoDeportivoDto
+      if (reserva.campoDeportivoDto) {
+        if (reserva.campoDeportivoDto.nombre?.toLowerCase().includes(term) ||
+            reserva.campoDeportivoDto.complejoDto.nombre.toLowerCase().includes(term) ||
+            reserva.campoDeportivoDto.complejoDto?.nombre?.toLowerCase().includes(term)) {
+          return true;
+        }
+      }
+
+      // Search in contribuyenteDto
+      if (reserva.contribuyenteDto) {
+        const contrib = reserva.contribuyenteDto;
+        if (contrib.nombreCompleto?.toLowerCase().includes(term) ||
+            contrib.nombre?.toLowerCase().includes(term) ||
+            contrib.primerApellido?.toLowerCase().includes(term) ||
+            contrib.segundoApellido?.toLowerCase().includes(term) ||
+            contrib.numeroDocumento?.toLowerCase().includes(term) ||
+            contrib.email?.toLowerCase().includes(term) ||
+            contrib.telefono?.toLowerCase().includes(term)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   performSearch(): void {
-    this.reservasList = this.temp.filter((item: any) => {
-      return (
-        Object.values(item).some((val: any) =>
-          val?.toString().toLowerCase().includes(this.searchTerm.toLowerCase())) ||
-        item.reservaDto?.campoDeportivoDto?.nombre?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.reservaDto?.contribuyenteDto?.nombre?.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
-    });
+    this.applyFilters(); // Reuse the same filtering logic
   }
 
   onNavChange(changeEvent: NgbNavChangeEvent) {
@@ -164,8 +218,9 @@ export class BookingOneTimeComponent implements OnInit {
     this.router.navigate(['/inicio/taxpayer']);
   }
 
-  public showTicket(data: any) {
-    this.router.navigate(['/reservations/ticket'], { state: { data: data } });
+  public showTicket(data: ReservaPuntual) {
+    console.log(data)
+    this.router.navigate(['/reservations/ticket'], { state: { data: data.reservaDto } });
   }
 
   public agregarReserva() {
@@ -241,7 +296,7 @@ export class BookingOneTimeComponent implements OnInit {
       for (const reserva of reservas) {
           if (this.isReservaExpired(reserva) && 
               reserva.reservaDto?.estadoReserva === 'PENDIENTE') {
-              reserva.reservaDto.estadoReserva = 'VENCIDA';              
+              reserva.reservaDto.estadoReserva = EstadoReserva.EXPIRADA;              
               try {
                   const requestData = {
                       numeroTasa: reserva.reservaDto.numeroTasa,
@@ -287,15 +342,10 @@ export class BookingOneTimeComponent implements OnInit {
   private async getReservations(page: number = 0, size: number = 20) {
       try {
           this.loading = true;
-          // Pass pagination parameters to your service
           const data: any = await this.reservasService.getAll(page, size).toPromise();
-          
           if (data && data['status'] === 'OK') {
-              // The entire paginated response
-              this.reservasList = data.payload;
-              this.temp = data.payload;
-              
-              // Update current page
+              this.reservasList = data.payload.content;
+              this.temp = this.reservasList;
               this.currentPage = data.payload.pageable?.pageNumber + 1 || 1;
           }
       } catch (error) {

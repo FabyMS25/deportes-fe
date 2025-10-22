@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, Output, EventEmitter, OnInit } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { EstadoActual } from 'src/app/core/constants/Estados';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
+import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 
 @Component({
@@ -40,7 +42,7 @@ export class ComplejoSelectionComponent implements OnInit {
       next: (response: any) => {
         if (response.status === 'OK') {
           this.complejosList = response.payload.filter(
-            (c: ComplejoDeportivo) => c.estadoActual === 'Activo' && this.hasActiveFields(c)
+            (c: ComplejoDeportivo) => c.estadoActual === EstadoActual.ACTIVO && this.hasActiveFields(c)
           );
           this.filteredComplejos = [...this.complejosList];
         } else {
@@ -124,16 +126,28 @@ export class ComplejoSelectionComponent implements OnInit {
 
   getCamposCount(complejo: ComplejoDeportivo): number {
     return complejo.camposDeportivosDtoList?.filter(
-      c => c.estadoActual === 'Activo'
+      c => c.estadoActual === EstadoActual.ACTIVO
     ).length || 0;
   }
 
   hasActiveFields(complejo: ComplejoDeportivo): boolean {
     return this.getCamposCount(complejo) > 0;
   }
-
-  hasEncargados(complejo: ComplejoDeportivo): boolean {
-    return !!complejo.encargadosDtoList && complejo.encargadosDtoList.length > 0;
+  hasEncargados(complejo: ComplejoDeportivo): EncargadoComplejo | undefined {
+    const today = new Date();
+    const todayNormalized = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (!complejo.encargadosDtoList?.length) {
+      return undefined;
+    }
+    return complejo.encargadosDtoList.find((encargado: EncargadoComplejo) => {
+      if (!encargado.activo) return false;
+      if (!encargado.fechaAsignacion || !encargado.fechaFinAsignacion) {
+        return true;
+      }
+      const fechaAsignacion = new Date(encargado.fechaAsignacion + 'T00:00:00');
+      const fechaFinAsignacion = new Date(encargado.fechaFinAsignacion + 'T23:59:59');
+      return fechaAsignacion <= todayNormalized && todayNormalized <= fechaFinAsignacion;
+    });
   }
 
   getComplejoInfo(complejo: ComplejoDeportivo): string {

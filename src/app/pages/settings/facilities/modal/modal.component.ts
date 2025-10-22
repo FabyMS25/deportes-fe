@@ -7,7 +7,8 @@ import { LeafletComponent } from 'src/app/shared/map/leaflet.component';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { Districts } from 'src/app/core/constants/Places';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
-import { EstadoActual, TipoEstructura } from 'src/app/core/constants/Features';
+import { TipoEstructura } from 'src/app/core/constants/Features';
+import { EstadoActual } from 'src/app/core/constants/Estados';
 
 @Component({
   selector: 'app-modal',
