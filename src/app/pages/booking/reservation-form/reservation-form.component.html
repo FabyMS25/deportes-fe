@@ -542,7 +542,7 @@
           <button 
             type="submit" 
             class="btn btn-success px-4"
-            [disabled]="isSubmitting || reservationForm.invalid">
+            [disabled]="isSubmitting "><!-- || reservationForm.invalid -->
             <span *ngIf="!isSubmitting">
               <i class="ri-check-double-line me-2"></i>
               Confirmar Reserva
