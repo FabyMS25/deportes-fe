@@ -48,12 +48,12 @@ export const GlobalComponent = {
 
     /* RULES */
     VALID_HOURS : 4, // Hours to complete payment
-    ANTICIPATION_PUNTUAL_HOURS : 48, // Minimum advance booking for puntual (por_hora, por_persona)
-    ANTICIPATION_EVENT_HOURS : 168, // 7 days in hours for events
-    ANTICIPATION_EVENT_DAYS : 7, // 7 days in hours for events
-    ANTICIPATION_RECURRENT_DAYS : 15, // Days in advance for recurrent
+    // ANTICIPATION_PUNTUAL_HOURS : 48, // Minimum advance booking for puntual (por_hora, por_persona)
+    // ANTICIPATION_EVENT_HOURS : 168, // 7 days in hours for events
+    // ANTICIPATION_EVENT_DAYS : 7, // 7 days in hours for events
+    // ANTICIPATION_RECURRENT_DAYS : 15, // Days in advance for recurrent
 
   /* ==================== DURATION LIMITS ==================== */
-    MAX_DURATION_PUNTUAL_DEFAULT : 5, // Default max hours for puntual auto-approval
-    MAX_DURATION_EVENT : 12, // Maximum duration for events
+    // MAX_DURATION_PUNTUAL_DEFAULT : 5, // Default max hours for puntual auto-approval
+    // MAX_DURATION_EVENT : 12, // Maximum duration for events
 }

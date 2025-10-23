@@ -22,21 +22,12 @@ import { Organizacion } from 'src/app/core/models/organizacion.models';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
 import { BookingType } from 'src/app/core/constants/Features';
 import { EstadoReserva, EstadoValidacion } from 'src/app/core/constants/Estados';
+import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 
 interface PuntualSchedule {
   date: Date;
   start: string;
   end: string;
-}
-
-interface RecurrentSchedule {
-  tipoRecurrencia: string;
-  fechaInicio: Date;
-  fechaFin: Date;
-  diasSemana: string;
-  tablero: string[][];
-  cantidadSesiones: number;
-  duracionSesionHoras: number;
 }
 
 @Component({
@@ -64,8 +55,9 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   @Input() recurrentSchedule?: any;
   @Input() contribuyente?: Contribuyente;
   @Input() reservationsList: Reserva[] = [];
-  @Input() validHours: number = GlobalComponent.VALID_HOURS;
-  @Input() anticipationHours: number = 48;
+  // @Input() validHours: number = GlobalComponent.VALID_HOURS;
+  // @Input() anticipationHours: number = 48;
+  @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
   
   @Output() reservationCompleted = new EventEmitter<Reserva>();
   @Output() goBack = new EventEmitter<void>();
@@ -73,8 +65,8 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   @ViewChild('searchInput') searchInput!: ElementRef;
   
   submitted = false;
-  reservationForm!: FormGroup;
   isSubmitting = false;
+  reservationForm!: FormGroup;
   calculatedPrice = 0;
   priceDetails: string[] = [];
   numeroReserva = '';
@@ -107,6 +99,71 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     private organizationService: OrganizacionService
   ) {}
 
+  
+  // Add system config getters
+  get validHours(): number {
+    return this.systemConfigs['HORAS_VALIDACION_PAGO']?.valorNumerico || 4;
+  }
+
+  get anticipationHours(): number {
+    if (!this.selectedTariff) {
+      const horasPuntuales = this.systemConfigs['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico;
+      return horasPuntuales ?? 48;
+    }
+    
+    switch (this.selectedTariff.tipoCobro) {
+      case 'por_evento':
+        const diasEventos = this.systemConfigs['DIAS_ANTICIPACION_EVENTOS']?.valorNumerico;
+        return (diasEventos ?? 2) * 24;
+      case 'mensualidad': 
+      case 'por_sesion': 
+      case 'por_club':
+        const diasRecurrentes = this.systemConfigs['DIAS_ANTICIPACION_RECURRENTES']?.valorNumerico;
+        return (diasRecurrentes ?? 3) * 24;
+      default:
+        const horasPuntuales = this.systemConfigs['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico;
+        return horasPuntuales ?? 48;
+    }
+  }
+
+  get anticipationTimeDisplay(): string {
+    if (!this.selectedTariff) {
+      const horasPuntuales = this.systemConfigs['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico;
+      const hours = horasPuntuales ?? 48;
+      return `${hours} horas`;
+    }    
+    switch (this.selectedTariff.tipoCobro) {
+      case 'por_evento':
+        const diasEventos = this.systemConfigs['DIAS_ANTICIPACION_EVENTOS']?.valorNumerico;
+        const eventDays = diasEventos ?? 2;
+        return `${eventDays} días`;
+      case 'mensualidad': 
+      case 'por_sesion': 
+      case 'por_club':
+        const diasRecurrentes = this.systemConfigs['DIAS_ANTICIPACION_RECURRENTES']?.valorNumerico;
+        const recurrentDays = diasRecurrentes ?? 3;
+        return `${recurrentDays} días`;
+      default:
+        const horasPuntuales = this.systemConfigs['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico;
+        const hours = horasPuntuales ?? 48;
+        return `${hours} horas`;
+    }
+  }
+
+  // Add RUAT config getters
+  get ruatCodigoAlcaldia(): string {
+    return this.systemConfigs['CODIGO_ALCALDIA_RUAT']?.valorTexto || 'QUI';
+  }
+
+  get ruatServicioMunicipal(): string {
+    return this.systemConfigs['SERVICIO_MUNICIPAL_RUAT']?.valorTexto || '2174';
+  }
+
+  get ruatIntentosReintento(): number {
+    return this.systemConfigs['INTENTOS_REINTENTO_RUAT']?.valorNumerico || 3;
+  }
+
+
   ngOnInit(): void {
     this.initializeUserContext();
     this.generateReservationNumber();
@@ -121,7 +178,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       }
     }
     
-    if ((changes['selectedTariff'] || changes['selectedSchedule'] || changes['recurrentSchedule'] || changes['dataField']) && this.formInitialized) {
+    if ((changes['selectedTariff'] || changes['selectedSchedule'] || changes['recurrentSchedule'] || changes['dataField'] || changes['systemConfigs']) && this.formInitialized) {
       this.calculateValidationRequirement();
       this.calculatePrice();
     }
@@ -848,11 +905,12 @@ getConceptoDetails(): any[] {
       return;
     }
 
+    // Use system configs instead of GlobalComponent
     const ruatData = {
-      codigoAlcaldia: GlobalComponent.RUAT_codigoAlcaldia || "QUI",
+      codigoAlcaldia: this.ruatCodigoAlcaldia,
       codigoUsuario: reservaData.contribuyenteDto.codigoContribuyente,
       codigoContribuyente: reservaData.contribuyenteDto.codigoContribuyente,
-      servicioMunicipal: GlobalComponent.RUAT_servicioMunicipal || "2174",
+      servicioMunicipal: this.ruatServicioMunicipal,
       datosConcepto: [{
         numero: '1',
         codigoClasificador: this.selectedTariff.clasificadorRuatDto.codigo,

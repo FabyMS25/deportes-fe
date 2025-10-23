@@ -58,15 +58,40 @@
             <div class="d-flex flex-column h-100 justify-content-center">
               <label class="form-label mb-1 fw-medium">
                 <i class="ri-time-line me-1"></i>
-                Duración del intervalo
+                <span *ngIf="isTimeSlotMode">Duración del intervalo</span>
+                <span *ngIf="isEventMode">Duración del evento</span>
               </label>
-              <select class="form-select" 
+              
+              <!-- Time Slot Mode -->
+              <select *ngIf="isTimeSlotMode" 
+                      class="form-select" 
                       [(ngModel)]="slotDuration" 
                       (change)="onSlotDurationChange()">
                 <option *ngFor="let option of slotDurationOptions" [value]="option.value">
                   {{ option.label }}
                 </option>
               </select>
+              
+              <!-- Event Mode -->
+               <!-- Event Mode -->
+              <div *ngIf="isEventMode" class="event-duration-input">
+                <input type="number" 
+                      class="form-control" 
+                      [(ngModel)]="eventDurationHours"
+                      (change)="onEventDurationChange()"
+                      [min]="minEventDurationHours"
+                      [max]="maxEventDurationHours"
+                      [class.is-invalid]="eventDurationError"
+                      placeholder="Ingrese duración en horas">
+                
+                <div *ngIf="eventDurationError" class="invalid-feedback d-block">
+                  {{ eventDurationError }}
+                </div>
+                
+                <small class="form-text text-muted">
+                  Duración: {{ minEventDurationHours }} - {{ maxEventDurationHours }} horas
+                </small>
+              </div>
             </div>
           </div>
         </div>
@@ -76,7 +101,8 @@
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h6 class="mb-0 text-muted">
           <i class="ri-calendar-week-line me-1"></i>
-          Seleccione un día
+          <span *ngIf="isTimeSlotMode">Seleccione un día</span>
+          <span *ngIf="isEventMode">Seleccione un día disponible</span>
         </h6>
         <div class="btn-group" role="group">
           <button type="button" 
@@ -113,9 +139,9 @@
             <a ngbNavLink 
                class="nav-link text-center p-1" 
                [class.active]="activeDayName === day.name"
-               [class.disabled]="day.isPast"
+               [class.disabled]="day.isPast || (isEventMode && !isDayAvailableForEvent(day.date))"
                (click)="canSelectDay(day) ? setSelectedDay(day.date) : null"
-               [style.cursor]="day.isPast ? 'not-allowed' : 'pointer'">
+               [style.cursor]="(day.isPast || (isEventMode && !isDayAvailableForEvent(day.date))) ? 'not-allowed' : 'pointer'">
               
               <div class="fw-semibold mb-1">{{ day.dayName }}</div>
               <div class="fs-5 fw-bold mb-1">{{ day.date | date:'d' }}</div>
@@ -129,7 +155,19 @@
                       class="badge bg-secondary small">
                   <i class="ri-time-line me-1"></i>Pasado
                 </span>
-                <i class="fs-16" 
+                
+                <!-- Event Mode Availability Indicator -->
+                <span *ngIf="isEventMode && !day.isPast && isDayAvailableForEvent(day.date)" 
+                      class="badge bg-success small">
+                  <i class="ri-check-line me-1"></i>Disponible
+                </span>
+                <span *ngIf="isEventMode && !day.isPast && !isDayAvailableForEvent(day.date)" 
+                      class="badge bg-danger small">
+                  <i class="ri-close-line me-1"></i>Ocupado
+                </span>
+                
+                <!-- Time Slot Mode Indicator -->
+                <i *ngIf="isTimeSlotMode" class="fs-16" 
                    [ngClass]="{
                      'ri-checkbox-circle-fill text-success': !day.isPast && getTimeSlotsForDay(day.date).daySchedule?.abierto,
                      'ri-close-circle-fill text-danger': !day.isPast && !getTimeSlotsForDay(day.date).daySchedule?.abierto,
@@ -139,7 +177,7 @@
             </a>
           </div>
           
-          <ng-template ngbNavContent>
+          <ng-template *ngIf="isTimeSlotMode" ngbNavContent>
             <ng-container *ngIf="getTimeSlotsForDay(day.date) as slots">
               <ng-container *ngIf="slots.morningSlots.length === 0 && 
                                     slots.afternoonSlots.length === 0 && 
@@ -348,6 +386,31 @@
               </div>
             </ng-container>
           </ng-template>
+          <!-- Event Mode Content -->
+          <ng-template *ngIf="isEventMode" ngbNavContent>
+            <ng-container *ngIf="getTimeSlotsForDay(day.date) as slots">
+              <div class="text-center py-4">
+                <div *ngIf="isDayAvailableForEvent(day.date)" class="text-success">
+                  <i class="ri-calendar-check-line display-4"></i>
+                  <h5 class="mt-3">Día Disponible</h5>
+                  <p class="text-muted">
+                    Este día tiene disponibilidad para eventos de {{ eventDurationDisplay}}.
+                  </p>
+                  <p class="small text-muted">
+                    El horario específico será asignado automáticamente según la disponibilidad.
+                  </p>
+                </div>
+                <div *ngIf="!isDayAvailableForEvent(day.date)" class="text-danger">
+                  <i class="ri-calendar-close-line display-4"></i>
+                  <h5 class="mt-3">Día No Disponible</h5>
+                  <p class="text-muted">
+                    No hay disponibilidad continua de {{eventDurationDisplay }}  en este día.
+                  </p>
+                </div>
+              </div>
+            </ng-container>
+          </ng-template>
+
         </li>
       </ul>
 
@@ -357,7 +420,7 @@
       </div>
 
       <!-- Selection Summary -->
-      <div *ngIf="selectedSlots.length > 0" 
+      <div *ngIf="isTimeSlotMode && selectedSlots.length > 0" 
            class="alert alert-primary mt-4 mb-0" 
            role="alert">
         <div class="d-flex align-items-center">
@@ -382,6 +445,28 @@
           </div>
         </div>
       </div>
+      <!-- Event Mode Summary -->
+      <div *ngIf="isEventMode && fechaReserva && isDayAvailableForEvent(fechaReserva)" 
+          class="alert alert-success mt-4 mb-0" 
+          role="alert">
+        <div class="d-flex align-items-center">
+          <div class="flex-shrink-0">
+            <i class="ri-calendar-event-line fs-20"></i>
+          </div>
+          <div class="flex-grow-1 ms-3">
+            <h6 class="alert-heading mb-1">Evento Seleccionado</h6>
+            <p class="mb-0">
+              <strong>{{ fechaReserva | date:'fullDate':'':'es' }}</strong>
+              <span class="ms-2 text-muted">
+                (Duración: {{ eventDurationDisplay }})
+              </span>
+            </p>
+            <small class="text-muted">
+              El horario específico será asignado automáticamente según la disponibilidad del día.
+            </small>
+          </div>
+        </div>
+      </div>
 
       <!-- Information Alert -->
       <div class="alert alert-info mt-3 mb-0" role="alert">
@@ -393,18 +478,26 @@
             <h6 class="alert-heading mb-2">Información Importante</h6>
             <ul class="mb-0 ps-3">
               <li class="mb-1">
-                Las reservas deben realizarse con <strong>{{ anticipationHours }} horas</strong> de anticipación mínima.
+                Las reservas deben realizarse con <strong>{{ anticipationTimeDisplay }}</strong> de anticipación mínima.
               </li>
-              <li class="mb-1">
+              
+              <!-- Time Slot Mode Info -->
+              <li *ngIf="isTimeSlotMode" class="mb-1">
                 Los horarios seleccionados deben ser <strong>consecutivos</strong>.
               </li>
+              
+              <!-- Event Mode Info -->
+              <li *ngIf="isEventMode" class="mb-1">
+                Para eventos, seleccione un día disponible y la duración deseada.
+              </li>
+              
               <li class="mb-1">
-                Después de crear la reserva, tendrá <strong>{{ VALID_HOURS }} horas</strong> para realizar el pago.
+                Después de crear la reserva, tendrá <strong>{{ systemConfigs['HORAS_VALIDACION_PAGO'].valorNumerico }} horas</strong> para realizar el pago.
               </li>
               <li *ngIf="dataField?.requiereAprobacion && dataField?.maxDuracionAutoAprobacion">
                 Reservas mayores a <strong>{{ dataField.maxDuracionAutoAprobacion }} minutos</strong> requieren aprobación administrativa.
               </li>
-              <li class="mb-1">
+              <li *ngIf="isTimeSlotMode" class="mb-1">
                 Los horarios marcados con <i class="ri-lock-line text-danger"></i> están ocupados por otras reservas activas.
               </li>
             </ul>
@@ -413,21 +506,17 @@
       </div>
     </div>
     <div class="card-footer bg-light">
-      <div class="d-flex justify-content-between align-items-center">
-        <button type="button" 
-                class="btn btn-outline-secondary" 
-                (click)="openScheduleModal()">
-          <i class="ri-calendar-event-line me-1"></i>
-          Ver Calendario Completo
-        </button>
-        
+      <div class="d-flex justify-content-between align-items-center">        
         <button type="button" 
                 class="btn btn-primary" 
-                [disabled]="selectedSlots.length === 0 || isCheckingAvailability"
+                [disabled]="(isTimeSlotMode && selectedSlots.length === 0) || 
+                           (isEventMode && (!fechaReserva || !isDayAvailableForEvent(fechaReserva))) || 
+                           isCheckingAvailability"
                 (click)="confirmSelection()">
           <span *ngIf="!isCheckingAvailability">
             <i class="ri-check-line me-1"></i>
-            Confirmar y Continuar
+            <span *ngIf="isTimeSlotMode">Confirmar y Continuar</span>
+            <span *ngIf="isEventMode">Reservar Evento</span>
           </span>
           <span *ngIf="isCheckingAvailability">
             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>

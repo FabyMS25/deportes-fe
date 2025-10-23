@@ -32,7 +32,7 @@ interface CampoWithTariff {
   ]
 })
 export class CampoSelectionComponent implements OnInit {
-  @Input() dataComplejo!: ComplejoDeportivo;
+  @Input() dataComplejo?: ComplejoDeportivo;
   @Input() bookingType!: 'puntual' | 'recurrente';
   viewMode: 'list' | 'grid' = 'grid';
   
