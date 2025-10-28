@@ -62,10 +62,8 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     { value: 90, label: '1.5 horas' },
     { value: 120, label: '2 horas' }
   ];
-
-  eventDurationHours: number = 2;
+  eventDurationHours: number = 8;
   eventDurationError: string = '';
-
   get isEventMode(): boolean {
     return this.dataTariff?.tipoCobro === 'por_evento';
   }
@@ -193,7 +191,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         this.currentWeekStart = start;
         this.cdr.detectChanges();
       });
-
     this.scheduleState.currentWeekEnd$
       .pipe(takeUntil(this.destroy$))
       .subscribe(end => {
@@ -204,8 +201,8 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     this.generateWeekDays();
     this.setDefaultSlotDuration();
     if (this.isEventMode) {
-      this.eventDurationHours = this.minEventDurationHours;
-    }
+    this.eventDurationHours =this.maxEventDurationHours; 
+  }
   }
 
   ngOnDestroy(): void {
@@ -218,8 +215,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       this.clearCache();
       this.generateWeekDays();
       this.revalidateSelection();
-    }
-    
+    }    
     if (changes['dataTariff'] && !changes['dataTariff'].firstChange) {
       this.setDefaultSlotDuration();
       this.clearCache();
@@ -227,7 +223,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       this.generateWeekDays();
       
       if (this.isEventMode) {
-        this.eventDurationHours = this.minEventDurationHours;
+        this.eventDurationHours = this.maxEventDurationHours;
       }
     }
 
@@ -724,7 +720,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
 
   private areConsecutiveSlots(slots: TimeSlot[]): boolean {
     if (slots.length <= 1) return true;
-
     for (let i = 0; i < slots.length - 1; i++) {
       if (slots[i].endTime !== slots[i + 1].startTime) {
         return false;
@@ -735,26 +730,21 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
 
   private revalidateSelection(): void {
     if (this.selectedSlots.length === 0) return;
-
     const currentDaySlots = this.getTimeSlotsForDay(this.fechaReserva);
     const allSlots = [
       ...currentDaySlots.morningSlots,
       ...currentDaySlots.afternoonSlots,
       ...currentDaySlots.nightSlots
     ];
-
     const invalidSlots: TimeSlot[] = [];
-
     this.selectedSlots.forEach(selectedSlot => {
       const currentSlot = allSlots.find(s => 
         s.startTime === selectedSlot.startTime && s.endTime === selectedSlot.endTime
       );
-
       if (!currentSlot || !currentSlot.isAvailable || currentSlot.isReserved) {
         invalidSlots.push(selectedSlot);
       }
     });
-
     if (invalidSlots.length > 0) {
       this.clearSelectedSlots();
       this.validationErrors.push('Algunos horarios seleccionados ya no están disponibles');
@@ -763,22 +753,18 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   getSelectedSlotsInfo(): string {
-    if (this.selectedSlots.length === 0) return '';
-    
+    if (this.selectedSlots.length === 0) return '';    
     const startTime = this.selectedSlots[0].startTime.slice(0, 5);
     const endTime = this.selectedSlots[this.selectedSlots.length - 1].endTime.slice(0, 5);
     const duration = this.calculateDuration(
       this.selectedSlots[0].startTime,
       this.selectedSlots[this.selectedSlots.length - 1].endTime
-    );
-    
+    );    
     const hours = Math.floor(duration / 60);
     const minutes = duration % 60;
-    
     let durationStr = '';
     if (hours > 0) durationStr += `${hours}h `;
     if (minutes > 0) durationStr += `${minutes}min`;
-    
     return `${startTime} - ${endTime} (${durationStr.trim()})`;
   }
 
@@ -788,10 +774,8 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
 
   private getHorarioForDate(date: Date): HorarioFijo | undefined {
     if (!this.dataField?.horariosFijosDtoList) return undefined;
-    
     const dayOfWeek = date.getDay();
-    let diaKey: string;
-    
+    let diaKey: string;    
     if (dayOfWeek === 0) diaKey = 'domingo';
     else if (dayOfWeek === 6) diaKey = 'sabado';
     else diaKey = 'lunes_viernes';
@@ -889,9 +873,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
 
   getDayCardClasses(day: WeekDay): string {
     const classes: string[] = ['rounded-3', 'me-1', 'mb-2'];
-    
     const daySlots = this.getTimeSlotsForDay(day.date);
-    
     if (day.isPast) {
       classes.push('bg-secondary-subtle');
     } else if (this.isEventMode) {
@@ -905,11 +887,9 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     } else {
       classes.push('bg-danger-subtle');
     }
-    
     if (day.isToday) {
       classes.push('border', 'border-primary', 'border-2');
     }
-    
     return classes.join(' ');
   }
 

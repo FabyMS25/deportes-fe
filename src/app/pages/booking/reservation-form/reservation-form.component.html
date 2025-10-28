@@ -198,7 +198,7 @@
               <div class="col-md-3">
                 <label class="form-label fw-semibold">
                   <i class="ri-group-line me-1"></i>
-                  Personas <span class="text-danger">*</span>
+                  Personas <span class="text-danger" *ngIf="selectedTariff?.tipoCobro === 'por_persona'">*</span>
                 </label>
                 <input 
                   type="number" 

@@ -210,13 +210,11 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     const recurrentFechaFin = this.recurrentSchedule?.fechaFin ? 
       this.safeFormatDate(this.recurrentSchedule.fechaFin, 'yyyy-MM-dd') : '';    
     this.calculateValidationRequirement();
-    
     const numeroReservaDisabled = this.userRole === 'contribuyente' || this.userRole === 'representante';
     const initialEstadoValidacion = this.requiresValidation ? 
       EstadoValidacion.PENDIENTE : EstadoValidacion.APROBADA;    
     const initialEstadoReserva = this.requiresValidation ? 
-      EstadoReserva.SOLICITADA : EstadoReserva.PENDIENTE;
-      
+      EstadoReserva.SOLICITADA : EstadoReserva.PENDIENTE;      
     this.reservationForm = this.fb.group({
       fechaReserva: [new Date()],
       tipoReserva: [this.bookingType],
@@ -240,7 +238,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         { value: initialHoraFin, disabled: this.shouldDisableScheduleFields }
       ],
       duracionHoras: [{ value: initialDuracion, disabled: true }],
-      cantidadPersonas: [,[Validators.min(1), Validators.max(this.dataField?.capacidadPersonas || 100)]],
+      cantidadPersonas: [null, [Validators.min(1), Validators.max(this.dataField?.capacidadPersonas || 100)]],
       tipoRecurrencia: [{ value: this.recurrentSchedule?.tipoRecurrencia || '', disabled: true }],
       fechaInicio: [{ value: recurrentFechaInicio, disabled: true }],
       fechaFin: [{ value: recurrentFechaFin, disabled: true }],
@@ -589,30 +587,30 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
 
     return Object.keys(errors).length ? errors : null;
   }
-  private tariffSpecificValidator(control: AbstractControl): ValidationErrors | null {
-    const errors: ValidationErrors = {};
-    const form = control as FormGroup;
+private tariffSpecificValidator(control: AbstractControl): ValidationErrors | null {
+  const errors: ValidationErrors = {};
+  const form = control as FormGroup;
 
-    if (!this.selectedTariff) return null;
+  if (!this.selectedTariff) return null;
 
-    const cantidadPersonas = form.get('cantidadPersonas')?.value;
+  const cantidadPersonas = form.get('cantidadPersonas')?.value;
 
-    switch (this.selectedTariff.tipoCobro) {
-      case 'por_persona':
-        if (!cantidadPersonas || cantidadPersonas < 1) {
-          errors['cantidadPersonasRequired'] = 'La cantidad de personas es requerida para tarifas por persona';
-        }
-        break;
-      
-      case 'por_evento':
-        if (cantidadPersonas && cantidadPersonas < 1) {
-          errors['invalidPersonCount'] = 'La cantidad de personas debe ser mayor a 0';
-        }
-        break;
-    }
-
-    return Object.keys(errors).length ? errors : null;
+  switch (this.selectedTariff.tipoCobro) {
+    case 'por_persona':
+      if (!cantidadPersonas || cantidadPersonas < 1) {
+        errors['cantidadPersonasRequired'] = 'La cantidad de personas es requerida para tarifas por persona';
+      }
+      break;
+    case 'por_evento':
+    case 'por_hora':
+      if (cantidadPersonas && cantidadPersonas < 1) {
+        errors['invalidPersonCount'] = 'La cantidad de personas debe ser mayor a 0';
+      }
+      break;
   }
+
+  return Object.keys(errors).length ? errors : null;
+}
   private timeRangeValidator(): ValidatorFn {
     return (formGroup: AbstractControl): ValidationErrors | null => {
       if (this.bookingType === 'recurrente') return null;
