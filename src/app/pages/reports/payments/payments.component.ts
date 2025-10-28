@@ -8,9 +8,8 @@ import { ReportsService } from 'src/app/core/services/api/reportes.service';
   styleUrl: './payments.component.scss'
 })
 export class PaymentsCompoment {
-
   breadCrumbItems!: Array<{}>;
-  title='Pagos';
+  title = 'Reporte de Pagos';
   showLoading: boolean = false; 
 
   date!: { from: Date, to: Date };
@@ -20,38 +19,49 @@ export class PaymentsCompoment {
 
   constructor(private reportsService: ReportsService) {}
 
-  async ngOnInit() {    
+  async ngOnInit() {
     this.breadCrumbItems = [
       { label: 'Reportes' },
       { label: this.title, active: true }
-    ];        
+    ];
   }
 
   applyFilters() {
-    let strQuery = '';    
+    let fecha_ini = '';
+    let fecha_fin = '';
+    
     if (this.date && this.date.from && this.date.to) {
       const fromDate = new Date(this.date.from);
       const toDate = new Date(this.date.to);
-      const fromDateFormatted = fromDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      const toDateFormatted = toDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });  
-      strQuery += 'fecha_ini=' + fromDateFormatted;
-      strQuery += '&fecha_fin=' + toDateFormatted;
+      fecha_ini = this.formatDateToDDMMYYYY(fromDate);
+      fecha_fin = this.formatDateToDDMMYYYY(toDate);
     }
   
     this.showLoading = true;
-    this.generarReportePDF(strQuery);
+    this.generarReportePDF(fecha_ini, fecha_fin);
+  }
+
+  private formatDateToDDMMYYYY(date: Date): string {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   }
   
-   
   /* API Services */
-  private async generarReportePDF(params: any) {
-    const data = await this.reportsService.getPaymentsReport(params).subscribe(
-      (data: any) => {
+  private generarReportePDF(fecha_ini: string, fecha_fin: string) {
+    this.reportsService.getPaymentsReport(fecha_ini, fecha_fin).subscribe(
+      (data: ArrayBuffer) => {
         const file = new Blob([data], { type: 'application/pdf' });
         const fileURL = URL.createObjectURL(file);
         this.pdfViewer.nativeElement.data = fileURL;
         this.showLoading = false;
+      },
+      (error) => {
+        console.error('Error generating report:', error);
+        this.showLoading = false;
+        alert('Error al generar el reporte');
       }
     );
   }
-  }
+}

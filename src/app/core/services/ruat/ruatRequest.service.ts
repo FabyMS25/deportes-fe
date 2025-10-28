@@ -4,12 +4,12 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
-import { GlobalComponent } from "../../../global-component";
 import { Contribuyente } from '../../models/contribuyente.models';
+import { GlobalComponent } from 'src/app/global-component';
 
 const apiUrl = `${environment.backendUrl}/ruat`;
 
-const token = GlobalComponent.RUAT_token;
+const token = GlobalComponent.RUAT_token;//sessionStorage.getItem('ruatToken');
 @Injectable({
   providedIn: 'root'
 })
@@ -19,12 +19,12 @@ export class RuatRequestsService {
     private http: HttpClient,
   ) { }
 
-  authenticate(): Observable<any> {
+  authenticate(usuario:string,clave:string): Observable<any> {
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
-    const username=GlobalComponent.RUAT_usuario;
-    const password=GlobalComponent.RUAT_clave;
+    const username=usuario;//GlobalComponent.RUAT_usuario;
+    const password=clave;//GlobalComponent.RUAT_clave;
     const requestData = {
       'usuario': username,
       'clave': password
@@ -32,12 +32,11 @@ export class RuatRequestsService {
     return this.http.post<any>(`${apiUrl}/login`, requestData);
   }
 
-
-  getContribuyentePorCi( numeroDocumento: string, tipoDocumento: string,expedido:string): Observable<any> {
+  getContribuyentePorCi( codigoAlcaldia:string, numeroDocumento: string, tipoDocumento: string,expedido:string): Observable<any> {
     const requestData = {
       'token': token,
       'contribuyenteRequest': {
-        'codigoAlcaldia': GlobalComponent.RUAT_codigoAlcaldia,
+        'codigoAlcaldia': codigoAlcaldia,//GlobalComponent.RUAT_codigoAlcaldia,
         'numeroDocumento': numeroDocumento,
         'tipoDocumento': tipoDocumento,
         'expedido': expedido
@@ -46,12 +45,12 @@ export class RuatRequestsService {
     return this.http.post<any>(`${apiUrl}/buscar`, requestData, );
   }
 
-  registerContribuyente(data:Contribuyente): Observable<any> {
+  registerContribuyente(codigoAlcaldia:string,codigoUsuario:string,data:Contribuyente): Observable<any> {
     const requestData = {
       'token': token,
       'registro':{
-        codigoAlcaldia: GlobalComponent.RUAT_codigoAlcaldia,
-        codigoUsuario: GlobalComponent.RUAT_codigoUsuario,
+        codigoAlcaldia: codigoAlcaldia,//GlobalComponent.RUAT_codigoAlcaldia,
+        codigoUsuario: codigoUsuario,//GlobalComponent.RUAT_codigoUsuario,
     
         numeroDocumento: data.numeroDocumento,
         tipoDocumento: data.tipoDocumento,
@@ -71,13 +70,13 @@ export class RuatRequestsService {
   }
 
   
-  getDeudasContribuyente(token: string, tipoConsulta: string, nroDocumento: string, tipoDocumento: string): Observable<any> {
+  getDeudasContribuyente(token: string,codigoAlcaldia:string, tipoConsulta: string, nroDocumento: string, tipoDocumento: string): Observable<any> {
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
 
     const requestData = {
-      'codigoAlcaldia': GlobalComponent.RUAT_codigoAlcaldia,
+      'codigoAlcaldia':codigoAlcaldia,// GlobalComponent.RUAT_codigoAlcaldia,
       'tipoConsulta': tipoConsulta,
       'numeroDocumento': nroDocumento,
       'tipoDocumento': tipoDocumento
@@ -89,18 +88,16 @@ export class RuatRequestsService {
       { headers }
     );
   }
-  
-
 
 /* ------API REST RUAT TASAS y OTROS SERVICIOS -------*/
-   createTasa(data:any, codigoContribuyente:string): Observable<any> {    
+   createTasa(codigoAlcaldia:string,codigoUsuario:string,servicioMunicipal:string,data:any, codigoContribuyente:string): Observable<any> {    
     const requestData = {
       'token':token,
       'tasa': {
-        codigoAlcaldia: GlobalComponent.RUAT_codigoAlcaldia,
-        codigoUsuario: GlobalComponent.RUAT_codigoUsuario ,
+        codigoAlcaldia: codigoAlcaldia,//GlobalComponent.RUAT_codigoAlcaldia,
+        codigoUsuario: codigoUsuario,//GlobalComponent.RUAT_codigoUsuario ,
         codigoContribuyente: codigoContribuyente,
-        servicioMunicipal: GlobalComponent.RUAT_servicioMunicipal,
+        servicioMunicipal: servicioMunicipal,//GlobalComponent.RUAT_servicioMunicipal,
         datosConcepto: data.datosConcepto,
         observacion: data.observacion
       }
@@ -108,12 +105,12 @@ export class RuatRequestsService {
     return this.http.post<any>(`${apiUrl}/creartasa`,requestData, );
   }
 
-  cancelTasa( data:any): Observable<any> {   
+  cancelTasa( codigoAlcaldia:string,codigoUsuario:string,data:any): Observable<any> {   
     const requestData = {
       'token':token,
       'anular': {
-        'codigoAlcaldia': GlobalComponent.RUAT_codigoAlcaldia,
-        'codigoUsuario': GlobalComponent.RUAT_codigoUsuario,
+        'codigoAlcaldia': codigoAlcaldia,//GlobalComponent.RUAT_codigoAlcaldia,
+        'codigoUsuario': codigoUsuario,//GlobalComponent.RUAT_codigoUsuario,
         'numeroTasa' : data.numeroTasa,
         'tipoTasa' : 'TO',
         'motivoTasa': data.motivo,
@@ -123,11 +120,11 @@ export class RuatRequestsService {
     return this.http.post<any>(`${apiUrl}/anulartasa`,requestData, );
   }
   
-  consultaPagoTasa( nroTasa: number): Observable<any> {
+  consultaPagoTasa( codigoAlcaldia:string,nroTasa: string ): Observable<any> {
     const requestData = {
       'token':token,
       'pago': {
-        'codigoAlcaldia': GlobalComponent.RUAT_codigoAlcaldia,
+        'codigoAlcaldia': codigoAlcaldia,//GlobalComponent.RUAT_codigoAlcaldia,
         'numeroTasa': nroTasa,
         'tipoTasa': 'TO'
       }

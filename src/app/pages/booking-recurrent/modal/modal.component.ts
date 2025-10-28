@@ -15,13 +15,17 @@ import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportiv
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
 import { PagoService } from 'src/app/core/services/api/pago.service';
 import { CityAcronym } from 'src/app/core/constants/Places';
-import { EstadoReserva, EstadoValidacion } from 'src/app/core/constants/Estados';
+import { EstadoReserva, EstadoValidacion, EstadoPago } from 'src/app/core/constants/Estados';
 import { environment } from 'src/environments/environment';
+import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
+import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
+import { TicketComponent } from '../../reports/ticket/ticket.component';
+import { Pago } from 'src/app/core/models/pago.model';
 
 @Component({
   selector: 'app-booking-recurrent-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgbNavModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, NgbNavModule, FormsModule, TicketComponent],
   templateUrl: './modal.component.html',
   styleUrls: ['./modal.component.scss']
 })
@@ -32,8 +36,11 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
   @Input() canActivate!: any[];
   @Output() emitList = new EventEmitter();
 
+  systemConfigList: ConfiguracionSistema[] = [];
   CityAcronym = CityAcronym;
   EstadoReserva = EstadoReserva;
+  EstadoPago = EstadoPago;
+  userData!: any;
 
   reservationForm!: FormGroup;
   validationForm!: FormGroup;
@@ -67,6 +74,8 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
   ];
 
   @ViewChild('validationModel') validationModel!: TemplateRef<any>;
+  @ViewChild('ticketModal') ticketModal!: TemplateRef<any>;
+  @ViewChild('annularModal') annularModal!: TemplateRef<any>;
 
   constructor(
     private modalService: NgbModal,
@@ -76,11 +85,20 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
     private canchasService: CamposDeportivoService,
     private contribuyentesService: ContribuyentesService,
     private ruatService: RuatRequestsService,
+    private systemConfigsService: ConfiguracionSistemaService,
     private pagoService: PagoService,
     private router: Router
   ) {}
 
-  ngOnInit(): void {    
+  ngOnInit(): void {   
+    const currentUser = window.sessionStorage.getItem("currentUser");
+    this.userData = currentUser ? JSON.parse(currentUser) : null;
+    
+    if (window.sessionStorage.getItem("auth-token") !== 'isContribuyente') {
+      this.userData = this.userData.designacion.personaDto;
+    }
+    
+    this.getConfigsSystem(); 
     this.getFields();
     this.getTaxpayers();
     
@@ -92,18 +110,29 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    if (this.accion === 'validar' && this.validationModel) {
-      setTimeout(() => {
-        this.openValidationModal(this.validationModel);
-      });
-    }
+    setTimeout(() => {      
+      if (!this.accion) return;
+      switch (this.accion) {
+        case 'validarModal':
+          this.openValidationModal(this.validationModel);
+          break;
+        case 'annularModal':
+          if (this.annularModal) {
+            this.openDeleteModal(this.annularModal);
+          }
+          break;
+        case 'ticketModal': 
+          this.openTicketModal(this.ticketModal);
+          break;
+      }
+    });
   }
 
   private initForm() {
     const today = new Date();
     const minDate = today.toISOString().split('T')[0];
     const maxDate = new Date();
-    maxDate.setFullYear(today.getFullYear() + 1); // 1 year max for recurrent reservations
+    maxDate.setFullYear(today.getFullYear() + 1);
 
     this.reservationForm = this.formBuilder.group({
       fechaInicio: [
@@ -125,8 +154,23 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
   private initValidationForm() {
     this.validationForm = this.formBuilder.group({
       validationStatus: [EstadoValidacion.APROBADA, Validators.required],
-      validationObservation: ['', Validators.required]
+      validationObservation: ['']
     });
+    
+    this.validationForm.get('validationStatus')?.valueChanges.subscribe(status => {
+      this.updateObservationValidation(status);
+    });
+  }
+
+  private updateObservationValidation(status: string): void {
+    const observationControl = this.validationForm.get('validationObservation');
+    if (status === EstadoValidacion.RECHAZADA) {
+      observationControl?.setValidators([Validators.required]);
+      observationControl?.updateValueAndValidity();
+    } else {
+      observationControl?.clearValidators();
+      observationControl?.updateValueAndValidity();
+    }
   }
 
   get form() {
@@ -149,6 +193,7 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
     }
     this.reservationForm.patchValue({ diasSemana: diasArray });
   }
+
   /**
    * Save reservation changes
    */
@@ -172,13 +217,14 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
    */
   validateReservation() {
     this.validationSubmitted = true;
+    this.updateObservationValidation(this.validationForm.value.validationStatus);
+    
     if (this.validationForm.valid) {
       this.showLoading = true;
       
       const validationData = this.validationForm.value;
       const isApproved = validationData.validationStatus === EstadoValidacion.APROBADA;
       const reservaUuid = this.row.reservaDto?.uuid;
-      const currentUser = this.getCurrentUser();
 
       if (!reservaUuid) {
         this.showLoading = false;
@@ -187,9 +233,9 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
       }
 
       if (isApproved) {
-        this.approveReserva(reservaUuid, currentUser,validationData.validationObservation);
+        this.approveReserva(reservaUuid, validationData.validationObservation);
       } else {
-        this.rejectReserva(reservaUuid, validationData.validationObservation, currentUser);
+        this.rejectReserva(reservaUuid, validationData.validationObservation);
       }
     } else {
       this.notify('Por favor complete todos los campos de validación', 'error');
@@ -199,35 +245,20 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
   /**
    * Approve reservation using dedicated service
    */
-  private approveReserva(reservaUuid: String, aprobadoPor: string, observaciones: string) {
+  private approveReserva(reservaUuid: any, observaciones: string = '') {
+    const aprobadoPor = this.userData.nombreCompleto || this.userData.fullName;
+    
     this.reservaService.aprobarReserva(reservaUuid, aprobadoPor).subscribe({
-      next: async (reservaActualizada: Reserva) => {
+      next: async (data: any) => {
         try {
-          // Update local row data with the updated reserva
-          const updatedReservaRecurrente = {
-            ...this.row,
-            reservaDto: {
-              ...this.row.reservaDto,
-              ...reservaActualizada,
-              observacionesValidacion: observaciones
-            }
-          };
-
-          // Send email notification
-          await this.sendValidationEmail(updatedReservaRecurrente, true);
-          
           this.showLoading = false;
-          this.notify('Reserva recurrente aprobada exitosamente y notificación enviada al contribuyente', 'success');
-          this.emitList.emit();
-          this.modalService.dismissAll();
-          this.onCloseModal();
-        } catch (emailError) {
+          await this.registerReservationInRuat(data.payload);
+          this.openTicketModal(this.ticketModal);
+          this.notify('Reserva recurrente aprobada exitosamente y registrada en RUAT', 'success');
+        } catch (error) {
           this.showLoading = false;
-          console.error('Error sending email:', emailError);
-          this.notify('Reserva aprobada exitosamente, pero error al enviar notificación por email', 'warning');
-          this.emitList.emit();
-          this.modalService.dismissAll();
-          this.onCloseModal();
+          console.error('Error in approval process:', error);
+          this.notify('Reserva aprobada pero error en proceso adicional: ' + error, 'warning');
         }
       },
       error: (error) => {
@@ -241,35 +272,19 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
   /**
    * Reject reservation using dedicated service
    */
-  private rejectReserva(reservaUuid: String, motivoRechazo: string, aprobadoPor: string) {
+  private rejectReserva(reservaUuid: any, motivoRechazo: string = '') {
+    const aprobadoPor = this.userData.nombreCompleto || this.userData.fullName;
+    
     this.reservaService.rechazarReserva(reservaUuid, motivoRechazo, aprobadoPor).subscribe({
-      next: async (reservaActualizada: Reserva) => {
+      next: async (data: any) => {
         try {
-          // Update local row data with the updated reserva
-          const updatedReservaRecurrente = {
-            ...this.row,
-            reservaDto: {
-              ...this.row.reservaDto,
-              ...reservaActualizada,
-              observacionesValidacion: motivoRechazo
-            }
-          };
-
-          // Send email notification
-          await this.sendValidationEmail(updatedReservaRecurrente, false);
-          
           this.showLoading = false;
-          this.notify('Reserva recurrente rechazada exitosamente y notificación enviada al contribuyente', 'success');
-          this.emitList.emit();
-          this.modalService.dismissAll();
-          this.onCloseModal();
-        } catch (emailError) {
+          this.openTicketModal(this.ticketModal);
+          this.notify('Reserva recurrente rechazada exitosamente', 'success');
+        } catch (error) {
           this.showLoading = false;
-          console.error('Error sending email:', emailError);
-          this.notify('Reserva rechazada exitosamente, pero error al enviar notificación por email', 'warning');
-          this.emitList.emit();
-          this.modalService.dismissAll();
-          this.onCloseModal();
+          console.error('Error in rejection process:', error);
+          this.notify('Reserva rechazada pero error en proceso adicional', 'warning');
         }
       },
       error: (error) => {
@@ -281,101 +296,123 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * Get current user for aprobadoPor field
+   * Register reservation in RUAT system
    */
-  private getCurrentUser(): string {
-    const currentUserStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
-    if (currentUserStr) {
-      try {
-        const currentUser = JSON.parse(currentUserStr);
-        return currentUser.username || currentUser.nombre || 'Sistema';
-      } catch (e) {
-        console.error('Error parsing user data:', e);
+  private registerReservationInRuat(reservaData: Reserva): void {
+    const codigoAlcaldia = this.systemConfigList.find(config => config.clave === 'CODIGO_ALCALDIA_RUAT')?.valorTexto || '';
+    const codigoUsuario = this.systemConfigList.find(config => config.clave === 'CODIGO_USUARIO_RUAT')?.valorTexto || '';
+    const servicioMunicipal = this.systemConfigList.find(config => config.clave === 'SERVICIO_MUNICIPAL_RUAT')?.valorTexto || '';
+    
+    const ruatData = {
+      codigoAlcaldia: codigoAlcaldia,
+      codigoUsuario: reservaData.contribuyenteDto.codigoContribuyente,
+      codigoContribuyente: reservaData.contribuyenteDto.codigoContribuyente,
+      servicioMunicipal: servicioMunicipal,
+      datosConcepto: [{
+        numero: '1',
+        codigoClasificador: reservaData.tarifaDto.clasificadorRuatDto.codigo,
+        tipoArancel: reservaData.tarifaDto.clasificadorRuatDto.tipoArancel || "DI",
+        monto: reservaData.montoTotal
+      }],
+      observacion: reservaData.reservaRecurrenteDto?.observaciones || 'Reserva Recurrente de Cancha Deportiva GAMQ'
+    };
+    
+    const code = reservaData.contribuyenteDto.codigoContribuyente || '';
+    
+    this.ruatService.createTasa(codigoAlcaldia, codigoUsuario, servicioMunicipal, ruatData, code)
+    .subscribe({
+      next: (response: any) => {
+        if (response.status === 'OK' && response.payload.continuarFlujo) {
+          reservaData.numeroTasa = response.payload.numeroTasa;
+          this.updateReserva(reservaData);
+        } else {
+          this.handleError('Error en RUAT', response.payload?.mensaje || 'No se pudo registrar la tasa');
+        }
+      },
+      error: (error) => {
+        this.handleError('Error de conexión con RUAT', error.error?.mensaje || error.message);
       }
-    }
-    return 'Sistema';
+    });
   }
 
   /**
-   * Open validation modal
+   * Open modals
    */
   openValidationModal(content: any) {
-    this.validationForm.reset({
-      validationStatus: EstadoValidacion.APROBADA,
-      validationObservation: ''
-    });
-    this.validationSubmitted = false;
-    
+    this.initValidationForm();
+    this.modalService.open(content, { centered: true, size: 'md' });
+    this.validationSubmitted = false;    
     const modalRef = this.modalService.open(content, { 
       centered: true, 
       size: 'md',
       backdrop: 'static'
     });
-
+    
     modalRef.dismissed.subscribe((reason) => {
       if (this.accion === 'validar') {
         this.onCloseModal();
       }
     });
-
-    modalRef.closed.subscribe((result) => {
-      if (this.accion === 'validar') {
-        this.onCloseModal();
-      }
-    });
   }
 
-  /**
-   * Open consultation modal
-   */
-  async consultModal(content: any, data: any) {
-    if (this.selectedItems.length === 0) {
-      this.selectedItems.push(this.row); 
-    }    
-    this.consultResults = [];
-    
-    for (const item of this.selectedItems) {
-      this.showLoading = true;      
-      try {
-        const result = await this.consultData(item); 
-        this.consultResults.push(result);
-      } catch (error) {
-        console.error("Error during consultation:", error);
-        this.consultResults.push({ 
-          item, 
-          text: 'Error al realizar la consulta', 
-          type: 'error' 
-        });
-      } finally {
-        this.showLoading = false;
-      }
-    }
-    
-    this.modalService.open(content, { centered: true, size: 'lg' });
-    this.selectedItems = [];
-    this.emitList.emit();
-  }
-
-  /**
-   * Open cancel modal
-   */
-  deleteModal(content: any, data: any) {
+  openDeleteModal(content: any) {
     this.accion = content;
     this.motivo = '';
     this.observation = '';
   }
 
+  openTicketModal(content: any) {
+    this.modalService.open(content, { centered: true, size: 'md' });
+    this.emitList.emit();
+  }
+
   /**
-   * Generate ticket
+   * Confirm usage of recurrent reservation
    */
-  generateTicket() {
-    this.router.navigate(['/reservations/ticket'], { 
-      state: { data: this.row } 
+  confirmUsage() {
+    Swal.fire({
+      title: 'Confirmar Uso',
+      text: '¿Estás seguro de que la reserva recurrente se ha utilizado completamente?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, confirmar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#299cdb',
+      cancelButtonColor: '#6c757d'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.showLoading = true;
+        const updatedReserva: any = {
+          ...this.row,
+          reservaDto: {
+            ...this.row.reservaDto,
+            estadoReserva: EstadoReserva.COMPLETADA,
+          }
+        };      
+        this.updateReservaRecurrente(updatedReserva).then(() => {
+          this.showLoading = false;
+          this.notify('Reserva recurrente marcada como completada exitosamente', 'success');
+          this.emitList.emit();
+          this.onCloseModal();
+        }).catch(error => {
+          this.showLoading = false;
+          this.notify('Error al actualizar la reserva: ' + error, 'error');
+        });
+      }
     });
-    this.onCloseModal();
   }
 
   /* API REQUESTS */
+  private getConfigsSystem() {
+    this.systemConfigsService.getAll().subscribe({
+      next: (data: any) => {
+          if (data['status'] === 'OK') {
+            this.systemConfigList = data.payload;
+          }
+        }
+      });
+  }
+
   private getFields() {
     this.canchasService.getAll().subscribe({
       next: (data: any) => {
@@ -426,12 +463,29 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
     });
   }
 
+  updateReserva(data: Reserva): Promise<Reserva> {
+    return new Promise((resolve, reject) => {
+      this.reservaService.update(data).subscribe({
+        next: (resp: any) => {
+          if (resp['status'] === 'OK') {
+            resolve(resp.payload);
+          } else {
+            reject(resp.payload);
+          }
+        },
+        error: (error) => {
+          console.error("Error updating reserva:", error);
+          reject(error);
+        }
+      });
+    });
+  }
+
   updateData(datosUnit: ReservaRecurrente) {
     this.showLoading = true;
     this.reservaRecurrenteService.update(datosUnit).subscribe({
       next: (data: any) => {
         this.showLoading = false;
-        this.Editposition();
         this.submitted = false;
         this.onCloseModal();
         this.emitList.emit();
@@ -450,7 +504,9 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
       this.notify('No se pudo obtener los datos de la reserva', 'error');
       return;
     }
-
+    
+    const codigoAlcaldia = this.systemConfigList.find(config => config.clave === 'CODIGO_ALCALDIA_RUAT')?.valorTexto || '';
+    const codigoUsuario = this.systemConfigList.find(config => config.clave === 'CODIGO_USUARIO_RUAT')?.valorTexto || '';
     const requestData = {
       numeroTasa: this.row.reservaDto.numeroTasa,
       motivo: formValues.motivo,
@@ -459,21 +515,18 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
 
     this.showLoading = true;
 
-    this.ruatService.cancelTasa(requestData).subscribe({
+    this.ruatService.cancelTasa(codigoAlcaldia, codigoUsuario, requestData).subscribe({
       next: (resp: any) => {
         this.showLoading = false;
 
         if (resp['status'] === 'OK') {
-          const text = resp.payload['mensaje'];
-          const updatedReservaRecurrente: any = {
-            ...this.row,
-            reservaDto: {
-              ...this.row.reservaDto,
-              estadoReserva: EstadoReserva.CANCELADA
-            }
+          const text = resp.payload['mensajeConfirmacion'];
+          const updatedReserva: any = {
+            ...this.row.reservaDto,
+            estadoReserva: EstadoReserva.CANCELADA
           };
           
-          this.reservaRecurrenteService.update(updatedReservaRecurrente).subscribe({
+          this.reservaService.update(updatedReserva).subscribe({
             next: () => {
               Swal.fire({
                 title: 'Anulado!',
@@ -503,14 +556,44 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
     });
   }
 
-  async consultData(item: any): Promise<any> {
+  /* Consultation functionality */
+  async consultModal(content: any, data: any) {
+    if (this.selectedItems.length === 0) {
+      this.selectedItems.push(this.row); 
+    }
+    const codigoAlcaldia = this.systemConfigList.find(config => config.clave === 'CODIGO_ALCALDIA_RUAT')?.valorTexto || '';
+    this.consultResults = [];
+    
+    for (const item of this.selectedItems) {
+      this.showLoading = true;      
+      try {
+        const result = await this.consultData(codigoAlcaldia, item); 
+        this.consultResults.push(result);
+      } catch (error) {
+        console.error("Error during consultation:", error);
+        this.consultResults.push({ 
+          item, 
+          text: 'Error al realizar la consulta', 
+          type: 'error' 
+        });
+      } finally {
+        this.showLoading = false;
+      }
+    }
+    
+    this.modalService.open(content, { centered: true, size: 'lg' });
+    this.selectedItems = [];
+    this.emitList.emit();
+  }
+
+  async consultData(codigoAlcaldia: string, item: any): Promise<any> {
     if (!item || !item.reservaDto?.numeroTasa) {
       return { item, text: 'No se pudo obtener el dato seleccionado', type: 'warning' };
     }  
     
     try {
       const nroTasa = item.reservaDto.numeroTasa;
-      const resp: any = await this.ruatService.consultaPagoTasa(nroTasa).toPromise();
+      const resp: any = await this.ruatService.consultaPagoTasa(codigoAlcaldia, nroTasa).toPromise();
 
       if (resp['status'] !== 'OK') {
         return { item, text: "La Tasa y Otro Ingreso no tiene pagos", type: 'warning' };
@@ -521,15 +604,31 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
       }
 
       const text = resp.payload.observacion;  
-      if (item.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE || 
-          item.reservaDto?.estadoReserva === EstadoReserva.CONFIRMADA) {
-        const pago = resp.payload.pagoTasa;
-        const [day, month, year] = pago.fechaPago.split('/');
-        pago.fechaPago = `${year}-${month}-${day}`;
-        pago.reservasDto = item;  
+      if (item.reservaDto?.estadoReserva === EstadoReserva.SOLICITADA || 
+          item.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE) {
+        const pagoData = resp.payload.pagoTasa;
         
         try {
-          const pagoResp: any = await this.pagoService.save(pago).toPromise();
+          const [day, month, year] = pagoData.fechaPago.split('/');
+          const formattedDate = `${year}-${month}-${day}`;
+          
+          const nuevoPago: Pago = {
+            numeroTasa: pagoData.numeroTasa,
+            tipoTasa: "TO",
+            folio: pagoData.folio,
+            formaPago: pagoData.formaPago,
+            fechaPago: new Date(formattedDate),
+            entidadFinanciera: pagoData.entidadFinanciera,
+            montoPagado: parseFloat(pagoData.montoPago) || 0,
+            observaciones: pagoData.observacion,
+            estadoPago: EstadoPago.PAGADO,
+            ultimaConsulta: new Date(),
+            respuestaCompletaRuat: JSON.stringify(resp),
+            reservaDto: item.reservaDto
+          };
+          
+          const pagoResp: any = await this.pagoService.save(nuevoPago).toPromise();
+          
           if (pagoResp.status === 'OK') {
             // Update reservation status to PAGADA
             const updatedReservaRecurrente = {
@@ -540,17 +639,29 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
               }
             };
             await this.updateReservaRecurrente(updatedReservaRecurrente);
-            return { item: updatedReservaRecurrente, text, type: 'success' };
+            return { 
+              item: updatedReservaRecurrente, 
+              text, 
+              type: 'success',
+              hasPayment: true,
+              pagoData: pagoResp.payload
+            };
           }
         } catch (error) {
           console.error('Error saving pago:', error);
-          return { item, text: 'Error al guardar el pago', type: 'error' };
+          return { item, text: 'Error al guardar el pago', type: 'error', hasPayment: true };
         }
       }
-      return { item, text, type: 'info' };
+      return { 
+        item, 
+        text, 
+        type: 'info',
+        hasPayment: true,
+        pagoData: item.reservaDto?.pagosDtoList?.[0] || resp.payload.pagoTasa
+      };
     } catch (error) {
       console.error('Error:', error);
-      return { item, text: 'Error al realizar la consulta en RUAT', type: 'error' };
+      return { item, text: 'Error al realizar la consulta en RUAT', type: 'error', hasPayment: false };
     }
   }
 
@@ -559,9 +670,9 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
     switch (estado) {
       case EstadoReserva.BORRADOR:
         return 'bg-secondary-subtle text-secondary';
-      case EstadoReserva.PENDIENTE:
+      case EstadoReserva.SOLICITADA:
         return 'bg-warning-subtle text-warning';
-      case EstadoReserva.CONFIRMADA:
+      case EstadoReserva.PENDIENTE:
         return 'bg-info-subtle text-info';
       case EstadoReserva.PAGADA:
         return 'bg-primary-subtle text-primary';
@@ -597,9 +708,9 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
 
   getStatusAlertClass(estado: string | undefined): string {
     switch (estado) {
-      case EstadoReserva.PENDIENTE:
+      case EstadoReserva.SOLICITADA:
         return 'alert-warning';
-      case EstadoReserva.CONFIRMADA:
+      case EstadoReserva.PENDIENTE:
         return 'alert-info';
       case EstadoReserva.PAGADA:
         return 'alert-primary';
@@ -619,8 +730,8 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
   getStatusDescription(estado: any): string {
     const descriptions: { [key: string]: string } = {
       [EstadoReserva.BORRADOR]: 'Reserva en proceso de creación',
-      [EstadoReserva.PENDIENTE]: 'Esperando validación administrativa',
-      [EstadoReserva.CONFIRMADA]: 'Reserva aprobada, pendiente de pago',
+      [EstadoReserva.SOLICITADA]: 'Esperando validación administrativa',
+      [EstadoReserva.PENDIENTE]: 'Reserva aprobada, pendiente de pago',
       [EstadoReserva.PAGADA]: 'Pago confirmado, reserva activa',
       [EstadoReserva.EN_CURSO]: 'Reserva en curso',
       [EstadoReserva.COMPLETADA]: 'Reserva finalizada exitosamente',
@@ -666,7 +777,11 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
     if (this.reservationForm) {
       this.reservationForm.enable();
       this.reservationForm.reset();
-    }  
+    }
+    if (this.validationForm) {
+      this.validationForm.enable();
+      this.validationForm.reset();
+    }
     this.modalService.dismissAll();
   }
   
@@ -677,6 +792,15 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
       timer: 4000,
       timerProgressBar: true,
       showConfirmButton: false
+    });
+  }
+
+  private handleError(title: string, error: any): void {
+    Swal.fire({
+      title: title,
+      text: error.message || 'Por favor, intente nuevamente.',
+      icon: 'error',
+      confirmButtonText: 'Entendido'
     });
   }
 
@@ -704,7 +828,7 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
    */
   canCancelReservation(): boolean {
     const estado = this.row?.reservaDto?.estadoReserva;
-    return (estado === EstadoReserva.PENDIENTE || estado === EstadoReserva.CONFIRMADA) && 
+    return (estado === EstadoReserva.SOLICITADA || estado === EstadoReserva.PENDIENTE) && 
            this.canActivate.includes('ANULAR');
   }
 
@@ -713,141 +837,7 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
    */
   canConsultReservation(): boolean {
     const estado = this.row?.reservaDto?.estadoReserva;
-    return (estado === EstadoReserva.PENDIENTE || estado === EstadoReserva.CONFIRMADA) && 
+    return (estado === EstadoReserva.SOLICITADA || estado === EstadoReserva.PENDIENTE) && 
            this.canActivate.includes('ACTUALIZAR');
-  }
-
-  /**
-   * Send email notification for validation result
-   */
-  private async sendValidationEmail(
-    reserva: ReservaRecurrente, 
-    isApproved: boolean
-  ): Promise<void> {
-    try {
-      const contribuyente = reserva.reservaDto?.contribuyenteDto;
-      const campoDeportivo = reserva.reservaDto?.campoDeportivoDto;
-      
-      const templateParams = {
-        subject: isApproved ? 
-          `Reserva Recurrente Aprobada - ${campoDeportivo?.nombre}` : 
-          `Reserva Recurrente Rechazada - ${campoDeportivo?.nombre}`,
-        to_email: contribuyente?.email,
-        cc_email: '',
-        bcc_email: '',
-        send_date: this.formatDate(new Date()),
-
-        // Reservation Information
-        reserva_number: reserva.reservaDto?.numeroTasa,
-        estado_reserva: isApproved ? 'APROBADA' : 'RECHAZADA',
-        validation_observation: this.reservationForm.value.observaciones,
-        
-        // Contribuyente Information
-        contribuyente_name: contribuyente?.nombreCompleto || 
-                           `${contribuyente?.nombre} ${contribuyente?.primerApellido} ${contribuyente?.segundoApellido}`,
-        contribuyente_document: contribuyente?.numeroDocumento,
-        contribuyente_phone: contribuyente?.telefono,
-
-        // Recurrent Reservation Details
-        complejo_name: campoDeportivo?.complejoDto.nombre,
-        campo_deportivo: campoDeportivo?.nombre,
-        superficie: reserva.superficie,
-        categoria: reserva.categoria,
-        tipo_recurrencia: this.getRecurrenceDescription(reserva.tipoRecurrencia),
-        fecha_inicio: this.formatDate(new Date(reserva.fechaInicio)),
-        fecha_fin: this.formatDate(new Date(reserva.fechaFin)),
-        dias_semana: this.getDiasSemanaLabels(reserva.diasSemana),
-        duracion_sesion: `${reserva.duracionSesionHoras} horas`,
-        cantidad_sesiones: reserva.cantidadSesiones,
-        cantidad_personas: reserva.cantidadPersonas,
-        monto_total: `Bs. ${reserva.reservaDto?.montoTotal}`,
-
-        // Contact Information
-        phone: '+(591) 4-1234567',
-        email: 'deportes@gamq.gov.bo',
-        address: 'Calle Principal #123, Quillacollo',
-        
-        // Conditional content based on approval/rejection
-        is_approved: isApproved,
-        is_rejected: !isApproved,
-        
-        // Approval specific content
-        approval_instructions: isApproved ? 
-          `Para completar su reserva recurrente, proceda con el pago de la tasa ${reserva.reservaDto?.numeroTasa} en cualquier entidad financiera autorizada.` :
-          '',
-        
-        // Rejection specific content
-        next_steps_rejected: !isApproved ?
-          `Puede contactarnos para más información o realizar una nueva reserva ajustándose a las observaciones proporcionadas.` :
-          ''
-      };
-
-      const templateId = environment.EmailJS.idTemplate;
-
-      const response = await emailjs.send(
-        environment.EmailJS.idService,
-        templateId,
-        templateParams,
-        environment.EmailJS.publicKey
-      );
-
-      if (response.status === 200) {
-        console.log(`Email de ${isApproved ? 'aprobación' : 'rechazo'} enviado exitosamente`);
-      } else {
-        console.error(`EmailJS responded with status ${response.status}`);
-        throw new Error(`EmailJS responded with status ${response.status}`);
-      }
-
-    } catch (error: any) {
-      console.error('Error sending validation email:', error);
-      
-      if (error?.status === 429) {
-        throw new Error('Límite de envíos de email alcanzado. Por favor intente más tarde.');
-      } else if (error?.status === 400) {
-        throw new Error('Error en la configuración del email. Verifique los datos.');
-      } else {
-        throw new Error('Error inesperado al enviar la notificación por email');
-      }
-    }
-  }
-
-  private formatDate(date: Date): string {
-    return date.toLocaleDateString('es-BO', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  }
-
-  private calculatePaymentDeadline(validationDate: Date): Date {
-    const deadline = new Date(validationDate);
-    deadline.setHours(deadline.getHours() + 24);
-    return deadline;
-  }
-
-  /**
-   * Model Position Set
-   */
-  position() {
-    Swal.fire({
-      position: 'center',
-      icon: 'success',
-      title: 'Evento guardado',
-      showConfirmButton: false,
-      timer: 1000,
-    });
-  }
-
-  /**
-   * Model Edit Position Set
-   */
-  Editposition() {
-    Swal.fire({
-      position: 'center',
-      icon: 'success',
-      title: 'Evento actualizado',
-      showConfirmButton: false,
-      timer: 1000,
-    });
   }
 }

@@ -200,7 +200,7 @@
         <div class="col col-xxl-5 d-none d-sm-table" *ngIf="getTotalElements() > 0">
             <div class="dataTables_info mb-2" id="tickets-table_info" role="status" aria-live="polite">
                 <span style="color:slategray">
-                    {{getDisplayContentLength()}} Registros, de un total de {{ getTotalElements() }}
+                    {{this.content.length}} Registros, de un total de {{ getTotalElements() }}
                     <span *ngIf="serverSidePagination">(Paginación del servidor)</span>
                 </span>
             </div>            

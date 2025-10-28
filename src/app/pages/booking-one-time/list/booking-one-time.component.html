@@ -1,6 +1,4 @@
-<!-- Start Breadcrumbs -->
 <app-breadcrumbs title="Reservas" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
-<!-- End Breadcrumbs -->
 
 <div class="row">
   <div class="col-lg-12">
@@ -11,7 +9,7 @@
                 <div class="d-flex gap-1 flex-wrap ">
                     <button class="btn btn-soft-primary"
                         [style.display]="selectedItems.length > 0 ? 'inline-block' : 'none'"
-                        (click)="consultModal(undefined,consultModel)">
+                        (click)="consultModal(undefined,consultModel,'lg')">
                         <i class="ri-restart-fill fs-16 "></i>
                         {{"Consultar" | translate}}
                     </button>
@@ -21,7 +19,8 @@
                         {{"Agregar" | translate}}
                     </button>
                     <button *ngIf="canActivate.includes('VER')" (click)="csvFileExport()"
-                        class="btn btn-soft-info" id="remove-actions" style="display: none">
+                        class="btn btn-soft-info" 
+                        [style.display]="selectedItems.length > 0 ? 'inline-block' : 'none'">
                         <i class="ri-file-download-line align-bottom"></i>
                         {{"Exportar" | translate}}
                     </button>
@@ -29,100 +28,113 @@
             </div>
         </div>
         <div class="card-header border border-dashed border-end-0 border-start-0">
-            <div class="bg-danger-subtle text-danger rounded-3 justify-content-center align-items-center p-2"  *ngIf="contribuyente && contribuyente.estadoUsuario !== 'Activo'">
+            <div class="bg-danger-subtle text-danger rounded-3 justify-content-center align-items-center p-2"  *ngIf="contribuyente && contribuyente.estadoUsuario !== 'ACTIVO'">
                 <h4 class="text-danger text-center">Su cuenta no se encuentra activa, solo puede ver el historial de sus reservas y no realizar reservas nuevas</h4>
                 <p class="text-center"> para reactivar su cuenta comuniquese con el administrador</p>
             </div>
-            <form (ngSubmit)="applyFilters()">
-                <div class="row g-1">
-                    <div class="col-xxl-3 col-md-6 col-sm-6">
-                        <div class="search-box">
-                            <input type="text" class="form-control search" name="searchTerm"
-                                placeholder="Buscar reservas ..."
-                                [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
-                                <i class="ri-search-line search-icon"></i>
-                        </div>
-                    </div>
-                    <div class="col-xxl-2 col-md-4 col-sm-4">
-                        <input type="text" class="form-control" mwlFlatpickr name="date" mode="range"
-                            placeholder="Fecha de Uso"
-                            [convertModelValue]="true"
-                            [(ngModel)]="date"
-                            [altInput]="true"
-                            [altFormat]="'F j, Y'"
-                            dateFormat="Y-m-d">
-                    </div>
-                    <div class="col-xxl-2 col-md-3 col-sm-3">
-                        <select class="form-control" data-choices data-choices-search-false name="estadoValidacion" id="idEstadoValidacion"
-                        [(ngModel)]="estadoValidacion">
-                            <option value="" selected>Estado Validación</option>
-                            <option value="PENDIENTE">Pendiente</option>
-                            <option value="APROBADA">Aprobada</option>
-                            <option value="RECHAZADA">Rechazada</option>
-                        </select>
-                    </div>
-                    <div class="col-xxl-2 col-md-3 col-sm-3">
-                        <select class="form-control" data-choices data-choices-search-false name="estadoReserva" id="idEstadoReserva"
-                        [(ngModel)]="estadoReserva">
-                            <option value="" selected>Estado Reserva</option>
-                            <option value="BORRADOR">Borrador</option>
-                            <option value="PENDIENTE">Pendiente</option>
-                            <option value="APROBADA">Aprobada</option>
-                            <option value="CONFIRMADA">Confirmada</option>
-                            <option value="ACTIVA">Activa</option>
-                            <option value="COMPLETADA">Completada</option>
-                            <option value="CANCELADA">Cancelada</option>
-                            <option value="ANULADA">Anulada</option>
-                        </select>
-                    </div>
-                    <div class="col-xxl-2 col-md-3 col-sm-3">
-                        <select class="form-control" data-choices data-choices-search-false
-                                name="categoria" id="idCategoria" [(ngModel)]="categoria">
-                            <option value="" selected>Categoría</option>
-                            <option *ngFor="let category of categoryList" [value]="category.nombre">
-                                {{category.nombre}}
-                            </option>
-                        </select>
-                    </div>
-                    <div class="col-xxl-1 col-md-3 col-sm-3">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="ri-equalizer-fill align-bottom"></i>
-                            Filtrar
-                        </button>
+            <div class="row g-1">
+                <div class="col-xxl-3 col-md-6 col-sm-6">
+                    <div class="search-box">
+                        <input type="text" class="form-control search" name="searchTerm"
+                            placeholder="Buscar reservas ..."
+                            [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()">
+                            <i class="ri-search-line search-icon"></i>
                     </div>
                 </div>
-            </form>
+                <div class="col-xxl-2 col-md-4 col-sm-4">
+                    <input type="text" class="form-control" mwlFlatpickr name="date" mode="range"
+                        placeholder="Fecha de Uso"
+                        [convertModelValue]="true"
+                        [(ngModel)]="date"
+                        [altInput]="true"
+                        [altFormat]="'F j, Y'"
+                        dateFormat="Y-m-d"
+                        (ngModelChange)="applyFilters()">
+                </div>
+                <div class="col-xxl-2 col-md-3 col-sm-3">
+                    <select class="form-control" data-choices data-choices-search-false name="estadoValidacion" id="idEstadoValidacion"
+                        [(ngModel)]="estadoValidacion" (ngModelChange)="applyFilters()">
+                        <option value="" selected>Estado Validación</option>
+                        <option value="PENDIENTE">Pendiente</option>
+                        <option value="APROBADA">Aprobada</option>
+                        <option value="RECHAZADA">Rechazada</option>
+                    </select>
+                </div>
+                <div class="col-xxl-2 col-md-3 col-sm-3">
+                    <select class="form-control" data-choices data-choices-search-false name="estadoReserva" id="idEstadoReserva"
+                        [(ngModel)]="estadoReserva" (ngModelChange)="applyFilters()">
+                        <option value="" selected>Estado Reserva</option>
+                        <option value="BORRADOR">Borrador</option>
+                        <option value="SOLICITADA">Solicitada</option>
+                        <option value="PENDIENTE">Pendiente</option>
+                        <option value="PAGADA">Pagada</option>
+                        <option value="EN_CURSO">En Curso</option>
+                        <option value="COMPLETADA">Completada</option>
+                        <option value="CANCELADA">Cancelada</option>
+                        <option value="EXPIRADA">Expirada</option>
+                        <option value="NO_SHOW">No Show</option>
+                        <option value="RECHAZADA">Rechazada</option>
+                    </select>
+                </div>
+                <div class="col-xxl-2 col-md-3 col-sm-3">
+                    <select class="form-control" data-choices data-choices-search-false
+                            name="categoria" id="idCategoria" 
+                            [(ngModel)]="categoria" (ngModelChange)="applyFilters()">
+                        <option value="" selected>Categoría</option>
+                        <option *ngFor="let category of categoryList" [value]="category.nombre">
+                            {{category.nombre}}
+                        </option>
+                    </select>
+                </div>
+                <div class="col-xxl-1 col-md-3 col-sm-3">
+                    <button type="button" class="btn btn-outline-secondary w-100" 
+                            (click)="clearFilters()">
+                        <i class="ri-close-line align-bottom"></i>
+                        <small>Limpiar</small>
+                    </button>
+                </div>
+            </div>
         </div>
 
       <div class="card-header p-0">
           <div class="d-flex align-items-center gap-2">
-                <ul ngbNav #nav="ngbNav" [activeId]="1" (navChange)="onNavChange($event)" class="nav nav-tabs nav-tabs-custom nav-success mb-3" role="tablist">
-                    <li [ngbNavItem]="1" class="nav-item">
-                        <a ngbNavLink class="nav-link All py-3" data-bs-toggle="tab" id="All" href="javascript:void(0);" role="tab" aria-selected="true">
-                            Todas las Reservas<span class="badge bg-danger align-middle ms-1">{{temp.length}}</span>
-                        </a>
-                    </li>
-                    <li [ngbNavItem]="2" class="nav-item">
-                        <a ngbNavLink class="nav-link py-3 New" data-bs-toggle="tab" id="Pendiente" href="javascript:void(0);" role="tab" aria-selected="false">
-                            Pendiente
-                        </a>
-                    </li>
-                    <li [ngbNavItem]="3" class="nav-item">
-                        <a ngbNavLink class="nav-link py-3 Pending" data-bs-toggle="tab" id="Aprobada" href="javascript:void(0);" role="tab" aria-selected="false">
-                            Aprobada
-                        </a>
-                    </li>
-                    <li [ngbNavItem]="4" class="nav-item">
-                        <a ngbNavLink class="nav-link py-3 Approved" data-bs-toggle="tab" id="Confirmada" href="javascript:void(0);" role="tab" aria-selected="false">
-                            Confirmada
-                        </a>
-                    </li>
-                    <li [ngbNavItem]="5" class="nav-item">
-                        <a ngbNavLink class="nav-link py-3 Rejected" data-bs-toggle="tab" id="Cancelada" href="javascript:void(0);" role="tab" aria-selected="false">
-                            Cancelada/Anulada
-                        </a>
-                    </li>
-                </ul>
+            <ul ngbNav #nav="ngbNav" [activeId]="0" (navChange)="onNavChange($event)" class="nav nav-tabs nav-tabs-custom nav-success mb-3" role="tablist">
+            <li [ngbNavItem]="0" class="nav-item">
+                <a ngbNavLink class="nav-link All py-3" data-bs-toggle="tab" id="All" href="javascript:void(0);" role="tab" aria-selected="true">
+                Todas las Reservas<span class="badge bg-danger align-middle ms-1">{{temp.length || 0}}</span>
+                </a>
+            </li>
+            <li [ngbNavItem]="1" class="nav-item">
+                <a ngbNavLink class="nav-link py-3 New" data-bs-toggle="tab" id="Solicitadas" href="javascript:void(0);" role="tab" aria-selected="false">
+                Solicitadas
+                </a>
+            </li>
+            <li [ngbNavItem]="2" class="nav-item">
+                <a ngbNavLink class="nav-link py-3 New" data-bs-toggle="tab" id="Pendientes" href="javascript:void(0);" role="tab" aria-selected="false">
+                Pendientes de Pago
+                </a>
+            </li>
+            <li [ngbNavItem]="3" class="nav-item">
+                <a ngbNavLink class="nav-link py-3 Pending" data-bs-toggle="tab" id="Pagadas" href="javascript:void(0);" role="tab" aria-selected="false">
+                Pagadas
+                </a>
+            </li>
+            <li [ngbNavItem]="4" class="nav-item">
+                <a ngbNavLink class="nav-link py-3 Approved" data-bs-toggle="tab" id="EnCurso" href="javascript:void(0);" role="tab" aria-selected="false">
+                En Curso
+                </a>
+            </li>
+            <li [ngbNavItem]="5" class="nav-item">
+                <a ngbNavLink class="nav-link py-3 Completed" data-bs-toggle="tab" id="Completadas" href="javascript:void(0);" role="tab" aria-selected="false">
+                Completadas
+                </a>
+            </li>
+            <li [ngbNavItem]="6" class="nav-item">
+                <a ngbNavLink class="nav-link py-3 Rejected" data-bs-toggle="tab" id="Canceladas" href="javascript:void(0);" role="tab" aria-selected="false">
+                Canceladas/Rechazadas
+                </a>
+            </li>
+            </ul>
               <div class="hstack gap-2 ms-auto p-2 mb-2">
                 <span class="dropdown d-md-inline-block" ngbDropdown>
                   <button class="btn btn-soft-info btn-icon fs-14 arrow-none d-block" type="button"
@@ -135,7 +147,7 @@
                           <li class="dropdown-item p-1">
                           <div class="form-check form-check-outline form-check-primary">
                               <input class="form-check-input" type="checkbox" [id]="'formCheck' + column.prop"
-                                  [(ngModel)]="column.visible">
+                                  [(ngModel)]="column.visible" (ngModelChange)="applyFilters()">
                               <label class="form-check-label" [for]="'formCheck' + column.prop">
                               {{column.name}}
                               </label>
@@ -163,9 +175,9 @@
                 close: canActivate.includes('ANULAR')?'Anular':'',}"
                 (showItemEmitter)="openModal($event,'show','md')"
                 (editItemEmitter)="openModal($event,'edit','md')"
-                (consultItemEmitter)="consultModal($event,consultModel)"
-                (validateItemEmitter)="openModal($event,'validarModel','')"
-                (closeItemEmitter)="openModal($event,'annularModel','')"
+                (consultItemEmitter)="consultModal($event,consultModel,'md')"
+                (validateItemEmitter)="openModal($event,'validarModal','')"
+                (closeItemEmitter)="openModal($event,'annularModal','')"
                 (recordsEmitter)="showTicket($event)"
                 (pageChange)="onPageChange($event)"
                 (pageSizeChange)="onPageSizeChange($event)"
@@ -173,11 +185,11 @@
                 (selectedItemEmitter)="getSelectedItems($event)" 
                 [viewMode]="viewMode">
             </app-data-table>
-                <!-- Loading Spinner -->
-                <div id="elmLoader" *ngIf="showLoading">
+                <div id="elmLoader" *ngIf="loading" class="text-center py-4">
                     <div class="spinner-border text-primary avatar-sm" role="status">
                       <span class="visually-hidden">Cargando...</span>
                     </div>
+                    <p class="text-muted mt-2">Cargando reservas puntuales...</p>
                 </div>
             </div>
         </div>
@@ -185,65 +197,165 @@
   </div>
 </div>
 
-<!-- Modals -->
 <ng-template #consultModel role="document" let-modal>
-    <div class="modal-body">
-      <div class="modal-header">
-          <button type="button" class="btn-close" id="btn-close"
+    <div class="modal-header">
+        <h5 class="modal-title">Resultados de Consulta RUAT</h5>
+        <button type="button" class="btn-close" id="btn-close"
             data-bs-dismiss="modal" aria-label="Close"
             (click)="modal.dismiss('Cross click')"></button>
-      </div>
-      <div class="text-center">
-        <div class="mt-3">
-            <div class="avatar-lg mx-auto">
+    </div>
+    <div class="modal-body">
+        <div class="text-center mb-3">
+            <div class="avatar-lg mx-auto mb-2">
                 <div class="avatar-title bg-light text-success display-5 rounded-circle">
-                    <i class=" ri-bubble-chart-line"></i>
+                    <i class="ri-bubble-chart-line"></i>
                 </div>
             </div>
-            <div class="mt-4 pt-2 fs-15">
-                <h4 class="fs-20 fw-semibold text-info ">Se realizo la Consulta!</h4>
+            <h4 class="fs-18 fw-semibold text-info">Consulta Realizada Exitosamente</h4>
+        </div>
+        
+        <div class="consult-results">
+            <div *ngFor="let result of consultResults" class="result-item border rounded p-3 mb-3">
+                <div class="reservation-info border-bottom pb-2 mb-2">
+                    <h6 class="fw-semibold text-primary mb-2">
+                        <i class="ri-information-line me-1"></i>
+                        Información de Reserva
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">Complejo:</small>
+                            <div class="fw-medium">{{result.item.reservaDto?.campoDeportivoDto?.complejoDto?.nombre || 'N/A'}}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Campo Deportivo:</small>
+                            <div class="fw-medium">{{result.item.reservaDto?.campoDeportivoDto?.nombre || 'N/A'}}</div>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <small class="text-muted">Número de Tasa:</small>
+                            <div class="fw-medium">{{result.item.reservaDto?.numeroTasa || 'N/A'}}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Estado Reserva:</small>
+                            <span class="badge ms-1" [ngClass]="{
+                                'badge bg-warning-subtle text-warning': result.item.reservaDto?.estadoReserva === 'PENDIENTE' || result.item.reservaDto?.estadoReserva === 'SOLICITADA',
+                                'badge bg-success-subtle text-success': result.item.reservaDto?.estadoReserva === 'PAGADA',
+                                'badge bg-primary-subtle text-primary': result.item.reservaDto?.estadoReserva === 'EN_CURSO',
+                                'badge bg-danger-subtle text-danger': result.item.reservaDto?.estadoReserva === 'CANCELADA' || result.item.reservaDto?.estadoReserva === 'RECHAZADA' || result.item.reservaDto?.estadoReserva === 'EXPIRADA' || result.item.reservaDto?.estadoReserva === 'NO_SHOW',
+                                'badge bg-secondary-subtle text-secondary': result.item.reservaDto?.estadoReserva === 'COMPLETADA',
+                                'badge bg-light-subtle text-dark': result.item.reservaDto?.estadoReserva === 'BORRADOR' }">
+                                {{result.item.reservaDto?.estadoReserva || 'N/A'}}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <small class="text-muted">Fecha de Uso:</small>
+                            <div class="fw-medium">{{result.item.fechaUso | date:'dd/MM/yyyy'}}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Horario:</small>
+                            <div class="fw-medium">{{result.item.horaInicio}} - {{result.item.horaFin}}</div>
+                        </div>
+                    </div>
+                </div>
 
-                <ul>
-                    <li *ngFor="let result of consultResults" class="fs-14 px-5 text-start">
-                        La Reserva al complejo <b>{{result.item.reservaDto?.campoDeportivoDto?.complejoNombre}}</b> con Tasa <b>{{result.item.reservaDto?.numeroTasa}}</b> se encuentra
-                        <span class="fw-medium"> </span>,
-                        <span class="badge " [ngClass]="{
-                            'badge bg-warning-subtle text-warning': result.item.reservaDto?.estadoReserva === 'PENDIENTE',
-                            'badge bg-success-subtle text-success': result.item.reservaDto?.estadoReserva === 'CONFIRMADA',
-                            'badge bg-info-subtle text-info': result.item.reservaDto?.estadoReserva === 'APROBADA',
-                            'badge bg-danger-subtle text-danger': result.item.reservaDto?.estadoReserva === 'CANCELADA' || result.item.reservaDto?.estadoReserva === 'ANULADA',
-                            'badge bg-secondary-subtle text-secondary': result.item.reservaDto?.estadoReserva === 'COMPLETADA' }">
-                            <strong>{{result.item.reservaDto?.estadoReserva}}</strong>
-                        </span> <br/>
-                        <ng-container *ngIf="result.item.reservaDto?.pagosDtoList && result.item.reservaDto.pagosDtoList[0] as pago; else noPayment">
-                            <div  class=" text-muted ">
-                            <b>Fecha de Pago:</b> {{pago.fechaPago | date:'dd/MM/yyyy'}}<br/>
-                            <b>Monto Pagado:</b> {{pago.montoPago}}<br/>
-                            <b>Forma de Pago:</b> {{pago.formaPago}}<br/>
-                            <b>Entidad Financiera:</b> {{pago.entidadFinanciera}}<br/>
-                            <b>Observaciones:</b> {{pago.observaciones}}<br/>
+                <div *ngIf="result.hasPayment" class="payment-info">
+                    <h6 class="fw-semibold text-success mb-2">
+                        <i class="ri-money-dollar-circle-line me-1"></i>
+                        Información de Pago
+                    </h6>
+                    <div class="payment-details bg-success-subtle p-2 rounded">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted">Fecha de Pago:</small>
+                                <div class="fw-medium">{{result.pagoData?.fechaPago | date:'dd/MM/yyyy'}}</div>
                             </div>
-                        </ng-container>
+                            <div class="col-md-6">
+                                <small class="text-muted">Monto Pagado:</small>
+                                <div class="fw-medium">{{result.pagoData?.montoPagado | currency:'Bs. '}}</div>
+                            </div>
+                        </div>
+                        <div class="row mt-1">
+                            <div class="col-md-6">
+                                <small class="text-muted">Forma de Pago:</small>
+                                <div class="fw-medium">{{result.pagoData?.formaPago}}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">Entidad Financiera:</small>
+                                <div class="fw-medium">{{result.pagoData?.entidadFinanciera}}</div>
+                            </div>
+                        </div>
+                        <div class="row mt-1">
+                            <div class="col-md-6">
+                                <small class="text-muted">Folio:</small>
+                                <div class="fw-medium">{{result.pagoData?.folio}}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">Estado Pago:</small>
+                                <span class="badge bg-success-subtle text-success">{{result.pagoData?.estadoPago || 'PAGADO'}}</span>
+                            </div>
+                        </div>
+                        <div *ngIf="result.pagoData?.observaciones" class="row mt-1">
+                            <div class="col-12">
+                                <small class="text-muted">Observaciones:</small>
+                                <div class="fw-medium">{{result.pagoData?.observaciones}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                        <ng-template #noPayment>
-                            <p [ngClass]="{
-                                'text-success': result.type === 'success' ,
-                                'text-warning': result.type === 'warning',
-                                'text-danger': result.type === 'error' }">
-                                {{result.text}}
-                            </p>
-                        </ng-template>
-                    </li>
-                </ul>
+                <div class="response-message mt-2">
+                    <h6 class="fw-semibold mb-2">
+                        <i class="ri-message-2-line me-1"></i>
+                        Respuesta del Sistema
+                    </h6>
+                    <div class="alert" [ngClass]="{
+                        'alert-success': result.type === 'success',
+                        'alert-warning': result.type === 'warning',
+                        'alert-danger': result.type === 'error',
+                        'alert-info': result.type === 'info'
+                    }">
+                        <div class="d-flex align-items-center">
+                            <i class="me-2" [ngClass]="{
+                                'ri-checkbox-circle-fill': result.type === 'success',
+                                'ri-error-warning-fill': result.type === 'warning',
+                                'ri-close-circle-fill': result.type === 'error',
+                                'ri-information-fill': result.type === 'info'
+                            }"></i>
+                            <span>{{result.text}}</span>
+                        </div>
+                        <div *ngIf="result.type === 'success' && result.hasPayment" class="mt-1 small">
+                            <i class="ri-check-double-line me-1"></i>
+                            El pago ha sido registrado exitosamente y la reserva ha sido actualizada.
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="!result.hasPayment" class="no-payment-info mt-2">
+                    <div class="alert alert-warning">
+                        <div class="d-flex align-items-center">
+                            <i class="ri-information-line me-2"></i>
+                            <span>No se encontraron pagos registrados para esta tasa</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
-            <button type="button" class="swal2-confirm btn btn-primary mb-1" aria-label=""
-                (click)="modal.dismiss('Cross click')">OK</button>
+    </div>
+    
+    <div class="modal-footer border-top-0">
+        <div class="d-flex justify-content-between w-100 align-items-center">
+            <small class="text-muted">
+                <i class="ri-time-line me-1"></i>
+                {{consultResults.length}} consulta(s) procesada(s)
+            </small>
+            <button type="button" class="btn btn-primary" 
+                (click)="modal.dismiss('Cross click')">
+                <i class="ri-close-line me-1"></i>
+                Cerrar
+            </button>
         </div>
-        <div class="swal2-footer" *ngIf="consultResults.length>0">
-            <p class="fs-14 text-muted">Consultas Realizadas en RUAT</p>
-        </div>
-      </div>
     </div>
 </ng-template>

@@ -7,6 +7,8 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
 import { ModalComponent } from './modal/modal.component';
+import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { Organizacion } from 'src/app/core/models/organizacion.models';
 
 @Component({
   selector: 'app-organizations',
@@ -32,6 +34,7 @@ export class OrganizationsComponent implements OnInit {
   tienePersoneriaJuridica: string = '';
 
   selectedItems: any[] = [];
+  contribuyente!:Contribuyente;
 
   constructor(
     private modalService: NgbModal, 
@@ -51,6 +54,10 @@ export class OrganizationsComponent implements OnInit {
       { label: '' },
       { label: this.title, active: true }
     ];
+    const currentUser = window.sessionStorage.getItem("currentUser");
+    if (window.sessionStorage.getItem("auth-token") === 'isContribuyente') {
+          this.contribuyente = currentUser ? JSON.parse(currentUser) : null;
+    }   
     
     this.itemsList = [
       { name: 'Nombre', prop: 'nombre', visible: true },
@@ -217,6 +224,11 @@ export class OrganizationsComponent implements OnInit {
         this.loading = false;
         if (data['status'] === 'OK') {
           this.organizacionesList = data.payload.content;
+          if(this.contribuyente){
+            this.organizacionesList = this.organizacionesList.filter((item:Organizacion)=>
+              item.representanteDto.uuid === this.contribuyente.uuid
+            );
+          }
           this.temp = this.organizacionesList;
         }
       },

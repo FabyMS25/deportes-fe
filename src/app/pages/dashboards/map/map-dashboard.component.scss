@@ -88,20 +88,6 @@
         .info-row {
             display: flex;
             align-items: flex-start;
-            // margin-bottom: 8px;
-            
-            i {
-                font-size: 16px;
-                min-width: 20px;
-                margin-right: 8px;
-                color: #299cdb;
-                margin-top: 2px;
-            }
-            
-            span {
-                flex: 1;
-                font-size: 12px;
-            }
         }
 
         .campos-section {
@@ -121,28 +107,12 @@
             padding: 8px 10px;
             border-radius: 6px;
             font-size: 12px;
-
-            i {
-                color: #856404;
-                margin-right: 6px;
-            }
         }
 
         .facilities {
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
-
-            .badge {
-                font-size: 10px;
-                padding: 4px 8px;
-                font-weight: 500;
-
-                i {
-                    font-size: 11px;
-                    margin-right: 3px;
-                }
-            }
         }
 
         .observaciones {
@@ -150,63 +120,6 @@
             padding: 6px 10px;
             border-radius: 4px;
             border-left: 3px solid #299cdb;
-
-            small {
-                font-size: 11px;
-                
-                i {
-                    margin-right: 4px;
-                }
-            }
-        }
-
-        h6 {
-            font-size: 15px;
-            color: #2c3e50;
-            margin-bottom: 8px;
-        }
-
-        hr {
-            margin: 12px 0;
-            opacity: 0.1;
-        }
-
-        .btn {
-            font-size: 13px;
-            padding: 8px 16px;
-            
-            i {
-                margin-right: 6px;
-            }
-            
-            &.btn-reserva-puntual {
-                background: linear-gradient(135deg, #299cdb 0%, #1f7ea7 100%);
-                border: none;
-                box-shadow: 0 2px 4px rgba(41, 156, 219, 0.3);
-                
-                &:hover {
-                    background: linear-gradient(135deg, #1f7ea7 0%, #176a8f 100%);
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 8px rgba(41, 156, 219, 0.4);
-                }
-            }
-            
-            &.btn-reserva-recurrente {
-                background: linear-gradient(135deg, #28a745 0%, #20893a 100%);
-                border: none;
-                box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
-                
-                &:hover {
-                    background: linear-gradient(135deg, #20893a 0%, #1a6d2f 100%);
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
-                }
-            }
-            
-            small {
-                opacity: 0.9;
-                font-weight: 400;
-            }
         }
         
         .reservation-info {
@@ -214,15 +127,6 @@
             background-color: #f0f8ff;
             border-radius: 4px;
             border-left: 3px solid #299cdb;
-            
-            small {
-                font-size: 11px;
-                color: #666;
-                
-                i {
-                    color: #299cdb;
-                }
-            }
         }
         
         .alert-sm {
@@ -230,10 +134,6 @@
             font-size: 12px;
             margin-bottom: 0;
             border-radius: 6px;
-            
-            small {
-                margin: 0;
-            }
             
             &.alert-info {
                 background-color: #d1ecf1;
@@ -308,11 +208,6 @@
         .offcanvas-title {
             font-size: 18px;
             font-weight: 600;
-            
-            i {
-                color: #299cdb;
-                margin-right: 8px;
-            }
         }
     }
 
@@ -322,24 +217,12 @@
         .form-label {
             font-size: 12px;
             letter-spacing: 0.5px;
-            // margin-bottom: 12px;
-
-            i {
-                margin-right: 6px;
-                color: #299cdb;
-            }
         }
 
         .form-select,
         .form-control {
             font-size: 14px;
             border-radius: 6px;
-            border: 1px solid #dee2e6;
-
-            &:focus {
-                border-color: #299cdb;
-                box-shadow: 0 0 0 0.2rem rgba(41, 156, 219, 0.25);
-            }
         }
 
         .category-filter-grid {
@@ -352,7 +235,6 @@
             }
 
             &::-webkit-scrollbar-track {
-                background: #f1f1f1;
                 border-radius: 10px;
             }
 
@@ -393,83 +275,11 @@
             .alert-heading {
                 font-size: 14px;
                 color: #004085;
-                
-                i {
-                    margin-right: 6px;
-                }
-            }
-
-            ul {
-                margin-bottom: 0;
-                font-size: 12px;
-
-                li {
-                    margin-bottom: 4px;
-
-                    &:last-child {
-                        margin-bottom: 0;
-                    }
-
-                    strong {
-                        color: #004085;
-                    }
-                }
-            }
-        }
-    }
-
-    &-footer {
-        padding: 16px;
-        background-color: #f8f9fa;
-
-        .btn {
-            font-size: 14px;
-            padding: 10px 16px;
-            border-radius: 6px;
-            font-weight: 500;
-
-            i {
-                margin-right: 6px;
-            }
-
-            &-primary {
-                background-color: #299cdb;
-                border-color: #299cdb;
-
-                &:hover {
-                    background-color: #1f7ea7;
-                    border-color: #1f7ea7;
-                }
-            }
-
-            &-outline-secondary {
-                &:hover {
-                    background-color: #6c757d;
-                    border-color: #6c757d;
-                    color: white;
-                }
             }
         }
     }
 }
 
-// Card Header Badges
-.card-header {
-    .badge {
-        font-size: 12px;
-        padding: 6px 12px;
-        font-weight: 500;
-        border-radius: 6px;
-
-        &.bg-primary {
-            background-color: #299cdb !important;
-        }
-
-        &.bg-info {
-            background-color: #17a2b8 !important;
-        }
-    }
-}
 
 // Responsive Styles
 @media (max-width: 768px) {
@@ -502,15 +312,6 @@
                     font-size: 14px;
                     min-width: 18px;
                 }
-            }
-
-            h6 {
-                font-size: 14px;
-            }
-
-            .btn {
-                font-size: 12px;
-                padding: 6px 12px;
             }
         }
 
@@ -573,19 +374,4 @@
     padding: 40px;
     text-align: center;
     color: #6c757d;
-
-    i {
-        font-size: 64px;
-        margin-bottom: 20px;
-        opacity: 0.5;
-    }
-
-    h5 {
-        margin-bottom: 10px;
-    }
-
-    p {
-        margin-bottom: 0;
-        font-size: 14px;
-    }
 }

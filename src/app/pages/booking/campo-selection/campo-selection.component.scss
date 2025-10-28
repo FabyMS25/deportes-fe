@@ -1,5 +1,5 @@
     .tarifa-option {
-      border: 2px solid #e9ecef;
+      border: solid #e9ecef;
       border-radius: 8px;
       padding: 1rem;
       cursor: pointer;
@@ -31,19 +31,6 @@
           align-items: baseline;
           gap: 0.25rem;
           flex-shrink: 0;
-          
-          .amount {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #0d6efd;
-            line-height: 1;
-          }
-          
-          .currency {
-            font-size: 0.75rem;
-            font-weight: 300;
-            color: #6c757d;
-          }
         }
       }
       
@@ -60,10 +47,8 @@
         align-items: center;
         padding: 0.5rem 0.75rem;
         margin: 0 -1rem -1rem;
-        border-top: 1px solid #e9ecef;
         font-size: 0.875rem;
         font-weight: 600;
-        color: #0d6efd;
         transition: all 0.2s ease;
         border-radius: 0 0 6px 6px;
       }

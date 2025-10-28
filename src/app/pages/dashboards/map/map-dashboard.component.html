@@ -30,7 +30,6 @@
     </div>
 </div>
 
-<!-- Right Sidebar Filter Section -->
 <ng-template #filtetcontent let-offcanvas>
     <div class="offcanvas-header bg-light">
         <h5 class="offcanvas-title">
@@ -42,8 +41,7 @@
 
     <div class="offcanvas-body">
         <form>
-            <!-- District Filter -->
-            <div class="mb-4">
+            <div class="mb-2">
                 <label for="distrito-select" class="form-label text-muted text-uppercase fw-semibold mb-3">
                     <i class="ri-map-pin-line"></i> Distrito
                 </label>
@@ -54,9 +52,7 @@
                     </option>
                 </select>
             </div>
-
-            <!-- Category Filter -->
-            <div class="mb-4">
+            <div class="mb-2">
                 <label class="form-label text-muted text-uppercase fw-semibold mb-3">
                     <i class="ri-price-tag-3-line"></i> Categorías Deportivas
                 </label>
@@ -76,9 +72,7 @@
                     No hay categorías disponibles
                 </small>
             </div>
-
-            <!-- Price Range Filter -->
-            <div class="mb-4">
+            <div class="mb-2">
                 <label class="form-label text-muted text-uppercase fw-semibold mb-3">
                     <i class="ri-money-dollar-circle-line"></i> Rango de Tarifa (Bs.)
                 </label>
@@ -104,8 +98,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Active Filters Summary -->
             <div class="alert alert-info" *ngIf="selectedCategories.length > 0 || selectedDistrict || minTarifa || maxTarifa">
                 <h6 class="alert-heading mb-2">
                     <i class="ri-filter-2-line"></i> Filtros Activos
@@ -125,8 +117,7 @@
             </div>
         </form>
     </div>
-
-    <div class="offcanvas-footer border-top p-3">
+    <div class="offcanvas-footer border-top p-2">
         <div class="d-grid gap-2">
             <button type="button" 
                     class="btn btn-primary" 

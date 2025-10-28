@@ -77,7 +77,6 @@ export class AuthenticationService {
               this.storageService.saveToken("isContribuyente");
               this.storageService.saveUser(this.currentUserSubject);
               localStorage.setItem('menu', JSON.stringify(MENU_BASE));
-
               resolve(true);
             } else {
               resolve(false);

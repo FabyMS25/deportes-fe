@@ -5,7 +5,6 @@ import { Injectable, Input } from '@angular/core';
     providedIn: 'root',
 })
 export class PaginationService {
-    // Pagination
     pageSize: any = 5;
     page: any = 1;
     startIndex: number = 1;

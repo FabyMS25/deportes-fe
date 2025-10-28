@@ -13,9 +13,13 @@ export const environment = {
   backendRuat:'http://181.177.143.187:8085/api',
   
   
-    EmailJS:{
-        idService:'service_auth',
-        idTemplate:'template_6htavso',
-        publicKey:'X9362U1QpUzthcHGT'
-    },
+  assetsUrl: "http://181.177.143.187:4205",
+  EmailJS:{
+    idService:'service_auth',
+    idTemplate:'template_6htavso',
+    publicKey:'X9362U1QpUzthcHGT',
+    idServiceReservation:'service_8fw4clg',
+    idTemplateReservation:'template_cwykhov',
+    publicKeyReservation:'LvRUPzE2ZiLeZy93H'
+  },
 };

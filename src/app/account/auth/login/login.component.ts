@@ -12,12 +12,8 @@ import { ToastService } from './toast-service';
   styleUrls: ['./login.component.scss']
 })
 
-/**
- * Login Component
- */
 export class LoginComponent implements OnInit {
 
-  // Login Form
   loginForm!: UntypedFormGroup;
   submitted = false;
   fieldTextType!: boolean;
@@ -31,7 +27,6 @@ export class LoginComponent implements OnInit {
     private authenticationService: AuthenticationService,
     private router: Router,
     public toastService: ToastService) {
-      // redirect to home if already logged in
       if (!this.authenticationService.currentUserSubject) {
         this.router.navigate(['/auth/login']);
       }
@@ -47,9 +42,6 @@ export class LoginComponent implements OnInit {
     return this.loginForm.controls;
   }
 
-  /**
-   * Form submit
-   */
   async onSubmit() {
     this.submitted = true;
     try {
@@ -90,12 +82,7 @@ export class LoginComponent implements OnInit {
     }
   }
 
-
-  /**
-   * Password Hide/Show
-   */
-   toggleFieldTextType() {
+  toggleFieldTextType() {
     this.fieldTextType = !this.fieldTextType;
   }
-
 }

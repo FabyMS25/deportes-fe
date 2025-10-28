@@ -1,23 +1,22 @@
 // Estados de Reserva (estadoReserva)
 export enum EstadoReserva { 
-  BORRADOR = 'BORRADOR',         // Iniciada pero no enviada
-  PENDIENTE = 'PENDIENTE',       // Enviada, esperando confirmación
-  CONFIRMADA = 'CONFIRMADA',     // Aprobada, esperando pago
-  PAGADA = 'PAGADA',             // Pago verificado en RUAT
-  EN_CURSO = 'EN_CURSO',         // Activa en su horario
-  COMPLETADA = 'COMPLETADA',     // Finalizada exitosamente
-  CANCELADA = 'CANCELADA',       // Cancelada por usuario/admin
-  RECHAZADA = 'RECHAZADA',       // No aprobada
-  EXPIRADA = 'EXPIRADA',         // No completó pago a tiempo
-  NO_SHOW = 'NO_SHOW'            // Usuario no se presentó
+  BORRADOR = 'BORRADOR',           // Draft, not submitted yet
+  SOLICITADA = 'SOLICITADA',       // Requested, pending approval
+  PENDIENTE = 'PENDIENTE',         // Approved, waiting for payment/confirmation
+  RECHAZADA = 'RECHAZADA',         // Rejected by admin/manager
+  PAGADA = 'PAGADA',               // Payment verified in RUAT (ready to use)
+  EN_CURSO = 'EN_CURSO',           // Currently active during scheduled time
+  COMPLETADA = 'COMPLETADA',       // Successfully completed
+  CANCELADA = 'CANCELADA',         // Cancelled by user/admin before start
+  EXPIRADA = 'EXPIRADA',           // Didn't complete payment in time
+  NO_SHOW = 'NO_SHOW'              // User didn't show up
 }
 // Estados de Validación (estadoValidacion)
 export enum EstadoValidacion {
-  NO_REQUIERE = 'NO_REQUIERE',     // Campo no requiere aprobación
+  // NO_REQUIERE = 'NO_REQUIERE',     // Campo no requiere aprobación
   PENDIENTE = 'PENDIENTE',         // Esperando aprobación
   APROBADA = 'APROBADA',           // Aprobada por encargado/admin
   RECHAZADA = 'RECHAZADA',         // Rechazada
-  REVISION = 'REVISION'            // En revisión manual
 }
 // Estados de Pago (estadoPago)
 export enum EstadoPago {

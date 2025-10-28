@@ -1,81 +1,111 @@
-<!-- Start Breadcrumbs -->
- <app-breadcrumbs [title]="'Reporte de ' + title" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
-<!-- End Breadcrumbs -->
+<app-breadcrumbs [title]="'Reporte de ' + title" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
 
 <div class="row">
     <div class="col-lg-12">
         <div class="card">
-            <div class="card-header  border-0">
-                <h5 class="card-title mb-3 flex-grow-1">Reservas por Fechas</h5>
-                <!-- Filters -->
-                <div >
-                <form (ngSubmit)="applyFilters()">
-                    <div class="row g-3">
-                        <div class="col-xxl-6 col-sm-6">
-                            <div>
-                                <input type="text" 
-                                    class="form-control" 
-                                    mwlFlatpickr 
-                                    placeholder="Intervalo de Fechas" 
-                                    name="date"
-                                    [convertModelValue]="true"     
-                                    mode="range"                                 
-                                    [(ngModel)]="date"                                     
-                                    [altInput]="true"
-                                    [altFormat]="'F j, Y'"
-                                    dateFormat="Y-m-d"
-                                    [locale]="Spanish">                             
+            <div class="card-header border-0">
+                <h5 class="card-title mb-3 flex-grow-1">Reporte de Reservas</h5>
+                <div>
+                    <form (ngSubmit)="applyFilters()">
+                        <div class="row g-3">
+                            <div class="col-xxl-2 col-sm-6">
+                                <div>
+                                    <select class="form-control" name="reportType" [(ngModel)]="reportType">
+                                        <option *ngFor="let type of reportTypes" [value]="type.value">
+                                            {{type.label}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-xxl-2 col-sm-6">
+                                <div>
+                                    <input type="text" 
+                                        class="form-control" 
+                                        mwlFlatpickr 
+                                        placeholder="Intervalo de Fechas" 
+                                        name="date"
+                                        [convertModelValue]="true"     
+                                        mode="range"                                 
+                                        [(ngModel)]="date"                                     
+                                        [altInput]="true"
+                                        [altFormat]="'F j, Y'"
+                                        dateFormat="Y-m-d"
+                                        [locale]="Spanish"
+                                        required>                             
+                                </div>
+                            </div>
+                            <div class="col-xxl-2 col-sm-4">
+                                <div>
+                                    <select class="form-control" name="cancha" [(ngModel)]="cancha">
+                                        <option value="TODO">Todos los complejos</option>
+                                        <option *ngFor="let complejo of complejosList" [value]="complejo.nombre">
+                                            {{complejo.nombre}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-xxl-2 col-sm-4">
+                                <div>
+                                    <select class="form-control" name="paymentType" [(ngModel)]="paymentType">
+                                        <option *ngFor="let option of paymentTypeOptions" [value]="option.value">
+                                            {{option.label}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-xxl-2 col-sm-4">
+                                <div>
+                                    <select class="form-control" name="status" [(ngModel)]="status">
+                                        <option *ngFor="let option of statusOptions" [value]="option.value">
+                                            {{option.label}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-xxl-2 col-sm-4">
+                                <div>
+                                    <button type="submit" class="btn btn-primary w-100" [disabled]="showLoading">
+                                        <i class="ri-equalizer-fill mx-1 align-bottom"></i>
+                                        <span *ngIf="!showLoading">Generar</span>
+                                        <span *ngIf="showLoading">Generando...</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-xxl-2 col-sm-4">
-                            <div>
-                                <select class="form-control" data-choices data-choices-search-false name="status" id="idStatus" 
-                                [(ngModel)]="status">
-                                    <option value="" selected>Todo</option>                                
-                                    <option value="Pendiente">Pendiente</option>
-                                    <option value="Pagado">Pagado</option>
-                                    <option value="Vencido">Vencido</option>
-                                    <option value="Anulado">Anulado</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-xxl-2 col-sm-4">
-                            <div>
-                                <select class="form-control" data-choices data-choices-search-false 
-                                        name="category" id="idCategory" [(ngModel)]="category">
-                                    <option value="" selected>Todo</option>
-                                    <option *ngFor="let category of categoryList" [value]="category.nombre">
-                                        {{category.nombre}}
-                                    </option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-xxl-2 col-sm-4">
-                            <div>
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="ri-equalizer-fill mx-1 align-bottom"></i>
-                                    Generar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+                    </form>
                 </div>
             </div>            
+            
             <div class="card-body border border-dashed border-end-0 border-start-0">
-                <div class="col-12" style="height: 430px;" >
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="alert alert-info mb-0">
+                            <i class="ri-information-line align-middle"></i>
+                            <strong>Reporte:</strong> 
+                            {{ reportType === 'puntual' ? 'Reservas Puntuales' : 'Reservas Recurrentes' }}
+                            | <strong>Complejo:</strong> {{ getCanchaLabel(cancha) }}
+                            | <strong>Estado:</strong> {{ getStatusLabel(status) }}
+                            | <strong>Tipo de Cobro:</strong> {{ getPaymentTypeLabel(paymentType) }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-12" style="height: 430px;">
                     <object #pdfViewer type="application/pdf" width="100%" height="100%">
+                        <div class="text-center p-5 bg-light">
+                            <i class="ri-file-pdf-line display-4 text-muted"></i>
+                            <p class="mt-2 text-muted">El reporte se mostrará aquí después de generarlo</p>
+                        </div>
                     </object>                         
                 </div>
-                <!-- Loading Spinner -->
-                <div id="elmLoader" *ngIf="showLoading">
-                    <div class="spinner-border text-primary avatar-sm" role="status">
-                      <span class="visually-hidden">Cargando...</span>
+                
+                <div id="elmLoader" *ngIf="showLoading" class="text-center mt-3">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Cargando...</span>
                     </div>
+                    <p class="mt-2 text-muted">Generando reporte, por favor espere...</p>
                 </div> 
             </div>
         </div>
     </div>
 </div>
-
-

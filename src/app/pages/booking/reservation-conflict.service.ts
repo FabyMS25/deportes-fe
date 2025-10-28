@@ -24,7 +24,7 @@ export interface TimeRange {
 export class ReservationConflictService {
   private readonly BLOCKING_STATES: EstadoReserva[] = [
     EstadoReserva.PENDIENTE,
-    EstadoReserva.CONFIRMADA,
+    EstadoReserva.SOLICITADA,
     EstadoReserva.PAGADA,
     EstadoReserva.EN_CURSO
   ];
@@ -360,9 +360,9 @@ export class ReservationConflictService {
    */
   private getConflictReason(reserva: Reserva): string {
     switch (reserva.estadoReserva) {
-      case EstadoReserva.PENDIENTE:
+      case EstadoReserva.SOLICITADA:
         return 'Reserva pendiente de aprobación';
-      case EstadoReserva.CONFIRMADA:
+      case EstadoReserva.PENDIENTE:
         return 'Reserva confirmada, pendiente de pago';
       case EstadoReserva.PAGADA:
         return 'Reserva pagada y confirmada';

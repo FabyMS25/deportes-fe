@@ -13,7 +13,8 @@
 <div class="row" *ngIf="!isLoading">
   <div class="col-lg-9 col-sm-12">
     <div class="wizard-container">
-      <div class="card border-0 shadow-sm mb-2 sticky-top" style="top: 80px; z-index: 1020">
+      <div class="card border-0 shadow-sm mb-2">
+      <!-- <div class="card border-0 shadow-sm mb-2 sticky-top" style="top: 80px; z-index: 1020"> -->
         <div class="card-header">
           <div class="d-flex align-items-center">
             <div class="flex-grow-1">
@@ -54,6 +55,14 @@
                 <i class="ri-building-line me-1"></i>
                 {{ bookingState.complejo?.nombre }} - {{ bookingState.campo?.nombre }}
               </small>
+              <h4 *ngIf="bookingStep === BookingStep.TICKET" 
+                  class="card-title mb-1 text-primary">
+                <i class="ri-building-line me-2 text-primary"></i>
+                Ticked de Reserva
+              </h4>
+              <small *ngIf="bookingStep === BookingStep.TICKET" class="text-muted">
+                Reserva Completada
+              </small>  
             </div>            
             <div class="flex-shrink-0 d-flex align-items-center gap-2">
               <div *ngIf="bookingStep === BookingStep.COMPLEJO_SELECTION && !isLoading">
@@ -134,6 +143,13 @@
           [systemConfigs]="configs"
           (reservationCompleted)="onReservationCompleted($event)">
         </app-reservation-form>
+        <app-ticket 
+          *ngSwitchCase="BookingStep.TICKET"
+          [bookingType]="bookingType"
+          [userRole]="userRole"
+          [reservationData]="bookingState.reservaCreada"
+          [autoLoad]="true">
+        </app-ticket>        
       </ng-container>
     </div>
   </div>
@@ -331,8 +347,8 @@
               <div class="ms-2 flex-grow-1">
                 <div class="fw-medium small">{{ globalAdmin.name }}</div>
                 <p class="text-muted mb-0 small">{{ globalAdmin.role }}</p>
-                <a [href]="'tel:' + globalAdmin.telf" class="text-primary small">
-                  <i class="ri-phone-line me-1"></i>{{ globalAdmin.telf }}
+                <a [href]="'tel:' + globalAdmin.phone" class="text-primary small">
+                  <i class="ri-phone-line me-1"></i>{{ globalAdmin.phone }}
                 </a>
               </div>
             </div>

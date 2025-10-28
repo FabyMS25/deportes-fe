@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-// Component pages
 import { AuthGuard } from '../core/guards/auth.guard';
 import { TicketComponent } from './reports/ticket/ticket.component';
 import { BookingRecurrentComponent } from './booking-recurrent/list/booking-recurrent.component';

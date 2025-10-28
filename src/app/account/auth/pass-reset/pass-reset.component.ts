@@ -17,14 +17,12 @@ import { GlobalComponent } from 'src/app/global-component';
  * Pass-Reset pass-reset Component
  */
 export class PassResetComponent implements OnInit {
-  link= GlobalComponent.URL+'/auth/pass-create'
-  // Login Form
+  link= environment.assetsUrl+'/auth/pass-create'
   passresetForm!: UntypedFormGroup;
   submitted = false;
   fieldTextType!: boolean;
   error = '';
   returnUrl!: string;
-  // set the current year
   year: number = new Date().getFullYear();
 
   constructor(private formBuilder: UntypedFormBuilder, private resetService: PassResetsService) { }

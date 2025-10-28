@@ -14,20 +14,20 @@ export class PagoService {
 
   constructor(private http: HttpClient) { }
 
-  getAll(): Observable<Pago[]> {
-    return this.http.get<Pago[]>(`${this.apiUrl}`);
+  getAll(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}`);
   }
 
-  getByUuid(uuid: String): Observable<Pago> {
-    return this.http.get<Pago>(`${this.apiUrl}${uuid}`);
+  getByUuid(uuid: String): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}${uuid}`);
   }
 
   save(data: any): Observable<any> {
-    return this.http.post<Pago>(`${this.apiUrl}`, data);
+    return this.http.post<any>(`${this.apiUrl}`, data);
   }
 
-  update(data: Pago): Observable<Pago> {
-    return this.http.put<Pago>(`${this.apiUrl}`, data);
+  update(data: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}`, data);
   }
   
 

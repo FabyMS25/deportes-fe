@@ -7,7 +7,6 @@
   </div>
 
   <form *ngIf="reservationForm" [formGroup]="reservationForm" (ngSubmit)="onSubmit()" novalidate>
-    <!-- Main Error Alert -->
     <div *ngIf="submitted && reservationForm.invalid" class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
       <div class="d-flex align-items-start">
         <i class="ri-error-warning-fill me-3 mt-1"></i>
@@ -21,10 +20,8 @@
       </div>
     </div>
 
-    <!-- Single Card Container -->
     <div class="card shadow-sm">
       <div class="card-body">
-        <!-- Facility & Field Information -->
         <div class="row g-3 mb-4">
           <div class="col-md-8">
             <h6 class="fw-bold text-dark mb-1">
@@ -50,6 +47,8 @@
               </span>
             </div>
           </div>
+
+
           <div class="col-md-4">
             <label class="form-label fw-semibold mb-2">
               <i class="ri-hashtag text-primary me-1"></i>
@@ -64,15 +63,53 @@
                 class="form-control fw-bold" 
                 formControlName="numeroReserva"
                 [readonly]="!canEditReservationNumber"
-                [class.bg-light]="!canEditReservationNumber">
+                [class.is-invalid]="isFieldInvalid('numeroReserva')"
+                [class.bg-light]="!canEditReservationNumber"
+                placeholder="0010/25">
+              
+              <!-- Action buttons for editable users -->
+              <div class="btn-group" *ngIf="canEditReservationNumber">
+                <!-- Validate button (shown when number is changed) -->
+                <button
+                  *ngIf="reservationForm?.get('numeroReserva')?.value !== numeroReserva && reservationForm?.get('numeroReserva')?.valid"
+                  class="btn btn-outline-primary"
+                  type="button"
+                  (click)="validateCustomReservationNumber()"
+                  [disabled]="isSubmitting"
+                  title="Validar número personalizado">
+                  <i class="ri-check-line"></i>
+                </button>
+                
+                <!-- Generate new number button -->
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  (click)="generateNewReservationNumber()"
+                  [disabled]="isSubmitting"
+                  title="Generar nuevo número">
+                  <i class="ri-refresh-line"></i>
+                </button>
+              </div>
+              
               <span *ngIf="!canEditReservationNumber" class="input-group-text bg-light">
                 <i class="ri-lock-line text-muted"></i>
               </span>
             </div>
-            <small class="text-muted d-block mt-1">
-              <i class="ri-information-line me-1"></i>
-              {{ canEditReservationNumber ? 'Editable' : 'Auto-generado' }}
-            </small>
+            <div *ngIf="!isFieldInvalid('numeroReserva')" class="form-text">
+              <small>
+                <i class="ri-information-line me-1"></i>
+                {{ canEditReservationNumber ? 'Editable - Formato: 0010/25' : 'Auto-generado por el sistema' }}
+              </small>
+            </div>            
+            <div *ngIf="isFieldInvalid('numeroReserva')" class="invalid-feedback d-block">
+              {{ getFieldError('numeroReserva') }}
+            </div>
+            <div *ngIf="isSubmitting" class="mt-1">
+              <small class="text-muted">
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Generando número...
+              </small>
+            </div>
           </div>
         </div>
 
@@ -98,9 +135,17 @@
                   formControlName="fechaUso"
                   [min]="minDate"
                   [max]="maxDate"
-                  [class.is-invalid]="isFieldInvalid('fechaUso')">
+                  [class.is-invalid]="isFieldInvalid('fechaUso')"
+                  [disabled]="shouldDisableScheduleFields"
+                  [class.bg-light]="shouldDisableScheduleFields">
                 <div *ngIf="getFieldError('fechaUso')" class="invalid-feedback">
                   {{ getFieldError('fechaUso') }}
+                </div>
+                <div *ngIf="shouldDisableScheduleFields" class="form-text">
+                  <small class="text-muted">
+                    <i class="ri-information-line me-1"></i>
+                    Fecha previamente seleccionada
+                  </small>
                 </div>
               </div>
 
@@ -113,9 +158,17 @@
                   type="time" 
                   class="form-control form-control-sm" 
                   formControlName="horaInicio"
-                  [class.is-invalid]="isFieldInvalid('horaInicio')">
+                  [class.is-invalid]="isFieldInvalid('horaInicio')"
+                  [disabled]="shouldDisableScheduleFields"
+                  [class.bg-light]="shouldDisableScheduleFields">
                 <div *ngIf="getFieldError('horaInicio')" class="invalid-feedback">
                   {{ getFieldError('horaInicio') }}
+                </div>
+                <div *ngIf="shouldDisableScheduleFields" class="form-text">
+                  <small class="text-muted">
+                    <i class="ri-information-line me-1"></i>
+                    Hora previamente seleccionada
+                  </small>
                 </div>
               </div>
 
@@ -128,9 +181,17 @@
                   type="time" 
                   class="form-control form-control-sm" 
                   formControlName="horaFin"
-                  [class.is-invalid]="isFieldInvalid('horaFin')">
+                  [class.is-invalid]="isFieldInvalid('horaFin')"
+                  [disabled]="shouldDisableScheduleFields"
+                  [class.bg-light]="shouldDisableScheduleFields">
                 <div *ngIf="getFieldError('horaFin')" class="invalid-feedback">
                   {{ getFieldError('horaFin') }}
+                </div>
+                <div *ngIf="shouldDisableScheduleFields" class="form-text">
+                  <small class="text-muted">
+                    <i class="ri-information-line me-1"></i>
+                    Hora previamente seleccionada
+                  </small>
                 </div>
               </div>
 
@@ -146,9 +207,17 @@
                   [class.is-invalid]="isFieldInvalid('cantidadPersonas')"
                   min="1" 
                   [max]="dataField.capacidadPersonas || 100"
-                  placeholder="Ej: 10">
+                  placeholder="Ej: 10"
+                  [disabled]="shouldDisableScheduleFields && selectedTariff.tipoCobro === 'por_persona'"
+                  [class.bg-light]="shouldDisableScheduleFields && selectedTariff.tipoCobro === 'por_persona'">
                 <div *ngIf="getFieldError('cantidadPersonas')" class="invalid-feedback">
                   {{ getFieldError('cantidadPersonas') }}
+                </div>
+                <div *ngIf="shouldDisableScheduleFields && selectedTariff?.tipoCobro === 'por_persona'" class="form-text">
+                  <small class="text-muted">
+                    <i class="ri-information-line me-1"></i>
+                    Cantidad previamente definida
+                  </small>
                 </div>
               </div>
             </div>
@@ -158,48 +227,9 @@
                 <i class="ri-timer-line me-2"></i>
                 <strong>Duración:</strong> 
                 <span class="fw-bold ms-1">{{ formatDuration(duration) }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div *ngIf="bookingType === 'recurrente' && recurrentSchedule">
-            <div class="row g-2">
-              <div class="col-md-4">
-                <div class="p-2 bg-light rounded border">
-                  <small class="text-muted d-block mb-1">
-                    <i class="ri-calendar-line me-1"></i>
-                    Período
-                  </small>
-                  <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                      <strong class="d-block small">{{ recurrentSchedule.fechaInicio | date:'dd/MM/yy' }}</strong>
-                    </div>
-                    <i class="ri-arrow-right-line text-muted"></i>
-                    <div>
-                      <strong class="d-block small">{{ recurrentSchedule.fechaFin | date:'dd/MM/yy' }}</strong>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="col-md-4">
-                <div class="p-2 bg-light rounded border">
-                  <small class="text-muted d-block mb-1">
-                    <i class="ri-repeat-line me-1"></i>
-                    Tipo
-                  </small>
-                  <strong class="small text-capitalize">{{ recurrentSchedule.tipoRecurrencia }}</strong>
-                </div>
-              </div>
-
-              <div class="col-md-4">
-                <div class="p-2 bg-light rounded border">
-                  <small class="text-muted d-block mb-1">
-                    <i class="ri-calendar-check-line me-1"></i>
-                    Sesiones
-                  </small>
-                  <strong class="small">{{ recurrentSchedule.cantidadSesiones }} sesiones × {{ recurrentSchedule.duracionSesionHoras }}h</strong>
-                </div>
+                <span *ngIf="shouldDisableScheduleFields" class="ms-2 text-muted">
+                  <i class="ri-lock-line me-1"></i>Horario bloqueado para edición
+                </span>
               </div>
             </div>
           </div>
@@ -267,17 +297,17 @@
             </table>
           </div>
 
-          <div class="p-2 rounded" [ngClass]="requiresApproval ? 'bg-warning bg-opacity-10 border border-warning' : 'bg-success bg-opacity-10 border border-success'">
+          <div class="p-2 rounded" [ngClass]="requiresValidation ? 'bg-warning bg-opacity-10 border border-warning' : 'bg-success bg-opacity-10 border border-success'">
             <div class="d-flex align-items-center">
-              <i [class]="requiresApproval ? 'ri-time-line' : 'ri-checkbox-circle-line'" 
+              <i [class]="requiresValidation ? 'ri-time-line' : 'ri-checkbox-circle-line'" 
                   class="fs-5 me-2" 
-                  [ngClass]="requiresApproval ? 'text-warning' : 'text-success'"></i>
+                  [ngClass]="requiresValidation ? 'text-warning' : 'text-success'"></i>
               <div>
-                <strong class="d-block small" [ngClass]="requiresApproval ? 'text-warning' : 'text-success'">
-                  {{ requiresApproval ? 'Requiere Aprobación' : 'Aprobación Automática' }}
+                <strong class="d-block small" [ngClass]="requiresValidation ? 'text-warning' : 'text-success'">
+                  {{ requiresValidation ? 'Requiere Aprobación' : 'Aprobación Automática' }}
                 </strong>
                 <small class="text-muted">
-                  {{ requiresApproval ? 'Revisión administrativa requerida' : 'Confirmación inmediata' }}
+                  {{ requiresValidation ? 'Revisión administrativa requerida' : 'Confirmación inmediata' }}
                 </small>
               </div>
             </div>
@@ -530,15 +560,7 @@
 
       <!-- Card Footer -->
       <div class="card-footer bg-light">
-        <div class="d-flex justify-content-between align-items-center">
-          <button 
-            type="button" 
-            class="btn btn-outline-secondary"
-            (click)="back()">
-            <i class="ri-arrow-left-line me-1"></i>
-            Volver
-          </button>
-          
+        <div class="d-flex justify-content-between align-items-center">          
           <button 
             type="submit" 
             class="btn btn-success px-4"

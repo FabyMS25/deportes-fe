@@ -102,9 +102,9 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
       observaciones: [''],
       accesoLibre: [false],
       requiereAprobacion: [false],
-      horasMinimaAprobacion:[],
-      maxDuracionAutoAprobacion:[],
-      maxPersonasAutoAprobacion:[],
+      horasMinimaAprobacion: [null, [this.conditionalApprovalValidator('requiereAprobacion', true)]],
+      maxDuracionAutoAprobacion: [null],
+      maxPersonasAutoAprobacion: [null],
       complejoDto: [null, [Validators.required]],
       superficieDto: [null, [Validators.required]],      
       horariosFijosDtoList: this.formBuilder.array([]),
@@ -188,7 +188,20 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
     const tipo = concepto.get('tipo')?.value;
     return tipo === 'por_hora' || tipo === 'fijo' || tipo === 'porcentaje';
   }
-
+  private conditionalApprovalValidator(dependentField: string, requiresApproval: boolean) {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.parent) return null;
+      
+      const requiresApprovalValue = control.parent.get(dependentField)?.value;
+      
+      // If requires approval is true, then horasMinimaAprobacion is required
+      // If requires approval is false, then the auto-approval fields are required
+      if (requiresApproval === requiresApprovalValue && !control.value) {
+        return { required: true };
+      }
+      return null;
+    };
+  }
   getTipoConceptoDisplay(tipo: string): string {
     const tipoMap: Record<string, string> = {
       'fijo': 'Monto Fijo',
@@ -495,9 +508,9 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
       observaciones: formValue.observaciones,
       accesoLibre: formValue.accesoLibre,
       requiereAprobacion: formValue.requiereAprobacion,
-      horasMinimaAprobacion:formValue.horasMinimaAprobacion,
-      maxDuracionAutoAprobacion:formValue.maxDuracionAutoAprobacion,
-      maxPersonasAutoAprobacion:formValue.maxPersonasAutoAprobacion,
+      horasMinimaAprobacion: formValue.requiereAprobacion ? formValue.horasMinimaAprobacion : null,
+      maxDuracionAutoAprobacion: !formValue.requiereAprobacion ? formValue.maxDuracionAutoAprobacion : null,
+      maxPersonasAutoAprobacion: !formValue.requiereAprobacion ? formValue.maxPersonasAutoAprobacion : null,
       complejoDto: formValue.complejoDto,
       superficieDto: formValue.superficieDto,
       horariosFijosDtoList: formValue.horariosFijosDtoList.map((h: any) => ({
@@ -516,7 +529,6 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
         horaCierre: this.formatTimeForBackend(h.horaCierre),
         motivo: h.motivo || null
       })),
-
       tarifasDtoList: formValue.tarifasDtoList.map((t: any) => ({
         uuid: t.uuid || undefined,
         precioBase: parseFloat(t.precioBase),
@@ -549,6 +561,10 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
     if (formValue.uuid) {
       datos.uuid = formValue.uuid;
     }
+
+    // Set default values for hidden fields
+    datos.estado = true;
+    datos.fechaCreacion = new Date();
 
     return datos;
   }

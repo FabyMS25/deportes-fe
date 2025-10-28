@@ -1,804 +1,163 @@
 import { MenuItem } from './menu.model';
 export const MENU_BASE: MenuItem[] = [
-  // {
-  //   "uuid":"91b69bcd-6273-479c-88a3-9c3bd796584c",
-  //   "modulo":"DEPORTESAPP",
-  //   "codigo":"SIS-013",
-  //   "nombreMenu":"Dashboard de Admin",
-  //   "accion":"VER",
-  //   "ruta":"/inicio",
-  //   "orden":1,
-  //   "icono":"ri-dashboard-2-line",
-  //   "estado":false,
-  //   "permisoHijoListDto":[],
-  //   "subNivel":false
-  // },
-  // {
-  //   "uuid":"43e436ff-7bc4-416e-b0ea-21f93021a1c7",
-  //   "modulo":"DEPORTESAPP",
-  //   "codigo":"SIS-013",
-  //   "nombreMenu":"Dashboard de Empleado",
-  //   "accion":"VER",
-  //   "ruta":"/inicio/employee",
-  //   "orden":1,
-  //   "icono":"ri-dashboard-2-line",
-  //   "estado":false,
-  //   "permisoHijoListDto":[],
-  //   "subNivel":false
-  // },
-  {
-    "uuid":"81a40727-d633-4e5e-9f08-663fd674fd4c",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Dashboard de Contribuyente",
-    "accion":"VER",
-    "ruta":"/inicio/taxpayer",
-    "orden":1,
-    "icono":"ri-dashboard-2-line",
-    "estado":false,
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "uuid":"2c5d6d42-4393-4cff-be30-5e51713265f6",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Reservas",
-    "accion":"ACTUALIZAR",
-    "ruta":"/reservations",
-    "orden":2,
-    "icono":"ri-profile-line",
-    "estado":false,
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "uuid":"cdff6f71-b264-470f-b4a4-80518f47f10e",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Reservas",
-    "accion":"CREAR",
-    "ruta":"/reservations",
-    "orden":2,
-    "icono":"ri-profile-line",
-    "estado":false,
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "uuid":"1e767a1a-e158-4373-8b03-0d7bd55221ee",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Reservas",
-    "accion":"VER",
-    "ruta":"/reservations",
-    "orden":2,
-    "icono":"ri-profile-line",
-    "estado":false,
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "uuid":"37ee150e-3970-4895-a488-9127673250be",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Reservas",
-    "accion":"VERIFICAR PAGO",
-    "ruta":"/reservations",
-    "orden":2,
-    "icono":"ri-profile-line",
-    "estado":false,
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  // {
-  //   "uuid":"a9f1892e-c0e8-4f28-aea1-1234fd80a1aa",
-  //   "modulo":"DEPORTESAPP",
-  //   "codigo":"SIS-013",
-  //   "nombreMenu":"Contribuyentes",
-  //   "accion":"VER",
-  //   "ruta":"/taxpayers",
-  //   "orden":3,
-  //   "icono":"ri-account-circle-line",
-  //   "estado":false,
-  //   "permisoHijoListDto":[],
-  //   "subNivel":false
-  // },
-  // {
-  //   "uuid":"5d5d14c0-01cb-4b5e-b5c7-06df460097c3",
-  //   "modulo":"DEPORTESAPP",
-  //   "codigo":"SIS-013",
-  //   "nombreMenu":"Reportes",
-  //   "accion":"GENERAR",
-  //   "ruta":"/reports",
-  //   "orden":4,
-  //   "icono":"ri-file-list-3-line",
-  //   "estado":false,
-  //   "permisoHijoListDto":[],
-  //   "subNivel":false
-  // },
-  // {
-  //   "uuid":"eccaab59-9916-4086-9320-59eebe8d2fee",
-  //   "modulo":"DEPORTESAPP",
-  //   "codigo":"SIS-013",
-  //   "nombreMenu":"Administracion",
-  //   "accion":"",
-  //   "ruta":"",
-  //   "orden":5,
-  //   "icono":"ri-settings-3-line",
-  //   "estado":false,
-  //   "permisoHijoListDto":[
-  //     {"uuid":"149a1fa1-c546-48c3-a4e6-01b7b5661cb9","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Encargados","accion":"VER","ruta":"/settings/employees","orden":1,"icono":"ri-user-2-fill","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"20ce9b41-2706-4541-bc8a-40e81628a909","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Encargados","accion":"ELIMINAR","ruta":"/settings/employees","orden":1,"icono":"ri-user-2-fill","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"94bb63fb-c3ba-4dcf-b98f-2e24e560cd70","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Encargados","accion":"CREAR","ruta":"/settings/employees","orden":1,"icono":"ri-user-2-fill","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"40d72007-ba8b-493f-8cf8-852fc77b4d38","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Complejos Deportivos","accion":"CREAR","ruta":"/settings/facilities","orden":2,"icono":"ri-government-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"d8dabaf3-6b80-49a9-be87-a146b13fd5e6","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Complejos Deportivos","accion":"ACTUALIZAR","ruta":"/settings/facilities","orden":2,"icono":"ri-government-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"e67c15c1-30ab-4330-bff3-03820d1b2003","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Complejos Deportivos","accion":"VER","ruta":"/settings/facilities","orden":2,"icono":"ri-government-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"a841f585-782f-452e-8d03-1454b33baba5","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Encargados","accion":"ACTUALIZAR","ruta":"/settings/employees","orden":1,"icono":"ri-user-2-fill","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"cf62c6d8-e0f6-439d-9d4c-d41ed27a21b5","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Categorias","accion":"VER","ruta":"/settings/categories","orden":4,"icono":"ri-football-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"6d101629-4096-4b4a-8ca7-0152589b8843","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Categorias","accion":"CREAR","ruta":"/settings/categories","orden":4,"icono":"ri-football-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"8cee97b5-60cd-4b5a-b9c2-1209bc0e67f3","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Categorias","accion":"ELIMINAR","ruta":"/settings/categories","orden":4,"icono":"ri-football-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"36d25505-f7a0-4ea2-b2fd-807520270000","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Categorias","accion":"ACTUALIZAR","ruta":"/settings/categories","orden":4,"icono":"ri-football-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"838b6e2f-4096-45d4-9e3d-4a297888d838","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Superficies","accion":"VER","ruta":"/settings/area","orden":5,"icono":"ri-home-6-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"1edf4db0-0afe-4fe1-b04d-921117d9e1ea","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Superficies","accion":"CREAR","ruta":"/settings/area","orden":5,"icono":"ri-home-6-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"bf0f67b9-c1c0-4c06-9214-b4e68da2372f","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Superficies","accion":"ACTUALIZAR","ruta":"/settings/area","orden":5,"icono":"ri-home-6-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"dfc0c1b0-fa62-4447-9d69-0b8c336fd9cf","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Superficies","accion":"ELIMINAR","ruta":"/settings/area","orden":5,"icono":"ri-home-6-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"07d298b6-9a39-4a6b-a763-a940f4cd2d49","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Complejos Deportivos","accion":"ELIMINAR","ruta":"/settings/facilities","orden":2,"icono":"ri-government-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"5c3d151e-d4c9-4932-aaa4-603d0fbe7b6d","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Campos Deportivos","accion":"ELIMINAR","ruta":"/settings/fields","orden":3,"icono":"ri-store-3-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"d64aa296-0f48-46d3-ba63-c09fa8634b90","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Campos Deportivos","accion":"VER","ruta":"/settings/fields","orden":3,"icono":"ri-store-3-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"68980c8c-0be3-4f4c-8ef9-411a1e789ee8","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Campos Deportivos","accion":"ACTUALIZAR","ruta":"/settings/fields","orden":3,"icono":"ri-store-3-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
-  //     {"uuid":"937f67f7-33f0-47c7-8617-b41474b9feba","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Campos Deportivos","accion":"CREAR","ruta":"/settings/fields","orden":3,"icono":"ri-store-3-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false}
-  //   ],
-  //   "subNivel":false
-  // },
-  {
-    "uuid":"20ce9b41-2706-4541-bc8a-40e81628a909",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Encargados",
-    "accion":"ELIMINAR",
-    "ruta":"/settings/employees",
-    "orden":1,
-    "icono":"ri-user-2-fill",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "uuid":"149a1fa1-c546-48c3-a4e6-01b7b5661cb9",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Encargados",
-    "accion":"VER",
-    "ruta":"/settings/employees",
-    "orden":1,
-    "icono":"ri-user-2-fill",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "uuid":"a841f585-782f-452e-8d03-1454b33baba5",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Encargados",
-    "accion":"ACTUALIZAR",
-    "ruta":"/settings/employees",
-    "orden":1,
-    "icono":"ri-user-2-fill",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "uuid":"94bb63fb-c3ba-4dcf-b98f-2e24e560cd70",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Encargados",
-    "accion":"CREAR",
-    "ruta":"/settings/employees",
-    "orden":1,
-    "icono":"ri-user-2-fill",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "uuid":"40d72007-ba8b-493f-8cf8-852fc77b4d38",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Complejos Deportivos",
-    "accion":"CREAR",
-    "ruta":"/settings/facilities",
-    "orden":2,
-    "icono":"ri-government-line",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "uuid":"d8dabaf3-6b80-49a9-be87-a146b13fd5e6",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Complejos Deportivos",
-    "accion":"ACTUALIZAR",
-    "ruta":"/settings/facilities",
-    "orden":2,
-    "icono":"ri-government-line",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "uuid":"e67c15c1-30ab-4330-bff3-03820d1b2003",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Complejos Deportivos",
-    "accion":"VER",
-    "ruta":"/settings/facilities",
-    "orden":2,
-    "icono":"ri-government-line",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "uuid":"07d298b6-9a39-4a6b-a763-a940f4cd2d49",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Complejos Deportivos",
-    "accion":"ELIMINAR",
-    "ruta":"/settings/facilities",
-    "orden":2,
-    "icono":"ri-government-line",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "uuid":"937f67f7-33f0-47c7-8617-b41474b9feba",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Campos Deportivos",
-    "accion":"CREAR",
-    "ruta":"/settings/fields",
-    "orden":3,
-    "icono":"ri-store-3-line",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":5,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "uuid":"68980c8c-0be3-4f4c-8ef9-411a1e789ee8",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Campos Deportivos",
-    "accion":"ACTUALIZAR",
-    "ruta":"/settings/fields",
-    "orden":3,
-    "icono":"ri-store-3-line",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee",
-      "modulo":"DEPORTESAPP",
-      "nombreMenu":
-      "Administracion",
-      "accion":"",
-      "ruta":"",
-      "orden":5,
-      "icono":"ri-settings-3-line",
-      "estado":false,"permisoHijoListDto":[],
-      "subNivel":false},
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "uuid":"5c3d151e-d4c9-4932-aaa4-603d0fbe7b6d",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Campos Deportivos",
-    "accion":"ELIMINAR",
-    "ruta":"/settings/fields",
-    "orden":3,
-    "icono":"ri-store-3-line",
-    "estado":false,
-    "permisoPadreDto":{
-      "uuid":"eccaab59-9916-4086-9320-59eebe8d2fee",
-      "modulo":"DEPORTESAPP",
-      "nombreMenu":"Administracion",
-      "accion":"",
-      "ruta":"",
-      "orden":5,
-      "icono":"ri-settings-3-line",
-      "estado":false,
-      "permisoHijoListDto":[],
-      "subNivel":false
-    },
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Campos Deportivos",
-    "accion":"VER",
-    "ruta":"/settings/fields",
-    "orden":3,
-    "icono":"ri-store-3-line",
-    "estado":false,
-    "permisoPadreDto":{
-      "uuid":"eccaab59-9916-4086-9320-59eebe8d2fee",
-      "modulo":"DEPORTESAPP",
-      "nombreMenu":"Administracion",
-      "accion":"",
-      "ruta":"",
-      "orden":5,
-      "icono":"ri-settings-3-line",
-      "estado":false,"permisoHijoListDto":[],
-      "subNivel":false
-    },
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Categorias",
-    "accion":"VER",
-    "ruta":"/settings/categories",
-    "orden":4,
-    "icono":"ri-football-line",
-    "estado":false,
-    "permisoPadreDto":{
-      "uuid":"eccaab59-9916-4086-9320-59eebe8d2fee",
-      "modulo":"DEPORTESAPP",
-      "nombreMenu":"Administracion",
-      "accion":"",
-      "ruta":"",
-      "orden":5,
-      "icono":"ri-settings-3-line",
-      "estado":false,"permisoHijoListDto":[],
-      "subNivel":false
-    },
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Categorias",
-    "accion":"CREAR",
-    "ruta":"/settings/categories",
-    "orden":4,
-    "icono":"ri-football-line",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee",
-      "modulo":"DEPORTESAPP",
-      "nombreMenu":"Administracion",
-      "accion":"",
-      "ruta":"",
-      "orden":5,
-      "icono":"ri-settings-3-line",
-      "estado":false,"permisoHijoListDto":[],
-      "subNivel":false
-    },
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Categorias",
-    "accion":"ACTUALIZAR",
-    "ruta":"/settings/categories",
-    "orden":4,
-    "icono":"ri-football-line",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee",
-      "modulo":"DEPORTESAPP",
-      "nombreMenu":"Administracion",
-      "accion":"",
-      "ruta":"",
-      "orden":5,
-      "icono":"ri-settings-3-line",
-      "estado":false,"permisoHijoListDto":[],
-      "subNivel":false
-    },
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Categorias",
-    "accion":"ELIMINAR",
-    "ruta":"/settings/categories",
-    "orden":4,
-    "icono":"ri-football-line",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee",
-      "modulo":"DEPORTESAPP",
-      "nombreMenu":"Administracion",
-      "accion":"",
-      "ruta":"",
-      "orden":5,
-      "icono":"ri-settings-3-line",
-      "estado":false,"permisoHijoListDto":[],
-      "subNivel":false
-    },
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Superficies",
-    "accion":"VER",
-    "ruta":"/settings/area",
-    "orden":5,
-    "icono":"ri-home-6-line",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee",
-      "modulo":"DEPORTESAPP",
-      "nombreMenu":"Administracion",
-      "accion":"",
-      "ruta":"",
-      "orden":5,
-      "icono":"ri-settings-3-line",
-      "estado":false,"permisoHijoListDto":[],
-      "subNivel":false
-    },
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Superficies",
-    "accion":"ELIMINAR",
-    "ruta":"/settings/area",
-    "orden":5,
-    "icono":"ri-home-6-line",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee",
-      "modulo":"DEPORTESAPP",
-      "nombreMenu":"Administracion",
-      "accion":"",
-      "ruta":"",
-      "orden":5,
-      "icono":"ri-settings-3-line",
-      "estado":false,"permisoHijoListDto":[],
-      "subNivel":false
-    },
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Superficies",
-    "accion":"ACTUALIZAR",
-    "ruta":"/settings/area",
-    "orden":5,
-    "icono":"ri-home-6-line",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee",
-      "modulo":"DEPORTESAPP",
-      "ombreMenu":"Administracion",
-      "accion":"",
-      "ruta":"",
-      "orden":5,
-      "icono":"ri-settings-3-line",
-      "estado":false,"permisoHijoListDto":[],
-      "subNivel":false
-    },
-    "permisoHijoListDto":[],
-    "subNivel":false
-  },
-  {
-    "uuid":"1edf4db0-0afe-4fe1-b04d-921117d9e1ea",
-    "modulo":"DEPORTESAPP",
-    "codigo":"SIS-013",
-    "nombreMenu":"Superficies",
-    "accion":"CREAR",
-    "ruta":"/settings/area",
-    "orden":5,
-    "icono":"ri-home-6-line",
-    "estado":false,
-    "permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee",
-      "modulo":"DEPORTESAPP",
-      "nombreMenu":"Administracion",
-      "accion":"",
-      "ruta":"",
-      "orden":5,
-      "icono":"ri-settings-3-line",
-      "estado":false,"permisoHijoListDto":[],
-      "subNivel":false
-    },
-    "permisoHijoListDto":[],
-    "subNivel":false
-  }
-]
-  export const MENU: MenuItem[] = [
-  // ,
-  {
-    permisoPadreDto: 100,
-    orden: 20,
-    nombreMenu: 'MENUITEMS.CHARTS.TEXT',
-    icono: 'ri-pie-chart-line',
-    isCollapsed: true,
-    permisoHijoListDto: [
-          {
-            orden: 1,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.LINE',
-            ruta: '/charts/apex-line',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 2,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.AREA',
-            ruta: '/charts/apex-area',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 3,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.COLUMN',
-            ruta: '/charts/apex-column',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 4,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.BAR',
-            ruta: '/charts/apex-bar',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 5,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.MIXED',
-            ruta: '/charts/apex-mixed',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 6,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.TIMELINE',
-            ruta: '/charts/apex-timeline',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 7,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.RANGEAREA',
-            ruta: '/charts/range-area',
-            badge: {
-              variant: 'bg-success',
-              text: 'MENUITEMS.DASHBOARD.BADGE',
-            },
-            permisoPadreDto: 20
-          },
-          {
-            orden: 8,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.FUNNEL',
-            ruta: '/charts/funnel',
-            badge: {
-              variant: 'bg-success',
-              text: 'MENUITEMS.DASHBOARD.BADGE',
-            },
-            permisoPadreDto: 20
-          },
-          {
-            orden: 9,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.CANDLSTICK',
-            ruta: '/charts/apex-candlestick',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 10,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.BOXPLOT',
-            ruta: '/charts/apex-boxplot',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 11,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.BUBBLE',
-            ruta: '/charts/apex-bubble',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 12,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.SCATTER',
-            ruta: '/charts/apex-scatter',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 13,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.HEATMAP',
-            ruta: '/charts/apex-heatmap',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 14,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.TREEMAP',
-            ruta: '/charts/apex-treemap',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 15,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.PIE',
-            ruta: '/charts/apex-pie',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 16,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.RADIALBAR',
-            ruta: '/charts/apex-radialbar',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 17,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.RADAR',
-            ruta: '/charts/apex-radar',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 18,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.POLARAREA',
-            ruta: '/charts/apex-polar',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 2,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.CHARTJS',
-            ruta: '/charts/chartjs',
-            permisoPadreDto: 20
-          },
-          {
-            orden: 3,
-            nombreMenu: 'MENUITEMS.CHARTS.LIST.ECHARTS',
-            ruta: '/charts/echarts',
-            permisoPadreDto: 20
-          }
-        ]
-  },
-      {
-        orden: 2,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.CHARTJS',
-        ruta: '/charts/chartjs',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 3,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.ECHARTS',
-        ruta: '/charts/echarts',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 1,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.LINE',
-        ruta: '/charts/apex-line',
-        permisoPadreDto: 20
-      },
+// {"uuid":"91b69bcd-6273-479c-88a3-9c3bd796584c","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Dashboard de Admin","accion":"VER","ruta":"/inicio","orden":0,"icono":"ri-dashboard-2-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
+{"uuid":"43e436ff-7bc4-416e-b0ea-21f93021a1c7","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Calendario","accion":"VER","ruta":"/inicio/employee","orden":1,"icono":"ri-dashboard-2-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
+ {"uuid":"d2092175-c678-4f62-8eda-0bcd6395a630","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Mapa","accion":"VER","ruta":"/inicio/taxpayer","orden":1,"icono":"ri-road-map-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
+ {"uuid":"1295af1c-3661-408e-a879-311cf53f9678","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Mapa","accion":"RESERVAR","ruta":"/inicio/taxpayer","orden":1,"icono":"ri-road-map-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"9f998d6d-fcf1-4823-8d04-3723e4c6cd41","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Contribuyentes","accion":"CREAR","ruta":"/taxpayers","orden":3,"icono":"ri-account-circle-line","estado":false,"permisoHijoListDto":[],"subNivel":false}, 
+//  {"uuid":"85e528f4-86f0-405e-b12b-68fabe2c8026","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Contribuyentes","accion":"BLOQUEAR","ruta":"/taxpayers","orden":3,"icono":"ri-account-circle-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"7936fe46-eb5e-45c0-a0c8-501d4f29dc77","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Contribuyentes","accion":"EXPORTAR","ruta":"/taxpayers","orden":3,"icono":"ri-account-circle-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"c8aee0b2-70f1-411b-915c-96bbd1ec2e0b","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Contribuyentes","accion":"ACTUALIZAR","ruta":"/taxpayers","orden":3,"icono":"ri-account-circle-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"a9f1892e-c0e8-4f28-aea1-1234fd80a1aa","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Contribuyentes","accion":"VER","ruta":"/taxpayers","orden":3,"icono":"ri-account-circle-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
+ {"uuid":"7c232c5e-3833-49bd-ae7a-54525aa880d1","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Organizaciones","accion":"VER","ruta":"/organizations","orden":5,"icono":"ri-parent-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"4c14d611-cafd-4c62-946d-bdfa905cc4d7","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Organizaciones","accion":"CREAR","ruta":"/organizations","orden":5,"icono":"ri-parent-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"1bc2cb58-a9c6-452f-820f-f7cfa75c96e8","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Organizaciones","accion":"ACTUALIZAR","ruta":"/organizations","orden":5,"icono":"ri-parent-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"f01cc4bf-741b-477a-9209-219dae5a30ac","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Organizaciones","accion":"ELIMINAR","ruta":"/organizations","orden":5,"icono":"ri-parent-line","estado":false,"permisoHijoListDto":[],"subNivel":false},
+{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[
+      {"uuid":"cdff6f71-b264-470f-b4a4-80518f47f10e","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Puntuales","accion":"CREAR","ruta":"/reservations/details","orden":1,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+      {"uuid":"412bd268-3266-4814-8fb0-96be5e401b0a","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Puntuales","accion":"CAMBIAR-HORARIO","ruta":"/reservations/one-time","orden":1,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+      {"uuid":"3a43b7da-8aca-4699-885b-0ffb8bdba158","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Puntuales","accion":"GENERAR TICKET","ruta":"/reservations/ticket","orden":1,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+      {"uuid":"37ee150e-3970-4895-a488-9127673250be","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Puntuales","accion":"ANULAR","ruta":"/reservations/one-time","orden":1,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+      {"uuid":"f23d40e1-e995-47ea-b35a-3ede2a9901ea","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Puntuales","accion":"VALIDAR","ruta":"/reservations/one-time","orden":1,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+      {"uuid":"2c5d6d42-4393-4cff-be30-5e51713265f6","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Puntuales","accion":"ACTUALIZAR","ruta":"/reservations/one-time","orden":1,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+      {"uuid":"1e767a1a-e158-4373-8b03-0d7bd55221ee","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Puntuales","accion":"VER","ruta":"/reservations/one-time","orden":1,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+      {"uuid":"d8bac92f-22b1-4acf-9b7b-80885a079df6","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Recurrentes","accion":"VALIDAR","ruta":"/reservations/recurrent","orden":2,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+      {"uuid":"aed6ff34-2015-408a-856d-71b5fec1a91a","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Recurrentes","accion":"ANULAR","ruta":"/reservations/recurrent","orden":2,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+      {"uuid":"2442d951-ac63-4da9-aaba-c168a483ae69","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Recurrentes","accion":"ACTUALIZAR","ruta":"/reservations/recurrent","orden":2,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+      {"uuid":"e24db4e8-b038-4b57-b0c3-0a51a963d603","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Recurrentes","accion":"VER","ruta":"/reservations/recurrent","orden":2,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+      {"uuid":"e6280259-8ee3-438e-9e79-ff5ebb72151c","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Recurrentes","accion":"GENERAR TICKET","ruta":"/reservations/ticket","orden":2,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+      {"uuid":"b5c58992-ff58-440b-9063-cd4213565b6d","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Recurrentes","accion":"CREAR","ruta":"/reservations/details","orden":2,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false}],"subNivel":false},
 
-      {
-        orden: 1,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.LINE',
-        ruta: '/charts/apex-line',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 2,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.AREA',
-        ruta: '/charts/apex-area',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 3,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.COLUMN',
-        ruta: '/charts/apex-column',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 4,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.BAR',
-        ruta: '/charts/apex-bar',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 5,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.MIXED',
-        ruta: '/charts/apex-mixed',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 6,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.TIMELINE',
-        ruta: '/charts/apex-timeline',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 7,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.RANGEAREA',
-        ruta: '/charts/range-area',
-        badge: {
-          variant: 'bg-success',
-          text: 'MENUITEMS.DASHBOARD.BADGE',
-        },
-        permisoPadreDto: 20
-      },
-      {
-        orden: 8,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.FUNNEL',
-        ruta: '/charts/funnel',
-        badge: {
-          variant: 'bg-success',
-          text: 'MENUITEMS.DASHBOARD.BADGE',
-        },
-        permisoPadreDto: 20
-      },
-      {
-        orden: 9,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.CANDLSTICK',
-        ruta: '/charts/apex-candlestick',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 10,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.BOXPLOT',
-        ruta: '/charts/apex-boxplot',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 11,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.BUBBLE',
-        ruta: '/charts/apex-bubble',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 12,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.SCATTER',
-        ruta: '/charts/apex-scatter',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 13,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.HEATMAP',
-        ruta: '/charts/apex-heatmap',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 14,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.TREEMAP',
-        ruta: '/charts/apex-treemap',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 15,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.PIE',
-        ruta: '/charts/apex-pie',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 16,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.RADIALBAR',
-        ruta: '/charts/apex-radialbar',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 17,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.RADAR',
-        ruta: '/charts/apex-radar',
-        permisoPadreDto: 20
-      },
-      {
-        orden: 18,
-        nombreMenu: 'MENUITEMS.CHARTS.LIST.POLARAREA',
-        ruta: '/charts/apex-polar',
-        permisoPadreDto: 20
-      },
-];
+  {"uuid":"cdff6f71-b264-470f-b4a4-80518f47f10e","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Puntuales","accion":"CREAR","ruta":"/reservations/details","orden":1,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"2c5d6d42-4393-4cff-be30-5e51713265f6","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Puntuales","accion":"ACTUALIZAR","ruta":"/reservations/one-time","orden":1,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  {"uuid":"3a43b7da-8aca-4699-885b-0ffb8bdba158","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Puntuales","accion":"GENERAR TICKET","ruta":"/reservations/ticket","orden":1,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  {"uuid":"1e767a1a-e158-4373-8b03-0d7bd55221ee","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Puntuales","accion":"VER","ruta":"/reservations/one-time","orden":1,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  {"uuid":"37ee150e-3970-4895-a488-9127673250be","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Puntuales","accion":"ANULAR","ruta":"/reservations/one-time","orden":1,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"f23d40e1-e995-47ea-b35a-3ede2a9901ea","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Puntuales","accion":"VALIDAR","ruta":"/reservations/one-time","orden":1,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+
+  {"uuid":"e6280259-8ee3-438e-9e79-ff5ebb72151c","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Recurrentes","accion":"GENERAR TICKET","ruta":"/reservations/ticket","orden":2,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  {"uuid":"e24db4e8-b038-4b57-b0c3-0a51a963d603","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Recurrentes","accion":"VER","ruta":"/reservations/recurrent","orden":2,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  {"uuid":"b5c58992-ff58-440b-9063-cd4213565b6d","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Recurrentes","accion":"CREAR","ruta":"/reservations/details","orden":2,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  {"uuid":"aed6ff34-2015-408a-856d-71b5fec1a91a","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Recurrentes","accion":"ANULAR","ruta":"/reservations/recurrent","orden":2,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"d8bac92f-22b1-4acf-9b7b-80885a079df6","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Recurrentes","accion":"VALIDAR","ruta":"/reservations/recurrent","orden":2,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"2442d951-ac63-4da9-aaba-c168a483ae69","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Recurrentes","accion":"ACTUALIZAR","ruta":"/reservations/recurrent","orden":2,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  //  {"uuid":"5d5d14c0-01cb-4b5e-b5c7-06df460097c3","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reportes","accion":"","ruta":"","orden":7,"icono":"ri-file-list-3-line","estado":false,"permisoHijoListDto":[
+//   {"uuid":"a761d826-fa90-40e3-87a5-3474c4f3db0f","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reportes Por Fecha","accion":"GENERAR","ruta":"/reports/dates","orden":1,"icono":"ri-file-list-3-line","estado":false,"permisoPadreDto":
+//   {"uuid":"5d5d14c0-01cb-4b5e-b5c7-06df460097c3","modulo":"DEPORTESAPP","nombreMenu":"Reportes","accion":"","ruta":"","orden":7,"icono":"ri-file-list-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"66ef6872-eff7-4878-8464-595e298dc9bc","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reportes pagos","accion":"GENERAR","ruta":"/reports/payments","orden":2,"icono":"ri-file-list-3-line","estado":false,"permisoPadreDto":
+//   {"uuid":"5d5d14c0-01cb-4b5e-b5c7-06df460097c3","modulo":"DEPORTESAPP","nombreMenu":"Reportes","accion":"","ruta":"","orden":7,"icono":"ri-file-list-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false}],"subNivel":false},
+// {"uuid":"a761d826-fa90-40e3-87a5-3474c4f3db0f","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reportes Por Fecha","accion":"GENERAR","ruta":"/reports/dates","orden":1,"icono":"ri-file-list-3-line","estado":false,"permisoPadreDto":
+//     {"uuid":"5d5d14c0-01cb-4b5e-b5c7-06df460097c3","modulo":"DEPORTESAPP","nombreMenu":"Reportes","accion":"","ruta":"","orden":7,"icono":"ri-file-list-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//   {"uuid":"66ef6872-eff7-4878-8464-595e298dc9bc","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reportes pagos","accion":"GENERAR","ruta":"/reports/payments","orden":2,"icono":"ri-file-list-3-line","estado":false,"permisoPadreDto":
+//     {"uuid":"5d5d14c0-01cb-4b5e-b5c7-06df460097c3","modulo":"DEPORTESAPP","nombreMenu":"Reportes","accion":"","ruta":"","orden":7,"icono":"ri-file-list-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"e675ff7a-6cca-4e4e-ac59-be571413a583","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Configuraciones","accion":"","ruta":"","orden":9,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[
+//   {"uuid":"937f67f7-33f0-47c7-8617-b41474b9feba","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Campos Deportivos","accion":"CREAR","ruta":"/settings/fields","orden":1,"icono":"ri-store-3-line","estado":false,"permisoPadreDto":
+//   {"uuid":"e675ff7a-6cca-4e4e-ac59-be571413a583","modulo":"DEPORTESAPP","nombreMenu":"Configuraciones","accion":"","ruta":"","orden":9,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"68980c8c-0be3-4f4c-8ef9-411a1e789ee8","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Campos Deportivos","accion":"ACTUALIZAR","ruta":"/settings/fields","orden":1,"icono":"ri-store-3-line","estado":false,"permisoPadreDto":
+//   {"uuid":"e675ff7a-6cca-4e4e-ac59-be571413a583","modulo":"DEPORTESAPP","nombreMenu":"Configuraciones","accion":"","ruta":"","orden":9,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"5c3d151e-d4c9-4932-aaa4-603d0fbe7b6d","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Campos Deportivos","accion":"ELIMINAR","ruta":"/settings/fields","orden":1,"icono":"ri-store-3-line","estado":false,"permisoPadreDto":
+//   {"uuid":"e675ff7a-6cca-4e4e-ac59-be571413a583","modulo":"DEPORTESAPP","nombreMenu":"Configuraciones","accion":"","ruta":"","orden":9,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"d64aa296-0f48-46d3-ba63-c09fa8634b90","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Campos Deportivos","accion":"VER","ruta":"/settings/fields","orden":1,"icono":"ri-store-3-line","estado":false,"permisoPadreDto":
+//   {"uuid":"e675ff7a-6cca-4e4e-ac59-be571413a583","modulo":"DEPORTESAPP","nombreMenu":"Configuraciones","accion":"","ruta":"","orden":9,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false}],"subNivel":false},
+//  {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[{"uuid":"e67c15c1-30ab-4330-bff3-03820d1b2003","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Complejos Deportivos","accion":"VER","ruta":"/admin/facilities","orden":1,"icono":"ri-government-line","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"40d72007-ba8b-493f-8cf8-852fc77b4d38","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Complejos Deportivos","accion":"CREAR","ruta":"/admin/facilities","orden":1,"icono":"ri-government-line","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"07d298b6-9a39-4a6b-a763-a940f4cd2d49","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Complejos Deportivos","accion":"ELIMINAR","ruta":"/admin/facilities","orden":1,"icono":"ri-government-line","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"d8dabaf3-6b80-49a9-be87-a146b13fd5e6","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Complejos Deportivos","accion":"ACTUALIZAR","ruta":"/admin/facilities","orden":1,"icono":"ri-government-line","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"149a1fa1-c546-48c3-a4e6-01b7b5661cb9","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Encargados","accion":"VER","ruta":"/admin/employees","orden":2,"icono":"ri-user-2-fill","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"94bb63fb-c3ba-4dcf-b98f-2e24e560cd70","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Encargados","accion":"CREAR","ruta":"/admin/employees","orden":2,"icono":"ri-user-2-fill","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"20ce9b41-2706-4541-bc8a-40e81628a909","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Encargados","accion":"ELIMINAR","ruta":"/admin/employees","orden":2,"icono":"ri-user-2-fill","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"a841f585-782f-452e-8d03-1454b33baba5","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Encargados","accion":"ACTUALIZAR","ruta":"/admin/employees","orden":2,"icono":"ri-user-2-fill","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"bf0f67b9-c1c0-4c06-9214-b4e68da2372f","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Superficies","accion":"ACTUALIZAR","ruta":"/admin/area","orden":3,"icono":"ri-home-6-line","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"838b6e2f-4096-45d4-9e3d-4a297888d838","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Superficies","accion":"VER","ruta":"/admin/area","orden":3,"icono":"ri-home-6-line","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"1edf4db0-0afe-4fe1-b04d-921117d9e1ea","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Superficies","accion":"CREAR","ruta":"/admin/area","orden":3,"icono":"ri-home-6-line","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"dfc0c1b0-fa62-4447-9d69-0b8c336fd9cf","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Superficies","accion":"ELIMINAR","ruta":"/admin/area","orden":3,"icono":"ri-home-6-line","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"8cee97b5-60cd-4b5a-b9c2-1209bc0e67f3","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Categorias","accion":"ELIMINAR","ruta":"/admin/categories","orden":4,"icono":"ri-football-line","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"cf62c6d8-e0f6-439d-9d4c-d41ed27a21b5","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Categorias","accion":"VER","ruta":"/admin/categories","orden":4,"icono":"ri-football-line","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"36d25505-f7a0-4ea2-b2fd-807520270000","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Categorias","accion":"ACTUALIZAR","ruta":"/admin/categories","orden":4,"icono":"ri-football-line","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//  {"uuid":"6d101629-4096-4b4a-8ca7-0152589b8843","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Categorias","accion":"CREAR","ruta":"/admin/categories","orden":4,"icono":"ri-football-line","estado":false,"permisoPadreDto":
+//   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//   {"uuid":"0656bd00-7e31-4797-acce-5e40c9c75177","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Clasificadores Ruat","accion":"ELIMINAR","ruta":"/admin/classifiers","orden":5,"icono":"ri-registered-line","estado":false,"permisoPadreDto":
+//     {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//   {"uuid":"9345b8e4-030f-489e-a7e0-f27841784832","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Clasificadores Ruat","accion":"CREAR","ruta":"/admin/classifiers","orden":5,"icono":"ri-registered-line","estado":false,"permisoPadreDto":
+//     {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//   {"uuid":"b8736afa-7718-44de-a5b5-0776a43c9a3a","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Clasificadores Ruat","accion":"ACTUALIZAR","ruta":"/admin/classifiers","orden":5,"icono":"ri-registered-line","estado":false,"permisoPadreDto":
+//     {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//   {"uuid":"67f90927-be5c-4962-a657-cd35bd2b05a8","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Clasificadores Ruat","accion":"VER","ruta":"/admin/classifiers","orden":5,"icono":"ri-registered-line","estado":false,"permisoPadreDto":
+//     {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//   {"uuid":"f18e93f9-5f63-4a8e-8a5e-5bda7bfc69d8","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Configuraciones de Sistema","accion":"VER","ruta":"/admin/config","orden":6,"icono":"bx bx-terminal","estado":false,"permisoPadreDto":
+//     {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//   {"uuid":"a68fc88f-57c4-4158-b1b7-f9b9021caed6","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Configuraciones de Sistema","accion":"ACTUALIZAR","ruta":"/admin/config","orden":6,"icono":"bx bx-terminal","estado":false,"permisoPadreDto":
+//     {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//   {"uuid":"0713501e-bfa2-48be-84d7-846ef64eab6f","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Configuraciones de Sistema","accion":"CREAR","ruta":"bx bx-terminal","orden":6,"icono":"bx bx-terminal","estado":false,"permisoPadreDto":
+//     {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+//   {"uuid":"9cbe62cc-8972-483e-958e-c4f9ce251291","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Configuraciones de Sistema","accion":"ELIMINAR","ruta":"/admin/config","orden":6,"icono":"bx bx-terminal","estado":false,"permisoPadreDto":
+//     {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false}],"subNivel":false},
+  // {"uuid":"40d72007-ba8b-493f-8cf8-852fc77b4d38","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Complejos Deportivos","accion":"CREAR","ruta":"/admin/facilities","orden":1,"icono":"ri-government-line","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"07d298b6-9a39-4a6b-a763-a940f4cd2d49","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Complejos Deportivos","accion":"ELIMINAR","ruta":"/admin/facilities","orden":1,"icono":"ri-government-line","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"d8dabaf3-6b80-49a9-be87-a146b13fd5e6","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Complejos Deportivos","accion":"ACTUALIZAR","ruta":"/admin/facilities","orden":1,"icono":"ri-government-line","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"e67c15c1-30ab-4330-bff3-03820d1b2003","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Complejos Deportivos","accion":"VER","ruta":"/admin/facilities","orden":1,"icono":"ri-government-line","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"94bb63fb-c3ba-4dcf-b98f-2e24e560cd70","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Encargados","accion":"CREAR","ruta":"/admin/employees","orden":2,"icono":"ri-user-2-fill","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"20ce9b41-2706-4541-bc8a-40e81628a909","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Encargados","accion":"ELIMINAR","ruta":"/admin/employees","orden":2,"icono":"ri-user-2-fill","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"149a1fa1-c546-48c3-a4e6-01b7b5661cb9","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Encargados","accion":"VER","ruta":"/admin/employees","orden":2,"icono":"ri-user-2-fill","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"a841f585-782f-452e-8d03-1454b33baba5","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Encargados","accion":"ACTUALIZAR","ruta":"/admin/employees","orden":2,"icono":"ri-user-2-fill","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"838b6e2f-4096-45d4-9e3d-4a297888d838","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Superficies","accion":"VER","ruta":"/admin/area","orden":3,"icono":"ri-home-6-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"dfc0c1b0-fa62-4447-9d69-0b8c336fd9cf","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Superficies","accion":"ELIMINAR","ruta":"/admin/area","orden":3,"icono":"ri-home-6-line","estado":false,"permisoPadreDto":{"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"1edf4db0-0afe-4fe1-b04d-921117d9e1ea","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Superficies","accion":"CREAR","ruta":"/admin/area","orden":3,"icono":"ri-home-6-line","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"bf0f67b9-c1c0-4c06-9214-b4e68da2372f","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Superficies","accion":"ACTUALIZAR","ruta":"/admin/area","orden":3,"icono":"ri-home-6-line","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"36d25505-f7a0-4ea2-b2fd-807520270000","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Categorias","accion":"ACTUALIZAR","ruta":"/admin/categories","orden":4,"icono":"ri-football-line","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"cf62c6d8-e0f6-439d-9d4c-d41ed27a21b5","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Categorias","accion":"VER","ruta":"/admin/categories","orden":4,"icono":"ri-football-line","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"6d101629-4096-4b4a-8ca7-0152589b8843","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Categorias","accion":"CREAR","ruta":"/admin/categories","orden":4,"icono":"ri-football-line","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"8cee97b5-60cd-4b5a-b9c2-1209bc0e67f3","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Categorias","accion":"ELIMINAR","ruta":"/admin/categories","orden":4,"icono":"ri-football-line","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"67f90927-be5c-4962-a657-cd35bd2b05a8","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Clasificadores Ruat","accion":"VER","ruta":"/admin/classifiers","orden":5,"icono":"ri-registered-line","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"0656bd00-7e31-4797-acce-5e40c9c75177","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Clasificadores Ruat","accion":"ELIMINAR","ruta":"/admin/classifiers","orden":5,"icono":"ri-registered-line","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"b8736afa-7718-44de-a5b5-0776a43c9a3a","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Clasificadores Ruat","accion":"ACTUALIZAR","ruta":"/admin/classifiers","orden":5,"icono":"ri-registered-line","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"9345b8e4-030f-489e-a7e0-f27841784832","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Clasificadores Ruat","accion":"CREAR","ruta":"/admin/classifiers","orden":5,"icono":"ri-registered-line","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"0713501e-bfa2-48be-84d7-846ef64eab6f","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Configuraciones de Sistema","accion":"CREAR","ruta":"bx bx-terminal","orden":6,"icono":"bx bx-terminal","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"9cbe62cc-8972-483e-958e-c4f9ce251291","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Configuraciones de Sistema","accion":"ELIMINAR","ruta":"/admin/config","orden":6,"icono":"bx bx-terminal","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"a68fc88f-57c4-4158-b1b7-f9b9021caed6","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Configuraciones de Sistema","accion":"ACTUALIZAR","ruta":"/admin/config","orden":6,"icono":"bx bx-terminal","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"f18e93f9-5f63-4a8e-8a5e-5bda7bfc69d8","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Configuraciones de Sistema","accion":"VER","ruta":"/admin/config","orden":6,"icono":"bx bx-terminal","estado":false,"permisoPadreDto":
+  //   {"uuid":"eccaab59-9916-4086-9320-59eebe8d2fee","modulo":"DEPORTESAPP","nombreMenu":"Administracion","accion":"","ruta":"","orden":10,"icono":"ri-shield-user-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+    // {"uuid":"937f67f7-33f0-47c7-8617-b41474b9feba","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Campos Deportivos","accion":"CREAR","ruta":"/settings/fields","orden":1,"icono":"ri-store-3-line","estado":false,"permisoPadreDto":
+    //   {"uuid":"e675ff7a-6cca-4e4e-ac59-be571413a583","modulo":"DEPORTESAPP","nombreMenu":"Configuraciones","accion":"","ruta":"","orden":9,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+    // {"uuid":"68980c8c-0be3-4f4c-8ef9-411a1e789ee8","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Campos Deportivos","accion":"ACTUALIZAR","ruta":"/settings/fields","orden":1,"icono":"ri-store-3-line","estado":false,"permisoPadreDto":
+    //   {"uuid":"e675ff7a-6cca-4e4e-ac59-be571413a583","modulo":"DEPORTESAPP","nombreMenu":"Configuraciones","accion":"","ruta":"","orden":9,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+    // {"uuid":"5c3d151e-d4c9-4932-aaa4-603d0fbe7b6d","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Campos Deportivos","accion":"ELIMINAR","ruta":"/settings/fields","orden":1,"icono":"ri-store-3-line","estado":false,"permisoPadreDto":
+    //   {"uuid":"e675ff7a-6cca-4e4e-ac59-be571413a583","modulo":"DEPORTESAPP","nombreMenu":"Configuraciones","accion":"","ruta":"","orden":9,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+    // {"uuid":"d64aa296-0f48-46d3-ba63-c09fa8634b90","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Campos Deportivos","accion":"VER","ruta":"/settings/fields","orden":1,"icono":"ri-store-3-line","estado":false,"permisoPadreDto":
+    //   {"uuid":"e675ff7a-6cca-4e4e-ac59-be571413a583","modulo":"DEPORTESAPP","nombreMenu":"Configuraciones","accion":"","ruta":"","orden":9,"icono":"ri-settings-3-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false}
+  ]

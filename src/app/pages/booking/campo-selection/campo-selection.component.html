@@ -11,7 +11,6 @@
     </button>
   </div>
     
-  <!-- Grid View -->
   <div class="row" *ngIf="!isLoading && filteredCampos.length > 0 && viewMode === 'grid'">
     <div class="col-lg-6" *ngFor="let item of filteredCampos">
       <div class="card campo-card border-0 shadow-sm" (click)="toggleCampoExpansion(item)">
@@ -67,7 +66,6 @@
               </div>
             </div>
           </div>
-          <!-- Tarifas disponibles -->
           <div class="tarifas-section" *ngIf="item.isExpanded" @slideDown>
             <hr class="my-3">
             <h6 class="mb-2">
@@ -81,10 +79,10 @@
                 tabindex="0">
               <div class="card-header tarifa-header p-0">
                 <div class="tarifa-title">
-                  <h5 class="text-primary mb-1">
+                  <h6 class="text-primary mb-1">
                     <i class="ri-price-tag-3-line"></i>
                     {{ tarifa.descripcion || 'Tarifa estándar' }}
-                  </h5>
+                  </h6>
                   <!-- <div class="tarifa-status mx-3 mb-1 small">
                     <span class="badge" [ngClass]="tarifa.activo ? 'bg-success' : 'bg-secondary'">
                       {{ tarifa.activo ? 'Tarifa Activa' : 'Tarifa Inactiva' }}
@@ -92,8 +90,8 @@
                   </div> -->
                 </div>
                 <div class="tarifa-price">
-                  <span class="amount">{{ tarifa.precioBase | number:'1.2-2' }} Bs</span>
-                  <span class="currency">Bs</span>
+                  <span class="text-primary">{{ tarifa.precioBase | number:'1.2-2' }}</span>
+                  <span class="text-mutted">Bs</span>
                 </div>
               </div>  
               <div class="tarifa-meta mb-0">
@@ -259,8 +257,8 @@
                   </div> -->
                 </div>
                 <div class="tarifa-price">
-                  <span class="amount">{{ tarifa.precioBase | number:'1.2-2' }} Bs</span>
-                  <span class="currency">Bs</span>
+                  <span class="text-primary">{{ tarifa.precioBase | number:'1.2-2' }}</span>
+                  <span class="text-mutted">Bs</span>
                 </div>
               </div>  
               <div class="tarifa-meta mb-0">

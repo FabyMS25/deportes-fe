@@ -62,7 +62,6 @@ export class ReservaService {
     return this.http.get<Reserva[]>(`${this.apiUrl}/activas/campo/${uuidCampo}`, { params });
   }
 
-  // Approval Workflow Methods
   aprobarReserva(uuid: String, aprobadoPor: string): Observable<Reserva> {
     let params = new HttpParams().set('aprobadoPor', aprobadoPor);
     return this.http.put<Reserva>(`${this.apiUrl}/${uuid}/aprobar`, null, { params });
@@ -81,7 +80,6 @@ export class ReservaService {
     return this.http.put<Reserva>(`${this.apiUrl}/${uuid}/cancelar`, null, { params });
   }
 
-  // Conflict Detection
   verificarConflictos(uuidCampo: string, fechaIni: Date, fechaFin: Date, excludeReservaUuid?: string): Observable<boolean> {
     let params = new HttpParams()
       .set('uuidCampo', uuidCampo)
@@ -95,7 +93,6 @@ export class ReservaService {
     return this.http.get<boolean>(`${this.apiUrl}/verificar/conflictos`, { params });
   }
 
-  // CRUD Operations
   create(data: Reserva): Observable<Reserva> {
     return this.http.post<Reserva>(`${this.apiUrl}`, data);
   }
@@ -108,7 +105,6 @@ export class ReservaService {
     return this.http.delete(`${this.apiUrl}/${uuid}`);
   }
 
-  // Counting and Statistics
   countByEstado(estadoReserva: string): Observable<number> {
     return this.http.get<number>(`${this.apiUrl}/contador/estado/${estadoReserva}`);
   }
@@ -117,8 +113,38 @@ export class ReservaService {
     return this.http.get<number>(`${this.apiUrl}/contador/campo/${uuidCampo}/estado/${estadoReserva}`);
   }
 
-  // Approval Requirements Check
   verificarRequisitosAprobacion(uuidCampo: string, reservaData: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/campo/${uuidCampo}/verificar-aprobacion`, reservaData);
   }
+  
+  /**
+   * Previews the next reservation number without reserving it
+   * Use this to show the number to the user before creating the reservation
+   */
+  previewNumeroReserva(): Observable<string> {
+    return this.http.get<string>(`${this.apiUrl}/numero-reserva/preview`);
+  }
+
+  /**
+   * Generates the next available reservation number
+   * Use this when the user confirms they want to use this number
+   */
+  generateNumeroReserva(): Observable<string> {
+    return this.http.get<string>(`${this.apiUrl}/numero-reserva/generar`);
+  }
+
+  /**
+   * Validates a custom reservation number provided by the user
+   */
+  validateNumeroReserva(numeroReserva: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/numero-reserva/validar`, numeroReserva);
+  }
+
+  /**
+   * Checks if a specific reservation number is available
+   */
+  verificarDisponibilidadNumeroReserva(numeroReserva: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/numero-reserva/verificar/${numeroReserva}`);
+  }
+
 }

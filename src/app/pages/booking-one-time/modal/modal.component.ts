@@ -17,17 +17,16 @@ import { EstadoReserva, EstadoValidacion } from 'src/app/core/constants/Estados'
 import { environment } from 'src/environments/environment';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { Reserva } from 'src/app/core/models/reserva.models';
-
+import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
+import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
+import { TicketComponent } from '../../reports/ticket/ticket.component';
+import { GlobalComponent } from 'src/app/global-component';
 
 @Component({
   selector: 'app-booking-one-time-modal',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule,
-        NgbNavModule,
-        // NgbCollapseModule,
-        // NgbTypeaheadModule,
-        FormsModule,
-        // CurrencyPipe
+        NgbNavModule, FormsModule, TicketComponent
   ],
   templateUrl: './modal.component.html',
   styleUrls: ['./modal.component.scss'],
@@ -40,80 +39,61 @@ export class BookingOneTimeModalComponent implements OnInit, AfterViewInit {
   @Input() canActivate!: any[];
   @Output() emitList = new EventEmitter();
 
+  systemConfigList: ConfiguracionSistema[] = [];
   CityAcronym = CityAcronym;
   EstadoReserva = EstadoReserva;
-
-  reservationForm!: FormGroup;
-  validationForm!: FormGroup;
+  userData!:any
   submitted = false;
+  reservationForm!: FormGroup;
   validationSubmitted = false;
+  validationForm!: FormGroup;
   showLoading = false;
-
-  canchasList: any[] = [];
-  contribuyentesList: any[] = [];
-  selectedItems: any[] = [];
-  consultResults: any[] = [];
   
   motivo: string = '';
   observation: string = '';
-  validationObservation: string = '';
-  validationStatus: string = 'APROBADA';
-  
-  minDate: string = '';
-  maxDate: string = '';
 
-  @ViewChild('validationModel') validationModel!: TemplateRef<any>;
+  @ViewChild('validationModal') validationModal!: TemplateRef<any>;
+  @ViewChild('ticketModal') ticketModal!: TemplateRef<any>;
+  @ViewChild('annularModal') annularModal!: TemplateRef<any>;
 
   constructor(
     private modalService: NgbModal,
     private formBuilder: FormBuilder,
-    private reservasService: ReservaPuntualService,
-    private canchasService: CamposDeportivoService,
-    private contribuyentesService: ContribuyentesService,
+    private systemConfigsService: ConfiguracionSistemaService,
     private ruatService: RuatRequestsService,
     private pagoService: PagoService,
     private router: Router,
+    private reservaPuntualService: ReservaPuntualService,
     private reservaService: ReservaService
   ) {}
 
-  ngOnInit(): void {    
-    this.getFields();
-    this.getTaxpayers();
+  ngOnInit(): void { 
+    const currentUser = window.sessionStorage.getItem("currentUser");
+      this.userData= currentUser ?JSON.parse(currentUser):null;
+    if (window.sessionStorage.getItem("auth-token") !== 'isContribuyente') {
+      this.userData=this.userData.designacion.personaDto
+    } 
+    this.getConfigsSystem(); 
     this.initForm();
-    if(this.accion ==='validarModel'){
-      this.initValidationForm();
-    }
   }
 
   ngAfterViewInit(): void {
-    // Open validation modal after view is initialized and ViewChild is available
-    if (this.accion === 'validarModel' && this.validationModel) {
-      setTimeout(() => {
-        this.openValidationModal(this.validationModel);
-      });
+    setTimeout(() => {      
+    if (!this.accion) return;
+    switch (this.accion) {
+      case 'validarModal':this.openValidationModal(this.validationModal);
+        break;
+      case 'annularModal':
+        if (this.annularModal) {
+          this.openDeleteModal(this.annularModal);
+        }
+        break;
+      case 'ticketModal': this.openTicketModal(this.ticketModal);
+        break;
     }
-  }
-  private getCurrentUser(): string {
-    // Adjust this based on how you store user information
-    const currentUserStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
-    if (currentUserStr) {
-      try {
-        const currentUser = JSON.parse(currentUserStr);
-        return currentUser.username || currentUser.nombre || 'Sistema';
-      } catch (e) {
-        console.error('Error parsing user data:', e);
-      }
-    }
-    return 'Sistema'; // Fallback
+    });
   }
   private initForm() {
-    console.log('Reserva data:', this.row);
-    const today = new Date();
-    this.minDate = today.toISOString().split('T')[0];
-    const maxDate = new Date();
-    maxDate.setMonth(today.getMonth() + 3);
-    this.maxDate = maxDate.toISOString().split('T')[0];
-
     this.reservationForm = this.formBuilder.group({
       fechaUso: [
         this.row?.fechaUso ? new Date(this.row.fechaUso).toISOString().split('T')[0] : '', 
@@ -124,18 +104,29 @@ export class BookingOneTimeModalComponent implements OnInit, AfterViewInit {
       observaciones: [this.row?.observaciones || '']
     });
   }
-
   private initValidationForm() {
     this.validationForm = this.formBuilder.group({
       validationStatus: [EstadoValidacion.APROBADA, Validators.required],
-      validationObservation: ['', Validators.required]
+      validationObservation: ['']
     });
+    this.validationForm.get('validationStatus')?.valueChanges.subscribe(status => {
+      this.updateObservationValidation(status);
+    });
+  }
+  private updateObservationValidation(status: string): void {
+    const observationControl = this.validationForm.get('validationObservation');
+    if (status === EstadoValidacion.RECHAZADA) {
+      observationControl?.setValidators([Validators.required]);
+      observationControl?.updateValueAndValidity();
+    } else {
+      observationControl?.clearValidators();
+      observationControl?.updateValueAndValidity();
+    }
   }
 
   get form() {
     return this.reservationForm.controls;
   }
-
   get validationFormControls() {
     return this.validationForm.controls;
   }
@@ -149,133 +140,46 @@ export class BookingOneTimeModalComponent implements OnInit, AfterViewInit {
       let datos: any = {
         ...this.row,
         ...this.reservationForm.value,
-      };
-      
-      this.updateData(datos);
+      };      
+      this.updateReservaPuntual(datos);
     } else {
       this.notify('Formulario Inválido! Por favor complete todos los campos requeridos.', 'error');
     }
   }
 
-
-
-// Helper method to calculate payment deadline (24 hours from validation)
-private calculatePaymentDeadline(validationDate: Date): Date {
-  const deadline = new Date(validationDate);
-  deadline.setHours(deadline.getHours() + 24);
-  return deadline;
-}
-
-// Helper method to format dates (reuse your existing formatDate method)
-private formatDate(date: Date): string {
-  return date.toLocaleDateString('es-BO', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
-}
   /**
-   * Open validation modal
+   * Open modals
    */
   openValidationModal(content: any) {
-    this.validationForm.reset({
-      validationStatus: EstadoValidacion.APROBADA,
-      validationObservation: ''
-    });
-    this.validationSubmitted = false;
-    
+    this.initValidationForm();
+    this.modalService.open(content, { centered: true, size: 'md' });
+    this.validationSubmitted = false;    
     const modalRef = this.modalService.open(content, { 
       centered: true, 
       size: 'md',
-      backdrop: 'static' // Prevent closing by clicking backdrop
+      backdrop: 'static'
     });
-
-    // Handle modal dismissal to close the main modal if needed
     modalRef.dismissed.subscribe((reason) => {
-      console.log('Validation modal dismissed:', reason);
-      // If this was opened as a direct validation action, close the main modal too
       if (this.accion === 'validar') {
         this.onCloseModal();
       }
     });
-
     modalRef.closed.subscribe((result) => {
       console.log('Validation modal closed:', result);
-      // If this was opened as a direct validation action, close the main modal too
       if (this.accion === 'validar') {
         this.onCloseModal();
       }
     });
   }
- validateReservation() {
-    this.validationSubmitted = true;
-    if (this.validationForm.valid) {
-      this.showLoading = true;
-      
-      const validationData = this.validationForm.value;
-      const isApproved = validationData.validationStatus === EstadoValidacion.APROBADA;
-      const reservaUuid = this.row.reservaDto?.uuid; // Get the reserva UUID
-      const currentUser = this.getCurrentUser(); // Get current user for aprobadoPor
-
-      if (!reservaUuid) {
-        this.showLoading = false;
-        this.notify('Error: No se pudo identificar la reserva', 'error');
-        return;
-      }
-
-      if (isApproved) {
-        this.approveReserva(reservaUuid, currentUser, validationData.validationObservation);
-      } else {
-        this.rejectReserva(reservaUuid, validationData.validationObservation, currentUser);
-      }
-    } else {
-      this.notify('Por favor complete todos los campos de validación', 'error');
-    }
-  }
-
-  /**
-   * Open consultation modal
-   */
-  async consultModal(content: any, data: any) {
-    if (this.selectedItems.length === 0) {
-      this.selectedItems.push(this.row); 
-    }    
-    this.consultResults = [];
-    
-    for (const item of this.selectedItems) {
-      this.showLoading = true;      
-      try {
-        const result = await this.consultData(item); 
-        this.consultResults.push(result);
-      } catch (error) {
-        console.error("Error during consultation:", error);
-        this.consultResults.push({ 
-          item, 
-          text: 'Error al realizar la consulta', 
-          type: 'error' 
-        });
-      } finally {
-        this.showLoading = false;
-      }
-    }
-    
-    this.modalService.open(content, { centered: true, size: 'lg' });
-    this.selectedItems = [];
-    this.emitList.emit();
-  }
-
-  /**
-   * Open cancel modal
-   */
-  deleteModal(content: any, data: any) {
+  openDeleteModal(content: any) {
     this.accion = content;
     this.motivo = '';
     this.observation = '';
   }
-
-  /**
-   * Confirm reservation usage (mark as completed)
-   */
+  openTicketModal(content:any) {
+    this.modalService.open(content, { centered: true, size: 'md' });
+    this.emitList.emit();
+  }
   confirmUsage() {
     Swal.fire({
       title: 'Confirmar Uso',
@@ -293,11 +197,10 @@ private formatDate(date: Date): string {
           ...this.row,
           reservaDto: {
             ...this.row.reservaDto,
-            estadoReserva: EstadoReserva.COMPLETADA
+            estadoReserva: EstadoReserva.COMPLETADA,
           }
-        };
-        
-        this.updateReserva(updatedReserva).then(() => {
+        };      
+        this.updateReservaPuntual(updatedReserva).then(() => {
           this.showLoading = false;
           this.notify('Reserva marcada como completada exitosamente', 'success');
           this.emitList.emit();
@@ -309,141 +212,60 @@ private formatDate(date: Date): string {
       }
     });
   }
-
-
-private async sendValidationEmail(
-  reserva: ReservaPuntual, 
-  isApproved: boolean
-): Promise<void> {
-  try {
-    const contribuyente = reserva.reservaDto?.contribuyenteDto;
-    const campoDeportivo = reserva.reservaDto?.campoDeportivoDto;
-    
-    const templateParams = {
-      subject: isApproved ? 
-        `Reserva Aprobada - ${campoDeportivo?.nombre}` : 
-        `Reserva Rechazada - ${campoDeportivo?.nombre}`,
-      to_email: contribuyente?.email,
-      cc_email: '',
-      bcc_email: '',
-      send_date: this.formatDate(new Date()),
-
-      // Reservation Information
-      reserva_number: reserva.reservaDto?.numeroTasa,
-      estado_reserva: isApproved ? 'APROBADA' : 'RECHAZADA',
-      // validation_observation: validationObservation,
-      
-      // Contribuyente Information
-      contribuyente_name: contribuyente?.nombreCompleto || 
-                         `${contribuyente?.nombre} ${contribuyente?.primerApellido} ${contribuyente?.segundoApellido}`,
-      contribuyente_document: contribuyente?.numeroDocumento,
-      contribuyente_phone: contribuyente?.telefono,
-
-      // Reservation Details
-      complejo_name: campoDeportivo?.complejoDto.nombre,
-      campo_deportivo: campoDeportivo?.nombre,
-      superficie: reserva.superficie,
-      categoria: reserva.categoria,
-      fecha_uso: this.formatDate(new Date(reserva.fechaUso)),
-      hora_inicio: reserva.horaInicio,
-      hora_fin: reserva.horaFin,
-      duracion: reserva.duracionHoras,
-      cantidad_personas: reserva.cantidadPersonas,
-      monto_total: `Bs. ${reserva.reservaDto?.montoTotal}`,
-
-      // Contact Information
-      phone: '+(591) 4-1234567', // Replace with your contact info
-      email: 'deportes@gamq.gov.bo', // Replace with your contact email
-      address: 'Calle Principal #123, Quillacollo', // Replace with your address
-      
-      // URLs
-      // logo_url: `${environment.assetsUrl}/assets/icons/logos/logo-gamq.png`,
-      // regulations_url: `${environment.assetsUrl}/public/terms-condition`,
-      contact_url: '',
-      
-      // Conditional content based on approval/rejection
-      is_approved: isApproved,
-      is_rejected: !isApproved,
-      
-      // Approval specific content
-      approval_instructions: isApproved ? 
-        `Para completar su reserva, proceda con el pago de la tasa ${reserva.reservaDto?.numeroTasa} en cualquier entidad financiera autorizada.` :
-        '',
-      
-      // Rejection specific content
-      next_steps_rejected: !isApproved ?
-        `Puede contactarnos para más información o realizar una nueva reserva ajustándose a las observaciones proporcionadas.` :
-        '',
-      
-      payment_deadline: isApproved ? 
-        this.formatDate(this.calculatePaymentDeadline(new Date())) : 
-        ''
-    };
-
-    // Use different templates for approval vs rejection
-    const templateId = isApproved ? 
-      environment.EmailJS.idTemplate : 
-      environment.EmailJS.idTemplate;
-
-    const response = await emailjs.send(
-      environment.EmailJS.idService,
-      templateId,
-      templateParams,
-      environment.EmailJS.publicKey
-    );
-
-    if (response.status === 200) {
-      console.log(`Email de ${isApproved ? 'aprobación' : 'rechazo'} enviado exitosamente`);
+  validateReservation() {
+    this.validationSubmitted = true;
+    this.updateObservationValidation(this.validationForm.value.validationStatus);    
+    if (this.validationForm.valid) {
+      this.showLoading = true;
+      const validationData = this.validationForm.value;
+      const isApproved = validationData.validationStatus === EstadoValidacion.APROBADA;
+      const reservaUuid = this.row.reservaDto?.uuid;      
+      if (!reservaUuid) {
+        this.showLoading = false;
+        this.notify('Error: No se pudo identificar la reserva', 'error');
+        return;
+      }      
+      if (isApproved) {
+        this.approveReserva(reservaUuid, validationData.validationObservation);
+      } else {
+        this.rejectReserva(reservaUuid, validationData.validationObservation);
+      }
     } else {
-      console.error(`EmailJS responded with status ${response.status}`);
-      throw new Error(`EmailJS responded with status ${response.status}`);
-    }
-
-  } catch (error: any) {
-    console.error('Error sending validation email:', error);
-    
-    if (error?.status === 429) {
-      throw new Error('Límite de envíos de email alcanzado. Por favor intente más tarde.');
-    } else if (error?.status === 400) {
-      throw new Error('Error en la configuración del email. Verifique los datos.');
-    } else {
-      throw new Error('Error inesperado al enviar la notificación por email');
+      this.notify('Por favor complete todos los campos de validación', 'error');
     }
   }
-}
-  /**
-   * Generate ticket
-   */
-  generateTicket() {
-    this.router.navigate(['/reservations/ticket'], { 
-      state: { data: this.row } 
-    });
-    this.onCloseModal();
-  }
 
-  /* API REQUESTS */
-    private approveReserva(reservaUuid: String, aprobadoPor: string, observaciones: string) {
+  /* API REQUESTS */  
+  private getConfigsSystem() {
+    this.systemConfigsService.getAll().subscribe({
+      next: (data: any) => {
+          if (data['status'] === 'OK') {
+            this.systemConfigList = data.payload;
+          }
+        }
+      });
+  }
+  private approveReserva(reservaUuid: any, observaciones: string = '') {
+    const aprobadoPor = this.userData.nombreCompleto || this.userData.fullName
     this.reservaService.aprobarReserva(reservaUuid, aprobadoPor).subscribe({
-      next: async (reservaActualizada: Reserva) => {
+      next: async (data: any) => {
         try {
-          // Update local row data with the updated reserva
-          const updatedReservaPuntual = {
-            ...this.row,
-            reservaDto: {
-              ...this.row.reservaDto,
-              ...reservaActualizada,
-              observacionesValidacion: observaciones
-            }
-          };
-
-          // Send email notification
-          await this.sendValidationEmail(updatedReservaPuntual, true);
-          
           this.showLoading = false;
-          this.notify('Reserva aprobada exitosamente y notificación enviada al contribuyente', 'success');
-          this.emitList.emit();
-          this.modalService.dismissAll();
-          this.onCloseModal();
+          await this.registerReservationInRuat(data.payload);
+          this.openTicketModal(this.ticketModal)
+          this.notify('Reserva aprobada exitosamente y registrada en Ruat', 'success');
+          // const updatedReservaPuntual = {
+          //   ...this.row,
+          //   reservaDto: {
+          //     ...this.row.reservaDto,
+          //     ...reservaActualizada,
+          //     observacionesValidacion: observaciones
+          //   }
+          // };
+          // await this.sendValidationEmail(updatedReservaPuntual, true,'');
+          // this.emitList.emit();
+          // this.modalService.dismissAll();
+          // this.onCloseModal();
         } catch (emailError) {
           this.showLoading = false;
           console.error('Error sending email:', emailError);
@@ -460,31 +282,26 @@ private async sendValidationEmail(
       }
     });
   }
-  /**
-   * Reject reservation using dedicated service
-   */
-  private rejectReserva(reservaUuid: String, motivoRechazo: string, aprobadoPor: string) {
+  private rejectReserva(reservaUuid: any, motivoRechazo: string = '') {
+    const aprobadoPor = this.userData.nombreCompleto || this.userData.fullName;
     this.reservaService.rechazarReserva(reservaUuid, motivoRechazo, aprobadoPor).subscribe({
-      next: async (reservaActualizada: Reserva) => {
+      next: async (data: any) => {
         try {
-          // Update local row data with the updated reserva
-          const updatedReservaPuntual = {
-            ...this.row,
-            reservaDto: {
-              ...this.row.reservaDto,
-              ...reservaActualizada,
-              observacionesValidacion: motivoRechazo
-            }
-          };
-
-          // Send email notification
-          await this.sendValidationEmail(updatedReservaPuntual, false);
-          
           this.showLoading = false;
+          this.openTicketModal(this.ticketModal)
+          // const updatedReservaPuntual = {
+          //   ...this.row,
+          //   reservaDto: {
+          //     ...this.row.reservaDto,
+          //     ...reservaActualizada,
+          //     observacionesValidacion: motivoRechazo
+          //   }
+          // };
+          // await this.sendValidationEmail(updatedReservaPuntual, false,'');          
           this.notify('Reserva rechazada exitosamente y notificación enviada al contribuyente', 'success');
-          this.emitList.emit();
-          this.modalService.dismissAll();
-          this.onCloseModal();
+          // this.emitList.emit();
+          // this.modalService.dismissAll();
+          // this.onCloseModal();
         } catch (emailError) {
           this.showLoading = false;
           console.error('Error sending email:', emailError);
@@ -501,42 +318,67 @@ private async sendValidationEmail(
       }
     });
   }
-
-  private getFields() {
-    this.canchasService.getAll().subscribe({
-      next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.canchasList = data.payload;
+  private registerReservationInRuat(reservaData: Reserva): void {
+    const codigoAlcaldia = this.systemConfigList.find(config => config.clave === 'CODIGO_ALCALDIA_RUAT')?.valorTexto || '';
+    const codigoUsuario = this.systemConfigList.find(config => config.clave === 'CODIGO_USUARIO_RUAT')?.valorTexto || '';
+    const servicioMunicipal = this.systemConfigList.find(config => config.clave === 'SERVICIO_MUNICIPAL_RUAT')?.valorTexto || '';
+    
+    const ruatData = {
+      codigoAlcaldia: codigoAlcaldia,
+      codigoUsuario: reservaData.contribuyenteDto.codigoContribuyente,
+      codigoContribuyente: reservaData.contribuyenteDto.codigoContribuyente,
+      servicioMunicipal: servicioMunicipal,
+      datosConcepto: [{
+        numero: '1',
+        codigoClasificador: reservaData.tarifaDto.clasificadorRuatDto.codigo,
+        tipoArancel: reservaData.tarifaDto.clasificadorRuatDto.tipoArancel || "DI",
+        monto: reservaData.montoTotal
+      }],
+      observacion: reservaData.reservaPuntualDto?.observaciones || reservaData.reservaRecurrenteDto?.observaciones || 'Reserva de Cancha Deportiva GAMQ'
+    };
+    
+    const code = reservaData.contribuyenteDto.codigoContribuyente || '';
+    
+    this.ruatService.createTasa(codigoAlcaldia,codigoUsuario, servicioMunicipal, ruatData, code)
+    .subscribe({
+      next: (response: any) => {
+        if (response.status === 'OK' ) {
+          if(response.payload.continuarFlujo){
+            reservaData.numeroTasa = response.payload.numeroTasa;
+            this.updateReserva(reservaData);
+          } else {
+            this.handleError('Error en RUAT', response.payload.mensaje || 'No se pudo registrar la tasa');
+          }
         } else {
-          Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
+          this.handleError('Error en RUAT', response.mensaje || 'No se pudo registrar la tasa');
         }
       },
       error: (error) => {
-        console.error('Error fetching fields:', error);
-        Swal.fire({ text: 'Error al cargar los campos deportivos', icon: 'error' });
+        this.handleError('Error de conexión con RUAT', error.error?.mensaje || error.message);
       }
     });
   }
 
-  private getTaxpayers() {
-    this.contribuyentesService.getAll().subscribe({
-      next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.contribuyentesList = data.payload;
-        } else {
-          Swal.fire({ text: data.payload, confirmButtonColor: '#299cdb'});
-        }
-      },
-      error: (error) => {
-        console.error('Error fetching taxpayers:', error);
-        Swal.fire({ text: 'Error al cargar los contribuyentes', icon: 'error' });
-      }
-    });
-  }
-
-  updateReserva(data: ReservaPuntual): Promise<ReservaPuntual> {
+  updateReservaPuntual(data: ReservaPuntual): Promise<ReservaPuntual> {
     return new Promise((resolve, reject) => {
-      this.reservasService.update(data).subscribe({
+      this.reservaPuntualService.update(data).subscribe({
+        next: (resp: any) => {
+          if (resp['status'] === 'OK') {
+            resolve(resp.payload);
+          } else {
+            reject(resp.payload);
+          }
+        },
+        error: (error) => {
+          console.error("Error updating reserva:", error);
+          reject(error);
+        }
+      });
+    });
+  }
+  updateReserva(data: Reserva): Promise<Reserva> {
+    return new Promise((resolve, reject) => {
+      this.reservaService.update(data).subscribe({
         next: (resp: any) => {
           if (resp['status'] === 'OK') {
             resolve(resp.payload);
@@ -552,23 +394,6 @@ private async sendValidationEmail(
     });
   }
 
-  updateData(datosUnit: ReservaPuntual) {
-    this.showLoading = true;
-    this.reservasService.update(datosUnit).subscribe({
-      next: (data: any) => {
-        this.showLoading = false;
-        this.Editposition();
-        this.submitted = false;
-        this.onCloseModal();
-        this.emitList.emit();
-        this.notify('Horario actualizado exitosamente!', 'success');
-      },
-      error: (error) => {
-        this.showLoading = false;
-        this.notify('No se pudo actualizar el horario! ' + error, 'error');
-      }
-    });
-  }
 
   /* RUAT REQUESTS */
   annularData(formValues: any) {
@@ -576,30 +401,27 @@ private async sendValidationEmail(
       this.notify('No se pudo obtener los datos de la reserva', 'error');
       return;
     }
-
+    const codigoAlcaldia = this.systemConfigList.find(config => config.clave === 'CODIGO_ALCALDIA_RUAT')?.valorTexto || '';
+    const codigoUsuario = this.systemConfigList.find(config => config.clave === 'CODIGO_USUARIO_RUAT')?.valorTexto || '';
     const requestData = {
       numeroTasa: this.row.reservaDto.numeroTasa,
       motivo: formValues.motivo,
       observacion: formValues.observation
     };
-
     this.showLoading = true;
-
-    this.ruatService.cancelTasa(requestData).subscribe({
+    this.ruatService.cancelTasa(codigoAlcaldia,codigoUsuario,requestData).subscribe({
       next: (resp: any) => {
         this.showLoading = false;
-
         if (resp['status'] === 'OK') {
-          const text = resp.payload['mensaje'];
+          const text = resp.payload['mensajeConfirmacion'];
           const updatedReserva:any = {
-            ...this.row,
-            reservaDto: {
+            // ...this.row,
+            // reservaDto: {
               ...this.row.reservaDto,
               estadoReserva: EstadoReserva.CANCELADA
-            }
+            // }
           };
-          
-          this.reservasService.update(updatedReserva).subscribe({
+          this.reservaService.update(updatedReserva).subscribe({
             next: () => {
               Swal.fire({
                 title: 'Anulado!',
@@ -629,65 +451,14 @@ private async sendValidationEmail(
     });
   }
 
-  async consultData(item: any): Promise<any> {
-    if (!item || !item.reservaDto?.numeroTasa) {
-      return { item, text: 'No se pudo obtener el dato seleccionado', type: 'warning' };
-    }  
-    
-    try {
-      const nroTasa = item.reservaDto.numeroTasa;
-      const resp: any = await this.ruatService.consultaPagoTasa(nroTasa).toPromise();
-
-      if (resp['status'] !== 'OK') {
-        return { item, text: "La Tasa y Otro Ingreso no tiene pagos", type: 'warning' };
-      }
-      
-      if (!resp.payload.continuarFlujo) {
-        return { item, text: resp.payload.observacion, type: 'warning' };
-      }
-
-      const text = resp.payload.observacion;  
-      if (item.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE || 
-          item.reservaDto?.estadoReserva === EstadoReserva.CONFIRMADA) {
-        const pago = resp.payload.pagoTasa;
-        const [day, month, year] = pago.fechaPago.split('/');
-        pago.fechaPago = `${year}-${month}-${day}`;
-        pago.reservasDto = item;  
-        
-        try {
-          const pagoResp: any = await this.pagoService.save(pago).toPromise();
-          if (pagoResp.status === 'OK') {
-            // Update reservation status to PAGADA
-            const updatedReserva = {
-              ...item,
-              reservaDto: {
-                ...item.reservaDto,
-                estadoReserva: EstadoReserva.PAGADA
-              }
-            };
-            await this.updateReserva(updatedReserva);
-            return { item: updatedReserva, text, type: 'success' };
-          }
-        } catch (error) {
-          console.error('Error saving pago:', error);
-          return { item, text: 'Error al guardar el pago', type: 'error' };
-        }
-      }
-      return { item, text, type: 'info' };
-    } catch (error) {
-      console.error('Error:', error);
-      return { item, text: 'Error al realizar la consulta en RUAT', type: 'error' };
-    }
-  }
-
   /* Status Helper Methods */
   getStatusBadgeClass(estado: string| undefined): string {
     switch (estado) {
       case EstadoReserva.BORRADOR:
         return 'bg-secondary-subtle text-secondary';
-      case EstadoReserva.PENDIENTE:
+      case EstadoReserva.SOLICITADA:
         return 'bg-warning-subtle text-warning';
-      case EstadoReserva.CONFIRMADA:
+      case EstadoReserva.PENDIENTE:
         return 'bg-info-subtle text-info';
       case EstadoReserva.PAGADA:
         return 'bg-primary-subtle text-primary';
@@ -721,32 +492,11 @@ private async sendValidationEmail(
     }
   }
 
-  getStatusAlertClass(estado: string| undefined): string {
-    switch (estado) {
-      case EstadoReserva.PENDIENTE:
-        return 'alert-warning';
-      case EstadoReserva.CONFIRMADA:
-        return 'alert-info';
-      case EstadoReserva.PAGADA:
-        return 'alert-primary';
-      case EstadoReserva.EN_CURSO:
-      case EstadoReserva.COMPLETADA:
-        return 'alert-success';
-      case EstadoReserva.CANCELADA:
-      case EstadoReserva.RECHAZADA:
-      case EstadoReserva.EXPIRADA:
-      case EstadoReserva.NO_SHOW:
-        return 'alert-danger';
-      default:
-        return 'alert-secondary';
-    }
-  }
-
   getStatusDescription(estado: any): string {
     const descriptions: { [key: string]: string } = {
       [EstadoReserva.BORRADOR]: 'Reserva en proceso de creación',
-      [EstadoReserva.PENDIENTE]: 'Esperando validación administrativa',
-      [EstadoReserva.CONFIRMADA]: 'Reserva aprobada, pendiente de pago',
+      [EstadoReserva.SOLICITADA]: 'Esperando validación administrativa',
+      [EstadoReserva.PENDIENTE]: 'Reserva aprobada, pendiente de pago',
       [EstadoReserva.PAGADA]: 'Pago confirmado, reserva activa',
       [EstadoReserva.EN_CURSO]: 'Reserva en curso',
       [EstadoReserva.COMPLETADA]: 'Reserva finalizada exitosamente',
@@ -775,11 +525,14 @@ private async sendValidationEmail(
 
   /* Common functions */ 
   public onCloseModal() {
-    this.accion = '';    
     if (this.reservationForm) {
       this.reservationForm.enable();
       this.reservationForm.reset();
-    }  
+    }
+    if(this.validationForm){
+      this.validationForm.enable();
+      this.validationForm.reset()
+    }
     this.modalService.dismissAll();
   }
   
@@ -792,76 +545,12 @@ private async sendValidationEmail(
       showConfirmButton: false
     });
   }
-
-  /**
-   * Check if reservation can be validated
-   */
-  canValidateReservation(): boolean {
-    const estadoValidacion = this.row?.reservaDto?.estadoValidacion;
-    const estadoReserva = this.row?.reservaDto?.estadoReserva;
-    return (estadoValidacion === 'PENDIENTE' && 
-            estadoReserva === EstadoReserva.PENDIENTE && 
-            this.canActivate.includes('VALIDAR'));
-  }
-
-  /**
-   * Check if reservation can be edited
-   */
-  canEditReservation(): boolean {
-    return this.row?.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE && 
-           this.canActivate.includes('CAMBIAR-HORARIO');
-  }
-
-  /**
-   * Check if reservation can be cancelled
-   */
-  canCancelReservation(): boolean {
-    const estado = this.row?.reservaDto?.estadoReserva;
-    return (estado === EstadoReserva.PENDIENTE || estado === EstadoReserva.CONFIRMADA) && 
-           this.canActivate.includes('ANULAR');
-  }
-
-  /**
-   * Check if reservation can be consulted
-   */
-  canConsultReservation(): boolean {
-    const estado = this.row?.reservaDto?.estadoReserva;
-    return (estado === EstadoReserva.PENDIENTE || estado === EstadoReserva.CONFIRMADA) && 
-           this.canActivate.includes('ACTUALIZAR');
-  }
-
-  /**
-   * Check if reservation usage can be confirmed
-   */
-  canConfirmUsage(): boolean {
-    const estado = this.row?.reservaDto?.estadoReserva;
-    return (estado === EstadoReserva.PAGADA || estado === EstadoReserva.EN_CURSO) && 
-           this.canActivate.includes('CONFIRMAR_USO');
-  }
-
-  /**
-   * Model Position Set
-   */
-  position() {
-    Swal.fire({
-      position: 'center',
-      icon: 'success',
-      title: 'Evento guardado',
-      showConfirmButton: false,
-      timer: 1000,
-    });
-  }
-
-  /**
-   * Model Edit Position Set
-   */
-  Editposition() {
-    Swal.fire({
-      position: 'center',
-      icon: 'success',
-      title: 'Evento actualizado',
-      showConfirmButton: false,
-      timer: 1000,
-    });
-  }
+    private handleError(title: string, error: any): void {
+      Swal.fire({
+        title: title,
+        text: error.message || 'Por favor, intente nuevamente.',
+        icon: 'error',
+        confirmButtonText: 'Entendido'
+      });
+    }
 }

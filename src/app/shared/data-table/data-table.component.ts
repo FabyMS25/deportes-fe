@@ -95,34 +95,6 @@ export class DataTableComponent implements OnChanges {
     }
   }
 
-
-  private handleServerSidePagination(): void {
-    if (this.allcontent && this.allcontent.content && Array.isArray(this.allcontent.content)) {
-      this.content = this.allcontent.content;
-      this.totalElements = this.allcontent.totalElements || this.content.length;
-      if (this.allcontent.pageable) {
-        this.service.page = this.allcontent.pageable.pageNumber + 1; 
-        this.itemsPerPage = this.allcontent.pageable.pageSize;
-      }
-    } else if (Array.isArray(this.allcontent)) {
-      this.content = this.allcontent;
-      this.totalElements = this.allcontent.length;
-    } else {
-      this.content = [];
-      this.totalElements = 0;
-    }
-  }
-
-  private handleClientSidePagination(): void {
-    if (Array.isArray(this.allcontent)) {
-      this.content = this.service.changePage(this.allcontent, this.itemsPerPage);
-      this.totalElements = this.allcontent.length;
-    } else {
-      this.content = [];
-      this.totalElements = 0;
-    }
-  }
-
   //#region Action Handle
   showItem(item: any): void { this.showItemEmitter.emit(item); }
   editItem(item: any): void { this.editItemEmitter.emit(item); }
@@ -262,6 +234,37 @@ export class DataTableComponent implements OnChanges {
   //#endregion
 
   //#region On selection
+  checkUncheckAll(e: Event): void {
+    const target = e.target as HTMLInputElement;
+    this.masterSelected = target.checked;    
+    if (this.masterSelected) {
+        this.content.forEach(item => {
+            const exists = this.checkedValGet.some(selected => 
+                (selected.uuid && item.uuid && selected.uuid === item.uuid) ||
+                selected === item
+            );
+            if (!exists) {
+                this.checkedValGet.push(item);
+            }
+        });
+    } else {
+        this.checkedValGet = this.checkedValGet.filter(selected => 
+            !this.content.some(item => 
+                (selected.uuid && item.uuid && selected.uuid === item.uuid) ||
+                selected === item
+            )
+        );
+    }  
+    this.updateSelectionState();
+  }
+  private updateSelectionState(): void {
+    this.updateMasterCheckbox();
+    this.selectedItemEmitter.emit(this.checkedValGet);  
+    const removeActions = document.getElementById("remove-actions");
+    if (removeActions) {
+        removeActions.style.display = this.checkedValGet.length > 0 ? "block" : "none";
+    }
+  }
   onCheckboxChange(e: Event, item: any): void {
     const target = e.target as HTMLInputElement;
     target.checked
@@ -269,46 +272,9 @@ export class DataTableComponent implements OnChanges {
       : this.checkedValGet = this.checkedValGet.filter(i => i !== item);
     this.updateSelectionState();
   }
-  checkUncheckAll(e: Event): void {
-    const target = e.target as HTMLInputElement;
-    this.masterSelected = target.checked;
-    if (this.serverSidePagination) {
-      this.checkedValGet = this.masterSelected ? [...this.content] : [];
-    } else {
-      this.checkedValGet = this.masterSelected ? [...this.allcontent] : [];
-    }
-    
-    this.updateSelectionState();
-  }
-  // checkUncheckAll(e: Event): void {
-  //   const target = e.target as HTMLInputElement;
-  //   this.masterSelected = target.checked;
-  //   this.checkedValGet = this.masterSelected ? [...this.allcontent] : [];
-  //   this.updateSelectionState();
-  // }
-
-  private updateSelectionState(): void {
-    const totalItems = this.serverSidePagination ? this.content.length : this.allcontent.length;
-    this.masterSelected = this.checkedValGet.length === totalItems && totalItems > 0;
-    this.selectedItemEmitter.emit(this.checkedValGet);
-    
-    const removeActions = document.getElementById("remove-actions");
-    if (removeActions) {
-      removeActions.style.display = this.checkedValGet.length > 0 ? "block" : "none";
-    }
-  }
-  // private updateSelectionState(): void {
-  //   this.masterSelected = this.checkedValGet.length === this.allcontent.length;
-  //   this.selectedItemEmitter.emit(this.checkedValGet);
-  //   const removeActions = document.getElementById("remove-actions");
-  //   if (removeActions) {
-  //     removeActions.style.display = this.checkedValGet.length > 0 ? "block" : "none";
-  //   }
-  // }
   //#endregion
 
    //#region Sort & Pagination
-  // Sort - Only for client-side
   currentSortColumn: string = '';
   isSortAscending: boolean = true;
 
@@ -317,7 +283,6 @@ export class DataTableComponent implements OnChanges {
       console.warn('Sorting should be handled server-side when using server-side pagination');
       return;
     }
-
     if (this.currentSortColumn === column) {
       this.isSortAscending = !this.isSortAscending;
     } else {
@@ -328,36 +293,81 @@ export class DataTableComponent implements OnChanges {
     this.service.page = 1;
     this.changePage();
   }
-
   getSortDirection(column: string): string {
     if (this.serverSidePagination) return 'none';
     if (this.currentSortColumn !== column) return 'none';
     return this.isSortAscending ? 'ascending' : 'descending';
   }
-
-  // Pagination
+  
+  private handleClientSidePagination(): void {
+    if (Array.isArray(this.allcontent)) {
+      this.content = this.service.changePage(this.allcontent, this.itemsPerPage);
+      this.totalElements = this.allcontent.length;
+    } else {
+      this.content = [];
+      this.totalElements = 0;
+    }
+  }
+  private handleServerSidePagination(): void {
+    if (this.allcontent && this.allcontent.content && Array.isArray(this.allcontent.content)) {
+        this.content = this.allcontent.content;
+        this.totalElements = this.allcontent.totalElements || 0;
+        const pageNumber = this.allcontent.number ?? this.allcontent.pageable?.pageNumber ?? 0;
+        const pageSize = this.allcontent.size ?? this.allcontent.pageable?.pageSize ?? this.itemsPerPage;
+        this.service.page = pageNumber + 1;
+        this.itemsPerPage = pageSize;
+        this.service.pageSize = this.itemsPerPage;
+    } else if (Array.isArray(this.allcontent)) {
+        this.content = this.allcontent;
+        this.totalElements = this.allcontent.length;
+    } else {
+        this.content = [];
+        this.totalElements = 0;
+    }
+    this.updateMasterCheckbox();
+  }
+  private updateMasterCheckbox(): void {
+    if (this.content.length === 0) {
+        this.masterSelected = false;
+        return;
+    }
+    const allCurrentPageSelected = this.content.every(item => 
+        this.checkedValGet.some(selected => 
+            (selected.uuid && item.uuid && selected.uuid === item.uuid) ||
+            selected === item
+        )
+    );    
+    this.masterSelected = allCurrentPageSelected && this.content.length > 0;
+  }
   onTableSizeChange(event: Event): void {
     const size = +(event.target as HTMLSelectElement).value;
     this.itemsPerPage = size;
+    this.service.pageSize = size;
     
     if (this.serverSidePagination) {
-      this.pageSizeChange.emit(size);
+        this.pageSizeChange.emit(size);
     } else {
-      this.changePage();
+        this.service.page = 1;
+        this.changePage();
     }
   }
-
   changePage(): void {
     if (this.serverSidePagination) {
-      this.pageChange.emit(this.service.page);
+        this.pageChange.emit(this.service.page);
     } else {
-      this.content = this.service.changePage(this.allcontent, this.itemsPerPage);
+        this.content = this.service.changePage(this.allcontent, this.itemsPerPage);
+        this.updateMasterCheckbox();
     }
   }
-
   onPageChange(page: number): void {
     this.service.page = page;
     this.changePage();
+  }
+  getTotalElements(): number {
+    if (this.serverSidePagination) {
+        return this.totalElements;
+    }
+    return Array.isArray(this.allcontent) ? this.allcontent.length : 0;
   }
   //#endregion
 
@@ -377,15 +387,5 @@ export class DataTableComponent implements OnChanges {
 
   toggleColumn(column: ColumnDefinition): void {
     column.visible = !column.visible;
-  }
-
-  getDisplayContentLength(): number {
-    return this.content.length;
-  }
-  getTotalElements(): number {
-    if (this.serverSidePagination) {
-      return this.totalElements;
-    }
-    return Array.isArray(this.allcontent) ? this.allcontent.length : 0;
   }
 }

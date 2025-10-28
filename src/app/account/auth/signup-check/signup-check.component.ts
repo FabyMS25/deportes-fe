@@ -9,6 +9,8 @@ import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.
 import { UserDataService } from '../signup/user-data.service';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
 import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
+import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 
 @Component({
   selector: 'app-signup-check',
@@ -20,6 +22,7 @@ export class SignupCheckComponent {
   SignupForm!: UntypedFormGroup;
   submitted = false;
   year: number = new Date().getFullYear();
+  systemConfigList: ConfiguracionSistema[] = [];
   
   identityTypes = UserDocType
   cityAcronym= CityAcronym
@@ -29,18 +32,19 @@ export class SignupCheckComponent {
     private ruatService: RuatRequestsService,
     // private ruatService: RuatCallsService,
     private router: Router,
-    private userDataService: UserDataService
+    private userDataService: UserDataService,
+    private systemConfigsService: ConfiguracionSistemaService
   ) { }
 
   ngOnInit(): void {
-    this.authRuat()
+    this.getConfigsSystem();
+    // this.authRuat()
     
      this.SignupForm = this.formBuilder.group({
       tipoDocumento:['', [Validators.required]],
       numeroDocumento:['', [Validators.required]],
       expedido:[''],
-    });
-    
+    }); 
   }
 
   get f() { return this.SignupForm.controls; }
@@ -108,8 +112,20 @@ export class SignupCheckComponent {
     });
   }
   /* API RUAT Services */
+  private getConfigsSystem() {
+    this.systemConfigsService.getAll().subscribe({
+      next: (data: any) => {
+          if (data['status'] === 'OK') {
+            this.systemConfigList = data.payload;
+            this.authRuat()
+          }
+        }
+      });
+  }
   private authRuat() {
-      this.ruatService.authenticate().subscribe({
+    const usuario = this.systemConfigList.find(config => config.clave === 'USUARIO_RUAT')?.valorTexto || '';
+    const clave = this.systemConfigList.find(config => config.clave === 'CLAVE_RUAT')?.valorTexto || '';
+      this.ruatService.authenticate(usuario,clave).subscribe({
         next: (response) => {          
           window.sessionStorage.setItem('ruatToken', response.token);
         },
@@ -122,7 +138,7 @@ export class SignupCheckComponent {
   ruatData: any;
   searchContribuyente(data:any){
     console.log(data)
-    this.ruatService.getContribuyentePorCi(data.numeroDocumento,data.tipoDocumento, data.expedido ).subscribe({    
+    this.ruatService.getContribuyentePorCi('QUI',data.numeroDocumento,data.tipoDocumento, data.expedido ).subscribe({    
       next: (resp: any) => {
         if(resp['status']==='OK'){
           const response = resp.payload
@@ -157,6 +173,4 @@ export class SignupCheckComponent {
       }
     });
   }
-
-
 }

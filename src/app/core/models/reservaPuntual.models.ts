@@ -1,9 +1,4 @@
-import { CampoDeportivo } from "./campoDeportivo.model";
-import { Contribuyente } from "./contribuyente.models";
-import { Pago } from "./pago.model";
 import { Reserva } from "./reserva.models";
-import { Tablero } from "./tablero.models";
-
 export interface ReservaPuntual {
   uuid?: string;
   estado?: boolean;

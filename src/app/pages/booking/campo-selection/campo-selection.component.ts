@@ -4,7 +4,7 @@ import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { trigger, transition, style, animate } from '@angular/animations';
+import { trigger, transition, animate } from '@angular/animations';
 
 interface CampoWithTariff {
   campo: CampoDeportivo;
@@ -21,12 +21,10 @@ interface CampoWithTariff {
   animations: [
     trigger('slideDown', [
       transition(':enter', [
-        style({ height: '0', opacity: '0', overflow: 'hidden' }),
-        animate('300ms ease-out', style({ height: '*', opacity: '1' }))
+        animate('300ms ease-out')
       ]),
       transition(':leave', [
-        style({ height: '*', opacity: '1', overflow: 'hidden' }),
-        animate('300ms ease-in', style({ height: '0', opacity: '0' }))
+        animate('300ms ease-in')
       ])
     ])
   ]

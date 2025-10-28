@@ -18,6 +18,9 @@ import { ReservaPuntualService } from 'src/app/core/services/api/reserva-puntual
 import { ReservaRecurrenteService } from 'src/app/core/services/api/reserva-recurrente.service';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { ModalRecurrentComponent } from '../../booking-recurrent/modal/modal.component';
+import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { ReservaPuntual } from 'src/app/core/models/reservaPuntual.models';
+import { EstadoReserva } from 'src/app/core/constants/Estados';
 
 @Component({
     selector: 'app-calendar-dashboard',
@@ -44,6 +47,7 @@ export class CalendarDashboardComponent implements OnInit {
   
   filterEvents: any = [];
   allcalendarEvents: any[] = [];
+  contribuyente!:Contribuyente;
 
   @ViewChild('confirmModal') confirmModal!: TemplateRef<any>; 
 
@@ -63,7 +67,11 @@ export class CalendarDashboardComponent implements OnInit {
       this.breadCrumbItems = [
           { label: 'Dashboards' },
           { label: 'Encargado', active: true }
-      ];        
+      ];  
+      const currentUser = window.sessionStorage.getItem("currentUser");
+      if (window.sessionStorage.getItem("auth-token") === 'isContribuyente') {
+        this.contribuyente = currentUser ? JSON.parse(currentUser) : null;
+      }   
     this._fetchData();
   }
 
@@ -81,11 +89,20 @@ export class CalendarDashboardComponent implements OnInit {
       let allEvents: any[] = [];
 
       if (reservasPuntuales?.status === 'OK') {
-        let reservasPuntualesData = reservasPuntuales.payload;
+        let reservasPuntualesData = reservasPuntuales.payload.filter((item:Reserva)=>
+          item.estadoReserva === EstadoReserva.PAGADA || 
+          item.estadoReserva === EstadoReserva.PENDIENTE || item.estadoReserva===EstadoReserva.SOLICITADA ||
+          item.estadoReserva === EstadoReserva.COMPLETADA || item.estadoReserva===EstadoReserva.EN_CURSO
+        );
         
         if (employee) {
-          reservasPuntualesData = reservasPuntualesData.filter((item: any) => 
+          reservasPuntualesData = reservasPuntualesData.filter((item: Reserva) => 
             item.campoDeportivoDto?.complejoDto?.uuid === employee.complejoDto.uuid
+          );
+        }
+        if(this.contribuyente){
+          reservasPuntualesData = reservasPuntualesData.filter((item: Reserva) => 
+            item.contribuyenteDto?.uuid === this.contribuyente.uuid
           );
         }
 
@@ -128,11 +145,20 @@ export class CalendarDashboardComponent implements OnInit {
       }
 
       if (reservasRecurrentes?.status === 'OK') {
-        let reservasRecurrentesData = reservasRecurrentes.payload;
+        let reservasRecurrentesData = reservasRecurrentes.payload.filter((item:Reserva)=>
+          item.estadoReserva === EstadoReserva.PAGADA || 
+          item.estadoReserva === EstadoReserva.PENDIENTE || item.estadoReserva===EstadoReserva.SOLICITADA ||
+          item.estadoReserva === EstadoReserva.COMPLETADA || item.estadoReserva===EstadoReserva.EN_CURSO
+        );
         
         if (employee) {
           reservasRecurrentesData = reservasRecurrentesData.filter((item: any) => 
             item.campoDeportivoDto?.complejoDto?.uuid === employee.complejoDto.uuid
+          );
+        }
+        if(this.contribuyente){
+          reservasRecurrentesData = reservasRecurrentesData.filter((item: Reserva) => 
+            item.contribuyenteDto?.uuid === this.contribuyente.uuid
           );
         }
 

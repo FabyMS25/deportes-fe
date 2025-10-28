@@ -14,34 +14,37 @@
     <form (ngSubmit)="saveData()" *ngIf="accion === 'edit' || accion === ''"
         class="tablelist-form" autocomplete="off" [formGroup]="fieldsForm">
         <div class="modal-body p-0">
-            <ul class="nav nav-tabs nav-tabs-custom" role="tablist">
+            <ul class="nav nav-tabs nav-tabs-custom nav-justified" role="tablist">
                 <li class="nav-item">
-                    <a class="nav-link" [class.active]="currentStep === 1" 
+                    <a class="nav-link py-2" [class.active]="currentStep === 1" 
                     (click)="goToStep(1)" role="tab">
-                        <i class="ri-information-line"></i> Información Básica
+                        <i class="ri-information-line d-block d-sm-none"></i>
+                        <span class="d-none d-sm-inline"><i class="ri-information-line me-1"></i>Información Básica</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" [class.active]="currentStep === 2"
+                    <a class="nav-link py-2" [class.active]="currentStep === 2"
                     (click)="goToStep(2)" role="tab">
-                        <i class="ri-calendar-line"></i> Horarios
+                        <i class="ri-calendar-line d-block d-sm-none"></i>
+                        <span class="d-none d-sm-inline"><i class="ri-calendar-line me-1"></i>Horarios</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" [class.active]="currentStep === 3"
+                    <a class="nav-link py-2" [class.active]="currentStep === 3"
                     (click)="goToStep(3)" role="tab">
-                        <i class="ri-money-dollar-circle-line"></i> Tarifas
+                        <i class="ri-money-dollar-circle-line d-block d-sm-none"></i>
+                        <span class="d-none d-sm-inline"><i class="ri-money-dollar-circle-line me-1"></i>Tarifas</span>
                     </a>
                 </li>
             </ul>
 
-            <div class="tab-content p-4" style="max-height: 60vh; overflow-y: auto;">
+            <div class="tab-content p-3" style="max-height: 65vh; overflow-y: auto;">
                 <input type="hidden" formControlName="uuid" />            
                 <!-- Step 1: Basic Information -->
                 <div class="tab-pane" [class.active]="currentStep === 1" [class.show]="currentStep === 1">
-                    <div class="row g-3">
-                        <div class="col-lg-6">
-                            <label class="form-label mb-0">Complejo <span class="text-danger">*</span></label>
+                    <div class="row g-2">
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label mb-1 small">Complejo <span class="text-danger">*</span></label>
                             <ng-select [items]="complejosList" bindLabel="nombre"
                                     formControlName="complejoDto" placeholder="Seleccione"
                                     [ngClass]="{'is-invalid': submitted && form['complejoDto'].errors }">
@@ -51,8 +54,8 @@
                             </div>
                         </div>
                         
-                        <div class="col-lg-6">
-                            <label class="form-label mb-0">Superficie <span class="text-danger">*</span></label>
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label mb-1 small">Superficie <span class="text-danger">*</span></label>
                             <ng-select [items]="surfacesList" bindLabel="descripcion"
                                     formControlName="superficieDto" placeholder="Seleccione"
                                     [ngClass]="{'is-invalid': submitted && form['superficieDto'].errors }">
@@ -61,19 +64,32 @@
                                 <div *ngIf="form['superficieDto'].errors['required']">Campo requerido</div>
                             </div>
                         </div>
-                        <div class="col-lg-8">
-                            <label class="form-label mb-0">Nombre <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" placeholder="Nombre del campo"
+
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label mb-1 small">Categoría <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" formControlName="categoria"
+                                    [ngClass]="{'is-invalid': submitted && form['categoria'].errors }">
+                                <option value="">Seleccione</option>
+                                <option *ngFor="let cat of categoriaCampoList" [value]="cat">{{cat}}</option>
+                            </select>
+                            <div *ngIf="submitted && form['categoria'].errors" class="invalid-feedback">
+                                <div *ngIf="form['categoria'].errors['required']">Campo requerido</div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 col-md-8">
+                            <label class="form-label mb-1 small">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" placeholder="Nombre del campo"
                                 formControlName="nombre" maxlength="250"
                                 [ngClass]="{ 'is-invalid': submitted && form['nombre'].errors }" />
                             <div *ngIf="submitted && form['nombre'].errors" class="invalid-feedback">
                                 <div *ngIf="form['nombre'].errors['required']">Campo requerido</div>
                             </div>
                         </div>
-                        <div class="col-lg-4">
-                            <label class="form-label mb-0">Código <span class="text-danger">*</span>
-                            <small class="text-muted">Auto-generado, puede editarlo</small></label>
-                            <div class="input-group">
+
+                        <div class="col-lg-3 col-md-4">
+                            <label class="form-label mb-1 small">Código <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-sm">
                                 <input type="text" class="form-control" placeholder="CAMPO-001" 
                                     formControlName="codigo" maxlength="50"
                                     [ngClass]="{ 'is-invalid': submitted && form['codigo'].errors }" />
@@ -87,111 +103,149 @@
                                 <div *ngIf="form['codigo'].errors['required']">Campo requerido</div>
                             </div>
                         </div>
-                        <div class="col-lg-4">
-                            <label class="form-label mb-0">Categoría <span class="text-danger">*</span></label>
-                            <select class="form-select" formControlName="categoria"
-                                    [ngClass]="{'is-invalid': submitted && form['categoria'].errors }">
-                                <option value="">Seleccione</option>
-                                <option *ngFor="let cat of categoriaCampoList" [value]="cat">{{cat}}</option>
-                            </select>
-                            <div *ngIf="submitted && form['categoria'].errors" class="invalid-feedback">
-                                <div *ngIf="form['categoria'].errors['required']">Campo requerido</div>
-                            </div>
-                        </div>
 
-                        <div class="col-lg-4">
-                            <label class="form-label mb-0">Estado <span class="text-danger">*</span></label>
-                            <select class="form-select" formControlName="estadoActual"
+                        <div class="col-lg-3 col-md-4">
+                            <label class="form-label mb-1 small">Estado <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" formControlName="estadoActual"
                                     [ngClass]="{'is-invalid': submitted && form['estadoActual'].errors }">
                                 <option *ngFor="let estado of estadoActualList" [value]="estado">{{estado}}</option>
                             </select>
                         </div>
 
-                        <div class="col-lg-4">
-                            <label class="form-label mb-0">Capacidad</label>
-                            <input type="number" class="form-control" placeholder="0"
+                        <div class="col-lg-3 col-md-4">
+                            <label class="form-label mb-1 small">Capacidad</label>
+                            <input type="number" class="form-control form-control-sm" placeholder="0"
                                 formControlName="capacidadPersonas" min="0" />
                         </div>
 
-                        <div class="col-lg-6">
-                            <label class="form-label mb-0">Dimensiones</label>
-                            <input type="text" class="form-control" placeholder="105m x 68m"
+                        <div class="col-lg-3 col-md-4">
+                            <label class="form-label mb-1 small">Dimensiones</label>
+                            <input type="text" class="form-control form-control-sm" placeholder="105m x 68m"
                                 formControlName="dimensiones" maxlength="100" />
                         </div>
 
-                        <div class="col-lg-3">
+                        <div class="col-lg-3 col-6">
                             <div class="form-check form-switch mt-4">
                                 <input class="form-check-input" type="checkbox" id="tieneIluminacion" 
                                     formControlName="tieneIluminacion">
-                                <label class="form-check-label" for="tieneIluminacion">Iluminación</label>
+                                <label class="form-check-label small" for="tieneIluminacion">Iluminación</label>
                             </div>
                         </div>
 
-                        <div class="col-lg-3">
+                        <div class="col-lg-3 col-6">
                             <div class="form-check form-switch mt-4">
                                 <input class="form-check-input" type="checkbox" id="accesoLibre" 
                                     formControlName="accesoLibre">
-                                <label class="form-check-label" for="accesoLibre">Acceso Libre</label>
+                                <label class="form-check-label small" for="accesoLibre">Acceso Libre</label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 mt-3">
+                            <div class="card border mb-0">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="mb-0 small"><i class="ri-shield-check-line me-1"></i>Configuración de Aprobación</h6>
+                                </div>
+                                <div class="card-body p-2">
+                                    <div class="row g-2">
+                                        <div class="col-lg-4 col-md-6">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="requiereAprobacion" 
+                                                    formControlName="requiereAprobacion">
+                                                <label class="form-check-label fw-semibold small" for="requiereAprobacion">
+                                                    Requiere Aprobación
+                                                </label>
+                                            </div>
+                                            <small class="text-muted d-block">Las reservas requieren validación manual</small>
+                                        </div>
+
+                                        <div class="col-lg-4 col-md-6" *ngIf="fieldsForm.get('requiereAprobacion')?.value">
+                                            <label class="form-label mb-1 small">Horas Mínima Aprobación</label>
+                                            <input type="number" class="form-control form-control-sm" placeholder="24"
+                                                formControlName="horasMinimaAprobacion" min="0" step="1" />
+                                            <small class="text-muted d-block">Horas mínimas para aprobación</small>
+                                        </div>
+
+                                        <div class="col-lg-4 col-md-6" *ngIf="!fieldsForm.get('requiereAprobacion')?.value">
+                                            <label class="form-label mb-1 small">Duración Máx. (min)</label>
+                                            <input type="number" class="form-control form-control-sm" placeholder="120"
+                                                formControlName="maxDuracionAutoAprobacion" min="0" step="15" />
+                                            <small class="text-muted d-block">Para auto-aprobación</small>
+                                        </div>
+
+                                        <div class="col-lg-4 col-md-6" *ngIf="!fieldsForm.get('requiereAprobacion')?.value">
+                                            <label class="form-label mb-1 small">Personas Máx.</label>
+                                            <input type="number" class="form-control form-control-sm" placeholder="20"
+                                                formControlName="maxPersonasAutoAprobacion" min="0" step="1" />
+                                            <small class="text-muted d-block">Para auto-aprobación</small>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="col-lg-12">
-                            <label class="form-label mb-0">Observaciones</label>
-                            <textarea class="form-control" rows="2" placeholder="Observaciones"
+                        <div class="col-12">
+                            <label class="form-label mb-1 small">Observaciones</label>
+                            <textarea class="form-control form-control-sm" rows="2" placeholder="Observaciones"
                                     formControlName="observaciones"></textarea>
                         </div>
                     </div>
                 </div>
+
                 <!-- Step 2: Horarios -->
                 <div class="tab-pane" [class.active]="currentStep === 2" [class.show]="currentStep === 2">
-                    <div class="mb-4">
-                        <h6 class="mb-3"><i class="ri-calendar-check-line"></i> Horarios Regulares</h6>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0 small"><i class="ri-calendar-check-line me-1"></i>Horarios Regulares</h6>
+                            <button type="button" class="btn btn-sm btn-primary" (click)="addHorarioFijo()" [disabled]="submitted">
+                                <i class="ri-add-line"></i> Agregar
+                            </button>
+                        </div>
                         <div formArrayName="horariosFijosDtoList" class="table-responsive">
-                            <table class="table table-sm table-bordered align-middle">
+                            <table class="table table-sm table-bordered align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 20%">Día</th>
-                                        <th style="width: 12%" class="text-center">Abierto</th>
-                                        <th style="width: 20%">Apertura</th>
-                                        <th style="width: 20%">Cierre</th>
-                                        <th style="width: 20%">Observaciones</th>
-                                        <th style="width: 8%"></th>
+                                        <th style="width: 18%" class="py-1 small">Día</th>
+                                        <th style="width: 10%" class="text-center py-1 small">Abierto</th>
+                                        <th style="width: 18%" class="py-1 small">Apertura</th>
+                                        <th style="width: 18%" class="py-1 small">Cierre</th>
+                                        <th style="width: 28%" class="py-1 small">Observaciones</th>
+                                        <th style="width: 8%" class="py-1"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr *ngFor="let horario of horariosFijos.controls; let i = index" [formGroupName]="i">
-                                        <td>
+                                        <td class="py-1">
                                             <select class="form-select form-select-sm" formControlName="dia"
                                                     [ngClass]="{'is-invalid': submitted && horario.get('dia')?.errors}">
                                                 <option value="">Seleccione</option>
                                                 <option *ngFor="let dia of diaOptions" [value]="dia.value">{{dia.label}}</option>
                                             </select>
                                         </td>
-                                        <td class="text-center">
-                                            <div class="form-check form-switch d-flex justify-content-center">
+                                        <td class="text-center py-1">
+                                            <div class="form-check form-switch d-flex justify-content-center mb-0">
                                                 <input class="form-check-input" type="checkbox" formControlName="abierto"
                                                     [id]="'abierto-' + i">
                                             </div>
                                         </td>
-                                        <td>
+                                        <td class="py-1">
                                             <input type="time" class="form-control form-control-sm" 
                                                 formControlName="horaApertura"
                                                 [disabled]="!horario.get('abierto')?.value"
                                                 [ngClass]="{'is-invalid': submitted && horario.get('horaApertura')?.errors}">
                                         </td>
-                                        <td>
+                                        <td class="py-1">
                                             <input type="time" class="form-control form-control-sm" 
                                                 formControlName="horaCierre"
                                                 [disabled]="!horario.get('abierto')?.value"
                                                 [ngClass]="{'is-invalid': submitted && horario.get('horaCierre')?.errors}">
                                         </td>
-                                        <td>
+                                        <td class="py-1">
                                             <div class="input-group input-group-sm">
                                                 <input type="text" class="form-control form-control-sm" 
                                                     formControlName="observaciones"
                                                     placeholder="Opcional"
                                                     [id]="'obs-input-' + i">
-                                                <button class="btn btn-outline-secondary" type="button"
+                                                <button class="btn btn-outline-secondary btn-sm" type="button"
                                                         (click)="toggleObservacionesDropdown(i)"
                                                         [id]="'obs-btn-' + i">
                                                     <i class="ri-add-circle-line"></i>
@@ -199,17 +253,17 @@
                                             </div>
                                             <div class="dropdown-menu" [class.show]="showObsDropdown[i]"
                                                 style="position: absolute; z-index: 1000;">
-                                                <a class="dropdown-item" href="javascript:void(0)" 
+                                                <a class="dropdown-item small" href="javascript:void(0)" 
                                                 (click)="setObservacion(i, 'Horario reducido')">Horario reducido</a>
-                                                <a class="dropdown-item" href="javascript:void(0)" 
+                                                <a class="dropdown-item small" href="javascript:void(0)" 
                                                 (click)="setObservacion(i, 'Mantenimiento programado')">Mantenimiento programado</a>
-                                                <a class="dropdown-item" href="javascript:void(0)" 
+                                                <a class="dropdown-item small" href="javascript:void(0)" 
                                                 (click)="setObservacion(i, 'Sujeto a disponibilidad')">Sujeto a disponibilidad</a>
-                                                <a class="dropdown-item" href="javascript:void(0)" 
+                                                <a class="dropdown-item small" href="javascript:void(0)" 
                                                 (click)="setObservacion(i, 'Requiere reserva previa')">Requiere reserva previa</a>
                                             </div>
                                         </td>
-                                        <td class="text-center">
+                                        <td class="text-center py-1">
                                             <button type="button" class="btn btn-sm btn-danger" 
                                                     (click)="removeHorarioFijo(i)" 
                                                     *ngIf="horariosFijos.length > 1"
@@ -221,48 +275,51 @@
                                 </tbody>
                             </table>
                         </div>
-                        <button type="button" class="btn btn-sm btn-primary" (click)="addHorarioFijo()" [disabled]="submitted">
-                            <i class="ri-add-line"></i> Agregar Día
-                        </button>
                     </div>
+
                     <div>
-                        <h6 class="mb-3"><i class="ri-calendar-event-line"></i> Excepciones</h6>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0 small"><i class="ri-calendar-event-line me-1"></i>Excepciones</h6>
+                            <button type="button" class="btn btn-sm btn-warning" (click)="addHorarioExcepcion()" [disabled]="submitted">
+                                <i class="ri-add-line"></i> Agregar
+                            </button>
+                        </div>
                         <div formArrayName="horariosExcepcionesDtoList" class="table-responsive">
-                            <table class="table table-sm table-bordered align-middle">
+                            <table class="table table-sm table-bordered align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 20%">Fecha</th>
-                                        <th style="width: 25%">Tipo</th>
-                                        <th style="width: 15%">Apertura</th>
-                                        <th style="width: 15%">Cierre</th>
-                                        <th style="width: 20%">Motivo</th>
-                                        <th style="width: 5%"></th>
+                                        <th style="width: 20%" class="py-1 small">Fecha</th>
+                                        <th style="width: 22%" class="py-1 small">Tipo</th>
+                                        <th style="width: 15%" class="py-1 small">Apertura</th>
+                                        <th style="width: 15%" class="py-1 small">Cierre</th>
+                                        <th style="width: 23%" class="py-1 small">Motivo</th>
+                                        <th style="width: 5%" class="py-1"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr *ngFor="let horario of horariosExcepciones.controls; let i = index" [formGroupName]="i">
-                                        <td>
+                                        <td class="py-1">
                                             <input type="date" class="form-control form-control-sm" formControlName="fecha"
                                                 [ngClass]="{'is-invalid': submitted && horario.get('fecha')?.errors}">
                                         </td>
-                                        <td>
+                                        <td class="py-1">
                                             <select class="form-select form-select-sm" formControlName="tipoExcepcion"
                                                     [ngClass]="{'is-invalid': submitted && horario.get('tipoExcepcion')?.errors}">
                                                 <option value="">Seleccione</option>
                                                 <option *ngFor="let tipo of tipoExcepcionList" [value]="tipo">{{tipo}}</option>
                                             </select>
                                         </td>
-                                        <td>
+                                        <td class="py-1">
                                             <input type="time" class="form-control form-control-sm" formControlName="horaApertura">
                                         </td>
-                                        <td>
+                                        <td class="py-1">
                                             <input type="time" class="form-control form-control-sm" formControlName="horaCierre">
                                         </td>
-                                        <td>
+                                        <td class="py-1">
                                             <input type="text" class="form-control form-control-sm" 
                                                 formControlName="motivo" placeholder="Motivo">
                                         </td>
-                                        <td class="text-center">
+                                        <td class="text-center py-1">
                                             <button type="button" class="btn btn-sm btn-danger" 
                                                     (click)="removeHorarioExcepcion(i)" [disabled]="submitted">
                                                 <i class="ri-delete-bin-line"></i>
@@ -270,311 +327,286 @@
                                         </td>
                                     </tr>
                                     <tr *ngIf="horariosExcepciones.length === 0">
-                                        <td colspan="6" class="text-center text-muted">No hay excepciones registradas</td>
+                                        <td colspan="6" class="text-center text-muted py-2 small">No hay excepciones registradas</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                        <button type="button" class="btn btn-sm btn-warning" (click)="addHorarioExcepcion()" [disabled]="submitted">
-                            <i class="ri-add-line"></i> Agregar Excepción
-                        </button>
                     </div>
                 </div>
+
                 <!-- Step 3: Tarifas -->
                 <div class="tab-pane" [class.active]="currentStep === 3" [class.show]="currentStep === 3">
-                <div formArrayName="tarifasDtoList">
-                    <div *ngFor="let tarifa of tarifas.controls; let i = index" [formGroupName]="i" class="card mb-2">
-                    <div class="card-header bg-light d-flex align-items-center p-1">
-                        <span class="badge bg-primary me-2">Tarifa {{i + 1}}</span>
-                        <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" formControlName="activo"
-                                [id]="'tarifa-activo-' + i">
-                        <label class="form-check-label" [for]="'tarifa-activo-' + i">Activa</label>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-danger ms-auto" 
-                                (click)="removeTarifa(i)" *ngIf="tarifas.length > 1" [disabled]="submitted">
-                        <i class="ri-delete-bin-line"></i> Eliminar
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-2">
-                        <div class="col-lg-5">
-                            <label class="form-label mb-0">Clasificador RUAT <span class="text-danger">*</span></label>
-                            <ng-select [items]="clasificadoresRuatList" bindLabel="nombre"
-                                    formControlName="clasificadorRuatDto" placeholder="Seleccionar"
-                                    [ngClass]="{'is-invalid': submitted && tarifa.get('clasificadorRuatDto')?.errors}">
-                            </ng-select>
-                            <div *ngIf="submitted && tarifa.get('clasificadorRuatDto')?.errors" class="invalid-feedback d-block">
-                            <div *ngIf="tarifa.get('clasificadorRuatDto')?.errors?.['required']">Campo requerido</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3">
-                            <label class="form-label mb-0">Tipo de Cobro <span class="text-danger">*</span></label>
-                            <select class="form-select" formControlName="tipoCobro"
-                                    [ngClass]="{'is-invalid': submitted && tarifa.get('tipoCobro')?.errors}">
-                            <option value="">Seleccione</option>
-                            <option *ngFor="let tipo of tipoCobroOptions" [value]="tipo.value">
-                                {{ tipo.label }}
-                            </option>
-                            </select>
-                            <div *ngIf="submitted && tarifa.get('tipoCobro')?.errors" class="invalid-feedback">
-                            <div *ngIf="tarifa.get('tipoCobro')?.errors?.['required']">Campo requerido</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-2" *ngIf="tarifa.get('tipoCobro')?.value === 'mensualidad' || tarifa.get('tipoCobro')?.value === 'por_sesion'">
-                            <label class="form-label mb-0">Frecuencia</label>
-                            <select class="form-select" formControlName="frecuencia">
-                            <option value="">Seleccione</option>
-                            <option *ngFor="let freq of frecuenciaOptions" [value]="freq.value">
-                                {{ freq.label }}
-                            </option>
-                            </select>
-                        </div>
-
-                        <div class="col-lg-2" *ngIf="tarifa.get('tipoCobro')?.value === 'mensualidad' || tarifa.get('tipoCobro')?.value === 'por_club'">
-                            <label class="form-label mb-0">Sesiones</label>
-                            <input type="number" class="form-control" placeholder="0" min="0"
-                                formControlName="sesionesIncluidas">
-                        </div>
-
-                        <div class="col-lg-5">
-                            <label class="form-label mb-0">Descripción</label>
-                            <input type="text" class="form-control" placeholder="Tarifa diurna"
-                                formControlName="descripcion">
-                        </div>
-                        <div class="col-lg-5">
-                            <label class="form-label mb-0">Categoría(s) <span class="text-danger">*</span></label>
-                            <!-- <select id="categoriasDtoList-field" class="form-control" 
-                                formControlName="categoriasDtoList"
-                                [ngClass]="{'is-invalid': submitted && tarifa.get('categoriasDtoList')?.errors}">
-                                <option value="">Seleccione una opción</option>
-                                <option *ngFor="let cat of categoriasList" [value]="cat">{{ cat.nombre }}</option>
-                            </select> -->
-                            <ng-select [items]="categoriasList" [multiple]="true" bindLabel="nombre" 
-                                    formControlName="categoriasDtoList" placeholder="Seleccione" 
-                                    [ngClass]="{'is-invalid': submitted && tarifa.get('categoriasDtoList')?.errors}">
-                            </ng-select>
-                            <div *ngIf="submitted && tarifa.get('categoriasDtoList')?.errors" class="invalid-feedback d-block">
-                            <div *ngIf="tarifa.get('categoriasDtoList')?.errors?.['required']">Campo requerido</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-2">
-                            <label class="form-label mb-0">Precio Base<span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" class="form-control" placeholder="150.00"
-                                formControlName="precioBase"
-                                [ngClass]="{'is-invalid': submitted && tarifa.get('precioBase')?.errors}">
-                            <div *ngIf="submitted && tarifa.get('precioBase')?.errors" class="invalid-feedback">
-                            <div *ngIf="tarifa.get('precioBase')?.errors?.['required']">Campo requerido</div>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-6">
-                            <div class="row">
-                            <div class="col-lg-6">
-                                <label class="form-label mb-0">Fecha Inicio <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control form-control-sm" formControlName="fechaInicio"
-                                    [ngClass]="{'is-invalid': submitted && tarifa.get('fechaInicio')?.errors}">
-                            </div>
-
-                            <div class="col-lg-6">
-                                <label class="form-label mb-0">Fecha Fin</label>
-                                <input type="date" class="form-control form-control-sm" formControlName="fechaFin">
-                            </div>
-
-                            <div class="col-lg-6 mt-2">
-                                <label class="form-label mb-0">Hora Desde</label>
-                                <input type="time" class="form-control form-control-sm" formControlName="desde">
-                            </div>
-
-                            <div class="col-lg-6 mt-2">
-                                <label class="form-label mb-0">Hora Hasta</label>
-                                <input type="time" class="form-control form-control-sm" formControlName="hasta">
-                            </div>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-6">
-                            <label class="form-label mb-0">Observaciones</label>
-                            <textarea class="form-control" rows="3" formControlName="observaciones"
-                                    placeholder="Observaciones adicionales"></textarea>
-                        </div>
-                        <div class="col-12">
-                        <div class="card bg-light border">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0">
-                                <i class="ri-file-list-3-line me-2"></i>Conceptos Adicionales
-                            </h6>
-                            <button type="button" class="btn btn-sm btn-success" 
-                                    (click)="addConcepto(i)" [disabled]="submitted">
-                                <i class="ri-add-line"></i> Agregar Concepto
-                            </button>
-                            </div>
-                            <div class="card-body">
-                            <div formArrayName="conceptosDtos">
-                                <div *ngIf="getConceptos(i).length === 0" class="text-muted text-center py-2">
-                                <small>No hay conceptos adicionales. Haga clic en "Agregar Concepto" para añadir uno.</small>
+                    <div formArrayName="tarifasDtoList">
+                        <div *ngFor="let tarifa of tarifas.controls; let i = index" [formGroupName]="i" class="card mb-2 border">
+                            <div class="card-header bg-light d-flex align-items-center p-2">
+                                <span class="badge bg-primary me-2">{{i + 1}}</span>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" formControlName="activo"
+                                            [id]="'tarifa-activo-' + i">
+                                    <label class="form-check-label small" [for]="'tarifa-activo-' + i">Activa</label>
                                 </div>
-                                <div *ngFor="let concepto of getConceptos(i).controls; let j = index" 
-                                    [formGroupName]="j" class="border rounded p-2 mb-2">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="badge bg-secondary">Concepto {{j + 1}}</span>
-                                    <button type="button" class="btn btn-sm btn-danger" 
-                                            (click)="removeConcepto(i, j)" [disabled]="submitted">
+                                <button type="button" class="btn btn-sm btn-danger ms-auto" 
+                                        (click)="removeTarifa(i)" *ngIf="tarifas.length > 1" [disabled]="submitted">
                                     <i class="ri-delete-bin-line"></i>
-                                    </button>
-                                </div>
+                                </button>
+                            </div>
+                            <div class="card-body p-2">
                                 <div class="row g-2">
+                                    <div class="col-lg-6">
+                                        <label class="form-label mb-1 small">Clasificador RUAT <span class="text-danger">*</span></label>
+                                        <ng-select [items]="clasificadoresRuatList" bindLabel="nombre"
+                                                formControlName="clasificadorRuatDto" placeholder="Seleccionar"
+                                                [ngClass]="{'is-invalid': submitted && tarifa.get('clasificadorRuatDto')?.errors}">
+                                        </ng-select>
+                                        <div *ngIf="submitted && tarifa.get('clasificadorRuatDto')?.errors" class="invalid-feedback d-block">
+                                            <div *ngIf="tarifa.get('clasificadorRuatDto')?.errors?.['required']">Campo requerido</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 col-6">
+                                        <label class="form-label mb-1 small">Tipo de Cobro <span class="text-danger">*</span></label>
+                                        <select class="form-select form-select-sm" formControlName="tipoCobro"
+                                                [ngClass]="{'is-invalid': submitted && tarifa.get('tipoCobro')?.errors}">
+                                            <option value="">Seleccione</option>
+                                            <option *ngFor="let tipo of tipoCobroOptions" [value]="tipo.value">
+                                                {{ tipo.label }}
+                                            </option>
+                                        </select>
+                                        <div *ngIf="submitted && tarifa.get('tipoCobro')?.errors" class="invalid-feedback">
+                                            <div *ngIf="tarifa.get('tipoCobro')?.errors?.['required']">Campo requerido</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 col-6" *ngIf="tarifa.get('tipoCobro')?.value === 'mensualidad' || tarifa.get('tipoCobro')?.value === 'por_sesion'">
+                                        <label class="form-label mb-1 small">Frecuencia</label>
+                                        <select class="form-select form-select-sm" formControlName="frecuencia">
+                                            <option value="">Seleccione</option>
+                                            <option *ngFor="let freq of frecuenciaOptions" [value]="freq.value">
+                                                {{ freq.label }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-3 col-6" *ngIf="tarifa.get('tipoCobro')?.value === 'mensualidad' || tarifa.get('tipoCobro')?.value === 'por_club'">
+                                        <label class="form-label mb-1 small">Sesiones</label>
+                                        <input type="number" class="form-control form-control-sm" placeholder="0" min="0"
+                                            formControlName="sesionesIncluidas">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label class="form-label mb-1 small">Descripción</label>
+                                        <input type="text" class="form-control form-control-sm" placeholder="Tarifa diurna"
+                                            formControlName="descripcion">
+                                    </div>
                                     <div class="col-lg-4">
-                                    <label class="form-label mb-0">Concepto <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control form-control-sm" 
-                                            placeholder="Ej: Luz, Agua, Mantenimiento, Recargo Nocturno"
-                                            formControlName="concepto"
-                                            [ngClass]="{'is-invalid': submitted && concepto.get('concepto')?.errors}">
-                                    <div *ngIf="submitted && concepto.get('concepto')?.errors" class="invalid-feedback">
-                                        Campo requerido
-                                    </div>
-                                    </div>
-                                    <div class="col-lg-3">
-                                    <label class="form-label mb-0">Tipo <span class="text-danger">*</span></label>
-                                    <select class="form-select form-select-sm" formControlName="tipo"
-                                            [ngClass]="{'is-invalid': submitted && concepto.get('tipo')?.errors}">
-                                        <option value="">Seleccione</option>
-                                        <option *ngFor="let tipo of tipoConceptoOptions" [value]="tipo.value">
-                                        {{ tipo.label }}
-                                        </option>
-                                    </select>
-                                    <div *ngIf="submitted && concepto.get('tipo')?.errors" class="invalid-feedback">
-                                        Campo requerido
-                                    </div>
-                                    </div>
-                                    <div class="col-lg-3">
-                                    <label class="form-label mb-0">
-                                        Valor <span class="text-danger">*</span>
-                                        <small class="text-muted">
-                                        ({{ concepto.get('tipo')?.value === 'porcentaje' ? '%' : 
-                                            concepto.get('tipo')?.value === 'por_hora' ? 'Bs/h' : 'Bs' }})
-                                        </small>
-                                    </label>
-                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" 
-                                            placeholder="0.00"
-                                            formControlName="valor"
-                                            [ngClass]="{'is-invalid': submitted && concepto.get('valor')?.errors}">
-                                    <div *ngIf="submitted && concepto.get('valor')?.errors" class="invalid-feedback">
-                                        Campo requerido
-                                    </div>
+                                        <label class="form-label mb-1 small">Categoría(s) <span class="text-danger">*</span></label>
+                                        <ng-select [items]="categoriasList" [multiple]="true" bindLabel="nombre" 
+                                                formControlName="categoriasDtoList" placeholder="Seleccione" 
+                                                [ngClass]="{'is-invalid': submitted && tarifa.get('categoriasDtoList')?.errors}">
+                                        </ng-select>
+                                        <div *ngIf="submitted && tarifa.get('categoriasDtoList')?.errors" class="invalid-feedback d-block">
+                                            <div *ngIf="tarifa.get('categoriasDtoList')?.errors?.['required']">Campo requerido</div>
+                                        </div>
                                     </div>
                                     <div class="col-lg-2">
-                                    <div class="form-check form-switch mt-4">
-                                        <input class="form-check-input" type="checkbox" 
-                                            formControlName="activo"
-                                            [id]="'concepto-activo-' + i + '-' + j">
-                                        <label class="form-check-label" [for]="'concepto-activo-' + i + '-' + j">
-                                        Activo
-                                        </label>
-                                    </div>
-                                    </div>
-                                    <div class="col-12" *ngIf="showTimeFields(concepto)">
-                                    <div class="card bg-light-subtle border-0">
-                                        <div class="card-body p-2">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <small class="text-muted">
-                                            <i class="ri-time-line me-1"></i>Intervalo de Horas (Opcional)
-                                            </small>
-                                            <button type="button" class="btn btn-sm btn-outline-primary"
-                                                    (click)="toggleTimeFields(concepto)">
-                                            <i class="ri-time-line me-1"></i>
-                                            {{ concepto.get('desde')?.value || concepto.get('hasta')?.value ? 'Ocultar' : 'Agregar Horario' }}
-                                            </button>
+                                        <label class="form-label mb-1 small">Precio Base<span class="text-danger">*</span></label>
+                                        <input type="number" step="0.01" class="form-control form-control-sm" placeholder="150.00"
+                                            formControlName="precioBase"
+                                            [ngClass]="{'is-invalid': submitted && tarifa.get('precioBase')?.errors}">
+                                        <div *ngIf="submitted && tarifa.get('precioBase')?.errors" class="invalid-feedback">
+                                            <div *ngIf="tarifa.get('precioBase')?.errors?.['required']">Campo requerido</div>
                                         </div>
-                                        
-                                        <div class="row g-2" *ngIf="concepto.get('desde')?.value || concepto.get('hasta')?.value">
-                                            <div class="col-lg-6">
-                                            <label class="form-label mb-0 small">Hora Desde</label>
-                                            <input type="time" class="form-control form-control-sm" 
-                                                    formControlName="desde"
-                                                    placeholder="HH:MM">
-                                            <small class="text-muted">Hora de inicio del concepto</small>
+                                    </div>
+                                    <div class="col-lg-3 col-6">
+                                        <label class="form-label mb-1 small">Fecha Inicio <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control form-control-sm" formControlName="fechaInicio"
+                                            [ngClass]="{'is-invalid': submitted && tarifa.get('fechaInicio')?.errors}">
+                                    </div>
+                                    <div class="col-lg-3 col-6">
+                                        <label class="form-label mb-1 small">Fecha Fin</label>
+                                        <input type="date" class="form-control form-control-sm" formControlName="fechaFin">
+                                    </div>
+                                    <div class="col-lg-3 col-6">
+                                        <label class="form-label mb-1 small">Hora Desde</label>
+                                        <input type="time" class="form-control form-control-sm" formControlName="desde">
+                                    </div>
+                                    <div class="col-lg-3 col-6">
+                                        <label class="form-label mb-1 small">Hora Hasta</label>
+                                        <input type="time" class="form-control form-control-sm" formControlName="hasta">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label mb-1 small">Observaciones</label>
+                                        <textarea class="form-control form-control-sm" rows="2" formControlName="observaciones"
+                                                placeholder="Observaciones adicionales"></textarea>
+                                    </div>
+                                    
+                                    <!-- Conceptos Adicionales -->
+                                    <div class="col-12">
+                                        <div class="card bg-light border-0 mb-0">
+                                            <div class="card-header d-flex justify-content-between align-items-center py-1 px-2">
+                                                <h6 class="mb-0 small">
+                                                    <i class="ri-file-list-3-line me-1"></i>Conceptos Adicionales
+                                                </h6>
+                                                <button type="button" class="btn btn-sm btn-success py-0 px-2" 
+                                                        (click)="addConcepto(i)" [disabled]="submitted">
+                                                    <i class="ri-add-line"></i> Agregar
+                                                </button>
                                             </div>
-                                            <div class="col-lg-6">
-                                            <label class="form-label mb-0 small">Hora Hasta</label>
-                                            <input type="time" class="form-control form-control-sm" 
-                                                    formControlName="hasta"
-                                                    placeholder="HH:MM">
-                                            <small class="text-muted">Hora de fin del concepto</small>
+                                            <div class="card-body p-2">
+                                                <div formArrayName="conceptosDtos">
+                                                    <div *ngIf="getConceptos(i).length === 0" class="text-muted text-center py-1">
+                                                        <small>No hay conceptos adicionales</small>
+                                                    </div>
+                                                    <div *ngFor="let concepto of getConceptos(i).controls; let j = index" 
+                                                        [formGroupName]="j" class="border rounded p-2 mb-2">
+                                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                                            <span class="badge bg-secondary small">{{j + 1}}</span>
+                                                            <button type="button" class="btn btn-sm btn-danger py-0 px-2" 
+                                                                    (click)="removeConcepto(i, j)" [disabled]="submitted">
+                                                                <i class="ri-delete-bin-line"></i>
+                                                            </button>
+                                                        </div>
+                                                        <div class="row g-2">
+                                                            <div class="col-lg-4 col-md-6">
+                                                                <label class="form-label mb-1 small">Concepto <span class="text-danger">*</span></label>
+                                                                <input type="text" class="form-control form-control-sm" 
+                                                                        placeholder="Ej: Luz, Agua, Mantenimiento"
+                                                                        formControlName="concepto"
+                                                                        [ngClass]="{'is-invalid': submitted && concepto.get('concepto')?.errors}">
+                                                                <div *ngIf="submitted && concepto.get('concepto')?.errors" class="invalid-feedback">
+                                                                    Campo requerido
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-3 col-md-3 col-6">
+                                                                <label class="form-label mb-1 small">Tipo <span class="text-danger">*</span></label>
+                                                                <select class="form-select form-select-sm" formControlName="tipo"
+                                                                        [ngClass]="{'is-invalid': submitted && concepto.get('tipo')?.errors}">
+                                                                    <option value="">Seleccione</option>
+                                                                    <option *ngFor="let tipo of tipoConceptoOptions" [value]="tipo.value">
+                                                                        {{ tipo.label }}
+                                                                    </option>
+                                                                </select>
+                                                                <div *ngIf="submitted && concepto.get('tipo')?.errors" class="invalid-feedback">
+                                                                    Campo requerido
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-3 col-md-3 col-6">
+                                                                <label class="form-label mb-1 small">
+                                                                    Valor <span class="text-danger">*</span>
+                                                                    <small class="text-muted">
+                                                                        ({{ concepto.get('tipo')?.value === 'porcentaje' ? '%' : 
+                                                                            concepto.get('tipo')?.value === 'por_hora' ? 'Bs/h' : 'Bs' }})
+                                                                    </small>
+                                                                </label>
+                                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm" 
+                                                                        placeholder="0.00"
+                                                                        formControlName="valor"
+                                                                        [ngClass]="{'is-invalid': submitted && concepto.get('valor')?.errors}">
+                                                                <div *ngIf="submitted && concepto.get('valor')?.errors" class="invalid-feedback">
+                                                                    Campo requerido
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-2 col-12">
+                                                                <div class="form-check form-switch" [class.mt-4]="!concepto.get('desde')?.value && !concepto.get('hasta')?.value">
+                                                                    <input class="form-check-input" type="checkbox" 
+                                                                        formControlName="activo"
+                                                                        [id]="'concepto-activo-' + i + '-' + j">
+                                                                    <label class="form-check-label small" [for]="'concepto-activo-' + i + '-' + j">
+                                                                        Activo
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-12" *ngIf="showTimeFields(concepto)">
+                                                                <div class="bg-light rounded p-2">
+                                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                        <small class="text-muted">
+                                                                            <i class="ri-time-line me-1"></i>Intervalo de Horas (Opcional)
+                                                                        </small>
+                                                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
+                                                                                (click)="toggleTimeFields(concepto)">
+                                                                            <i class="ri-time-line me-1"></i>
+                                                                            {{ concepto.get('desde')?.value || concepto.get('hasta')?.value ? 'Ocultar' : 'Agregar Horario' }}
+                                                                        </button>
+                                                                    </div>
+                                                                    
+                                                                    <div class="row g-2" *ngIf="concepto.get('desde')?.value || concepto.get('hasta')?.value">
+                                                                        <div class="col-6">
+                                                                            <label class="form-label mb-1 small">Hora Desde</label>
+                                                                            <input type="time" class="form-control form-control-sm" 
+                                                                                    formControlName="desde"
+                                                                                    placeholder="HH:MM">
+                                                                        </div>
+                                                                        <div class="col-6">
+                                                                            <label class="form-label mb-1 small">Hora Hasta</label>
+                                                                            <input type="time" class="form-control form-control-sm" 
+                                                                                    formControlName="hasta"
+                                                                                    placeholder="HH:MM">
+                                                                        </div>
+                                                                        <div class="col-12">
+                                                                            <small class="text-info">
+                                                                                <i class="ri-information-line me-1"></i>
+                                                                                Este concepto aplicará solo dentro del intervalo especificado
+                                                                            </small>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-12" *ngIf="concepto.valid">
+                                                                <div class="alert alert-info py-1 px-2 mb-0">
+                                                                    <small>
+                                                                        <strong>{{ concepto.get('concepto')?.value }}</strong> - 
+                                                                        {{ getTipoConceptoDisplay(concepto.get('tipo')?.value) }}: 
+                                                                        {{ concepto.get('valor')?.value }}
+                                                                        {{ concepto.get('tipo')?.value === 'porcentaje' ? '%' : 
+                                                                        concepto.get('tipo')?.value === 'por_hora' ? 'Bs/h' : 'Bs' }}
+                                                                        
+                                                                        <span *ngIf="concepto.get('desde')?.value && concepto.get('hasta')?.value" class="ms-2">
+                                                                            | {{ concepto.get('desde')?.value }} - {{ concepto.get('hasta')?.value }}
+                                                                        </span>
+                                                                        
+                                                                        <span class="badge ms-2" 
+                                                                            [ngClass]="concepto.get('activo')?.value ? 'bg-success' : 'bg-secondary'">
+                                                                            {{ concepto.get('activo')?.value ? 'Activo' : 'Inactivo' }}
+                                                                        </span>
+                                                                    </small>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="col-12">
-                                            <small class="text-info">
-                                                <i class="ri-information-line me-1"></i>
-                                                Este concepto aplicará solo dentro del intervalo de horas especificado.
-                                            </small>
-                                            </div>
                                         </div>
-                                        </div>
-                                    </div>
-                                    </div>
-
-                                    <!-- Concepto Preview -->
-                                    <div class="col-12" *ngIf="concepto.valid">
-                                    <div class="alert alert-info py-2 mb-0">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                        <small>
-                                            <strong>{{ concepto.get('concepto')?.value }}</strong> - 
-                                            {{ getTipoConceptoDisplay(concepto.get('tipo')?.value) }}: 
-                                            {{ concepto.get('valor')?.value }}
-                                            {{ concepto.get('tipo')?.value === 'porcentaje' ? '%' : 
-                                            concepto.get('tipo')?.value === 'por_hora' ? 'Bs/h' : 'Bs' }}
-                                            
-                                            <span *ngIf="concepto.get('desde')?.value && concepto.get('hasta')?.value" class="ms-2">
-                                            | Horario: {{ concepto.get('desde')?.value }} - {{ concepto.get('hasta')?.value }}
-                                            </span>
-                                            
-                                            <span class="badge ms-2" 
-                                                [ngClass]="concepto.get('activo')?.value ? 'bg-success' : 'bg-secondary'">
-                                            {{ concepto.get('activo')?.value ? 'Activo' : 'Inactivo' }}
-                                            </span>
-                                        </small>
-                                        </div>
-                                    </div>
                                     </div>
                                 </div>
-                                </div>
-                            </div>
                             </div>
                         </div>
-                        </div>
-                        </div>
                     </div>
-                    </div>
-                </div>
-                
-                <button type="button" class="btn btn-success" (click)="addTarifa()" [disabled]="submitted">
-                    <i class="ri-add-line"></i> Agregar Tarifa
-                </button>
+                    
+                    <button type="button" class="btn btn-success btn-sm" (click)="addTarifa()" [disabled]="submitted">
+                        <i class="ri-add-line"></i> Agregar Tarifa
+                    </button>
                 </div>
             </div>
         </div>
         <div class="modal-footer bg-light py-2">
             <div class="d-flex justify-content-between w-100 align-items-center">
                 <div class="d-flex align-items-center" *ngIf="currentStep===1">
-                        <small class="text-muted">
-                            <i class="ri-information-line me-1"></i>
-                            <span class="text-danger">*</span> Campos obligatorios
-                        </small>
+                    <small class="text-muted">
+                        <i class="ri-information-line me-1"></i>
+                        <span class="text-danger">*</span> Campos obligatorios
+                    </small>
                 </div>
                 <div class="hstack gap-2 justify-content-between w-100">
-                    <button type="button" class="btn btn-secondary" *ngIf="currentStep > 1"
-                            (click)="previousStep()" [disabled]="submitted">
+                    <button type="button" class="btn btn-secondary btn-sm" *ngIf="currentStep > 1"
+                            (click)="previousStep()">
                         <i class="ri-arrow-left-line"></i> Anterior
                     </button>
                     <div class="ms-auto hstack gap-2">
-                        <button type="button" class="btn btn-light" (click)="closeModal()" [disabled]="submitted">
+                        <button type="button" class="btn btn-light btn-sm" (click)="closeModal()">
                             <i class="ri-close-line"></i> Cerrar
                         </button>
-                        <button type="button" class="btn btn-primary" *ngIf="currentStep < 3"
-                                (click)="nextStep()" [disabled]="submitted">
+                        <button type="button" class="btn btn-primary btn-sm" *ngIf="currentStep < 3"
+                                (click)="nextStep()">
                             Siguiente <i class="ri-arrow-right-line"></i>
                         </button>
-                        <button type="submit" class="btn btn-success" *ngIf="currentStep === 3" [disabled]="fieldsForm.invalid">
+                        <button type="submit" class="btn btn-success btn-sm" *ngIf="currentStep === 3">
                             <span *ngIf="!submitted"><i class="ri-save-line"></i> Guardar</span>
                             <span *ngIf="submitted">
                                 <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
@@ -589,50 +621,50 @@
 
 <ng-template #deleteConfirmation let-modal>
     <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header py-2">
             <h5 class="modal-title">Confirmar Eliminación</h5>
             <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
         </div>
-        <div class="modal-body text-center">
+        <div class="modal-body text-center py-3">
             <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
                 colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
-            <div class="mt-4">
+            <div class="mt-3">
                 <h4>¿Está seguro de eliminar esta tarifa?</h4>
-                <p class="text-muted">Esta acción eliminará la tarifa de forma permanente.</p>
+                <p class="text-muted mb-0">Esta acción eliminará la tarifa de forma permanente.</p>
             </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-link link-success" (click)="modal.dismiss('cancel')">
-              <i class="ri-close-line"></i> Cancelar
-          </button>
-          <button type="button" class="btn btn-danger" (click)="modal.close('delete')">
-              <i class="ri-delete-bin-line"></i> Sí, Eliminar
-          </button>
+        <div class="modal-footer py-2">
+            <button class="btn btn-link link-success btn-sm" (click)="modal.dismiss('cancel')">
+                <i class="ri-close-line"></i> Cancelar
+            </button>
+            <button type="button" class="btn btn-danger btn-sm" (click)="modal.close('delete')">
+                <i class="ri-delete-bin-line"></i> Sí, Eliminar
+            </button>
         </div>
     </div>
 </ng-template>
 
 <ng-template #deleteModel>
     <div class="modal-content" *ngIf="row.uuid">
-        <div class="modal-header">
+        <div class="modal-header py-2">
             <h5 class="modal-title">Confirmar Eliminación</h5>
             <button type="button" class="btn-close" 
                     (click)="closeModal()"
                     [disabled]="submitted"></button>
         </div>
-        <div class="modal-body">
-            <div class="mt-2 text-center">
+        <div class="modal-body py-3">
+            <div class="text-center">
                 <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
                     colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
-                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+                <div class="mt-3 pt-2">
                     <h4>¿Está seguro de eliminar este campo deportivo?</h4>
-                    <p class="text-muted mx-4 mb-0">
+                    <p class="text-muted mb-0">
                         Esta acción eliminará permanentemente el campo deportivo "<strong>{{row.nombre}}</strong>" 
                         y toda su información asociada (horarios, tarifas, etc.).
                     </p>
                 </div>
             </div>
-            <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+            <div class="d-flex gap-2 justify-content-center mt-4">
                 <button class="btn btn-link link-success fw-medium text-decoration-none" 
                         (click)="closeModal()"
                         [disabled]="submitted">

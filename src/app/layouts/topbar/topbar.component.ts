@@ -9,22 +9,23 @@ import { LanguageService } from '../../core/services/language.service';
 import { EventService } from '../../core/services/event.service';
 import { AuthenticationService } from '../../core/services/auth.service';
 import { TokenStorageService } from '../../core/services/token-storage.service';
+import { EstadoUsuario } from 'src/app/core/constants/Estados';
 
-// Language
 @Component({
   selector: 'app-topbar',
   templateUrl: './topbar.component.html',
   styleUrls: ['./topbar.component.scss']
 })
+
 export class TopbarComponent implements OnInit {
-  menuItems:any[]=[];
-  avatar="default-profile1.png";
+  menuItems: any[] = [];
+  avatar = "default-profile1.png";
   
   messages: any;
   element: any;
   mode: string | undefined;
   @Output() mobileMenuButtonClicked = new EventEmitter();
-  allnotifications: any
+  allnotifications: any;
   flagvalue: any;
   valueset: any;
   countryName: any;
@@ -36,22 +37,30 @@ export class TopbarComponent implements OnInit {
   newNotify: number = 0;
   readNotify: number = 0;
   isDropdownOpen = false;
-  @ViewChild('removenotification') removenotification !: TemplateRef<any>;
+  @ViewChild('removenotification') removenotification!: TemplateRef<any>;
   notifyId: any;
 
-  constructor(@Inject(DOCUMENT) private document: any, private eventService: EventService, public languageService: LanguageService, private modalService: NgbModal,
-    public _cookiesService: CookieService, public translate: TranslateService, private authService: AuthenticationService, 
-    private router: Router, private TokenStorageService: TokenStorageService) { }
+  constructor(
+    @Inject(DOCUMENT) private document: any, 
+    private eventService: EventService, 
+    public languageService: LanguageService, 
+    private modalService: NgbModal,
+    public _cookiesService: CookieService, 
+    public translate: TranslateService, 
+    private authService: AuthenticationService, 
+    private router: Router, 
+    private tokenStorageService: TokenStorageService
+  ) { }
 
   ngOnInit(): void {
     this.userData = this.authService.currentUser();
+    console.log('User data:', this.userData);
     this.element = document.documentElement;
 
-    this.avatar=this.authService.getAvatar();
+    this.avatar = this.authService.getAvatar();
     const menu = localStorage.getItem('menu');
-    this.menuItems =menu ? JSON.parse(menu) : null;
+    this.menuItems = menu ? JSON.parse(menu) : null;
 
-    // Cookies wise Language set
     this.cookieValue = this._cookiesService.get('lang');
     const val = this.listLang.filter(x => x.lang === this.cookieValue);
     this.countryName = val.map(element => element.text);
@@ -60,23 +69,106 @@ export class TopbarComponent implements OnInit {
     } else {
       this.flagvalue = val.map(element => element.flag);
     }
-
-    
-
   }
 
-  /**
-   * Toggle the menu bar when having mobile screen
-   */
+  isContribuyenteUser(): boolean {
+    return this.userData && this.userData.tipoContribuyente !== undefined;
+  }
+  isExternalUser(): boolean {
+    return this.userData && this.userData.designacion !== undefined;
+  }
+
+  getUserFullName(): string {
+    if (!this.userData) return '';
+    
+    if (this.isExternalUser()) {
+      return this.userData.designacion?.personaDto?.fullName || 
+             (this.userData.designacion?.personaDto?.nombre + ' ' + 
+              this.userData.designacion?.personaDto?.apPaterno) || 
+             this.userData.username || 
+             'Usuario';
+    } else if (this.isContribuyenteUser()) {
+      return this.userData.nombreCompleto || 
+             (this.userData.nombre + ' ' + this.userData.primerApellido + 
+              (this.userData.segundoApellido ? ' ' + this.userData.segundoApellido : '')) || 
+             this.userData.userName || 
+             'Contribuyente';
+    }
+    
+    return this.userData.username || this.userData.userName || 'Usuario';
+  }
+
+  getUserRole(): string {
+    if (!this.userData) return 'Usuario';
+    if (this.isContribuyenteUser()) {
+      return 'Contribuyente';
+    }
+    if (this.isExternalUser()) {
+      if (this.userData.modulos && this.userData.modulos.length > 0) {
+          return 'Admin';
+      }
+      return 'Empleado';
+    }    
+    return 'Usuario';
+  }
+
+  getUserStatus(): string {
+    if (!this.userData) return '';
+    
+    if (this.isContribuyenteUser()) {
+      const estado = this.userData.estadoUsuario;
+      switch (estado) {
+        case EstadoUsuario.ACTIVO:
+          return 'Activo';
+        case EstadoUsuario.PENDIENTE_VERIFICACION:
+          return 'Pendiente Verificación';
+        case EstadoUsuario.INACTIVO:
+          return 'Inactivo';
+        case EstadoUsuario.SANCIONADO:
+          return 'Sancionado';
+        case EstadoUsuario.BLOQUEADO:
+          return 'Bloqueado';
+        default:
+          return estado || 'Desconocido';
+      }
+    }
+    
+    return '';
+  }
+
+  getUserName(): string {
+    if (!this.userData) return '';
+    return this.userData.username || this.userData.userName || '';
+  }
+
+  shouldShowStatus(): boolean {
+    return this.isContribuyenteUser() && !!this.getUserStatus();
+  }
+
+  getStatusBadgeClass(): string {
+    const status = this.getUserStatus().toLowerCase();
+    switch (status) {
+      case 'activo':
+        return 'bg-success';
+      case 'pendiente verificación':
+        return 'bg-warning';
+      case 'inactivo':
+        return 'bg-secondary';
+      case 'sancionado':
+        return 'bg-danger';
+      case 'bloqueado':
+        return 'bg-dark';
+      default:
+        return 'bg-info';
+    }
+  }
+
   toggleMobileMenu(event: any) {
     document.querySelector('.hamburger-icon')?.classList.toggle('open')
     event.preventDefault();
     this.mobileMenuButtonClicked.emit();
   }
 
-  /**
-   * Fullscreen method
-   */
   fullscreen() {
     document.body.classList.toggle('fullscreen-enable');
     if (
@@ -85,42 +177,29 @@ export class TopbarComponent implements OnInit {
       if (this.element.requestFullscreen) {
         this.element.requestFullscreen();
       } else if (this.element.mozRequestFullScreen) {
-        /* Firefox */
         this.element.mozRequestFullScreen();
       } else if (this.element.webkitRequestFullscreen) {
-        /* Chrome, Safari and Opera */
         this.element.webkitRequestFullscreen();
       } else if (this.element.msRequestFullscreen) {
-        /* IE/Edge */
         this.element.msRequestFullscreen();
       }
     } else {
       if (this.document.exitFullscreen) {
         this.document.exitFullscreen();
       } else if (this.document.mozCancelFullScreen) {
-        /* Firefox */
         this.document.mozCancelFullScreen();
       } else if (this.document.webkitExitFullscreen) {
-        /* Chrome, Safari and Opera */
         this.document.webkitExitFullscreen();
       } else if (this.document.msExitFullscreen) {
-        /* IE/Edge */
         this.document.msExitFullscreen();
       }
     }
   }
-  /**
-* Open modal
-* @param content modal content
-*/
+
   openModal(content: any) {
-    // this.submitted = false;
     this.modalService.open(content, { centered: true });
   }
 
-  /**
-  * Topbar Light-Dark Mode Change
-  */
   changeMode(mode: string) {
     this.mode = mode;
     this.eventService.broadcast('changeMode', mode);
@@ -138,23 +217,11 @@ export class TopbarComponent implements OnInit {
     }
   }
 
-  /***
-   * Language Listing
-   */
   listLang = [
     { text: 'English', flag: 'assets/icons/flags/us.svg', lang: 'en' },
     { text: 'Español', flag: 'assets/icons/flags/spain.svg', lang: 'es' },
-    // { text: 'Deutsche', flag: 'assets/icons/flags/germany.svg', lang: 'de' },
-    // { text: 'Italiana', flag: 'assets/icons/flags/italy.svg', lang: 'it' },
-    // { text: 'русский', flag: 'assets/icons/flags/russia.svg', lang: 'ru' },
-    // { text: '中国人', flag: 'assets/icons/flags/china.svg', lang: 'ch' },
-    // { text: 'français', flag: 'assets/icons/flags/french.svg', lang: 'fr' },
-    // { text: 'Arabic', flag: 'assets/icons/flags/ar.svg', lang: 'ar' },
   ];
 
-  /***
-   * Language Value Set
-   */
   setLanguage(text: string, lang: string, flag: string) {
     this.countryName = text;
     this.flagvalue = flag;
@@ -162,9 +229,6 @@ export class TopbarComponent implements OnInit {
     this.languageService.setLanguage(lang);
   }
 
-  /**
-   * Logout the user
-   */
   logout() {
     this.authService.logout();
     this.router.navigate(['/auth/login']);
@@ -180,7 +244,6 @@ export class TopbarComponent implements OnInit {
     }
   }
 
-  // Delete Item
   deleteItem(event: any, id: any) {
     var price = event.target.closest('.dropdown-item').querySelector('.item_price').innerHTML;
     var Total_price = this.total - price;
@@ -191,15 +254,10 @@ export class TopbarComponent implements OnInit {
   }
 
   toggleDropdown(event: Event) {
-    
     event.stopPropagation();
-    if (this.isDropdownOpen) {
-      this.isDropdownOpen = false;
-    } else {
-      this.isDropdownOpen = true;
-    }
+    this.isDropdownOpen = !this.isDropdownOpen;
   }
-  // Search Topbar
+
   Search() {
     const searchOptions = document.getElementById("search-close-options") as HTMLElement;
     const dropdown = document.getElementById("search-dropdown") as HTMLElement;
@@ -222,11 +280,7 @@ export class TopbarComponent implements OnInit {
       searchOptions.classList.add("d-none");
     }
   }
-  
 
-  /**
-   * Search Close Btn
-   */
   closeBtn() {
     var searchOptions = document.getElementById("search-close-options") as HTMLAreaElement;
     var dropdown = document.getElementById("search-dropdown") as HTMLAreaElement;
@@ -236,10 +290,9 @@ export class TopbarComponent implements OnInit {
     searchInputReponsive.value = "";
   }
 
-  // Remove Notification
   checkedValGet: any[] = [];
   onCheckboxChange(event: any, id: any) {
-    this.notifyId = id
+    this.notifyId = id;
     var result;
     if (id == '1') {
       var checkedVal: any[] = [];
@@ -268,7 +321,7 @@ export class TopbarComponent implements OnInit {
       for (var i = 0; i < this.checkedValGet.length; i++) {
         for (var j = 0; j < this.allnotifications.length; j++) {
           if (this.allnotifications[j].id == this.checkedValGet[i]) {
-            this.allnotifications.splice(j, 1)
+            this.allnotifications.splice(j, 1);
           }
         }
       }
@@ -276,24 +329,22 @@ export class TopbarComponent implements OnInit {
       for (var i = 0; i < this.checkedValGet.length; i++) {
         for (var j = 0; j < this.messages.length; j++) {
           if (this.messages[j].id == this.checkedValGet[i]) {
-            this.messages.splice(j, 1)
+            this.messages.splice(j, 1);
           }
         }
       }
     }
-    this.calculatenotification()
+    this.calculatenotification();
     this.modalService.dismissAll();
   }
 
   calculatenotification() {
     this.totalNotify = 0;
-    this.checkedValGet = []
+    this.checkedValGet = [];
 
     this.checkedValGet.length > 0 ? (document.getElementById("notification-actions") as HTMLElement).style.display = 'block' : (document.getElementById("notification-actions") as HTMLElement).style.display = 'none';
     if (this.totalNotify == 0) {
-      document.querySelector('.empty-notification-elem')?.classList.remove('d-none')
+      document.querySelector('.empty-notification-elem')?.classList.remove('d-none');
     }
   }
-
-  
 }

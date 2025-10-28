@@ -13,6 +13,8 @@ import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
 import { EstadoUsuario, EstadoRuat } from 'src/app/core/constants/Estados';
 import { environment } from 'src/environments/environment';
+import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
+import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 
 @Component({
   selector: 'app-modal',
@@ -26,6 +28,7 @@ export class ModalComponent {
   @Input() userPermissions: string[] = [];
   @Output() emitList = new EventEmitter();
 
+  systemConfigList: ConfiguracionSistema[] = [];
   civilStatus = UserCivilStatus;
   identityTypes = UserDocType;
   cityAcronym = CityAcronym;
@@ -53,10 +56,12 @@ export class ModalComponent {
     private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
     private contribuyentesService: ContribuyentesService,
-    private ruatService: RuatRequestsService
+    private ruatService: RuatRequestsService,
+    private systemConfigsService: ConfiguracionSistemaService
   ) {}
 
   ngOnInit(): void {
+    this.getConfigsSystem();
     this.canSanction = this.userPermissions.includes('SANCIONAR');
     this.initForms();
     this.formDataSet();
@@ -226,7 +231,9 @@ export class ModalComponent {
     
     this.searchingRuat = true;
     try {
-      const ruatResp = await this.searchContribuyenteInRuat(this.searchRuatForm.value);
+      
+      const codigoAlcaldia = this.systemConfigList.find(config => config.clave === 'CODIGO_ALCALDIA_RUAT')?.valorTexto || '';
+      const ruatResp = await this.searchContribuyenteInRuat(codigoAlcaldia,this.searchRuatForm.value);
       
       if (ruatResp && ruatResp.continuarFlujo) {
         this.ruatDataFound = ruatResp;
@@ -373,7 +380,9 @@ export class ModalComponent {
     }
 
     try {
-      const ruatResp = await this.registerContribuyente(ruatData);
+      const codigoAlcaldia = this.systemConfigList.find(config => config.clave === 'CODIGO_ALCALDIA_RUAT')?.valorTexto || '';
+      const codigoUsuario = this.systemConfigList.find(config => config.clave === 'CODIGO_USUARIO_RUAT')?.valorTexto || '';
+      const ruatResp = await this.registerContribuyente(codigoAlcaldia,codigoUsuario,ruatData);
       
       if (ruatResp && ruatResp.continuarFlujo) {
         let nuevoEstado = this.editForm.get('estadoUsuario')?.value;
@@ -814,6 +823,15 @@ private getFieldDisplayName(fieldName: string): string {
   /**
    * API Requests
    */
+  private getConfigsSystem() {
+    this.systemConfigsService.getAll().subscribe({
+      next: (data: any) => {
+          if (data['status'] === 'OK') {
+            this.systemConfigList = data.payload;
+          }
+        }
+      });
+  }
   private addData(datos: Contribuyente): Promise<any> {
     return new Promise((resolve, reject) => {
       this.contribuyentesService.save(datos).subscribe({
@@ -871,9 +889,9 @@ private getFieldDisplayName(fieldName: string): string {
     });
   }
 
-  private async registerContribuyente(data: any): Promise<any> {
+  private async registerContribuyente(codigoAlcaldia:string,codigoUsuario:string,data: any): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.ruatService.registerContribuyente(data).subscribe({
+      this.ruatService.registerContribuyente(codigoAlcaldia,codigoUsuario,data).subscribe({
         next: (resp: any) => {
           if (resp['status'] === 'OK') {
             const response = resp.payload;
@@ -890,9 +908,10 @@ private getFieldDisplayName(fieldName: string): string {
     });
   }
 
-  private async searchContribuyenteInRuat(data: any): Promise<any> {
+  private async searchContribuyenteInRuat(codigoAlcaldia:string,data: any): Promise<any> {
     return new Promise((resolve, reject) => {
       this.ruatService.getContribuyentePorCi(
+        codigoAlcaldia,
         data.numeroDocumento,
         data.tipoDocumento, 
         data.expedido

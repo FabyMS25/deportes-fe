@@ -6,9 +6,21 @@ import { environment } from 'src/environments/environment';
 
 import { GlobalComponent } from "../../../global-component";
 const ruatUrl = `${environment.backendRuat}`;
-const token = GlobalComponent.RUAT_token;
-const codigoAlcaldia = GlobalComponent.RUAT_codigoAlcaldia;
+const token = sessionStorage.getItem('ruatToken');//GlobalComponent.RUAT_token;
+const codigoAlcaldia = 'QUI';
 
+
+    /* RUAT CREDENTIALS PRODUCTION */
+    // apiRuatUrl: "https://aplicaciones.ruat.gob.bo",
+    // RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
+    // RUAT_clave: "Gam#1209",
+    // RUAT_codigoUsuario: "ERODRIGUEZ2.QUI",
+    /* RUAT CREDENTIALS TEST */
+    // apiRuatUrl: "https://consolidacionjboss.ruat.gob.bo", 
+  const RUAT_usuario= "SWTRAMITESURKUPINIAQUI";
+  const RUAT_clave= "S1234567";
+  const RUAT_codigoUsuario= "PRUEBAS_1.QUI"; 
+  const RUAT_passwordUsuario= "Ruat_123$";
 @Injectable({
   providedIn: 'root'
 })
@@ -30,8 +42,8 @@ export class RuatService {
   // }
 
   authenticate(): Observable<any> {
-    const username = GlobalComponent.RUAT_usuario;
-    const password = GlobalComponent.RUAT_clave;
+    const username = RUAT_usuario;// GlobalComponent.RUAT_usuario;
+    const password = RUAT_passwordUsuario;// GlobalComponent.RUAT_clave;
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
       'Accept': 'application/json, text/plain, */*',

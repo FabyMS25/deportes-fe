@@ -224,7 +224,7 @@ export class DashboardComponent implements OnInit {
         case EstadoReserva.EN_CURSO:
           monthlyData.enCurso[month]++;
           break;
-        case EstadoReserva.CONFIRMADA:
+        case EstadoReserva.SOLICITADA:
           monthlyData.confirmadas[month]++;
           break;
         case EstadoReserva.PENDIENTE:

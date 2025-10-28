@@ -59,7 +59,6 @@ import { SystemConfigurationsComponent } from './settings/system-configurations/
 
 @NgModule({
   declarations: [
-    TicketComponent,
     ModalComponent,
 
     BookingOneTimeComponent,
@@ -110,6 +109,7 @@ import { SystemConfigurationsComponent } from './settings/system-configurations/
     ScheduleRecurrentSelectionComponent,
     ScheduleSelectionComponent,
     ReservationFormComponent,
+    TicketComponent,
 
     ScrollToModule.forRoot(),
     FeatherModule.pick(allIcons),
