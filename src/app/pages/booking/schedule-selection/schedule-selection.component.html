@@ -58,12 +58,10 @@
             <div class="d-flex flex-column h-100 justify-content-center">
               <label class="form-label mb-1 fw-medium">
                 <i class="ri-time-line me-1"></i>
-                <span *ngIf="isTimeSlotMode">Duración del intervalo</span>
-                <span *ngIf="isEventMode">Duración del evento</span>
+                <span *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'">Duración de la Reserva</span>
+                <span *ngIf="this.dataTariff?.tipoCobro === 'por_evento'">Duración del evento</span>
               </label>
-              
-              <!-- Time Slot Mode -->
-              <select *ngIf="isTimeSlotMode" 
+              <select *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'" 
                       class="form-select" 
                       [(ngModel)]="slotDuration" 
                       (change)="onSlotDurationChange()">
@@ -73,7 +71,7 @@
               </select>
               
               <!-- Event Mode -->
-              <div *ngIf="isEventMode" class="event-duration-input">
+              <div *ngIf="this.dataTariff?.tipoCobro === 'por_evento'" class="event-duration-input">
                 <input type="number" 
                       class="form-control" 
                       [(ngModel)]="eventDurationHours"
@@ -99,8 +97,8 @@
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h6 class="mb-0 text-muted">
           <i class="ri-calendar-week-line me-1"></i>
-          <span *ngIf="isTimeSlotMode">Seleccione un día</span>
-          <span *ngIf="isEventMode">Seleccione un día disponible</span>
+          <span *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'">Seleccione un día</span>
+          <span *ngIf="this.dataTariff?.tipoCobro === 'por_evento'">Seleccione un día disponible</span>
         </h6>
         <div class="btn-group" role="group">
           <button type="button" 
@@ -137,9 +135,9 @@
             <a ngbNavLink 
                class="nav-link text-center p-1" 
                [class.active]="activeDayName === day.name"
-               [class.disabled]="day.isPast || (isEventMode && !isDayAvailableForEvent(day.date))"
+               [class.disabled]="day.isPast || (this.dataTariff.tipoCobro === 'por_evento' && !isDayAvailableForEvent(day.date))"
                (click)="canSelectDay(day) ? setSelectedDay(day.date) : null"
-               [style.cursor]="(day.isPast || (isEventMode && !isDayAvailableForEvent(day.date))) ? 'not-allowed' : 'pointer'">
+               [style.cursor]="(day.isPast || (this.dataTariff.tipoCobro === 'por_evento' && !isDayAvailableForEvent(day.date))) ? 'not-allowed' : 'pointer'">
               
               <div class="fw-semibold mb-1">{{ day.dayName }}</div>
               <div class="fs-5 fw-bold mb-1">{{ day.date | date:'d' }}</div>
@@ -153,16 +151,16 @@
                       class="badge bg-secondary small">
                   <i class="ri-time-line me-1"></i>Pasado
                 </span>
-                <span *ngIf="isEventMode && !day.isPast && isDayAvailableForEvent(day.date)" 
+                <span *ngIf="this.dataTariff?.tipoCobro === 'por_evento' && !day.isPast && isDayAvailableForEvent(day.date)" 
                       class="badge bg-success small">
                   <i class="ri-check-line me-1"></i>Disponible
                 </span>
-                <span *ngIf="isEventMode && !day.isPast && !isDayAvailableForEvent(day.date)" 
+                <span *ngIf="this.dataTariff?.tipoCobro === 'por_evento' && !day.isPast && !isDayAvailableForEvent(day.date)" 
                       class="badge bg-danger small">
                   <i class="ri-close-line me-1"></i>Ocupado
                 </span>
                 
-                <i *ngIf="isTimeSlotMode" class="fs-16" 
+                <i *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'" class="fs-16" 
                    [ngClass]="{
                      'ri-checkbox-circle-fill text-success': !day.isPast && getTimeSlotsForDay(day.date).daySchedule?.abierto,
                      'ri-close-circle-fill text-danger': !day.isPast && !getTimeSlotsForDay(day.date).daySchedule?.abierto,
@@ -172,7 +170,7 @@
             </a>
           </div>
           
-          <ng-template *ngIf="isTimeSlotMode" ngbNavContent>
+          <ng-template *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'" ngbNavContent>
             <ng-container *ngIf="getTimeSlotsForDay(day.date) as slots">
               <ng-container *ngIf="slots.morningSlots.length === 0 && 
                                     slots.afternoonSlots.length === 0 && 
@@ -381,7 +379,7 @@
               </div>
             </ng-container>
           </ng-template>
-          <ng-template *ngIf="isEventMode" ngbNavContent>
+          <ng-template *ngIf="this.dataTariff?.tipoCobro === 'por_evento'" ngbNavContent>
             <ng-container *ngIf="getTimeSlotsForDay(day.date) as slots">
               <div class="text-center py-4">
                 <div *ngIf="isDayAvailableForEvent(day.date)" class="text-success">
@@ -412,7 +410,7 @@
         <div [ngbNavOutlet]="Header"></div>
       </div>
 
-      <div *ngIf="isTimeSlotMode && selectedSlots.length > 0" 
+      <div *ngIf="this.dataTariff?.tipoCobro !== 'por_evento' && selectedSlots.length > 0" 
            class="alert alert-primary mt-4 mb-0" 
            role="alert">
         <div class="d-flex align-items-center">
@@ -437,7 +435,7 @@
           </div>
         </div>
       </div>
-      <div *ngIf="isEventMode && fechaReserva && isDayAvailableForEvent(fechaReserva)" 
+      <div *ngIf="this.dataTariff?.tipoCobro === 'por_evento' && fechaReserva && isDayAvailableForEvent(fechaReserva)" 
           class="alert alert-success mt-4 mb-0" 
           role="alert">
         <div class="d-flex align-items-center">
@@ -471,20 +469,20 @@
               <li class="mb-1">
                 Las reservas deben realizarse con <strong>{{ anticipationTimeDisplay }}</strong> de anticipación mínima.
               </li>
-              <li *ngIf="isTimeSlotMode" class="mb-1">
+              <li *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'" class="mb-1">
                 Los horarios seleccionados deben ser <strong>consecutivos</strong>.
               </li>
-              <li *ngIf="isEventMode" class="mb-1">
+              <li *ngIf="this.dataTariff?.tipoCobro === 'por_evento'" class="mb-1">
                 Para eventos, seleccione un día disponible y la duración deseada.
               </li>
               
               <li class="mb-1">
-                Después de crear la reserva, tendrá <strong>{{ systemConfigs['HORAS_VALIDACION_PAGO'].valorNumerico }} horas</strong> para realizar el pago.
+                Después de crear la reserva, tendrá <strong>{{ systemConfig['HORAS_VALIDACION_PAGO'].valorNumerico }} horas</strong> para realizar el pago.
               </li>
               <li *ngIf="dataField?.requiereAprobacion && dataField?.maxDuracionAutoAprobacion">
                 Reservas mayores a <strong>{{ dataField.maxDuracionAutoAprobacion }} minutos</strong> requieren aprobación administrativa.
               </li>
-              <li *ngIf="isTimeSlotMode" class="mb-1">
+              <li *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'" class="mb-1">
                 Los horarios marcados con <i class="ri-lock-line text-danger"></i> están ocupados por otras reservas activas.
               </li>
             </ul>
@@ -496,14 +494,14 @@
       <div class="d-flex justify-content-between align-items-center">        
         <button type="button" 
                 class="btn btn-primary" 
-                [disabled]="(isTimeSlotMode && selectedSlots.length === 0) || 
-                           (isEventMode && (!fechaReserva || !isDayAvailableForEvent(fechaReserva))) || 
+                [disabled]="(this.dataTariff.tipoCobro !== 'por_evento' && selectedSlots.length === 0) || 
+                           (this.dataTariff.tipoCobro === 'por_evento' && (!fechaReserva || !isDayAvailableForEvent(fechaReserva))) || 
                            isCheckingAvailability"
                 (click)="confirmSelection()">
           <span *ngIf="!isCheckingAvailability">
             <i class="ri-check-line me-1"></i>
-            <span *ngIf="isTimeSlotMode">Confirmar y Continuar</span>
-            <span *ngIf="isEventMode">Reservar Evento</span>
+            <span *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'">Confirmar y Continuar</span>
+            <span *ngIf="this.dataTariff?.tipoCobro === 'por_evento'">Reservar Evento</span>
           </span>
           <span *ngIf="isCheckingAvailability">
             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>

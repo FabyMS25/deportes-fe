@@ -14,6 +14,7 @@ import { ModalImportComponent } from 'src/app/shared/modal-import/modal-import.c
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { TipoEstructura } from 'src/app/core/constants/Features';
 import { EstadoActual } from 'src/app/core/constants/Estados';
+import { LeafletComponent } from 'src/app/shared/map/leaflet.component';
 
 @Component({
   selector: 'app-facilities',
@@ -136,7 +137,25 @@ export class FacilitiesComponent {
       this.getFacilities();
     })
   }
-
+  public openMapModal(complejo: any) {
+    const modalRef = this.modalService.open(LeafletComponent, {
+      backdrop: 'static',
+      size: 'lg',
+      keyboard: false
+    });
+    
+    modalRef.componentInstance.title = `Ubicación - ${complejo.nombre}`;
+    modalRef.componentInstance.form = false; // Modo solo visualización
+    modalRef.componentInstance.latitud = complejo.latitud;
+    modalRef.componentInstance.longitud = complejo.longitud;
+    modalRef.componentInstance.direccion = complejo.ubicacion;
+    
+    // Opcional: Si quieres permitir copiar coordenadas incluso en modo visualización
+    modalRef.componentInstance.latLngEmitter.subscribe((data: any) => {
+      // En modo visualización, esto podría usarse solo para copiar coordenadas
+      console.log('Coordenadas copiadas:', data);
+    });
+  }
   deleteId!: string;
   deleteModal(content: any, data: any) {
     this.deleteId = data.uuid;

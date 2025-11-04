@@ -132,18 +132,12 @@
                             placeholder="Ingrese una descripción (opcional)" formControlName="descripcion"></textarea>
                     </div>
                 </div>
-                <!-- Remove tipoReserva field -->
                 <div class="col-lg-12">
                     <div>
                         <label for="tipoArancel-field" class="form-label mb-0">Tipo de Arancel</label>
-                        <!-- Change to select dropdown for better UX -->
-                        <select id="tipoArancel-field" class="form-control" required formControlName="tipoArancel"
-                            [ngClass]="{ 'is-invalid': submitted && form['tipoArancel'].errors }">
-                            <option value="">Seleccione un tipo de arancel</option>
-                            <option *ngFor="let option of tipoArancelOptions" [value]="option.value">
-                                {{ option.label }}
-                            </option>
-                        </select>
+                        <input type="text" id="tipoArancel-field" class="form-control"
+                            placeholder="Ingrese el tipoArancel del Clasificador" required formControlName="tipoArancel"
+                            [ngClass]="{ 'is-invalid': submitted && form['tipoArancel'].errors }" />
                         @if(submitted && form['tipoArancel'].errors){
                         <div class="invalid-feedback" align="left">
                             @if(form['tipoArancel'].errors['required']){

@@ -12,6 +12,7 @@ import { ReportsService } from 'src/app/core/services/api/reportes.service';
 import { GlobalComponent } from 'src/app/global-component';
 import { Reserva } from 'src/app/core/models/reserva.models';
 import { environment } from 'src/environments/environment';
+import { BookingType } from 'src/app/core/constants/Features';
 
 @Component({
   selector: 'app-ticket',
@@ -28,7 +29,7 @@ import { environment } from 'src/environments/environment';
   styleUrls: ['./ticket.component.scss']
 })
 export class TicketComponent implements OnChanges {
-  @Input() bookingType: 'puntual' | 'recurrente' = 'puntual';
+  @Input() bookingType: BookingType = 'puntual';
   @Input() reservationData!: any;
   @Input() autoLoad: boolean = false;
   @Input() showAsModal: boolean = false;

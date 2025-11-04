@@ -1,6 +1,4 @@
-<!-- Start Breadcrumbs -->
 <app-breadcrumbs [title]="'Complejos'" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
-<!-- End Breadcrumbs -->
 
 <div class="row">
     <app-data-header
@@ -13,7 +11,6 @@
         (importEmitter)="openModalImport()"
         (exportEmitter)="csvFileExport()"
     ></app-data-header>
-    <!--end col-->
     <div class="col-xxl-8">
         <div class="card">
             <div class="card-header">
@@ -73,7 +70,7 @@
             </div>
         </div>
     </div>
-    <!--end col-->    
+     
     <div class="col-xxl-4" #viewModel>
         <div class="card" id="content-view-detail" *ngIf="dataSelected">
             <div class="card-head text-center company-details">
@@ -121,14 +118,21 @@
                                 <td class="direccion py-1">{{dataSelected.distrito}}</td>
                             </tr>
                             <tr>
-                                <td class="fw-medium py-1" scope="row">Dirección</td>
-                                <td class="direccion py-1">{{dataSelected.ubicacion}}</td>
-                            </tr>
-                            <tr>
-                                <td class="fw-medium py-1" scope="row">Coordenadas</td>
+                                <td class="fw-medium py-1" scope="row">Ubicación</td>
                                 <td class="small py-1">
-                                    Lat: {{dataSelected.latitud}}<br>
-                                    Long: {{dataSelected.longitud}}
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-grow-1">
+                                            {{dataSelected.ubicacion}}<br>
+                                            <small class="text-muted">
+                                                Lat: {{dataSelected.latitud}} | Long: {{dataSelected.longitud}}
+                                            </small>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-primary ms-2" 
+                                                (click)="openMapModal(dataSelected)"
+                                                title="Ver en mapa">
+                                            <i class="ri-map-pin-line"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             <tr>
@@ -158,11 +162,8 @@
             </div>
         </div>
     </div>
-    <!--end col-->
 </div>
-<!--end row-->
 
-<!-- removeItemModal -->
 <ng-template #deleteModel let-modal>
     <div class="modal-content">
         <div class="modal-header">

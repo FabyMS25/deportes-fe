@@ -5,6 +5,8 @@ import { Tarifa } from 'src/app/core/models/tarifa.model';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { trigger, transition, animate } from '@angular/animations';
+import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
+import { BookingType } from 'src/app/core/constants/Features';
 
 interface CampoWithTariff {
   campo: CampoDeportivo;
@@ -31,7 +33,8 @@ interface CampoWithTariff {
 })
 export class CampoSelectionComponent implements OnInit {
   @Input() dataComplejo?: ComplejoDeportivo;
-  @Input() bookingType!: 'puntual' | 'recurrente';
+  @Input() bookingType!: BookingType;
+  @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
   viewMode: 'list' | 'grid' = 'grid';
   
   @Output() campoSelected = new EventEmitter<{
@@ -51,8 +54,8 @@ export class CampoSelectionComponent implements OnInit {
   isLoading = false;
 
   ngOnInit(): void {
+    console.log(this.systemConfigs)
     if (!this.dataComplejo) {
-      console.error('No se proporcionó dataComplejo');
       return;
     }
     this.processCampos();

@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NgbModal} from '@ng-bootstrap/ng-bootstrap';
 
-// Sweet Alert
 import Swal from 'sweetalert2';
 import { ngxCsv } from 'ngx-csv';
 
@@ -17,9 +16,7 @@ import { ClasificadorRuatService } from 'src/app/core/services/api/clasificadorR
   templateUrl: './clasificadores-ruat.component.html',
   styleUrls: ['./clasificadores-ruat.component.scss']
 })
-/**
- * Clasificadores Ruat Component
- */
+
 export class ClasificadoresRuatComponent {
   breadCrumbItems!: Array<{}>;
   title="Clasificadores Ruat";
@@ -35,17 +32,6 @@ export class ClasificadoresRuatComponent {
   checkedList: any;
   searchResults: any;
   searchTerm: any;
-
-  // Add these arrays for dropdown options
-  tipoArancelOptions = [
-    { value: 'por_hora', label: 'Por Hora' },
-    { value: 'por_persona', label: 'Por Persona' },
-    { value: 'por_evento', label: 'Por Evento' },
-    { value: 'por_sesion', label: 'Por Sesión' },
-    { value: 'mensualidad', label: 'Mensualidad' },
-    { value: 'por_club', label: 'Por Club' }
-  ];
-
   constructor(private modalService: NgbModal,
     private authService: AuthenticationService,
     public translate: TranslateService,
@@ -79,8 +65,6 @@ export class ClasificadoresRuatComponent {
       codigo: ['', [Validators.required]],
       nombre: ['', [Validators.required]],
       descripcion: [''],
-      // Remove tipoReserva since it's commented out in the interface
-      // tipoReserva: ['', [Validators.required]],
       tipoArancel: ['', [Validators.required]],
       activo: [true]
     });
@@ -97,8 +81,6 @@ export class ClasificadoresRuatComponent {
       codigo: row.codigo,
       nombre: row.nombre,
       descripcion: row.descripcion || '',
-      // Remove tipoReserva
-      // tipoReserva: row.tipoReserva,
       tipoArancel: row.tipoArancel,
       activo: row.activo
     });
@@ -109,14 +91,12 @@ export class ClasificadoresRuatComponent {
     this.selectedItems = items;
   }
 
-  // Search Data - Remove tipoReserva from search
   performSearch(): void {
     this.clasificadorList = this.temp.filter((item: any) => {
       return (
         item.nombre?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.codigo?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.descripcion?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        // Remove tipoReserva from search
         item.tipoArancel?.toLowerCase().includes(this.searchTerm.toLowerCase())
       );
     });
@@ -135,7 +115,6 @@ export class ClasificadoresRuatComponent {
         this.contentForm.disable()
       }
     } else {
-      // Reset form for new entry
       this.contentForm.patchValue({
         activo: true
       });
@@ -143,9 +122,7 @@ export class ClasificadoresRuatComponent {
     this.modalService.open(content, { size: 'md', centered: true });
   }
 
-  // Update headersImport - remove Tipo Reserva
   headersImport = ['Código', 'Nombre', 'Descripción', 'Tipo Arancel', 'Activo'];
-  
   public openModalImport() {
     const modalRef = this.modalService.open(ModalImportComponent, {
       size: 'lg', backdrop: 'static'
@@ -158,29 +135,39 @@ export class ClasificadoresRuatComponent {
       this.temp.some(item => !item.estado &&
         (item.nombre === registro.nombre || item.codigo === registro.codigo)
       );
+    
     modalRef.componentInstance.mapRowFn = (row: any, lookupData: any): ClasificadorRuat => {
-
       const missingFields = [];
-      // Remove tipoReserva validation
+      if (!row['Código']) missingFields.push('Código');
+      if (!row['Nombre']) missingFields.push('Nombre');
       if (!row['Tipo Arancel']) missingFields.push('Tipo Arancel');
 
       if (missingFields.length > 0) {
         throw { missingFields };
       }
-
       let codigo = row['Código'];
       if (codigo !== null && codigo !== undefined) {
+        // codigo = codigo.toString().trim();
         codigo = codigo.toString().replace(/[^\d]/g, '');
+      } else {
+        codigo = '';
       }
-
+      let activo = true;
+      const activoValue = row['Activo'];
+      if (activoValue !== null && activoValue !== undefined) {
+        const activoStr = activoValue.toString().toLowerCase().trim();
+        activo = activoStr === 'sí' || activoStr === 'si' || activoStr === 'yes' || 
+                activoStr === 'true' || activoStr === '1' || activoStr === 'verdadero' ||
+                activoStr === 'activo' || activoStr === 's';
+      }
       return {
         codigo: codigo,
-        nombre: row['Nombre'],
-        descripcion: row['Descripción'] ? row['Descripción'] : '',
-        activo: row['Activo'] ? ('' + row['Activo']).toLowerCase() === 'true' : true,
-        tipoArancel: row['Tipo Arancel']
+        nombre: row['Nombre'] ? row['Nombre'].toString().trim() : '',
+        descripcion: row['Descripción'] ? row['Descripción'].toString().trim() : '',
+        activo: activo,
+        tipoArancel: row['Tipo Arancel'] ? row['Tipo Arancel'].toString().trim() : 'DI'
       };
-    };
+    };    
     modalRef.componentInstance.createRecordFn = (record: ClasificadorRuat) =>
       this.clasificadoresService.save(record).toPromise();
     modalRef.componentInstance.actionCompleted.subscribe(() => {
@@ -188,7 +175,6 @@ export class ClasificadoresRuatComponent {
     });
   }
 
-  // Csv File Export - Update to remove tipoReserva
   public csvFileExport() {
     const lista = this.selectedItems.flatMap((item: ClasificadorRuat) => {
       return {
@@ -196,7 +182,7 @@ export class ClasificadoresRuatComponent {
         name: item.nombre,
         description: item.descripcion || '',
         tariffType: item.tipoArancel,
-        active: item.activo ? 'Sí' : 'No'
+        active: item.activo ? 'SI' : 'NO'
       };
     });
     var data = {
@@ -233,8 +219,6 @@ export class ClasificadoresRuatComponent {
         codigo: this.contentForm.value.codigo,
         nombre: this.contentForm.value.nombre,
         descripcion: this.contentForm.value.descripcion,
-        // Remove tipoReserva
-        // tipoReserva: this.contentForm.value.tipoReserva,
         tipoArancel: this.contentForm.value.tipoArancel,
         activo: this.contentForm.value.activo
       };
@@ -270,28 +254,43 @@ export class ClasificadoresRuatComponent {
   private addData(datos: ClasificadorRuat) {
     this.clasificadoresService.save(datos).subscribe({
       next: (data: any) => {
-        this.submitted = false;
-        this.notify('Datos Registrados exitosamente!', 'success');
-        this.closeModal();
+        if (data.status === 'OK') {
+          this.submitted = false;
+          this.notify('Datos registrados exitosamente!', 'success');
+          this.closeModal();
+        } else {
+          const errorMessage = data.payload || 'Error desconocido al guardar';
+          this.notify('No se pudo guardar los datos: ' + errorMessage, 'error');
+        }
       },
       error: (error) => {
-        this.notify('No se pudo Guardar los datos! ' + error, 'error');
+        console.error('Error saving data:', error);
+        const errorMessage = this.getErrorMessage(error);
+        this.notify('No se pudo guardar los datos: ' + errorMessage, 'error');
       }
-    })
+    });
   }
 
   private updateData(datosUnit: ClasificadorRuat) {
     this.clasificadoresService.update(datosUnit).subscribe({
-      next: (data: ClasificadorRuat) => {
-        this.submitted = false;
-        this.closeModal();
-        this.notify('Datos Actualizados exitosamente!', 'success');
+      next: (data: any) => {
+        if (data.status === 'OK') {
+          this.submitted = false;
+          this.closeModal();
+          this.notify('Datos actualizados exitosamente!', 'success');
+        } else {
+          const errorMessage = data.payload || 'Error desconocido al actualizar';
+          this.notify('No se pudo actualizar los datos: ' + errorMessage, 'error');
+        }
       },
       error: (error) => {
-        this.notify('No se pudo Actualizar los datos! ' + error, 'error');
+        console.error('Error updating data:', error);
+        const errorMessage = this.getErrorMessage(error);
+        this.notify('No se pudo actualizar los datos: ' + errorMessage, 'error');
       }
-    })
+    });
   }
+
 
   // Delete Data
   deleteData() {
@@ -319,19 +318,31 @@ export class ClasificadoresRuatComponent {
     this.getClasificadores();
   }
 
-  private notify(message: any, type: any): void {
-    let timerInterval: any;
+  private getErrorMessage(error: any): string {
+    if (error.error && error.error.payload) {
+      return error.error.payload;
+    } else if (error.error && typeof error.error === 'string') {
+      return error.error;
+    } else if (error.message) {
+      return error.message;
+    } else if (error.status === 409) {
+      return 'El código ya existe en el sistema';
+    } else if (error.status === 404) {
+      return 'Registro no encontrado';
+    } else if (error.status === 400) {
+      return 'Datos inválidos';
+    } else {
+      return 'Error de conexión con el servidor';
+    }
+  }
+
+  private notify(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
     Swal.fire({
       title: message,
       icon: type,
       timer: 3000,
       timerProgressBar: true,
-      willClose: () => {
-        clearInterval(timerInterval);
-      },
-    }).then((result) => {
-      if (result.dismiss === Swal.DismissReason.timer) {
-      }
+      showConfirmButton: false
     });
   }
 }

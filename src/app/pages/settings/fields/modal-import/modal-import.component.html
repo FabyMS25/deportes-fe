@@ -1,19 +1,26 @@
 <div class="modal-header">
-    <h5>Importar Datos</h5>
-    <button
-        [disabled]="loading"
-        type="button"
-        class="btn-close"
-        aria-label="Close"
-        (click)="cerrarModal()">
-    </button>
+    <h5>Importar Campos Deportivos</h5>
+    <div>
+        <button
+            type="button"
+            class="btn btn-outline-info btn-sm me-2"
+            (click)="showImportInstructions()">
+            <i class="bi bi-info-circle"></i> Instrucciones
+        </button>
+        <button
+            [disabled]="loading"
+            type="button"
+            class="btn-close"
+            aria-label="Close"
+            (click)="cerrarModal()">
+        </button>
+    </div>
 </div>
 <div class="modal-body">
     <div class="alert-primary mb-3">
         <blockquote class="blockquote custom-blockquote blockquote-primary rounded mb-0">
             <strong class="text-primary"> Nota: </strong>
             <p class="text-body mb-2">Solo se guardarán los registros que no existan, los registros que ya existan no se tomaran en cuenta.</p>
-            <!-- <footer class="blockquote-footer mt-0"> <cite title="Source Title"></cite></footer> -->
         </blockquote>
     </div>
     <div class="row d-flex justify-content-center mb-3">

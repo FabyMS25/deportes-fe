@@ -32,7 +32,7 @@ export const TipoCobro = [
 ];
 export const frecuencia = [
   { value: 'diaria', label: 'Diaria' },
-  { value: 'semanal', label: 'Semanal' },
+  { value: 'días hábiles', label: 'días hábiles' },
   { value: 'mensual', label: 'Mensual' }
 ];
 

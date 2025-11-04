@@ -45,8 +45,7 @@ interface PuntualSchedule {
   templateUrl: './reservation-form.component.html',
   styleUrls: ['./reservation-form.component.scss']
 })
-export class ReservationFormComponent implements OnInit, OnDestroy {
-  @Input() userRole: 'contribuyente' | 'representante' | 'encargado' | 'admin' = 'contribuyente';  
+export class ReservationFormComponent implements OnInit, OnDestroy { 
   @Input() bookingType!: BookingType;
   @Input() dataComplejo!: ComplejoDeportivo;
   @Input() dataField!: CampoDeportivo;
@@ -56,6 +55,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   @Input() contribuyente?: Contribuyente;
   @Input() reservationsList: Reserva[] = [];
   @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
+  @Input() userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente'; 
   
   @Output() reservationCompleted = new EventEmitter<Reserva>();
   @Output() goBack = new EventEmitter<void>();
@@ -189,7 +189,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       this.loadOrganizations();   
     } else {      
       this.selectedContribuyente = this.contribuyente;
-      if (this.userRole === 'representante') {
+      if (this.userRole === 'Representante') {
         this.organizationsList = this.contribuyente.organizacionesRepresentadas?.length ? 
           this.contribuyente.organizacionesRepresentadas : [];
       }
@@ -210,7 +210,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     const recurrentFechaFin = this.recurrentSchedule?.fechaFin ? 
       this.safeFormatDate(this.recurrentSchedule.fechaFin, 'yyyy-MM-dd') : '';    
     this.calculateValidationRequirement();
-    const numeroReservaDisabled = this.userRole === 'contribuyente' || this.userRole === 'representante';
+    const numeroReservaDisabled = this.userRole === 'Contribuyente' || this.userRole === 'Representante';
     const initialEstadoValidacion = this.requiresValidation ? 
       EstadoValidacion.PENDIENTE : EstadoValidacion.APROBADA;    
     const initialEstadoReserva = this.requiresValidation ? 
@@ -289,7 +289,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         
         if (this.reservationForm) {
           // Enable/disable based on user role
-          const numeroReservaDisabled = this.userRole === 'contribuyente';
+          const numeroReservaDisabled = this.userRole === 'Contribuyente';
           this.reservationForm.patchValue({ 
             numeroReserva: this.numeroReserva 
           });
@@ -413,7 +413,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       this.requiresValidation = true;
       return;
     }
-    if (this.userRole === 'admin' || this.userRole === 'encargado') {
+    if (this.userRole === 'Admin' || this.userRole === 'Encargado') {
       this.requiresValidation = false;
       return;
     }
@@ -454,7 +454,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   private setupConditionalValidators(): void {
     if (!this.reservationForm) return;
     
-    if (this.userRole === 'contribuyente') {
+    if (this.userRole === 'Contribuyente') {
       this.reservationForm.get('esParaOrganizacion')?.disable();
     }    
     
@@ -467,7 +467,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     this.reservationForm.get('esParaOrganizacion')?.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(esParaOrganizacion => {
-      if (esParaOrganizacion && (this.userRole === 'admin' || this.userRole === 'encargado' || this.userRole === 'representante')) {
+      if (esParaOrganizacion && (this.userRole === 'Admin' || this.userRole === 'Encargado' || this.userRole === 'Representante')) {
         this.showOrganizationSearch = true;
       } else {
         this.showOrganizationSearch = false;
@@ -488,7 +488,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       this.updateDuration();
     });
 
-    if (this.userRole !== 'contribuyente') {
+    if (this.userRole !== 'Contribuyente') {
       this.reservationForm.get('numeroReserva')?.valueChanges.pipe(
         debounceTime(500),
         distinctUntilChanged(),
@@ -563,7 +563,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       };
     }
     
-    if (this.bookingType === 'recurrente' && this.userRole === 'contribuyente') {
+    if (this.bookingType === 'recurrente' && this.userRole === 'Contribuyente') {
       errors['recurrentNotAllowed'] = 'Los contribuyentes no pueden hacer reservas recurrentes';
     }
 
@@ -976,7 +976,7 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
     let estadoValidacion: EstadoValidacion;
     let estadoReserva: EstadoReserva;
 
-    if (!this.requiresValidation || this.userRole === 'admin' || this.userRole === 'encargado') {
+    if (!this.requiresValidation || this.userRole === 'Admin' || this.userRole === 'Encargado') {
       estadoValidacion = EstadoValidacion.APROBADA;
       estadoReserva = EstadoReserva.PENDIENTE;
     } else {
@@ -1415,7 +1415,7 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
   }
 
   get canSelectOrganization(): boolean {
-    return this.userRole === 'admin' || this.userRole === 'encargado' || this.userRole === 'representante';
+    return this.userRole === 'Admin' || this.userRole === 'Encargado' || this.userRole === 'Representante';
   }
 
   get userDisplayName(): string {
@@ -1426,7 +1426,7 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
   }
 
   get canEditReservationNumber(): boolean {
-    return this.userRole !== 'contribuyente';
+    return this.userRole !== 'Contribuyente';
   }
 
   getTarifaCategories(): string {
@@ -1443,7 +1443,8 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
       'por_evento': 'por evento',
       'mensualidad': 'por mes',
       'por_sesion': 'por sesión',
-      'por_club': 'por mes'
+      'por_club': 'por mes',
+      'periodo' : 'periodo de Escuela'
     };
     return units[this.selectedTariff.tipoCobro] || '';
   }

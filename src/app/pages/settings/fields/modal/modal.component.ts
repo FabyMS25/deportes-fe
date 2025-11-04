@@ -561,11 +561,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
     if (formValue.uuid) {
       datos.uuid = formValue.uuid;
     }
-
-    // Set default values for hidden fields
-    datos.estado = true;
     datos.fechaCreacion = new Date();
-
     return datos;
   }
 

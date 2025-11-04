@@ -264,12 +264,12 @@
                         <img class="rounded-circle header-profile-user" [src]="'assets/icons/users/'+avatar" alt="Header Avatar">
                         <span class="text-start ms-xl-2">
                             <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">
-                            {{ getUserFullName() }}
+                            {{ this.userFullName }}
                             </span>
                             <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">
-                            <span class="text-muted">{{ getUserRole() }}</span>
-                            <span *ngIf="shouldShowStatus()" class="badge {{ getStatusBadgeClass() }} ms-1 fs-11">
-                                {{ getUserStatus() }}
+                            <span class="text-muted">{{ this.userRole }}</span>
+                            <span *ngIf="this.userRole==='Contribuyente'" class="badge {{ getStatusBadgeClass() }} ms-1 fs-11">
+                                {{ this.userData.estadoUsuario}}
                             </span>
                             </span>
                         </span>

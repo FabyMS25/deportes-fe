@@ -6,6 +6,8 @@ import {CityAcronym}  from 'src/app/core/constants/Places';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { UserService } from 'src/app/core/services/api-users/users.service';
 import { PassResetComponent } from '../password-reset/pass-reset.component';
+import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo';
+import { Contribuyente } from 'src/app/core/models/contribuyente.models';
 
 @Component({
   selector: 'app-profile',
@@ -17,12 +19,11 @@ import { PassResetComponent } from '../password-reset/pass-reset.component';
 export class ProfileComponent {
 
   CityAcronym=CityAcronym;
-  userType:string='';
-  userData: any;
-  persona:any = null;
-  funcionario!:any;//DesignacionFuncionario;
-  avatar="default-profile1.png";
-  // userRol =UserRol;
+  userRole!: 'Contribuyente' | 'Admin' | 'Encargado';
+  userAvatar = "default-profile1.png";
+  userData!:any;
+  userEmployee!: EncargadoComplejo;
+  userContribuyente!: Contribuyente
 
   constructor(
     private authService:AuthenticationService, 
@@ -30,33 +31,27 @@ export class ProfileComponent {
   ) {}
 
   ngOnInit(): void {
-      const token = window.sessionStorage.getItem('auth-token');
-      const userString = window.sessionStorage.getItem('currentUser');
-      this.userData =userString ? JSON.parse(userString) : null;
-      this.avatar=this.authService.getAvatar();
-      if(token==='isContribuyente'){
-        this.persona =this.userData;
-        this.userType='Contribuyente';
-      }else{
-        this.userType='Administrador';
-        this.persona =this.userData.designacion.personaDto;
+    const dataSaved = this.authService.currentUser();
+      this.userAvatar=this.authService.getAvatar();
+      this.userRole= this.authService.getUserRole();
+      if(this.userRole==='Contribuyente'){
+        this.userContribuyente = dataSaved;
+      }else if(this.userRole === 'Encargado'){
         const funcionarioString = localStorage.getItem('assignaments');
-        this.funcionario =funcionarioString ? JSON.parse(funcionarioString) : null;
-        if(this.funcionario)this.userType='Encargado'; 
+        this.userEmployee =  funcionarioString ? JSON.parse(funcionarioString) : null;
+        this.userData = dataSaved.designacion.personaDto;
+      }else{
+        this.userData = dataSaved.designacion.personaDto;
       }
   }
 
-  // openModal(content:any) {
-  //   this.modalService.open(content, { centered: true });
-  // }
   public openModal() {
     const modalRef = this.modalService.open(PassResetComponent, {
         backdrop: 'static',
     });
-    modalRef.componentInstance.userData = this.userData;
+    modalRef.componentInstance.userRole = this.userRole;
+    modalRef.componentInstance.userData = this.userContribuyente || this.userData;
   }
-
-
 
   getAcronymCity(city: string): string {
     let acronym = '';
@@ -67,16 +62,19 @@ export class ProfileComponent {
     });
     return acronym;
   }
-  getCityDescription(ciExpedido: any): string {
-    const cityById = CityAcronym.find(c => c.id === ciExpedido);  
-    if (cityById) {
-      return cityById.value;
+  getCityDescription(expedido: any,getBy:string = 'id'): string {
+    if(getBy ==='acronym'){
+      const cityByDescription = CityAcronym.find(c => c.acronym === expedido);
+      if (cityByDescription) {
+        return cityByDescription.acronym;
+      }  
+    }else{
+      const cityById = CityAcronym.find(c => c.id === expedido);  
+      if (cityById) {
+        return cityById.value;
+      }
     }
-    // const cityByDescription = CityAcronym.find(c => c.description === ciExpedido);
-    // if (cityByDescription) {
-    //   return cityByDescription.description;
-    // }  
-    return ciExpedido;
+    return expedido;
   }
    
 }

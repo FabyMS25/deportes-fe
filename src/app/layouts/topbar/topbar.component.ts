@@ -19,7 +19,10 @@ import { EstadoUsuario } from 'src/app/core/constants/Estados';
 
 export class TopbarComponent implements OnInit {
   menuItems: any[] = [];
+  userData: any;
   avatar = "default-profile1.png";
+  userRole!: 'Contribuyente' | 'Admin' | 'Encargado';
+  userFullName = '';
   
   messages: any;
   element: any;
@@ -30,7 +33,6 @@ export class TopbarComponent implements OnInit {
   valueset: any;
   countryName: any;
   cookieValue: any;
-  userData: any;
   total = 0;
   cart_length: any = 0;
   totalNotify: number = 0;
@@ -53,14 +55,14 @@ export class TopbarComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.userData = this.authService.currentUser();
-    console.log('User data:', this.userData);
-    this.element = document.documentElement;
-
-    this.avatar = this.authService.getAvatar();
     const menu = localStorage.getItem('menu');
     this.menuItems = menu ? JSON.parse(menu) : null;
+    this.userData = this.authService.currentUser();
+    this.avatar = this.authService.getAvatar();
+    this.userRole = this.authService.getUserRole();
+    this.userFullName = this.authService.getUserFullName();
 
+    this.element = document.documentElement;
     this.cookieValue = this._cookiesService.get('lang');
     const val = this.listLang.filter(x => x.lang === this.cookieValue);
     this.countryName = val.map(element => element.text);
@@ -71,82 +73,13 @@ export class TopbarComponent implements OnInit {
     }
   }
 
-  isContribuyenteUser(): boolean {
-    return this.userData && this.userData.tipoContribuyente !== undefined;
-  }
-  isExternalUser(): boolean {
-    return this.userData && this.userData.designacion !== undefined;
-  }
-
-  getUserFullName(): string {
-    if (!this.userData) return '';
-    
-    if (this.isExternalUser()) {
-      return this.userData.designacion?.personaDto?.fullName || 
-             (this.userData.designacion?.personaDto?.nombre + ' ' + 
-              this.userData.designacion?.personaDto?.apPaterno) || 
-             this.userData.username || 
-             'Usuario';
-    } else if (this.isContribuyenteUser()) {
-      return this.userData.nombreCompleto || 
-             (this.userData.nombre + ' ' + this.userData.primerApellido + 
-              (this.userData.segundoApellido ? ' ' + this.userData.segundoApellido : '')) || 
-             this.userData.userName || 
-             'Contribuyente';
-    }
-    
-    return this.userData.username || this.userData.userName || 'Usuario';
-  }
-
-  getUserRole(): string {
-    if (!this.userData) return 'Usuario';
-    if (this.isContribuyenteUser()) {
-      return 'Contribuyente';
-    }
-    if (this.isExternalUser()) {
-      if (this.userData.modulos && this.userData.modulos.length > 0) {
-          return 'Admin';
-      }
-      return 'Empleado';
-    }    
-    return 'Usuario';
-  }
-
-  getUserStatus(): string {
-    if (!this.userData) return '';
-    
-    if (this.isContribuyenteUser()) {
-      const estado = this.userData.estadoUsuario;
-      switch (estado) {
-        case EstadoUsuario.ACTIVO:
-          return 'Activo';
-        case EstadoUsuario.PENDIENTE_VERIFICACION:
-          return 'Pendiente Verificación';
-        case EstadoUsuario.INACTIVO:
-          return 'Inactivo';
-        case EstadoUsuario.SANCIONADO:
-          return 'Sancionado';
-        case EstadoUsuario.BLOQUEADO:
-          return 'Bloqueado';
-        default:
-          return estado || 'Desconocido';
-      }
-    }
-    
-    return '';
-  }
-
   getUserName(): string {
     if (!this.userData) return '';
     return this.userData.username || this.userData.userName || '';
   }
 
-  shouldShowStatus(): boolean {
-    return this.isContribuyenteUser() && !!this.getUserStatus();
-  }
-
   getStatusBadgeClass(): string {
-    const status = this.getUserStatus().toLowerCase();
+    const status = this.userData.estadoUsuario.toLowerCase();
     switch (status) {
       case 'activo':
         return 'bg-success';

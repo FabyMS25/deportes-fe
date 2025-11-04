@@ -7,6 +7,9 @@ import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { ReservaRecurrente } from 'src/app/core/models/reservaRecurrente.models';
 import { Reserva } from 'src/app/core/models/reserva.models';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
+import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
+import { AuthenticationService } from 'src/app/core/services/auth.service';
+import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 
 interface TimeSlot {
   horaInicio: string;
@@ -31,9 +34,9 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   @Input() dataField!: CampoDeportivo;
   @Input() dataTariff!: Tarifa;
   @Input() reservationsList: Reserva[] = [];
-  
+  // @Input() systemConfigs: { [key: string]: ConfiguracionSistema} = {};
+  @Input() userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente'; 
   @Output() scheduleCompleted = new EventEmitter<ReservaRecurrente>();
-  @Output() goBack = new EventEmitter<void>();
 
   tipoRecurrencia: string = '';
   fechaInicio: string = '';
@@ -49,7 +52,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     { dia: 'domingo', diaDisplay: 'Domingo', selected: false, horarios: [{ horaInicio: '08:00', horaFin: '09:00' }] }
   ];
 
-  // Calendar view
   tablero: string[][] = []; // Starting from Monday (0=Monday, 6=Sunday)
   calendarMonths: any[] = [];
   
@@ -58,8 +60,35 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   
   errorMessage = '';
 
+  
+  systemConfigList: { [key: string]: ConfiguracionSistema } = {};
+  get enableRecurrentBooking(): boolean | undefined{
+    return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? true;
+  }
+  get enableOrganizationReservation(): boolean {
+    return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_ORGANIZACIONES]?.valorBoolean ?? true;
+  }
+  get HorasValidacionPago(): number | undefined {
+    return this.systemConfigList[ClaveConfiguracion.HORAS_VALIDACION_PAGO]?.valorNumerico;
+  }  
+  get anticipationTime(): string | undefined {
+    if (this.userRole !== 'Contribuyente') {
+      return undefined;
+    }
+    if (!this.dataTariff) {
+      return this.systemConfigList['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico +' horas';
+    }
+    return this.systemConfigList['HORAS_ANTICIPACION_RECURRENTES']?.valorNumerico ? 
+        this.systemConfigList['HORAS_ANTICIPACION_RECURRENTES'].valorNumerico +' días' : undefined;
+  }
+
+  constructor(
+      private authenticationService: AuthenticationService
+  ) {}
   ngOnInit(): void {
-    console.log(this.reservationsList);
+    this.systemConfigList = this.authenticationService.getAllConfigs();
+    console.log(this.systemConfigList)
+    const currentUser = this.authenticationService.currentUser()  
     this.initializeDates();
     this.loadFieldConstraints();
     this.generateCalendar();
@@ -79,7 +108,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   private formatDateForInput(date: Date): string {
     return date.toISOString().split('T')[0];
   }
-
   private parseDateFromInput(dateString: string): Date {
     return new Date(dateString + 'T00:00:00');
   }
@@ -87,7 +115,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   get fechaInicioDate(): Date {
     return this.parseDateFromInput(this.fechaInicio);
   }
-
   get fechaFinDate(): Date {
     return this.parseDateFromInput(this.fechaFin);
   }
@@ -182,15 +209,11 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   }
 
   private initializeTablero(): void {
-    // Tablero structure: 7 days starting from Monday (0=Monday, 6=Sunday)
     this.tablero = Array(7).fill(null).map(() => []);
-    
-    // Populate based on selected days and their time slots
     this.diasSemana.forEach((dia) => {
       if (dia.selected && dia.horarios.length > 0) {
         const tableroIndex = this.getTableroIndex(dia.dia);
         if (tableroIndex !== -1) {
-          // Add all time slots for this day
           this.tablero[tableroIndex] = dia.horarios.map(
             horario => `${horario.horaInicio}-${horario.horaFin}`
           );
@@ -200,7 +223,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   }
 
   private getTableroIndex(diaName: string): number {
-    // Monday = 0, Sunday = 6
     const dayMap: {[key: string]: number} = {
       'lunes': 0,
       'martes': 1,
@@ -213,11 +235,9 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     return dayMap[diaName] !== undefined ? dayMap[diaName] : -1;
   }
 
-  // ==================== DAY SELECTION ====================
 
   toggleDay(dia: DayConfig): void {
     dia.selected = !dia.selected;
-    // Ensure at least one time slot when selecting
     if (dia.selected && dia.horarios.length === 0) {
       dia.horarios.push({ horaInicio: '08:00', horaFin: '09:00' });
     }
@@ -239,7 +259,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     this.validateSchedule();
   }
 
-  // ==================== TIME SLOT MANAGEMENT ====================
 
   addTimeSlot(dia: DayConfig): void {
     const lastSlot = dia.horarios[dia.horarios.length - 1];
@@ -298,8 +317,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     return `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   }
 
-  // ==================== DATE MANAGEMENT ====================
-
   onFechaInicioChange(): void {
     if (this.fechaInicio >= this.fechaFin) {
       const newEnd = new Date(this.fechaInicio + 'T00:00:00');
@@ -334,8 +351,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     this.calculateSessionInfo();
   }
 
-  // ==================== CALCULATIONS ====================
-
   calculateSessionInfo(): number {
     const selectedDays = this.diasSemana.filter(d => d.selected);
     if (selectedDays.length === 0) return 0;
@@ -345,8 +360,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     const diffTime = end.getTime() - start.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     const weeks = Math.ceil(diffDays / 7);
-    
-    // Total sessions = weeks * sum of all time slots across all selected days
     const totalSlotsPerWeek = selectedDays.reduce((sum, dia) => sum + dia.horarios.length, 0);
     return weeks * totalSlotsPerWeek;
   }
@@ -376,8 +389,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     
     return (endMinutes - startMinutes) / 60;
   }
-
-  // ==================== VALIDATION ====================
 
   private validateSchedule(): boolean {
     this.errorMessage = '';
@@ -429,8 +440,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     return time >= this.minTime && time <= this.maxTime;
   }
 
-  // ==================== CONFLICT DETECTION ====================
-
   private checkReservationConflicts(date: Date): boolean {
     if (!this.reservationsList || this.reservationsList.length === 0) {
       return false;
@@ -454,8 +463,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
       if (reservaDateStr === checkDate && reserva.reservaPuntualDto) {
         const reservaStart = reserva.reservaPuntualDto?.horaInicio?.slice(0, 5) || '00:00';
         const reservaEnd = reserva.reservaPuntualDto?.horaFin?.slice(0, 5) || '23:59';
-        
-        // Check if any time slot conflicts with this reservation
         return dayConfig.horarios.some(slot => 
           this.hasTimeConflict(slot.horaInicio, slot.horaFin, reservaStart, reservaEnd)
         );

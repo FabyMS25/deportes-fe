@@ -50,7 +50,7 @@ export class LoginComponent implements OnInit {
 
       if (this.loginForm.valid) {
         const [empleadoResult, contribuyenteResult] = await Promise.all([
-          this.authenticationService.loginEmpleado(username, password),
+          this.authenticationService.loginEmployee(username, password),
           this.authenticationService.loginContribuyente(username, password)
         ]);
 

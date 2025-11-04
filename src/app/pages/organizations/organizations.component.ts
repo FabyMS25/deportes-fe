@@ -23,18 +23,17 @@ export class OrganizationsComponent implements OnInit {
   temp: any[] = [];
   viewMode: 'table' | 'cards' = 'table';
 
+  loading: boolean = true;
   organizacionesList: any[] = [];
-  contribuyentesList: any[] = []; // For representatives dropdown
-
-  // Search filters
+  contribuyentesList: any[] = []; 
+  contribuyente!:Contribuyente;
+  
   searchTerm: string = '';
   estado: string = '';
   tipoOrganizacion: string = '';
   tieneNit: string = '';
   tienePersoneriaJuridica: string = '';
-
   selectedItems: any[] = [];
-  contribuyente!:Contribuyente;
 
   constructor(
     private modalService: NgbModal, 
@@ -54,9 +53,9 @@ export class OrganizationsComponent implements OnInit {
       { label: '' },
       { label: this.title, active: true }
     ];
-    const currentUser = window.sessionStorage.getItem("currentUser");
-    if (window.sessionStorage.getItem("auth-token") === 'isContribuyente') {
-          this.contribuyente = currentUser ? JSON.parse(currentUser) : null;
+    const currentUser = this.authService.currentUser();
+    if (this.authService.getUserRole() === 'Contribuyente') {
+      this.contribuyente =currentUser;
     }   
     
     this.itemsList = [
@@ -74,7 +73,6 @@ export class OrganizationsComponent implements OnInit {
       { name: 'Teléfono Representante', prop: 'representanteDto.telefono', visible: false },
       { name: 'Fecha Creación', prop: 'fechaCreacion', visible: false, date: true },
     ];
-    
     this.getOrganizaciones();
     this.getContribuyentesForRepresentatives();
   }
@@ -215,9 +213,7 @@ export class OrganizationsComponent implements OnInit {
     new ngxCsv(lista, "organizaciones", data);
   }
 
-  /* API Services */
-  loading: boolean = true;
-  
+  /* API Services */  
   private getOrganizaciones() {
     this.organizacionesService.getAll().subscribe({
       next: (data: any) => {

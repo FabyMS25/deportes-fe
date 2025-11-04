@@ -89,10 +89,16 @@ export class ModalFacilitiesComponent {
   public openMapa() {
     const modalRef = this.modalService.open(LeafletComponent, {
         backdrop: 'static',
-        size: 'lg'
+        size: 'lg',
+        keyboard: false
     });
     modalRef.componentInstance.title = 'Buscar en Mapa';
     modalRef.componentInstance.form = true;
+    if(this.row){
+      modalRef.componentInstance.latitud = this.row.latitud;
+      modalRef.componentInstance.longitud = this.row.longitud;
+      modalRef.componentInstance.direccion = this.row.ubicacion;
+    }
     modalRef.componentInstance.latLngEmitter.subscribe((data: any) => {
       const latitud = data.lat;
       const longitud = data.lng;

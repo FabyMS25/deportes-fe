@@ -14,6 +14,7 @@ import { CategoriesComponent } from './settings/categories/categories.component'
 import { SurfacesComponent } from './settings/surfaces/surfaces.component';
 import { ClasificadoresRuatComponent } from './settings/clasificadores-ruat/clasificadores-ruat.component';
 import { SystemConfigurationsComponent } from './settings/system-configurations/system-configurations.component';
+import { BookingSchoolsComponent } from './booking-schools/list/booking-schools.component';
 const routes: Routes = [
     {
       path: 'inicio', loadChildren: () => import('./dashboards/dashboards.module').then(m => m.DashboardsModule), canActivate: [AuthGuard]
@@ -48,7 +49,7 @@ const routes: Routes = [
       children: [
         { path: 'one-time', component: BookingOneTimeComponent},
         { path: 'recurrent', component: BookingRecurrentComponent},
-        // { path: 'recurrent/form', component: BookingRecurrentFormRecurrentComponent}
+        { path: 'schools', component: BookingSchoolsComponent},
         { path: "details",  component: BookingDetailsComponent },
         { path: "ticket", component: TicketComponent },
       ]

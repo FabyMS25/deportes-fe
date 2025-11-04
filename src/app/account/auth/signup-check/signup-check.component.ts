@@ -11,6 +11,7 @@ import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.serv
 import { Contribuyente } from 'src/app/core/models/contribuyente.models';
 import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
+import { GlobalComponent } from 'src/app/global-component';
 
 @Component({
   selector: 'app-signup-check',
@@ -30,7 +31,6 @@ export class SignupCheckComponent {
   constructor(private formBuilder: UntypedFormBuilder,
     private contribuyentesService: ContribuyentesService,
     private ruatService: RuatRequestsService,
-    // private ruatService: RuatCallsService,
     private router: Router,
     private userDataService: UserDataService,
     private systemConfigsService: ConfiguracionSistemaService
@@ -123,8 +123,8 @@ export class SignupCheckComponent {
       });
   }
   private authRuat() {
-    const usuario = this.systemConfigList.find(config => config.clave === 'USUARIO_RUAT')?.valorTexto || '';
-    const clave = this.systemConfigList.find(config => config.clave === 'CLAVE_RUAT')?.valorTexto || '';
+    const usuario = GlobalComponent.RUAT_usuario;//this.systemConfigList.find(config => config.clave === 'USUARIO_RUAT')?.valorTexto || '';
+    const clave = GlobalComponent.RUAT_clave;//this.systemConfigList.find(config => config.clave === 'CLAVE_RUAT')?.valorTexto || '';
       this.ruatService.authenticate(usuario,clave).subscribe({
         next: (response) => {          
           window.sessionStorage.setItem('ruatToken', response.token);

@@ -11,6 +11,8 @@ import { ReservationConflictService, TimeRange } from '../reservation-conflict.s
 import { ScheduleStateService } from '../schedule-state.service';
 import { Subject, takeUntil } from 'rxjs';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
+import { AuthenticationService } from 'src/app/core/services/auth.service';
+import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 
 interface TimeSlot {
   time: string;
@@ -47,8 +49,9 @@ interface WeekDay {
 export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy {
   @Input() dataField!: CampoDeportivo;
   @Input() dataTariff!: Tarifa;
-  @Input() reservationsList: Reserva[] = [];
-  @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
+  @Input() reservationsList: Reserva[] = []; 
+  // @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
+  @Input() userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
   @Output() horarioSelected = new EventEmitter<{ date: Date; start: string; end: string }>();
 
   currentWeekStart: Date = new Date();
@@ -59,92 +62,80 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   slotDurationOptions = [
     { value: 30, label: '30 minutos' },
     { value: 60, label: '1 hora' },
-    { value: 90, label: '1.5 horas' },
-    { value: 120, label: '2 horas' }
+    // { value: 90, label: '1.5 horas' },
+    // { value: 120, label: '2 horas' }
   ];
   eventDurationHours: number = 8;
   eventDurationError: string = '';
-  get isEventMode(): boolean {
-    return this.dataTariff?.tipoCobro === 'por_evento';
-  }
-  get isTimeSlotMode(): boolean {
-    return this.dataTariff?.tipoCobro === 'por_hora' || this.dataTariff?.tipoCobro === 'por_persona';
-  }
 
-  get anticipationTime(): number {
+  systemConfig: { [key: string]: ConfiguracionSistema } = {};
+  get enableRecurrentBooking(): boolean | undefined{
+    return this.systemConfig[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? true;
+  }
+  get enableOrganizationReservation(): boolean {
+    return this.systemConfig[ClaveConfiguracion.HABILITAR_RESERVAS_ORGANIZACIONES]?.valorBoolean ?? true;
+  }
+  get HorasValidacionPago(): number | undefined {
+    return this.systemConfig[ClaveConfiguracion.HORAS_VALIDACION_PAGO]?.valorNumerico;
+  }  
+  get anticipationTime(): number | undefined {
+    if (this.userRole !== 'Contribuyente') {
+      return undefined;
+    }
     if (!this.dataTariff) {
-      const horasPuntuales = this.systemConfigs['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico;
-      return horasPuntuales ?? 48;
+      return this.systemConfig['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico ;
     }
     switch (this.dataTariff.tipoCobro) {
       case 'por_evento':
-        const diasEventos = this.systemConfigs['DIAS_ANTICIPACION_EVENTOS']?.valorNumerico;
-        return (diasEventos ?? 2) * 24;
-      case 'mensualidad': 
-      case 'por_sesion': 
-      case 'por_club':
-        const diasRecurrentes = this.systemConfigs['DIAS_ANTICIPACION_RECURRENTES']?.valorNumerico;
-        return (diasRecurrentes ?? 3) * 24;
+        return this.systemConfig['DIAS_ANTICIPACION_EVENTOS']?.valorNumerico ? 
+               this.systemConfig['DIAS_ANTICIPACION_EVENTOS'].valorNumerico : undefined;
+      case 'mensualidad': case 'por_sesion': case 'por_club':
+        return this.systemConfig['HORAS_ANTICIPACION_RECURRENTES']?.valorNumerico ? 
+               this.systemConfig['HORAS_ANTICIPACION_RECURRENTES'].valorNumerico  : undefined;
       default:
-        const horasPuntuales = this.systemConfigs['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico;
-        return horasPuntuales ?? 48;
+        return this.systemConfig['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico;
     }
   }
-
   get anticipationTimeDisplay(): string {
-    if (!this.dataTariff) {
-      const horasPuntuales = this.systemConfigs['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico;
-      const hours = horasPuntuales ?? 48;
-      return `${hours} horas`;
-    }    
     switch (this.dataTariff.tipoCobro) {
       case 'por_evento':
-        const diasEventos = this.systemConfigs['DIAS_ANTICIPACION_EVENTOS']?.valorNumerico;
-        const eventDays = diasEventos ?? 2;
-        return `${eventDays} días`;
-      case 'mensualidad': 
-      case 'por_sesion': 
-      case 'por_club':
-        const diasRecurrentes = this.systemConfigs['DIAS_ANTICIPACION_RECURRENTES']?.valorNumerico;
-        const recurrentDays = diasRecurrentes ?? 3;
-        return `${recurrentDays} días`;
+        return this.systemConfig['DIAS_ANTICIPACION_EVENTOS']?.valorNumerico + `días`;
+      case 'mensualidad': case 'por_sesion': case 'por_club':
+        return this.systemConfig['HORAS_ANTICIPACION_RECURRENTES']?.valorNumerico+ `días`;
       default:
-        const horasPuntuales = this.systemConfigs['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico;
-        const hours = horasPuntuales ?? 48;
-        return `${hours} horas`;
+        return this.systemConfig['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico+`horas`;
     }
   }
   get maxEventDurationHours(): number {
     if (this.dataTariff?.tipoCobro === 'por_evento') {
-      const maxDuration = this.systemConfigs['DURACION_MAXIMA_EVENTOS']?.valorNumerico;
+      const maxDuration = this.systemConfig['DURACION_MAXIMA_EVENTOS']?.valorNumerico;
       return maxDuration !== undefined && maxDuration !== null ? maxDuration : 12;
     }
-    const punctualMax = this.systemConfigs['DURACION_MAXIMA_PUNTUAL_POR_DEFECTO']?.valorNumerico;
+    const punctualMax = this.systemConfig['DURACION_MAXIMA_PUNTUAL_POR_DEFECTO']?.valorNumerico;
     return punctualMax ? punctualMax : 4;
   }
 
   get minEventDurationHours(): number {
-    const minDuration = this.systemConfigs['DURACION_MINIMA_RESERVA']?.valorNumerico;
+    const minDuration = this.systemConfig['DURACION_MINIMA_RESERVA']?.valorNumerico;
     return minDuration !== undefined && minDuration !== null ? minDuration : 1;
   }
   get maxDuration(): number {
     if (this.dataTariff?.tipoCobro === 'por_evento') {
-      const maxHours = this.systemConfigs['DURACION_MAXIMA_EVENTOS']?.valorNumerico;
+      const maxHours = this.systemConfig['DURACION_MAXIMA_EVENTOS']?.valorNumerico;
       return (maxHours !== undefined && maxHours !== null ? maxHours : 12) * 60;
     }
-    const punctualMax = this.systemConfigs['DURACION_MAXIMA_PUNTUAL_POR_DEFECTO']?.valorNumerico;
-    return punctualMax !== undefined && punctualMax !== null ? punctualMax * 60 : 4 * 60;
+    const punctualMax = this.systemConfig['DURACION_MAXIMA_PUNTUAL_POR_DEFECTO']?.valorNumerico;
+    return (punctualMax !== undefined && punctualMax !== null ? punctualMax : 4 )* 60;
   }
   get minDuration(): number {
-    const minDuration = this.systemConfigs['DURACION_MINIMA_RESERVA']?.valorNumerico;
+    const minDuration = this.systemConfig['DURACION_MINIMA_RESERVA']?.valorNumerico;
     return minDuration !== undefined && minDuration !== null ? minDuration * 60 : 60;
   }
 
   get maxDurationDisplay(): string {
     const totalMinutes = this.maxDuration;
     const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    
+    const minutes = totalMinutes % 60;    
     if (hours > 0 && minutes > 0) {
       return `${hours} hora${hours !== 1 ? 's' : ''} y ${minutes} minutos`;
     } else if (hours > 0) {
@@ -157,8 +148,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   get minDurationDisplay(): string {
     const totalMinutes = this.minDuration;
     const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    
+    const minutes = totalMinutes % 60;    
     if (hours > 0 && minutes > 0) {
       return `${hours} hora${hours !== 1 ? 's' : ''} y ${minutes} minutos`;
     } else if (hours > 0) {
@@ -179,12 +169,16 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   private destroy$ = new Subject<void>();
 
   constructor(
+    private authenticationService: AuthenticationService,
     private cdr: ChangeDetectorRef,
     private conflictService: ReservationConflictService,
     private scheduleState: ScheduleStateService
   ) {}
 
   ngOnInit(): void {
+    this.systemConfig = this.authenticationService.getAllConfigs()
+    const currentUser = this.authenticationService.currentUser()  
+
     this.scheduleState.currentWeekStart$
       .pipe(takeUntil(this.destroy$))
       .subscribe(start => {
@@ -197,12 +191,14 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         this.currentWeekEnd = end;
         this.cdr.detectChanges();
       });
-    this.initializeWeek();
-    this.generateWeekDays();
-    this.setDefaultSlotDuration();
-    if (this.isEventMode) {
-    this.eventDurationHours =this.maxEventDurationHours; 
-  }
+      
+    console.log(this.systemConfig)
+      this.initializeWeek();
+      this.generateWeekDays();
+      this.setDefaultSlotDuration();
+      if (this.dataTariff?.tipoCobro === 'por_evento') {
+        this.eventDurationHours =this.maxEventDurationHours; 
+      }
   }
 
   ngOnDestroy(): void {
@@ -222,7 +218,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       this.clearSelectedSlots();
       this.generateWeekDays();
       
-      if (this.isEventMode) {
+      if (this.dataTariff?.tipoCobro === 'por_evento') {
         this.eventDurationHours = this.maxEventDurationHours;
       }
     }
@@ -431,7 +427,9 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   private generateTimeSlots(date: Date, startTime: string, endTime: string): TimeSlot[] {
     const slots: TimeSlot[] = [];
     const now = new Date();
-    const minReservationTime = new Date(now.getTime() + this.anticipationTime * 60 * 60 * 1000);
+    let minReservationTime = new Date(now.getTime()) ;
+    console.log(this.anticipationTime)
+    if(this.anticipationTime) minReservationTime=new Date(now.getTime() + this.anticipationTime * 60 * 60 * 1000)
     const startMinutes = this.timeToMinutes(startTime);
     const endMinutes = this.timeToMinutes(endTime);
     for (let minutes = startMinutes; minutes < endMinutes; minutes += this.slotDuration) {
@@ -514,7 +512,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   async confirmSelection(): Promise<void> {
-    if (this.isEventMode) {
+    if (this.dataTariff?.tipoCobro === 'por_evento') {
       await this.confirmEventSelection();
     } else {
       await this.confirmTimeSlotSelection();
@@ -816,7 +814,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     const days = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     return days[date.getDay()];
   }
-
   private getFullDayName(date: Date): string {
     const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     return days[date.getDay()];
@@ -826,13 +823,11 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     this.scheduleState.moveWeek(direction);
     this.clearCache();
     this.clearSelectedSlots();
-    this.generateWeekDays();
-    
+    this.generateWeekDays();    
     if (this.weekDays.length > 0) {
       this.setSelectedDay(this.weekDays[0].date);
     }
   }
-
   goToToday(): void {
     this.scheduleState.goToToday();
     this.clearCache();
@@ -847,7 +842,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   canSelectDay(day: WeekDay): boolean {
-    if (this.isEventMode) {
+    if (this.dataTariff?.tipoCobro === 'por_evento') {
       return !day.isPast && this.isDayAvailableForEvent(day.date);
     }
     return !day.isPast;
@@ -876,7 +871,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     const daySlots = this.getTimeSlotsForDay(day.date);
     if (day.isPast) {
       classes.push('bg-secondary-subtle');
-    } else if (this.isEventMode) {
+    } else if (this.dataTariff?.tipoCobro === 'por_evento') {
       if (this.isDayAvailableForEvent(day.date)) {
         classes.push('bg-success-subtle');
       } else {

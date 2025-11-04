@@ -14,7 +14,6 @@
   <div class="col-lg-9 col-sm-12">
     <div class="wizard-container">
       <div class="card border-0 shadow-sm mb-2">
-      <!-- <div class="card border-0 shadow-sm mb-2 sticky-top" style="top: 80px; z-index: 1020"> -->
         <div class="card-header">
           <div class="d-flex align-items-center">
             <div class="flex-grow-1">
@@ -96,14 +95,14 @@
           *ngSwitchCase="BookingStep.COMPLEJO_SELECTION"
           [userRole]="userRole"
           [bookingType]="bookingType"
-          [systemConfigs]="configs"
+          [systemConfigs]="systemConfigList"
           (complejoSelected)="onComplejoSelected($event)">
         </app-complejo-selection>        
         <app-campo-selection
           *ngSwitchCase="BookingStep.CAMPO_SELECTION"
           [dataComplejo]="bookingState.complejo!"
           [bookingType]="bookingType"
-          [systemConfigs]="configs"
+          [systemConfigs]="systemConfigList"
           (campoSelected)="onCampoSelected($event)"
           (goBack)="back()">
         </app-campo-selection>
@@ -115,7 +114,8 @@
             [dataField]="bookingState.campo"
             [dataTariff]="bookingState.tarifa"
             [reservationsList]="reservationsList"
-            [systemConfigs]="configs"
+            [userRole]="userRole"
+            [systemConfigs]="systemConfigList"
             (horarioSelected)="onHorarioSelected($event)">
           </app-schedule-selection>
           <!-- Recurrent Schedule -->
@@ -124,7 +124,8 @@
             [dataField]="bookingState.campo"
             [dataTariff]="bookingState.tarifa"
             [reservationsList]="reservationsList"
-            [systemConfigs]="configs"
+            [userRole]="userRole"
+            [systemConfigs]="systemConfigList"
             (scheduleCompleted)="onRecurrentScheduleCompleted($event)">
           </app-schedule-recurrent-selection>
         </ng-container>
@@ -132,7 +133,6 @@
         <app-reservation-form
           *ngSwitchCase="BookingStep.RESERVATION_FORM"
           [bookingType]="bookingType"
-          [userRole]="userRole"
           [contribuyente]="bookingState.contribuyente"
           [dataComplejo]="bookingState.complejo!"
           [dataField]="bookingState.campo!"
@@ -140,13 +140,13 @@
           [selectedSchedule]="bookingState.puntualSchedule"
           [recurrentSchedule]="bookingState.recurrentSchedule"
           [reservationsList]="reservationsList"
-          [systemConfigs]="configs"
+          [userRole]="userRole"
+          [systemConfigs]="systemConfigList"
           (reservationCompleted)="onReservationCompleted($event)">
         </app-reservation-form>
         <app-ticket 
           *ngSwitchCase="BookingStep.TICKET"
           [bookingType]="bookingType"
-          [userRole]="userRole"
           [reservationData]="bookingState.reservaCreada"
           [autoLoad]="true">
         </app-ticket>        
@@ -168,11 +168,11 @@
         <div class="card-body p-2">
           <ngx-slick-carousel [config]="config" #slickModal="slick-carousel">
             <div class="alert alert-warning small py-2 mb-0" 
-                 *ngIf="bookingStep === BookingStep.RESERVATION_FORM && this.configs['HORAS_VALIDACION_PAGO']?.valorNumerico" 
+                 *ngIf="bookingStep === BookingStep.RESERVATION_FORM && this.systemConfigList['HORAS_VALIDACION_PAGO']?.valorNumerico" 
                  ngxSlickItem>
               <i class="ri-alarm-warning-line me-1"></i>
               <strong>Recuerde:</strong> Debe realizar el pago dentro de las próximas 
-              <strong>{{ this.configs['HORAS_VALIDACION_PAGO'].valorNumerico }}</strong> hora(s) para confirmar su reserva.
+              <strong>{{ this.systemConfigList['HORAS_VALIDACION_PAGO'].valorNumerico }}</strong> hora(s) para confirmar su reserva.
             </div>            
             <div class="alert alert-info small py-2 mb-0" 
                  *ngIf="bookingStep >= BookingStep.HORARIO_SELECTION && bookingState.campo?.requiereAprobacion" 
@@ -210,8 +210,8 @@
                   <p class="mb-1 fs-13" *ngIf="anticipationTime">
                     Reserva con <strong>{{ anticipationTime }}</strong> de anticipación mínima.
                   </p>
-                  <small class="text-muted fs-12" *ngIf="this.configs['HORAS_VALIDACION_PAGO']?.valorNumerico">
-                    Pago en <strong>{{ this.configs['HORAS_VALIDACION_PAGO'].valorNumerico }}h</strong> para confirmar.
+                  <small class="text-muted fs-12" *ngIf="this.systemConfigList['HORAS_VALIDACION_PAGO']?.valorNumerico">
+                    Pago en <strong>{{ this.systemConfigList['HORAS_VALIDACION_PAGO'].valorNumerico }}h</strong> para confirmar.
                   </small>
                 </div>
               </div>

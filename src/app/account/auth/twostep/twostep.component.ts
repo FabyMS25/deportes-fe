@@ -157,8 +157,8 @@ export class TwoStepComponent implements OnInit {
   
   /* RUAT API Requests */
   private async registerContribuyente(data:any): Promise<any>{
-    const codigoAlcaldia = 'QUI';//this.systemConfigList.find(config => config.clave === 'CODIGO_USUARIO_RUAT')?.valorTexto || '';
-    const codigoUsuario = 'ERODRIGUEZ2.QUI';//this.systemConfigList.find(config => config.clave === 'CODIGO_USUARIO_RUAT')?.valorTexto || '';
+    const codigoAlcaldia = GlobalComponent.RUAT_codigoAlcaldia;//this.systemConfigList.find(config => config.clave === 'CODIGO_USUARIO_RUAT')?.valorTexto || '';
+    const codigoUsuario = GlobalComponent.RUAT_codigoUsuario;//this.systemConfigList.find(config => config.clave === 'CODIGO_USUARIO_RUAT')?.valorTexto || '';
     return new Promise((resolve, reject) => {
       this.ruatService.registerContribuyente(codigoAlcaldia,codigoUsuario,data ).subscribe({    
         next: (resp: any) => {

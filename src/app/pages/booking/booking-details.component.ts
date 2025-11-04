@@ -21,6 +21,7 @@ import { ScheduleStateService } from './schedule-state.service';
 import { EstadoActual } from 'src/app/core/constants/Estados';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
+import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 
 interface PuntualSchedule {
   date: Date;
@@ -66,12 +67,11 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   currentWeekEnd: Date = new Date();  
   globalAdmin = GlobalComponent.admin_deportes;
 
-  userRole: 'contribuyente' | 'representante' | 'encargado' | 'admin' = 'contribuyente';
+  userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
   isLoading = false;
   isRuatAuthenticated = false;
   reservationsList: Reserva[] = [];
   complejosList: ComplejoDeportivo[] = [];
-  configs: { [key: string]: ConfiguracionSistema } = {};
 
   readonly BookingStep = BookingStep;
   bookingStep: BookingStep = BookingStep.COMPLEJO_SELECTION;
@@ -85,26 +85,41 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   config = {infinite: true, slidesToShow: 1, slidesToScroll: 1, autoplay: true, arrows: false};
   slidesConfig = {infinite: true, slidesToShow: 4, slidesToScroll: 1, autoplay: true};
 
+
+  systemConfigList: { [key: string]: ConfiguracionSistema } = {};
+  get enableRecurrentBooking(): boolean | undefined{
+    return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? true;
+  }
+  get enableOrganizationReservation(): boolean {
+    return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_ORGANIZACIONES]?.valorBoolean ?? true;
+  }
+  get HorasValidacionPago(): number | undefined {
+    return this.systemConfigList[ClaveConfiguracion.HORAS_VALIDACION_PAGO]?.valorNumerico;
+  }  
   get anticipationTime(): string | undefined {
+    if (this.userRole !== 'Contribuyente') {
+      return undefined;
+    }
     if (!this.bookingState.tarifa) {
-      return this.configs['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico+' horas';
+      return this.systemConfigList['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico +' horas';
     }
     switch (this.bookingState.tarifa.tipoCobro) {
       case 'por_evento':
-        return this.configs['DIAS_ANTICIPACION_EVENTOS']?.valorNumerico ? 
-               this.configs['DIAS_ANTICIPACION_EVENTOS'].valorNumerico+' días' : undefined;
+        return this.systemConfigList['DIAS_ANTICIPACION_EVENTOS']?.valorNumerico ? 
+               this.systemConfigList['DIAS_ANTICIPACION_EVENTOS'].valorNumerico +' horas' : undefined;
       case 'mensualidad': case 'por_sesion': case 'por_club':
-        return this.configs['DIAS_ANTICIPACION_RECURRENTES']?.valorNumerico ? 
-               this.configs['DIAS_ANTICIPACION_RECURRENTES'].valorNumerico +' días' : undefined;
+        return this.systemConfigList['HORAS_ANTICIPACION_RECURRENTES']?.valorNumerico ? 
+               this.systemConfigList['HORAS_ANTICIPACION_RECURRENTES'].valorNumerico +' días' : undefined;
       default:
-        return this.configs['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico+' horas';
+        return this.systemConfigList['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico+' horas';
     }
   }
+
   get maxActiveReservationsPerUser(): number | undefined {
-    return this.configs['MAXIMO_RESERVAS_ACTIVAS_POR_USUARIO']?.valorNumerico;
+    return this.systemConfigList['MAXIMO_RESERVAS_ACTIVAS_POR_USUARIO']?.valorNumerico ;
   }
   get maxReservationsPerDayUser(): number | undefined {
-    return this.configs['MAXIMO_RESERVAS_POR_DIA_USUARIO']?.valorNumerico;
+    return this.systemConfigList['MAXIMO_RESERVAS_POR_DIA_USUARIO']?.valorNumerico;
   }
 
   constructor(
@@ -116,23 +131,38 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     private router: Router,
     private cdRef: ChangeDetectorRef,
     private scheduleState: ScheduleStateService,
-    private systemConfigurationService: ConfiguracionSistemaService
-  ) {}
+  ) {
+    this.userRole = this.authenticationService.getUserRole()
+  }
 
   async ngOnInit(): Promise<void> {
+    // await this.configService.ensureConfigsLoaded().toPromise();
+    // this.updatePermissionsBasedOnConfig();
     this.breadCrumbItems = [
       { label: 'Complejo' },
       { label: 'Reserva', active: true }
-    ];    
-    this.currentTime = new Date().toLocaleTimeString();    
+    ];
+    this.currentTime = new Date().toLocaleTimeString(); 
+    this.systemConfigList = this.authenticationService.getAllConfigs()
+    const currentUser = this.authenticationService.currentUser()   
+    if (this.userRole === 'Contribuyente') {
+        this.bookingState.contribuyente = currentUser;        
+        if (this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_ORGANIZACIONES]?.valorBoolean ?? false) {
+          this.userRole = !!this.bookingState.contribuyente?.organizacionesRepresentadas && 
+                            this.bookingState.contribuyente?.organizacionesRepresentadas?.length 
+                              ? 'Representante' : 'Contribuyente';
+        }
+        if (!this.bookingType) {
+          this.bookingType = 'puntual';
+        }
+    }
+   
     this.scheduleState.currentWeekStart$
       .pipe(takeUntil(this.destroy$))
       .subscribe(start => this.currentWeekStart = start);      
     this.scheduleState.currentWeekEnd$
       .pipe(takeUntil(this.destroy$))
       .subscribe(end => this.currentWeekEnd = end);
-    await this.loadSystemConfigurations();  
-    await this.initializeUserData();
     this.initializeFromNavigation();
     await this.authenticateRuat();
   }
@@ -143,39 +173,6 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     this.modalService.dismissAll();
   }
 
-  private async initializeUserData(): Promise<void> {
-    const authToken = window.sessionStorage.getItem('auth-token');
-    const currentUser = window.sessionStorage.getItem('currentUser') ?? '';    
-    if (!currentUser) return;    
-    const currentUserStr = JSON.parse(currentUser);    
-    if (authToken === 'isContribuyente' && currentUserStr) {
-      try {
-        this.bookingState.contribuyente = currentUserStr;        
-        if (this.configs['HABILITAR_RESERVAS_ORGANIZACIONES']?.valorBoolean ?? false) {
-          this.userRole = !!this.bookingState.contribuyente?.organizacionesRepresentadas && 
-                            this.bookingState.contribuyente?.organizacionesRepresentadas?.length 
-                              ? 'representante' : 'contribuyente';
-        } else {
-          this.userRole = 'contribuyente';
-        }
-        if (!this.bookingType) {
-          this.bookingType = 'puntual';
-        }
-      } catch (error) {
-        this.showNotification(
-          'Error al cargar datos del usuario. Por favor, inicie sesión nuevamente.',
-          'error'
-        );
-      }
-    } else {
-      const permissionStatus = await this.authenticationService.userHasPermission(currentUserStr);
-      if (permissionStatus === 'isAdmin') {
-        this.userRole = 'admin';
-      } else if (permissionStatus === 'isEmployee') {
-        this.userRole = 'encargado';
-      }
-    }
-  }
   private async initializeFromNavigation(): Promise<void> {
     const navigationData = history.state;    
     if (navigationData.data && navigationData.tipoReserva) {
@@ -195,7 +192,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     }
   }
   private setBookingType(tipoReserva: 'puntual' | 'recurrente'): void {
-    if (tipoReserva === 'recurrente' && !(this.configs['HABILITAR_RESERVAS_RECURRENTES']?.valorBoolean ?? true)) {
+    if (tipoReserva === 'recurrente' && !this.enableRecurrentBooking) {
       this.showNotification(
         'Las reservas recurrentes no están habilitadas en este momento',
         'warning'
@@ -233,9 +230,8 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
         }
         return true;
       },
-      [BookingStep.RESERVATION_FORM]: () => true,
-      
-      [BookingStep.TICKET]: () => {return true; },
+      [BookingStep.RESERVATION_FORM]: () => true,      
+      [BookingStep.TICKET]: () => true,
     };
     
     return validations[this.bookingStep]?.() ?? false;
@@ -257,7 +253,6 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
         break;
     }
   }
-
 
   onComplejoSelected(complejo: ComplejoDeportivo): void {
     if (!complejo) {
@@ -337,8 +332,8 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   }
   /* API REQUESTS */  
   private async authenticateRuat(): Promise<void> {    
-    const usuario = this.configs['USUARIO_RUAT']?.valorTexto || '';
-    const clave = this.configs['CLAVE_RUAT']?.valorTexto || '';
+    const usuario = this.systemConfigList[ClaveConfiguracion.USUARIO_RUAT]?.valorTexto || '';
+    const clave = this.systemConfigList[ClaveConfiguracion.CLAVE_RUAT]?.valorTexto || '';
     try {
       const response = await this.ruatService.authenticate(usuario,clave)
         .pipe(takeUntil(this.destroy$))
@@ -354,35 +349,6 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
         'warning'
       );
     }
-  }
-  private async loadSystemConfigurations(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.systemConfigurationService.getAll()
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (response: any) => {
-            if (response?.status === 'OK' && response.payload) {
-              response.payload.forEach((config: ConfiguracionSistema) => {
-                if (config.activo) {
-                  this.configs[config.clave] = config;
-                }
-              });              
-              this.isLoading = false;
-              console.log('📋 Available configs:', Object.keys(this.configs));
-              resolve();
-            } else {
-              reject(new Error('Invalid configurations response'));
-            }
-          },
-          error: (error) => {
-            this.showNotification(
-              'Error crítico al cargar configuraciones del sistema',
-              'error'
-            );
-            reject(error);
-          }
-        });
-    });
   }
   private async loadReservationsByField(fieldUuid: string): Promise<void> {
     if (!fieldUuid) {
@@ -458,7 +424,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     });
   }
 private showConfirmationModal(reservaData: Reserva): void {
-  const paymentHours = this.configs['HORAS_VALIDACION_PAGO']?.valorNumerico || 4;
+  const paymentHours = this.HorasValidacionPago ?? 1;
   const paymentDeadlineMessage = paymentHours > 1 
     ? `${paymentHours} horas` 
     : `${paymentHours} hora`;
@@ -488,7 +454,6 @@ private showConfirmationModal(reservaData: Reserva): void {
       </div>
     </div>
   `;
-  
   Swal.fire({
     text: title,
     html: html,
@@ -500,7 +465,6 @@ private showConfirmationModal(reservaData: Reserva): void {
     cancelButtonColor: '#6c757d'
   }).then((result) => {
     if (result.isConfirmed) {
-      // Store the created reservation and navigate to ticket step
       this.bookingState.reservaCreada = reservaData;
       this.bookingStep = BookingStep.TICKET;
     } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -516,12 +480,13 @@ showTicket(reservaData: Reserva): void {
 
   getTariffDescription(tarifa: Tarifa): string {
     const descriptions = {
-      'por_hora': 'Tarifa por Hora',
-      'por_persona': 'Tarifa por Persona',
-      'por_evento': 'Tarifa por Evento',
-      'mensualidad': 'Mensualidad',
-      'por_sesion': 'Sesión',
-      'por_club': 'Tarifa Club'
+      'por_hora': 'por hora',
+      'por_persona': 'por persona',
+      'por_evento': 'por evento',
+      'mensualidad': 'por mes',
+      'por_sesion': 'por sesión',
+      'por_club': 'por mes',
+      'periodo' : 'periodo de Escuela'
     };
     return descriptions[tarifa.tipoCobro] || 'Tarifa';
   }

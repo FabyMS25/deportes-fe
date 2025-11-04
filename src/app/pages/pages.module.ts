@@ -55,6 +55,7 @@ import { ModalEmployeeComponent } from './settings/employees/modal/modalEmployee
 import { ModalScheduleComponent } from './settings/fields/modal-schedule/modal-schedule.component';
 import { ModalTarifaComponent } from './settings/fields/modal-tarifa/modal-tarifa.component';
 import { SystemConfigurationsComponent } from './settings/system-configurations/system-configurations.component';
+import { BookingSchoolsComponent } from './booking-schools/list/booking-schools.component';
 
 
 @NgModule({
@@ -64,6 +65,7 @@ import { SystemConfigurationsComponent } from './settings/system-configurations/
     BookingOneTimeComponent,
     BookingRecurrentComponent,
     BookingDetailsComponent,
+    BookingSchoolsComponent,
     OrganizationsComponent,
 
         EmployeesComponent,

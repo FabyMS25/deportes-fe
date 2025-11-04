@@ -703,7 +703,6 @@ private getFieldDisplayName(fieldName: string): string {
 
   async unblockUser() {
     const datos = { ...this.row };
-    // Al desbloquear, verificar si tiene sanción activa
     if (datos.estaSancionado) {
       datos.estadoUsuario = EstadoUsuario.SANCIONADO;
     } else if (!datos.verificadoRuat) {

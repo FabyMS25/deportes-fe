@@ -14,6 +14,11 @@ import { MENU_BASE } from 'src/app/core/data/menu';
 import { ContribuyentesService } from './api/contribuyentes.service';
 import { of } from 'rxjs';
 import { UserService } from './api-users/users.service';
+import { Contribuyente } from '../models/contribuyente.models';
+import { EncargadoComplejo } from '../models/encargadoComplejo';
+import { ConfiguracionSistemaService } from './api/configuracionSistema.service';
+import { ConfiguracionSistema } from '../models/configuracionSistema.model';
+import { AplicaAConfiguracion } from '../constants/Configurations';
 
 const AUTH_API = ""//GlobalComponent.AUTH_API;
 
@@ -24,41 +29,38 @@ const httpOptions = {
 
 @Injectable({ providedIn: 'root' })
 
-/**
- * Auth-service Component
- */
 export class AuthenticationService {
 
-    user!: any;
-    currentUserSubject: any;
-    permisoAdmin ='Administracion'
+  adminPermission ='Administracion'
+  userRole!:'Contribuyente'| 'Admin' | 'Encargado';
+  currentUserSubject: any;
+  isAuthenticated: boolean = false;
+  private systemConfigs: { [key: string]: ConfiguracionSistema } = {};
 
-    isAuthenticated: boolean = false;
-    userRol:any[]=[];
-
-    constructor(private http: HttpClient, private store: Store,
+  constructor(private http: HttpClient, private store: Store,
         private authUser: UserService,
         private authContribuyente: ContribuyentesService,
-        private permissionService: PermissionUserService,
         private designationsService: EncargadoService,
+        private permissionService: PermissionUserService,
+        private systemConfigsService: ConfiguracionSistemaService,
+        private router: Router,
         private storageService: TokenStorageService,
         private toastService: ToastService,
-        private router: Router,
 
-    ) {
-        // this.currentUserSubject = JSON.parse(storageService.getUser())
-        this.currentUserSubject = storageService.getUser()
-        this.isAuthenticated = !!storageService.getToken();
-    }
+  ) {
+    // this.loadSystemConfigs()
+    this.currentUserSubject = storageService.getUser()
+    this.isAuthenticated = !!storageService.getToken();
+  }
 
-
-    async loginEmpleado(username: string, password: string): Promise<any> {
+    async loginEmployee(username: string, password: string): Promise<any> {
       return new Promise((resolve, reject) => {
         this.authUser.loginByUsername(username, password).subscribe({
-          next: (data) => {
+          next: async (data) => {
             this.currentUserSubject = data;
             this.storageService.saveToken(data.token);
             // this.userHasPermission(data);
+            await this.loadSystemConfigs(false);
             resolve(data);
           },
           error: (error) => {
@@ -67,16 +69,17 @@ export class AuthenticationService {
         });
       });
     }
-
     async loginContribuyente(username: string, password: string): Promise<boolean> {
       return new Promise((resolve, reject) => {
         this.authContribuyente.loginByUsername(username, password).subscribe({
-          next: (data: any) => {
+          next: async (data: any) => {
             if (data['status'] === 'OK') {
               this.currentUserSubject = data.payload;
               this.storageService.saveToken("isContribuyente");
               this.storageService.saveUser(this.currentUserSubject);
               localStorage.setItem('menu', JSON.stringify(MENU_BASE));
+              console.log(JSON.stringify(MENU_BASE))
+              await this.loadSystemConfigs(true);
               resolve(true);
             } else {
               resolve(false);
@@ -89,7 +92,6 @@ export class AuthenticationService {
       });
     }
 
-
     async userHasPermission(user: any): Promise<'isAdmin' | 'isEmployee' | 'hasNoPermissions'> {
       try {
         const [userPermissions, userAssignations] = await Promise.all([
@@ -99,7 +101,7 @@ export class AuthenticationService {
             .catch(error => null),
         ]);
         if (userPermissions && Array.isArray(userPermissions) && userPermissions.length > 0) {
-          const isAdmin = userPermissions.some(permission => permission.nombreMenu === this.permisoAdmin);
+          const isAdmin = userPermissions.some(permission => permission.nombreMenu === this.adminPermission);
             if (userAssignations !== null || isAdmin) {
             this.isAuthenticated = true;
             userPermissions.forEach((menu: any) => {
@@ -126,70 +128,6 @@ export class AuthenticationService {
         throw new Error('Ocurrió un error al verificar los permisos');
       }
     }
-
-    /**
-     * Returns the current user
-     */
-    public currentUser(): any {
-        return this.currentUserSubject;
-    }
-    public isLoggedIn(): boolean {
-      return this.isAuthenticated;
-  }
-    /**
-     * Logout the user
-     */
-    logout() {
-        this.store.dispatch(logout());
-        localStorage.removeItem('currentUser')
-        localStorage.removeItem('menu');
-        localStorage.removeItem('assignaments');
-        this.storageService.signOut();
-        this.isAuthenticated = false;
-        this.currentUserSubject = null;
-        this.router.navigate(['/auth/login']);
-
-        this.store.dispatch(logoutSuccess());
-        return of(undefined).pipe(
-
-        );
-    }
-
-    /**
-     * Reset password
-     * @param email email
-     */
-    resetPassword(email: string) {
-        // return getFirebaseBackend()!.forgetPassword(email).then((response: any) => {
-        //     const message = response.data;
-        //     return message;
-        // });
-    }
-
-
-    isAdmin():boolean{
-      const menuString = localStorage.getItem('menu');
-      const menu: any[] = menuString ? JSON.parse(menuString) : null;
-      return menu.some(permission => permission.nombreMenu === this.permisoAdmin)
-    }
-    // getRouteDB():string{
-    //   if(this.storageService.getToken()==="isContribuyente"){
-    //     return 'taxpayer'
-    //   }else{
-    //     if (!this.isAdmin()) {
-    //       return 'employee'
-    //     }
-    //   }
-    //   return ''
-    // }
-    getDashboardUrl(): string {
-      const dashboardRoutes = ['/inicio', '/inicio/employee', '/inicio/taxpayer'];
-      const storedMenu = localStorage.getItem('menu');
-      const userMenu = storedMenu ? JSON.parse(storedMenu) : null;
-      const userDashboard = userMenu.find((item:any) => dashboardRoutes.includes(item.ruta));
-      return userDashboard ? userDashboard.ruta : '/auth/login';
-    }
-
     hasPermission(modulo: string): string[] {
       const menuString = localStorage.getItem('menu');
       const menu: any[] = menuString ? JSON.parse(menuString) : null;
@@ -202,36 +140,141 @@ export class AuthenticationService {
       const permissions = menu.filter(permission => permission.ruta === route);
       return menu.find(permission => permission.ruta === route) ? true : false;
     }
-
-
-    public getAvatar(): string{
-      let avatar="default-profile1.png";
-      let tipoUser;
-      const menuString = localStorage.getItem('menu');
-      const menu: any[] = menuString ? JSON.parse(menuString) : null;
-      if(this.storageService.getToken()==="isContribuyente"){
-        tipoUser = UserRol.find(item => item.tipo == 2);//Contribuyente
-        if (tipoUser !== undefined) {
-            avatar = tipoUser.avatarM;
-            if (this.currentUserSubject.sexo === 'F') {
-                avatar = tipoUser.avatarF;
-            }
-        }
-      }else{
-        if (menu.some(permission => permission.nombreMenu === this.permisoAdmin)) {
-          tipoUser = UserRol.find(item => item.tipo === 0);//ADMINISTRADOR
-        } else {
-          tipoUser = UserRol.find(item => item.tipo == 1);//VALIDADOR
-        }
-        if (tipoUser !== undefined) {
-            avatar = tipoUser.avatarM;
-            if (this.currentUserSubject.designacion.personaDto.sexo === 'F') {
-                avatar = tipoUser.avatarF;
-            }
-        }
-      }
-      return avatar
+    
+    getDashboardUrl(): string {
+      const dashboardRoutes = ['/inicio', '/inicio/employee', '/inicio/taxpayer'];
+      const storedMenu = localStorage.getItem('menu');
+      const userMenu = storedMenu ? JSON.parse(storedMenu) : null;
+      const userDashboard = userMenu.find((item:any) => dashboardRoutes.includes(item.ruta));
+      return userDashboard ? userDashboard.ruta : '/auth/login';
     }
 
+    /**
+     * GETTERS
+     */ 
+  public currentUser(): any {
+        return this.currentUserSubject;
+  }
+  public isLoggedIn(): boolean {
+      return this.isAuthenticated;
+  }
+
+    isAdmin():boolean{
+      const menuString = localStorage.getItem('menu');
+      const menu: any[] = menuString ? JSON.parse(menuString) : null;
+      return menu.some(permission => permission.nombreMenu === this.adminPermission)
+    }
+    
+  getUserFullName(): string {
+    if (!this.currentUserSubject) return '';   
+    
+    if(this.storageService.getToken() === 'isContribuyente'){
+      return this.currentUserSubject.nombreCompleto || 
+             (this.currentUserSubject.nombre + ' ' + this.currentUserSubject.primerApellido + 
+              (this.currentUserSubject.segundoApellido ? ' ' + this.currentUserSubject.segundoApellido : '')) || 
+             this.currentUserSubject.userName || 
+             'Contribuyente';
+    }else{
+      return this.currentUserSubject.designacion?.personaDto?.fullName || 
+             (this.currentUserSubject.designacion?.personaDto?.nombre + ' ' + 
+              this.currentUserSubject.designacion?.personaDto?.apPaterno) || 
+             this.currentUserSubject.username || 
+             'Usuario';
+
+    }
+    return this.currentUserSubject.username || this.currentUserSubject.userName || 'Usuario';
+  }
+
+  getUserRole(): 'Contribuyente' | 'Admin' | 'Encargado' {
+    if(this.storageService.getToken() === 'isContribuyente'){
+      return 'Contribuyente';
+    }else{ if (this.isAdmin()) {
+          return 'Admin';
+      }
+      return 'Encargado';
+    }
+  }
+
+  getAvatar(): string {
+    if (!this.currentUserSubject) return 'default-profile1.png';       
+    if(this.storageService.getToken() === 'isContribuyente'){
+      const tipoUser = UserRol.find(item => item.tipo == 2);//Contribuyente
+      if (this.currentUserSubject.genero === 'F') {
+        return tipoUser?.avatarF || '';
+      }else return tipoUser?.avatarM ||''
+    }else if(this.isAdmin()){
+      const tipoUser = UserRol.find(item => item.tipo === 0);//ADMINISTRADOR
+      if (this.currentUserSubject.designacion.personaDto.sexo === 'F') {
+        return tipoUser?.avatarF || '';
+      }else return tipoUser?.avatarM ||''
+    }else{
+      const data = localStorage.getItem('assignaments')
+      const employee = data ? JSON.parse(data) : null;      
+      return employee.avatar;
+    }
+  }
+
+  getAllConfigs(): { [key: string]: ConfiguracionSistema } {
+    try {
+      const storedConfigs = localStorage.getItem('systemConfigs');
+      if (storedConfigs) {
+        this.systemConfigs = JSON.parse(storedConfigs);
+      }
+    } catch (error) {
+      this.systemConfigs = {};
+    }
+    return this.systemConfigs;
+  }
+  getSystemConfig(clave: string): ConfiguracionSistema | undefined {
+    return this.systemConfigs[clave];
+  }
+
+  /*
+   * Logout the user
+  */
+  logout() {
+    this.store.dispatch(logout());
+    localStorage.removeItem('currentUser')
+    localStorage.removeItem('menu');
+    localStorage.removeItem('assignaments');
+    this.storageService.signOut();
+    this.isAuthenticated = false;
+    this.currentUserSubject = null;
+    this.router.navigate(['/auth/login']);
+    this.store.dispatch(logoutSuccess());
+        return of(undefined).pipe(
+    );
+  }
+  /**
+   * Reset password
+   * @param email email
+    */
+  resetPassword(email: string) {
+        // return getFirebaseBackend()!.forgetPassword(email).then((response: any) => {
+        //     const message = response.data;
+        //     return message;
+        // });
+  }
+  private async loadSystemConfigs(usuario:boolean): Promise<void> {
+    try {
+      const configResponse: any = await this.systemConfigsService.getAll().toPromise();
+      if (configResponse.status === 'OK') {
+        const configsMap: { [key: string]: ConfiguracionSistema } = {};        
+        configResponse.payload.forEach((config: ConfiguracionSistema) => {
+          if (config.activo) {
+            if (!usuario && config.aplicaA === AplicaAConfiguracion.USUARIO) {
+              return;
+            }            
+            configsMap[config.clave] = config;
+          }
+        });        
+        this.systemConfigs = configsMap;
+        console.log(this.systemConfigs)
+        localStorage.setItem('systemConfigs', JSON.stringify(configsMap));
+      }
+    } catch (error) {
+      console.error('Failed to load system configs:', error);
+    }
+  }
 }
 

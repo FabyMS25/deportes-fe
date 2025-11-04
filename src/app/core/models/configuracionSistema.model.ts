@@ -1,3 +1,5 @@
+import { AplicaAConfiguracion, CategoriaConfiguracion, ClaveConfiguracion, UnidadMedida } from "../constants/Configurations";
+
 export interface ConfiguracionSistema {
   uuid?: string;
   estado?: boolean;
@@ -5,8 +7,8 @@ export interface ConfiguracionSistema {
   fechaActualizacion?: Date;
   
   // Identification
-  clave: string;              // Unique key identifier
-  categoria: string;          // Group related configs
+  clave: ClaveConfiguracion;              // Unique key identifier
+  categoria: CategoriaConfiguracion;          // Group related configs
   
   // Values (flexible storage)
   valorNumerico?: number;     // For numeric values
@@ -17,7 +19,7 @@ export interface ConfiguracionSistema {
   // Metadata
   nombre: string;             // Display name
   descripcion?: string;       // What this config does
-  unidadMedida?: string;      // 'horas', 'dias', 'bolivianos', 'porcentaje'
+  unidadMedida?: UnidadMedida;      // 'horas', 'dias', 'bolivianos', 'porcentaje'
   
   // Validation
   valorMinimo?: number;       // Min allowed value
@@ -34,6 +36,6 @@ export interface ConfiguracionSistema {
   modificadoPor?: string;     // User UUID who modified
   
   // Application scope
-  aplicaA?: string;           // 'global', 'campo_deportivo', 'complejo', 'tarifa'
+  aplicaA?: AplicaAConfiguracion;           // 'global', 'usuario', ..
   referenciaUuid?: string;    // UUID of related entity (if aplicaA != 'global')
 }

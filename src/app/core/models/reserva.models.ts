@@ -22,7 +22,7 @@ import { Tarifa } from "./tarifa.model";
   estadoValidacion:EstadoValidacion;
   
   estadoReserva:EstadoReserva;
-  tipoReserva:BookingType; //puntual / recurente
+  tipoReserva:BookingType; //puntual / recurente / periodo
   numeroReserva:string;
   numeroTasa?:string;
   montoTotal:number;
