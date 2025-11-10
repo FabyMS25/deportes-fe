@@ -1,4 +1,69 @@
 <div class="campo-selection-container">
+  <!-- Filters Section -->
+  <div class="card mb-4" *ngIf="filteredCampos.length > 0">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label small fw-medium">Buscar campo</label>
+          <input type="text" class="form-control" placeholder="Nombre, código..." 
+                 [(ngModel)]="searchText">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small fw-medium">Iluminación</label>
+          <select class="form-select" [(ngModel)]="filterByIluminacion">
+            <option [value]="undefined">Todas</option>
+            <option [value]="true">Con iluminación</option>
+            <option [value]="false">Sin iluminación</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small fw-medium">Superficie</label>
+          <select class="form-select" [(ngModel)]="filterBySuperficie">
+            <option value="">Todas</option>
+            <option *ngFor="let superficie of superficiesDisponibles" [value]="superficie">
+              {{ superficie }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small fw-medium">Categoría</label>
+          <select class="form-select" [(ngModel)]="filterByCategoria">
+            <option value="">Todas</option>
+            <option *ngFor="let categoria of categoriasDisponibles" [value]="categoria">
+              {{ categoria }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+          <button class="btn btn-outline-secondary w-100" 
+                  (click)="clearFilters()" 
+                  [disabled]="!hasActiveFilters()">
+            <i class="ri-close-line"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Mode Toggle -->
+  <div class="d-flex justify-content-between align-items-center mb-3" *ngIf="filteredCampos.length > 0">
+    <div class="text-muted small">
+      {{ filteredCampos.length }} campo(s) encontrado(s)
+    </div>
+    <div class="btn-group btn-group-sm" role="group">
+      <button type="button" class="btn btn-outline-primary" 
+              [class.active]="viewMode === 'grid'"
+              (click)="viewMode = 'grid'">
+        <i class="ri-grid-fill"></i> Grid
+      </button>
+      <button type="button" class="btn btn-outline-primary" 
+              [class.active]="viewMode === 'list'"
+              (click)="viewMode = 'list'">
+        <i class="ri-list-check"></i> Lista
+      </button>
+    </div>
+  </div>
+
   <div class="text-center py-3" *ngIf="!this.isLoading && this.filteredCampos.length === 0">
     <i class="ri-football-line display-4 text-muted opacity-25 mb-3"></i>
     <h6 class="mb-2">No hay campos disponibles</h6>
@@ -11,6 +76,7 @@
     </button>
   </div>
     
+  <!-- Grid View -->
   <div class="row" *ngIf="!isLoading && filteredCampos.length > 0 && viewMode === 'grid'">
     <div class="col-lg-6" *ngFor="let item of filteredCampos">
       <div class="card campo-card border-0 shadow-sm" (click)="toggleCampoExpansion(item)">
@@ -21,6 +87,13 @@
                 {{ item.campo.nombre }}
                 <span class="badge bg-success-subtle text-success ms-2">
                   {{ item.campo.categoria }}
+                </span>
+                <!-- Approval Requirement Badge -->
+                <span class="badge ms-2" [ngClass]="item.campo.requiereAprobacion 
+      ? 'bg-warning-subtle text-warning' 
+      : 'bg-success-subtle text-success'">
+                  <i class="ri-shield-check-line me-1"></i>
+                  {{ item.campo.requiereAprobacion ? 'Requiere aprobación' : 'Aprobación automática'}}
                 </span>
               </h6>
               <small class="text-muted">{{ item.campo.codigo }}</small>
@@ -83,11 +156,6 @@
                     <i class="ri-price-tag-3-line"></i>
                     {{ tarifa.descripcion || 'Tarifa estándar' }}
                   </h6>
-                  <!-- <div class="tarifa-status mx-3 mb-1 small">
-                    <span class="badge" [ngClass]="tarifa.activo ? 'bg-success' : 'bg-secondary'">
-                      {{ tarifa.activo ? 'Tarifa Activa' : 'Tarifa Inactiva' }}
-                    </span>
-                  </div> -->
                 </div>
                 <div class="tarifa-price">
                   <span class="text-primary">{{ tarifa.precioBase | number:'1.2-2' }}</span>
@@ -95,14 +163,6 @@
                 </div>
               </div>  
               <div class="tarifa-meta mb-0">
-                <!-- <div class="tarifa-item" *ngIf="tarifa.clasificadorRuatDto?.nombre">
-                  <p class="text-muted mb-0 small">
-                    <i class="ri-money-dollar-circle-line"></i> Clasificador
-                  </p>
-                    <span class="badge bg-light text-body fs-10 fw-medium">
-                      <i class="mdi mdi-star text-warning me-1"></i>{{ tarifa.clasificadorRuatDto.nombre }}
-                    </span>
-                </div> -->
                 <div class="tarifa-item">
                   <p class="text-muted mb-0 small">
                     <i class="ri-money-dollar-circle-line"></i> Tipo de Cobro
@@ -117,16 +177,6 @@
                     {{ tarifa.sesionesIncluidas }} Sesiones
                   </span>
                 </div>
-                <!-- <div class="tarifa-item">
-                    <p class="text-muted mb-0 small">
-                      <i class="ri-calendar-event-line"></i> Vigencia
-                    </p>
-                    <p class="mb-0">
-                      {{ formatDate(tarifa.fechaInicio) }}
-                      <span *ngIf="tarifa.fechaFin"> - {{ formatDate(tarifa.fechaFin) }}</span>
-                      <span *ngIf="!tarifa.fechaFin" class="text-muted"> - Sin fecha fin</span>
-                    </p>
-                </div> -->
                 <div *ngIf="tarifa.desde || tarifa.hasta" class="tarifa-item">
                     <p class="text-muted mb-0 small">
                         <i class="ri-time-line me-1"></i> Intervalo Válido
@@ -138,9 +188,6 @@
                       </div>
                 </div>
                 <div class="tarifa-item">
-                    <!-- <p class="text-muted mb-0 small">
-                      <i class="ri-price-tag-line"></i> Categorías/ Disiplinas Deportivas
-                    </p> -->
                     <div class="d-flex gap-1 flex-wrap">
                         <span *ngFor="let cat of tarifa.categoriasDtoList" 
                               class="badge bg-success-subtle text-success">
@@ -168,18 +215,26 @@
       </div>
     </div>
   </div>
+
   <!-- List View -->
   <div class="list-view" *ngIf="!isLoading && filteredCampos.length > 0 && viewMode === 'list'">
     <div class="card campo-card border-0 shadow-sm" *ngFor="let item of filteredCampos" (click)="toggleCampoExpansion(item)">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start mb-2">
-            <div class="d-flex">
-              <h6 class="mb-1 fw-bold">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <h6 class="mb-0 fw-bold">
                 {{ item.campo.nombre }}
               </h6>
-              <small class="text-muted me-2">{{ item.campo.codigo }}</small>
-              <span class="badge bg-success-subtle text-success ms-2">
+              <small class="text-muted">{{ item.campo.codigo }}</small>
+              <span class="badge bg-success-subtle text-success">
                 {{ item.campo.categoria }}
+              </span>
+              <!-- Approval Requirement Badge in List View -->
+              <span class="badge" [ngClass]="item.campo.requiereAprobacion 
+      ? 'bg-warning-subtle text-warning' 
+      : 'bg-success-subtle text-success'">
+                <i class="ri-shield-check-line me-1"></i>
+                {{ item.campo.requiereAprobacion ? 'Requiere aprobación' : 'Aprobación automática' }}
               </span>
             </div>
             <div class="form-check">
@@ -225,12 +280,7 @@
               </span>
             </div>
           </div>
-          <div class="mt-2" *ngIf="item.campo.observaciones">
-            <small class="text-muted">
-              <i class="ri-information-line me-1"></i>
-              {{ item.campo.observaciones }}
-            </small>
-          </div>
+          
           <!-- Tarifas disponibles -->
           <div class="tarifas-section" *ngIf="item.isExpanded" @slideDown>
             <hr class="my-3">
@@ -250,11 +300,6 @@
                     <i class="ri-price-tag-3-line"></i>
                     {{ tarifa.descripcion || 'Tarifa estándar' }}
                   </h5>
-                  <!-- <div class="tarifa-status mx-3 mb-1 small">
-                    <span class="badge" [ngClass]="tarifa.activo ? 'bg-success' : 'bg-secondary'">
-                      {{ tarifa.activo ? 'Tarifa Activa' : 'Tarifa Inactiva' }}
-                    </span>
-                  </div> -->
                 </div>
                 <div class="tarifa-price">
                   <span class="text-primary">{{ tarifa.precioBase | number:'1.2-2' }}</span>
@@ -262,14 +307,6 @@
                 </div>
               </div>  
               <div class="tarifa-meta mb-0">
-                <!-- <div class="tarifa-item" *ngIf="tarifa.clasificadorRuatDto?.nombre">
-                  <p class="text-muted mb-0 small">
-                    <i class="ri-money-dollar-circle-line"></i> Clasificador
-                  </p>
-                    <span class="badge bg-light text-body fs-10 fw-medium">
-                      <i class="mdi mdi-star text-warning me-1"></i>{{ tarifa.clasificadorRuatDto.nombre }}
-                    </span>
-                </div> -->
                 <div class="tarifa-item">
                   <p class="text-muted mb-0 small">
                     <i class="ri-money-dollar-circle-line"></i> Tipo de Cobro
@@ -284,16 +321,6 @@
                     {{ tarifa.sesionesIncluidas }} Sesiones
                   </span>
                 </div>
-                <!-- <div class="tarifa-item">
-                    <p class="text-muted mb-0 small">
-                      <i class="ri-calendar-event-line"></i> Vigencia
-                    </p>
-                    <p class="mb-0">
-                      {{ formatDate(tarifa.fechaInicio) }}
-                      <span *ngIf="tarifa.fechaFin"> - {{ formatDate(tarifa.fechaFin) }}</span>
-                      <span *ngIf="!tarifa.fechaFin" class="text-muted"> - Sin fecha fin</span>
-                    </p>
-                </div> -->
                 <div *ngIf="tarifa.desde || tarifa.hasta" class="tarifa-item">
                     <p class="text-muted mb-0 small">
                         <i class="ri-time-line me-1"></i> Intervalo Válido
@@ -305,9 +332,6 @@
                       </div>
                 </div>
                 <div class="tarifa-item">
-                    <!-- <p class="text-muted mb-0 small">
-                      <i class="ri-price-tag-line"></i> Categorías/ Disiplinas Deportivas
-                    </p> -->
                     <div class="d-flex gap-1 flex-wrap">
                         <span *ngFor="let cat of tarifa.categoriasDtoList" 
                               class="badge bg-success-subtle text-success">

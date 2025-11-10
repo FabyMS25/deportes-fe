@@ -3,6 +3,35 @@
     <div class="col-lg-8">
       <div class="card">        
         <div class="card-body">
+          <!-- Conflict Alert -->
+          <div class="alert alert-warning" *ngIf="reservationConflicts.length > 0 && showConflicts">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h6 class="alert-heading">
+                  <i class="ri-alert-line me-2"></i>
+                  Conflictos de Reserva Detectados
+                </h6>
+                <p class="mb-2">Se encontraron conflictos con las siguientes fechas:</p>
+                <div *ngFor="let conflict of reservationConflicts" class="conflict-detail mb-2 p-2 bg-white rounded">
+                  <div class="fw-medium text-danger">
+                    {{ conflict.date | date:'fullDate' }} ({{ conflict.dayName | titlecase }})
+                  </div>
+                  <div *ngFor="let slotConflict of conflict.conflictingSlots" class="small text-muted ms-3">
+                    • {{ slotConflict.slot.horaInicio }} - {{ slotConflict.slot.horaFin }}: 
+                    {{ slotConflict.conflictWith }}
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="btn-close" (click)="hideConflicts()" aria-label="Close"></button>
+            </div>
+          </div>
+
+          <!-- Error Message -->
+          <div class="alert alert-danger" *ngIf="errorMessage && reservationConflicts.length === 0">
+            <i class="ri-error-warning-line me-2"></i>
+            {{ errorMessage }}
+          </div>
+
           <div class="row mb-4">
             <div class="col-md-6">
               <label class="form-label fw-medium">
@@ -26,11 +55,7 @@
                      [min]="fechaInicio">
             </div>
           </div>
-          <div class="alert alert-danger" *ngIf="errorMessage">
-            <i class="ri-error-warning-line me-2"></i>
-            {{ errorMessage }}
-          </div>
-          <div class="card bg-light mb-4">
+          <div class="card bg-light mb-2">
             <div class="card-body">
               <h6 class="mb-3">
                 <i class="ri-calendar-event-line me-1"></i>

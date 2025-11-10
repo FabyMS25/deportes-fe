@@ -401,8 +401,8 @@
 </div>
 
 <ng-template #ticketModal>
-    <app-ticket
-        [bookingType]="row.reservaDto?.tipoReserva || 'recurrente'"
+    <app-ticket *ngIf="row.reservaDto"
+        [bookingType]="row.reservaDto.tipoReserva || 'recurrente'"
         [reservationData]="row.reservaDto"
         [autoLoad]="true"
         [showAsModal]="true">

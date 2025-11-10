@@ -9,7 +9,7 @@ import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
 import { Reserva } from 'src/app/core/models/reserva.models';
-import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
@@ -465,6 +465,7 @@ private showConfirmationModal(reservaData: Reserva): void {
     cancelButtonColor: '#6c757d'
   }).then((result) => {
     if (result.isConfirmed) {
+      console.log(reservaData)
       this.bookingState.reservaCreada = reservaData;
       this.bookingStep = BookingStep.TICKET;
     } else if (result.dismiss === Swal.DismissReason.cancel) {

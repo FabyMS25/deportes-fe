@@ -262,6 +262,7 @@ export class BookingRecurrentComponent implements OnInit {
       size: 'lg',
       windowClass: 'ticket-modal'
     });
+    console.log(data)
     modalRef.componentInstance.reservationData = data.reservaDto;
     modalRef.componentInstance.showAsModal = true;
     modalRef.componentInstance.autoLoad = true;

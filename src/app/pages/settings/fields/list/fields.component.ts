@@ -17,6 +17,11 @@ import { EstadoActual } from 'src/app/core/constants/Estados';
 import { HorarioExcepcion } from 'src/app/core/models/horarioExcepcion.model';
 import { TarifaConcepto } from 'src/app/core/models/tarifaConcepto.model';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
+import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
+import { CategoriaCampo } from 'src/app/core/constants/Features';
+import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
+import { Superficie } from 'src/app/core/models/superficie.model';
 
 @Component({
   selector: 'app-fields',
@@ -27,24 +32,31 @@ export class FieldsComponent {
   breadCrumbItems!: Array<{}>;
   title = "Campos Deportivos";
   canActivate: string[];
-  temp: any[] = [];
-  itemsList: any[] = [];
   viewMode: 'table' | 'cards' = 'table';
+  itemsList: any[] = [];
+  temp: CampoDeportivo[] = [];
+  fieldsList: CampoDeportivo[] = [];
 
   submitted = false;
   fieldsForm!: UntypedFormGroup;
-  searchTerm: any;
-  categoryList: any[] = [];
-  fieldsList: any[] = [];
   dataSelected!: CampoDeportivo;
+  searchTerm: any;
+  categoryList = Object.values(CategoriaCampo);
+  complejosList: ComplejoDeportivo[] = [];
+  superficiesList: Superficie[] = [];
+
+  selectedComplejo: string = '';
+  selectedSuperficie: string = '';
+  selectedCategoria: string = '';
 
   @ViewChild('viewModel') viewModel!: ElementRef;
 
   constructor(
     private modalService: NgbModal,
-    private fieldsService: CamposDeportivoService,
-    private categoriasService: CategoriasService,
     private authService: AuthenticationService,
+    private fieldsService: CamposDeportivoService,
+    private complejoService: ComplejosService,
+    private superficieService: SuperficiesService,
   ) {
     this.canActivate = this.authService.hasPermission(this.title);
   }
@@ -73,7 +85,8 @@ export class FieldsComponent {
       { name: 'Observaciones', prop: 'observaciones', visible: false },
       { name: 'Fecha Creación', prop: 'fechaCreacion', date: true, visible: false },
     ];
-    this.getCategories();
+    this.getComplejos();
+    this.getSuperficies();
     this.getFields();
   }
 
@@ -82,22 +95,46 @@ export class FieldsComponent {
     this.selectedItems = items;
   }
 
-  // Search Data
+  // Perform search with all filters
   performSearch(): void {
     this.fieldsList = this.temp.filter((item: any) => {
-      return (
+      const matchesSearch = !this.searchTerm || 
         item.codigo?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.nombre?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.categoria?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.superficieDto?.descripcion?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.complejoDto?.nombre?.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
+        item.complejoDto?.nombre?.toLowerCase().includes(this.searchTerm.toLowerCase());
+
+      const matchesComplejo = !this.selectedComplejo || 
+        item.complejoDto?.uuid === this.selectedComplejo;
+
+      const matchesSuperficie = !this.selectedSuperficie || 
+        item.superficieDto?.uuid === this.selectedSuperficie;
+
+      const matchesCategoria = !this.selectedCategoria || 
+        item.categoria === this.selectedCategoria;
+
+
+      return matchesSearch && matchesComplejo && matchesSuperficie && 
+             matchesCategoria ;
     });
   }
 
-  /**
-   * View Data Get
-   */
+  // Apply filters
+  applyFilters(): void {
+    this.performSearch();
+  }
+
+  // Clear all filters
+  clearFilters(): void {
+    this.selectedComplejo = '';
+    this.selectedSuperficie = '';
+    this.selectedCategoria = '';
+    this.searchTerm = '';
+    this.performSearch();
+  }
+
+
   viewDataGet(data: any) {
     this.dataSelected = data;
     const element = this.viewModel.nativeElement;
@@ -123,9 +160,6 @@ export class FieldsComponent {
     });
   }
 
-  /**
-   * Delete model
-   */
   deleteId!: string;
   deleteModal(content: any, data: any) {
     this.deleteId = data.uuid;
@@ -172,14 +206,12 @@ export class FieldsComponent {
     modalRef.componentInstance.titles = this.headersImport.map(header =>
       ({ prop: header, name: header, visible: true }));
     modalRef.componentInstance.itemsList = this.temp;
-
     modalRef.componentInstance.emitList.subscribe(() => {
-      this.getCategories();
       this.getFields();
     });
   }
 
-// Csv File Export
+  // Csv File Export
   csvFileExport() {
     const daysOrder = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo', 'Feriado'];
     const dayMapping: { [key: string]: string[] } = {
@@ -283,11 +315,20 @@ export class FieldsComponent {
   }
 
   /* API Services */
-  private getCategories() {
-    this.categoriasService.getAll().subscribe({
+  private getComplejos() {
+    this.complejoService.getAll().subscribe({
       next: (data: any) => {
         if (data['status'] === 'OK') {
-          this.categoryList = data.payload;
+          this.complejosList = data.payload;
+        }
+      }
+    });
+  }
+  private getSuperficies() {
+    this.superficieService.getAll().subscribe({
+      next: (data: any) => {
+        if (data['status'] === 'OK') {
+          this.superficiesList = data.payload;
         }
       }
     });

@@ -318,20 +318,16 @@ export class ReservationConflictService {
     campoDeportivoId: string,
     timeRange: TimeRange,
     existingReservations: Reserva[],
-    anticipationHours: number = 48
+    anticipationHours: number | undefined
   ): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
-
-    // Check anticipation time
     const now = new Date();
-    const minReservationTime = new Date(now.getTime() + anticipationHours * 60 * 60 * 1000);
+    const minReservationTime = anticipationHours? new Date(now.getTime() + anticipationHours * 60 * 60 * 1000):undefined;
     const reservationDateTime = this.combineDateAndTime(timeRange.date, timeRange.startTime);
 
-    if (reservationDateTime < minReservationTime) {
+    if (minReservationTime && reservationDateTime < minReservationTime) {
       errors.push(`La reserva debe realizarse con al menos ${anticipationHours} horas de anticipación`);
     }
-
-    // Check for conflicts
     const conflict = this.checkConflict(
       campoDeportivoId,
       timeRange,
@@ -341,8 +337,6 @@ export class ReservationConflictService {
     if (conflict.hasConflict) {
       errors.push(conflict.reason || 'El horario seleccionado tiene conflictos con otras reservas');
     }
-
-    // Check if date is in the past
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (timeRange.date < today) {

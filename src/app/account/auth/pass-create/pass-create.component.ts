@@ -3,7 +3,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { MustMatch } from './must-match';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
-import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { PassResetsService } from 'src/app/core/services/api/pass-resets.service';
 import Swal from 'sweetalert2';
 

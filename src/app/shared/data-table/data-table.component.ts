@@ -113,9 +113,9 @@ export class DataTableComponent implements OnChanges {
     return [
       ...(this.actions.show ? [{ tooltip: 'Ver', icon: 'ri-eye-fill', handler: () => this.showItem(data), buttonClass: '' }] : []),
       ...(this.actions.records ? [{ tooltip: 'Historial', icon: 'ri-file-list-3-line', handler: () => this.recordsItem(data), buttonClass: '' }] : []),
-      ...(this.actions.validate && this.canShow('validate',data)? [{ tooltip: 'Validar', icon: ' ri-toggle-fill', handler: () => this.validateItem(data), buttonClass: 'text-primary d-inline-block edit-item-btn' }] : []),
       ...(this.actions.consult ? [{ tooltip: 'Consultar', icon: 'ri-restart-fill', handler: () => this.consultItem(data), buttonClass: 'text-primary d-inline-block edit-item-btn' }] : []),
-      ...(this.actions.edit || (this.actions.edit && data.estadoReserva && data.estadoReserva ==='Pendiente')? [{ tooltip: 'Editar', icon: 'ri-pencil-fill', handler: () => this.editItem(data), buttonClass: 'text-primary edit-item-btn' }] : []),
+      ...(this.actions.validate && this.canShow('validate',data)? [{ tooltip: 'Validar', icon: ' ri-toggle-fill', handler: () => this.validateItem(data), buttonClass: 'text-primary d-inline-block edit-item-btn' }] : []),
+      ...(this.actions.edit && this.canShow('Editar',data)? [{ tooltip: 'Editar', icon: 'ri-pencil-fill', handler: () => this.editItem(data), buttonClass: 'text-primary edit-item-btn' }] : []),
       ...((this.actions.close && this.canShow(this.actions.close,data,)) ? [{ tooltip: this.actions.close, icon: 'ri-close-circle-line', handler: () => this.closeItem(data), buttonClass: 'text-danger remove-item-btn' }] : []),
       ...((this.actions.check && this.canShow(this.actions.check,data,)) ? [{ tooltip: this.actions.check, icon: 'ri-checkbox-circle-line', handler: () => this.checkItem(data), buttonClass: 'text-success' }] : []),
       ...(this.actions.process ? [{ tooltip: this.actions.process, icon: ' ri-auction-line', handler: () => this.processItem(data), buttonClass: 'text-warning' }] : []),
@@ -125,6 +125,8 @@ export class DataTableComponent implements OnChanges {
   } 
   canShow(action:string,data: any): boolean {
     switch(action){
+      case 'Editar':
+        return data.reservaDto ? data.reservaDto.estadoReserva ===statusData.EstadoReserva.PENDIENTE : true
       case 'validate':
         return data.reservaDto && data.reservaDto.estadoValidacion ===statusData.EstadoValidacion.PENDIENTE;
       case 'Anular':

@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgOtpInputComponent } from 'ng-otp-input'; 
 
-import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import Swal from 'sweetalert2';
 import { UserDataService } from '../signup/user-data.service';

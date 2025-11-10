@@ -1,4 +1,5 @@
-import { Contribuyente } from "./contribuyente.models";
+import { TipoOrganizacion } from "../constants/Features";
+import { Contribuyente } from "./contribuyente.model";
 import { Reserva } from "./reserva.models";
 
 export interface Organizacion {
@@ -6,15 +7,26 @@ export interface Organizacion {
   estado?: boolean;
   fechaCreacion?: Date;
 
-  tipoOrganizacion:string;
+  activo:boolean;
+
+  tipoOrganizacion:TipoOrganizacion; 
+  personeriaJuridica?: string;
   nombre:string;
   telefono?:string;
   email?: string;
   direccion?: string; 
-  personeriaJuridica?: string;
   nroNit?: string;
-  activo:boolean;
+
+  entrenador?: string;
+  disciplina?: string;
+  codigoEscuela?: string;
+  
+  // Payment configuration
+  requierePagoMensualidad: boolean;
+  tarifaMensual?: number;
+  permiteReservasGratuitas: boolean;
 
   representanteDto: Contribuyente;
   reservasDtoList?: Reserva[];
+  // estudiantesDtoList?: EstudianteEscuela[];
 }

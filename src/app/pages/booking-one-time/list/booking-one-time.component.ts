@@ -19,7 +19,7 @@ import { ConfiguracionSistemaService } from 'src/app/core/services/api/configura
 import { Reserva } from 'src/app/core/models/reserva.models';
 import { TicketComponent } from '../../reports/ticket/ticket.component';
 import { Categoria } from 'src/app/core/models/categoria.model';
-import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { Pago } from 'src/app/core/models/pago.model';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
@@ -115,12 +115,6 @@ export class BookingOneTimeComponent implements OnInit {
     } else {
       this.userData = currentUser.designacion.personaDto;
     }
-    
-    // const expiredCount = await this.checkAllExpiredReservations();
-    // console.log(expiredCount)
-    // if (expiredCount > 0) {
-    //   this.showExpiredReservationsMessage(expiredCount);
-    // }
     this.authRuat()
     await this.getReservations();
     await this.getCategories();

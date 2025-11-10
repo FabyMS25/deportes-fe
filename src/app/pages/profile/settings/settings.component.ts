@@ -11,7 +11,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Location } from '@angular/common';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { de } from 'date-fns/locale';
-import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo';
 
 @Component({
@@ -162,8 +162,6 @@ export class SettingsComponent implements OnInit {
           estadoRuat: this.userContribuyente.estadoRuat,
           verificadoRuat: this.userContribuyente.verificadoRuat,
           esDeportistaElite: this.userContribuyente.esDeportistaElite,
-          perteneceEscuelaMunicipal: this.userContribuyente.perteneceEscuelaMunicipal,
-          descuentoAplicable: this.userContribuyente.descuentoAplicable,
           estaSancionado: this.userContribuyente.estaSancionado,
 
           fechaNacimiento: this.userContribuyente.fechaNacimiento,

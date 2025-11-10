@@ -4,7 +4,7 @@
   <div class="col-lg-12">
     <div class="card">
         <div class="card-header border-0 d-flex flex-wrap align-items-center">
-            <h5 class="card-title flex-grow-1">{{'Lista de pagos a '+title|translate }}</h5>
+            <h5 class="card-title flex-grow-1">{{'Pagos de Mensualidades - '+title|translate }}</h5>
             <div class="flex-shrink-0">
                 <div class="d-flex gap-1 flex-wrap ">
                     <button class="btn btn-soft-primary"
@@ -14,9 +14,9 @@
                         {{"Consultar" | translate}}
                     </button>
                     <button *ngIf="canActivate.includes('CREAR')"
-                        type="button" class="btn btn-soft-secondary" (click)="agregarReserva()">
+                        type="button" class="btn btn-soft-success" (click)="openModal($event,'','lg')">
                         <i class="ri-add-circle-line align-middle"></i>
-                        {{"Agregar" | translate}}
+                        {{"Nueva Mensualidad" | translate}}
                     </button>
                     <button *ngIf="canActivate.includes('VER')" (click)="csvFileExport()"
                         class="btn btn-soft-info" 
@@ -29,27 +29,27 @@
         </div>
         <div class="card-header border border-dashed border-end-0 border-start-0">
             <div class="bg-danger-subtle text-danger rounded-3 justify-content-center align-items-center p-2"  *ngIf="contribuyente && contribuyente.estadoUsuario !== 'ACTIVO'">
-                <h4 class="text-danger text-center">Su cuenta no se encuentra activa, solo puede ver el historial de sus reservas y no realizar reservas nuevas</h4>
-                <p class="text-center"> para reactivar su cuenta comuniquese con el administrador</p>
+                <h4 class="text-danger text-center">Su cuenta no se encuentra activa, solo puede ver el historial de pagos</h4>
+                <p class="text-center">Para reactivar su cuenta comuníquese con el administrador</p>
             </div>
             <div class="row g-1">
                 <div class="col-xxl-3 col-md-6 col-sm-6">
                     <div class="search-box">
                         <input type="text" class="form-control search" name="searchTerm"
-                            placeholder="Buscar reservas ..."
+                            placeholder="Buscar estudiante, matrícula, período..."
                             [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()">
                             <i class="ri-search-line search-icon"></i>
                     </div>
                 </div>
                 <div class="col-xxl-2 col-md-4 col-sm-4">
-                    <input type="text" class="form-control" mwlFlatpickr name="date" mode="range"
-                        placeholder="Fecha de Uso"
-                        [convertModelValue]="true"
-                        [(ngModel)]="date"
-                        [altInput]="true"
-                        [altFormat]="'F j, Y'"
-                        dateFormat="Y-m-d"
-                        (ngModelChange)="applyFilters()">
+                    <select class="form-control" data-choices data-choices-search-false 
+                            name="periodo" id="idPeriodo"
+                            [(ngModel)]="periodoFiltro" (ngModelChange)="applyFilters()">
+                        <option value="" selected>Período</option>
+                        <option *ngFor="let periodo of periodosDisponibles" [value]="periodo">
+                            {{ getPeriodoDisplay(periodo) }}
+                        </option>
+                    </select>
                 </div>
                 <div class="col-xxl-2 col-md-3 col-sm-3">
                     <select class="form-control" data-choices data-choices-search-false name="estadoValidacion" id="idEstadoValidacion"
@@ -63,26 +63,20 @@
                 <div class="col-xxl-2 col-md-3 col-sm-3">
                     <select class="form-control" data-choices data-choices-search-false name="estadoReserva" id="idEstadoReserva"
                         [(ngModel)]="estadoReserva" (ngModelChange)="applyFilters()">
-                        <option value="" selected>Estado Reserva</option>
-                        <option value="BORRADOR">Borrador</option>
-                        <option value="SOLICITADA">Solicitada</option>
-                        <option value="PENDIENTE">Pendiente</option>
+                        <option value="" selected>Estado Pago</option>
+                        <option value="PENDIENTE_PAGO">Pendiente Pago</option>
                         <option value="PAGADA">Pagada</option>
-                        <option value="EN_CURSO">En Curso</option>
-                        <option value="COMPLETADA">Completada</option>
+                        <option value="VENCIDA">Vencida</option>
                         <option value="CANCELADA">Cancelada</option>
-                        <option value="EXPIRADA">Expirada</option>
-                        <option value="NO_SHOW">No Show</option>
-                        <option value="RECHAZADA">Rechazada</option>
                     </select>
                 </div>
                 <div class="col-xxl-2 col-md-3 col-sm-3">
                     <select class="form-control" data-choices data-choices-search-false
-                            name="categoria" id="idCategoria" 
-                            [(ngModel)]="categoria" (ngModelChange)="applyFilters()">
-                        <option value="" selected>Categoría</option>
-                        <option *ngFor="let category of categoryList" [value]="category.nombre">
-                            {{category.nombre}}
+                            name="escuela" id="idEscuela" 
+                            [(ngModel)]="escuelaFiltro" (ngModelChange)="applyFilters()">
+                        <option value="" selected>Escuela</option>
+                        <option *ngFor="let escuela of escuelasList" [value]="escuela.uuid">
+                            {{escuela.nombre}}
                         </option>
                     </select>
                 </div>
@@ -101,37 +95,27 @@
             <ul ngbNav #nav="ngbNav" [activeId]="0" (navChange)="onNavChange($event)" class="nav nav-tabs nav-tabs-custom nav-success mb-3" role="tablist">
             <li [ngbNavItem]="0" class="nav-item">
                 <a ngbNavLink class="nav-link All py-3" data-bs-toggle="tab" id="All" href="javascript:void(0);" role="tab" aria-selected="true">
-                Todas las Reservas<span class="badge bg-danger align-middle ms-1">{{temp.length || 0}}</span>
+                Todas las Mensualidades<span class="badge bg-danger align-middle ms-1">{{temp.length || 0}}</span>
                 </a>
             </li>
             <li [ngbNavItem]="1" class="nav-item">
-                <a ngbNavLink class="nav-link py-3 New" data-bs-toggle="tab" id="Solicitadas" href="javascript:void(0);" role="tab" aria-selected="false">
-                Solicitadas
-                </a>
-            </li>
-            <li [ngbNavItem]="2" class="nav-item">
-                <a ngbNavLink class="nav-link py-3 New" data-bs-toggle="tab" id="Pendientes" href="javascript:void(0);" role="tab" aria-selected="false">
+                <a ngbNavLink class="nav-link py-3 New" data-bs-toggle="tab" id="PendientesPago" href="javascript:void(0);" role="tab" aria-selected="false">
                 Pendientes de Pago
                 </a>
             </li>
-            <li [ngbNavItem]="3" class="nav-item">
+            <li [ngbNavItem]="2" class="nav-item">
                 <a ngbNavLink class="nav-link py-3 Pending" data-bs-toggle="tab" id="Pagadas" href="javascript:void(0);" role="tab" aria-selected="false">
                 Pagadas
                 </a>
             </li>
+            <li [ngbNavItem]="3" class="nav-item">
+                <a ngbNavLink class="nav-link py-3 Approved" data-bs-toggle="tab" id="Vencidas" href="javascript:void(0);" role="tab" aria-selected="false">
+                Vencidas
+                </a>
+            </li>
             <li [ngbNavItem]="4" class="nav-item">
-                <a ngbNavLink class="nav-link py-3 Approved" data-bs-toggle="tab" id="EnCurso" href="javascript:void(0);" role="tab" aria-selected="false">
-                En Curso
-                </a>
-            </li>
-            <li [ngbNavItem]="5" class="nav-item">
-                <a ngbNavLink class="nav-link py-3 Completed" data-bs-toggle="tab" id="Completadas" href="javascript:void(0);" role="tab" aria-selected="false">
-                Completadas
-                </a>
-            </li>
-            <li [ngbNavItem]="6" class="nav-item">
-                <a ngbNavLink class="nav-link py-3 Rejected" data-bs-toggle="tab" id="Canceladas" href="javascript:void(0);" role="tab" aria-selected="false">
-                Canceladas/Rechazadas
+                <a ngbNavLink class="nav-link py-3 Completed" data-bs-toggle="tab" id="EsteMes" href="javascript:void(0);" role="tab" aria-selected="false">
+                Este Mes
                 </a>
             </li>
             </ul>
@@ -167,15 +151,16 @@
                 [allcontent]="reservasList"
                 [serverSidePagination]="true"
                 [actions]="{
-                show: canActivate.includes('VER'),
-                edit: canActivate.includes('CAMBIAR-HORARIO'),
-                validate: canActivate.includes('VALIDAR'),
-                consult: canActivate.includes('ACTUALIZAR'),
-                records: true,
-                close: canActivate.includes('ANULAR')?'Anular':'',}"
+                  show: canActivate.includes('VER'),
+                  edit: canActivate.includes('ACTUALIZAR'),
+                  validate: canActivate.includes('VALIDAR'),
+                  consult: canActivate.includes('ACTUALIZAR'),
+                  records: true,
+                  close: canActivate.includes('ANULAR')?'Anular':'',}"
+                  
                 (showItemEmitter)="openModal($event,'show','md')"
                 (editItemEmitter)="openModal($event,'edit','md')"
-                (consultItemEmitter)="consultModal($event,consultModel,'md')"
+                (consultItemEmitter)="consultModal($event,consultModel,'lg')"
                 (validateItemEmitter)="openModal($event,'validarModal','')"
                 (closeItemEmitter)="openModal($event,'annularModal','')"
                 (recordsEmitter)="showTicket($event)"
@@ -189,13 +174,31 @@
                     <div class="spinner-border text-primary avatar-sm" role="status">
                       <span class="visually-hidden">Cargando...</span>
                     </div>
-                    <p class="text-muted mt-2">Cargando reservas puntuales...</p>
+                    <p class="text-muted mt-2">Cargando mensualidades...</p>
+                </div>
+
+                <!-- Empty State for School Payments -->
+                <div *ngIf="!loading && reservasList.length === 0" class="text-center py-5">
+                    <div class="avatar-lg mx-auto mb-3">
+                        <div class="avatar-title bg-light text-primary display-4 rounded-circle">
+                            <i class="ri-school-line"></i>
+                        </div>
+                    </div>
+                    <h5 class="text-muted mb-3">No hay mensualidades registradas</h5>
+                    <p class="text-muted mb-4">No se encontraron pagos de mensualidades para las escuelas municipales.</p>
+                    <button *ngIf="canActivate.includes('CREAR')" 
+                            type="button" class="btn btn-primary"
+                            (click)="generarNuevaMensualidad()">
+                        <i class="ri-add-circle-line align-middle me-2"></i>
+                        Generar Primera Mensualidad
+                    </button>
                 </div>
             </div>
         </div>
     </div>
   </div>
 </div>
+
 
 <ng-template #consultModel role="document" let-modal>
     <div class="modal-header">

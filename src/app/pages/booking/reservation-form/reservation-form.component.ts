@@ -5,14 +5,13 @@ import { es } from 'date-fns/locale';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import Swal from 'sweetalert2';
 
-import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
-import { GlobalComponent } from 'src/app/global-component';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { NgbCollapseModule, NgbNavModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { Reserva } from 'src/app/core/models/reserva.models';
@@ -23,6 +22,7 @@ import { OrganizacionService } from 'src/app/core/services/api/organizacion.serv
 import { BookingType } from 'src/app/core/constants/Features';
 import { EstadoReserva, EstadoValidacion } from 'src/app/core/constants/Estados';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
+import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 
 interface PuntualSchedule {
   date: Date;
@@ -97,58 +97,66 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     private organizationService: OrganizacionService
   ) {}
 
-  get ruatCodigoAlcaldia(): string {
-    return this.systemConfigs['CODIGO_ALCALDIA_RUAT']?.valorTexto || 'QUI';
+  get enableSolicitudOrganizationReservation(): boolean {
+    return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_ORGANIZACIONES]?.valorBoolean ?? false;
   }
-  get ruatServicioMunicipal(): string {
-    return this.systemConfigs['SERVICIO_MUNICIPAL_RUAT']?.valorTexto || '2174';
+  get enableOrganizationReservation(): boolean {
+    return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_ORGANIZACIONES]?.valorBoolean ?? false;
   }
-  get ruatIntentosReintento(): number {
-    return this.systemConfigs['INTENTOS_REINTENTO_RUAT']?.valorNumerico || 5;
+  get enableSolicitudEventsBooking(): boolean{
+    return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_EVENTOS]?.valorBoolean ?? false;
+  }
+  get enableEventsBooking(): boolean {
+    return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_EVENTOS]?.valorBoolean ?? false;
+  }
+  get enableSolicitudRecurrentBooking(): boolean | undefined{
+    return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
+  }
+  get enableRecurrentBooking(): boolean | undefined{
+    return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
+  }
+  get ruatIntentosReintento(): number | undefined{
+    return this.systemConfigs[ClaveConfiguracion.MAXIMO_INTENTOS_REINTENTO_RESERVAS]?.valorNumerico;
   }
   get validHours(): number {
-    return this.systemConfigs['HORAS_VALIDACION_PAGO']?.valorNumerico || 4;
+    return this.systemConfigs[ClaveConfiguracion.HORAS_VALIDACION_PAGO]?.valorNumerico || 4;
   }
-  get anticipationHours(): number {
+  get anticipationHours(): number | undefined{
     if (!this.selectedTariff) {
-      const horasPuntuales = this.systemConfigs['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico;
-      return horasPuntuales ?? 48;
+      return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
     }
     switch (this.selectedTariff.tipoCobro) {
       case 'por_evento':
-        const diasEventos = this.systemConfigs['DIAS_ANTICIPACION_EVENTOS']?.valorNumerico;
-        return (diasEventos ?? 2) * 24;
+        const diasEventos = this.systemConfigs[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico;
+        return diasEventos? diasEventos* 24:undefined;
       case 'mensualidad': 
       case 'por_sesion': 
       case 'por_club':
-        const diasRecurrentes = this.systemConfigs['DIAS_ANTICIPACION_RECURRENTES']?.valorNumerico;
-        return (diasRecurrentes ?? 3) * 24;
+        return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico;
       default:
-        const horasPuntuales = this.systemConfigs['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico;
-        return horasPuntuales ?? 48;
+        return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
     }
   }
-
   get anticipationTimeDisplay(): string {
     if (!this.selectedTariff) {
-      const horasPuntuales = this.systemConfigs['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico;
-      const hours = horasPuntuales ?? 48;
+      const horasPuntuales = this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
+      const hours = horasPuntuales ?? '';
       return `${hours} horas`;
     }    
     switch (this.selectedTariff.tipoCobro) {
       case 'por_evento':
-        const diasEventos = this.systemConfigs['DIAS_ANTICIPACION_EVENTOS']?.valorNumerico;
-        const eventDays = diasEventos ?? 2;
+        const diasEventos = this.systemConfigs[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico;
+        const eventDays = diasEventos ?? '';
         return `${eventDays} días`;
       case 'mensualidad': 
       case 'por_sesion': 
       case 'por_club':
-        const diasRecurrentes = this.systemConfigs['DIAS_ANTICIPACION_RECURRENTES']?.valorNumerico;
-        const recurrentDays = diasRecurrentes ?? 3;
-        return `${recurrentDays} días`;
+        const diasRecurrentes = this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico;
+        const recurrentDays = diasRecurrentes ?? '';
+        return `${recurrentDays} horas`;
       default:
-        const horasPuntuales = this.systemConfigs['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico;
-        const hours = horasPuntuales ?? 48;
+        const horasPuntuales = this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
+        const hours = horasPuntuales ?? '';
         return `${hours} horas`;
     }
   }
@@ -276,25 +284,15 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
   }
   private generateReservationNumber(): void {
-    // const timestamp = new Date().getTime().toString().slice(-6);
-    // const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    // this.numeroReserva = `RES-${timestamp}-${random}`;
-    
-    // if (this.reservationForm) {
-    //   this.reservationForm.patchValue({ numeroReserva: this.numeroReserva });
-    // }
     this.reservaService.previewNumeroReserva().subscribe({
       next: (numeroReserva: any) => {
         this.numeroReserva = numeroReserva.payload;
         
         if (this.reservationForm) {
-          // Enable/disable based on user role
-          const numeroReservaDisabled = this.userRole === 'Contribuyente';
+          const numeroReservaDisabled = this.userRole === 'Contribuyente' || this.userRole === 'Representante';
           this.reservationForm.patchValue({ 
             numeroReserva: this.numeroReserva 
           });
-          
-          // Update control disabled state
           const numeroReservaControl = this.reservationForm.get('numeroReserva');
           if (numeroReservaControl) {
             if (numeroReservaDisabled) {
@@ -413,42 +411,55 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       this.requiresValidation = true;
       return;
     }
-    if (this.userRole === 'Admin' || this.userRole === 'Encargado') {
+    const formValue = this.reservationForm?.getRawValue();
+    const selectedOrganization = formValue?.organizacionDto;
+    if (selectedOrganization?.permiteReservasGratuitas) {
       this.requiresValidation = false;
       return;
     }
-    if (this.selectedContribuyente.puedeReservarGratis && this.dataField.accesoLibre) {
-      this.requiresValidation = false;
-      return;
-    }
-    if (!this.dataField.requiereAprobacion) {
-      this.requiresValidation = false;
-      return;
-    }
-    if (this.bookingType === 'puntual') {
-      let duration = 0;
-      let personas = 1;
       
-      if (this.selectedSchedule) {
-        duration = this.calculateDurationFromTimes(this.selectedSchedule.start, this.selectedSchedule.end);
-      } else if (this.reservationForm) {
-        const horaInicio = this.reservationForm.get('horaInicio')?.value;
-        const horaFin = this.reservationForm.get('horaFin')?.value;
-        if (horaInicio && horaFin) {
-          duration = this.calculateDurationFromTimes(horaInicio, horaFin);
+      if (this.userRole === 'Admin' || this.userRole === 'Encargado') {
+        this.requiresValidation = false;
+        return;
+      }
+      
+      if (this.selectedContribuyente.puedeReservarGratis && this.dataField.accesoLibre) {
+        this.requiresValidation = false;
+        return;
+      }
+      
+      if (!this.dataField.requiereAprobacion) {
+        this.requiresValidation = false;
+        return;
+      }
+      
+      if (this.bookingType === 'puntual') {
+        let duration = 0;
+        let personas = 1;
+        
+        if (this.selectedSchedule) {
+          duration = this.calculateDurationFromTimes(this.selectedSchedule.start, this.selectedSchedule.end);
+        } else if (this.reservationForm) {
+          const horaInicio = this.reservationForm.get('horaInicio')?.value;
+          const horaFin = this.reservationForm.get('horaFin')?.value;
+          if (horaInicio && horaFin) {
+            duration = this.calculateDurationFromTimes(horaInicio, horaFin);
+          }
+          personas = this.reservationForm.get('cantidadPersonas')?.value || 1;
         }
-        personas = this.reservationForm.get('cantidadPersonas')?.value || 1;
+        
+        if (this.dataField.maxDuracionAutoAprobacion && duration <= this.dataField.maxDuracionAutoAprobacion) {
+          this.requiresValidation = false;
+          return;
+        }
+        
+        if (this.dataField.maxPersonasAutoAprobacion && personas <= this.dataField.maxPersonasAutoAprobacion) {
+          this.requiresValidation = false;
+          return;
+        }
       }
-      if (this.dataField.maxDuracionAutoAprobacion && duration <= this.dataField.maxDuracionAutoAprobacion) {
-        this.requiresValidation = false;
-        return;
-      }
-      if (this.dataField.maxPersonasAutoAprobacion && personas <= this.dataField.maxPersonasAutoAprobacion) {
-        this.requiresValidation = false;
-        return;
-      }
-    }
-    this.requiresValidation = true;
+      
+      this.requiresValidation = true;
   }
 
   private setupConditionalValidators(): void {
@@ -462,6 +473,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(() => {
       this.calculatePrice();
+      this.calculateValidationRequirement();
     });    
     
     this.reservationForm.get('esParaOrganizacion')?.valueChanges.pipe(
@@ -554,63 +566,52 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     const errors: ValidationErrors = {};
     const form = control as FormGroup;
     const cantidadPersonas = form.get('cantidadPersonas')?.value;
-    const campoCapacity = this.dataField?.capacidadPersonas;
-    
+    const campoCapacity = this.dataField?.capacidadPersonas;    
     if (campoCapacity && cantidadPersonas > campoCapacity) {
       errors['capacityExceeded'] = {
         max: campoCapacity,
         actual: cantidadPersonas
       };
-    }
-    
+    }    
     if (this.bookingType === 'recurrente' && this.userRole === 'Contribuyente') {
       errors['recurrentNotAllowed'] = 'Los contribuyentes no pueden hacer reservas recurrentes';
     }
-
     return Object.keys(errors).length ? errors : null;
   }
   private entityValidator(control: AbstractControl): ValidationErrors | null {
     const errors: ValidationErrors = {};
     const form = control as FormGroup;
-
     const esParaOrganizacion = form.get('esParaOrganizacion')?.value;
     const organizacionDto = form.get('organizacionDto')?.value;
     const contribuyenteDto = form.get('contribuyenteDto')?.value;
-
     if (!contribuyenteDto) {
       errors['contribuyenteRequired'] = 'Debe seleccionar un contribuyente';
     }
-
     if (esParaOrganizacion && !organizacionDto) {
       errors['organizacionRequired'] = 'Debe seleccionar una organización';
     }
-
     return Object.keys(errors).length ? errors : null;
   }
-private tariffSpecificValidator(control: AbstractControl): ValidationErrors | null {
-  const errors: ValidationErrors = {};
-  const form = control as FormGroup;
-
-  if (!this.selectedTariff) return null;
-
-  const cantidadPersonas = form.get('cantidadPersonas')?.value;
-
-  switch (this.selectedTariff.tipoCobro) {
-    case 'por_persona':
-      if (!cantidadPersonas || cantidadPersonas < 1) {
-        errors['cantidadPersonasRequired'] = 'La cantidad de personas es requerida para tarifas por persona';
-      }
-      break;
-    case 'por_evento':
-    case 'por_hora':
-      if (cantidadPersonas && cantidadPersonas < 1) {
-        errors['invalidPersonCount'] = 'La cantidad de personas debe ser mayor a 0';
-      }
-      break;
+  private tariffSpecificValidator(control: AbstractControl): ValidationErrors | null {
+    const errors: ValidationErrors = {};
+    const form = control as FormGroup;
+    if (!this.selectedTariff) return null;
+    const cantidadPersonas = form.get('cantidadPersonas')?.value;
+    switch (this.selectedTariff.tipoCobro) {
+      case 'por_persona':
+        if (!cantidadPersonas || cantidadPersonas < 1) {
+          errors['cantidadPersonasRequired'] = 'La cantidad de personas es requerida para tarifas por persona';
+        }
+        break;
+      case 'por_evento':
+      case 'por_hora':
+        if (cantidadPersonas && cantidadPersonas < 1) {
+          errors['invalidPersonCount'] = 'La cantidad de personas debe ser mayor a 0';
+        }
+        break;
+    }
+    return Object.keys(errors).length ? errors : null;
   }
-
-  return Object.keys(errors).length ? errors : null;
-}
   private timeRangeValidator(): ValidatorFn {
     return (formGroup: AbstractControl): ValidationErrors | null => {
       if (this.bookingType === 'recurrente') return null;
@@ -641,8 +642,7 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
       const selectedDate = new Date(year, month - 1, day);      
       if (!isValid(selectedDate)) return { invalidDate: true };
       const today = startOfDay(new Date());
-      const selectedDay = startOfDay(selectedDate);
-      
+      const selectedDay = startOfDay(selectedDate);      
       return isBefore(selectedDay, today) ? { pastDate: 'La fecha no puede ser anterior a hoy' } : null;
     };
   }
@@ -658,14 +658,12 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
       const selectedDateTime = new Date(year, month - 1, day, hours, minutes, 0);      
       if (!isValid(selectedDateTime)) return null;
       const now = new Date();
-      const minAllowedDateTime = new Date(now.getTime() + (this.anticipationHours * 60 * 60 * 1000));
-      
-      if (selectedDateTime < minAllowedDateTime) {
+      const minAllowedDateTime = this.anticipationHours? new Date(now.getTime() + (this.anticipationHours * 60 * 60 * 1000)):undefined;
+      if (minAllowedDateTime && selectedDateTime < minAllowedDateTime) {
         return { 
           anticipationRequired: `Las reservas requieren ${this.anticipationTimeDisplay} de anticipación mínima. La reserva más temprana posible es el ${this.formatMinAllowedDateTime(minAllowedDateTime)}` 
         };
-      }
-      
+      }      
       return null;
     };
   }
@@ -676,12 +674,25 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
 
   // PRICE CALCULATION
   private calculatePrice(): void {
-    if (!this.selectedTariff || !this.reservationForm) {
+    const formValue = this.reservationForm?.getRawValue();
+    const selectedOrganization = formValue?.organizacionDto;
+    if (selectedOrganization?.permiteReservasGratuitas) {
       this.calculatedPrice = 0;
-      this.priceDetails = [];
+      this.priceDetails = ['Reserva gratuita para organización'];      
+      if (this.reservationForm) {
+        this.reservationForm.patchValue({ montoTotal: 0 }, { emitEvent: false });
+      }
       return;
     }
-    const formValue = this.reservationForm.getRawValue();
+    if (!this.selectedTariff || !this.reservationForm) {
+      this.calculatedPrice = 0;
+      this.priceDetails = [];      
+      if (this.reservationForm) {
+        this.reservationForm.patchValue({ montoTotal: 0 }, { emitEvent: false });
+      }
+      return;
+    }
+   
     const montoBase = this.selectedTariff.precioBase || 0;
     let total = 0;
     let detalles: string[] = [];
@@ -963,8 +974,15 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
   }
   private processReservation(): void {
     this.isSubmitting = true;
-    const reservaData = this.prepareReservationData();    
-    if (!this.requiresValidation) {
+    const reservaData = this.prepareReservationData();
+    
+    console.log(this.reservationForm.value)
+    console.log(reservaData)
+    const isFreeReservation = reservaData.esReservaGratuita;
+    
+    if (isFreeReservation) {
+      this.saveReservation(reservaData);
+    } else if (!this.requiresValidation) {
       this.registerReservationInRuat(reservaData);
     } else {
       this.saveReservation(reservaData);
@@ -976,7 +994,13 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
     let estadoValidacion: EstadoValidacion;
     let estadoReserva: EstadoReserva;
 
-    if (!this.requiresValidation || this.userRole === 'Admin' || this.userRole === 'Encargado') {
+    // Check if organization can reserve for free
+    const selectedOrganization = formValue.organizacionDto;
+    const isFreeReservation = selectedOrganization?.permiteReservasGratuitas;
+
+    console.log('Prepare Data - isFreeReservation:', isFreeReservation); // Debug log
+
+    if (isFreeReservation || !this.requiresValidation || this.userRole === 'Admin' || this.userRole === 'Encargado') {
       estadoValidacion = EstadoValidacion.APROBADA;
       estadoReserva = EstadoReserva.PENDIENTE;
     } else {
@@ -985,6 +1009,7 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
     }
 
     const reserva: Reserva = {
+      esReservaGratuita: isFreeReservation, // Set this flag
       fechaCreacion: new Date(),
       fechaActualizacion: new Date(),
       tipoReserva: this.bookingType,
@@ -992,7 +1017,7 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
       numeroReserva: formValue.numeroReserva,
       estadoValidacion: estadoValidacion,
       estadoReserva: estadoReserva,
-      montoTotal: this.calculatedPrice,
+      montoTotal: isFreeReservation ? 0 : this.calculatedPrice, // Set total to 0 for free reservations
       clasificadorRuatId: this.selectedTariff.clasificadorRuatDto?.uuid || '',
       contribuyenteDto: formValue.contribuyenteDto,
       campoDeportivoDto: this.dataField,
@@ -1003,6 +1028,7 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
       reserva.organizacionDto = formValue.organizacionDto;
     }
     
+    // Rest of your existing code for puntual/recurrent reservations...
     if (this.bookingType === 'puntual') {
       const fechaUso = this.safeParseDate(formValue.fechaUso);
       reserva.reservaPuntualDto = {
@@ -1024,7 +1050,7 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
         cantidadSesiones: this.recurrentSchedule.cantidadSesiones,
         duracionSesionHoras: this.recurrentSchedule.duracionSesionHoras,
         cantidadPersonas: formValue.cantidadPersonas,
-        tarifaMensual: this.calculatedPrice / this.safeCalculateMonthsDuration(this.recurrentSchedule.fechaInicio, this.recurrentSchedule.fechaFin),
+        tarifaMensual: isFreeReservation ? 0 : (this.calculatedPrice / this.safeCalculateMonthsDuration(this.recurrentSchedule.fechaInicio, this.recurrentSchedule.fechaFin)),
         activo: true,
         categoria: this.getTarifaCategories(),
         superficie: this.dataField?.superficieDto?.descripcion || '',
@@ -1034,7 +1060,6 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
         }
       };
     }
-
     return reserva;
   }
   private registerReservationInRuat(reservaData: Reserva): void {
@@ -1048,10 +1073,10 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
     }
 
     const ruatData = {
-      codigoAlcaldia: this.ruatCodigoAlcaldia,
-      codigoUsuario: reservaData.contribuyenteDto.codigoContribuyente,
+      codigoAlcaldia: this.systemConfigs[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI',
+      codigoUsuario: this.systemConfigs[ClaveConfiguracion.CODIGO_USUARIO_RUAT]?.valorTexto || '2174',
       codigoContribuyente: reservaData.contribuyenteDto.codigoContribuyente,
-      servicioMunicipal: this.ruatServicioMunicipal,
+      servicioMunicipal: this.systemConfigs[ClaveConfiguracion.SERVICIO_MUNICIPAL_RUAT]?.valorTexto || '2174',
       datosConcepto: [{
         numero: '1',
         codigoClasificador: this.selectedTariff.clasificadorRuatDto.codigo,
@@ -1061,9 +1086,9 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
       observacion: reservaData.reservaPuntualDto?.observaciones || reservaData.reservaRecurrenteDto?.observaciones || 'Reserva de Cancha Deportiva GAMQ'
     };
 
-    const codigoAlcaldia = this.systemConfigs['CODIGO_ALCALDIA_RUAT']?.valorTexto || '';
-    const codigoUsuario = this.systemConfigs['CODIGO_USUARIO_RUAT']?.valorTexto || '';
-    const servicioMunicipal = this.systemConfigs['SERVICIO_MUNICIPAL_RUAT']?.valorTexto || '';
+    const codigoAlcaldia = this.systemConfigs[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || '';
+    const codigoUsuario = this.systemConfigs[ClaveConfiguracion.CODIGO_USUARIO_RUAT]?.valorTexto || '';
+    const servicioMunicipal = this.systemConfigs[ClaveConfiguracion.SERVICIO_MUNICIPAL_RUAT]?.valorTexto || '';
     this.ruatService.createTasa(codigoAlcaldia,codigoUsuario,servicioMunicipal,ruatData, reservaData.contribuyenteDto.codigoContribuyente)
     .subscribe({
       next: (response: any) => {
@@ -1141,7 +1166,12 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
     });
   }
   getStatusDescription(): string {
-    if (this.requiresValidation) {
+    const formValue = this.reservationForm?.getRawValue();
+    const selectedOrganization = formValue?.organizacionDto;
+    
+    if (selectedOrganization?.permiteReservasGratuitas) {
+      return 'Reserva gratuita - No requiere pago ni registro en RUAT';
+    } else if (this.requiresValidation) {
       return 'Revisión administrativa requerida antes del pago';
     } else {
       return 'Confirmación inmediata - se generará tasa municipal';
@@ -1149,7 +1179,12 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
   }
 
   getStatusClass(): string {
-    if (this.requiresValidation) {
+    const formValue = this.reservationForm?.getRawValue();
+    const selectedOrganization = formValue?.organizacionDto;
+    
+    if (selectedOrganization?.permiteReservasGratuitas) {
+      return 'bg-info bg-opacity-10 border border-info';
+    } else if (this.requiresValidation) {
       return 'bg-warning bg-opacity-10 border border-warning';
     } else {
       return 'bg-success bg-opacity-10 border border-success';
@@ -1157,7 +1192,12 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
   }
 
   getStatusIcon(): string {
-    if (this.requiresValidation) {
+    const formValue = this.reservationForm?.getRawValue();
+    const selectedOrganization = formValue?.organizacionDto;
+    
+    if (selectedOrganization?.permiteReservasGratuitas) {
+      return 'ri-gift-line text-info';
+    } else if (this.requiresValidation) {
       return 'ri-time-line text-warning';
     } else {
       return 'ri-checkbox-circle-line text-success';
@@ -1165,7 +1205,12 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
   }
 
   getStatusText(): string {
-    if (this.requiresValidation) {
+    const formValue = this.reservationForm?.getRawValue();
+    const selectedOrganization = formValue?.organizacionDto;
+    
+    if (selectedOrganization?.permiteReservasGratuitas) {
+      return 'Reserva Gratuita';
+    } else if (this.requiresValidation) {
       return 'Requiere Aprobación';
     } else {
       return 'Aprobación Automática';
@@ -1243,12 +1288,17 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
       esParaOrganizacion: true
     });
     this.showOrganizationSearch = false;
+    
     if (organizacion.representanteDto) {
       this.selectedContribuyente = organizacion.representanteDto;
       this.reservationForm.patchValue({
         contribuyenteDto: organizacion.representanteDto
       });
     }
+    
+    console.log('selected org', this.selectedOrganization)
+    this.calculatePrice();
+    this.calculateValidationRequirement();
   }
 
   searchOrganization(event: Event): void {
@@ -1269,6 +1319,10 @@ private tariffSpecificValidator(control: AbstractControl): ValidationErrors | nu
       organizacionDto: null,
       esParaOrganizacion: false
     });
+    
+    // Add these lines to trigger price and validation updates
+    this.calculatePrice();
+    this.calculateValidationRequirement();
   }
 
   private loadContribuyentes(): void {

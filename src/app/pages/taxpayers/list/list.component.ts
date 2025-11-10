@@ -86,46 +86,30 @@ export class ListComponent implements OnInit {
     this.getTaxpayers();
   }
 
-  // Apply all filters
   applyFilters() {
     if (!this.temp || this.temp.length === 0) return;
-
     this.contribuyentesList = this.temp.filter(item => {
-      // Search term filter
       const searchMatch = !this.searchTerm || this.searchInContribuyente(item, this.searchTerm);
-
-      // Estado Usuario filter
       const estadoUsuarioMatch = !this.estadoUsuario || 
         item.estadoUsuario === this.estadoUsuario;
-
-      // Estado Ruat filter
       const estadoRuatMatch = !this.estadoRuat || 
         item.estadoRuat === this.estadoRuat;
-
-      // Tipo Contribuyente filter
       const tipoContribuyenteMatch = !this.tipoContribuyente || 
         item.tipoContribuyente === this.tipoContribuyente;
-
-      // Puede Reservar Gratis filter
       const puedeReservarGratisMatch = !this.puedeReservarGratis || 
         (this.puedeReservarGratis === 'SI' && item.puedeReservarGratis) ||
         (this.puedeReservarGratis === 'NO' && !item.puedeReservarGratis);
-
-      // Es Deportista Elite filter
       const esDeportistaEliteMatch = !this.esDeportistaElite || 
         (this.esDeportistaElite === 'SI' && item.esDeportistaElite) ||
         (this.esDeportistaElite === 'NO' && !item.esDeportistaElite);
-
       return searchMatch && estadoUsuarioMatch && estadoRuatMatch && 
              tipoContribuyenteMatch && puedeReservarGratisMatch && esDeportistaEliteMatch;
     });
   }
 
   private searchInContribuyente(item: any, searchTerm: string): boolean {
-    if (!searchTerm) return true;
-    
-    const term = searchTerm.toLowerCase();
-    
+    if (!searchTerm) return true;    
+    const term = searchTerm.toLowerCase();    
     return (
       item.nombreCompleto?.toLowerCase().includes(term) ||
       item.nombre?.toLowerCase().includes(term) ||
@@ -153,22 +137,22 @@ export class ListComponent implements OnInit {
   // Handle tab navigation changes
   onNavChange(changeEvent: NgbNavChangeEvent) {
     switch (changeEvent.nextId) {
-      case 1: // Todos los Contribuyentes
+      case 1: 
         this.contribuyentesList = this.temp;
         break;
-      case 2: // Contribuyentes Naturales
+      case 2:
         this.contribuyentesList = this.temp.filter(item => item.tipoContribuyente === 'NA');
         break;
-      case 3: // Contribuyentes Jurídicos
+      case 3: 
         this.contribuyentesList = this.temp.filter(item => item.tipoContribuyente === 'JU');
         break;
-      case 4: // Puede Reservar Gratis
+      case 4:
         this.contribuyentesList = this.temp.filter(item => item.puedeReservarGratis === true);
         break;
-      case 5: // Deportista Elite
+      case 5:
         this.contribuyentesList = this.temp.filter(item => item.esDeportistaElite === true);
         break;
-      case 6: // Sancionados
+      case 6:
         this.contribuyentesList = this.temp.filter(item => item.estaSancionado === true);
         break;
     }

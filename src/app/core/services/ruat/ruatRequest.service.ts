@@ -4,12 +4,12 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
-import { Contribuyente } from '../../models/contribuyente.models';
+import { Contribuyente } from '../../models/contribuyente.model';
 import { GlobalComponent } from 'src/app/global-component';
 
 const apiUrl = `${environment.backendUrl}/ruat`;
 
-const token = GlobalComponent.RUAT_token;//sessionStorage.getItem('ruatToken');
+const token = sessionStorage.getItem('ruatToken');
 @Injectable({
   providedIn: 'root'
 })
@@ -33,6 +33,7 @@ export class RuatRequestsService {
   }
 
   getContribuyentePorCi( codigoAlcaldia:string, numeroDocumento: string, tipoDocumento: string,expedido:string): Observable<any> {
+    console.log(token)
     const requestData = {
       'token': token,
       'contribuyenteRequest': {

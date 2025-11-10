@@ -10,7 +10,7 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { UserService } from 'src/app/core/services/api-users/users.service';
 import { TokenStorageService } from 'src/app/core/services/token-storage.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
-import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 
 @Component({
   selector: 'app-pass-reset',

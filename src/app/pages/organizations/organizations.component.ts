@@ -7,7 +7,7 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
 import { ModalComponent } from './modal/modal.component';
-import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { Organizacion } from 'src/app/core/models/organizacion.models';
 
 @Component({

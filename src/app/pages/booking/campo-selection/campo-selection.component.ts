@@ -7,6 +7,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { trigger, transition, animate } from '@angular/animations';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { BookingType } from 'src/app/core/constants/Features';
+import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 
 interface CampoWithTariff {
   campo: CampoDeportivo;
@@ -32,15 +33,32 @@ interface CampoWithTariff {
   ]
 })
 export class CampoSelectionComponent implements OnInit {
+  viewMode: 'list' | 'grid' = 'grid';
   @Input() dataComplejo?: ComplejoDeportivo;
   @Input() bookingType!: BookingType;
+  @Input() userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente'; 
   @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
-  viewMode: 'list' | 'grid' = 'grid';
-  
-  @Output() campoSelected = new EventEmitter<{
-    field: CampoDeportivo;
-    tariff: Tarifa;
-  }>();
+
+  get enableSolicitudOrganizationReservation(): boolean {
+    return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_ORGANIZACIONES]?.valorBoolean ?? false;
+  }
+  get enableOrganizationReservation(): boolean {
+    return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_ORGANIZACIONES]?.valorBoolean ?? false;
+  }
+  get enableSolicitudEventsBooking(): boolean{
+    return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_EVENTOS]?.valorBoolean ?? false;
+  }
+  get enableEventsBooking(): boolean {
+    return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_EVENTOS]?.valorBoolean ?? false;
+  }
+  get enableSolicitudRecurrentBooking(): boolean | undefined{
+    return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
+  }
+  get enableRecurrentBooking(): boolean | undefined{
+    return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
+  }
+
+  @Output() campoSelected = new EventEmitter<{field: CampoDeportivo; tariff: Tarifa;}>();
   @Output() goBack = new EventEmitter<void>();
 
   camposConTarifas: CampoWithTariff[] = [];
@@ -48,8 +66,8 @@ export class CampoSelectionComponent implements OnInit {
   
   searchText = '';
   filterByIluminacion?: boolean;
-  filterBySuperficie?: string;
-  filterByCategoria?: string;
+  filterBySuperficie?: string ='';
+  filterByCategoria?: string ='';
 
   isLoading = false;
 

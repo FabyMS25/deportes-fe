@@ -6,6 +6,7 @@ import { Tarifa } from './tarifa.model';
 import { HorarioFijo } from './horarioFijo.model';
 import { Reserva } from './reserva.models';
 import { EstadoActual } from '../constants/Estados';
+import { CategoriaCampo } from '../constants/Features';
 export interface CampoDeportivo {
   uuid?: string;
   estado?: boolean;
@@ -14,7 +15,7 @@ export interface CampoDeportivo {
   estadoActual: EstadoActual;
   codigo?: string;
   nombre: string;
-  categoria: string; // 'A', 'B', 'ELITE'
+  categoria: CategoriaCampo;
   dimensiones?: string;
   capacidadPersonas?: number;
   tieneIluminacion?: boolean;

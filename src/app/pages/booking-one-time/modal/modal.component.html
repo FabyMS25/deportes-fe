@@ -179,7 +179,7 @@
                         </div>
                     </div>
                 </div>
-                <div *ngIf="row?.observaciones" class="mt-3">
+                <div *ngIf="row.observaciones" class="mt-3">
                     <hr>
                     <h6 class="fw-semibold mb-2">
                         <i class="ri-file-text-line me-2"></i>Observaciones
@@ -286,8 +286,8 @@
 </div>
 
 <ng-template #ticketModal>
-        <app-ticket
-          [bookingType]="row.reservaDto?.tipoReserva || 'puntual'"
+        <app-ticket *ngIf="row.reservaDto"
+          [bookingType]="row.reservaDto.tipoReserva || 'puntual'"
           [reservationData]="row.reservaDto"
           [autoLoad]="true"
           [showAsModal]="true">

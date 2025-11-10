@@ -88,6 +88,62 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Escuela Municipal Specific Fields -->
+                <div class="col-lg-4" *ngIf="isEscuelaMunicipal">
+                    <label for="codigoEscuela-field" class="form-label mb-0">
+                        <i class="ri-code-line me-2"></i>Código de Escuela <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="codigoEscuela-field" 
+                           formControlName="codigoEscuela"
+                           placeholder="Código único de escuela"
+                           [ngClass]="{ 'is-invalid': submitted && form['codigoEscuela'].errors }"
+                           [readonly]="accion === 'show'" />
+                    <div *ngIf="submitted && form['codigoEscuela'].errors" class="invalid-feedback">
+                        <div *ngIf="form['codigoEscuela'].errors['required']">
+                            <i class="ri-error-warning-line me-1"></i>El código de escuela es requerido
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4" *ngIf="isEscuelaMunicipal">
+                    <label for="disciplina-field" class="form-label mb-0">
+                        <i class="ri-football-line me-2"></i>Disciplina <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="disciplina-field" 
+                           formControlName="disciplina"
+                           placeholder="Ej: Fútbol, Básquetbol, etc."
+                           [ngClass]="{ 'is-invalid': submitted && form['disciplina'].errors }"
+                           [readonly]="accion === 'show'" />
+                    <div *ngIf="submitted && form['disciplina'].errors" class="invalid-feedback">
+                        <div *ngIf="form['disciplina'].errors['required']">
+                            <i class="ri-error-warning-line me-1"></i>La disciplina es requerida
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4" *ngIf="isEscuelaMunicipal">
+                    <label for="entrenador-field" class="form-label mb-0">
+                        <i class="ri-user-line me-2"></i>Entrenador <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="entrenador-field" 
+                           formControlName="entrenador"
+                           placeholder="Nombre del entrenador"
+                           [ngClass]="{ 'is-invalid': submitted && form['entrenador'].errors }"
+                           [readonly]="accion === 'show'" />
+                    <div *ngIf="submitted && form['entrenador'].errors" class="invalid-feedback">
+                        <div *ngIf="form['entrenador'].errors['required']">
+                            <i class="ri-error-warning-line me-1"></i>El entrenador es requerido
+                        </div>
+                    </div>
+                </div>
+
                 <div class="col-lg-6">
                     <label for="telefono-field" class="form-label mb-0">
                         <i class="ri-phone-line me-2"></i>Teléfono
@@ -144,19 +200,89 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-6">
-                            <div class="form-check form-switch mt-4 ">
-                                <input class="form-check-input" 
-                                       type="checkbox" 
-                                       role="switch"
-                                       id="activo-field" 
-                                       formControlName="activo"
-                                       [disabled]="accion === 'show'">
-                                <label class="form-check-label fw-medium" for="activo-field">
-                                    <i class="ri-checkbox-circle-line me-2"></i>Organización Activa
-                                </label>
+
+                <!-- Payment and Reservation Configuration -->
+                <div class="col-lg-12 mt-2">
+                    <div class="border rounded p-3 bg-light">
+                        <h6 class="mb-3">
+                            <i class="ri-money-dollar-circle-line me-2"></i>Configuración de Pagos y Reservas
+                        </h6>
+                        
+                        <div class="row g-3">
+                            <div class="col-lg-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           role="switch"
+                                           id="permiteReservasGratuitas-field" 
+                                           formControlName="permiteReservasGratuitas"
+                                           [disabled]="isEscuelaMunicipal || accion === 'show'">
+                                    <label class="form-check-label fw-medium" for="permiteReservasGratuitas-field">
+                                        <i class="ri-calendar-check-line me-2"></i>Permitir Reservas Gratuitas
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted" *ngIf="isEscuelaMunicipal">
+                                    <i class="ri-information-line me-1"></i>Las escuelas municipales siempre permiten reservas gratuitas
+                                </small>
                             </div>
+
+                            <div class="col-lg-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           role="switch"
+                                           id="requierePagoMensualidad-field" 
+                                           formControlName="requierePagoMensualidad"
+                                           [disabled]="isEscuelaMunicipal || accion === 'show'">
+                                    <label class="form-check-label fw-medium" for="requierePagoMensualidad-field">
+                                        <i class="ri-bank-card-line me-2"></i>Requiere Pago Mensualidad
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted" *ngIf="isEscuelaMunicipal">
+                                    <i class="ri-information-line me-1"></i>Las escuelas municipales siempre requieren pago de mensualidad
+                                </small>
+                            </div>
+
+                            <div class="col-lg-4" *ngIf="requierePagoMensualidad">
+                                <label for="tarifaMensual-field" class="form-label mb-0">
+                                    <i class="ri-money-dollar-box-line me-2"></i>Tarifa Mensual (Bs.) <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="tarifaMensual-field" 
+                                       formControlName="tarifaMensual"
+                                       placeholder="0.00"
+                                       min="0"
+                                       step="0.01"
+                                       [ngClass]="{ 'is-invalid': submitted && form['tarifaMensual'].errors }"
+                                       [readonly]="accion === 'show'" />
+                                <div *ngIf="submitted && form['tarifaMensual'].errors" class="invalid-feedback">
+                                    <div *ngIf="form['tarifaMensual'].errors['required']">
+                                        <i class="ri-error-warning-line me-1"></i>La tarifa mensual es requerida
+                                    </div>
+                                    <div *ngIf="form['tarifaMensual'].errors['min']">
+                                        <i class="ri-error-warning-line me-1"></i>La tarifa no puede ser negativa
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <div class="col-lg-6">
+                    <div class="form-check form-switch mt-4">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               role="switch"
+                               id="activo-field" 
+                               formControlName="activo"
+                               [disabled]="accion === 'show'">
+                        <label class="form-check-label fw-medium" for="activo-field">
+                            <i class="ri-checkbox-circle-line me-2"></i>Organización Activa
+                        </label>
+                    </div>
+                </div>
+
                 <div class="col-lg-12">
                     <label for="direccion-field" class="form-label mb-0">
                         <i class="ri-map-pin-line me-2"></i>Dirección
@@ -251,6 +377,21 @@
                 <small class="text-muted d-block">NIT:</small>
                 <div class="fw-medium">{{ row.nroNit || 'No registrado' }}</div>
             </div>
+            
+            <!-- Escuela Municipal Specific Info -->
+            <div class="col-sm-6" *ngIf="row.codigoEscuela">
+                <small class="text-muted d-block">Código de Escuela:</small>
+                <div class="fw-medium">{{ row.codigoEscuela }}</div>
+            </div>
+            <div class="col-sm-6" *ngIf="row.disciplina">
+                <small class="text-muted d-block">Disciplina:</small>
+                <div class="fw-medium">{{ row.disciplina }}</div>
+            </div>
+            <div class="col-sm-6" *ngIf="row.entrenador">
+                <small class="text-muted d-block">Entrenador:</small>
+                <div class="fw-medium">{{ row.entrenador }}</div>
+            </div>
+            
             <div class="col-sm-6">
                 <small class="text-muted d-block">Personería Jurídica:</small>
                 <div class="fw-medium">{{ row.personeriaJuridica || 'No registrada' }}</div>
@@ -268,6 +409,40 @@
                 <div class="fw-medium">{{ row.direccion || 'No registrada' }}</div>
             </div>
         </div>
+        
+        <!-- Payment and Reservation Info -->
+        <hr>
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0 me-3">
+                <i class="ri-money-dollar-circle-line text-muted fs-5"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h6 class="fw-semibold mb-1">Configuración de Pagos y Reservas</h6>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-4">
+                <small class="text-muted d-block">Permite Reservas Gratuitas:</small>
+                <div class="fw-medium">
+                    <span class="badge" [ngClass]="row.permiteReservasGratuitas ? 'bg-success' : 'bg-secondary'">
+                        {{ row.permiteReservasGratuitas ? 'Sí' : 'No' }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <small class="text-muted d-block">Requiere Pago Mensualidad:</small>
+                <div class="fw-medium">
+                    <span class="badge" [ngClass]="row.requierePagoMensualidad ? 'bg-success' : 'bg-secondary'">
+                        {{ row.requierePagoMensualidad ? 'Sí' : 'No' }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-sm-4" *ngIf="row.requierePagoMensualidad && row.tarifaMensual">
+                <small class="text-muted d-block">Tarifa Mensual:</small>
+                <div class="fw-medium">{{ row.tarifaMensual | currency:'Bs. ' }}</div>
+            </div>
+        </div>
+
         <hr>
         <div class="d-flex align-items-center">
             <div class="flex-shrink-0 me-3">

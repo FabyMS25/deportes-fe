@@ -7,7 +7,7 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { UserService } from 'src/app/core/services/api-users/users.service';
 import { PassResetComponent } from '../password-reset/pass-reset.component';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo';
-import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 
 @Component({
   selector: 'app-profile',

@@ -55,7 +55,8 @@ import { ModalEmployeeComponent } from './settings/employees/modal/modalEmployee
 import { ModalScheduleComponent } from './settings/fields/modal-schedule/modal-schedule.component';
 import { ModalTarifaComponent } from './settings/fields/modal-tarifa/modal-tarifa.component';
 import { SystemConfigurationsComponent } from './settings/system-configurations/system-configurations.component';
-import { BookingSchoolsComponent } from './booking-schools/list/booking-schools.component';
+import { BookingPeriodoComponent } from './booking-schools/list/booking-periodo.component';
+import { BookingPeriodoModalComponent } from './booking-schools/modal/modal.component';
 
 
 @NgModule({
@@ -65,7 +66,7 @@ import { BookingSchoolsComponent } from './booking-schools/list/booking-schools.
     BookingOneTimeComponent,
     BookingRecurrentComponent,
     BookingDetailsComponent,
-    BookingSchoolsComponent,
+    BookingPeriodoComponent,
     OrganizationsComponent,
 
         EmployeesComponent,
@@ -112,6 +113,7 @@ import { BookingSchoolsComponent } from './booking-schools/list/booking-schools.
     ScheduleSelectionComponent,
     ReservationFormComponent,
     TicketComponent,
+    BookingPeriodoModalComponent,
 
     ScrollToModule.forRoot(),
     FeatherModule.pick(allIcons),

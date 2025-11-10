@@ -53,14 +53,14 @@
             <h6 class="fw-semibold mb-2">Resumen de la Reserva</h6>
             <div class="row">
                 <div class="col-md-6">
-                    <small><strong>Contribuyente:</strong> {{reservationData.contribuyenteDto?.nombreCompleto}}</small><br>
-                    <small><strong>Documento:</strong> {{reservationData.contribuyenteDto?.numeroDocumento}}</small><br>
-                    <small><strong>Email:</strong> {{reservationData.contribuyenteDto?.email}}</small>
+                    <small><strong>Contribuyente:</strong> {{reservationData.contribuyenteDto.nombreCompleto}}</small><br>
+                    <small><strong>Documento:</strong> {{reservationData.contribuyenteDto.numeroDocumento}}</small><br>
+                    <small><strong>Email:</strong> {{reservationData.contribuyenteDto.email}}</small>
                 </div>
                 <div class="col-md-6">
-                    <small><strong>Complejo:</strong> {{reservationData.campoDeportivoDto?.complejoDto?.nombre}}</small><br>
-                    <small><strong>Campo:</strong> {{reservationData.campoDeportivoDto?.nombre}}</small><br>
-                    <small><strong>Tipo Cobro:</strong> {{formatTipoCobro(reservationData.tarifaDto?.tipoCobro)}}</small>
+                    <small><strong>Complejo:</strong> {{reservationData.campoDeportivoDto.complejoDto.nombre}}</small><br>
+                    <small><strong>Campo:</strong> {{reservationData.campoDeportivoDto.nombre}}</small><br>
+                    <small *ngIf="reservationData.tarifaDto && reservationData.tarifaDto.tipoCobro"><strong>Tipo Cobro:</strong> {{formatTipoCobro(reservationData.tarifaDto.tipoCobro)}}</small>
                 </div>
             </div>
             <div class="mt-2" *ngIf="reservationData.organizacionDto">
@@ -72,9 +72,9 @@
         <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="!showLoading && !errorMessage">
             <div class="reservation-info">
                 <small class="text-muted">
-                    <strong>Reserva:</strong> {{reservationData?.numeroReserva}} | 
-                    <strong>Estado:</strong> {{reservationData?.estadoReserva}} | 
-                    <strong>Total:</strong> Bs. {{reservationData?.montoTotal}}
+                    <strong>Reserva:</strong> {{reservationData.numeroReserva}} | 
+                    <strong>Estado:</strong> {{reservationData.estadoReserva}} | 
+                    <strong>Total:</strong> Bs. {{reservationData.montoTotal}}
                 </small>
             </div>
             <div class="d-flex gap-2">

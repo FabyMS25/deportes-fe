@@ -13,23 +13,31 @@ export class OrganizacionService {
 
   constructor(private http: HttpClient) { }
 
-  getAll(): Observable<Organizacion[]> {
-    return this.http.get<Organizacion[]>(`${this.apiUrl}`);
+  getAll(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}`);
   }
 
-  getByUuid(uuid: String): Observable<Organizacion> {
-    return this.http.get<Organizacion>(`${this.apiUrl}/${uuid}`)
+  getByUuid(uuid: String): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${uuid}`)
   }
 
-  save(data: Organizacion): Observable<Organizacion> {
-    return this.http.post<Organizacion>(`${this.apiUrl}`, data);
+  save(data: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}`, data);
   }
 
-  update(data: Organizacion): Observable<Organizacion> {
-    return this.http.put<Organizacion>(`${this.apiUrl}`, data);
+  update(data: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}`, data);
   }
   delete(uuid: string) {
     return this.http.delete(`${this.apiUrl}/${uuid}`);
+  }
+  
+  getByRepresentante(contribuyenteUuid: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/representante/${contribuyenteUuid}`);
+  }
+
+  getByContribuyente(contribuyenteUuid: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/contribuyente/${contribuyenteUuid}`);
   }
 }
 

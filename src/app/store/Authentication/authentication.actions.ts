@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 // import { User } from './auth.models';
 
 // Register action

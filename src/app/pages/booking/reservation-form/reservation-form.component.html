@@ -213,7 +213,7 @@
                 <div *ngIf="getFieldError('cantidadPersonas')" class="invalid-feedback">
                   {{ getFieldError('cantidadPersonas') }}
                 </div>
-                <div *ngIf="shouldDisableScheduleFields && selectedTariff?.tipoCobro === 'por_persona'" class="form-text">
+                <div *ngIf="shouldDisableScheduleFields && selectedTariff.tipoCobro === 'por_persona'" class="form-text">
                   <small class="text-muted">
                     <i class="ri-information-line me-1"></i>
                     Cantidad previamente definida
@@ -488,6 +488,23 @@
                       (click)="clearOrganizationSearch()">
                       <i class="ri-close-line"></i>
                     </button>
+                  </div>
+                </div>
+              </div>
+              <div class="p-2 rounded" [ngClass]="getStatusClass()">
+                <div class="d-flex align-items-center">
+                  <i [class]="getStatusIcon()" class="fs-5 me-2"></i>
+                  <div>
+                    <strong class="d-block small" [ngClass]="{
+                      'text-info': getStatusText() === 'Reserva Gratuita',
+                      'text-warning': getStatusText() === 'Requiere Aprobación', 
+                      'text-success': getStatusText() === 'Aprobación Automática'
+                    }">
+                      {{ getStatusText() }}
+                    </strong>
+                    <small class="text-muted">
+                      {{ getStatusDescription() }}
+                    </small>
                   </div>
                 </div>
               </div>

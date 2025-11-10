@@ -5,11 +5,11 @@ export interface ClasificadorRuat {
   estado?: boolean;
   fechaCreacion?: Date;
 
-  codigo:String;
-  nombre:String;
-  descripcion?:String;
+  codigo:string;
+  nombre:string;
+  descripcion?:string;
   // tipoReserva:String; // por_hora , por_persona , por_evento , mensualidad , por_club
-  tipoArancel:String;
+  tipoArancel:string;
   activo: boolean;
   
   tarifasDtoList?:Tarifa[];

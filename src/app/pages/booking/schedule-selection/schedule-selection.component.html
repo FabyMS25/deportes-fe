@@ -41,7 +41,7 @@
                       {{ currentSlots.daySchedule?.horaApertura?.slice(0, 5) }} - 
                       {{ currentSlots.daySchedule?.horaCierre?.slice(0, 5) }}
                     </span>
-                    <span *ngIf="currentSlots.exceptions && currentSlots.exceptions?.length" 
+                    <span *ngIf="currentSlots.exceptions && currentSlots.exceptions.length" 
                           class="badge bg-warning-subtle text-warning">
                       <i class="ri-alert-line me-1"></i>
                       {{ currentSlots.exceptions[0].tipoExcepcion }} - {{ currentSlots.exceptions[0].motivo }}  
@@ -58,10 +58,10 @@
             <div class="d-flex flex-column h-100 justify-content-center">
               <label class="form-label mb-1 fw-medium">
                 <i class="ri-time-line me-1"></i>
-                <span *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'">Duración de la Reserva</span>
-                <span *ngIf="this.dataTariff?.tipoCobro === 'por_evento'">Duración del evento</span>
+                <span *ngIf="this.dataTariff.tipoCobro !== 'por_evento'">Duración de la Reserva</span>
+                <span *ngIf="this.dataTariff.tipoCobro === 'por_evento'">Duración del evento</span>
               </label>
-              <select *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'" 
+              <select *ngIf="this.dataTariff.tipoCobro !== 'por_evento'" 
                       class="form-select" 
                       [(ngModel)]="slotDuration" 
                       (change)="onSlotDurationChange()">
@@ -71,13 +71,13 @@
               </select>
               
               <!-- Event Mode -->
-              <div *ngIf="this.dataTariff?.tipoCobro === 'por_evento'" class="event-duration-input">
+              <div *ngIf="this.dataTariff.tipoCobro === 'por_evento'" class="event-duration-input">
                 <input type="number" 
                       class="form-control" 
                       [(ngModel)]="eventDurationHours"
                       (change)="onEventDurationChange()"
-                      [min]="minEventDurationHours"
-                      [max]="maxEventDurationHours"
+                      [min]="minDuration"
+                      [max]="maxDuration"
                       [class.is-invalid]="eventDurationError"
                       placeholder="Ingrese duración en horas">                
                 <div *ngIf="eventDurationError" class="invalid-feedback d-block">
@@ -85,7 +85,7 @@
                 </div>
                 
                 <small class="form-text text-muted">
-                  Duración: {{ minEventDurationHours }} - {{ maxEventDurationHours }} horas
+                  Duración: {{ minDuration }} - {{ maxDuration }} horas
                 </small>
               </div>
             </div>
@@ -97,8 +97,8 @@
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h6 class="mb-0 text-muted">
           <i class="ri-calendar-week-line me-1"></i>
-          <span *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'">Seleccione un día</span>
-          <span *ngIf="this.dataTariff?.tipoCobro === 'por_evento'">Seleccione un día disponible</span>
+          <span *ngIf="this.dataTariff.tipoCobro !== 'por_evento'">Seleccione un día</span>
+          <span *ngIf="this.dataTariff.tipoCobro === 'por_evento'">Seleccione un día disponible</span>
         </h6>
         <div class="btn-group" role="group">
           <button type="button" 
@@ -151,16 +151,16 @@
                       class="badge bg-secondary small">
                   <i class="ri-time-line me-1"></i>Pasado
                 </span>
-                <span *ngIf="this.dataTariff?.tipoCobro === 'por_evento' && !day.isPast && isDayAvailableForEvent(day.date)" 
+                <span *ngIf="this.dataTariff.tipoCobro === 'por_evento' && !day.isPast && isDayAvailableForEvent(day.date)" 
                       class="badge bg-success small">
                   <i class="ri-check-line me-1"></i>Disponible
                 </span>
-                <span *ngIf="this.dataTariff?.tipoCobro === 'por_evento' && !day.isPast && !isDayAvailableForEvent(day.date)" 
+                <span *ngIf="this.dataTariff.tipoCobro === 'por_evento' && !day.isPast && !isDayAvailableForEvent(day.date)" 
                       class="badge bg-danger small">
                   <i class="ri-close-line me-1"></i>Ocupado
                 </span>
                 
-                <i *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'" class="fs-16" 
+                <i *ngIf="this.dataTariff.tipoCobro !== 'por_evento'" class="fs-16" 
                    [ngClass]="{
                      'ri-checkbox-circle-fill text-success': !day.isPast && getTimeSlotsForDay(day.date).daySchedule?.abierto,
                      'ri-close-circle-fill text-danger': !day.isPast && !getTimeSlotsForDay(day.date).daySchedule?.abierto,
@@ -170,7 +170,7 @@
             </a>
           </div>
           
-          <ng-template *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'" ngbNavContent>
+          <ng-template *ngIf="this.dataTariff.tipoCobro !== 'por_evento'" ngbNavContent>
             <ng-container *ngIf="getTimeSlotsForDay(day.date) as slots">
               <ng-container *ngIf="slots.morningSlots.length === 0 && 
                                     slots.afternoonSlots.length === 0 && 
@@ -379,7 +379,7 @@
               </div>
             </ng-container>
           </ng-template>
-          <ng-template *ngIf="this.dataTariff?.tipoCobro === 'por_evento'" ngbNavContent>
+          <ng-template *ngIf="this.dataTariff.tipoCobro === 'por_evento'" ngbNavContent>
             <ng-container *ngIf="getTimeSlotsForDay(day.date) as slots">
               <div class="text-center py-4">
                 <div *ngIf="isDayAvailableForEvent(day.date)" class="text-success">
@@ -410,7 +410,7 @@
         <div [ngbNavOutlet]="Header"></div>
       </div>
 
-      <div *ngIf="this.dataTariff?.tipoCobro !== 'por_evento' && selectedSlots.length > 0" 
+      <div *ngIf="this.dataTariff.tipoCobro !== 'por_evento' && selectedSlots.length > 0" 
            class="alert alert-primary mt-4 mb-0" 
            role="alert">
         <div class="d-flex align-items-center">
@@ -435,7 +435,7 @@
           </div>
         </div>
       </div>
-      <div *ngIf="this.dataTariff?.tipoCobro === 'por_evento' && fechaReserva && isDayAvailableForEvent(fechaReserva)" 
+      <div *ngIf="this.dataTariff.tipoCobro === 'por_evento' && fechaReserva && isDayAvailableForEvent(fechaReserva)" 
           class="alert alert-success mt-4 mb-0" 
           role="alert">
         <div class="d-flex align-items-center">
@@ -469,20 +469,20 @@
               <li class="mb-1">
                 Las reservas deben realizarse con <strong>{{ anticipationTimeDisplay }}</strong> de anticipación mínima.
               </li>
-              <li *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'" class="mb-1">
+              <li *ngIf="this.dataTariff.tipoCobro !== 'por_evento'" class="mb-1">
                 Los horarios seleccionados deben ser <strong>consecutivos</strong>.
               </li>
-              <li *ngIf="this.dataTariff?.tipoCobro === 'por_evento'" class="mb-1">
+              <li *ngIf="this.dataTariff.tipoCobro === 'por_evento'" class="mb-1">
                 Para eventos, seleccione un día disponible y la duración deseada.
               </li>
               
               <li class="mb-1">
-                Después de crear la reserva, tendrá <strong>{{ systemConfig['HORAS_VALIDACION_PAGO'].valorNumerico }} horas</strong> para realizar el pago.
+                Después de crear la reserva, tendrá <strong>{{ systemConfigs['HORAS_VALIDACION_PAGO'].valorNumerico }} horas</strong> para realizar el pago.
               </li>
-              <li *ngIf="dataField?.requiereAprobacion && dataField?.maxDuracionAutoAprobacion">
+              <li *ngIf="dataField.requiereAprobacion && dataField.maxDuracionAutoAprobacion">
                 Reservas mayores a <strong>{{ dataField.maxDuracionAutoAprobacion }} minutos</strong> requieren aprobación administrativa.
               </li>
-              <li *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'" class="mb-1">
+              <li *ngIf="this.dataTariff.tipoCobro !== 'por_evento'" class="mb-1">
                 Los horarios marcados con <i class="ri-lock-line text-danger"></i> están ocupados por otras reservas activas.
               </li>
             </ul>
@@ -500,8 +500,8 @@
                 (click)="confirmSelection()">
           <span *ngIf="!isCheckingAvailability">
             <i class="ri-check-line me-1"></i>
-            <span *ngIf="this.dataTariff?.tipoCobro !== 'por_evento'">Confirmar y Continuar</span>
-            <span *ngIf="this.dataTariff?.tipoCobro === 'por_evento'">Reservar Evento</span>
+            <span *ngIf="this.dataTariff.tipoCobro !== 'por_evento'">Confirmar y Continuar</span>
+            <span *ngIf="this.dataTariff.tipoCobro === 'por_evento'">Reservar Evento</span>
           </span>
           <span *ngIf="isCheckingAvailability">
             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>

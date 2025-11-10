@@ -29,3 +29,10 @@ export enum TipoExcepcion {
 }
 export type BookingType = 'puntual' | 'recurrente' | 'periodo';
 export type ReservationType = 'por_hora' | 'por_persona' | 'por_evento' | 'mensualidad' |'por_sesion'| 'por_club' | 'periodo';
+
+export enum TipoOrganizacion {
+  ASOCIACION = 'ASOCIACION',
+  CLUB = 'CLUB',
+  ESCUELA_MUNICIPAL = 'ESCUELA_MUNICIPAL',
+  ORGANIZACION = 'ORGANIZACION'
+}

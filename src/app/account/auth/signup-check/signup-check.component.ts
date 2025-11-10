@@ -8,7 +8,7 @@ import { UserDocType} from 'src/app/core/constants/UserData';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { UserDataService } from '../signup/user-data.service';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
-import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { GlobalComponent } from 'src/app/global-component';

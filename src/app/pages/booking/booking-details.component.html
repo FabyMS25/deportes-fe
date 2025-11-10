@@ -102,6 +102,7 @@
           *ngSwitchCase="BookingStep.CAMPO_SELECTION"
           [dataComplejo]="bookingState.complejo!"
           [bookingType]="bookingType"
+          [userRole]="userRole"
           [systemConfigs]="systemConfigList"
           (campoSelected)="onCampoSelected($event)"
           (goBack)="back()">
@@ -144,12 +145,13 @@
           [systemConfigs]="systemConfigList"
           (reservationCompleted)="onReservationCompleted($event)">
         </app-reservation-form>
+        @if(bookingState.reservaCreada){
         <app-ticket 
           *ngSwitchCase="BookingStep.TICKET"
           [bookingType]="bookingType"
           [reservationData]="bookingState.reservaCreada"
           [autoLoad]="true">
-        </app-ticket>        
+        </app-ticket>}
       </ng-container>
     </div>
   </div>

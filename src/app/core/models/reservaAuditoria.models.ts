@@ -1,5 +1,5 @@
 import { CampoDeportivo } from "./campoDeportivo.model";
-import { Contribuyente } from "./contribuyente.models";
+import { Contribuyente } from "./contribuyente.model";
 import { Pago } from "./pago.model";
 import { Tablero } from "./tablero.models";
 

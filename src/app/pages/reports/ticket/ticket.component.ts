@@ -30,7 +30,7 @@ import { BookingType } from 'src/app/core/constants/Features';
 })
 export class TicketComponent implements OnChanges {
   @Input() bookingType: BookingType = 'puntual';
-  @Input() reservationData!: any;
+  @Input() reservationData!: Reserva;
   @Input() autoLoad: boolean = false;
   @Input() showAsModal: boolean = false;
 
@@ -141,7 +141,7 @@ export class TicketComponent implements OnChanges {
     }
     const filename = `ticket_${this.reservationData.numeroReserva || this.reservationData.uuid}.pdf`;
     let observable;
-    if (this.reservationData.tipoReserva === 'puntual') {
+    if (this.reservationData.tipoReserva === 'puntual' && this.reservationData.uuid) {
       switch (this.reservationData.tarifaDto?.tipoCobro) {
         case 'por_evento':
           observable = this.reportsService.getTicketReservaEvento(this.reservationData.uuid);

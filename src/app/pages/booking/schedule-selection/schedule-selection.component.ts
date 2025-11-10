@@ -62,99 +62,66 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   slotDurationOptions = [
     { value: 30, label: '30 minutos' },
     { value: 60, label: '1 hora' },
-    // { value: 90, label: '1.5 horas' },
-    // { value: 120, label: '2 horas' }
   ];
   eventDurationHours: number = 8;
   eventDurationError: string = '';
 
-  systemConfig: { [key: string]: ConfiguracionSistema } = {};
-  get enableRecurrentBooking(): boolean | undefined{
-    return this.systemConfig[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? true;
+  systemConfigs: { [key: string]: ConfiguracionSistema } = {};
+  get enableSolicitudEventsBooking(): boolean{
+    return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_EVENTOS]?.valorBoolean ?? false;
   }
-  get enableOrganizationReservation(): boolean {
-    return this.systemConfig[ClaveConfiguracion.HABILITAR_RESERVAS_ORGANIZACIONES]?.valorBoolean ?? true;
+  get enableEventsBooking(): boolean {
+    return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_EVENTOS]?.valorBoolean ?? false;
   }
-  get HorasValidacionPago(): number | undefined {
-    return this.systemConfig[ClaveConfiguracion.HORAS_VALIDACION_PAGO]?.valorNumerico;
-  }  
-  get anticipationTime(): number | undefined {
-    if (this.userRole !== 'Contribuyente') {
-      return undefined;
-    }
+  
+  get anticipationHours(): number | undefined{
     if (!this.dataTariff) {
-      return this.systemConfig['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico ;
+      return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
     }
     switch (this.dataTariff.tipoCobro) {
       case 'por_evento':
-        return this.systemConfig['DIAS_ANTICIPACION_EVENTOS']?.valorNumerico ? 
-               this.systemConfig['DIAS_ANTICIPACION_EVENTOS'].valorNumerico : undefined;
-      case 'mensualidad': case 'por_sesion': case 'por_club':
-        return this.systemConfig['HORAS_ANTICIPACION_RECURRENTES']?.valorNumerico ? 
-               this.systemConfig['HORAS_ANTICIPACION_RECURRENTES'].valorNumerico  : undefined;
+        const diasEventos = this.systemConfigs[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico;
+        return diasEventos? diasEventos* 24:undefined;
+      case 'mensualidad': 
+      case 'por_sesion': 
+      case 'por_club':
+        return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico;
       default:
-        return this.systemConfig['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico;
+        return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
     }
   }
   get anticipationTimeDisplay(): string {
     switch (this.dataTariff.tipoCobro) {
       case 'por_evento':
-        return this.systemConfig['DIAS_ANTICIPACION_EVENTOS']?.valorNumerico + `días`;
+        return this.systemConfigs[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico + `días`;
       case 'mensualidad': case 'por_sesion': case 'por_club':
-        return this.systemConfig['HORAS_ANTICIPACION_RECURRENTES']?.valorNumerico+ `días`;
+        return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico+ `días`;
       default:
-        return this.systemConfig['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico+`horas`;
+        return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico+`horas`;
     }
-  }
-  get maxEventDurationHours(): number {
-    if (this.dataTariff?.tipoCobro === 'por_evento') {
-      const maxDuration = this.systemConfig['DURACION_MAXIMA_EVENTOS']?.valorNumerico;
-      return maxDuration !== undefined && maxDuration !== null ? maxDuration : 12;
-    }
-    const punctualMax = this.systemConfig['DURACION_MAXIMA_PUNTUAL_POR_DEFECTO']?.valorNumerico;
-    return punctualMax ? punctualMax : 4;
-  }
-
-  get minEventDurationHours(): number {
-    const minDuration = this.systemConfig['DURACION_MINIMA_RESERVA']?.valorNumerico;
-    return minDuration !== undefined && minDuration !== null ? minDuration : 1;
   }
   get maxDuration(): number {
-    if (this.dataTariff?.tipoCobro === 'por_evento') {
-      const maxHours = this.systemConfig['DURACION_MAXIMA_EVENTOS']?.valorNumerico;
-      return (maxHours !== undefined && maxHours !== null ? maxHours : 12) * 60;
-    }
-    const punctualMax = this.systemConfig['DURACION_MAXIMA_PUNTUAL_POR_DEFECTO']?.valorNumerico;
-    return (punctualMax !== undefined && punctualMax !== null ? punctualMax : 4 )* 60;
+      const maxHours = this.systemConfigs[ClaveConfiguracion.DURACION_MAXIMA_EVENTOS]?.valorNumerico;
+      return (maxHours !== undefined && maxHours !== null ? maxHours : 24);
   }
   get minDuration(): number {
-    const minDuration = this.systemConfig['DURACION_MINIMA_RESERVA']?.valorNumerico;
-    return minDuration !== undefined && minDuration !== null ? minDuration * 60 : 60;
+    const minDuration = this.systemConfigs[ClaveConfiguracion.DURACION_MINIMA_RESERVA]?.valorNumerico;
+    return minDuration !== undefined && minDuration !== null ? minDuration : 1;
   }
-
   get maxDurationDisplay(): string {
-    const totalMinutes = this.maxDuration;
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;    
-    if (hours > 0 && minutes > 0) {
-      return `${hours} hora${hours !== 1 ? 's' : ''} y ${minutes} minutos`;
-    } else if (hours > 0) {
-      return `${hours} hora${hours !== 1 ? 's' : ''}`;
+    const hours = this.maxDuration;
+    if (hours === 1) {
+      return '1 hora';
     } else {
-      return `${minutes} minutos`;
+      return `${hours} horas`;
     }
   }
-
   get minDurationDisplay(): string {
-    const totalMinutes = this.minDuration;
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;    
-    if (hours > 0 && minutes > 0) {
-      return `${hours} hora${hours !== 1 ? 's' : ''} y ${minutes} minutos`;
-    } else if (hours > 0) {
-      return `${hours} hora${hours !== 1 ? 's' : ''}`;
+    const hours = this.minDuration;
+    if (hours === 1) {
+      return '1 hora';
     } else {
-      return `${minutes} minutos`;
+      return `${hours} horas`;
     }
   }
 
@@ -176,9 +143,8 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   ) {}
 
   ngOnInit(): void {
-    this.systemConfig = this.authenticationService.getAllConfigs()
-    const currentUser = this.authenticationService.currentUser()  
-
+    this.systemConfigs = this.authenticationService.getAllConfigs();
+    console.log("this",this.systemConfigs['HORAS_VALIDACION_PAGO'].valorNumerico)
     this.scheduleState.currentWeekStart$
       .pipe(takeUntil(this.destroy$))
       .subscribe(start => {
@@ -191,13 +157,11 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         this.currentWeekEnd = end;
         this.cdr.detectChanges();
       });
-      
-    console.log(this.systemConfig)
       this.initializeWeek();
       this.generateWeekDays();
       this.setDefaultSlotDuration();
       if (this.dataTariff?.tipoCobro === 'por_evento') {
-        this.eventDurationHours =this.maxEventDurationHours; 
+        this.eventDurationHours =this.maxDuration; 
       }
   }
 
@@ -219,7 +183,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       this.generateWeekDays();
       
       if (this.dataTariff?.tipoCobro === 'por_evento') {
-        this.eventDurationHours = this.maxEventDurationHours;
+        this.eventDurationHours = this.maxDuration;
       }
     }
 
@@ -323,12 +287,12 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
 
   onEventDurationChange(): void {
     this.eventDurationError = '';
-    if (this.eventDurationHours < this.minEventDurationHours) {
-      this.eventDurationError = `La duración mínima es de ${this.minEventDurationHours} hora${this.minEventDurationHours !== 1 ? 's' : ''}`;
+    if (this.eventDurationHours < this.minDuration) {
+      this.eventDurationError = `La duración mínima es de ${this.minDurationDisplay}`;
       return;
     }    
-    if (this.eventDurationHours > this.maxEventDurationHours) {
-      this.eventDurationError = `La duración máxima es de ${this.maxEventDurationHours} hora${this.maxEventDurationHours !== 1 ? 's' : ''}`;
+    if (this.eventDurationHours > this.maxDuration) {
+      this.eventDurationError = `La duración máxima es de ${this.maxDurationDisplay}`;
       return;
     }
     this.clearCache();
@@ -341,14 +305,14 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       return false;
     }
 
-    const durationInMinutes = this.eventDurationHours * 60;
+    const durationInHours = this.eventDurationHours;
     
-    if (durationInMinutes < this.minDuration) {
+    if (durationInHours < this.minDuration) {
       this.validationErrors.push(`La duración mínima del evento es de ${this.minDurationDisplay}`);
       return false;
     }
 
-    if (durationInMinutes > this.maxDuration) {
+    if (durationInHours > this.maxDuration) {
       this.validationErrors.push(`La duración máxima del evento es de ${this.maxDurationDisplay}`);
       return false;
     }
@@ -428,8 +392,8 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     const slots: TimeSlot[] = [];
     const now = new Date();
     let minReservationTime = new Date(now.getTime()) ;
-    console.log(this.anticipationTime)
-    if(this.anticipationTime) minReservationTime=new Date(now.getTime() + this.anticipationTime * 60 * 60 * 1000)
+    console.log(this.anticipationHours)
+    if(this.anticipationHours) minReservationTime=new Date(now.getTime() + this.anticipationHours * 60 * 60 * 1000)
     const startMinutes = this.timeToMinutes(startTime);
     const endMinutes = this.timeToMinutes(endTime);
     for (let minutes = startMinutes; minutes < endMinutes; minutes += this.slotDuration) {
@@ -575,7 +539,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         this.dataField.uuid!,
         timeRange,
         this.reservationsList,
-        this.anticipationTime
+        this.anticipationHours
       );      
       if (!validation.isValid) {
         this.validationErrors = validation.errors;
@@ -625,7 +589,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         this.dataField.uuid!,
         timeRange,
         this.reservationsList,
-        this.anticipationTime
+        this.anticipationHours
       );
       
       if (!validation.isValid) {
@@ -664,12 +628,15 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       this.selectedSlots[this.selectedSlots.length - 1].endTime
     );
 
-    if (duration < this.minDuration) {
+    // Convert duration from minutes to hours for comparison
+    const durationInHours = duration / 60;
+
+    if (durationInHours < this.minDuration) {
       this.validationErrors.push(`La duración mínima de reserva es de ${this.minDurationDisplay}`);
       return false;
     }
 
-    if (duration > this.maxDuration) {
+    if (durationInHours > this.maxDuration) {
       this.validationErrors.push(`La duración máxima para este tipo de reserva es de ${this.maxDurationDisplay}`);
       return false;
     }

@@ -1,783 +1,1142 @@
-<div class="modal-content" *ngIf="accion!=='block' && accion!=='unblock';else actionModel">
+<div class="modal-content" *ngIf="accion!=='block' && accion!=='unblock' && accion!=='removeSanction';else actionModel">
   <div id="elmLoader" *ngIf="submitted || searchingRuat" class="text-center py-3">
     <div class="spinner-border text-primary avatar-sm" role="status">
       <span class="visually-hidden">Cargando...</span>
     </div>
     <p class="text-muted mt-2">{{ searchingRuat ? 'Buscando en RUAT...' : 'Procesando...' }}</p>
-  </div>      
-  <div class="modal-header bg-info-subtle p-2">
-        <h5 class="modal-title" *ngIf="accion === ''" ngbAutofocus>
-            <i class="ri-account-circle-line me-2"></i>Agregar Contribuyente
-        </h5>
-        <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>
-            <i class="ri-account-circle-fill me-2"></i>Editar Datos de Contribuyente
-        </h5>
-        <h5 class="modal-title" *ngIf="accion === 'show'" ngbAutofocus>
-            <i class="ri-eye-line me-2"></i>Ver Contribuyente
-        </h5>
-        <h5 class="modal-title" *ngIf="accion === 'sanction'" ngbAutofocus>
-            <i class="ri-forbid-line me-2"></i>Aplicar Sanción
-        </h5>
-        <button type="button" class="btn-close" data-dismiss="modal" 
-            aria-label="Cerrar" [disabled]="submitted"(click)="closeModal()">
-        </button>
   </div>
-    <div *ngIf="showRuatSearch && (accion === '')" class="modal-body">
-      <div class="alert alert-info">
-        <i class="ri-information-line me-2"></i>
-        <strong>Paso 1:</strong> Busque al contribuyente en el sistema RUAT
-      </div>      
-      <form [formGroup]="searchRuatForm" class="needs-validation">
-        <div class="row">
-          <div class="col-md-4">
-            <label for="search-tipoDocumento" class="form-label">Tipo Documento <span class="text-danger">*</span></label>
-            <select class="form-select" id="search-tipoDocumento" formControlName="tipoDocumento">
-              <option value="" disabled>Seleccionar opción</option>
-              <option *ngFor="let item of identityTypes" [value]="item.type">{{ item.description }}</option>
-            </select>
-          </div>
-          <div class="col-md-4">
-            <label for="search-numeroDocumento" class="form-label">Nro Documento <span class="text-danger">*</span></label>
-            <input type="text" id="search-numeroDocumento" class="form-control" 
-                   placeholder="Documento de Identificación" 
-                   formControlName="numeroDocumento">
-            <div class="form-text">Ej: <b>12345678-1C</b></div>
-          </div>
-          <div class="col-md-4">
-            <label for="search-expedido" class="form-label">Expedido <span class="text-danger">*</span></label>
-            <select class="form-select" id="search-expedido" formControlName="expedido">
-              <option value="" disabled>Seleccionar opción</option>
-              <option *ngFor="let item of cityAcronym" [value]="item.id">{{ item.value }}</option>
-            </select>
-          </div>
-        </div>
-        <div class="d-flex gap-2 justify-content-end">
-          <button type="button" class="btn btn-light" (click)="skipRuatSearch()" [disabled]="searchingRuat">
-            Saltar Búsqueda
-          </button>
-          <button type="button" class="btn btn-primary" (click)="searchInRuat()" [disabled]="searchingRuat || searchRuatForm.invalid">
-            <i class="ri-search-line me-1"></i>Buscar en RUAT
-          </button>
-        </div>
-      </form>
-    </div>    
-    <form [formGroup]="editForm" (ngSubmit)="saveData()" class="needs-validation" name="event-form" id="form-event" 
-          *ngIf="(accion === '' || accion === 'edit' || accion === 'show') && !showRuatSearch">
-      <div class="modal-body">
-        <div *ngIf="accion === 'show' && row">
-            <div class="d-flex align-items-center">
-                <div class="flex-shrink-0 me-3">
-                    <i class="ri-information-line text-muted fs-5"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h6 class="fw-semibold mb-1">Información General</h6>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <small class="text-muted d-block">Tipo de Contribuyente:</small>
-                    <div class="fw-medium">{{ getTipoContribuyenteText(row.tipoContribuyente) }}</div>
-                </div>
-                <div class="col-sm-6">
-                    <small class="text-muted d-block">Código Contribuyente:</small>
-                    <div class="fw-medium">{{ row.codigoContribuyente || 'No asignado' }}</div>
-                </div>
-                <div class="col-sm-6">
-                    <small class="text-muted d-block">Estado Usuario:</small>
-                    <div class="fw-medium">
-                        <span class="badge" 
-                              [ngClass]="{
-                                'bg-success': row.estadoUsuario === 'ACTIVO',
-                                'bg-warning': row.estadoUsuario === 'PENDIENTE_VERIFICACION',
-                                'bg-danger': row.estadoUsuario === 'BLOQUEADO' || row.estadoUsuario === 'SANCIONADO',
-                                'bg-secondary': row.estadoUsuario === 'INACTIVO'
-                              }">
-                            {{ getEstadoUsuarioText(row.estadoUsuario) }}
-                        </span>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <small class="text-muted d-block">Verificado RUAT:</small>
-                    <div class="fw-medium">
-                        <span class="badge" [ngClass]="row.verificadoRuat ? 'bg-success' : 'bg-warning'">
-                            {{ row.verificadoRuat ? 'VERIFICADO' : 'NO VERIFICADO' }}
-                        </span>
-                        <span *ngIf="row.verificadoRuat" class="text-muted ms-2 fs-12">
-                            ({{ row.fechaVerificacionRuat | date:'dd/MM/yyyy' }})
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <hr>
-            <div class="d-flex align-items-center">
-                <div class="flex-shrink-0 me-3">
-                    <i class="ri-user-line text-muted fs-5"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h6 class="fw-semibold mb-1">Información Personal</h6>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <small class="text-muted d-block">Nombre Completo:</small>
-                    <div class="fw-medium">{{ row.nombreCompleto }}</div>
-                </div>
-                <div class="col-sm-6">
-                    <small class="text-muted d-block">{{ row.tipoDocumento }}:</small>
-                    <div class="fw-medium">
-                        {{ row.numeroDocumento }}
-                        <span *ngIf="row.expedido"> - {{ getDepartmentName(row.expedido) }}</span>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <small class="text-muted d-block">NIT:</small>
-                    <div class="fw-medium">{{ row.nroNit || 'No registrado' }}</div>
-                </div>
-                <div class="col-sm-4">
-                    <small class="text-muted d-block">Género:</small>
-                    <div class="fw-medium">{{ getGenderText(row.genero) }}</div>
-                </div>
-                <div class="col-sm-4">
-                    <small class="text-muted d-block">Fecha Nacimiento:</small>
-                    <div class="fw-medium">{{ row.fechaNacimiento | date:'dd/MM/yyyy' }}</div>
-                </div>
-                <div class="col-sm-4">
-                    <small class="text-muted d-block">Estado Civil:</small>
-                    <div class="fw-medium">{{ getCivilStatus(row.estadoCivil) }}</div>
-                </div>
-            </div>
-            <hr>
-            <div class="d-flex align-items-center">
-                <div class="flex-shrink-0 me-3">
-                    <i class="ri-contacts-line text-muted fs-5"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h6 class="fw-semibold mb-1">Información de Contacto</h6>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <small class="text-muted d-block">Teléfono:</small>
-                    <div class="fw-medium">{{ row.telefono || 'No registrado' }}</div>
-                </div>
-                <div class="col-sm-6">
-                    <small class="text-muted d-block">Email:</small>
-                    <div class="fw-medium">{{ row.email || 'No registrado' }}</div>
-                </div>
-                <div class="col-12">
-                    <small class="text-muted d-block">Dirección:</small>
-                    <div class="fw-medium">{{ row.direccion || 'No registrada' }}</div>
-                </div>
-            </div>
-            <hr>
-            <div class="d-flex align-items-center">
-                <div class="flex-shrink-0 me-3">
-                    <i class="ri-trophy-line text-muted fs-5"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h6 class="fw-semibold mb-1">Información Deportiva</h6>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <small class="text-muted d-block">Deportista Elite:</small>
-                    <div class="fw-medium">
-                        <span class="badge" [ngClass]="row.esDeportistaElite ? 'bg-success' : 'bg-secondary'">
-                            {{ row.esDeportistaElite ? 'SÍ' : 'NO' }}
-                        </span>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <small class="text-muted d-block">Escuela Municipal:</small>
-                    <div class="fw-medium">
-                        <span class="badge" [ngClass]="row.perteneceEscuelaMunicipal ? 'bg-success' : 'bg-secondary'">
-                            {{ row.perteneceEscuelaMunicipal ? 'SÍ' : 'NO' }}
-                        </span>
-                    </div>
-                </div>
-                <div class="col-sm-6" *ngIf="row.registroUnicoDeportivo">
-                    <small class="text-muted d-block">Registro Deportivo:</small>
-                    <div class="fw-medium">{{ row.registroUnicoDeportivo }}</div>
-                </div>
-                <div class="col-sm-6" *ngIf="row.descuentoAplicable > 0">
-                    <small class="text-muted d-block">Descuento Aplicable:</small>
-                    <div class="fw-medium">{{ row.descuentoAplicable }}%</div>
-                </div>
-                <div class="col-12" *ngIf="row.puedeReservarGratis">
-                    <small class="text-muted d-block">Reserva Gratuita:</small>
-                    <div class="fw-medium">
-                        <span class="badge bg-info">PUEDE RESERVAR GRATIS</span>
-                        <span *ngIf="row.fechaUltimoUsoGratuito" class="text-muted ms-2 fs-12">
-                            (Último uso: {{ row.fechaUltimoUsoGratuito | date:'dd/MM/yyyy' }})
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <hr>
-            <div *ngIf="row.estaSancionado || row.observacionesMunicipales">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0 me-3">
-                        <i class="ri-alert-line text-muted fs-5"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h6 class="fw-semibold mb-1">Sanciones y Observaciones</h6>
-                    </div>
-                </div>                
-                <div class="row">
-                    <div class="col-12" *ngIf="row.estaSancionado">
-                        <div class="alert alert-danger">
-                            <h6 class="alert-heading"><i class="ri-error-warning-line me-2"></i>Usuario Sancionado</h6>
-                            <p class="mb-1"><strong>Motivo:</strong> {{ row.motivoSancion }}</p>
-                            <p class="mb-0"><strong>Fin de sanción:</strong> {{ row.fechaFinSancion | date:'dd/MM/yyyy' }}</p>
-                        </div>
-                    </div>                    
-                    <div class="col-12" *ngIf="row.observacionesMunicipales">
-                        <small class="text-muted d-block">Observaciones Municipales:</small>
-                        <div class="fw-medium">{{ row.observacionesMunicipales }}</div>
-                    </div>
-                </div>
-                <hr>
-            </div>
+  <div class="modal-header bg-info-subtle p-2">
+    <h5 class="modal-title" *ngIf="accion === ''" ngbAutofocus>
+      <i class="ri-account-circle-line me-2"></i>Agregar Contribuyente
+    </h5>
+    <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>
+      <i class="ri-account-circle-fill me-2"></i>Editar Datos de Contribuyente
+    </h5>
+    <h5 class="modal-title" *ngIf="accion === 'show'" ngbAutofocus>
+      <i class="ri-eye-line me-2"></i>Ver Contribuyente
+    </h5>
+    <h5 class="modal-title" *ngIf="accion === 'sanction'" ngbAutofocus>
+      <i class="ri-forbid-line me-2"></i>Aplicar Sanción
+    </h5>
+    <button type="button" class="btn-close" data-dismiss="modal" 
+      aria-label="Cerrar" [disabled]="submitted" (click)="closeModal()">
+    </button>
+  </div>
 
-            <!-- Información del Sistema -->
-            <div class="d-flex align-items-center">
-                <div class="flex-shrink-0 me-3">
-                    <i class="ri-history-line text-muted fs-5"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h6 class="fw-semibold mb-1">Información del Sistema</h6>
-                </div>
-            </div>
-            <div class="row">
-              <div class="col-sm-6">
-                <small class="text-muted d-block">Fecha de Creación:</small>
-                <div class="fw-medium">{{ row.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</div>
-            </div>
-            <div class="col-sm-6">
-                <small class="text-muted d-block">Última Actualización:</small>
-                <div class="fw-medium">{{ row.fechaActualizacion | date:'dd/MM/yyyy HH:mm' }}</div>
-            </div>
-            </div>
+  <div *ngIf="showRuatSearch && (accion === '')" class="modal-body">
+    <div class="alert alert-info">
+      <i class="ri-information-line me-2"></i>
+      <strong>Paso 1:</strong> Busque al contribuyente en el sistema RUAT
+    </div>
+    <form [formGroup]="searchRuatForm" class="needs-validation">
+      <div class="row">
+        <div class="col-md-4">
+          <label for="search-tipoDocumento" class="form-label">Tipo Documento <span class="text-danger">*</span></label>
+          <select class="form-select" id="search-tipoDocumento" formControlName="tipoDocumento">
+            <option value="" disabled>Seleccionar opción</option>
+            <option *ngFor="let item of identityTypes" [value]="item.type">{{ item.description }}</option>
+          </select>
         </div>
-        <div *ngIf="accion!=='show'" class="row">
-    <div *ngIf="submitted && editForm.invalid" class="alert alert-danger">
+        <div class="col-md-4">
+          <label for="search-numeroDocumento" class="form-label">Nro Documento <span class="text-danger">*</span></label>
+          <input type="text" id="search-numeroDocumento" class="form-control" 
+            placeholder="Documento de Identificación" 
+            formControlName="numeroDocumento">
+          <div class="form-text">Ej: <b>12345678-1C</b></div>
+        </div>
+        <div class="col-md-4">
+          <label for="search-expedido" class="form-label">Expedido <span class="text-danger">*</span></label>
+          <select class="form-select" id="search-expedido" formControlName="expedido">
+            <option value="" disabled>Seleccionar opción</option>
+            <option *ngFor="let item of cityAcronym" [value]="item.id">{{ item.value }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="d-flex gap-2 justify-content-end mt-3">
+        <button type="button" class="btn btn-light" (click)="skipRuatSearch()" [disabled]="searchingRuat">
+          Saltar Búsqueda
+        </button>
+        <button type="button" class="btn btn-primary" (click)="searchInRuat()" 
+          [disabled]="searchingRuat || searchRuatForm.invalid">
+          <i class="ri-search-line me-1"></i>Buscar en RUAT
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Main Form (Edit/Create/Show) -->
+  <form [formGroup]="editForm" (ngSubmit)="saveData()" class="needs-validation" name="event-form" id="form-event" 
+    *ngIf="(accion === '' || accion === 'edit' || accion === 'show') && !showRuatSearch">    
+    <div class="modal-body" *ngIf="accion !=='show'">
+      <ul class="nav nav-tabs nav-justified mb-3" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link" [ngClass]="{'active': activeTab === 'basic'}" 
+            (click)="setActiveTab('basic')" role="tab">
+            <i class="ri-user-line me-1"></i>
+            Información Básica
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [ngClass]="{'active': activeTab === 'estudiantes'}" 
+            (click)="setActiveTab('estudiantes')" role="tab">
+            <i class="ri-parent-line me-1"></i>
+            Estudiantes
+            <span class="badge bg-primary ms-1" *ngIf="estudiantesTemporales.length > 0">
+              {{estudiantesTemporales.length}}
+            </span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [ngClass]="{'active': activeTab === 'organizaciones'}" 
+            (click)="setActiveTab('organizaciones')" role="tab">
+            <i class="ri-building-4-line me-1"></i>
+            Organizaciones
+            <span class="badge bg-success ms-1" *ngIf="organizacionesTemporales.length > 0">
+              {{organizacionesTemporales.length}}
+            </span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [ngClass]="{'active': activeTab === 'deportivo'}" 
+            (click)="setActiveTab('deportivo')" role="tab">
+            <i class="ri-trophy-line me-1"></i>
+            Info Deportiva
+          </a>
+        </li>
+      </ul>
+      <!-- Validation Errors Summary -->
+      <div *ngIf="submitted && editForm.invalid" class="alert alert-danger">
         <h6 class="alert-heading"><i class="ri-error-warning-line me-2"></i>Errores en el formulario</h6>
         <ul class="mb-0">
-            <li *ngIf="form['tipoContribuyente'].errors?.['required']">• Tipo de Contribuyente es requerido</li>
-            <li *ngIf="form['tipoDocumento'].errors?.['required']">• Tipo de Documento es requerido</li>
-            <li *ngIf="form['numeroDocumento'].errors?.['required']">• Número de Documento es requerido</li>
-            <li *ngIf="form['numeroDocumento'].errors?.['itExist']">• Ya existe un usuario con este documento</li>
-            <li *ngIf="form['expedido'].errors?.['required']">• Expedido es requerido</li>
-            <li *ngIf="form['nombre'].errors?.['required']">• Nombre es requerido</li>
-            <li *ngIf="form['primerApellido'].errors?.['required']">• Primer Apellido es requerido</li>
-            <li *ngIf="form['fechaNacimiento'].errors?.['required']">• Fecha de Nacimiento es requerida</li>
-            <li *ngIf="form['telefono'].errors?.['required']">• Teléfono es requerido</li>
-            <li *ngIf="form['email'].errors?.['required']">• Email es requerido</li>
-            <li *ngIf="form['email'].errors?.['email']">• Formato de email inválido</li>
-            <li *ngIf="form['email'].errors?.['emailTaken']">• Este email ya está registrado</li>
-            <li *ngIf="form['userName'].errors?.['required']">• Usuario es requerido</li>
-            <li *ngIf="form['userName'].errors?.['invalidFormat']">• Formato de usuario inválido (solo minúsculas, números y puntos)</li>
-            <li *ngIf="form['password'].errors?.['required']">• Contraseña es requerida</li>
-            <li *ngIf="form['password'].errors?.['minlength']">• La contraseña debe tener al menos 6 caracteres</li>
-            <li *ngIf="form['cpassword'].errors?.['required']">• Confirmar contraseña es requerido</li>
-            <li *ngIf="editForm.errors?.['mustMatch']">• Las contraseñas no coinciden</li>
+          <li *ngIf="form['nombre'].errors?.['required']">• Nombre es requerido</li>
+          <li *ngIf="form['primerApellido'].errors?.['required']">• Primer Apellido es requerido</li>
+          <li *ngIf="form['numeroDocumento'].errors?.['required']">• Número de Documento es requerido</li>
+          <li *ngIf="form['numeroDocumento'].errors?.['itExist']">• Ya existe un usuario con este documento</li>
+          <li *ngIf="form['email'].errors?.['required']">• Email es requerido</li>
+          <li *ngIf="form['email'].errors?.['emailTaken']">• Este Email ya está registrado</li>
+          <li *ngIf="form['telefono'].errors?.['required']">• Teléfono es requerido</li>
+          <li *ngIf="form['fechaNacimiento'].errors?.['required']">• Fecha de Nacimiento es requerida</li>
+          <li *ngIf="form['esDeportistaElite'].value && form['registroUnicoDeportivo'].errors?.['required']">
+            • Deportista Elite requiere Registro Único Deportivo
+          </li>
         </ul>
-    </div>
-    
-          <div class="col-12">
-            <h6 class="border-bottom pb-2">Información Básica</h6>
+      </div>
+      <div class="tab-content">
+        <div *ngIf="activeTab === 'basic'">
+          <div class="alert alert-success" *ngIf="editForm.get('verificadoRuat')?.value">
+            <i class="ri-checkbox-circle-line me-2"></i>
+            <strong>Contribuyente verificado en RUAT</strong>
+            <span class="ms-2">(Código: {{ editForm.get('codigoContribuyente')?.value }})</span>
           </div>
-          <div class="col-12" *ngIf="editForm.get('verificadoRuat')?.value">
-            <div class="alert alert-success">
-              <i class="ri-checkbox-circle-line me-2"></i>
-              <strong>Contribuyente verificado en RUAT</strong>
-              <span class="ms-2">(Código: {{ editForm.get('codigoContribuyente')?.value }})</span>
-              <button type="button" class="btn btn-sm btn-outline-warning" 
-                      *ngIf="!editForm.get('verificadoRuat')?.value"
-                      (click)="verifyInRuat()">
-                <i class="ri-check-line me-1"></i>Verificar en RUAT
-              </button> 
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label for="tipoContribuyente" class="form-label mb-0">Tipo Contribuyente <span class="text-danger">*</span></label>
+              <select class="form-select" id="tipoContribuyente" formControlName="tipoContribuyente"
+                [ngClass]="{'is-invalid': (form['tipoContribuyente'].touched || submitted) && form['tipoContribuyente'].errors}">
+                <option value="NA">Natural</option>
+                <option value="JU">Jurídica</option>
+              </select>
             </div>
-          </div>
+            <div class="col-md-3">
+              <label for="tipoDocumento" class="form-label mb-0">Tipo Documento <span class="text-danger">*</span></label>
+              <select class="form-select" id="tipoDocumento" formControlName="tipoDocumento"
+                [ngClass]="{'is-invalid': (form['tipoDocumento'].touched || submitted) && form['tipoDocumento'].errors}">
+                <option value="" disabled>Seleccionar</option>
+                <option *ngFor="let item of identityTypes" [value]="item.type">{{ item.description }}</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="numeroDocumento" class="form-label mb-0">Nro Documento <span class="text-danger">*</span></label>
+              <input type="text" id="numeroDocumento" class="form-control" placeholder="Documento" 
+                formControlName="numeroDocumento"
+                [ngClass]="{'is-invalid': (form['numeroDocumento'].touched || submitted) && form['numeroDocumento'].errors}">
+              <div *ngIf="(form['numeroDocumento'].touched || submitted) && form['numeroDocumento'].errors" class="invalid-feedback">
+                <span *ngIf="form['numeroDocumento'].errors['required']">Campo requerido</span>
+                <span *ngIf="form['numeroDocumento'].errors['itExist']">Ya existe</span>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label for="expedido" class="form-label mb-0">Expedido <span class="text-danger">*</span></label>
+              <select class="form-select" id="expedido" formControlName="expedido"
+                [ngClass]="{'is-invalid': (form['expedido'].touched || submitted) && form['expedido'].errors}">
+                <option value="" disabled>Seleccionar</option>
+                <option *ngFor="let item of cityAcronym" [value]="item.id">{{ item.value }}</option>
+              </select>
+            </div>
+            <div class="col-12"><hr class="my-2"></div>
+            <div class="col-md-4">
+              <label for="nombre" class="form-label mb-0">Nombre(s) <span class="text-danger">*</span></label>
+              <input type="text" id="nombre" class="form-control" placeholder="Nombre" formControlName="nombre"
+                [ngClass]="{'is-invalid': submitted && form['nombre'].errors}">
+            </div>
+            <div class="col-md-4">
+              <label for="primerApellido" class="form-label mb-0">Primer Apellido <span class="text-danger">*</span></label>
+              <input type="text" id="primerApellido" class="form-control" placeholder="Primer Apellido" 
+                formControlName="primerApellido"
+                [ngClass]="{'is-invalid': submitted && form['primerApellido'].errors}">
+            </div>
+            <div class="col-md-4">
+              <label for="segundoApellido" class="form-label mb-0">Segundo Apellido</label>
+              <input type="text" id="segundoApellido" class="form-control" placeholder="Segundo Apellido" 
+                formControlName="segundoApellido">
+            </div>
+            <div class="col-md-4">
+              <label for="fechaNacimiento" class="form-label mb-0">Fecha Nacimiento <span class="text-danger">*</span></label>
+              <input type="date" id="fechaNacimiento" class="form-control" formControlName="fechaNacimiento"
+                [ngClass]="{'is-invalid': submitted && form['fechaNacimiento'].errors}">
+            </div>
+            <div class="col-md-4">
+              <label for="genero" class="form-label mb-0">Género</label>
+              <select class="form-select" id="genero" formControlName="genero">
+                <option value="" disabled>Seleccionar</option>
+                <option *ngFor="let item of userSex" [value]="item.id">{{ item.description }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="estadoCivil" class="form-label mb-0">Estado Civil</label>
+              <select class="form-select" id="estadoCivil" formControlName="estadoCivil">
+                <option value="" disabled>Seleccionar</option>
+                <option *ngFor="let item of civilStatus" [value]="item.type">{{ item.description }}</option>
+              </select>
+            </div>
 
-          <div class="col-md-3">
-            <label for="tipoContribuyente" class="form-label mb-0">Tipo Contribuyente <span class="text-danger">*</span></label>
-            <select class="form-select" id="tipoContribuyente" formControlName="tipoContribuyente"
-              [ngClass]="{'is-invalid': (form['tipoContribuyente'].touched || submitted) && form['tipoContribuyente'].errors}">
-              <option value="NA">Natural</option>
-              <option value="JU">Jurídica</option>
-            </select>
-            <div *ngIf="(form['tipoContribuyente'].touched || submitted) && form['tipoContribuyente'].errors" class="invalid-feedback">
-              <span *ngIf="form['tipoContribuyente'].errors?.['required']">El tipo de contribuyente es requerido</span>
+            <!-- NIT -->
+            <div class="col-md-6">
+              <label for="nroNit" class="form-label mb-0">NIT</label>
+              <input type="text" id="nroNit" class="form-control" placeholder="NIT" formControlName="nroNit">
             </div>
-          </div>
-          <div class="col-md-3">
-            <label for="tipoDocumento" class="form-label mb-0">Tipo Documento <span class="text-danger">*</span></label>
-            <select class="form-select" id="tipoDocumento" formControlName="tipoDocumento"
-              [ngClass]="{'is-invalid': (form['tipoDocumento'].touched || submitted) && form['tipoDocumento'].errors}">
-              <option value="" disabled>Seleccionar opción</option>
-              <option *ngFor="let item of identityTypes" [value]="item.type">{{ item.description }}</option>
-            </select>
-            <div *ngIf="(form['tipoDocumento'].touched || submitted) && form['tipoDocumento'].errors" class="invalid-feedback">
-              <span *ngIf="form['tipoDocumento'].errors?.['required']">El tipo de documento es requerido</span>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <label for="numeroDocumento" class="form-label mb-0">Nro Documento <span class="text-danger">*</span></label>
-            <input type="text" id="numeroDocumento" class="form-control" placeholder="Documento de Identificación" 
-                   formControlName="numeroDocumento"
-              [ngClass]="{'is-invalid': (form['numeroDocumento'].touched || submitted) && form['numeroDocumento'].errors}">
-            <div *ngIf="(form['numeroDocumento'].touched || submitted) && form['numeroDocumento'].errors" class="invalid-feedback mb-0">
-              <span *ngIf="form['numeroDocumento'].errors?.['required']">El campo es requerido</span>
-              <span *ngIf="form['numeroDocumento'].errors?.['itExist']">Ya existe un usuario con este documento</span>
-            </div>
-            <div class="form-text small mt-0">Agregar complemento si corresponde, ejm: <b>123456-1C</b></div>
-          </div>
-          <div class="col-md-3">
-            <label for="expedido" class="form-label mb-0">Expedido <span class="text-danger">*</span></label>
-            <select class="form-select" id="expedido" formControlName="expedido"
-              [ngClass]="{'is-invalid': (form['expedido'].touched || submitted) && form['expedido'].errors}">
-              <option value="" disabled>Seleccionar opción</option>
-              <option *ngFor="let item of cityAcronym" [value]="item.id">{{ item.value }}</option>
-            </select>
-            <div *ngIf="(form['expedido'].touched || submitted) && form['expedido'].errors" class="invalid-feedback">
-              <span *ngIf="form['expedido'].errors?.['required']">El lugar de expedición es requerido</span>
-            </div>
-          </div>
 
-          <div class="col-12 mt-2">
-            <h6 class="border-bottom pb-2">Información Personal</h6>
-          </div>
-          <div class="col-md-4">
-            <label for="nombre" class="form-label mb-0">Nombre(s) <span class="text-danger">*</span></label>
-            <input type="text" id="nombre" class="form-control" placeholder="Ingresar Nombre" formControlName="nombre"
-              [ngClass]="{'is-invalid': submitted && form['nombre'].errors}">
-            <div *ngIf="submitted && form['nombre'].errors" class="invalid-feedback">
-              <span *ngIf="form['nombre'].errors?.['required']">El campo es requerido</span>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <label for="primerApellido" class="form-label mb-0">Primer Apellido <span class="text-danger">*</span></label>
-            <input type="text" id="primerApellido" class="form-control" placeholder="Primer Apellido" formControlName="primerApellido"
-              [ngClass]="{'is-invalid': submitted && form['primerApellido'].errors}">
-            <div *ngIf="submitted && form['primerApellido'].errors" class="invalid-feedback">
-              <span *ngIf="form['primerApellido'].errors?.['required']">El campo es requerido</span>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <label for="segundoApellido" class="form-label mb-0">Segundo Apellido</label>
-            <input type="text" id="segundoApellido" class="form-control" placeholder="Segundo Apellido" formControlName="segundoApellido">
-          </div>
-          <div class="col-md-4">
-            <label for="fechaNacimiento" class="form-label mb-0">Fecha Nacimiento <span class="text-danger">*</span></label>
-            <input type="date" id="fechaNacimiento" class="form-control" formControlName="fechaNacimiento"
-              [ngClass]="{'is-invalid': submitted && form['fechaNacimiento'].errors}">
-            <div *ngIf="submitted && form['fechaNacimiento'].errors" class="invalid-feedback">
-              <span *ngIf="form['fechaNacimiento'].errors?.['required']">El campo es requerido</span>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <label for="genero" class="form-label mb-0">Género</label>
-            <select class="form-select" id="genero" formControlName="genero">
-              <option value="" disabled>Seleccionar opción</option>
-              <option *ngFor="let item of userSex" [value]="item.id">{{ item.description }}</option>
-            </select>
-          </div>
-          <div class="col-md-4">
-            <label for="estadoCivil" class="form-label mb-0">Estado Civil</label>
-            <select class="form-select" id="estadoCivil" formControlName="estadoCivil">
-              <option value="" disabled>Seleccionar opción</option>
-              <option *ngFor="let item of civilStatus" [value]="item.type">{{ item.description }}</option>
-            </select>
-          </div>
-          <div class="col-md-6">
-            <label for="nroNit" class="form-label mb-0">NIT</label>
-            <input type="text" id="nroNit" class="form-control" placeholder="Ingresar NIT" formControlName="nroNit">
-          </div>
+            <!-- Divider -->
+            <div class="col-12"><hr class="my-2"></div>
 
-          <!-- Contacto -->
-          <div class="col-12 mt-2">
-            <h6 class="border-bottom pb-2">Contacto</h6>
-          </div>
-          <div class="col-md-6">
-            <label for="telefono" class="form-label mb-0">Teléfono <span class="text-danger">*</span></label>
-            <input type="text" id="telefono" class="form-control" placeholder="Ingresar Teléfono" formControlName="telefono"
-              [ngClass]="{'is-invalid': submitted && form['telefono'].errors}">
-            <div *ngIf="submitted && form['telefono'].errors" class="invalid-feedback">
-              <span *ngIf="form['telefono'].errors?.['required']">El campo es requerido</span>
+            <!-- Teléfono -->
+            <div class="col-md-6">
+              <label for="telefono" class="form-label mb-0">Teléfono <span class="text-danger">*</span></label>
+              <input type="text" id="telefono" class="form-control" placeholder="Teléfono" formControlName="telefono"
+                [ngClass]="{'is-invalid': submitted && form['telefono'].errors}">
             </div>
-          </div>
-          <div class="col-6">
-            <label for="email" class="form-label mb-0">Email <span class="text-danger">*</span>
-            <small class="form-text me-3">Asegúrese de tener acceso al correo</small></label>
-            <div class="input-group">
-              <input type="email" id="email" class="form-control" placeholder="Ingrese un correo válido" formControlName="email"
-                [ngClass]="{'is-invalid': submitted && form['email'].errors}">
-              <button class="btn btn-outline-secondary" type="button" 
-                      *ngIf="(accion === '' )  && !verificationCodeSent"
-                      (click)="sendVerificationEmail()">
-                <i class="ri-mail-send-line"></i> Verificar
-              </button>
-            </div>
-            <span *ngIf="editForm.get('email')?.pending" class="text-warning fs-12">Verificando disponibilidad...</span>
-            <div *ngIf="submitted && form['email'].errors" class="invalid-feedback d-block">
-              <span *ngIf="form['email'].errors?.['required']">Debe ingresar un correo</span>
-              <span *ngIf="form['email'].errors?.['email']">Formato de email inválido</span>
-              <span *ngIf="form['email'].errors?.['emailTaken']">Este Email ya está registrado</span>
-            </div>
-          </div>
 
-          <!-- Verificación de Email -->
-          <div class="col-12" *ngIf="showVerificationCode && (accion === '')">
-            <div class="alert alert-info">
-              <h6 class="alert-heading"><i class="ri-mail-line me-2"></i>Verificación de Email</h6>
-              <p class="mb-2">Se ha enviado un código de 4 dígitos a su correo electrónico</p>
-              
-              <form [formGroup]="verificationForm" (ngSubmit)="verifyEmailCode()">
-                <div class="input-group">
-                  <input type="text" class="form-control" placeholder="Código de 4 dígitos" 
-                         formControlName="code" maxlength="4">
-                  <button class="btn btn-primary" type="submit" [disabled]="verificationForm.invalid">
-                    <i class="ri-check-line"></i> Verificar
+            <!-- Email with Verification -->
+            <div class="col-md-6">
+              <label for="email" class="form-label mb-0">
+                Email <span class="text-danger">*</span>
+                <small class="text-muted ms-2">Asegúrese de tener acceso al correo</small>
+              </label>
+              <div class="input-group">
+                <input type="email" id="email" class="form-control" placeholder="Email" formControlName="email"
+                  [ngClass]="{'is-invalid': submitted && form['email'].errors}">
+                <button class="btn btn-outline-secondary" type="button" 
+                  *ngIf="(accion === '') && !verificationCodeSent"
+                  (click)="sendVerificationEmail()">
+                  <i class="ri-mail-send-line"></i> Verificar
+                </button>
+              </div>
+              <div *ngIf="submitted && form['email'].errors" class="invalid-feedback d-block">
+                <span *ngIf="form['email'].errors['required']">Email requerido</span>
+                <span *ngIf="form['email'].errors['email']">Formato inválido</span>
+                <span *ngIf="form['email'].errors['emailTaken']">Email ya registrado</span>
+              </div>
+            </div>
+            <div class="col-12" *ngIf="showVerificationCode && (accion === '')">
+              <div class="alert alert-info">
+                <h6 class="alert-heading"><i class="ri-mail-line me-2"></i>Verificación de Email</h6>
+                <p class="mb-2">Se ha enviado un código de 4 dígitos a su correo electrónico</p>
+                
+                <form [formGroup]="verificationForm" (ngSubmit)="verifyEmailCode()">
+                  <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Código de 4 dígitos" 
+                      formControlName="code" maxlength="4">
+                    <button class="btn btn-primary" type="submit" [disabled]="verificationForm.invalid">
+                      <i class="ri-check-line"></i> Verificar
+                    </button>
+                  </div>
+                </form>
+                
+                <button type="button" class="btn btn-link btn-sm mt-2" (click)="sendVerificationEmail()">
+                  Reenviar código
+                </button>
+              </div>
+            </div>
+            <div class="col-12">
+              <label for="direccion" class="form-label mb-0">Dirección</label>
+              <textarea id="direccion" class="form-control" placeholder="Dirección" formControlName="direccion" rows="2"></textarea>
+            </div>
+            <div class="col-12">
+              <label for="observacionesMunicipales" class="form-label mb-0">Observaciones</label>
+              <textarea id="observacionesMunicipales" class="form-control" placeholder="Observaciones" 
+                formControlName="observacionesMunicipales" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="activeTab === 'estudiantes'">
+          <div class="alert alert-info">
+            <i class="ri-information-line me-2"></i>
+            <strong>Estudiantes a cargo:</strong> Si este contribuyente es tutor/padre de estudiantes en escuelas municipales, agrégalos aquí.
+            Los contribuyentes con estudiantes pueden realizar reservas gratuitas.
+          </div>
+          <div class="mb-3">
+            <button type="button" class="btn btn-primary btn-sm" (click)="toggleEstudianteForm()"
+              *ngIf="!showEstudianteForm">
+              <i class="ri-add-line me-1"></i>Agregar Estudiante
+            </button>
+          </div>
+          <!-- Student Form -->
+          <div class="card border mb-3" *ngIf="showEstudianteForm">
+            <div class="card-body">
+              <h6 class="card-title">
+                {{ editingEstudianteIndex >= 0 ? 'Editar' : 'Nuevo' }} Estudiante
+              </h6>              
+              <form [formGroup]="estudianteForm">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Nombre Completo <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" formControlName="nombreCompleto"
+                      placeholder="Nombre completo del estudiante"
+                      [ngClass]="{'is-invalid': estudiante['nombreCompleto'].touched && estudiante['nombreCompleto'].errors}">
+                  </div>
+                  
+                  <div class="col-md-6">
+                    <label class="form-label">Matrícula <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" formControlName="matricula"
+                      placeholder="Número de matrícula"
+                      [ngClass]="{'is-invalid': estudiante['matricula'].touched && estudiante['matricula'].errors}">
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label">Fecha Nacimiento <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" formControlName="fechaNacimiento"
+                      [ngClass]="{'is-invalid': estudiante['fechaNacimiento'].touched && estudiante['fechaNacimiento'].errors}">
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label">Género</label>
+                    <select class="form-select" formControlName="genero">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let item of userSex" [value]="item.id">{{ item.description }}</option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label">CI/Documento</label>
+                    <input type="text" class="form-control" formControlName="numeroDocumento"
+                      placeholder="Opcional">
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Teléfono</label>
+                    <input type="text" class="form-control" formControlName="telefono"
+                      placeholder="Opcional">
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" formControlName="email"
+                      placeholder="Opcional">
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Fecha Inscripción <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" formControlName="fechaInscripcion">
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="form-check mt-4">
+                      <input class="form-check-input" type="checkbox" id="estudianteActivo" formControlName="activo">
+                      <label class="form-check-label" for="estudianteActivo">Activo</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-3 d-flex gap-2">
+                  <button type="button" class="btn btn-success btn-sm" (click)="addOrUpdateEstudiante()">
+                    <i class="ri-save-line me-1"></i>
+                    {{ editingEstudianteIndex >= 0 ? 'Actualizar' : 'Agregar' }}
+                  </button>
+                  <button type="button" class="btn btn-light btn-sm" (click)="toggleEstudianteForm()">
+                    Cancelar
                   </button>
                 </div>
               </form>
-              
-              <button type="button" class="btn btn-link btn-sm mt-2" (click)="sendVerificationEmail()">
-                Reenviar código
-              </button>
             </div>
           </div>
-
-          <div class="col-12">
-            <label for="direccion" class="form-label mb-0">Dirección</label>
-            <textarea id="direccion" class="form-control" placeholder="Ingresar Dirección" formControlName="direccion" rows="2"></textarea>
-          </div>
-
-          <!-- Información Deportiva -->
-          <div class="col-12 mt-2">
-            <h6 class="border-bottom pb-2">Información Deportiva</h6>
-          </div>
-          <div class="col-md-6">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="esDeportistaElite" formControlName="esDeportistaElite">
-              <label class="form-check-label" for="esDeportistaElite">Deportista Elite</label>
+          <div *ngIf="estudiantesTemporales.length > 0">
+            <h6 class="mb-2">Estudiantes Registrados ({{estudiantesTemporales.length}})</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Matrícula</th>
+                    <th>Fecha Nac.</th>
+                    <th>Estado</th>
+                    <th style="width: 100px;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let est of estudiantesTemporales; let i = index">
+                    <td>{{est.nombreCompleto}}</td>
+                    <td>{{est.matricula}}</td>
+                    <td>{{est.fechaNacimiento | date:'dd/MM/yyyy'}}</td>
+                    <td>
+                      <span class="badge" [ngClass]="est.activo ? 'bg-success' : 'bg-secondary'">
+                        {{est.activo ? 'Activo' : 'Inactivo'}}
+                      </span>
+                    </td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-soft-primary me-1" 
+                        (click)="editEstudiante(i)" title="Editar">
+                        <i class="ri-edit-line"></i>
+                      </button>
+                      <button type="button" class="btn btn-sm btn-soft-danger" 
+                        (click)="removeEstudiante(i)" title="Eliminar">
+                        <i class="ri-delete-bin-line"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="perteneceEscuelaMunicipal" formControlName="perteneceEscuelaMunicipal">
-              <label class="form-check-label" for="perteneceEscuelaMunicipal">Pertenece a Escuela Municipal</label>
+          <div *ngIf="estudiantesTemporales.length === 0 && !showEstudianteForm" class="text-center text-muted py-4">
+            <i class="ri-user-line fs-1"></i>
+            <p>No hay estudiantes registrados</p>
+          </div>
+        </div>
+        <div *ngIf="activeTab === 'organizaciones'">
+          <div class="alert alert-info">
+            <i class="ri-information-line me-2"></i>
+            <strong>Organizaciones representadas:</strong> Si este contribuyente representa o es encargado de organizaciones deportivas, regístrelas aquí.
+          </div>
+          <div class="mb-3">
+            <button type="button" class="btn btn-success btn-sm" (click)="toggleOrganizacionForm()"
+              *ngIf="!showOrganizacionForm">
+              <i class="ri-add-line me-1"></i>Agregar Organización
+            </button>
+          </div>
+          <div class="card border mb-3" *ngIf="showOrganizacionForm">
+            <div class="card-body">
+              <h6 class="card-title">
+                {{ editingOrganizacionIndex >= 0 ? 'Editar' : 'Nueva' }} Organización
+              </h6>              
+              <form [formGroup]="organizacionForm">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" formControlName="nombre"
+                      placeholder="Nombre de la organización"
+                      [ngClass]="{'is-invalid': organizacion['nombre'].touched && organizacion['nombre'].errors}">
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                    <select class="form-select" formControlName="tipoOrganizacion"
+                      [ngClass]="{'is-invalid': organizacion['tipoOrganizacion'].touched && organizacion['tipoOrganizacion'].errors}">
+                      <option *ngFor="let tipo of tiposOrganizacion" [value]="tipo">
+                        {{getTipoOrganizacionLabel(tipo)}}
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Personería Jurídica</label>
+                    <input type="text" class="form-control" formControlName="personeriaJuridica"
+                      placeholder="Número de personería">
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">NIT</label>
+                    <input type="text" class="form-control" formControlName="nroNit"
+                      placeholder="NIT">
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Teléfono</label>
+                    <input type="text" class="form-control" formControlName="telefono"
+                      placeholder="Teléfono">
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" formControlName="email"
+                      placeholder="Email">
+                  </div>
+                  <div class="col-12" *ngIf="organizacionForm.get('tipoOrganizacion')?.value === 'ESCUELA_MUNICIPAL'">
+                    <div class="alert alert-warning">
+                      <i class="ri-information-line me-2"></i>
+                      Las escuelas municipales requieren información adicional
+                    </div>
+                  </div>
+
+                  <div class="col-md-4" *ngIf="organizacionForm.get('tipoOrganizacion')?.value === 'ESCUELA_MUNICIPAL'">
+                    <label class="form-label">Código Escuela <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" formControlName="codigoEscuela"
+                      placeholder="Código único"
+                      [ngClass]="{'is-invalid': organizacion['codigoEscuela'].touched && organizacion['codigoEscuela'].errors}">
+                  </div>
+
+                  <div class="col-md-4" *ngIf="organizacionForm.get('tipoOrganizacion')?.value === 'ESCUELA_MUNICIPAL'">
+                    <label class="form-label">Disciplina <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" formControlName="disciplina"
+                      placeholder="Fútbol, Básquet, etc."
+                      [ngClass]="{'is-invalid': organizacion['disciplina'].touched && organizacion['disciplina'].errors}">
+                  </div>
+
+                  <div class="col-md-4" *ngIf="organizacionForm.get('tipoOrganizacion')?.value === 'ESCUELA_MUNICIPAL'">
+                    <label class="form-label">Entrenador</label>
+                    <input type="text" class="form-control" formControlName="entrenador"
+                      placeholder="Nombre del entrenador">
+                  </div>
+
+                  <div class="col-md-4" *ngIf="organizacionForm.get('tipoOrganizacion')?.value === 'ESCUELA_MUNICIPAL'">
+                    <label class="form-label">Tarifa Mensual (Bs)</label>
+                    <input type="number" class="form-control" formControlName="tarifaMensual"
+                      placeholder="0.00" min="0" step="0.01">
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label">Dirección</label>
+                    <textarea class="form-control" formControlName="direccion" rows="2"
+                      placeholder="Dirección de la organización"></textarea>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-check mt-3">
+                      <input class="form-check-input" type="checkbox" id="orgActivo" formControlName="activo">
+                      <label class="form-check-label" for="orgActivo">Organización Activa</label>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4" *ngIf="organizacionForm.get('tipoOrganizacion')?.value === 'ESCUELA_MUNICIPAL'">
+                    <div class="form-check mt-3">
+                      <input class="form-check-input" type="checkbox" id="requierePago" formControlName="requierePagoMensualidad">
+                      <label class="form-check-label" for="requierePago">Requiere Pago Mensual</label>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-check mt-3">
+                      <input class="form-check-input" type="checkbox" id="reservasGratis" formControlName="permiteReservasGratuitas">
+                      <label class="form-check-label" for="reservasGratis">Reservas Gratuitas</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-3 d-flex gap-2">
+                  <button type="button" class="btn btn-success btn-sm" (click)="addOrUpdateOrganizacion()">
+                    <i class="ri-save-line me-1"></i>
+                    {{ editingOrganizacionIndex >= 0 ? 'Actualizar' : 'Agregar' }}
+                  </button>
+                  <button type="button" class="btn btn-light btn-sm" (click)="toggleOrganizacionForm()">
+                    Cancelar
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-          <div class="col-md-6">
-            <label for="registroUnicoDeportivo" class="form-label mb-0">Registro Único Deportivo</label>
-            <input type="text" id="registroUnicoDeportivo" class="form-control" placeholder="Número de registro" formControlName="registroUnicoDeportivo">
+          <div *ngIf="organizacionesTemporales.length > 0">
+            <h6 class="mb-2">Organizaciones Registradas ({{organizacionesTemporales.length}})</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Disciplina</th>
+                    <th>Estado</th>
+                    <th style="width: 100px;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let org of organizacionesTemporales; let i = index">
+                    <td>{{org.nombre}}</td>
+                    <td>
+                      <span class="badge bg-primary">{{getTipoOrganizacionLabel(org.tipoOrganizacion)}}</span>
+                    </td>
+                    <td>{{org.disciplina || '-'}}</td>
+                    <td>
+                      <span class="badge" [ngClass]="org.activo ? 'bg-success' : 'bg-secondary'">
+                        {{org.activo ? 'Activa' : 'Inactiva'}}
+                      </span>
+                    </td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-soft-primary me-1" 
+                        (click)="editOrganizacion(i)" title="Editar">
+                        <i class="ri-edit-line"></i>
+                      </button>
+                      <button type="button" class="btn btn-sm btn-soft-danger" 
+                        (click)="removeOrganizacion(i)" title="Eliminar">
+                        <i class="ri-delete-bin-line"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-
-          <div class="col-md-6">
-            <label for="descuentoAplicable" class="form-label mb-0">Descuento Aplicable (%)</label>
-            <input type="number" id="descuentoAplicable" class="form-control" min="0" max="100" formControlName="descuentoAplicable">
+          <div *ngIf="organizacionesTemporales.length === 0 && !showOrganizacionForm" class="text-center text-muted py-4">
+            <i class="ri-building-4-line fs-1"></i>
+            <p>No hay organizaciones registradas</p>
           </div>
-
-          <div class="col-12 mt-3">
-            <label for="observacionesMunicipales" class="form-label mb-0">Observaciones</label>
-            <textarea id="observacionesMunicipales" class="form-control" placeholder="Observaciones adicionales" formControlName="observacionesMunicipales" rows="3"></textarea>
+        </div>
+        <div *ngIf="activeTab === 'deportivo'">
+          <div class="alert alert-info">
+            <i class="ri-information-line me-2"></i>
+            <strong>Información Deportiva:</strong> Configure si el contribuyente es deportista elite o tiene privilegios deportivos.
           </div>
-
-          <!-- Hidden fields for system use -->
-          <div class="d-none">
-            <input type="text" formControlName="userName">
-            <input type="password" formControlName="password">
-            <input type="password" formControlName="cpassword">
-            <input type="text" formControlName="verificationCode">
-            <input type="text" formControlName="estadoUsuario">
-            <input type="text" formControlName="estadoRuat">
-            <input type="checkbox" formControlName="verificadoRuat">
-            <input type="date" formControlName="fechaVerificacionRuat">
-            <input type="checkbox" formControlName="puedeReservarGratis">
-            <input type="date" formControlName="fechaUltimoUsoGratuito">
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="card border">
+                <div class="card-body">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="esDeportistaElite" 
+                      formControlName="esDeportistaElite">
+                    <label class="form-check-label fw-semibold" for="esDeportistaElite">
+                      <i class="ri-trophy-line text-warning me-1"></i>
+                      Deportista Elite
+                    </label>
+                  </div>
+                  <p class="text-muted small mb-0 mt-2">
+                    Los deportistas elite obtienen acceso gratuito a las instalaciones deportivas
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-12" *ngIf="editForm.get('esDeportistaElite')?.value">
+              <div class="alert alert-warning">
+                <i class="ri-error-warning-line me-2"></i>
+                <strong>Atención:</strong> Deportista Elite requiere Registro Único Deportivo
+              </div>
+              <label class="form-label">Registro Único Deportivo <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="registroUnicoDeportivo"
+                placeholder="Número de registro único deportivo"
+                [ngClass]="{'is-invalid': form['registroUnicoDeportivo'].touched && form['registroUnicoDeportivo'].errors}">
+              <div class="form-text">Ingrese el número de registro emitido por la autoridad deportiva</div>
+              <div *ngIf="form['registroUnicoDeportivo'].touched && form['registroUnicoDeportivo'].errors" class="invalid-feedback d-block">
+                <span *ngIf="form['registroUnicoDeportivo'].errors['required']">
+                  El registro único es requerido para deportistas elite
+                </span>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="card bg-light border-0">
+                <div class="card-body">
+                  <h6 class="card-title">Resumen de Beneficios</h6>
+                  <ul class="mb-0">
+                    <li class="mb-2">
+                      <strong>Puede Reservar Gratis:</strong> 
+                      <span class="badge ms-2" [ngClass]="editForm.get('puedeReservarGratis')?.value ? 'bg-success' : 'bg-secondary'">
+                        {{editForm.get('puedeReservarGratis')?.value ? 'SÍ' : 'NO'}}
+                      </span>
+                    </li>
+                    <li class="mb-2">
+                      <strong>Razón:</strong>
+                      <span *ngIf="editForm.get('esDeportistaElite')?.value">
+                        Deportista Elite
+                      </span>
+                      <span *ngIf="!editForm.get('esDeportistaElite')?.value && estudiantesTemporales.length > 0">
+                        Tutor de {{estudiantesTemporales.length}} estudiante(s)
+                      </span>
+                      <span *ngIf="!editForm.get('esDeportistaElite')?.value && estudiantesTemporales.length === 0">
+                        No aplica
+                      </span>
+                    </li>
+                    <li *ngIf="editForm.get('fechaUltimoUsoGratuito')?.value">
+                      <strong>Último Uso Gratuito:</strong> 
+                      {{editForm.get('fechaUltimoUsoGratuito')?.value | date:'dd/MM/yyyy'}}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <div class="hstack gap-2 justify-content-end">
-          <button type="button" class="btn btn-light" (click)="closeModal()" [disabled]="submitted">Cerrar</button>
-          <button type="submit" class="btn btn-success" id="add-btn" [disabled]="submitted" *ngIf="accion!=='show'">
-            <span *ngIf="!submitted">
-              <i class="ri-save-line me-1"></i>Guardar
+      <div class="d-none">
+        <input type="text" formControlName="userName">
+        <input type="password" formControlName="password">
+        <input type="password" formControlName="cpassword">
+        <input type="text" formControlName="verificationCode">
+        <input type="text" formControlName="estadoUsuario">
+        <input type="text" formControlName="estadoRuat">
+        <input type="checkbox" formControlName="verificadoRuat">
+        <input type="date" formControlName="fechaVerificacionRuat">
+        <input type="checkbox" formControlName="puedeReservarGratis">
+        <input type="date" formControlName="fechaUltimoUsoGratuito">
+      </div>
+    </div>
+    <div class="modal-body" *ngIf="accion === 'show' && row">
+      <div class="row">
+        <div class="col-md-8">
+          <h6 class="mb-0">{{row.nombreCompleto}}</h6>
+          <p class="text-muted mb-0">{{getTipoContribuyenteText(row.tipoContribuyente)}}</p>
+          <p class="text-muted small mb-0">
+            <i class="ri-user-line me-1"></i>Código: {{row.codigoContribuyente || 'No asignado'}}
+          </p>
+        </div>
+        <div class="col-md-4 text-end">
+          <span class="badge mb-2" 
+            [ngClass]="{
+              'bg-success': row.estadoUsuario === 'ACTIVO',
+              'bg-warning': row.estadoUsuario === 'PENDIENTE_VERIFICACION',
+              'bg-danger': row.estadoUsuario === 'BLOQUEADO' || row.estadoUsuario === 'SANCIONADO',
+              'bg-secondary': row.estadoUsuario === 'INACTIVO'
+            }">
+            {{getEstadoUsuarioText(row.estadoUsuario)}}
+          </span>
+          <div *ngIf="row.verificadoRuat" class="mt-1">
+            <span class="badge bg-info">
+              <i class="ri-checkbox-circle-line me-1"></i>Verificado RUAT
             </span>
-            <span *ngIf="submitted">
-              <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
-            </span>
+          </div>
+        </div>
+      </div>
+      <hr>
+  <!-- Personal Information -->   
+      <h6 class="text-primary"><i class="ri-user-line me-2"></i>Información Personal</h6>
+          <div class="row mb-2">
+            <!-- <div class="col-12">
+              <small class="text-muted d-block">Nombres Completos</small>
+              <p class="fw-medium mb-0">{{row.nombre}} {{row.primerApellido}} {{row.segundoApellido || ''}}</p>
+              <p class="text-muted small mb-0" *ngIf="row.apellidoEsposo">Apellido esposo: {{row.apellidoEsposo}}</p>
+            </div> -->
+            <div class="col-4">
+              <small class="text-muted d-block">{{getTipoDocumentoDescription(row.tipoDocumento)}}</small>
+              <p class="fw-medium">
+                {{row.numeroDocumento}}
+              </p>
+            </div>
+            <div class="col-4">
+              <small class="text-muted d-block">Expedido en:</small>
+              <p class="fw-medium">{{row.expedido ? getExpedidoDescription(row.expedido):''}}</p>
+            </div>
+            <div class="col-4">
+              <small class="text-muted d-block">NIT</small>
+              <p class="fw-medium">{{row.nroNit || 'No registrado'}}</p>
+            </div>
+            <div class="col-4">
+              <small class="text-muted d-block">Fecha de Nacimiento</small>
+              <p class="fw-medium mb-0">{{row.fechaNacimiento | date:'dd/MM/yyyy'}}</p>
+              <p class="text-muted small" *ngIf="row.fechaNacimiento">
+                Edad: {{calculateAge(row.fechaNacimiento)}} años
+              </p>
+            </div>
+            <div class="col-4">
+              <small class="text-muted d-block">Género</small>
+              <p class="fw-medium">{{getGenderText(row.genero)}}</p>
+            </div>
+            <div class="col-4">
+              <small class="text-muted d-block">Estado Civil</small>
+              <p class="fw-medium">{{getCivilStatus(row.estadoCivil) || 'No especificado'}}</p>
+            </div>
+          </div>
+      <h6 class="text-primary"><i class="ri-contacts-line me-2"></i>Información de Contacto</h6>
+          <div class="row mb-2">
+            <div class="col-6">
+              <small class="text-muted d-block"><i class="ri-phone-line me-2 text-muted"></i>Teléfono</small>
+              <p class="fw-medium mb-0">                
+                {{row.telefono || 'No registrado'}}
+              </p>
+            </div>
+            <div class="col-6">
+              <small class="text-muted d-block"><i class="ri-mail-line me-2 text-muted"></i>Correo</small>
+              <p class="fw-medium mb-0">                
+                {{row.email || 'No registrado'}}
+              </p>
+            </div>
+            <div class="col-12">
+              <small class="text-muted d-block"><i class="ri-map-pin-line me-2 text-muted"></i>Dirección</small>
+              <p class="fw-medium mb-0">                
+                {{row.direccion || 'No registrada'}}
+              </p>
+            </div>
+          </div>
+      <hr>
+      <!-- Sports Information -->
+      <h6 class="text-primary"><i class="ri-trophy-line me-2"></i>Información Deportiva</h6>
+      <div class="row">
+        <div class="col">
+          <div class="card h-100 border-0">
+            <div class="card-body text-center">
+              <i class="ri-award-line fs-1 text-warning"></i>
+              <h6 class="card-title">Deportista Elite</h6>
+              <p class="fw-medium mb-0">
+                <span class="badge" [ngClass]="row.esDeportistaElite ? 'bg-warning' : 'bg-secondary'">
+                  {{row.esDeportistaElite ? 'SÍ' : 'NO'}}
+                </span>
+              </p>
+              <p class="text-muted small" *ngIf="row.registroUnicoDeportivo">
+                Registro: {{row.registroUnicoDeportivo}}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card h-100 border-0">
+            <div class="card-body text-center">
+              <i class="ri-gift-line fs-1 text-success"></i>
+              <h6 class="card-title">Reservas Gratuitas</h6>
+              <p class="fw-medium mb-0">
+                <span class="badge" [ngClass]="row.puedeReservarGratis ? 'bg-success' : 'bg-secondary'">
+                  {{row.puedeReservarGratis ? 'PERMITIDO' : 'NO PERMITIDO'}}
+                </span>
+              </p>
+              <p class="text-muted small" *ngIf="row.fechaUltimoUsoGratuito">
+                Último uso: {{row.fechaUltimoUsoGratuito | date:'dd/MM/yyyy'}}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Students Section -->
+      <h6 class="text-primary"><i class="ri-parent-line me-2"></i>Estudiantes a Cargo</h6>
+      <div *ngIf="row.estudianteEnEscuelas && row.estudianteEnEscuelas.length > 0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Nombre Completo</th>
+                <th>Matrícula</th>
+                <th>Fecha Nacimiento</th>
+                <th>Género</th>
+                <th>Documento</th>
+                <th>Fecha Inscripción</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let est of row.estudianteEnEscuelas">
+                <td>
+                  <strong>{{est.nombreCompleto}}</strong>
+                  <div *ngIf="est.email" class="text-muted small">{{est.email}}</div>
+                  <div *ngIf="est.telefono" class="text-muted small">{{est.telefono}}</div>
+                </td>
+                <td>{{est.matricula}}</td>
+                <td>{{est.fechaNacimiento | date:'dd/MM/yyyy'}}</td>
+                <td>{{getGenderText(est.genero)}}</td>
+                <td>{{est.numeroDocumento || '-'}}</td>
+                <td>{{est.fechaInscripcion | date:'dd/MM/yyyy'}}</td>
+                <td>
+                  <span class="badge" [ngClass]="est.activo ? 'bg-success' : 'bg-secondary'">
+                    {{est.activo ? 'Activo' : 'Inactivo'}}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="text-muted text-center mt-2">
+          <small>Total de estudiantes: {{row.estudianteEnEscuelas.length}}</small>
+        </div>
+      </div>
+      <div *ngIf="!row.estudianteEnEscuelas || row.estudianteEnEscuelas.length === 0" class="text-center text-muted py-4">
+        <i class="ri-user-line fs-1"></i>
+        <p>No tiene estudiantes a cargo</p>
+      </div>
+      <hr>
+      <!-- Organizations Section -->
+      <h6 class="text-primary"><i class="ri-building-4-line me-2"></i>Organizaciones Representadas</h6>
+      <div *ngIf="row.organizacionesRepresentadas && row.organizacionesRepresentadas.length > 0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Disciplina</th>
+                <th>Contacto</th>
+                <th>Información Adicional</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let org of row.organizacionesRepresentadas">
+                <td>
+                  <strong>{{org.nombre}}</strong>
+                  <div *ngIf="org.personeriaJuridica" class="text-muted small">
+                    Personería: {{org.personeriaJuridica}}
+                  </div>
+                  <div *ngIf="org.nroNit" class="text-muted small">NIT: {{org.nroNit}}</div>
+                </td>
+                <td>
+                  <span class="badge bg-primary">{{getTipoOrganizacionLabel(org.tipoOrganizacion)}}</span>
+                </td>
+                <td>{{org.disciplina || '-'}}</td>
+                <td>
+                  <div *ngIf="org.telefono" class="small">{{org.telefono}}</div>
+                  <div *ngIf="org.email" class="small text-muted">{{org.email}}</div>
+                  <div *ngIf="org.direccion" class="small text-muted">{{org.direccion}}</div>
+                </td>
+                <td>
+                  <div *ngIf="org.entrenador" class="small">Entrenador: {{org.entrenador}}</div>
+                  <div *ngIf="org.codigoEscuela" class="small">Código: {{org.codigoEscuela}}</div>
+                  <div *ngIf="org?.tarifaMensual" class="small">Tarifa: Bs. {{org.tarifaMensual}}</div>
+                  <div class="small">
+                    <span class="badge bg-info me-1" *ngIf="org.requierePagoMensualidad">Pago Mensual</span>
+                    <span class="badge bg-success" *ngIf="org.permiteReservasGratuitas">Reservas Gratis</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="org.activo ? 'bg-success' : 'bg-secondary'">
+                    {{org.activo ? 'Activa' : 'Inactiva'}}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="text-muted text-center mt-2">
+          <small>Total de organizaciones: {{row.organizacionesRepresentadas.length}}</small>
+        </div>
+      </div>
+      <div *ngIf="!row.organizacionesRepresentadas || row.organizacionesRepresentadas.length === 0" class="text-center text-muted py-4">
+        <i class="ri-building-4-line fs-1"></i>
+        <p>No representa organizaciones</p>
+      </div>
+      <!-- Sanctions Section -->
+      <div *ngIf="row.estaSancionado">
+        <hr>
+        <h6 class="text-danger mb-3"><i class="ri-alert-line me-2"></i>Sanción Activa</h6>
+        <div class="alert alert-danger">
+          <div class="row">
+            <div class="col-md-8">
+              <h6 class="alert-heading">Motivo de la Sanción</h6>
+              <p class="mb-2">{{row.motivoSancion}}</p>
+            </div>
+            <div class="col-md-4">
+              <h6 class="alert-heading">Detalles</h6>
+              <p class="mb-1"><strong>Fecha de fin:</strong> {{row.fechaFinSancion | date:'dd/MM/yyyy'}}</p>
+              <p class="mb-0"><strong>Estado:</strong> 
+                <span class="badge bg-danger">SANCIONADO</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Observations Section -->
+      <div *ngIf="row.observacionesMunicipales">
+        <hr>
+        <h6 class="text-primary mb-3"><i class="ri-file-text-line me-2"></i>Observaciones Municipales</h6>
+        <div class="card border-0 bg-light">
+          <div class="card-body">
+            <p class="mb-0">{{row.observacionesMunicipales}}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div class="hstack gap-2 justify-content-end w-100">
+        <button type="button" class="btn btn-light" (click)="closeModal()" [disabled]="submitted">
+          Cerrar
+        </button>
+        <div *ngIf="accion !== 'show'" class="btn-group">
+          <button type="button" class="btn btn-outline-secondary" 
+            *ngIf="activeTab !== 'basic'"
+            (click)="setActiveTab(activeTab === 'estudiantes' ? 'basic' : activeTab === 'organizaciones' ? 'estudiantes' : 'organizaciones')"
+            [disabled]="submitted">
+            <i class="ri-arrow-left-line"></i> Anterior
+          </button>          
+          <button type="button" class="btn btn-outline-secondary" 
+            *ngIf="activeTab === 'basic'"
+            (click)="setActiveTab('estudiantes')"
+            [disabled]="submitted">
+            Siguiente <i class="ri-arrow-right-line"></i>
+          </button>          
+          <button type="button" class="btn btn-outline-secondary" 
+            *ngIf="activeTab === 'estudiantes'"
+            (click)="setActiveTab('organizaciones')"
+            [disabled]="submitted">
+            Siguiente <i class="ri-arrow-right-line"></i>
+          </button>          
+          <button type="button" class="btn btn-outline-secondary" 
+            *ngIf="activeTab === 'organizaciones'"
+            (click)="setActiveTab('deportivo')"
+            [disabled]="submitted">
+            Siguiente <i class="ri-arrow-right-line"></i>
           </button>
         </div>
+        <button type="submit" class="btn btn-success" id="add-btn" 
+          [disabled]="submitted" *ngIf="accion!=='show'">
+          <span *ngIf="!submitted">
+            <i class="ri-save-line me-1"></i>Guardar Todo
+          </span>
+          <span *ngIf="submitted">
+            <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+          </span>
+        </button>
       </div>
-    </form>
-    <!-- FORMULARIO DE SANCIÓN (Separado) -->
-    <form [formGroup]="sanctionForm" (ngSubmit)="applySanction()" class="needs-validation" 
-          *ngIf="accion === 'sanction'">
-      <div class="modal-body">
-        <!-- Mostrar alerta si ya tiene sanción activa -->
-        <div class="alert alert-danger" *ngIf="row?.estaSancionado">
-          <h6 class="alert-heading">
-            <i class="ri-error-warning-line me-2"></i>Sanción Activa
-          </h6>
-          <p class="mb-1"><strong>Motivo actual:</strong> {{ row.motivoSancion }}</p>
-          <p class="mb-1"><strong>Fecha fin:</strong> {{ row.fechaFinSancion | date:'dd/MM/yyyy' }}</p>
-          <hr>
-          <p class="mb-0 text-muted small">
-            Para aplicar una nueva sanción, primero debe levantar la sanción existente.
+    </div>
+  </form>
+  <form [formGroup]="sanctionForm" (ngSubmit)="applySanction()" class="needs-validation" 
+    *ngIf="accion === 'sanction'">
+    <div class="modal-body">
+      <div class="alert alert-danger" *ngIf="row.estaSancionado">
+        <h6 class="alert-heading">
+          <i class="ri-error-warning-line me-2"></i>Sanción Activa
+        </h6>
+        <p class="mb-1"><strong>Motivo actual:</strong> {{row.motivoSancion}}</p>
+        <p class="mb-1"><strong>Fecha fin:</strong> {{row.fechaFinSancion | date:'dd/MM/yyyy'}}</p>
+        <hr>
+        <p class="mb-0 text-muted small">
+          Para aplicar una nueva sanción, primero debe levantar la sanción existente.
+        </p>
+      </div>
+      <div class="alert alert-warning" *ngIf="!row.estaSancionado">
+        <i class="ri-error-warning-line me-2"></i>
+        <strong>Atención:</strong> Está a punto de aplicar una sanción al contribuyente 
+        <strong>{{row.nombreCompleto}}</strong>. Esta acción restringirá el acceso del usuario al sistema.
+      </div>
+
+      <div class="row" *ngIf="!row.estaSancionado">
+        <div class="col-12">
+          <label for="fechaFinSancion" class="form-label mb-0">Fecha Fin de Sanción <span class="text-danger">*</span></label>
+          <input type="date" id="fechaFinSancion" class="form-control" formControlName="fechaFinSancion"
+            [min]="today"
+            [ngClass]="{'is-invalid': submitted && sanction['fechaFinSancion'].errors}">
+          <div *ngIf="submitted && sanction['fechaFinSancion'].errors" class="invalid-feedback">
+            <span *ngIf="sanction['fechaFinSancion'].errors['required']">La fecha de fin de sanción es requerida</span>
+          </div>
+        </div>
+
+        <div class="col-12 mt-3">
+          <label for="motivoSancion" class="form-label mb-0">Motivo de la Sanción <span class="text-danger">*</span></label>
+          <textarea id="motivoSancion" class="form-control" placeholder="Describa el motivo de la sanción..." 
+            formControlName="motivoSancion" rows="4"
+            [ngClass]="{'is-invalid': submitted && sanction['motivoSancion'].errors}"></textarea>
+          <div *ngIf="submitted && sanction['motivoSancion'].errors" class="invalid-feedback">
+            <span *ngIf="sanction['motivoSancion'].errors['required']">El motivo de la sanción es requerido</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <div class="hstack gap-2 justify-content-end w-100">
+        <button type="button" class="btn btn-light" (click)="closeModal()" [disabled]="submitted">
+          Cancelar
+        </button>
+
+        <button type="button" class="btn btn-success" 
+          *ngIf="row.estaSancionado"
+          (click)="removeSanction()"
+          [disabled]="submitted">
+          <span *ngIf="!submitted">
+            <i class="ri-check-line me-1"></i>Levantar Sanción
+          </span>
+          <span *ngIf="submitted">
+            <span class="spinner-border spinner-border-sm me-2"></span>Levantando...
+          </span>
+        </button>
+
+        <button type="submit" class="btn btn-danger" 
+          *ngIf="!row.estaSancionado"
+          [disabled]="submitted">
+          <span *ngIf="!submitted">
+            <i class="ri-forbid-line me-1"></i>Aplicar Sanción
+          </span>
+          <span *ngIf="submitted">
+            <span class="spinner-border spinner-border-sm me-2"></span>Aplicando...
+          </span>
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<ng-template #actionModel>
+  <div class="modal-content" *ngIf="row.uuid">
+    <div class="modal-header">
+      <button type="button" class="btn-close" 
+        (click)="closeModal()"
+        [disabled]="submitted"></button>
+    </div>
+    <div class="modal-body">
+      <div class="mt-2 text-center">
+        <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
+          colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
+        
+        <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5" *ngIf="accion === 'block'">
+          <h4>¿Está seguro de Bloquear al Contribuyente?</h4>
+          <p class="text-muted mx-4 mb-0">
+            El Contribuyente: "<strong>{{row.nombreCompleto}}</strong>" 
+            no podrá realizar ninguna acción.
           </p>
         </div>
 
-        <!-- Alerta para aplicar nueva sanción -->
-        <div class="alert alert-warning" *ngIf="!row?.estaSancionado">
-          <i class="ri-error-warning-line me-2"></i>
-          <strong>Atención:</strong> Está a punto de aplicar una sanción al contribuyente 
-          <strong>{{row.nombreCompleto}}</strong>. Esta acción restringirá el acceso del usuario al sistema.
+        <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5" *ngIf="accion === 'unblock'">
+          <h4>¿Desea Desbloquear al Contribuyente?</h4>
+          <p class="text-muted mx-4 mb-0">
+            El Contribuyente: "<strong>{{row.nombreCompleto}}</strong>" 
+            podrá volver a realizar acciones en el sistema.
+          </p>
         </div>
 
-        <!-- Formulario de sanción (solo si NO tiene sanción activa) -->
-        <div class="row" *ngIf="!row?.estaSancionado">
-          <div class="col-12">
-            <label for="fechaFinSancion" class="form-label mb-0">Fecha Fin de Sanción <span class="text-danger">*</span></label>
-            <input type="date" id="fechaFinSancion" class="form-control" formControlName="fechaFinSancion"
-                  [min]="today"
-                  [ngClass]="{'is-invalid': submitted && sanction['fechaFinSancion'].errors}">
-            <div *ngIf="submitted && sanction['fechaFinSancion'].errors" class="invalid-feedback">
-              <span *ngIf="sanction['fechaFinSancion'].errors?.['required']">La fecha de fin de sanción es requerida</span>
-            </div>
-            <div class="form-text">Seleccione la fecha hasta la cual aplicará la sanción</div>
-          </div>
-
-          <div class="col-12">
-            <label for="motivoSancion" class="form-label mb-0">Motivo de la Sanción <span class="text-danger">*</span></label>
-            <textarea id="motivoSancion" class="form-control" placeholder="Describa el motivo de la sanción..." 
-                      formControlName="motivoSancion" rows="4"
-                      [ngClass]="{'is-invalid': submitted && sanction['motivoSancion'].errors}"></textarea>
-            <div *ngIf="submitted && sanction['motivoSancion'].errors" class="invalid-feedback">
-              <span *ngIf="sanction['motivoSancion'].errors?.['required']">El motivo de la sanción es requerido</span>
-              <span *ngIf="sanction['motivoSancion'].errors?.['minlength']">El motivo debe tener al menos 5 caracteres</span>
-              <span *ngIf="sanction['motivoSancion'].errors?.['maxlength']">El motivo no puede exceder 500 caracteres</span>
-            </div>
-            <div class="form-text">Describa detalladamente el motivo de la sanción</div>
-          </div>
-        </div>
-
-        <!-- Información de sanción existente (solo lectura) -->
-        <div class="row" *ngIf="row?.estaSancionado">
-          <div class="col-12">
-            <label class="form-label mb-0">Motivo de la Sanción Actual</label>
-            <textarea class="form-control" [value]="row.motivoSancion" rows="4" disabled></textarea>
-          </div>
-          <div class="col-12">
-            <label class="form-label mb-0">Fecha Fin de Sanción</label>
-            <input type="text" class="form-control" [value]="row.fechaFinSancion | date:'dd/MM/yyyy'" disabled>
+        <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5" *ngIf="accion === 'removeSanction'">
+          <h4>¿Desea Levantar la Sanción?</h4>
+          <p class="text-muted mx-4 mb-2">
+            El Contribuyente: "<strong>{{row.nombreCompleto}}</strong>"
+          </p>
+          
+          <div class="alert alert-info text-start mt-3">
+            <h6 class="alert-heading"><i class="ri-information-line me-2"></i>Información</h6>
+            <p class="mb-1"><strong>Estado actual:</strong> 
+              <span class="badge bg-danger">SANCIONADO</span>
+            </p>
+            <p class="mb-1"><strong>Motivo sanción:</strong> {{row.motivoSancion}}</p>
+            <p class="mb-1"><strong>Fin sanción:</strong> {{row.fechaFinSancion | date:'dd/MM/yyyy'}}</p>
+            <hr>
+            <p class="mb-0"><strong>Nuevo estado:</strong> 
+              <span class="badge" 
+                [ngClass]="row.verificadoRuat ? 'bg-success' : 'bg-warning'">
+                {{row.verificadoRuat ? 'ACTIVO' : 'PENDIENTE VERIFICACIÓN'}}
+              </span>
+            </p>
           </div>
         </div>
       </div>
+      
+      <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+        <button class="btn btn-link link-success fw-medium text-decoration-none" 
+          (click)="closeModal()"
+          [disabled]="submitted">
+          <i class="ri-close-line me-1 align-middle"></i> Cancelar
+        </button>
+        
+        <button type="button" class="btn w-sm btn-danger" 
+          *ngIf="accion === 'block'"
+          (click)="blockUser()"
+          [disabled]="submitted">
+          <span *ngIf="!submitted">
+            <i class="ri-forbid-line me-1"></i> Sí, Bloquear!
+          </span>
+          <span *ngIf="submitted">
+            <span class="spinner-border spinner-border-sm me-2"></span>Bloqueando...
+          </span>
+        </button>
 
-      <div class="modal-footer">
-        <div class="hstack gap-2 justify-content-end w-100">
-          <button type="button" class="btn btn-light" (click)="closeModal()" [disabled]="submitted">
-            Cancelar
-          </button>
+        <button type="button" class="btn w-sm btn-success" 
+          *ngIf="accion === 'unblock'"
+          (click)="unblockUser()"
+          [disabled]="submitted">
+          <span *ngIf="!submitted">
+            <i class="ri-check-line me-1"></i> Sí, Desbloquear!
+          </span>
+          <span *ngIf="submitted">
+            <span class="spinner-border spinner-border-sm me-2"></span>Desbloqueando...
+          </span>
+        </button>
 
-          <!-- Botón para LEVANTAR sanción (si ya está sancionado) -->
-          <button type="button" class="btn btn-success" 
-                  *ngIf="row?.estaSancionado"
-                  (click)="removeSanction()"
-                  [disabled]="submitted">
-            <span *ngIf="!submitted">
-              <i class="ri-check-line me-1"></i>Levantar Sanción
-            </span>
-            <span *ngIf="submitted">
-              <span class="spinner-border spinner-border-sm me-2"></span>Levantando...
-            </span>
-          </button>
-
-          <!-- Botón para APLICAR sanción (si NO está sancionado) -->
-          <button type="submit" class="btn btn-danger" 
-                  *ngIf="!row?.estaSancionado"
-                  [disabled]="submitted">
-            <span *ngIf="!submitted">
-              <i class="ri-forbid-line me-1"></i>Aplicar Sanción
-            </span>
-            <span *ngIf="submitted">
-              <span class="spinner-border spinner-border-sm me-2"></span>Aplicando...
-            </span>
-          </button>
-        </div>
+        <button type="button" class="btn w-sm btn-success" 
+          *ngIf="accion === 'removeSanction'"
+          (click)="removeSanction()"
+          [disabled]="submitted">
+          <span *ngIf="!submitted">
+            <i class="ri-check-line me-1"></i> Sí, Levantar Sanción!
+          </span>
+          <span *ngIf="submitted">
+            <span class="spinner-border spinner-border-sm me-2"></span>Procesando...
+          </span>
+        </button>
       </div>
-    </form>
-</div>
-<!-- <ng-template #actionModel>
-    <div class="modal-content" *ngIf="row?.uuid">
-        <div class="modal-header">
-            <button type="button" class="btn-close" 
-                    (click)="closeModal()"
-                    [disabled]="submitted"></button>
-        </div>
-        <div class="modal-body">
-            <div class="mt-2 text-center">
-                <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
-                    colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
-                
-                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5" *ngIf="accion === 'block'">
-                    <h4>¿Está seguro de Bloquear al Contribuyente?</h4>
-                    <p class="text-muted mx-4 mb-0">
-                        El Contribuyente: "<strong>{{row.nombreCompleto}}</strong>" 
-                        no podrá realizar ninguna acción.
-                    </p>
-                </div>
-
-                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5" *ngIf="accion === 'unblock'">
-                    <h4>¿Desea Desbloquear al Contribuyente?</h4>
-                    <p class="text-muted mx-4 mb-0">
-                        El Contribuyente: "<strong>{{row.nombreCompleto}}</strong>" 
-                        podrá volver a realizar acciones en el sistema.
-                    </p>
-                </div>
-            </div>
-            
-            <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
-                <button class="btn btn-link link-success fw-medium text-decoration-none" 
-                        (click)="closeModal()"
-                        [disabled]="submitted">
-                    <i class="ri-close-line me-1 align-middle"></i> Cancelar
-                </button>
-                <button type="button" class="btn w-sm btn-danger" 
-                        *ngIf="accion === 'block'"
-                        (click)="blockUser()"
-                        [disabled]="submitted">
-                    <span *ngIf="!submitted">
-                        <i class="ri-forbid-line me-1"></i> Sí, Bloquear!
-                    </span>
-                    <span *ngIf="submitted">
-                        <span class="spinner-border spinner-border-sm me-2"></span>Bloqueando...
-                    </span>
-                </button>
-                <button type="button" class="btn w-sm btn-success" 
-                        *ngIf="accion === 'unblock'"
-                        (click)="unblockUser()"
-                        [disabled]="submitted">
-                    <span *ngIf="!submitted">
-                        <i class="ri-check-line me-1"></i> Sí, Desbloquear!
-                    </span>
-                    <span *ngIf="submitted">
-                        <span class="spinner-border spinner-border-sm me-2"></span>Desbloqueando...
-                    </span>
-                </button>
-            </div>
-        </div>
     </div>
-</ng-template> -->
-<ng-template #actionModel>
-    <div class="modal-content" *ngIf="row?.uuid">
-        <div class="modal-header">
-            <button type="button" class="btn-close" 
-                    (click)="closeModal()"
-                    [disabled]="submitted"></button>
-        </div>
-        <div class="modal-body">
-            <div class="mt-2 text-center">
-                <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
-                    colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
-                
-                <!-- Bloquear -->
-                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5" *ngIf="accion === 'block'">
-                    <h4>¿Está seguro de Bloquear al Contribuyente?</h4>
-                    <p class="text-muted mx-4 mb-0">
-                        El Contribuyente: "<strong>{{row.nombreCompleto}}</strong>" 
-                        no podrá realizar ninguna acción.
-                    </p>
-                </div>
-
-                <!-- Desbloquear -->
-                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5" *ngIf="accion === 'unblock'">
-                    <h4>¿Desea Desbloquear al Contribuyente?</h4>
-                    <p class="text-muted mx-4 mb-0">
-                        El Contribuyente: "<strong>{{row.nombreCompleto}}</strong>" 
-                        podrá volver a realizar acciones en el sistema.
-                    </p>
-                </div>
-
-                <!-- Levantar Sanción - MEJORADO -->
-                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5" *ngIf="accion === 'removeSanction'">
-                    <h4>¿Desea Levantar la Sanción?</h4>
-                    <p class="text-muted mx-4 mb-2">
-                        El Contribuyente: "<strong>{{row.nombreCompleto}}</strong>"
-                    </p>
-                    
-                    <!-- Información sobre el estado resultante -->
-                    <div class="alert alert-info text-start mt-3">
-                        <h6 class="alert-heading"><i class="ri-information-line me-2"></i>Información</h6>
-                        <p class="mb-1"><strong>Estado actual:</strong> 
-                            <span class="badge bg-danger">SANCIONADO</span>
-                        </p>
-                        <p class="mb-1"><strong>Motivo sanción:</strong> {{row.motivoSancion}}</p>
-                        <p class="mb-1"><strong>Fin sanción:</strong> {{row.fechaFinSancion | date:'dd/MM/yyyy'}}</p>
-                        <hr>
-                        <p class="mb-0"><strong>Nuevo estado:</strong> 
-                            <span class="badge" 
-                                  [ngClass]="row.verificadoRuat ? 'bg-success' : 'bg-warning'">
-                                {{ row.verificadoRuat ? 'ACTIVO' : 'PENDIENTE VERIFICACIÓN' }}
-                            </span>
-                        </p>
-                        <p class="text-muted small mb-0" *ngIf="!row.verificadoRuat">
-                            El usuario debe completar verificación RUAT para estar activo
-                        </p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
-                <button class="btn btn-link link-success fw-medium text-decoration-none" 
-                        (click)="closeModal()"
-                        [disabled]="submitted">
-                    <i class="ri-close-line me-1 align-middle"></i> Cancelar
-                </button>
-                
-                <!-- Botón Bloquear -->
-                <button type="button" class="btn w-sm btn-danger" 
-                        *ngIf="accion === 'block'"
-                        (click)="blockUser()"
-                        [disabled]="submitted">
-                    <span *ngIf="!submitted">
-                        <i class="ri-forbid-line me-1"></i> Sí, Bloquear!
-                    </span>
-                    <span *ngIf="submitted">
-                        <span class="spinner-border spinner-border-sm me-2"></span>Bloqueando...
-                    </span>
-                </button>
-
-                <!-- Botón Desbloquear -->
-                <button type="button" class="btn w-sm btn-success" 
-                        *ngIf="accion === 'unblock'"
-                        (click)="unblockUser()"
-                        [disabled]="submitted">
-                    <span *ngIf="!submitted">
-                        <i class="ri-check-line me-1"></i> Sí, Desbloquear!
-                    </span>
-                    <span *ngIf="submitted">
-                        <span class="spinner-border spinner-border-sm me-2"></span>Desbloqueando...
-                    </span>
-                </button>
-
-                <!-- Botón Levantar Sanción - ACTUALIZADO -->
-                <button type="button" class="btn w-sm btn-success" 
-                        *ngIf="accion === 'removeSanction'"
-                        (click)="removeSanction()"
-                        [disabled]="submitted">
-                    <span *ngIf="!submitted">
-                        <i class="ri-check-line me-1"></i> Sí, Levantar Sanción!
-                    </span>
-                    <span *ngIf="submitted">
-                        <span class="spinner-border spinner-border-sm me-2"></span>Procesando...
-                    </span>
-                </button>
-            </div>
-        </div>
-    </div>
+  </div>
 </ng-template>

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { GlobalComponent } from "../../../../global-component";
 import { environment } from 'src/environments/environment';
-import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 
 const apiUrl = 'http://php-backend.test/api';
 

@@ -14,7 +14,7 @@ import { MENU_BASE } from 'src/app/core/data/menu';
 import { ContribuyentesService } from './api/contribuyentes.service';
 import { of } from 'rxjs';
 import { UserService } from './api-users/users.service';
-import { Contribuyente } from '../models/contribuyente.models';
+import { Contribuyente } from '../models/contribuyente.model';
 import { EncargadoComplejo } from '../models/encargadoComplejo';
 import { ConfiguracionSistemaService } from './api/configuracionSistema.service';
 import { ConfiguracionSistema } from '../models/configuracionSistema.model';
@@ -69,65 +69,74 @@ export class AuthenticationService {
         });
       });
     }
-    async loginContribuyente(username: string, password: string): Promise<boolean> {
-      return new Promise((resolve, reject) => {
-        this.authContribuyente.loginByUsername(username, password).subscribe({
-          next: async (data: any) => {
-            if (data['status'] === 'OK') {
-              this.currentUserSubject = data.payload;
-              this.storageService.saveToken("isContribuyente");
-              this.storageService.saveUser(this.currentUserSubject);
-              localStorage.setItem('menu', JSON.stringify(MENU_BASE));
-              console.log(JSON.stringify(MENU_BASE))
-              await this.loadSystemConfigs(true);
-              resolve(true);
-            } else {
-              resolve(false);
-            }
-          },
-          error: (error) => {
+  async loginContribuyente(username: string, password: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      this.authContribuyente.loginByUsername(username, password).subscribe({
+        next: async (data: any) => {
+          if (data['status'] === 'OK') {
+            this.currentUserSubject = data.payload;
+            this.storageService.saveToken("isContribuyente");
+            this.storageService.saveUser(this.currentUserSubject);
+            
+            const sortedMenu = this.sortMenuItemsRecursive(MENU_BASE);
+            localStorage.setItem('menu', JSON.stringify(sortedMenu));
+            
+            await this.loadSystemConfigs(true);
+            resolve(true);
+          } else {
             resolve(false);
           }
-        });
+        },
+        error: (error) => {
+          resolve(false);
+        }
       });
-    }
+    });
+  }
 
-    async userHasPermission(user: any): Promise<'isAdmin' | 'isEmployee' | 'hasNoPermissions'> {
-      try {
-        const [userPermissions, userAssignations] = await Promise.all([
-          this.permissionService.getPermisosUsuario(user.uuid).toPromise(),
-          this.designationsService.getByUserUuid(user.uuid).toPromise()
-            .then((response: any) => response?.status === 'OK' ? response.payload : null)
-            .catch(error => null),
-        ]);
-        if (userPermissions && Array.isArray(userPermissions) && userPermissions.length > 0) {
-          const isAdmin = userPermissions.some(permission => permission.nombreMenu === this.adminPermission);
-            if (userAssignations !== null || isAdmin) {
-            this.isAuthenticated = true;
-            userPermissions.forEach((menu: any) => {
-              if (!menu.permisoPadreDto) {
-                menu.isCollapsed = true;
-              }
-            });
-            this.storageService.saveUser(user);
-            localStorage.setItem('menu', JSON.stringify(userPermissions));
-            if (isAdmin) {
-              return 'isAdmin';
-            } else {
-              localStorage.setItem('assignaments', JSON.stringify(userAssignations));
-              return 'isEmployee';
+  async userHasPermission(user: any): Promise<'isAdmin' | 'isEmployee' | 'hasNoPermissions'> {
+    try {
+      const [userPermissions, userAssignations] = await Promise.all([
+        this.permissionService.getPermisosUsuario(user.uuid).toPromise(),
+        this.designationsService.getByUserUuid(user.uuid).toPromise()
+          .then((response: any) => response?.status === 'OK' ? response.payload : null)
+          .catch(error => null),
+      ]);
+      
+      if (userPermissions && Array.isArray(userPermissions) && userPermissions.length > 0) {
+        const isAdmin = userPermissions.some(permission => permission.nombreMenu === this.adminPermission);
+        
+        if (userAssignations !== null || isAdmin) {
+          this.isAuthenticated = true;
+          
+          userPermissions.forEach((menu: any) => {
+            if (!menu.permisoPadreDto) {
+              menu.isCollapsed = true;
             }
+          });
+          
+          this.storageService.saveUser(user);
+          
+          const sortedMenu = this.sortMenuItemsRecursive(userPermissions);
+          localStorage.setItem('menu', JSON.stringify(sortedMenu));
+          
+          if (isAdmin) {
+            return 'isAdmin';
           } else {
-            return 'hasNoPermissions';
+            localStorage.setItem('assignaments', JSON.stringify(userAssignations));
+            return 'isEmployee';
           }
         } else {
           return 'hasNoPermissions';
         }
-      } catch (error) {
-        console.error('Error in hasPermission:', error);
-        throw new Error('Ocurrió un error al verificar los permisos');
+      } else {
+        return 'hasNoPermissions';
       }
+    } catch (error) {
+      console.error('Error in hasPermission:', error);
+      throw new Error('Ocurrió un error al verificar los permisos');
     }
+  }
     hasPermission(modulo: string): string[] {
       const menuString = localStorage.getItem('menu');
       const menu: any[] = menuString ? JSON.parse(menuString) : null;
@@ -275,6 +284,59 @@ export class AuthenticationService {
     } catch (error) {
       console.error('Failed to load system configs:', error);
     }
+  }
+
+  private getActionPriority(accion: string): number {
+    const actionOrder = [
+      'VER',
+      'CREAR', 
+      'EDITAR',
+      'ACTUALIZAR',
+      'VALIDAR',
+      'ANULAR',
+      'GENERAR TICKET',
+      'CAMBIAR-HORARIO',
+      'EXPORTAR',
+      'BLOQUEAR',
+      'ELIMINAR'
+    ];    
+    const index = actionOrder.indexOf(accion);
+    return index !== -1 ? index : actionOrder.length;
+  }
+private sortMenuItemsRecursive(menuItems: any[]): any[] {
+  return menuItems.map(item => {
+    // Sort child items if they exist
+    if (item.permisoHijoListDto && item.permisoHijoListDto.length > 0) {
+      return {
+        ...item,
+        permisoHijoListDto: this.sortMenuItems(item.permisoHijoListDto)
+      };
+    }
+    return item;
+  }).sort((a, b) => {
+    // First sort by orden field
+    const orderCompare = (a.orden || 0) - (b.orden || 0);
+    if (orderCompare !== 0) {
+      return orderCompare;
+    }
+    
+    // If same orden, sort by action priority
+    const aPriority = this.getActionPriority(a.accion);
+    const bPriority = this.getActionPriority(b.accion);
+    
+    return aPriority - bPriority;
+  });
+}
+  private sortMenuItems(menuItems: any[]): any[] {
+    return menuItems.sort((a, b) => {
+      const orderCompare = (a.orden || 0) - (b.orden || 0);
+      if (orderCompare !== 0) {
+        return orderCompare;
+      }
+      const aPriority = this.getActionPriority(a.accion);
+      const bPriority = this.getActionPriority(b.accion);      
+      return aPriority - bPriority;
+    });
   }
 }
 

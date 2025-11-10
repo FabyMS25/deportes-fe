@@ -18,7 +18,7 @@ import { ReservaPuntualService } from 'src/app/core/services/api/reserva-puntual
 import { ReservaRecurrenteService } from 'src/app/core/services/api/reserva-recurrente.service';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { ModalRecurrentComponent } from '../../booking-recurrent/modal/modal.component';
-import { Contribuyente } from 'src/app/core/models/contribuyente.models';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { ReservaPuntual } from 'src/app/core/models/reservaPuntual.models';
 import { EstadoReserva } from 'src/app/core/constants/Estados';
 
