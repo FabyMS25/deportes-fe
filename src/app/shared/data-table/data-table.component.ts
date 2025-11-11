@@ -130,7 +130,7 @@ export class DataTableComponent implements OnChanges {
       case 'validate':
         return data.reservaDto && data.reservaDto.estadoValidacion ===statusData.EstadoValidacion.PENDIENTE;
       case 'Anular':
-        return data.reservaDto && data.reservaDto.estadoReserva ===statusData.EstadoReserva.PENDIENTE;
+        return data.reservaDto && (data.reservaDto.estadoReserva ===statusData.EstadoReserva.PENDIENTE || data.reservaDto.estadoReserva ===statusData.EstadoReserva.EN_CURSO);
       case 'Bloquear':
         return data.estadoUsuario === statusData.EstadoUsuario.ACTIVO;
       case 'Desbloquear':

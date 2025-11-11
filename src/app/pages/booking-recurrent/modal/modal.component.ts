@@ -194,6 +194,115 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
     this.reservationForm.patchValue({ diasSemana: diasArray });
   }
 
+   isDaySelected(dayValue: string): boolean {
+    if (!this.row?.diasSemana) return false;
+    return this.row.diasSemana.split(',').includes(dayValue);
+  }
+
+  /**
+   * Get short day name for display
+   */
+  getShortDayName(fullName: string): string {
+    const shortNames: { [key: string]: string } = {
+      'Lunes': 'Lun',
+      'Martes': 'Mar',
+      'Miércoles': 'Mié',
+      'Jueves': 'Jue',
+      'Viernes': 'Vie',
+      'Sábado': 'Sáb',
+      'Domingo': 'Dom'
+    };
+    return shortNames[fullName] || fullName;
+  }
+
+  getDiasSemanaDisplay(): any[] {
+    return [
+      { value: 'LUNES', shortName: 'Lun', fullName: 'Lunes', index: 0 },
+      { value: 'MARTES', shortName: 'Mar', fullName: 'Martes', index: 1 },
+      { value: 'MIERCOLES', shortName: 'Mié', fullName: 'Miércoles', index: 2 },
+      { value: 'JUEVES', shortName: 'Jue', fullName: 'Jueves', index: 3 },
+      { value: 'VIERNES', shortName: 'Vie', fullName: 'Viernes', index: 4 },
+      { value: 'SABADO', shortName: 'Sáb', fullName: 'Sábado', index: 5 },
+      { value: 'DOMINGO', shortName: 'Dom', fullName: 'Domingo', index: 6 }
+    ];
+  }
+  
+  getTimeSlots(): any[] {
+    if (!this.row?.tableroDto?.horario) return [];
+    const allTimeSlots = new Set<string>();
+    this.row.tableroDto.horario.forEach(daySlots => {
+      if (daySlots && daySlots.length > 0) {
+        daySlots.forEach(slot => {
+          allTimeSlots.add(slot);
+        });
+      }
+    });
+    return Array.from(allTimeSlots).map(slot => {
+      const [startTime, endTime] = slot.split('-');
+      const startHour = parseInt(startTime.split(':')[0]);
+      
+      return {
+        key: slot,
+        displayTime: `${startTime} - ${endTime}`,
+        startTime: startTime,
+        endTime: endTime,
+        period: startHour >= 12 ? 'PM' : 'AM',
+        startHour: startHour
+      };
+    }).sort((a, b) => a.startHour - b.startHour);
+  }
+
+  /**
+   * Check if a specific time slot is booked on a specific day
+   */
+  isTimeSlotBooked(dayIndex: number, timeSlot: string): boolean {
+    if (!this.row?.tableroDto?.horario?.[dayIndex]) return false;
+    return this.row.tableroDto.horario[dayIndex].includes(timeSlot);
+  }
+
+  /**
+   * Check if a day has any bookings
+   */
+  hasBookingsOnDay(dayIndex: number): boolean {
+    return !!(this.row?.tableroDto?.horario?.[dayIndex] && 
+              this.row.tableroDto.horario[dayIndex].length > 0);
+  }
+
+  /**
+   * Get booked time slots for a specific day
+   */
+  getBookedTimeSlotsForDay(dayIndex: number): string[] {
+    if (!this.hasBookingsOnDay(dayIndex)) return [];
+    return this.row.tableroDto.horario[dayIndex];
+  }
+
+
+  /**
+   * Get total weekly sessions
+   */
+  getTotalWeeklySessions(): number {
+    if (!this.row?.tableroDto?.horario) return 0;    
+    return this.row.tableroDto.horario.reduce((total, daySlots) => {
+      return total + (daySlots ? daySlots.length : 0);
+    }, 0);
+  }
+  getTotalWeeklyHours(): number {
+    const weeklySessions = this.getTotalWeeklySessions();
+    return weeklySessions * (this.row?.duracionSesionHoras || 0);
+  }
+
+  /**
+   * Check if a day is selected in the recurrence pattern
+   */
+  isDayInRecurrence(dayIndex: number): boolean {
+    if (!this.row?.diasSemana) return false;
+    
+    const dayNames = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+    const selectedDays = this.row.diasSemana.toLowerCase().split(',');
+    
+    return selectedDays.includes(dayNames[dayIndex]);
+  }
+  
   /**
    * Save reservation changes
    */
@@ -204,8 +313,7 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
         ...this.row,
         ...this.reservationForm.value,
         diasSemana: this.reservationForm.value.diasSemana.join(',')
-      };
-      
+      };      
       this.updateData(datos);
     } else {
       this.notify('Formulario Inválido! Por favor complete todos los campos requeridos.', 'error');
@@ -630,7 +738,6 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
           const pagoResp: any = await this.pagoService.save(nuevoPago).toPromise();
           
           if (pagoResp.status === 'OK') {
-            // Update reservation status to PAGADA
             const updatedReservaRecurrente = {
               ...item,
               reservaDto: {

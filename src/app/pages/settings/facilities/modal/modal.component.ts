@@ -113,7 +113,6 @@ export class ModalFacilitiesComponent {
     this.submitted = true;
     if (this.complejoForm.valid) {
       this.complejoForm.enable();
-      console.log(this)
       const datos: ComplejoDeportivo = {
         nombre: this.complejoForm.value.nombre,
         telefonoPrincipal: this.complejoForm.value.telefonoPrincipal,
@@ -128,7 +127,6 @@ export class ModalFacilitiesComponent {
         longitud: this.complejoForm.value.longitud,
         observaciones: this.complejoForm.value.observaciones
       };
-      console.log(datos)
       if (this.complejoForm.get('uuid')?.value) {
         datos.uuid = this.complejoForm.value.uuid;
         this.updateData(datos);

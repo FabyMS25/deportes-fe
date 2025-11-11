@@ -33,7 +33,6 @@ export class RuatRequestsService {
   }
 
   getContribuyentePorCi( codigoAlcaldia:string, numeroDocumento: string, tipoDocumento: string,expedido:string): Observable<any> {
-    console.log(token)
     const requestData = {
       'token': token,
       'contribuyenteRequest': {

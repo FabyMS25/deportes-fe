@@ -278,7 +278,6 @@ export class AuthenticationService {
           }
         });        
         this.systemConfigs = configsMap;
-        console.log(this.systemConfigs)
         localStorage.setItem('systemConfigs', JSON.stringify(configsMap));
       }
     } catch (error) {

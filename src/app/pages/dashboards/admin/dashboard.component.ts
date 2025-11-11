@@ -627,10 +627,8 @@ export class DashboardComponent implements OnInit {
       if (data['status'] === 'OK') {
         this.reservationsList = data.payload.content;
       } else {
-        console.warn('Unexpected status:', data.status);
       }
     } catch (error) {
-      console.error('Error al obtener las reservas:', error);
       Swal.fire({ 
         text: 'Error al obtener las reservas', 
         icon: 'error', 

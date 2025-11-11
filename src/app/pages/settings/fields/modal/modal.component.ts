@@ -417,7 +417,6 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
           }
         },
         (reason) => {
-          console.log('Delete operation canceled', reason);
         }
       );
     } else {
@@ -490,7 +489,6 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
     } else {
       this.notify('Complete todos los campos requeridos', 'warning');
       this.currentStep = 1;
-      console.log('Form errors:', this.getFormValidationErrors());
     }
   }
 
@@ -601,7 +599,6 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
           }
         },
         (reason) => {
-          console.log('Delete operation canceled', reason);
         }
       );
     }
@@ -616,7 +613,6 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
         }
       },
       (reason) => {
-        console.log('Delete operation canceled', reason);
       }
     );
   }

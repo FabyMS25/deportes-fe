@@ -125,11 +125,11 @@ export class BookingPeriodoComponent implements OnInit {
       { name: 'Escuela', prop: 'reservaDto.organizacionDto.nombre', visible: true, fallbackProp: 'nombre' },
       { name: 'Período', prop: 'periodoDisplay', visible: true, fallbackProp: 'periodoDisplay' },
       { name: 'Disciplina', prop: 'reservaDto.organizacionDto.disciplina', visible: true, fallbackProp: 'disciplina' },
-      { name: 'Entrenador', prop: 'reservaDto.organizacionDto.entrenador', visible: true, fallbackProp: 'entrenador' },
+      { name: 'Entrenador', prop: 'reservaDto.organizacionDto.entrenador', visible: false, fallbackProp: 'entrenador' },
       { name: 'Mes', prop: 'mes', visible: false, fallbackProp: 'mes' },
       { name: 'Año', prop: 'año', visible: false, fallbackProp: 'año' },
       { name: 'Monto', prop: 'reservaDto.montoTotal', currency: true, visible: true, fallbackProp: 'montoTotal' },
-      { name: 'Estado Validación', prop: 'reservaDto.estadoValidacion', tag: true, visible: true, fallbackProp: 'estadoValidacion' },
+      { name: 'Estado Validación', prop: 'reservaDto.estadoValidacion', tag: true, visible: false, fallbackProp: 'estadoValidacion' },
       { name: 'Estado Reserva', prop: 'reservaDto.estadoReserva', tag: true, visible: true, fallbackProp: 'estadoReserva' },
       { name: 'Número Reserva', prop: 'reservaDto.numeroReserva', visible: false, fallbackProp: 'numeroReserva' },
       { name: 'Número Tasa', prop: 'reservaDto.numeroTasa', visible: false, fallbackProp: 'numeroTasa' },
@@ -137,16 +137,11 @@ export class BookingPeriodoComponent implements OnInit {
       { name: 'Observaciones', prop: 'reservaDto.observaciones', visible: false, fallbackProp: 'observaciones' },
     ];
   }
-
-  // New method to generate periodos disponibles
   private generatePeriodosDisponibles(): void {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth() + 1;
-    
-    this.periodosDisponibles = [];
-    
-    // Generate last 6 months and next 6 months
+    const currentMonth = currentDate.getMonth() + 1;    
+    this.periodosDisponibles = [];    
     for (let i = -6; i <= 6; i++) {
       const year = currentYear + Math.floor((currentMonth + i - 1) / 12);
       const month = ((currentMonth + i - 1) % 12 + 12) % 12 + 1;
@@ -161,8 +156,6 @@ export class BookingPeriodoComponent implements OnInit {
                        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     return `${monthNames[parseInt(month) - 1]} ${year}`;
   }
-
-  // Helper method to get periodo display for a reservaPeriodo item
   getPeriodoDisplayForReserva(item: any): string {
     const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -230,8 +223,7 @@ export class BookingPeriodoComponent implements OnInit {
   onNavChange(changeEvent: NgbNavChangeEvent) {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth() + 1;
-    
+    const currentMonth = currentDate.getMonth() + 1;    
     switch (changeEvent.nextId) {
       case 0: // Todas
         this.reservasList = this.temp;
@@ -266,6 +258,7 @@ export class BookingPeriodoComponent implements OnInit {
       size: 'lg',
       windowClass: 'ticket-modal'
     });
+    modalRef.componentInstance.bookingType = 'periodo'
     modalRef.componentInstance.reservationData = data.reservaDto;
     modalRef.componentInstance.showAsModal = true;
     modalRef.componentInstance.autoLoad = true;
@@ -487,8 +480,9 @@ export class BookingPeriodoComponent implements OnInit {
           if (pagoResp.status === 'OK') {
             item.reservaDto.estadoReserva = EstadoReserva.PAGADA;
             const updatedReserva = await this.updateReserva(item.reservaDto);
+            item.reservaDto = updatedReserva
             return { 
-              item: updatedReserva, 
+              item: item, 
               text: `${text} - Pago registrado exitosamente`, 
               type: 'success',
               hasPayment: true,
@@ -597,26 +591,19 @@ export class BookingPeriodoComponent implements OnInit {
       this.loading = true;
       const data: any = await this.reservaPeriodoService.getAll().toPromise();      
       if (data && data['status'] === 'OK') {
-        console.log('API Response:', data);
         let list: ReservaPeriodo[] = [];        
-        // The API returns data.payload as an array directly
         if (Array.isArray(data.payload)) {
           list = data.payload;
         } else if (data.payload && Array.isArray(data.payload.content)) {
           list = data.payload.content;
         } else {
           list = [];
-        }        
-        console.log('Processed list:', list);
-
-        // Filter by contribuyente if needed
+        }
         if (this.contribuyente) {
           list = list.filter((item: any) => 
             item.reservaDto?.contribuyenteDto?.uuid === this.contribuyente.uuid
           );
         }
-
-        // Filter by employee assignment if needed
         const assignaments = localStorage.getItem("assignaments");
         const employee = assignaments ? JSON.parse(assignaments) : null;
         if (employee) {
@@ -624,15 +611,11 @@ export class BookingPeriodoComponent implements OnInit {
             item.reservaDto?.campoDeportivoDto?.complejoDto?.uuid === employee.complejoDto?.uuid
           );
         }
-        
-        // Add periodoDisplay to each item for easier display
         this.reservasList = list.map(item => ({
           ...item,
           periodoDisplay: this.getPeriodoDisplayForReserva(item)
-        }));
-        
+        }));        
         this.temp = this.reservasList;
-        console.log('Final reservasList:', this.reservasList);
       } else {
         this.reservasList = [];
         this.temp = [];

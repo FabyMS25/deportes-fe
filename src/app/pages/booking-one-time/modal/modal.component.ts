@@ -8,19 +8,15 @@ import emailjs from 'emailjs-com';
 
 import { ReservaPuntual } from 'src/app/core/models/reservaPuntual.models';
 import { ReservaPuntualService } from 'src/app/core/services/api/reserva-puntual.service';
-import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
-import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
 import { PagoService } from 'src/app/core/services/api/pago.service';
 import { CityAcronym } from 'src/app/core/constants/Places';
 import { EstadoReserva, EstadoValidacion } from 'src/app/core/constants/Estados';
-import { environment } from 'src/environments/environment';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { Reserva } from 'src/app/core/models/reserva.models';
 import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { TicketComponent } from '../../reports/ticket/ticket.component';
-import { GlobalComponent } from 'src/app/global-component';
 
 @Component({
   selector: 'app-booking-one-time-modal',
@@ -165,7 +161,6 @@ export class BookingOneTimeModalComponent implements OnInit, AfterViewInit {
       }
     });
     modalRef.closed.subscribe((result) => {
-      console.log('Validation modal closed:', result);
       if (this.accion === 'validar') {
         this.onCloseModal();
       }

@@ -57,8 +57,11 @@ export class BookingRecurrentComponent implements OnInit {
   activo: string = '';
   
   systemConfigList: { [key: string]: ConfiguracionSistema } = {};
+  get enableSolicitudRecurrentBooking(): boolean | undefined{
+    return this.systemConfigList[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
+  }
   get enableRecurrentBooking(): boolean | undefined{
-    return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? true;
+    return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
   }
   get HorasValidacionPago(): number | undefined {
     return this.systemConfigList[ClaveConfiguracion.HORAS_VALIDACION_PAGO]?.valorNumerico;
@@ -124,11 +127,10 @@ export class BookingRecurrentComponent implements OnInit {
     const currentUser = this.authService.currentUser();
     if (this.authService.getUserRole() === 'Contribuyente') {
       this.contribuyente = currentUser ;
-      if(!this.enableRecurrentBooking){        
+      if(!this.enableRecurrentBooking && !this.enableSolicitudRecurrentBooking){        
         const index = this.canActivate.indexOf('CREAR');
         if (index > -1) {
           this.canActivate.splice(index, 1);
-          console.log('CREAR permission removed. Updated canActivate:', this.canActivate);
         }
       }
       if (this.contribuyente.estadoUsuario !== EstadoUsuario.ACTIVO) {
@@ -262,7 +264,7 @@ export class BookingRecurrentComponent implements OnInit {
       size: 'lg',
       windowClass: 'ticket-modal'
     });
-    console.log(data)
+    modalRef.componentInstance.bookingType = 'recurrente'
     modalRef.componentInstance.reservationData = data.reservaDto;
     modalRef.componentInstance.showAsModal = true;
     modalRef.componentInstance.autoLoad = true;
@@ -481,9 +483,9 @@ export class BookingRecurrentComponent implements OnInit {
           const pagoResp: any = await this.pagoService.save(nuevoPago).toPromise();
           if (pagoResp.status === 'OK') {
             item.reservaDto.estadoReserva = EstadoReserva.PAGADA;
-            const updatedReserva = await this.updateReserva(item);
+            const updatedReserva = await this.updateReserva(item.reservaDto);
             return { 
-              item: updatedReserva, 
+              item: updatedReserva.reservaRecurrenteDto, 
               text: `${text} - Pago registrado exitosamente`, 
               type: 'success',
               hasPayment: true,
@@ -527,9 +529,26 @@ export class BookingRecurrentComponent implements OnInit {
   }
 
   /* API Services */
-  private updateReserva(data: ReservaRecurrente): Promise<ReservaRecurrente> {
+  private updateReservaRecurrente(data: ReservaRecurrente): Promise<ReservaRecurrente> {
     return new Promise((resolve, reject) => {
       this.reservaRecurrenteService.update(data).subscribe({
+        next: (resp: any) => {
+          if (resp['status'] === 'OK') {
+            resolve(resp.payload);
+          } else {
+            reject(resp.payload);
+          }
+        },
+        error: (error) => {
+          console.error("Error updating reserva:", error);
+          reject(error);
+        }
+      });
+    });
+  }
+  private updateReserva(data: Reserva): Promise<Reserva> {
+    return new Promise((resolve, reject) => {
+      this.reservaService.update(data).subscribe({
         next: (resp: any) => {
           if (resp['status'] === 'OK') {
             resolve(resp.payload);

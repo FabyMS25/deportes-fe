@@ -49,9 +49,7 @@ export class TicketComponent implements OnChanges {
   ) { }
 
   async ngOnInit(): Promise<void> {
-    this.currentTime = (new Date()).toLocaleTimeString();
-    console.log(this.reservationData)
-    
+    this.currentTime = (new Date()).toLocaleTimeString();    
     if (window.sessionStorage.getItem("auth-token") === 'isContribuyente') {
       const currentUser = window.sessionStorage.getItem("currentUser");
       this.contribuyente = currentUser ? JSON.parse(currentUser) : null;
@@ -74,10 +72,8 @@ export class TicketComponent implements OnChanges {
       this.errorMessage = 'No hay datos de reserva disponibles para generar el ticket.';
       return;
     }
-
     this.showLoading = true;
     this.errorMessage = '';
-
     try {
       await this.generarReportePDF(this.reservationData);
     } catch (error) {
@@ -89,7 +85,9 @@ export class TicketComponent implements OnChanges {
 
   private async generarReportePDF(reserva: any) {
     let observable;
-    if (reserva.tipoReserva === 'puntual') {
+    if (reserva.tipoReserva === 'periodo') {
+          observable = this.reportsService.getTicketByPeriodo(reserva.uuid);
+    } else if (reserva.tipoReserva === 'puntual') {
       switch (reserva.tarifaDto?.tipoCobro) {
         case 'por_evento':
           observable = this.reportsService.getTicketReservaEvento(reserva.uuid);

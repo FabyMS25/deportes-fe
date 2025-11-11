@@ -82,8 +82,6 @@
                             <span class="text-muted"> {{row.reservaDto?.numeroTasa || 'N/A'}}</span>
                         </h6>
                     </div>
-                </div>                
-                <div class="d-flex align-items-center mb-2">
                     <div class="flex-shrink-0 me-3">
                         <i class="bx bx-dollar-circle text-muted fs-lg"></i>
                     </div>
@@ -94,84 +92,7 @@
                         </h6>
                     </div>
                 </div>
-                
-                <div class="d-flex align-items-center mb-2">
-                    <div class="flex-shrink-0 me-3">
-                        <i class="ri-calendar-event-line text-muted fs-lg"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h6 class="d-block fw-semibold mb-0">
-                            Período: {{row.fechaInicio | date: 'dd/MM/yyyy'}} - {{row.fechaFin | date: 'dd/MM/yyyy'}}
-                        </h6>
-                    </div>
-                </div>
-
-                <div class="d-flex align-items-center mb-2">
-                    <div class="flex-shrink-0 me-3">
-                        <i class="ri-repeat-line text-muted fs-lg"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h6 class="d-block fw-semibold mb-0">
-                            Recurrencia: {{getRecurrenceDescription(row.tipoRecurrencia)}}
-                        </h6>
-                    </div>
-                </div>
-
-                <div class="d-flex align-items-center mb-2">
-                    <div class="flex-shrink-0 me-3">
-                        <i class="ri-calendar-schedule-line text-muted fs-lg"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h6 class="d-block fw-semibold mb-0">
-                            Días: {{getDiasSemanaLabels(row.diasSemana)}}
-                        </h6>
-                    </div>
-                </div>
-
-                <div class="d-flex align-items-center mb-2">
-                    <div class="flex-shrink-0 me-3">
-                        <i class="ri-time-line text-muted fs-lg"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h6 class="d-block fw-semibold mb-0">
-                            Duración por sesión: {{row.duracionSesionHoras}} horas
-                        </h6>
-                    </div>
-                </div>
-
-                <div class="d-flex align-items-center mb-2">
-                    <div class="flex-shrink-0 me-3">
-                        <i class="ri-user-line text-muted fs-lg"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h6 class="d-block fw-semibold mb-0">
-                            Sesiones totales: {{row.cantidadSesiones}}
-                        </h6>
-                    </div>
-                    <div class="flex-shrink-0 me-3">
-                        <i class="ri-group-line text-muted fs-lg"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h6 class="d-block fw-semibold mb-0">
-                            Personas: {{row.cantidadPersonas}}
-                        </h6>
-                    </div>
-                </div>
-
-                <div class="d-flex align-items-center mb-2">
-                    <div class="flex-shrink-0 me-3">
-                        <i class="ri-dashboard-line text-muted fs-lg"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h6 class="d-block fw-semibold mb-0">
-                            Tablero: {{row.tableroDto.horario || 'N/A'}}
-                        </h6>
-                    </div>
-                </div>
-                
-                <hr>
-                
-                <div class="d-flex mb-3">
+                <div class="d-flex align-items-center  mb-2">
                     <div class="flex-shrink-0 me-3">
                         <i class="ri-user-line text-muted fs-lg"></i>
                     </div>
@@ -190,10 +111,8 @@
                             Telf: {{row.reservaDto?.contribuyenteDto?.telefono}}
                         </p>
                     </div>
-                </div>
-                
-                <hr>
-                
+                </div>                
+                <hr>                
                 <div class="d-flex align-items-center mb-2">
                     <div class="flex-shrink-0 me-3">
                         <i class="ri-government-line text-muted fs-lg"></i>
@@ -208,7 +127,148 @@
                         </p>
                     </div>
                 </div>
-                
+                <hr>
+                <div class="align-items-center mb-2">
+                        <h6 class="card-title fw-semibold mb-2">
+                            <i class="ri-calendar-schedule-line me-2"></i>Información de Recurrencia
+                        </h6>                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <i class="ri-repeat-line text-muted"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <small class="text-muted d-block">Tipo de Recurrencia</small>
+                                        <strong>{{getRecurrenceDescription(row.tipoRecurrencia)}}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <i class="ri-time-line text-muted"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <small class="text-muted d-block">Duración por Sesión</small>
+                                        <strong>{{row.duracionSesionHoras}} horas</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <i class="ri-calendar-check-line text-muted"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <small class="text-muted d-block">Sesiones Totales</small>
+                                        <strong>{{row.cantidadSesiones}}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <i class="ri-group-line text-muted"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <small class="text-muted d-block">Personas</small>
+                                        <strong>{{row.cantidadPersonas || 'N/A'}}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="d-flex align-items-center p-2 bg-light rounded">
+                                    <i class="ri-calendar-event-line text-primary me-2"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Período Activo</small>
+                                        <strong>{{row.fechaInicio | date: 'dd/MM/yyyy'}} - {{row.fechaFin | date: 'dd/MM/yyyy'}}</strong>
+                                    </div>
+                                </div>                                                
+                            </div>
+                        </div>
+                </div>
+                <div class="align-items-center mb-2">
+                        <div class="schedule-board-container">
+                            @if(this.row.tableroDto && this.row.tableroDto.horario) {
+                                <div class="schedule-grid">
+                                    <div class="schedule-header bg-primary text-white p-2 rounded-top">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <small class="fw-semibold"><i class="ri-dashboard-line me-2"></i>Horario Semanal:</small>
+                                            </div>
+                                            <div class="col-auto">
+                                                <small>{{getTotalWeeklyHours()}} horas semanales</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="schedule-body border border-top-0 rounded-bottom">
+                                        <div class="row g-0 border-bottom bg-light">
+                                            @for(dia of getDiasSemanaDisplay(); track dia.value; let i = $index) {
+                                                <div class="col border-end p-2 text-center"
+                                                    [class]="i === 6 ? 'border-end-0' : ''">
+                                                    <small class="fw-semibold text-muted d-block">{{dia.shortName}}</small>
+                                                </div>
+                                            }
+                                        </div>
+                                        @for(timeSlot of getTimeSlots(); track timeSlot.key; let slotIndex = $index) {
+                                            <div class="row g-0 border-bottom"
+                                                [class]="slotIndex === getTimeSlots().length - 1 ? 'border-bottom-0' : ''">
+                                                @for(dia of getDiasSemanaDisplay(); track dia.value; let diaIndex = $index) {
+                                                    <div class="col border-end p-2 text-center position-relative"
+                                                        [class]="diaIndex === 6 ? 'border-end-0' : ''"
+                                                        [class.bg-success-subtle]="isTimeSlotBooked(diaIndex, timeSlot.key)">
+                                                        
+                                                        @if(isTimeSlotBooked(diaIndex, timeSlot.key)) {
+                                                            <div class="booked-slot-content">
+                                                                <i class="ri-checkbox-circle-fill text-success d-block mb-1"></i>
+                                                                <small class="text-success fw-medium d-block"></small>
+                                                                <small class="text-muted">{{timeSlot.displayTime}}</small>
+                                                            </div>
+                                                        } @else {
+                                                            <div class="available-slot-content">
+                                                                <i class="ri-time-line text-muted d-block mb-1"></i>
+                                                                <small class="text-muted"></small>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            } @else {
+                                <div class="text-center py-4 text-muted">
+                                    <i class="ri-information-line display-4"></i>
+                                    <p class="mt-2 mb-0">No hay información de horario disponible</p>
+                                </div>
+                            }
+                        </div>
+                            <div class="timeline-footer mt-2 border-top">
+                                <div class="row text-center">
+                                    <div class="col-md-4">
+                                        <div class="stat-item">
+                                            <div class="stat-value text-primary fw-bold">{{this.row.diasSemana.split(',').length}}</div>
+                                            <div class="stat-label text-muted small">Días activos</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="stat-item">
+                                            <div class="stat-value text-success fw-bold">{{row.cantidadSesiones}}</div>
+                                            <div class="stat-label text-muted small">Sesiones totales</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="stat-item">
+                                            <div class="stat-value text-info fw-bold">{{row.duracionSesionHoras * row.cantidadSesiones | number:'1.0-1'}}</div>
+                                            <div class="stat-label text-muted small">Horas totales</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                </div>
+                <hr>
                 <!-- Payment Information -->
                 <div *ngIf="row.reservaDto?.pagosDtoList" class="mt-3">
                     <hr>
@@ -247,7 +307,7 @@
                 </div>
 
                 <!-- Observations -->
-                <div *ngIf="row?.observaciones" class="mt-3">
+                <div *ngIf="row.observaciones" class="mt-3">
                     <hr>
                     <h6 class="fw-semibold mb-2">
                         <i class="ri-file-text-line me-2"></i>Observaciones

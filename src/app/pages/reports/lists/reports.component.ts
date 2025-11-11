@@ -1,40 +1,48 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { Spanish } from 'flatpickr/dist/l10n/es.js';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { ReportsService } from 'src/app/core/services/api/reportes.service';
+import { EstadoReserva } from 'src/app/core/constants/Estados';
 
 @Component({
   selector: 'app-reports',
   templateUrl: './reports.component.html',
   styleUrl: './reports.component.scss'
 })
-export class ReportsComponent {
+export class ListReportComponent implements OnInit {
 
   breadCrumbItems!: Array<{}>;
-  title = 'Reservas';
+  title = 'Reporte';
   showLoading: boolean = false; 
 
   date!: { from: Date, to: Date };
   Spanish = Spanish; 
   
   complejosList: ComplejoDeportivo[] = []
-  reportType: string = 'puntual';
+  reportType: string = 'mensual';
   status: string = 'TODO';
   paymentType: string = 'TODO';
-  cancha: string = 'TODO'; // Add cancha filter
+  cancha: string = 'TODO'; 
   
-  reportTypes = [
-    { value: 'puntual', label: 'Reservas Puntuales' },
-    { value: 'recurrente', label: 'Reservas Recurrentes' }
-  ];
-
   statusOptions = [
     { value: 'TODO', label: 'Todos los estados' },
-    { value: 'Pendiente', label: 'Pendiente' },
-    { value: 'Pagado', label: 'Pagado' },
-    { value: 'Vencido', label: 'Vencido' },
-    { value: 'Anulado', label: 'Anulado' }
+    { value: EstadoReserva.BORRADOR, label: 'Borrador' },
+    { value: EstadoReserva.SOLICITADA, label: 'Solicitada' },
+    { value: EstadoReserva.PENDIENTE, label: 'Pendiente' },
+    { value: EstadoReserva.PAGADA, label: 'Pagada' },
+    { value: EstadoReserva.EN_CURSO, label: 'En Curso' },
+    { value: EstadoReserva.COMPLETADA, label: 'Completada' },
+    { value: EstadoReserva.CANCELADA, label: 'Cancelada' },
+    { value: EstadoReserva.RECHAZADA, label: 'Rechazada' },
+    { value: EstadoReserva.EXPIRADA, label: 'Expirada' },
+    { value: EstadoReserva.NO_SHOW, label: 'No Show' }
+  ];
+  reportTypeOptions = [
+    { value: 'mensual', label: 'Reservas Mensuales' },
+    { value: 'puntual', label: 'Reservas Puntuales' },
+    { value: 'recurrente', label: 'Reservas Recurrentes' }
   ];
 
   paymentTypeOptions = [
@@ -51,15 +59,45 @@ export class ReportsComponent {
 
   constructor(
     private reportsService: ReportsService, 
-    private complejoService: ComplejosService
+    private complejoService: ComplejosService,
+    private route: ActivatedRoute
   ) {}
 
   async ngOnInit() {    
+    this.route.paramMap.subscribe(params => {
+      const tipoReporte = params.get('tipoReporte');
+      if (tipoReporte && ['mensual', 'puntual', 'recurrente'].includes(tipoReporte)) {
+        this.reportType = tipoReporte;
+        this.updateTitle();
+      }
+    });
+
     this.breadCrumbItems = [
       { label: 'Reportes' },
       { label: this.title, active: true }
     ];      
     this.getComplejos();  
+  }
+
+  private updateTitle() {
+    switch (this.reportType) {
+      case 'puntual':
+        this.title = 'Reservas Puntuales';
+        break;
+      case 'recurrente':
+        this.title = 'Reservas Recurrentes';
+        break;
+      case 'mensual':
+      default:
+        this.title = 'Reservas Mensuales';
+        break;
+    }
+    
+    // Update breadcrumb
+    this.breadCrumbItems = [
+      { label: 'Reportes' },
+      { label: this.title, active: true }
+    ];
   }
 
   applyFilters() {
@@ -73,10 +111,19 @@ export class ReportsComponent {
     
     this.showLoading = true;
 
-    if (this.reportType === 'puntual') {
-      this.generatePuntualesReport(fechaIni, fechaFin);
-    } else {
-      this.generateRecurrentesReport(fechaIni, fechaFin);
+    switch (this.reportType) {
+      case 'puntual':
+        this.generatePuntualesReport(fechaIni, fechaFin);
+        break;
+      case 'recurrente':
+        this.generateRecurrentesReport(fechaIni, fechaFin);
+        break;
+      case 'mensual':
+        this.generateMensualesReport(fechaIni, fechaFin);
+        break;
+      default:
+        this.generateMensualesReport(fechaIni, fechaFin);
+        break;
     }
   }
 
@@ -93,7 +140,7 @@ export class ReportsComponent {
       fechaFin, 
       this.paymentType, 
       this.status,
-      this.cancha // Send cancha parameter
+      this.cancha
     ).subscribe(
       (data: ArrayBuffer) => {
         this.displayPDF(data);
@@ -102,7 +149,7 @@ export class ReportsComponent {
       (error) => {
         console.error('Error generating reservas report:', error);
         this.showLoading = false;
-        alert('Error al generar el reporte de reservas');
+        alert('Error al generar el reporte de reservas puntuales');
       }
     );
   }
@@ -113,7 +160,7 @@ export class ReportsComponent {
       fechaFin, 
       this.paymentType, 
       this.status,
-      this.cancha // Send cancha parameter
+      this.cancha
     ).subscribe(
       (data: ArrayBuffer) => {
         this.displayPDF(data);
@@ -122,7 +169,25 @@ export class ReportsComponent {
       (error) => {
         console.error('Error generating recurrentes report:', error);
         this.showLoading = false;
-        alert('Error al generar el reporte de recurrentes');
+        alert('Error al generar el reporte de reservas recurrentes');
+      }
+    );
+  }
+
+  private generateMensualesReport(fechaIni: string, fechaFin: string) {
+    this.reportsService.getMonthlyRecurrentReport(
+      fechaIni, 
+      fechaFin, 
+      this.status
+    ).subscribe(
+      (data: ArrayBuffer) => {
+        this.displayPDF(data);
+        this.showLoading = false;
+      },
+      (error) => {
+        console.error('Error generating mensuales report:', error);
+        this.showLoading = false;
+        alert('Error al generar el reporte de reservas mensuales');
       }
     );
   }
@@ -141,6 +206,11 @@ export class ReportsComponent {
   getPaymentTypeLabel(paymentValue: string): string {
     const option = this.paymentTypeOptions.find(opt => opt.value === paymentValue);
     return option ? option.label : paymentValue;
+  }
+
+  getReportTypeLabel(): string {
+    const option = this.reportTypeOptions.find(opt => opt.value === this.reportType);
+    return option ? option.label : this.reportType;
   }
 
   getCanchaLabel(canchaValue: string): string {

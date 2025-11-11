@@ -56,9 +56,6 @@ export class BookingOneTimeComponent implements OnInit {
   categoria: string = '';
 
   systemConfigList: { [key: string]: ConfiguracionSistema } = {};
-  get enableRecurrentBooking(): boolean | undefined{
-    return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? true;
-  }
   get HorasValidacionPago(): number | undefined {
     return this.systemConfigList[ClaveConfiguracion.HORAS_VALIDACION_PAGO]?.valorNumerico;
   } 
@@ -238,6 +235,7 @@ export class BookingOneTimeComponent implements OnInit {
       size: 'lg',
       windowClass: 'ticket-modal'
     });
+    modalRef.componentInstance.bookingType = 'puntual'
     modalRef.componentInstance.reservationData = data.reservaDto;
     modalRef.componentInstance.showAsModal = true;
     modalRef.componentInstance.autoLoad = true;
@@ -457,7 +455,7 @@ export class BookingOneTimeComponent implements OnInit {
             item.reservaDto.estadoReserva = EstadoReserva.PAGADA;
             const updatedReserva = await this.updateReserva(item.reservaDto);
             return { 
-              item: updatedReserva, 
+              item: updatedReserva.reservaPuntualDto, 
               text: `${text} - Pago registrado exitosamente`, 
               type: 'success',
               hasPayment: true,
@@ -625,18 +623,17 @@ export class BookingOneTimeComponent implements OnInit {
         montoTotal: item.reservaDto?.montoTotal || '-',        
         estadoValidacion: item.reservaDto?.estadoValidacion || '-',
         estadoReserva: item.reservaDto?.estadoReserva || '-',
-        observaciones: item.observaciones || '-',        
-        // Approval information
+        observaciones: item.observaciones || '-',  
         fechaAprobacion: item.reservaDto?.fechaAprobacion ? new Date(item.reservaDto.fechaAprobacion).toLocaleDateString() : '-',
         fechaRechazo: item.reservaDto?.fechaRechazo ? new Date(item.reservaDto.fechaRechazo).toLocaleDateString() : '-',
         motivoRechazo: item.reservaDto?.motivoRechazo || '-',
         aprobadoPor: item.reservaDto?.aprobadoPor || '-',
-        // contributor information
+        
         tipoContribuyente: item.reservaDto?.contribuyenteDto?.tipoContribuyente || '-',
         contribuyente: item.reservaDto?.contribuyenteDto?.nombreCompleto || 
                     `${item.reservaDto?.contribuyenteDto?.nombre || ''} ${item.reservaDto?.contribuyenteDto?.primerApellido || ''} ${item.reservaDto?.contribuyenteDto?.segundoApellido || ''}`.trim(),
         carnet: item.reservaDto?.contribuyenteDto?.numeroDocumento || '-',
-        // Organization information (if applicable)
+        
         esOrganizacion: item.reservaDto?.organizacionDto ? 'SI' : 'NO',
         nombreOrganizacion: item.reservaDto?.organizacionDto?.nombre || '-',
       };      

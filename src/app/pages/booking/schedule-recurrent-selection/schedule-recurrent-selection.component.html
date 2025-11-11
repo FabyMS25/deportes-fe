@@ -3,26 +3,42 @@
     <div class="col-lg-8">
       <div class="card">        
         <div class="card-body">
-          <!-- Conflict Alert -->
-          <div class="alert alert-warning" *ngIf="reservationConflicts.length > 0 && showConflicts">
-            <div class="d-flex justify-content-between align-items-start">
-              <div>
-                <h6 class="alert-heading">
-                  <i class="ri-alert-line me-2"></i>
-                  Conflictos de Reserva Detectados
-                </h6>
-                <p class="mb-2">Se encontraron conflictos con las siguientes fechas:</p>
-                <div *ngFor="let conflict of reservationConflicts" class="conflict-detail mb-2 p-2 bg-white rounded">
-                  <div class="fw-medium text-danger">
-                    {{ conflict.date | date:'fullDate' }} ({{ conflict.dayName | titlecase }})
+          <div *ngIf="showConflicts && reservationConflicts.length > 0" class="alert alert-warning mt-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">
+                <i class="ri-alert-line me-2"></i>
+                Conflictos de Reserva Encontrados
+              </h6>
+              <button type="button" class="btn-close" (click)="hideConflicts()"></button>
+            </div>
+            
+            <div class="mt-2">
+              <p class="mb-2">Las siguientes fechas tienen conflictos con reservas existentes:</p>
+              
+              <div class="conflicts-list">
+                <div *ngFor="let conflict of reservationConflicts" class="conflict-item border rounded p-2 mb-2">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <strong>{{ conflict.date | date:'fullDate' }}</strong> - {{ conflict.dayName }}
+                    </div>
+                    <span class="badge bg-danger">Ocupado</span>
                   </div>
-                  <div *ngFor="let slotConflict of conflict.conflictingSlots" class="small text-muted ms-3">
-                    • {{ slotConflict.slot.horaInicio }} - {{ slotConflict.slot.horaFin }}: 
-                    {{ slotConflict.conflictWith }}
+                  
+                  <div class="conflict-slots mt-1">
+                    <div *ngFor="let slotConflict of conflict.conflictingSlots" class="slot-conflict small text-muted">
+                      • {{ slotConflict.slot.horaInicio }}-{{ slotConflict.slot.horaFin }}: 
+                      {{ slotConflict.conflictWith }}
+                    </div>
                   </div>
                 </div>
               </div>
-              <button type="button" class="btn-close" (click)="hideConflicts()" aria-label="Close"></button>
+              
+              <div class="mt-2">
+                <small class="text-muted">
+                  <i class="ri-information-line me-1"></i>
+                  Por favor, ajuste sus horarios o fechas para evitar estos conflictos.
+                </small>
+              </div>
             </div>
           </div>
 

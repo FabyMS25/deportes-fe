@@ -31,8 +31,11 @@ export class MapDashboardComponent implements OnInit {
     fieldList: any[] = [];
     
     systemConfigList: { [key: string]: ConfiguracionSistema } = {};
-    get enableRecurrentBooking(): boolean | undefined {
-        return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? true;
+    get enableSolicitudRecurrentBooking(): boolean | undefined{
+        return this.systemConfigList[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
+    }
+    get enableRecurrentBooking(): boolean | undefined{
+        return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
     }
 
     loading = false;
@@ -53,7 +56,6 @@ export class MapDashboardComponent implements OnInit {
     minTarifa: number | null = null;
     maxTarifa: number | null = null;
 
-    // Search properties
     searchQuery: string = '';
     searchResults: any[] = [];
     showSearchResults: boolean = false;
@@ -105,15 +107,11 @@ export class MapDashboardComponent implements OnInit {
             center: [-17.4010000, -66.2871000],
             layers: [this.main, this.mainList]
         });
-
         this.layerControl = L.control.layers(this.baseMaps, this.overlayMaps).addTo(this.map);
-
-        // Add custom search control
         this.addCustomSearchControl();
     }
 
     private addCustomSearchControl() {
-        // Create custom search control
         const SearchControl = L.Control.extend({
             options: {
                 position: 'topleft'
@@ -153,29 +151,21 @@ export class MapDashboardComponent implements OnInit {
                 resultsContainer.style.maxHeight = '300px';
                 resultsContainer.style.overflowY = 'auto';
                 resultsContainer.style.borderTop = '1px solid #e9ecef';
-
-                // Stop propagation of map events
                 L.DomEvent.disableClickPropagation(container);
                 L.DomEvent.disableScrollPropagation(container);
-
-                // Search input handler
                 searchInput.addEventListener('input', (e: any) => {
                     this.onSearchInput(e.target.value, resultsContainer);
                 });
-
                 searchInput.addEventListener('focus', () => {
                     if (this.searchResults.length > 0) {
                         resultsContainer.style.display = 'block';
                     }
                 });
-
-                // Click outside to close
                 document.addEventListener('click', (e: any) => {
                     if (!container.contains(e.target)) {
                         resultsContainer.style.display = 'none';
                     }
                 });
-
                 return container;
             }
         });
@@ -186,25 +176,20 @@ export class MapDashboardComponent implements OnInit {
 
     private onSearchInput(query: string, resultsContainer: HTMLElement) {
         this.searchQuery = query.toLowerCase().trim();
-        
         if (this.searchQuery.length < 2) {
             resultsContainer.style.display = 'none';
             this.searchResults = [];
             return;
         }
-
-        // Search in complexes
         this.searchResults = this.complexList.filter(complex => {
             const matchName = complex.nombre?.toLowerCase().includes(this.searchQuery);
             const matchLocation = complex.ubicacion?.toLowerCase().includes(this.searchQuery);
             const matchDistrict = complex.distrito?.toLowerCase().includes(this.searchQuery);
             const matchEncargado = complex.encargadosDtoList?.some((enc: any) => 
                 enc.nombre?.toLowerCase().includes(this.searchQuery)
-            );
-            
+            );            
             return matchName || matchLocation || matchDistrict || matchEncargado;
         });
-
         this.renderSearchResults(resultsContainer);
     }
 
@@ -220,10 +205,7 @@ export class MapDashboardComponent implements OnInit {
             noResults.innerHTML = '<i class="ri-information-line"></i> No se encontraron resultados';
             return;
         }
-
         container.style.display = 'block';
-
-        // Limit to 10 results
         const limitedResults = this.searchResults.slice(0, 10);
 
         limitedResults.forEach(complex => {
@@ -293,18 +275,13 @@ export class MapDashboardComponent implements OnInit {
     }
 
     private selectSearchResult(complex: any) {
-        // Remove previous search marker if exists
         if (this.currentSearchMarker) {
             this.map.removeLayer(this.currentSearchMarker);
         }
-
-        // Center map on selected complex
         this.map.setView([complex.latitud, complex.longitud], 17, {
             animate: true,
             duration: 0.5
         });
-
-        // Find and open popup for this complex
         this.mainList.eachLayer((layer: any) => {
             if (layer.getLatLng) {
                 const latlng = layer.getLatLng();
@@ -315,8 +292,6 @@ export class MapDashboardComponent implements OnInit {
                 }
             }
         });
-
-        // Add a temporary highlight circle
         const highlightCircle = L.circle([complex.latitud, complex.longitud], {
             color: '#0d6efd',
             fillColor: '#0d6efd',
@@ -324,8 +299,6 @@ export class MapDashboardComponent implements OnInit {
             radius: 100,
             weight: 2
         }).addTo(this.map);
-
-        // Remove highlight after 3 seconds
         setTimeout(() => {
             this.map.removeLayer(highlightCircle);
         }, 3000);
@@ -445,7 +418,7 @@ export class MapDashboardComponent implements OnInit {
                         <button class="btn btn-primary btn-sm w-100 mb-2 btn-reserva-puntual">
                             <i class="ri-calendar-check-line"></i>Reserva Puntual
                         </button>                        
-                        ${this.userRole !== 'Contribuyente' || (this.userRole === 'Contribuyente' && this.userData.estadoUsuario === EstadoUsuario.ACTIVO && this.enableRecurrentBooking) ? `
+                        ${this.userRole !== 'Contribuyente' || (this.userRole === 'Contribuyente' && this.userData.estadoUsuario === EstadoUsuario.ACTIVO && (this.enableRecurrentBooking || this.enableSolicitudRecurrentBooking)) ? `
                             <button class="btn btn-success btn-sm w-100 mb-2 btn-reserva-recurrente">
                                 <i class="ri-repeat-line"></i>Reserva Recurrente
                             </button>

@@ -58,20 +58,19 @@ export class RuatCallsService {
       codigoAlcaldia: codigoAlcaldia,
       codigoUsuario: codigoUsuario,
   
-      numeroDocumento: data.nroCarnet,
+      numeroDocumento: data.numeroDocumento,
       tipoDocumento: data.tipoDocumento,
-      expedido: data.ciExpedido,
+      expedido: data.expedido,
       nombre: data.nombre,
-      primerApellido: data.apPaterno,
-      segundoApellido: data.apMaterno,
+      primerApellido: data.primerApellido,
+      segundoApellido: data.segundoApellido,
       estadoCivil: data.estadoCivil,
-      fechaNacimiento: data.fechaNac,
-      genero: data.sexo,
+      fechaNacimiento: data.fechaNacimiento,
+      genero: data.genero,
       apellidoEsposo: "",  
       motivo:"REGISTRO TASAS Y OTROS INGRESOS",
       observacion: "REGISTRO PARA DEPORTESAPP - GAMQ"
     }
-    console.log(contribuyente)
     return this.http.post<any>(
       `${apiUrl}/registerContribuyente`,
       contribuyente,

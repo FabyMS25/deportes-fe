@@ -32,7 +32,6 @@ export class PassResetsService {
   
     return this.authService.loginByUsername(user.username, user.password).pipe(
       map((data) => {
-        console.log(data);
         return data.token; // Return the token
       })
     );

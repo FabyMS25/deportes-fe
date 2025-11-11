@@ -47,6 +47,7 @@ interface PuntualSchedule {
 })
 export class ReservationFormComponent implements OnInit, OnDestroy { 
   @Input() bookingType!: BookingType;
+  @Input() actionType?:'book' | 'request' | 'none';
   @Input() dataComplejo!: ComplejoDeportivo;
   @Input() dataField!: CampoDeportivo;
   @Input() selectedTariff!: Tarifa;
@@ -81,7 +82,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   
   conceptos: any[] = [];  
   businessHours: any = null;
-  requiresValidation = false;
+  requiresValidation = this.actionType==='book'? false:true;
 
   minDate = this.safeFormatDate(new Date(), 'yyyy-MM-dd');
   maxDate = this.safeFormatDate(addDays(new Date(), 30), 'yyyy-MM-dd');
@@ -218,7 +219,6 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     const recurrentFechaFin = this.recurrentSchedule?.fechaFin ? 
       this.safeFormatDate(this.recurrentSchedule.fechaFin, 'yyyy-MM-dd') : '';    
     this.calculateValidationRequirement();
-    const numeroReservaDisabled = this.userRole === 'Contribuyente' || this.userRole === 'Representante';
     const initialEstadoValidacion = this.requiresValidation ? 
       EstadoValidacion.PENDIENTE : EstadoValidacion.APROBADA;    
     const initialEstadoReserva = this.requiresValidation ? 
@@ -229,7 +229,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       estadoValidacion: [{ value: initialEstadoValidacion, disabled: true }],
       estadoReserva: [{ value: initialEstadoReserva, disabled: true }],
       numeroReserva: [
-        { value: this.numeroReserva, disabled: numeroReservaDisabled }, 
+        { value: this.numeroReserva, disabled: (this.userRole === 'Contribuyente' || this.userRole === 'Representante') }, 
         [Validators.required, this.reservationNumberFormatValidator()]
       ],
       contribuyenteDto: [this.selectedContribuyente || null, [Validators.required]],
@@ -313,8 +313,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   private generateFallbackReservationNumber(): void {
     const timestamp = new Date().getTime().toString().slice(-6);
     const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    this.numeroReserva = `RES-${timestamp}-${random}`;
-    
+    this.numeroReserva = `RES-${timestamp}-${random}`;    
     if (this.reservationForm) {
       this.reservationForm.patchValue({ numeroReserva: this.numeroReserva });
     }
@@ -339,13 +338,10 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     });
   }
   validateCustomReservationNumber(): void {
-    const customNumber = this.reservationForm?.get('numeroReserva')?.value;
-    
+    const customNumber = this.reservationForm?.get('numeroReserva')?.value;    
     if (!customNumber) {
       return;
     }
-
-    // Basic format validation
     const formatRegex = /^\d{4}\/\d{2}$/;
     if (!formatRegex.test(customNumber)) {
       Swal.fire({
@@ -374,7 +370,6 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
             icon: 'warning',
             confirmButtonText: 'Entendido'
           });
-          // Revert to previous valid number
           this.reservationForm?.patchValue({ numeroReserva: this.numeroReserva });
         }
       },
@@ -394,7 +389,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       const value = control.value;
       
       if (!value) {
-        return null; // Let required validator handle empty values
+        return null;
       }
       
       const formatRegex = /^\d{4}\/\d{2}$/;
@@ -421,7 +416,10 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       if (this.userRole === 'Admin' || this.userRole === 'Encargado') {
         this.requiresValidation = false;
         return;
+      }else if(this.actionType==='book'){
+        this.requiresValidation = false;
       }
+      
       
       if (this.selectedContribuyente.puedeReservarGratis && this.dataField.accesoLibre) {
         this.requiresValidation = false;
@@ -946,7 +944,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     const currencyPipe = new CurrencyPipe('en-US');
     const formattedTotal = currencyPipe.transform(this.calculatedPrice, 'BOB', 'symbol-narrow', '1.2-2');
     Swal.fire({
-      title: 'Confirmar Reserva',
+      title: `Confirmar ${this.actionType==='book'? 'Reserva': 'Solicitud'}`,
       html: `
         <div class="text-start">
           <p>¿Está seguro de que desea confirmar esta reserva?</p>
@@ -962,7 +960,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       `,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Sí, Confirmar',
+      confirmButtonText: 'Sí, '+ this.actionType==='book'? 'Reservar': 'Solicitar',
       cancelButtonText: 'Revisar',
       confirmButtonColor: '#198754',
       cancelButtonColor: '#6c757d'
@@ -975,11 +973,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   private processReservation(): void {
     this.isSubmitting = true;
     const reservaData = this.prepareReservationData();
-    
-    console.log(this.reservationForm.value)
-    console.log(reservaData)
     const isFreeReservation = reservaData.esReservaGratuita;
-    
     if (isFreeReservation) {
       this.saveReservation(reservaData);
     } else if (!this.requiresValidation) {
@@ -993,23 +987,18 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     const formValue = this.reservationForm.getRawValue();
     let estadoValidacion: EstadoValidacion;
     let estadoReserva: EstadoReserva;
-
-    // Check if organization can reserve for free
     const selectedOrganization = formValue.organizacionDto;
     const isFreeReservation = selectedOrganization?.permiteReservasGratuitas;
-
-    console.log('Prepare Data - isFreeReservation:', isFreeReservation); // Debug log
-
     if (isFreeReservation || !this.requiresValidation || this.userRole === 'Admin' || this.userRole === 'Encargado') {
       estadoValidacion = EstadoValidacion.APROBADA;
-      estadoReserva = EstadoReserva.PENDIENTE;
+      estadoReserva = EstadoReserva.EN_CURSO;
     } else {
       estadoValidacion = EstadoValidacion.PENDIENTE;
       estadoReserva = EstadoReserva.SOLICITADA;
     }
 
     const reserva: Reserva = {
-      esReservaGratuita: isFreeReservation, // Set this flag
+      esReservaGratuita: isFreeReservation,
       fechaCreacion: new Date(),
       fechaActualizacion: new Date(),
       tipoReserva: this.bookingType,
@@ -1017,7 +1006,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       numeroReserva: formValue.numeroReserva,
       estadoValidacion: estadoValidacion,
       estadoReserva: estadoReserva,
-      montoTotal: isFreeReservation ? 0 : this.calculatedPrice, // Set total to 0 for free reservations
+      montoTotal: isFreeReservation ? 0 : this.calculatedPrice,
       clasificadorRuatId: this.selectedTariff.clasificadorRuatDto?.uuid || '',
       contribuyenteDto: formValue.contribuyenteDto,
       campoDeportivoDto: this.dataField,
@@ -1027,8 +1016,6 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     if (formValue.esParaOrganizacion && formValue.organizacionDto) {
       reserva.organizacionDto = formValue.organizacionDto;
     }
-    
-    // Rest of your existing code for puntual/recurrent reservations...
     if (this.bookingType === 'puntual') {
       const fechaUso = this.safeParseDate(formValue.fechaUso);
       reserva.reservaPuntualDto = {
@@ -1287,16 +1274,13 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       organizacionDto: organizacion,
       esParaOrganizacion: true
     });
-    this.showOrganizationSearch = false;
-    
+    this.showOrganizationSearch = false;    
     if (organizacion.representanteDto) {
       this.selectedContribuyente = organizacion.representanteDto;
       this.reservationForm.patchValue({
         contribuyenteDto: organizacion.representanteDto
       });
     }
-    
-    console.log('selected org', this.selectedOrganization)
     this.calculatePrice();
     this.calculateValidationRequirement();
   }
@@ -1319,8 +1303,6 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       organizacionDto: null,
       esParaOrganizacion: false
     });
-    
-    // Add these lines to trigger price and validation updates
     this.calculatePrice();
     this.calculateValidationRequirement();
   }
@@ -1332,7 +1314,6 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
           this.contribuyentesList = response.payload || [];
           this.filteredContribuyentes = [...this.contribuyentesList];
         } else {
-          console.warn('Unexpected response format:', response);
           this.contribuyentesList = [];
           this.filteredContribuyentes = [];
         }
@@ -1357,7 +1338,6 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         if (response.status === 'OK') {
           this.organizationsList = response.payload.content || [];
         } else {
-          console.warn('Unexpected response format:', response);
           this.organizationsList = [];
         }
       },

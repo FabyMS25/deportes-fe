@@ -15,6 +15,13 @@ interface CampoWithTariff {
   isExpanded?: boolean;
 }
 
+interface TarifaPermission {
+  canBook: boolean;
+  canRequest: boolean;
+  message: string;
+  actionType: 'book' | 'request' | 'none';
+}
+
 @Component({
   selector: 'app-campo-selection',
   standalone: true,
@@ -39,26 +46,21 @@ export class CampoSelectionComponent implements OnInit {
   @Input() userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente'; 
   @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
 
-  get enableSolicitudOrganizationReservation(): boolean {
-    return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_ORGANIZACIONES]?.valorBoolean ?? false;
-  }
-  get enableOrganizationReservation(): boolean {
-    return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_ORGANIZACIONES]?.valorBoolean ?? false;
-  }
-  get enableSolicitudEventsBooking(): boolean{
+  // Configuration getters
+  get enableSolicitudEventsBooking(): boolean {
     return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_EVENTOS]?.valorBoolean ?? false;
   }
   get enableEventsBooking(): boolean {
     return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_EVENTOS]?.valorBoolean ?? false;
   }
-  get enableSolicitudRecurrentBooking(): boolean | undefined{
+  get enableSolicitudRecurrentBooking(): boolean {
     return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
   }
-  get enableRecurrentBooking(): boolean | undefined{
+  get enableRecurrentBooking(): boolean {
     return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
   }
 
-  @Output() campoSelected = new EventEmitter<{field: CampoDeportivo; tariff: Tarifa;}>();
+  @Output() campoSelected = new EventEmitter<{actionType:'book' | 'request' | 'none',field: CampoDeportivo; tariff: Tarifa;}>();
   @Output() goBack = new EventEmitter<void>();
 
   camposConTarifas: CampoWithTariff[] = [];
@@ -66,13 +68,12 @@ export class CampoSelectionComponent implements OnInit {
   
   searchText = '';
   filterByIluminacion?: boolean;
-  filterBySuperficie?: string ='';
-  filterByCategoria?: string ='';
+  filterBySuperficie?: string = '';
+  filterByCategoria?: string = '';
 
   isLoading = false;
 
   ngOnInit(): void {
-    console.log(this.systemConfigs)
     if (!this.dataComplejo) {
       return;
     }
@@ -127,6 +128,142 @@ export class CampoSelectionComponent implements OnInit {
     });
   }
 
+  getTarifaPermission(campo: CampoDeportivo, tarifa: Tarifa): TarifaPermission {
+    const tipoCobro = tarifa.tipoCobro.toLowerCase();
+    const isRegularUser = this.userRole === 'Contribuyente' || this.userRole === 'Representante';
+    const isAdminUser = this.userRole === 'Encargado' || this.userRole === 'Admin';
+    if (isAdminUser) {
+      return {
+        canBook: true,
+        canRequest: false,
+        message: 'Reserva directa disponible',
+        actionType: 'book'
+      };
+    }
+    if (this.bookingType === 'puntual') {
+      return this.getPuntualPermission(campo, tarifa, tipoCobro);
+    } else if (this.bookingType === 'recurrente') {
+      return this.getRecurrentePermission(campo, tarifa, tipoCobro);
+    }
+    return {
+      canBook: false,
+      canRequest: false,
+      message: 'Tipo de reserva no disponible',
+      actionType: 'none'
+    };
+  }
+
+  private getPuntualPermission(campo: CampoDeportivo, tarifa: Tarifa, tipoCobro: string): TarifaPermission {
+    const campoRequiereAprobacion = campo.requiereAprobacion;
+    if (tipoCobro === 'por_hora' || tipoCobro === 'por_persona') {
+      if (campoRequiereAprobacion) {
+        return {
+          canBook: false,
+          canRequest: true,
+          message: 'Requiere aprobación administrativa',
+          actionType: 'request'
+        };
+      } else {
+        return {
+          canBook: true,
+          canRequest: false,
+          message: 'Reserva directa disponible',
+          actionType: 'book'
+        };
+      }
+    }
+    
+    // For por_evento - check event-specific permissions
+    if (tipoCobro === 'por_evento') {
+      if (this.enableEventsBooking) {
+        if (campoRequiereAprobacion) {
+          return {
+            canBook: false,
+            canRequest: true,
+            message: 'Evento requiere aprobación administrativa',
+            actionType: 'request'
+          };
+        } else {
+          return {
+            canBook: true,
+            canRequest: false,
+            message: 'Reserva de evento disponible',
+            actionType: 'book'
+          };
+        }
+      } else if (this.enableSolicitudEventsBooking) {
+        return {
+          canBook: false,
+          canRequest: true,
+          message: 'Solicitud de evento - será validada por administrador',
+          actionType: 'request'
+        };
+      } else {
+        return {
+          canBook: false,
+          canRequest: false,
+          message: 'No puede realizar reservas de eventos sin autorización',
+          actionType: 'none'
+        };
+      }
+    }
+
+    return {
+      canBook: false,
+      canRequest: false,
+      message: 'Tipo de cobro no disponible',
+      actionType: 'none'
+    };
+  }
+
+  private getRecurrentePermission(campo: CampoDeportivo, tarifa: Tarifa, tipoCobro: string): TarifaPermission {
+    const campoRequiereAprobacion = campo.requiereAprobacion;
+    
+    // If campo requires approval, only allow requests
+    if (campoRequiereAprobacion) {
+      if (this.enableSolicitudRecurrentBooking) {
+        return {
+          canBook: false,
+          canRequest: true,
+          message: 'Reserva recurrente requiere aprobación',
+          actionType: 'request'
+        };
+      } else {
+        return {
+          canBook: false,
+          canRequest: false,
+          message: 'No puede solicitar reservas recurrentes en este campo',
+          actionType: 'none'
+        };
+      }
+    }
+    
+    // If campo doesn't require approval, check recurrent booking permissions
+    if (this.enableRecurrentBooking) {
+      return {
+        canBook: true,
+        canRequest: false,
+        message: 'Reserva recurrente disponible',
+        actionType: 'book'
+      };
+    } else if (this.enableSolicitudRecurrentBooking) {
+      return {
+        canBook: false,
+        canRequest: true,
+        message: 'Solicitud de reserva recurrente - será validada',
+        actionType: 'request'
+      };
+    } else {
+      return {
+        canBook: false,
+        canRequest: false,
+        message: 'No puede realizar reservas recurrentes sin autorización',
+        actionType: 'none'
+      };
+    }
+  }
+
+
   toggleCampoExpansion(item: CampoWithTariff): void {
     if (this.selectedCampoItem === item) {
       item.isExpanded = !item.isExpanded;
@@ -136,19 +273,35 @@ export class CampoSelectionComponent implements OnInit {
       }
       this.selectedCampoItem = item;
       item.isExpanded = true;
-      // if (item.tarifasActivas.length === 1) {
-      //   setTimeout(() => {
-      //     this.selectTarifa(item, item.tarifasActivas[0]);
-      //   }, 300);
-      // }
     }
   }
-
+  canSelectTarifa(campo: CampoDeportivo, tarifa: Tarifa): boolean {
+    const permission = this.getTarifaPermission(campo, tarifa);
+    return permission.canBook || permission.canRequest;
+  }
+  getTarifaActionText(campo: CampoDeportivo, tarifa: Tarifa): string {
+    const permission = this.getTarifaPermission(campo, tarifa);
+    if (permission.canBook) return 'Reservar';
+    if (permission.canRequest) return 'Solicitar';
+    return 'No disponible';
+  }
+getTarifaButtonClasses(campo: CampoDeportivo, tarifa: Tarifa): string {
+  const permission = this.getTarifaPermission(campo, tarifa);
+  
+  if (permission.canBook) return 'can-book';
+  if (permission.canRequest) return 'can-request';
+  return 'cannot-select';
+}
   selectTarifa(item: CampoWithTariff, tarifa: Tarifa): void {
     if (!tarifa || !item) return;
+    const permission = this.getTarifaPermission(item.campo, tarifa);
+    if (!permission.canBook && !permission.canRequest) {
+      return;
+    }
     this.campoSelected.emit({
       field: item.campo,
-      tariff: tarifa
+      tariff: tarifa,
+      actionType: permission.actionType // 'book' | 'request' | 'none'
     });
   }
 
@@ -213,7 +366,6 @@ export class CampoSelectionComponent implements OnInit {
     return Array.from(categorias).sort();
   }
 
-
   getTipoCobro(tipo: string): string {
     const tipoMap: Record<string, string> = {
       'por_hora': 'Por hora',
@@ -257,5 +409,4 @@ export class CampoSelectionComponent implements OnInit {
   back(): void {
     this.goBack.emit();
   }
-
 }

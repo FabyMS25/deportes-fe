@@ -11,21 +11,25 @@ import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.m
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { ReservaPeriodo } from 'src/app/core/models/reservaPeriodo.models';
+
 interface TimeSlot {
   horaInicio: string;
   horaFin: string;
 }
+
 interface DayConfig {
   dia: string;
   diaDisplay: string;
   selected: boolean;
   horarios: TimeSlot[];
 }
+
 interface ReservationConflict {
   date: Date;
   dayName: string;
   conflictingSlots: { slot: TimeSlot, conflictWith: string }[];
 }
+
 @Component({
   selector: 'app-schedule-recurrent-selection',
   standalone: true,
@@ -39,7 +43,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   @Input() reservationsList: Reserva[] = [];
   @Input() userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente'; 
   @Output() scheduleCompleted = new EventEmitter<ReservaRecurrente>();
-  // @Input() systemConfigs: { [key: string]: ConfiguracionSistema} = {};
 
   tipoRecurrencia: string = '';
   fechaInicio: string = '';
@@ -55,30 +58,33 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     { dia: 'domingo', diaDisplay: 'Domingo', selected: false, horarios: [{ horaInicio: '08:00', horaFin: '09:00' }] }
   ];
 
-  tablero: string[][] = []; // Starting from Monday (0=Monday, 6=Sunday)
+  tablero: string[][] = [];
   calendarMonths: any[] = [];
-  minTime = '06:00'; maxTime = '23:00';
+  minTime = '06:00'; 
+  maxTime = '23:00';
   
   errorMessage = '';
   reservationConflicts: ReservationConflict[] = [];
   showConflicts = false;
   
   systemConfigList: { [key: string]: ConfiguracionSistema } = {};
-  get enableSolicitudRecurrentBooking(): boolean | undefined{
+
+  get enableSolicitudRecurrentBooking(): boolean | undefined {
     return this.systemConfigList[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
   }
-  get enableRecurrentBooking(): boolean | undefined{
+
+  get enableRecurrentBooking(): boolean | undefined {
     return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
   }
 
-  get anticipationHours(): number | undefined{
+  get anticipationHours(): number | undefined {
     if (!this.dataTariff) {
       return this.systemConfigList[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
     }
     switch (this.dataTariff.tipoCobro) {
       case 'por_evento':
         const diasEventos = this.systemConfigList[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico;
-        return diasEventos? diasEventos* 24:undefined;
+        return diasEventos ? diasEventos * 24 : undefined;
       case 'mensualidad': 
       case 'por_sesion': 
       case 'por_club':
@@ -89,8 +95,9 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   }
 
   constructor(
-      private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService
   ) {}
+
   ngOnInit(): void {
     this.systemConfigList = this.authenticationService.getAllConfigs();
     this.initializeDates();
@@ -112,6 +119,7 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   private formatDateForInput(date: Date): string {
     return date.toISOString().split('T')[0];
   }
+
   private parseDateFromInput(dateString: string): Date {
     return new Date(dateString + 'T00:00:00');
   }
@@ -119,6 +127,7 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   get fechaInicioDate(): Date {
     return this.parseDateFromInput(this.fechaInicio);
   }
+
   get fechaFinDate(): Date {
     return this.parseDateFromInput(this.fechaFin);
   }
@@ -168,9 +177,11 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     const weeks: any[] = [];
     let week: any[] = [];
     const startDay = firstDay.getDay();
+    
     for (let i = 0; i < startDay; i++) {
       week.push({ empty: true });
     }
+    
     for (let day = 1; day <= lastDay.getDate(); day++) {
       const currentDate = new Date(year, month, day);
       const isInRange = currentDate >= this.fechaInicioDate && currentDate <= this.fechaFinDate;
@@ -188,7 +199,8 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
         dayOfWeek: dayOfWeek,
         dayName: dayName,
         hasSchedule: hasSchedule,
-        isReserved: isReserved
+        isReserved: isReserved,
+        conflictDetails: isReserved ? this.getDayConflicts(currentDate) : null
       });
       
       if (week.length === 7) {
@@ -203,6 +215,7 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     if (week.length > 0) {
       weeks.push(week);
     }
+    
     return {
       year: year,
       month: month,
@@ -224,66 +237,89 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
       }
     });
   }
-  
+
   private checkReservationConflicts(date: Date): boolean {
     if (!this.reservationsList || this.reservationsList.length === 0) {
       return false;
     }
-    const checkDate = date.toISOString().split('T')[0];
+    
     const dayOfWeek = date.getDay();
     const dayName = this.getDayName(dayOfWeek);
     const dayConfig = this.diasSemana.find(d => d.dia === dayName);
+    
     if (!dayConfig?.selected) {
       return false;
     }
-    return this.reservationsList.some(reserva => {
-      if (reserva.campoDeportivoDto?.uuid !== this.dataField.uuid) {
-        return false;
-      }
+
+    return dayConfig.horarios.some(slot => 
+      this.hasTimeConflictWithExistingReservations(date, dayName, slot)
+    );
+  }
+
+  private hasTimeConflictWithExistingReservations(date: Date, dayName: string, slot: TimeSlot): boolean {
+    for (const reserva of this.reservationsList) {
+      if (reserva.campoDeportivoDto?.uuid !== this.dataField.uuid) continue;
       if (reserva.tipoReserva === 'recurrente' && reserva.reservaRecurrenteDto) {
         const recurrente = reserva.reservaRecurrenteDto;
         const reservaStart = new Date(recurrente.fechaInicio);
-        const reservaEnd = new Date(recurrente.fechaFin);
+        const reservaEnd = new Date(recurrente.fechaFin);        
         if (date >= reservaStart && date <= reservaEnd) {
-          const reservaDays = recurrente.diasSemana?.split(',') || [];
-          if (reservaDays.includes(dayName)) {
-            return dayConfig.horarios.some(slot => 
-              this.hasTimeConflictWithRecurrente(slot, recurrente)
-            );
+          const reservaDays = recurrente.diasSemana?.toLowerCase().split(',') || [];
+          
+          if (reservaDays.includes(dayName.toLowerCase())) {
+            if (this.hasTimeConflictWithRecurrenteTablero(slot, recurrente, dayName)) {
+              return true;
+            }
           }
         }
       }
-
       if (reserva.tipoReserva === 'periodo' && reserva.reservaPeriodoDto) {
-        const periodo : ReservaPeriodo = reserva.reservaPeriodoDto;
+        const periodo = reserva.reservaPeriodoDto;
         if (date.getFullYear() === periodo.año && date.getMonth() + 1 === periodo.mes) {
-          return dayConfig.horarios.some(slot => 
-            this.hasTimeConflictWithPeriodo(slot, reserva)
-          );
+          if (this.hasTimeConflictWithPeriodo(slot, reserva)) {
+            return true;
+          }
         }
       }
+    }
+    
+    return false;
+  }
 
+  private hasTimeConflictWithRecurrenteTablero(slot: TimeSlot, recurrente: any, dayName: string): boolean {
+    if (!recurrente.tableroDto?.horario) {
       return false;
+    }
+    
+    const dayIndex = this.getTableroIndex(dayName);
+    if (dayIndex === -1) return false;
+    
+    const existingTimeSlots = recurrente.tableroDto.horario[dayIndex] || [];
+    
+    return existingTimeSlots.some((existingSlot: string) => {
+      const [existingStart, existingEnd] = existingSlot.split('-');
+      return this.hasTimeConflict(
+        slot.horaInicio, 
+        slot.horaFin, 
+        existingStart, 
+        existingEnd
+      );
     });
   }
 
   private hasTimeConflictWithRecurrente(slot: TimeSlot, recurrente: any): boolean {
     if (recurrente.tableroDto?.horario) {
-      const dayIndex = this.getTableroIndex(this.getDayName(new Date().getDay()));
-      if (dayIndex !== -1 && recurrente.tableroDto.horario[dayIndex]) {
-        return recurrente.tableroDto.horario[dayIndex].some((timeRange: string) => {
-          const [existingStart, existingEnd] = timeRange.split('-');
-          return this.hasTimeConflict(slot.horaInicio, slot.horaFin, existingStart, existingEnd);
-        });
-      }
+      return this.hasTimeConflictWithRecurrenteTablero(slot, recurrente, this.getDayName(new Date().getDay()));
     }
     
-    // Fallback: check if durations overlap (assuming similar time slots)
+    const defaultStart = '08:00';
+    const defaultEnd = this.addHour(defaultStart, recurrente.duracionSesionHoras || 1);
+    
     return this.hasTimeConflict(
       slot.horaInicio, 
       slot.horaFin, 
-      '08:00',
-      this.addHour('08:00', recurrente.duracionSesionHoras || 1)
+      defaultStart, 
+      defaultEnd
     );
   }
 
@@ -291,8 +327,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     if (periodoReserva.reservaRecurrenteDto) {
       return this.hasTimeConflictWithRecurrente(slot, periodoReserva.reservaRecurrenteDto);
     }
-    
-    // Fallback: assume standard school hours (e.g., 08:00-10:00)
     return this.hasTimeConflict(slot.horaInicio, slot.horaFin, '08:00', '10:00');
   }
 
@@ -301,84 +335,13 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
       const [hours, minutes] = time.split(':').map(Number);
       return hours * 60 + minutes;
     };
-
+    
     const start1Min = timeToMinutes(start1);
     const end1Min = timeToMinutes(end1);
     const start2Min = timeToMinutes(start2);
     const end2Min = timeToMinutes(end2);
-
+    
     return start1Min < end2Min && start2Min < end1Min;
-  }
-
-  private addHour(time: string, hoursToAdd: number = 1): string {
-    const [hours, minutes] = time.split(':').map(Number);
-    const newHours = (hours + hoursToAdd) % 24;
-    return `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  }
-
-  private validateSchedule(): boolean {
-    this.errorMessage = '';
-    this.reservationConflicts = [];
-    
-    const selectedDays = this.diasSemana.filter(d => d.selected);
-    
-    if (selectedDays.length === 0) {
-      this.errorMessage = 'Debe seleccionar al menos un día de la semana';
-      return false;
-    }
-    
-    // Validate individual day configurations
-    for (const dia of selectedDays) {
-      if (dia.horarios.length === 0) {
-        this.errorMessage = `${dia.diaDisplay} no tiene horarios configurados`;
-        return false;
-      }
-
-      for (const slot of dia.horarios) {
-        if (!this.validateTimeRange(slot.horaInicio, slot.horaFin)) {
-          this.errorMessage = `Horario inválido para ${dia.diaDisplay}`;
-          return false;
-        }
-        
-        if (!this.isTimeInRange(slot.horaInicio) || !this.isTimeInRange(slot.horaFin)) {
-          this.errorMessage = `El horario para ${dia.diaDisplay} debe estar entre ${this.minTime} y ${this.maxTime}`;
-          return false;
-        }
-      }
-
-      if (this.hasTimeSlotOverlap(dia)) {
-        this.errorMessage = `Horarios superpuestos en ${dia.diaDisplay}`;
-        return false;
-      }
-    }
-    
-    // Check for conflicts with existing reservations
-    const conflicts = this.checkAllConflicts();
-    if (conflicts.length > 0) {
-      this.reservationConflicts = conflicts;
-      this.showConflicts = true;
-      this.errorMessage = `Se encontraron ${conflicts.length} conflicto(s) con reservas existentes`;
-      return false;
-    }
-    
-    return true;
-  }
-
-  private checkAllConflicts(): ReservationConflict[] {
-    const conflicts: ReservationConflict[] = [];
-    const start = this.fechaInicioDate;
-    const end = this.fechaFinDate;
-    const current = new Date(start);
-    
-    while (current <= end) {
-      const dayConflicts = this.getDayConflicts(new Date(current));
-      if (dayConflicts.conflictingSlots.length > 0) {
-        conflicts.push(dayConflicts);
-      }
-      current.setDate(current.getDate() + 1);
-    }
-    
-    return conflicts;
   }
 
   private getDayConflicts(date: Date): ReservationConflict {
@@ -405,37 +368,53 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   }
 
   private getConflictReason(date: Date, dayName: string, slot: TimeSlot): string | null {
-    const checkDate = date.toISOString().split('T')[0];
-    
     for (const reserva of this.reservationsList) {
       if (reserva.campoDeportivoDto?.uuid !== this.dataField.uuid) continue;
 
-      // Check recurrent reservations
       if (reserva.tipoReserva === 'recurrente' && reserva.reservaRecurrenteDto) {
         const recurrente = reserva.reservaRecurrenteDto;
         const reservaStart = new Date(recurrente.fechaInicio);
         const reservaEnd = new Date(recurrente.fechaFin);
         
         if (date >= reservaStart && date <= reservaEnd) {
-          const reservaDays = recurrente.diasSemana?.split(',') || [];
-          if (reservaDays.includes(dayName)) {
-            if (this.hasTimeConflictWithRecurrente(slot, recurrente)) {
-              return `Reserva recurrente: ${recurrente.observaciones || 'Sin descripción'}`;
+          const reservaDays = recurrente.diasSemana?.toLowerCase().split(',') || [];
+          if (reservaDays.includes(dayName.toLowerCase())) {
+            if (this.hasTimeConflictWithRecurrenteTablero(slot, recurrente, dayName)) {
+              const reservaInfo = `Reserva recurrente #${reserva.numeroReserva} (${recurrente.fechaInicio} a ${recurrente.fechaFin})`;
+              return reservaInfo;
             }
           }
         }
       }
+      
       if (reserva.tipoReserva === 'periodo' && reserva.reservaPeriodoDto) {
         const periodo = reserva.reservaPeriodoDto;
         if (date.getFullYear() === periodo.año && date.getMonth() + 1 === periodo.mes) {
           if (this.hasTimeConflictWithPeriodo(slot, reserva)) {
-            return `Mensualidad: ${reserva.estudianteDto?.nombreCompleto || 'Estudiante'}`;
+            return `Mensualidad: ${reserva.estudianteDto?.nombreCompleto || 'Estudiante'} - ${periodo.mes}/${periodo.año}`;
           }
         }
       }
     }
     
     return null;
+  }
+
+  private checkAllConflicts(): ReservationConflict[] {
+    const conflicts: ReservationConflict[] = [];
+    const start = this.fechaInicioDate;
+    const end = this.fechaFinDate;
+    const current = new Date(start);
+    
+    while (current <= end) {
+      const dayConflicts = this.getDayConflicts(new Date(current));
+      if (dayConflicts.conflictingSlots.length > 0) {
+        conflicts.push(dayConflicts);
+      }
+      current.setDate(current.getDate() + 1);
+    }
+    
+    return conflicts;
   }
 
   getConflictSummary(): string {
@@ -465,7 +444,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     return dayMap[diaName] !== undefined ? dayMap[diaName] : -1;
   }
 
-
   toggleDay(dia: DayConfig): void {
     dia.selected = !dia.selected;
     if (dia.selected && dia.horarios.length === 0) {
@@ -488,7 +466,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     this.generateCalendar();
     this.validateSchedule();
   }
-
 
   addTimeSlot(dia: DayConfig): void {
     const lastSlot = dia.horarios[dia.horarios.length - 1];
@@ -517,7 +494,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
       return;
     }
     
-    // Check for overlaps within the same day
     if (this.hasTimeSlotOverlap(dia)) {
       this.errorMessage = `Horarios superpuestos en ${dia.diaDisplay}`;
       return;
@@ -577,8 +553,7 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
 
   calculateSessionInfo(): number {
     const selectedDays = this.diasSemana.filter(d => d.selected);
-    if (selectedDays.length === 0) return 0;
-    
+    if (selectedDays.length === 0) return 0;    
     const start = this.fechaInicioDate;
     const end = this.fechaFinDate;
     const diffTime = end.getTime() - start.getTime();
@@ -614,6 +589,81 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     return (endMinutes - startMinutes) / 60;
   }
 
+  private calculateAverageDuration(): number {
+    const selectedDays = this.diasSemana.filter(d => d.selected);
+    if (selectedDays.length === 0) return 0;
+    
+    let totalDuration = 0;
+    let totalSlots = 0;
+    
+    selectedDays.forEach(dia => {
+      dia.horarios.forEach(slot => {
+        totalDuration += this.calculateDuration(slot.horaInicio, slot.horaFin);
+        totalSlots++;
+      });
+    });
+    
+    return totalSlots > 0 ? totalDuration / totalSlots : 0;
+  }
+
+  private validateSchedule(): boolean {
+    this.errorMessage = '';
+    this.reservationConflicts = [];
+    
+    const selectedDays = this.diasSemana.filter(d => d.selected);
+    
+    if (selectedDays.length === 0) {
+      this.errorMessage = 'Debe seleccionar al menos un día de la semana';
+      return false;
+    }
+    
+    if (!this.fechaInicio || !this.fechaFin) {
+      this.errorMessage = 'Debe seleccionar un rango de fechas válido';
+      return false;
+    }
+    
+    const startDate = this.fechaInicioDate;
+    const endDate = this.fechaFinDate;
+    
+    if (endDate <= startDate) {
+      this.errorMessage = 'La fecha de fin debe ser posterior a la fecha de inicio';
+      return false;
+    }
+    
+    for (const dia of selectedDays) {
+      if (dia.horarios.length === 0) {
+        this.errorMessage = `${dia.diaDisplay} no tiene horarios configurados`;
+        return false;
+      }
+
+      for (const slot of dia.horarios) {
+        if (!this.validateTimeRange(slot.horaInicio, slot.horaFin)) {
+          this.errorMessage = `Horario inválido para ${dia.diaDisplay}: la hora de fin debe ser mayor que la hora de inicio`;
+          return false;
+        }
+        
+        if (!this.isTimeInRange(slot.horaInicio) || !this.isTimeInRange(slot.horaFin)) {
+          this.errorMessage = `El horario para ${dia.diaDisplay} debe estar entre ${this.minTime} y ${this.maxTime}`;
+          return false;
+        }
+      }
+
+      if (this.hasTimeSlotOverlap(dia)) {
+        this.errorMessage = `Horarios superpuestos en ${dia.diaDisplay}`;
+        return false;
+      }
+    }
+    
+    const conflicts = this.checkAllConflicts();
+    if (conflicts.length > 0) {
+      this.reservationConflicts = conflicts;
+      this.showConflicts = true;
+      this.errorMessage = `Se encontraron ${conflicts.length} conflicto(s) con reservas existentes. Revise los detalles antes de continuar.`;
+      return false;
+    }
+    
+    return true;
+  }
 
   private validateTimeRange(start: string, end: string): boolean {
     return start < end;
@@ -622,23 +672,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   private isTimeInRange(time: string): boolean {
     return time >= this.minTime && time <= this.maxTime;
   }
-
-  private hasConflicts(): boolean {
-    const start = this.fechaInicioDate;
-    const end = this.fechaFinDate;
-    const current = new Date(start);
-    
-    while (current <= end) {
-      if (this.checkReservationConflicts(new Date(current))) {
-        return true;
-      }
-      current.setDate(current.getDate() + 1);
-    }
-    
-    return false;
-  }
-
-  // ==================== HELPERS ====================
 
   getDayTimes(dayName: string): string {
     const dayConfig = this.diasSemana.find(d => d.dia === dayName);
@@ -663,7 +696,11 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     return months[month];
   }
 
-  // ==================== ACTIONS ====================
+  private addHour(time: string, hoursToAdd: number = 1): string {
+    const [hours, minutes] = time.split(':').map(Number);
+    const newHours = (hours + hoursToAdd) % 24;
+    return `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }
 
   confirmar(): void {
     if (!this.validateSchedule()) {
@@ -688,23 +725,6 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     this.scheduleCompleted.emit(scheduleData);
   }
 
-  private calculateAverageDuration(): number {
-    const selectedDays = this.diasSemana.filter(d => d.selected);
-    if (selectedDays.length === 0) return 0;
-    
-    let totalDuration = 0;
-    let totalSlots = 0;
-    
-    selectedDays.forEach(dia => {
-      dia.horarios.forEach(slot => {
-        totalDuration += this.calculateDuration(slot.horaInicio, slot.horaFin);
-        totalSlots++;
-      });
-    });
-    
-    return totalSlots > 0 ? totalDuration / totalSlots : 0;
-  }
-
   get selectedDaysCount(): number {
     return this.diasSemana.filter(d => d.selected).length;
   }
@@ -714,13 +734,15 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   get totalHours(): number {
     return this.calculateTotalHours();
   }
+
   get diasSeleccionadosString(): string {
     return this.diasSemana
       .filter(d => d.selected)
       .map(d => d.diaDisplay)
       .join(', ');
   }
+
   get canConfirm(): boolean {
-    return this.selectedDaysCount > 0 && !this.errorMessage;
+    return this.selectedDaysCount > 0 && !this.errorMessage && this.reservationConflicts.length === 0;
   }
 }

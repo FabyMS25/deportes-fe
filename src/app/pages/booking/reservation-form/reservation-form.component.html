@@ -69,9 +69,8 @@
               
               <!-- Action buttons for editable users -->
               <div class="btn-group" *ngIf="canEditReservationNumber">
-                <!-- Validate button (shown when number is changed) -->
                 <button
-                  *ngIf="reservationForm?.get('numeroReserva')?.value !== numeroReserva && reservationForm?.get('numeroReserva')?.valid"
+                  *ngIf="reservationForm.get('numeroReserva')?.value !== numeroReserva && reservationForm.get('numeroReserva')?.valid"
                   class="btn btn-outline-primary"
                   type="button"
                   (click)="validateCustomReservationNumber()"
@@ -79,8 +78,6 @@
                   title="Validar número personalizado">
                   <i class="ri-check-line"></i>
                 </button>
-                
-                <!-- Generate new number button -->
                 <button
                   class="btn btn-outline-secondary"
                   type="button"
@@ -114,14 +111,11 @@
         </div>
 
         <hr class="my-3">
-
-        <!-- Schedule Information -->
         <div class="mb-4">
           <h6 class="mb-3 fw-bold">
             <i class="ri-calendar-2-line text-primary me-2"></i>
             {{ bookingType === 'puntual' ? 'Fecha y Horario' : 'Programación Recurrente' }}
           </h6>
-
           <div *ngIf="bookingType === 'puntual'">
             <div class="row g-2">
               <div class="col-md-3">
@@ -198,7 +192,7 @@
               <div class="col-md-3">
                 <label class="form-label fw-semibold">
                   <i class="ri-group-line me-1"></i>
-                  Personas <span class="text-danger" *ngIf="selectedTariff?.tipoCobro === 'por_persona'">*</span>
+                  Personas <span class="text-danger" *ngIf="selectedTariff.tipoCobro === 'por_persona'">*</span>
                 </label>
                 <input 
                   type="number" 

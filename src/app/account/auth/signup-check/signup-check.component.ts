@@ -137,7 +137,6 @@ export class SignupCheckComponent {
 
   ruatData: any;
   searchContribuyente(data:any){
-    console.log(data)
     this.ruatService.getContribuyentePorCi('QUI',data.numeroDocumento,data.tipoDocumento, data.expedido ).subscribe({    
       next: (resp: any) => {
         if(resp['status']==='OK'){

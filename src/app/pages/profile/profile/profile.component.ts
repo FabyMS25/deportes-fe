@@ -39,9 +39,9 @@ export class ProfileComponent {
       }else if(this.userRole === 'Encargado'){
         const funcionarioString = localStorage.getItem('assignaments');
         this.userEmployee =  funcionarioString ? JSON.parse(funcionarioString) : null;
-        this.userData = dataSaved.designacion.personaDto;
+        this.userData = dataSaved;
       }else{
-        this.userData = dataSaved.designacion.personaDto;
+        this.userData = dataSaved;
       }
   }
 

@@ -1101,7 +1101,6 @@ export class ModalComponent {
   private authRuat() {
     const usuario = this.systemConfigList.find(config => config.clave === ClaveConfiguracion.USUARIO_RUAT)?.valorTexto || '';
     const clave = this.systemConfigList.find(config => config.clave === ClaveConfiguracion.CLAVE_RUAT)?.valorTexto || '';
-    console.log(usuario, clave)
     if(usuario && clave){
       this.ruatService.authenticate(usuario,clave).subscribe({
         next: (response) => {

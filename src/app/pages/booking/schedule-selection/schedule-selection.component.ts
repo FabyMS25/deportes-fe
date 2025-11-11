@@ -144,7 +144,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
 
   ngOnInit(): void {
     this.systemConfigs = this.authenticationService.getAllConfigs();
-    console.log("this",this.systemConfigs['HORAS_VALIDACION_PAGO'].valorNumerico)
     this.scheduleState.currentWeekStart$
       .pipe(takeUntil(this.destroy$))
       .subscribe(start => {
@@ -392,7 +391,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     const slots: TimeSlot[] = [];
     const now = new Date();
     let minReservationTime = new Date(now.getTime()) ;
-    console.log(this.anticipationHours)
     if(this.anticipationHours) minReservationTime=new Date(now.getTime() + this.anticipationHours * 60 * 60 * 1000)
     const startMinutes = this.timeToMinutes(startTime);
     const endMinutes = this.timeToMinutes(endTime);

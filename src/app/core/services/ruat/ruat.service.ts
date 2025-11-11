@@ -71,24 +71,12 @@ export class RuatService {
       'tipoDocumento': tipoDocumento,
       'expedido': expedido
     };
-    console.log(headers, requestData)
-
     return this.http.post<any>(
       `${ruatUrl}/RuatServiciosWebContribuyentes/contribuyentes/comun/busquedaContribuyente`,
       requestData,
       { headers }
     );
   }
-    // this.ruatService.getContribuyentePorCi(token, ci, tipoDocumento).subscribe(
-    //   (response) => {
-    //     // Handle successful response here
-    //     console.log('Contribuyente Data:', response);
-    //   },
-    //   (error) => {
-    //     // Handle error here
-    //     console.error('Error:', error);
-    //   }
-    // );
 
   getDeudasContribuyente(token: string, tipoConsulta: string, nroDocumento: string, tipoDocumento: string): Observable<any> {
     const headers = new HttpHeaders({
@@ -108,17 +96,6 @@ export class RuatService {
       { headers }
     );
   }
-  // this.ruatService.getDeudasContribuyente(token, tipoConsulta, nroDocumento, tipoDocumento).subscribe(
-  //     (response) => {
-  //       // Handle successful response here
-  //       console.log('Deuda Data:', response);
-  //     },
-  //     (error) => {
-  //       // Handle error here
-  //       console.error('Error:', error);
-  //     }
-  //   );
-
 
   registerContribuyente(data:any): Observable<any> {
     const headers = new HttpHeaders({

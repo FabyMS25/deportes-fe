@@ -134,6 +134,7 @@
         <app-reservation-form
           *ngSwitchCase="BookingStep.RESERVATION_FORM"
           [bookingType]="bookingType"
+          [actionType]="bookingState.actionType"
           [contribuyente]="bookingState.contribuyente"
           [dataComplejo]="bookingState.complejo!"
           [dataField]="bookingState.campo!"

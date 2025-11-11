@@ -54,6 +54,22 @@ export class ReportsService {
     });
   }
 
+  getMonthlyRecurrentReport(
+    fechaini: string, 
+    fechafin: string, 
+    estado: string = 'TODO'
+  ): Observable<ArrayBuffer> {
+    let params = new HttpParams();
+    params = params.append('fechaini', fechaini);
+    params = params.append('fechafin', fechafin);
+    params = params.append('estado', estado);
+    
+    return this.http.get(`${this.apiUrl}/lista-mensuales`, {
+      responseType: 'arraybuffer',
+      params
+    });
+  }
+  
   getPaymentsReport(fecha_ini: string, fecha_fin: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('fecha_ini', fecha_ini);
@@ -119,6 +135,15 @@ export class ReportsService {
       params
     });
   }
+  
+  getTicketByPeriodo(uuid: string): Observable<ArrayBuffer> {
+    let params = new HttpParams();
+    params = params.append('uuid', uuid);
+    return this.http.get(`${this.apiUrl}/ticket-mensual`, {
+      responseType: 'arraybuffer',
+      params
+    });
+  }
 
   getPayTicket(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
@@ -156,5 +181,12 @@ export class ReportsService {
         console.error('Error downloading PDF:', error);
       }
     });
+  }
+
+  downloadMonthlyReport(fechaini: string, fechafin: string, estado: string = 'TODO', filename: string = 'reporte-mensual.pdf'): void {
+    this.downloadPdf(
+      this.getMonthlyRecurrentReport(fechaini, fechafin, estado),
+      filename
+    );
   }
 }

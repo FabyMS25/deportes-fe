@@ -214,7 +214,6 @@ export class ModalTarifaComponent implements OnInit {
           }
         },
         (reason) => {
-          console.log('Delete operation canceled', reason);
         }
       );
     } else {

@@ -145,15 +145,11 @@ export class FacilitiesComponent {
     });
     
     modalRef.componentInstance.title = `Ubicación - ${complejo.nombre}`;
-    modalRef.componentInstance.form = false; // Modo solo visualización
+    modalRef.componentInstance.form = false; 
     modalRef.componentInstance.latitud = complejo.latitud;
     modalRef.componentInstance.longitud = complejo.longitud;
     modalRef.componentInstance.direccion = complejo.ubicacion;
-    
-    // Opcional: Si quieres permitir copiar coordenadas incluso en modo visualización
     modalRef.componentInstance.latLngEmitter.subscribe((data: any) => {
-      // En modo visualización, esto podría usarse solo para copiar coordenadas
-      console.log('Coordenadas copiadas:', data);
     });
   }
   deleteId!: string;

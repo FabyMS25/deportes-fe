@@ -118,7 +118,6 @@ export class PassResetComponent {
         }
       },
       error: (err) => {
-        console.error('Error updating password:', err);
         this.notify('error', 'Ocurrió un error inesperado al cambiar la contraseña');
       }
     });
@@ -148,7 +147,6 @@ export class PassResetComponent {
         this.modalService.dismissAll();
       },
       (error) => {
-        console.error('Error updating employee password:', error);
         this.notify('error', 'Ocurrió un error inesperado al cambiar la contraseña');
       }
     );

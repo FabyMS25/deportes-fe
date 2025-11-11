@@ -21,13 +21,13 @@ import { SharedModule } from 'src/app/shared/shared.module';
 // Routing
 import { ReportsRoutingModule } from './reports-routing.module';
 // Component
-import { ReportsComponent } from './dates/reports.component';
 import { PaymentsCompoment } from './payments/payments.component';
+import { ListReportComponent } from './lists/reports.component';
 
 @NgModule({
   declarations: [
-    ReportsComponent,
-    PaymentsCompoment
+    PaymentsCompoment,
+    ListReportComponent
   ],
   imports: [
     SharedModule,

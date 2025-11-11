@@ -402,62 +402,6 @@ export class ModalScheduleComponent implements OnInit {
       }
     });
   }
-  private logValidationErrors(): void {
-    console.group('=== FORM VALIDATION ERRORS ===');  
-    if (this.form.errors) {
-      console.log('Form Level Errors:', this.form.errors);
-    }
-    console.log('--- Horarios Fijos Errors ---');
-    if (this.horariosFijos.errors) {
-      console.log('Array Level Errors:', this.horariosFijos.errors);
-    }  
-    this.horariosFijos.controls.forEach((control, index) => {
-      if (control.invalid) {
-        console.log(`Horario Fijo [${index}]: INVALID`);      
-        const fields = ['dia', 'abierto', 'horaApertura', 'horaCierre', 'observaciones'];
-        fields.forEach(field => {
-          const fieldControl = control.get(field);
-          if (fieldControl?.errors) {
-            console.log(`  ${field}:`, fieldControl.errors, 'Value:', fieldControl.value);
-          }
-        });
-      } else {
-        console.log(`Horario Fijo [${index}]: VALID`);
-      }
-    });
-    console.log('--- Horarios Excepciones Errors ---');
-    if (this.horariosExcepciones.errors) {
-      console.log('Array Level Errors:', this.horariosExcepciones.errors);
-    }  
-    this.horariosExcepciones.controls.forEach((control, index) => {
-      if (control.invalid) {
-        console.log(`Horario Excepcion [${index}]: INVALID`);      
-        const fields = ['fecha', 'tipoExcepcion', 'horaApertura', 'horaCierre', 'motivo'];
-        fields.forEach(field => {
-          const fieldControl = control.get(field);
-          if (fieldControl?.errors) {
-            console.log(`  ${field}:`, fieldControl.errors, 'Value:', fieldControl.value);
-          }
-        });
-      } else {
-        console.log(`Horario Excepcion [${index}]: VALID`);
-      }
-    });
-    console.groupEnd();
-  }
-  private getControlErrors(control: AbstractControl): any {
-    if (control instanceof FormGroup) {
-      const errors: any = {};
-      Object.keys(control.controls).forEach(key => {
-        const childControl = control.get(key);
-        if (childControl?.errors) {
-          errors[key] = childControl.errors;
-        }
-      });
-      return errors;
-    }
-    return control.errors;
-  }
 
   private markFormGroupTouched(formGroup: FormGroup | FormArray) {
     Object.keys(formGroup.controls).forEach(key => {

@@ -1,5 +1,4 @@
 <div class="campo-selection-container">
-  <!-- Filters Section -->
   <div class="card mb-4" *ngIf="filteredCampos.length > 0">
     <div class="card-body">
       <div class="row g-3">
@@ -44,8 +43,6 @@
       </div>
     </div>
   </div>
-
-  <!-- View Mode Toggle -->
   <div class="d-flex justify-content-between align-items-center mb-3" *ngIf="filteredCampos.length > 0">
     <div class="text-muted small">
       {{ filteredCampos.length }} campo(s) encontrado(s)
@@ -63,7 +60,6 @@
       </button>
     </div>
   </div>
-
   <div class="text-center py-3" *ngIf="!this.isLoading && this.filteredCampos.length === 0">
     <i class="ri-football-line display-4 text-muted opacity-25 mb-3"></i>
     <h6 class="mb-2">No hay campos disponibles</h6>
@@ -75,7 +71,6 @@
       Cambiar complejo
     </button>
   </div>
-    
   <!-- Grid View -->
   <div class="row" *ngIf="!isLoading && filteredCampos.length > 0 && viewMode === 'grid'">
     <div class="col-lg-6" *ngFor="let item of filteredCampos">
@@ -88,10 +83,8 @@
                 <span class="badge bg-success-subtle text-success ms-2">
                   {{ item.campo.categoria }}
                 </span>
-                <!-- Approval Requirement Badge -->
                 <span class="badge ms-2" [ngClass]="item.campo.requiereAprobacion 
-      ? 'bg-warning-subtle text-warning' 
-      : 'bg-success-subtle text-success'">
+                ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success'">
                   <i class="ri-shield-check-line me-1"></i>
                   {{ item.campo.requiereAprobacion ? 'Requiere aprobación' : 'Aprobación automática'}}
                 </span>
@@ -146,62 +139,85 @@
               Seleccione una tarifa:
             </h6>
             <div class="tarifa-option gap-2 mb-2"
-                *ngFor="let tarifa of item.tarifasActivas let i = index"
+                *ngFor="let tarifa of item.tarifasActivas; let i = index"
+                [ngClass]="getTarifaButtonClasses(item.campo, tarifa)"
                 (click)="selectTarifa(item, tarifa)"
+                [attr.aria-disabled]="!canSelectTarifa(item.campo, tarifa)"
+                [class.disabled]="!canSelectTarifa(item.campo, tarifa)"
                 role="button"
-                tabindex="0">
+                tabindex="0"
+                (keydown.enter)="canSelectTarifa(item.campo, tarifa) && selectTarifa(item, tarifa)"
+                (keydown.space)="canSelectTarifa(item.campo, tarifa) && selectTarifa(item, tarifa)">
               <div class="card-header tarifa-header p-0">
                 <div class="tarifa-title">
                   <h6 class="text-primary mb-1">
-                    <i class="ri-price-tag-3-line"></i>
+                    <i class="ri-price-tag-3-line" aria-hidden="true"></i>
                     {{ tarifa.descripcion || 'Tarifa estándar' }}
                   </h6>
                 </div>
                 <div class="tarifa-price">
                   <span class="text-primary">{{ tarifa.precioBase | number:'1.2-2' }}</span>
-                  <span class="text-mutted">Bs</span>
+                  <span class="text-muted">Bs</span>
                 </div>
-              </div>  
+              </div>
               <div class="tarifa-meta mb-0">
                 <div class="tarifa-item">
                   <p class="text-muted mb-0 small">
-                    <i class="ri-money-dollar-circle-line"></i> Tipo de Cobro
+                    <i class="ri-money-dollar-circle-line" aria-hidden="true"></i>
+                    Tipo de Cobro
                   </p>
-                  <span class="badge bg-primary-subtle text-primary">
-                    {{ getTipoCobro(tarifa.tipoCobro) }}
-                  </span>
-                  <span class="badge bg-light-subtle text-body" *ngIf="tarifa.frecuencia">
-                    <i class="ri-repeat-line"></i> {{ tarifa.frecuencia }}
-                  </span>
-                  <span class="badge bg-light-subtle text-body" *ngIf="tarifa.sesionesIncluidas">
-                    {{ tarifa.sesionesIncluidas }} Sesiones
-                  </span>
+                  <div class="d-flex gap-1 flex-wrap mt-1">
+                    <span class="badge bg-primary-subtle text-primary">
+                      {{ getTipoCobro(tarifa.tipoCobro) }}
+                    </span>
+                    <span class="badge bg-light-subtle text-body" *ngIf="tarifa.frecuencia">
+                      <i class="ri-repeat-line" aria-hidden="true"></i>
+                      {{ tarifa.frecuencia }}
+                    </span>
+                    <span class="badge bg-light-subtle text-body" *ngIf="tarifa.sesionesIncluidas">
+                      {{ tarifa.sesionesIncluidas }} Sesiones
+                    </span>
+                  </div>
                 </div>
                 <div *ngIf="tarifa.desde || tarifa.hasta" class="tarifa-item">
-                    <p class="text-muted mb-0 small">
-                        <i class="ri-time-line me-1"></i> Intervalo Válido
-                      </p>
-                      <div class="d-flex align-items-center">
-                        <span class="badge bg-light text-dark">
-                          {{ tarifa.desde || '00:00' }} - {{ tarifa.hasta || '23:59' }}
-                        </span>
-                      </div>
+                  <p class="text-muted mb-0 small">
+                    <i class="ri-time-line me-1" aria-hidden="true"></i>
+                    Intervalo Válido
+                  </p>
+                  <div class="d-flex align-items-center mt-1">
+                    <span class="badge bg-light text-dark">
+                      {{ tarifa.desde || '00:00' }} - {{ tarifa.hasta || '23:59' }}
+                    </span>
+                  </div>
                 </div>
                 <div class="tarifa-item">
-                    <div class="d-flex gap-1 flex-wrap">
-                        <span *ngFor="let cat of tarifa.categoriasDtoList" 
-                              class="badge bg-success-subtle text-success">
-                          {{ cat.categoriaDto.nombre }}
-                        </span>
-                        <span *ngIf="!tarifa.categoriasDtoList || tarifa.categoriasDtoList.length === 0" class="text-muted">
-                          Sin categorías
-                        </span>
-                    </div>
-                </div> 
-              </div>             
+                  <p class="text-muted mb-0 small">Categorías aplicadas</p>
+                  <div class="d-flex gap-1 flex-wrap mt-1">
+                    <span *ngFor="let cat of tarifa.categoriasDtoList" 
+                          class="badge bg-success-subtle text-success">
+                      {{ cat.categoriaDto.nombre }}
+                    </span>
+                    <span *ngIf="!tarifa.categoriasDtoList?.length" 
+                          class="badge bg-light-subtle text-muted">
+                      Sin categorías
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="tarifa-permission-info mt-2 p-2 rounded" 
+                   [ngClass]="{
+                     'bg-success-subtle': getTarifaPermission(item.campo, tarifa).canBook,
+                     'bg-warning-subtle': getTarifaPermission(item.campo, tarifa).canRequest,
+                     'bg-danger-subtle': !getTarifaPermission(item.campo, tarifa).canBook && !getTarifaPermission(item.campo, tarifa).canRequest
+                   }">
+                <small class="d-block mb-1">
+                  <i class="ri-information-line me-1"></i>
+                  {{ getTarifaPermission(item.campo, tarifa).message }}
+                </small>
+              </div>
               <div class="tarifa-action">
-                    <span>Seleccionar</span>
-                    <i class="ri-arrow-right-line"></i>
+                <span>{{ getTarifaActionText(item.campo, tarifa) }}</span>
+                <i class="ri-arrow-right-line" aria-hidden="true"></i>
               </div>
             </div>
           </div>
@@ -215,7 +231,6 @@
       </div>
     </div>
   </div>
-
   <!-- List View -->
   <div class="list-view" *ngIf="!isLoading && filteredCampos.length > 0 && viewMode === 'list'">
     <div class="card campo-card border-0 shadow-sm" *ngFor="let item of filteredCampos" (click)="toggleCampoExpansion(item)">
@@ -229,10 +244,8 @@
               <span class="badge bg-success-subtle text-success">
                 {{ item.campo.categoria }}
               </span>
-              <!-- Approval Requirement Badge in List View -->
               <span class="badge" [ngClass]="item.campo.requiereAprobacion 
-      ? 'bg-warning-subtle text-warning' 
-      : 'bg-success-subtle text-success'">
+                ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success'">
                 <i class="ri-shield-check-line me-1"></i>
                 {{ item.campo.requiereAprobacion ? 'Requiere aprobación' : 'Aprobación automática' }}
               </span>
@@ -289,11 +302,15 @@
               Seleccione una tarifa:
             </h6>
           <div class="row g-3">
-            <div class="col-lg-6" *ngFor="let tarifa of item.tarifasActivas">
+            <div class="col-lg-6" *ngFor="let tarifa of item.tarifasActivas">              
             <div class="tarifa-option gap-2 mb-1"
                 (click)="selectTarifa(item, tarifa)"
+                [attr.aria-disabled]="!canSelectTarifa(item.campo, tarifa)"
+                [class.disabled]="!canSelectTarifa(item.campo, tarifa)"
                 role="button"
-                tabindex="0">
+                tabindex="0"
+                (keydown.enter)="canSelectTarifa(item.campo, tarifa) && selectTarifa(item, tarifa)"
+                (keydown.space)="canSelectTarifa(item.campo, tarifa) && selectTarifa(item, tarifa)">
               <div class="card-header tarifa-header p-0">
                 <div class="tarifa-title">
                   <h5 class="text-primary mb-1">
@@ -326,7 +343,7 @@
                         <i class="ri-time-line me-1"></i> Intervalo Válido
                       </p>
                       <div class="d-flex align-items-center">
-                        <span class="badge bg-light text-dark">
+                        <span class="badge bg-light">
                           {{ tarifa.desde || '00:00' }} - {{ tarifa.hasta || '23:59' }}
                         </span>
                       </div>
@@ -342,10 +359,21 @@
                         </span>
                     </div>
                 </div> 
+              </div>
+              <div class="tarifa-permission-info mt-2 p-2 rounded" *ngIf="getTarifaPermission(item.campo, tarifa) as permission"
+                   [ngClass]="{
+                     'bg-success-subtle': permission.canBook,
+                     'bg-warning-subtle': permission.canRequest,
+                     'bg-danger-subtle': !permission.canBook && !permission.canRequest
+                   }">
+                <small class="d-block mb-1">
+                  <i class="ri-information-line me-1"></i>
+                  {{ permission.message }}
+                </small>
               </div>             
               <div class="tarifa-action">
-                    <span>Seleccionar</span>
-                    <i class="ri-arrow-right-line"></i>
+                <span>{{ getTarifaActionText(item.campo, tarifa) }}</span>
+                <i class="ri-arrow-right-line ms-1" aria-hidden="true"></i>
               </div>
             </div>
             </div>

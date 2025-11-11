@@ -53,8 +53,38 @@
         border-radius: 0 0 6px 6px;
       }
       
-      &:hover .tarifa-action i {
-        transform: translateX(4px);
+      // &:hover .tarifa-action i {
+      //   transform: translateX(4px);
+      // }
+
+      &.can-book .tarifa-action {
+        border-top: 3px solid #198754;
+        background-color: #f8f9fa;
+        color: #198754;
+      }
+      
+      &.can-request .tarifa-action {
+        border-top: 3px solid #ffc107;
+        background-color: #f8f9fa;
+        color: #856404;
+      }
+      
+      &.cannot-select .tarifa-action {
+        border-top: 3px solid #6c757d;
+        background-color: #f8f9fa;
+        color: #6c757d;
+        opacity: 0.6;
+      }
+      
+      &:hover {
+        .tarifa-action {
+          background-color: #0d6efd; /* Blue on hover overrides everything */
+          color: white;
+          border-top-color: #0d6efd; /* Also change border color on hover */
+          
+          // i {
+          //   transform: translateX(4px);
+          // }
+        }
       }
     }
-    

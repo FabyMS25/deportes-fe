@@ -4,19 +4,20 @@
     <div class="col-lg-12">
         <div class="card">
             <div class="card-header border-0">
-                <h5 class="card-title mb-3 flex-grow-1">Reporte de Reservas</h5>
+                <h5 class="card-title mb-3 flex-grow-1">Reporte de {{title}}</h5>
                 <div>
                     <form (ngSubmit)="applyFilters()">
                         <div class="row g-3">
-                            <div class="col-xxl-2 col-sm-6">
+                            <!-- <div class="col-xxl-2 col-sm-4">
                                 <div>
-                                    <select class="form-control" name="reportType" [(ngModel)]="reportType">
-                                        <option *ngFor="let type of reportTypes" [value]="type.value">
-                                            {{type.label}}
-                                        </option>
-                                    </select>
+                                    <input type="text" 
+                                           class="form-control bg-light" 
+                                           [value]="getReportTypeLabel()" 
+                                           readonly
+                                           style="cursor: default;">
+                                    <small class="text-muted">Tipo de reporte</small>
                                 </div>
-                            </div>
+                            </div> -->
                             <div class="col-xxl-2 col-sm-6">
                                 <div>
                                     <input type="text" 
@@ -34,7 +35,7 @@
                                         required>                             
                                 </div>
                             </div>
-                            <div class="col-xxl-2 col-sm-4">
+                            <div class="col-xxl-2 col-sm-4" *ngIf="this.reportType !== 'mensual'">
                                 <div>
                                     <select class="form-control" name="cancha" [(ngModel)]="cancha">
                                         <option value="TODO">Todos los complejos</option>
@@ -44,7 +45,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-xxl-2 col-sm-4">
+                            <div class="col-xxl-2 col-sm-4" *ngIf="this.reportType !== 'mensual'">
                                 <div>
                                     <select class="form-control" name="paymentType" [(ngModel)]="paymentType">
                                         <option *ngFor="let option of paymentTypeOptions" [value]="option.value">
@@ -81,11 +82,10 @@
                     <div class="col-12">
                         <div class="alert alert-info mb-0">
                             <i class="ri-information-line align-middle"></i>
-                            <strong>Reporte:</strong> 
-                            {{ reportType === 'puntual' ? 'Reservas Puntuales' : 'Reservas Recurrentes' }}
-                            | <strong>Complejo:</strong> {{ getCanchaLabel(cancha) }}
+                            <strong>Reporte:</strong> {{ getReportTypeLabel() }}
+                            <span *ngIf="this.reportType !== 'mensual'">| <strong>Complejo:</strong> {{ getCanchaLabel(cancha) }}</span>
                             | <strong>Estado:</strong> {{ getStatusLabel(status) }}
-                            | <strong>Tipo de Cobro:</strong> {{ getPaymentTypeLabel(paymentType) }}
+                            <span *ngIf="this.reportType !== 'mensual'">| <strong>Tipo de Cobro:</strong> {{ getPaymentTypeLabel(paymentType) }}</span>
                         </div>
                     </div>
                 </div>

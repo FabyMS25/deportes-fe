@@ -758,7 +758,7 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
     const reservaPayload = {
         fechaCreacion: new Date().toISOString(),
         fechaReserva: new Date().toISOString(),
-        estadoValidacion: EstadoValidacion.PENDIENTE,
+        estadoValidacion: EstadoValidacion.APROBADA,
         estadoReserva: EstadoReserva.PENDIENTE,
         tipoReserva: 'periodo',
         montoTotal: this.getTotalAmount(),

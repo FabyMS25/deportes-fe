@@ -18,7 +18,7 @@
                         {{userContribuyente.nombre}}
                     </span>
                     <span *ngIf="userRole === 'Encargado' || userRole === 'Admin'">
-                        {{userData.fullName || userData.nombre + ' ' + userData.apPaterno + ' ' + userData.apMaterno}}
+                        {{userData.designacion.personaDto.fullName || userData.designacion.personaDto.nombre + ' ' + userData.designacion.personaDto.apPaterno + ' ' + userData.designacion.personaDto.apMaterno}}
                     </span>
                 </h3>
                 <p class="text-white text-opacity-75">
@@ -28,11 +28,11 @@
                     <div class="me-2">
                         <i class="ri-map-pin-user-line mx-1 text-white text-opacity-75 fs-16 align-middle"></i>
                         <span *ngIf="userRole === 'Contribuyente'">{{userContribuyente.direccion}}</span>
-                        <span *ngIf="userRole === 'Encargado' || userRole === 'Admin'">{{userData.direccion}}</span>
+                        <span *ngIf="userRole === 'Encargado' || userRole === 'Admin'">{{userData.designacion.personaDto.direccion}}</span>
                     </div>
-                    <div *ngIf="userRole === 'Encargado' && userEmployee?.complejoDto">
+                    <div *ngIf="userRole === 'Encargado' && userEmployee.complejoDto">
                         <i class="ri-building-line mx-1 text-white text-opacity-75 fs-16 align-middle"></i>
-                        {{userEmployee.complejoDto?.nombre}}
+                        {{userEmployee.complejoDto.nombre}}
                     </div>
                 </div>
             </div>
@@ -145,36 +145,38 @@
                                                                                     </ng-container>
 
                                                                                     <!-- Encargado/Admin Data -->
-                                                                                    <ng-container *ngIf="userRole === 'Encargado' || userRole === 'Admin'">
+                                                                                    @if (userRole === 'Encargado' || userRole === 'Admin') {
+                                                                                    <ng-container *ngIf="userData.designacion.personaDto as user">
                                                                                         <tr>
                                                                                             <th class="ps-0" scope="row">Nombre :</th>
-                                                                                            <td class="text-muted">{{userData.fullName || userData.nombre + ' ' + userData.apPaterno + ' ' + userData.apMaterno}}</td>
+                                                                                            <td class="text-muted">{{user.fullName || user.nombre + ' ' + user.apPaterno + ' ' + user.apMaterno}}</td>
                                                                                         </tr>
                                                                                         <tr>
                                                                                             <th class="ps-0" scope="row">Género :</th>
-                                                                                            <td class="text-muted">{{userData.sexo === 'F' ? 'Femenino' : 'Masculino'}}</td>
+                                                                                            <td class="text-muted">{{user.sexo === 'F' ? 'Femenino' : 'Masculino'}}</td>
                                                                                         </tr>
                                                                                         <tr>
                                                                                             <th class="ps-0" scope="row">Nro. Carnet :</th>
-                                                                                            <td class="text-muted">{{userData.nroCarnet}} - {{ userData.ciExpedito ? userData.ciExpedito : getCityDescription(userData.ciExpedito, 'acronym') }}</td>
+                                                                                            <td class="text-muted">{{user.nroCarnet}} - {{ user.ciExpedito ? user.ciExpedito : getCityDescription(user.ciExpedito, 'acronym') }}</td>
                                                                                         </tr>
                                                                                         <tr>
                                                                                             <th class="ps-0" scope="row">Nro. Nit :</th>
-                                                                                            <td class="text-muted">{{userData.nroNit}}</td>
+                                                                                            <td class="text-muted">{{user.nroNit}}</td>
                                                                                         </tr>
                                                                                         <tr>
                                                                                             <th class="ps-0" scope="row">Celular :</th>
-                                                                                            <td class="text-muted">{{userData.nroCelular}}</td>
+                                                                                            <td class="text-muted">{{user.nroCelular}}</td>
                                                                                         </tr>
                                                                                         <tr>
                                                                                             <th class="ps-0" scope="row">E-mail :</th>
-                                                                                            <td class="text-muted">{{userData.correoElectronico}}</td>
+                                                                                            <td class="text-muted">{{user.correoElectronico}}</td>
                                                                                         </tr>
                                                                                         <tr>
                                                                                             <th class="ps-0" scope="row">Dirección :</th>
-                                                                                            <td class="text-muted">{{userData.direccion}}</td>
+                                                                                            <td class="text-muted">{{user.direccion}}</td>
                                                                                         </tr>
                                                                                     </ng-container>
+                                                                                    }
                                                                                 </tbody>
                                                                             </table>
                                                                         </div>
@@ -241,19 +243,19 @@
                                                                     <div class="profile-timeline order-status">
                                                                         <div class="table-responsive">
                                                                             <table class="table table-borderless mb-0">
-                                                                                <tbody>
+                                                                                <tbody *ngIf="userData.designacion.personaDto as user">
                                                                                     <tr>
                                                                                         <th class="ps-0" scope="row">Profesión :</th>
-                                                                                        <td class="text-muted">{{userData.prefijo}} {{userData.profesion}}</td>
+                                                                                        <td class="text-muted">{{user.prefijo}} {{user.profesion}}</td>
                                                                                     </tr>
                                                                                     <tr>
                                                                                         <th class="ps-0" scope="row">Estado Civil :</th>
-                                                                                        <td class="text-muted">{{userData.estadoCivil}}</td>
+                                                                                        <td class="text-muted">{{user.estadoCivil}}</td>
                                                                                     </tr>
                                                                                     <tr>
                                                                                         <th class="ps-0" scope="row">Fecha de Ingreso :</th>
                                                                                         <td class="text-muted">
-                                                                                            {{(userData.fechaIngreso | date :'longDate')}}
+                                                                                            {{(user.fechaIngreso | date :'longDate')}}
                                                                                         </td>
                                                                                     </tr>
                                                                                 </tbody>
@@ -269,12 +271,12 @@
                                                     <div class="tab-content text-muted">
                                                         <div [ngbNavOutlet]="personalInfoNav"></div>
                                                     </div>
-                                                </div><!-- end card body -->
-                                            </div><!-- end card -->
-                                        </div><!-- end col -->
-                                    </div><!-- end row -->
-                                </div><!--end col-->
-                            </div><!--end row-->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </ng-template>
                     </li>
                 </ul>

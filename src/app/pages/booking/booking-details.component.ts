@@ -18,7 +18,7 @@ import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { BookingType, ReservationType } from 'src/app/core/constants/Features';
 import { ScheduleStateService } from './schedule-state.service';
-import { EstadoActual } from 'src/app/core/constants/Estados';
+import { EstadoActual, EstadoReserva } from 'src/app/core/constants/Estados';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
@@ -49,6 +49,7 @@ interface BookingState {
   contribuyente?: Contribuyente;
   complejo?: ComplejoDeportivo;
   campo?: CampoDeportivo;
+  actionType?:'book' | 'request' | 'none';
   tarifa?: Tarifa;
   puntualSchedule?: PuntualSchedule;
   recurrentSchedule?: RecurrentSchedule;
@@ -263,13 +264,14 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     this.bookingStep = BookingStep.CAMPO_SELECTION;
     this.cdRef.detectChanges();
   }
-  async onCampoSelected(selection: { field: CampoDeportivo; tariff: Tarifa }): Promise<void> {
+  async onCampoSelected(selection: { actionType:'book' | 'request' | 'none' ;field: CampoDeportivo; tariff: Tarifa }): Promise<void> {
     if (!selection?.field || !selection?.tariff) {
       this.showNotification('Datos de selección inválidos', 'error');
       return;
     }    
     this.bookingState.campo = selection.field;
-    this.bookingState.tarifa = selection.tariff;    
+    this.bookingState.tarifa = selection.tariff; 
+    this.bookingState.actionType = selection.actionType;  
     this.isLoading = true;    
     try {
       await this.loadReservationsByField(selection.field.uuid!);      
@@ -360,7 +362,12 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (response: any) => {
             if (response?.status === 'OK') {
-              this.reservationsList = response.payload || [];
+              this.reservationsList = response.payload.filter((reserva:Reserva)=> 
+                reserva.estadoReserva===EstadoReserva.PENDIENTE || 
+                reserva.estadoReserva===EstadoReserva.EN_CURSO || 
+                reserva.estadoReserva===EstadoReserva.PAGADA || 
+                reserva.estadoReserva===EstadoReserva.SOLICITADA
+              );
               resolve();
             } else {
               if (response?.payload) {
@@ -465,7 +472,6 @@ private showConfirmationModal(reservaData: Reserva): void {
     cancelButtonColor: '#6c757d'
   }).then((result) => {
     if (result.isConfirmed) {
-      console.log(reservaData)
       this.bookingState.reservaCreada = reservaData;
       this.bookingStep = BookingStep.TICKET;
     } else if (result.dismiss === Swal.DismissReason.cancel) {
