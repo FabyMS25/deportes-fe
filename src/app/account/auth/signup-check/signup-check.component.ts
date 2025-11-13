@@ -28,7 +28,11 @@ export class SignupCheckComponent {
   identityTypes = UserDocType
   cityAcronym= CityAcronym
 
-  constructor(private formBuilder: UntypedFormBuilder,
+  private isAuthenticated = false;
+  private authenticationAttempted = false;
+
+  constructor(
+    private formBuilder: UntypedFormBuilder,
     private contribuyentesService: ContribuyentesService,
     private ruatService: RuatRequestsService,
     private router: Router,
@@ -38,8 +42,7 @@ export class SignupCheckComponent {
 
   ngOnInit(): void {
     this.getConfigsSystem();
-    // this.authRuat()
-    
+    // this.authRuat();    
      this.SignupForm = this.formBuilder.group({
       tipoDocumento:['', [Validators.required]],
       numeroDocumento:['', [Validators.required]],
@@ -51,27 +54,25 @@ export class SignupCheckComponent {
   
   /**
    * Form submit
-   */    
-  onSubmit() {
+   */
+  async onSubmit() {
     this.submitted = true;  
     if (this.SignupForm.valid) {
       this.SignupForm.enable();
       let datos = {
         tipoDocumento: this.SignupForm.value.tipoDocumento,
         numeroDocumento: this.SignupForm.value.numeroDocumento,
-        expedido:this.SignupForm.value.expedido,
+        expedido: this.SignupForm.value.expedido,
       };
-      this.searchContribuyente(datos);
-
+      await this.searchContribuyente(datos);
     } else {
-      this.notify('Formulario Invalido!', 'error');
+      this.notify('Formulario Inválido!', 'error');
       Object.keys(this.SignupForm.controls).forEach(key => {
         const control = this.SignupForm.get(key);
         control?.markAsTouched();
       });
     }
-  }
-  
+  }  
 
   private notify(message: any, type: any): void {
     let timerInterval: any;
@@ -94,9 +95,9 @@ export class SignupCheckComponent {
       this.contribuyentesService.getAll().subscribe({
         next: (data: any) => {
           if (data['status'] === 'OK') {
-            const usersList:any[] = data.payload
+            const usersList:Contribuyente[] = data.payload
             if (usersList) {
-                const itExist = usersList.some(user => user.nroCarnet === value);
+                const itExist = usersList.some(user => user.numeroDocumento === value);
                 resolve(itExist);
             } 
             resolve(false);
@@ -115,60 +116,86 @@ export class SignupCheckComponent {
   private getConfigsSystem() {
     this.systemConfigsService.getAll().subscribe({
       next: (data: any) => {
-          if (data['status'] === 'OK') {
-            this.systemConfigList = data.payload;
-            this.authRuat()
-          }
+        if (data['status'] === 'OK') {
+          this.systemConfigList = data.payload;
+          this.authRuat();
         }
-      });
+      },
+      error: (error) => {
+        console.error('Error loading system config:', error);
+        this.notify('Error loading system configuration', 'error');
+      }
+    });
   }
-  private authRuat() {
-    const usuario = GlobalComponent.RUAT_usuario;//this.systemConfigList.find(config => config.clave === 'USUARIO_RUAT')?.valorTexto || '';
-    const clave = GlobalComponent.RUAT_clave;//this.systemConfigList.find(config => config.clave === 'CLAVE_RUAT')?.valorTexto || '';
-      this.ruatService.authenticate(usuario,clave).subscribe({
+  private authRuat(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      this.authenticationAttempted = true;      
+      const usuario = GlobalComponent.RUAT_usuario;
+      const clave = GlobalComponent.RUAT_clave;      
+      this.ruatService.authenticate(usuario, clave).subscribe({
         next: (response) => {          
           window.sessionStorage.setItem('ruatToken', response.token);
+          this.isAuthenticated = true;
+          resolve(true);
         },
         error: (error) => {
-          this.notify("Falla en la coneccion con el RUAT, porfavor intente mas tarde",'error')
+          this.isAuthenticated = false;
+          this.notify("Falla en la conexión con el RUAT, por favor intente más tarde", 'error');
+          reject(error);
         }
       });
+    });
   }
 
   ruatData: any;
-  searchContribuyente(data:any){
-    this.ruatService.getContribuyentePorCi('QUI',data.numeroDocumento,data.tipoDocumento, data.expedido ).subscribe({    
-      next: (resp: any) => {
-        if(resp['status']==='OK'){
-          const response = resp.payload
-        if(response.continuarFlujo){
-          this.ruatData= response;
-          this.searchUser(data.numeroDocumento)
-            .then((exist) => {
-              if(exist){
-                this.notify("Usted ya cuenta con un registro en Deportes- GAMQ ",'error')
-
-              }else{
-                this.userDataService.setTemporaryUserData(this.ruatData);
-                this.notify("Usted tiene datos registrados en Ruat,Proceder con registro en Deportes-GAMQ ",'success')
-                this.router.navigate(['/auth/signup'], { queryParams: { userExist: true } });
-              }
-            })
-            .catch(error => {
-              console.error('Error in searchUsers:', error);});
-
-        }else{
-          this.notify(response.mensaje+" Puede proceder con su registro",'success')
-          this.router.navigate(['/auth/signup'], { queryParams: { userExist:false } });          
+  async searchContribuyente(data: any) {
+    if (!this.isAuthenticated) {
+      try {
+        if (!this.authenticationAttempted) {
+          await this.authRuat();
+        } else {
+          await this.authRuat();
         }
-
-        }else{      
-          this.notify("El contribuyente no se encuentra registrado en el Gobierno Municipal."+" Puede proceder con su registro",'success')
-          this.router.navigate(['/auth/signup'], { queryParams: { userExist:false } }); 
+      } catch (error) {
+        this.notify('No se pudo autenticar con el servicio RUAT', 'error');
+        return;
+      }
+    }
+    this.ruatService.getContribuyentePorCi('QUI', data.numeroDocumento, data.tipoDocumento, data.expedido).subscribe({    
+      next: (resp: any) => {
+        if (resp['status'] === 'OK') {
+          const response = resp.payload;
+          if (response.continuarFlujo) {
+            this.ruatData = response;
+            this.searchUser(data.numeroDocumento)
+              .then((exist) => {
+                if (exist) {
+                  this.notify("Usted ya cuenta con un registro en Deportes- GAMQ", 'error');
+                } else {
+                  this.userDataService.setTemporaryUserData(this.ruatData);
+                  this.notify("Usted tiene datos registrados en Ruat, Proceder con registro en Deportes-GAMQ", 'success');
+                  this.router.navigate(['/auth/signup'], { queryParams: { userExist: true } });
+                }
+              })
+              .catch(error => {
+                console.error('Error in searchUsers:', error);
+              });
+          } else {
+            this.notify(response.mensaje + " Puede proceder con su registro", 'success');
+            this.router.navigate(['/auth/signup'], { queryParams: { userExist: false } });          
+          }
+        } else {      
+          this.notify("El contribuyente no se encuentra registrado en el Gobierno Municipal. Puede proceder con su registro", 'success');
+          this.router.navigate(['/auth/signup'], { queryParams: { userExist: false } }); 
         }
       },
       error: (error: any) => {        
         console.error('Error:', error);
+        // If token might be expired, try to reauthenticate
+        if (error.status === 401 || error.status === 403) {
+          this.isAuthenticated = false;
+          this.notify('La sesión ha expirado, por favor intente nuevamente', 'error');
+        }
       }
     });
   }

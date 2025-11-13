@@ -92,8 +92,7 @@
                     "maximumWarning": "6kB",
                     "maximumError": "10kB"
                   }
-                ],
-                
+                ],                
                 "outputHashing": "all",
                 "optimization": {
                   "scripts": true,

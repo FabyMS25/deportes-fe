@@ -12,6 +12,7 @@ import { UserDataService } from './user-data.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { environment } from 'src/environments/environment';
 import { EstadoRuat, EstadoUsuario } from 'src/app/core/constants/Estados';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 
 @Component({
   selector: 'app-signup',
@@ -34,7 +35,7 @@ export class SignupComponent implements OnInit {
 
   usersList!: any[];
   userExist = false;
-  ruatData: any;
+  ruatData!: Contribuyente;
 
   constructor(
     private route: ActivatedRoute,

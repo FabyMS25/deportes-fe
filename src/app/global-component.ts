@@ -3,7 +3,7 @@ export const GlobalComponent = {
     USER_KEY: 'currentUser',
     TOKEN_KEY: 'auth-token',    
     headerToken : {'Authorization': `Bearer ${sessionStorage.getItem('token')}`},
-    RUAT_token : `${sessionStorage.getItem('ruatToken')}`,
+    // RUAT_token : `${sessionStorage.getItem('ruatToken')}`,
 
     /* APP DETAILS */
     CODE_APP : "SIS-013",

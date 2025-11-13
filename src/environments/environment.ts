@@ -10,7 +10,6 @@ export const environment = {
   apiLoginUrl: 'http://181.177.143.185:8080/api',
   // backendUrl: "http://localhost:8085/api",
   backendUrl: "http://181.177.143.187:8085/api",
-  backendRuat:'http://181.177.143.187:8085/api',
   
   
   assetsUrl: "http://181.177.143.187:4205",
