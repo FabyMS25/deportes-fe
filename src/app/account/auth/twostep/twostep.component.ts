@@ -18,31 +18,34 @@ import { EstadoRuat, EstadoUsuario } from 'src/app/core/constants/Estados';
   templateUrl: './twostep.component.html',
   styleUrls: ['./twostep.component.scss']
 })
-
 export class TwoStepComponent implements OnInit {
 
   year: number = new Date().getFullYear();
   @ViewChild(NgOtpInputComponent, { static: false }) otpComponent?: NgOtpInputComponent;
 
   userData: any;
-    config = {
-      allowNumbersOnly: true,
-      length: 4,
-      isPasswordInput: false,
-      disableAutoFocus: false,
-      placeholder: '',
-      inputStyles: {
-        'width': '80px',
-        'height': '50px'
-      }
-    };
+  config = {
+    allowNumbersOnly: true,
+    length: 4,
+    isPasswordInput: false,
+    disableAutoFocus: false,
+    placeholder: '',
+    inputStyles: {
+      'width': '80px',
+      'height': '50px'
+    }
+  };
 
-  constructor( private router: Router, 
+  private isAuthenticated = false;
+  private authenticationAttempted = false;
+
+  constructor( 
+    private router: Router, 
     private route: ActivatedRoute,
-    private userDataService : UserDataService,
+    private userDataService: UserDataService,
     private contribuyentesService: ContribuyentesService,
     private ruatService: RuatRequestsService,
-  ) {  }
+  ) { }
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
@@ -64,6 +67,9 @@ export class TwoStepComponent implements OnInit {
     }
     try {
       if (!this.userData.verificadoRuat) {
+        // Ensure authentication before RUAT registration
+        await this.ensureAuthentication();
+        
         const ruatData = { ...this.userData };
         if (ruatData.fechaNacimiento) {
           const date = new Date(ruatData.fechaNacimiento);
@@ -78,8 +84,8 @@ export class TwoStepComponent implements OnInit {
           return;
         }
         this.userData.estadoUsuario = EstadoUsuario.ACTIVO;
-        this.userData.estadoRuat = EstadoRuat.ACTIVO
-        this.userData.verificadoRuat = true
+        this.userData.estadoRuat = EstadoRuat.ACTIVO;
+        this.userData.verificadoRuat = true;
       }
 
       const savedUser = await this.addData(this.userData);
@@ -97,25 +103,59 @@ export class TwoStepComponent implements OnInit {
     }
   }
 
+  private async ensureAuthentication(): Promise<void> {
+    if (!this.isAuthenticated) {
+      try {
+        if (!this.authenticationAttempted) {
+          await this.authRuat();
+        } else {
+          await this.authRuat();
+        }
+      } catch (error) {
+        throw new Error('No se pudo autenticar con el servicio RUAT');
+      }
+    }
+  }
+
+  private authRuat(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      this.authenticationAttempted = true;
+      
+      const usuario = GlobalComponent.RUAT_usuario;
+      const clave = GlobalComponent.RUAT_clave;
+      
+      this.ruatService.authenticate(usuario, clave).subscribe({
+        next: (response) => {          
+          window.sessionStorage.setItem('ruatToken', response.token);
+          this.isAuthenticated = true;
+          resolve(true);
+        },
+        error: (error) => {
+          this.isAuthenticated = false;
+          this.notify("Falla en la conexión con el RUAT, por favor intente más tarde", 'error');
+          reject(error);
+        }
+      });
+    });
+  }
+
   private sendEmail(username: string, password: string): Promise<void> {
     const email = this.userData.email;
     return emailjs.send(environment.EmailJS.idService, environment.EmailJS.idTemplate, {
       from_name: "GAMQ-DEPORTES",
-      to_name:this.userData.nombre,
+      to_name: this.userData.nombre,
       message: `USUARIO: ${username}, CONTRASEÑA: ${password}`,
       reply_to: email,
     }, environment.EmailJS.publicKey)
       .then(() => {
         this.notify(`Un email fue enviado a ${email} con su USUARIO y CONTRASEÑA`, 'success');
       })
-        // .then((response: EmailJSResponseStatus) => {
-        //   this.notify("Un email fue enviado a " + email + " con su USUARIO y CONTRASEÑA ", 'success');
-        // })
       .catch((error) => {
         this.notify("No se pudo enviar correctamente el e-mail", 'error');
         throw error;
       });
   }
+
   resendEmail(): Promise<void> {
     const email = this.userData.email;
     const codigo = this.userData.verificationCode;
@@ -156,35 +196,61 @@ export class TwoStepComponent implements OnInit {
   }
   
   /* RUAT API Requests */
-  private async registerContribuyente(data:any): Promise<any>{
-    const codigoAlcaldia = GlobalComponent.RUAT_codigoAlcaldia;//this.systemConfigList.find(config => config.clave === 'CODIGO_USUARIO_RUAT')?.valorTexto || '';
-    const codigoUsuario = GlobalComponent.RUAT_codigoUsuario;//this.systemConfigList.find(config => config.clave === 'CODIGO_USUARIO_RUAT')?.valorTexto || '';
-    return new Promise((resolve, reject) => {
-      this.ruatService.registerContribuyente(codigoAlcaldia,codigoUsuario,data ).subscribe({    
-        next: (resp: any) => {
-          if(resp['status']==='OK'){
-            const response = resp.payload
-            if(response.continuarFlujo){
-              this.userData.codigoContribuyente = response.codigoContribuyente
-              // this.addData(this.userData);  
-              // this.notify("Usted se encuentra registrado en el Ruat",'success')
-              resolve(response); 
-            }else{
-              this.notify(response.mensaje,'error')
-              resolve(null); 
-            }
-          }else{
-            this.notify(resp.payload,'error')
+private async registerContribuyente(data: any): Promise<any> {
+  const codigoAlcaldia = GlobalComponent.RUAT_codigoAlcaldia;
+  const codigoUsuario = GlobalComponent.RUAT_codigoUsuario;
+  
+  return new Promise((resolve, reject) => {
+    this.ruatService.registerContribuyente(codigoAlcaldia, codigoUsuario, data).subscribe({    
+      next: (resp: any) => {
+        if (resp['status'] === 'OK') {
+          const response = resp.payload;
+          if (response.continuarFlujo) {
+            this.userData.codigoContribuyente = response.codigoContribuyente;
+            resolve(response); 
+          } else {
+            this.notify(response.mensaje, 'error');
             resolve(null); 
           }
-        },
-        error: (error) => {
+        } else {
+          this.notify(resp.payload, 'error');
+          resolve(null); 
+        }
+      },
+      error: async (error) => {
+        // If token might be expired, try to reauthenticate and retry once
+        if (error.status === 401 || error.status === 403) {
+          try {
+            this.isAuthenticated = false;
+            await this.authRuat();
+            // Retry the registration after reauthentication
+            this.ruatService.registerContribuyente(codigoAlcaldia, codigoUsuario, data).subscribe({
+              next: (retryResp: any) => {
+                if (retryResp['status'] === 'OK' && retryResp.payload.continuarFlujo) {
+                  this.userData.codigoContribuyente = retryResp.payload.codigoContribuyente;
+                  resolve(retryResp.payload);
+                } else {
+                  this.notify('Error en reintento de registro RUAT', 'error');
+                  resolve(null);
+                }
+              },
+              error: (retryError) => {
+                this.notify('Error al registrar en RUAT después de reintento: ' + retryError.message, 'error');
+                reject(retryError);
+              }
+            });
+          } catch (authError) {
+            this.notify('No se pudo reautenticar con RUAT', 'error');
+            reject(authError);
+          }
+        } else {
           this.notify('Error al registrar en RUAT: ' + error.message, 'error');
           reject(error);
         }
-      });
-    })
-  }
+      }
+    });
+  });
+}
 
   private notify(message: any, type: any): void {
     let timerInterval: any;

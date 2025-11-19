@@ -156,8 +156,7 @@
                   validate: canActivate.includes('VALIDAR'),
                   consult: canActivate.includes('ACTUALIZAR'),
                   records: true,
-                  close: canActivate.includes('ANULAR')?'Anular':'',}"
-                  
+                  close: canActivate.includes('ANULAR')?'Anular':'',}"                  
                 (showItemEmitter)="openModal($event,'show','md')"
                 (editItemEmitter)="openModal($event,'edit','md')"
                 (consultItemEmitter)="consultModal($event,consultModel,'lg')"

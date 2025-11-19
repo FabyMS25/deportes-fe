@@ -1,5 +1,5 @@
 import { Component, OnInit, TemplateRef } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import * as L from 'leaflet';
 import Swal from 'sweetalert2';
 import * as GeoSearch from 'leaflet-geosearch';
@@ -13,6 +13,7 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { EstadoUsuario } from 'src/app/core/constants/Estados';
+import { ToastService } from '../admin/toast-service';
 
 @Component({
     selector: 'app-map-dashboard',
@@ -61,7 +62,9 @@ export class MapDashboardComponent implements OnInit {
     showSearchResults: boolean = false;
 
     constructor(
+        private route: ActivatedRoute,
         private router: Router,
+        public toastService: ToastService,
         private authService: AuthenticationService,
         private categoriesService: CategoriasService,
         private complexService: ComplejosService,
@@ -71,6 +74,25 @@ export class MapDashboardComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      if (params['message']) {
+        switch (params['message']) {
+          case 'welcome_admin':
+            this.toastService.show('¡Bienvenido Admin!', 'Inicio de sesión exitoso');
+            break;
+          case 'welcome_employee':
+            this.toastService.show('¡Bienvenido Encargado!', 'Inicio de sesión exitoso');
+            break;
+          case 'welcome_taxpayer':
+            this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
+            break;
+        }
+        this.router.navigate([], {
+          queryParams: {},
+          replaceUrl: true
+        });
+      }
+    });
         this.systemConfigList = this.authService.getAllConfigs()
         const currentUser = this.authService.currentUser();
         this.userRole = this.authService.getUserRole();

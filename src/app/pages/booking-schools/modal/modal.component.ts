@@ -330,7 +330,6 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
     this.checkExistingMensualidad();
   }
 
-  // Action Methods
   onSubmit(): void {
     if (this.reservaForm.invalid) {
         Swal.fire({
@@ -351,7 +350,6 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
         });
         return;
     }
-
     this.isLoading = true;
     const reservaData = this.prepareReservaPeriodoData();
     this.registerReservaPeriodoInRuat(reservaData);
@@ -763,10 +761,7 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
         tipoReserva: 'periodo',
         montoTotal: this.getTotalAmount(),
         clasificadorRuatId: this.clasificador.codigo,
-        esReservaGratuita: this.selectedEscuela?.permiteReservasGratuitas || false,
-        motivoGratuidad: this.selectedEscuela?.permiteReservasGratuitas ? 'ESCUELA_MUNICIPAL' : undefined,
         observaciones: formValue.observaciones || `Mensualidad para ${this.selectedEstudiante?.nombreCompleto} - ${this.selectedEscuela?.nombre}`,
-        
         campoDeportivoDto: { 
             uuid: this.selectedReservaRecurrente?.campoDeportivoDto?.uuid 
         },

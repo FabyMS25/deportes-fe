@@ -11,7 +11,6 @@ import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.serv
 import { PagoService } from 'src/app/core/services/api/pago.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { ReservaPuntualService } from 'src/app/core/services/api/reserva-puntual.service';
-import { ReservaPuntual } from 'src/app/core/models/reservaPuntual.models';
 import { EstadoPago, EstadoReserva, EstadoUsuario } from 'src/app/core/constants/Estados';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
@@ -66,6 +65,9 @@ export class BookingPeriodoComponent implements OnInit {
   escuelaFiltro: string = '';
 
   systemConfigList: { [key: string]: ConfiguracionSistema } = {};
+  get HorasValidacionPago(): number | undefined {
+    return this.systemConfigList[ClaveConfiguracion.HORAS_VALIDACION_PAGO]?.valorNumerico;
+  }  
   periodosDisponibles: string[] = [];
   
   categoryList: Categoria[] = [];
@@ -110,8 +112,7 @@ export class BookingPeriodoComponent implements OnInit {
     
     this.loadEscuelas();
     this.loadEstudiantes();
-    
-    this.authRuat();
+    // this.authRuat();
     await this.getReservations();
     this.generatePeriodosDisponibles();
     
@@ -162,7 +163,7 @@ export class BookingPeriodoComponent implements OnInit {
     return `${monthNames[item.mes - 1]} ${item.año}`;
   }
 
-  selectedItems: ReservaPuntual[] = [];
+  selectedItems: ReservaPeriodo[] = [];
   consultResults: any[] = [];
   getSelectedItems(items: any[]) {
     this.selectedItems = items;
@@ -185,33 +186,24 @@ export class BookingPeriodoComponent implements OnInit {
   private searchInReservaPeriodo(item: any, searchTerm: string): boolean {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
-    
-    // Search in student information
     if (item.reservaDto?.estudianteEscuelaDto?.nombreCompleto?.toLowerCase().includes(term) ||
         item.reservaDto?.estudianteEscuelaDto?.matricula?.toLowerCase().includes(term) ||
         item.reservaDto?.estudianteEscuelaDto?.numeroDocumento?.toLowerCase().includes(term)) {
       return true;
     }
-    
-    // Search in school information
     if (item.reservaDto?.organizacionDto?.nombre?.toLowerCase().includes(term) ||
         item.reservaDto?.organizacionDto?.disciplina?.toLowerCase().includes(term)) {
       return true;
     }
-    
-    // Search in reservation information
     if (item.reservaDto?.numeroReserva?.toLowerCase().includes(term) ||
         item.reservaDto?.numeroTasa?.toLowerCase().includes(term) ||
         item.reservaDto?.montoTotal?.toString().includes(term)) {
       return true;
     }
-    
-    // Search in period information
     const periodoDisplay = this.getPeriodoDisplayForReserva(item);
     if (periodoDisplay.toLowerCase().includes(term)) {
       return true;
-    }
-    
+    }    
     return false;
   }
 
@@ -271,8 +263,6 @@ export class BookingPeriodoComponent implements OnInit {
       } 
     });
   }
-
-  // New method to generate new monthly payment
   generarNuevaMensualidad(): void {
     if (this.escuelasList.length === 0) {
       Swal.fire({
@@ -283,19 +273,12 @@ export class BookingPeriodoComponent implements OnInit {
       });
       return;
     }
-
     const modalRef = this.modalService.open(BookingPeriodoModalComponent, {
       size: 'lg',
       centered: true,
       backdrop: 'static'
     });
-
-    // For now, use the first school - you might want to let the user choose
-    const escuelaSeleccionada = this.escuelasList[0];
-    
-    modalRef.componentInstance.organizacion = escuelaSeleccionada;
     modalRef.componentInstance.estudiantes = this.estudiantesList;
-
     modalRef.componentInstance.reservaGenerada.subscribe((reserva: Reserva) => {
       this.procesarReservaGenerada(reserva);
     });
@@ -390,25 +373,7 @@ export class BookingPeriodoComponent implements OnInit {
   }
 
   /* API RUAT Services */
-  private authRuat() {
-    const usuario = this.systemConfigList[ClaveConfiguracion.USUARIO_RUAT]?.valorTexto;
-    const clave = this.systemConfigList[ClaveConfiguracion.CLAVE_RUAT]?.valorTexto;
-    if(usuario && clave){
-      this.ruatService.authenticate(usuario,clave).subscribe({
-        next: (response) => {
-          window.sessionStorage.setItem('ruatToken', response.token);
-        },
-        error: (error) => {
-          Swal.fire({
-            text: 'Falla en la coneccion con el RUAT',
-            title: 'Error!', icon: 'error', confirmButtonColor: '#d33'
-          });
-        }
-      });
-    }
-  }
-
-  private async consultData(item: any): Promise<any> {
+  private async consultData(item: ReservaPeriodo): Promise<any> {
     if (!item) {
       return { item, text: 'No se pudo obtener el dato seleccionado', type: 'warning' };
     }
@@ -524,7 +489,101 @@ export class BookingPeriodoComponent implements OnInit {
       };
     }
   }
-
+  private async checkAndUpdateReservationStatuses(reservas: ReservaPeriodo[]): Promise<ReservaPeriodo[]> {
+    const updatePromises = reservas.map(async (reserva) => {
+      if (!reserva.reservaDto) return reserva;
+      const reservaDto = reserva.reservaDto;      
+      try {
+        if (reservaDto.estadoReserva === EstadoReserva.PENDIENTE) {
+          const consultResult = await this.consultData(reserva);
+          if (!consultResult.hasPayment) {
+            if (this.isPaymentPeriodExpired(reserva)) {
+              return await this.handleExpiredPendingReservation(reserva);
+            }
+          } else {
+            return consultResult.item;
+          }
+        }
+        if (reservaDto.estadoReserva === EstadoReserva.PAGADA && this.isUsageDatePassed(reserva)) {
+          return await this.handleCompletedReservation(reserva);
+        }
+        return reserva;
+      } catch (error) {
+        return reserva;
+      }
+    });    
+    return await Promise.all(updatePromises);
+  }
+  private isPaymentPeriodExpired(reserva: ReservaPeriodo): boolean {
+    let horasValidacion = this.HorasValidacionPago;
+    if (!horasValidacion) {
+      console.warn('HorasValidacionPago not configured, using default 24 hours');
+      horasValidacion = 24
+    }    
+    if (!reserva.reservaDto?.fechaCreacion) return false;    
+    const fechaCreacion = new Date(reserva.reservaDto.fechaCreacion);
+    const currentDate = new Date();
+    const expirationDate = new Date(fechaCreacion);
+    expirationDate.setHours(expirationDate.getHours() + horasValidacion);    
+    return currentDate > expirationDate;
+  }
+  private isUsageDatePassed(reserva: ReservaPeriodo): boolean {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1;
+    if (reserva.año < currentYear) {
+      return true;
+    } else if (reserva.año === currentYear && reserva.mes < currentMonth) {
+      return true;
+    }    
+    return false;
+  }
+  private async handleCompletedReservation(reserva: ReservaPeriodo): Promise<ReservaPeriodo> {
+    const updatedReservaDto: any = {
+      ...reserva.reservaDto,
+      estadoReserva: EstadoReserva.COMPLETADA,
+      fechaActualizacion: new Date()
+    };    
+    const updatedReserva = await this.reservaService.update(updatedReservaDto).toPromise();
+    reserva.reservaDto = updatedReserva;
+    return reserva;
+  }
+  private async handleExpiredPendingReservation(reserva: ReservaPeriodo): Promise<ReservaPeriodo> {
+    const codigoAlcaldia = this.systemConfigList[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI';
+    const codigoUsuario = this.systemConfigList[ClaveConfiguracion.CODIGO_USUARIO_RUAT]?.valorTexto || '';
+    if (reserva.reservaDto?.numeroTasa) {
+      try {
+        const requestData = {
+          numeroTasa: reserva.reservaDto.numeroTasa,
+          motivo: "NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO",
+          observacion: "ANULADO AUTOMATICO, VENCIDO PLAZO DE RESERVA"
+        };        
+        await this.ruatService.cancelTasa(codigoAlcaldia, codigoUsuario, requestData).toPromise();
+      } catch (error) {
+        console.warn('Failed to cancel tasa in RUAT for expired period reservation:', error);
+        return reserva;
+      }
+    }
+    const updatedReservaDto: any = {
+      ...reserva.reservaDto,
+      estadoReserva: EstadoReserva.EXPIRADA,
+      motivoRechazo: "NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO",
+      fechaRechazo: new Date()
+    };    
+    const updatedReserva = await this.reservaService.update(updatedReservaDto).toPromise();
+    reserva.reservaDto = updatedReserva;
+    return reserva;
+  }
+  private showExpiredReservationsMessage(count: number): void {
+    Swal.fire({
+      title: 'Reservas Expiradas',
+      text: `${count} reserva(s) pendiente(s) han expirado por falta de pago y han sido actualizadas automáticamente.`,
+      icon: 'info',
+      confirmButtonText: 'Entendido',
+      timer: 5000,
+      timerProgressBar: true
+    });
+  }
   /* API Services */
   private updateReserva(data: Reserva): Promise<Reserva> {
     return new Promise((resolve, reject) => {
@@ -585,7 +644,6 @@ export class BookingPeriodoComponent implements OnInit {
       }
     });
   }
-
   private async getReservations(page: number = 0, size: number = 20) {
     try {
       this.loading = true;
@@ -598,24 +656,38 @@ export class BookingPeriodoComponent implements OnInit {
           list = data.payload.content;
         } else {
           list = [];
-        }
+        }        
         if (this.contribuyente) {
           list = list.filter((item: any) => 
             item.reservaDto?.contribuyenteDto?.uuid === this.contribuyente.uuid
           );
-        }
+        }        
         const assignaments = localStorage.getItem("assignaments");
         const employee = assignaments ? JSON.parse(assignaments) : null;
         if (employee) {
           list = list.filter((item: any) => 
             item.reservaDto?.campoDeportivoDto?.complejoDto?.uuid === employee.complejoDto?.uuid
           );
-        }
-        this.reservasList = list.map(item => ({
+        }        
+        const originalPendingCount = list.filter(item => 
+          item.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE
+        ).length;        
+        const updatedList = await this.checkAndUpdateReservationStatuses(list);        
+        const newlyExpiredCount = updatedList.filter(item => 
+          item.reservaDto?.estadoReserva === EstadoReserva.EXPIRADA && 
+          list.find(originalItem => 
+            originalItem.reservaDto?.uuid === item.reservaDto?.uuid && 
+            originalItem.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE
+          )
+        ).length;        
+        this.reservasList = updatedList.map(item => ({
           ...item,
           periodoDisplay: this.getPeriodoDisplayForReserva(item)
         }));        
-        this.temp = this.reservasList;
+        this.temp = this.reservasList;        
+        if (newlyExpiredCount > 0) {
+          this.showExpiredReservationsMessage(newlyExpiredCount);
+        }
       } else {
         this.reservasList = [];
         this.temp = [];

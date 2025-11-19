@@ -165,7 +165,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(end => this.currentWeekEnd = end);
     this.initializeFromNavigation();
-    await this.authenticateRuat();
+    // await this.authenticateRuat();
   }
 
   ngOnDestroy(): void {
@@ -332,26 +332,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
       return fechaAsignacion <= todayNormalized && todayNormalized <= fechaFinAsignacion;
     });
   }
-  /* API REQUESTS */  
-  private async authenticateRuat(): Promise<void> {    
-    const usuario = this.systemConfigList[ClaveConfiguracion.USUARIO_RUAT]?.valorTexto || '';
-    const clave = this.systemConfigList[ClaveConfiguracion.CLAVE_RUAT]?.valorTexto || '';
-    try {
-      const response = await this.ruatService.authenticate(usuario,clave)
-        .pipe(takeUntil(this.destroy$))
-        .toPromise();      
-      if (response?.token) {
-        window.sessionStorage.setItem('ruatToken', response.token);
-        this.isRuatAuthenticated = true;
-      }
-    } catch (error) {
-      console.error('Error authenticating with RUAT:', error);
-      this.showNotification(
-        'Advertencia: No se pudo conectar con el RUAT. Algunas funcionalidades podrían estar limitadas.',
-        'warning'
-      );
-    }
-  }
+  /* API REQUESTS */
   private async loadReservationsByField(fieldUuid: string): Promise<void> {
     if (!fieldUuid) {
       throw new Error('UUID del campo es requerido');

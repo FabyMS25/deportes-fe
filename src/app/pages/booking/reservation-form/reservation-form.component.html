@@ -7,7 +7,7 @@
   </div>
 
   <form *ngIf="reservationForm" [formGroup]="reservationForm" (ngSubmit)="onSubmit()" novalidate>
-    <div *ngIf="submitted && reservationForm.invalid" class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+    <div *ngIf="submitted && reservationForm.invalid" class="alert alert-danger alert-dismissible fade show mb-2" role="alert">
       <div class="d-flex align-items-start">
         <i class="ri-error-warning-fill me-3 mt-1"></i>
         <div class="flex-grow-1">
@@ -22,7 +22,7 @@
 
     <div class="card shadow-sm">
       <div class="card-body">
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-2">
           <div class="col-md-8">
             <h6 class="fw-bold text-dark mb-1">
               <i class="ri-building-line text-primary me-1"></i>
@@ -47,8 +47,6 @@
               </span>
             </div>
           </div>
-
-
           <div class="col-md-4">
             <label class="form-label fw-semibold mb-2">
               <i class="ri-hashtag text-primary me-1"></i>
@@ -109,17 +107,25 @@
             </div>
           </div>
         </div>
-
-        <hr class="my-3">
-        <div class="mb-4">
-          <h6 class="mb-3 fw-bold">
-            <i class="ri-calendar-2-line text-primary me-2"></i>
-            {{ bookingType === 'puntual' ? 'Fecha y Horario' : 'Programación Recurrente' }}
-          </h6>
+        <hr class="my-2">
+        <div class="mb-2">
+          <div class="row g-3 mb-2">
+            <h6 class="col fw-bold">
+              <i class="ri-calendar-2-line text-primary me-2"></i>
+              {{ bookingType === 'puntual' ? 'Fecha y Horario' : 'Programación Recurrente' }}
+            </h6>            
+            <div class="col" *ngIf="bookingType === 'puntual' && duration > 0">
+              <div class="alert alert-info alert-sm py-2 mb-0">
+                <i class="ri-timer-line me-2"></i>
+                <strong>Duración:</strong> 
+                <span class="fw-bold ms-1">{{ formatDuration(duration) }}</span>
+              </div>
+            </div>
+          </div>
           <div *ngIf="bookingType === 'puntual'">
             <div class="row g-2">
               <div class="col-md-3">
-                <label class="form-label fw-semibold">
+                <label class="form-label mb-0 fw-semibold">
                   <i class="ri-calendar-event-line me-1"></i>
                   Fecha <span class="text-danger">*</span>
                 </label>
@@ -142,9 +148,8 @@
                   </small>
                 </div>
               </div>
-
               <div class="col-md-3">
-                <label class="form-label fw-semibold">
+                <label class="form-label mb-0 fw-semibold">
                   <i class="ri-time-line me-1"></i>
                   Hora Inicio <span class="text-danger">*</span>
                 </label>
@@ -165,9 +170,8 @@
                   </small>
                 </div>
               </div>
-
               <div class="col-md-3">
-                <label class="form-label fw-semibold">
+                <label class="form-label mb-0 fw-semibold">
                   <i class="ri-time-line me-1"></i>
                   Hora Fin <span class="text-danger">*</span>
                 </label>
@@ -188,9 +192,8 @@
                   </small>
                 </div>
               </div>
-
               <div class="col-md-3">
-                <label class="form-label fw-semibold">
+                <label class="form-label mb-0 fw-semibold">
                   <i class="ri-group-line me-1"></i>
                   Personas <span class="text-danger" *ngIf="selectedTariff.tipoCobro === 'por_persona'">*</span>
                 </label>
@@ -215,25 +218,12 @@
                 </div>
               </div>
             </div>
-
-            <div *ngIf="duration > 0" class="mt-2">
-              <div class="alert alert-info alert-sm py-2 mb-0">
-                <i class="ri-timer-line me-2"></i>
-                <strong>Duración:</strong> 
-                <span class="fw-bold ms-1">{{ formatDuration(duration) }}</span>
-                <span *ngIf="shouldDisableScheduleFields" class="ms-2 text-muted">
-                  <i class="ri-lock-line me-1"></i>Horario bloqueado para edición
-                </span>
-              </div>
-            </div>
           </div>
         </div>
-
-        <hr class="my-3">
-
+        <hr class="my-2">
         <!-- Price Calculation -->
         <div class="mb-4">
-          <h6 class="mb-3 fw-bold">
+          <h6 class="fw-bold">
             <i class="ri-calculator-line text-primary me-2"></i>
             Cálculo de Pago
           </h6>
@@ -307,13 +297,11 @@
             </div>
           </div>
         </div>
-
-        <hr class="my-3">
-
+        <hr class="my-2">
         <!-- Contributor Information -->
-        <div class="mb-4">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="mb-0 fw-bold">
+        <div class="mb-2">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold">
               <i class="ri-user-line text-primary me-2"></i>
               Solicitante
             </h6>
@@ -331,8 +319,7 @@
             </div>
           </div>
 
-          <div class="row g-3">
-            <!-- Contributor Column -->
+          <div class="row g-3 mb-2">
             <div [class]="reservationForm.get('esParaOrganizacion')?.value ? 'col-md-6' : 'col-12'">
               <div *ngIf="contribuyente" class="p-2 bg-success bg-opacity-10 rounded border border-success">
                 <div class="d-flex align-items-start">
@@ -485,6 +472,8 @@
                   </div>
                 </div>
               </div>
+            </div>
+          </div>  
               <div class="p-2 rounded" [ngClass]="getStatusClass()">
                 <div class="d-flex align-items-center">
                   <i [class]="getStatusIcon()" class="fs-5 me-2"></i>
@@ -501,15 +490,58 @@
                     </small>
                   </div>
                 </div>
+              </div>        
+          <div class="mb-2" *ngIf="showFreeReservationOption && selectedContribuyente?.esDeportistaElite && !selectedOrganization?.permiteReservasGratuitas">
+            <div class="form-check form-switch">
+              <input 
+                class="form-check-input" 
+                type="checkbox" 
+                [checked]="isFreeReservation"
+                (change)="toggleFreeReservation()"
+                id="freeReservation"
+                style="cursor: pointer;">
+              <label class="form-check-label fw-semibold text-info" for="freeReservation" style="cursor: pointer;">
+                <i class="ri-gift-line me-1"></i>
+                Realizar reserva gratuita como Deportista de Elite
+              </label>
+            </div>
+            <small class="text-muted d-block mt-1">
+              <i class="ri-information-line me-1"></i>
+              Como deportista de elite registrado, puede optar por realizar esta reserva sin costo.
+            </small>
+          </div>
+          <div class="mb-2" *ngIf="selectedOrganization?.permiteReservasGratuitas">
+            <div class="alert alert-info alert-sm py-2 mb-0">
+              <div class="d-flex align-items-center">
+                <i class="ri-gift-line me-2"></i>
+                <div>
+                  <strong class="d-block">Reserva Gratuita Automática</strong>
+                  <small>
+                    La organización seleccionada tiene permisos para reservas gratuitas. 
+                    Esta reserva no generará costo alguno.
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mb-2" *ngIf="selectedOrganization && !selectedOrganization.permiteReservasGratuitas && selectedContribuyente?.esDeportistaElite">
+            <div class="alert alert-warning alert-sm py-2 mb-0">
+              <div class="d-flex align-items-center">
+                <i class="ri-information-line me-2"></i>
+                <div>
+                  <strong class="d-block">Reserva con Costo</strong>
+                  <small>
+                    Aunque es deportista de elite, la organización seleccionada no tiene permisos para reservas gratuitas.
+                    Esta reserva generará el costo correspondiente.
+                  </small>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
-        <hr class="my-3">
-
+        <hr class="my-2">
         <!-- Observations -->
-        <div class="mb-3">
+        <div class="mb-2">
           <label class="form-label fw-semibold">
             <i class="ri-message-3-line me-1"></i>
             Observaciones <span class="text-danger">*</span>
@@ -530,9 +562,8 @@
             </small>
           </div>
         </div>
-
         <!-- Terms -->
-        <div class="mb-3">
+        <div class="mb-2">
           <div class="form-check">
             <input 
               class="form-check-input" 
@@ -552,7 +583,6 @@
             </div>
           </div>
         </div>
-
         <!-- Info Alert -->
         <div class="alert alert-info alert-sm mb-0">
           <div class="d-flex">
@@ -568,7 +598,6 @@
           </div>
         </div>
       </div>
-
       <!-- Card Footer -->
       <div class="card-footer bg-light">
         <div class="d-flex justify-content-between align-items-center">          

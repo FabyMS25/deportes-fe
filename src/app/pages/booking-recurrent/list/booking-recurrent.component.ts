@@ -139,7 +139,7 @@ export class BookingRecurrentComponent implements OnInit {
     } else {
       this.userData = currentUser.designacion.personaDto;
     }
-    this.authRuat()
+    // this.authRuat()
     await this.getReservations();
     await this.getCategories();
     setInterval(() => this.getReservations(), 5 * 60 * 1000);
@@ -302,8 +302,7 @@ export class BookingRecurrentComponent implements OnInit {
       for (const item of this.selectedItems) {
         try {
           const result = await this.consultData(item);
-          this.consultResults.push(result);
-          
+          this.consultResults.push(result);          
           if (!this.dataSelected && result.hasPayment && result.pagoData) {
             this.dataSelected = {
               reserva: result.item,
@@ -337,45 +336,170 @@ export class BookingRecurrentComponent implements OnInit {
       this.getReservations();
     }
   }
-  private async checkAndUpdateExpiredReservas(reservas: ReservaRecurrente[]): Promise<ReservaRecurrente[]> {
-    const updatedReservas: ReservaRecurrente[] = [];
-    const codigoAlcaldia = this.systemConfigList[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI';
-    const codigoUsuario = this.systemConfigList[ClaveConfiguracion.CODIGO_USUARIO_RUAT]?.valorTexto || '';
+
+  private async checkAndUpdateReservationStatuses(reservas: ReservaRecurrente[]): Promise<ReservaRecurrente[]> {
     const updatePromises = reservas.map(async (reserva) => {
-      if (this.isReservaExpired(reserva) && reserva.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE) {
-        try {
-          const requestData = {
-            numeroTasa: reserva.reservaDto.numeroTasa,
-            motivo: "NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO",
-            observacion: "ANULADO AUTOMATICO, VENCIDO PLAZO DE RESERVA"
-          };          
-          await this.ruatService.cancelTasa(codigoAlcaldia, codigoUsuario, requestData).toPromise();
-          reserva.reservaDto.estadoReserva = EstadoReserva.EXPIRADA;
-          reserva.reservaDto.motivoRechazo = requestData.motivo;
-          reserva.reservaDto.fechaRechazo = new Date();
-          const updatedReserva = await this.reservaService.update(reserva.reservaDto).toPromise();
-          reserva.reservaDto = updatedReserva;
-          return reserva;
-        } catch (error) {
-          console.error('Error updating expired reserva:', error);
-          return reserva;
+      if (!reserva.reservaDto) return reserva;
+      const reservaDto = reserva.reservaDto;      
+      try {
+        if (reservaDto.estadoReserva === EstadoReserva.PENDIENTE) {
+          const consultResult = await this.consultData(reserva);
+          if (!consultResult.hasPayment) {
+            if (this.isPaymentPeriodExpired(reserva)) {
+              return await this.handleExpiredPendingReservation(reserva);
+            }
+          } else {
+            return consultResult.item;
+          }
         }
-      } else {
+        if (reservaDto.estadoReserva === EstadoReserva.PAGADA && this.isUsageDatePassed(reserva)) {
+          return await this.handleCompletedReservation(reserva);
+        }
+        if (reservaDto.estadoReserva === EstadoReserva.EN_CURSO && this.isSessionCompleted(reserva)) {
+          return await this.handleCompletedReservation(reserva);
+        }
+        if (reservaDto.estadoReserva === EstadoReserva.PAGADA && this.isSessionCurrentlyActive(reserva)) {
+          return await this.handleInProgressReservation(reserva);
+        }        
+        return reserva;
+      } catch (error) {
         return reserva;
       }
-    });
-    const results = await Promise.all(updatePromises);
-    return results;
+    });    
+    return await Promise.all(updatePromises);
   }
-  private isReservaExpired(reserva: ReservaRecurrente): boolean {
-    const now = new Date();      
-    if (!reserva.reservaDto?.fechaCreacion) {
-      return false;
+  private isPaymentPeriodExpired(reserva: ReservaRecurrente): boolean {
+    let horasValidacion = this.HorasValidacionPago;
+    if (!horasValidacion) {
+      console.warn('HorasValidacionPago not configured, using default 24 hours');
+      horasValidacion = 24
     }    
-    const fechaCreated = new Date(reserva.reservaDto.fechaCreacion);    
-    const horasTimeout = this.HorasValidacionPago ?? 24;    
-    const expirationTime = new Date(fechaCreated.getTime() + horasTimeout * 60 * 60 * 1000);      
-    return now > expirationTime;
+    if (!reserva.reservaDto?.fechaCreacion) return false;    
+    const fechaCreacion = new Date(reserva.reservaDto.fechaCreacion);
+    const currentDate = new Date();
+    const expirationDate = new Date(fechaCreacion);
+    expirationDate.setHours(expirationDate.getHours() + horasValidacion);    
+    return currentDate > expirationDate;
+  }
+  private isUsageDatePassed(reserva: ReservaRecurrente): boolean {
+    if (reserva.fechaFin) {
+      const endDate = new Date(reserva.fechaFin);
+      const currentDate = new Date();
+      endDate.setHours(23, 59, 59, 999);
+      return endDate < currentDate;
+    }    
+    return false;
+  }
+  private isSessionCompleted(reserva: ReservaRecurrente): boolean {
+    const currentDate = new Date();
+    if (this.isTodayScheduledDay(reserva)) {
+      const todaysSessions = this.getTodaysSessions(reserva);
+      const lastSessionEndTime = this.getLastSessionEndTime(todaysSessions);
+      return lastSessionEndTime !== null && lastSessionEndTime < currentDate;
+    }    
+    return false;
+  }
+  private isSessionCurrentlyActive(reserva: ReservaRecurrente): boolean {
+    const currentDate = new Date();    
+    if (this.isTodayScheduledDay(reserva)) {
+      const todaysSessions = this.getTodaysSessions(reserva);
+      return todaysSessions.some(session => 
+        currentDate >= session.startTime && currentDate <= session.endTime
+      );
+    }    
+    return false;
+  }
+  private isTodayScheduledDay(reserva: ReservaRecurrente): boolean {
+    if (!reserva.diasSemana || !reserva.fechaInicio || !reserva.fechaFin) return false;    
+    const currentDate = new Date();
+    const startDate = new Date(reserva.fechaInicio);
+    const endDate = new Date(reserva.fechaFin);
+    if (currentDate < startDate || currentDate > endDate) return false;
+    const todayIndex = (currentDate.getDay() + 6) % 7;
+    const scheduledDays = reserva.diasSemana.split(',').map(day => this.parseDayToTableroIndex(day.trim()));
+    
+    return scheduledDays.includes(todayIndex);
+  }
+  private getTodaysSessions(reserva: ReservaRecurrente): { startTime: Date, endTime: Date }[] {
+    if (!reserva.tableroDto?.horario) return [];    
+    const currentDate = new Date();
+    const todayIndex = (currentDate.getDay() + 6) % 7;
+    const todaysSchedule = reserva.tableroDto.horario[todayIndex];    
+    if (!todaysSchedule || todaysSchedule.length === 0) return [];    
+    const sessions: { startTime: Date, endTime: Date }[] = [];    
+    todaysSchedule.forEach(timeSlot => {
+      const [startTimeStr, endTimeStr] = timeSlot.split('-');
+      if (startTimeStr && endTimeStr) {
+        const [startHours, startMinutes] = startTimeStr.split(':').map(Number);
+        const [endHours, endMinutes] = endTimeStr.split(':').map(Number);        
+        const startTime = new Date(currentDate);
+        startTime.setHours(startHours, startMinutes, 0, 0);        
+        const endTime = new Date(currentDate);
+        endTime.setHours(endHours, endMinutes, 0, 0);        
+        sessions.push({ startTime, endTime });
+      }
+    });    
+    return sessions;
+  }
+  private parseDayToTableroIndex(day: string): number {
+    const dayMap: { [key: string]: number } = {
+      'lunes': 0, 'martes': 1, 'miercoles': 2, 'miércoles': 2,
+      'jueves': 3, 'viernes': 4, 'sabado': 5, 'sábado': 5,
+      'domingo': 6
+    };
+    return dayMap[day.toLowerCase()] ?? -1;
+  }
+  private getLastSessionEndTime(sessions: { startTime: Date, endTime: Date }[]): Date | null {
+    if (sessions.length === 0) return null;
+    const sortedSessions = sessions.sort((a, b) => b.endTime.getTime() - a.endTime.getTime());
+    return sortedSessions[0].endTime;
+  }
+
+  private async handleCompletedReservation(reserva: ReservaRecurrente): Promise<ReservaRecurrente> {
+    const updatedReservaDto: any = {
+      ...reserva.reservaDto,
+      estadoReserva: EstadoReserva.COMPLETADA,
+      fechaActualizacion: new Date()
+    };    
+    const updatedReserva = await this.reservaService.update(updatedReservaDto).toPromise();
+    reserva.reservaDto = updatedReserva;
+    return reserva;
+  }
+  private async handleInProgressReservation(reserva: ReservaRecurrente): Promise<ReservaRecurrente> {
+    const updatedReservaDto: any = {
+      ...reserva.reservaDto,
+      estadoReserva: EstadoReserva.EN_CURSO,
+      fechaActualizacion: new Date()
+    };    
+    const updatedReserva = await this.reservaService.update(updatedReservaDto).toPromise();
+    reserva.reservaDto = updatedReserva;
+    return reserva;
+  }
+  private async handleExpiredPendingReservation(reserva: ReservaRecurrente): Promise<ReservaRecurrente> {
+    const codigoAlcaldia = this.systemConfigList[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI';
+    const codigoUsuario = this.systemConfigList[ClaveConfiguracion.CODIGO_USUARIO_RUAT]?.valorTexto || '';
+    if (reserva.reservaDto?.numeroTasa) {
+      try {
+        const requestData = {
+          numeroTasa: reserva.reservaDto.numeroTasa,
+          motivo: "NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO",
+          observacion: "ANULADO AUTOMATICO, VENCIDO PLAZO DE RESERVA"
+        };        
+        await this.ruatService.cancelTasa(codigoAlcaldia, codigoUsuario, requestData).toPromise();
+      } catch (error) {
+        console.warn('Failed to cancel tasa in RUAT for expired reservation:', error);
+        return reserva;
+      }
+    }
+    const updatedReservaDto: any = {
+      ...reserva.reservaDto,
+      estadoReserva: EstadoReserva.EXPIRADA,
+      motivoRechazo: "NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO",
+      fechaRechazo: new Date()
+    };    
+    const updatedReserva = await this.reservaService.update(updatedReservaDto).toPromise();
+    reserva.reservaDto = updatedReserva;
+    return reserva;
   }
   private showExpiredReservationsMessage(expiredCount: number): void {
     const message = expiredCount === 1 
@@ -393,25 +517,7 @@ export class BookingRecurrentComponent implements OnInit {
     });
   }
   /* API RUAT Services */
-  private authRuat() {
-    const usuario = this.systemConfigList[ClaveConfiguracion.USUARIO_RUAT]?.valorTexto;
-    const clave = this.systemConfigList[ClaveConfiguracion.CLAVE_RUAT]?.valorTexto;
-    if(usuario && clave){
-      this.ruatService.authenticate(usuario,clave).subscribe({
-        next: (response) => {
-          window.sessionStorage.setItem('ruatToken', response.token);
-        },
-        error: (error) => {
-          Swal.fire({
-            text: 'Falla en la coneccion con el RUAT',
-            title: 'Error!', icon: 'error', confirmButtonColor: '#d33'
-          });
-        }
-      });
-    }
-  }
-
-  private async consultData(item: any): Promise<any> {
+  private async consultData(item: ReservaRecurrente): Promise<any> {
     if (!item) {
       return { item, text: 'No se pudo obtener el dato seleccionado', type: 'warning' };
     }    
@@ -529,23 +635,6 @@ export class BookingRecurrentComponent implements OnInit {
   }
 
   /* API Services */
-  private updateReservaRecurrente(data: ReservaRecurrente): Promise<ReservaRecurrente> {
-    return new Promise((resolve, reject) => {
-      this.reservaRecurrenteService.update(data).subscribe({
-        next: (resp: any) => {
-          if (resp['status'] === 'OK') {
-            resolve(resp.payload);
-          } else {
-            reject(resp.payload);
-          }
-        },
-        error: (error) => {
-          console.error("Error updating reserva:", error);
-          reject(error);
-        }
-      });
-    });
-  }
   private updateReserva(data: Reserva): Promise<Reserva> {
     return new Promise((resolve, reject) => {
       this.reservaService.update(data).subscribe({
@@ -604,7 +693,7 @@ export class BookingRecurrentComponent implements OnInit {
         const originalPendingCount = list.filter(item => 
           item.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE
         ).length;
-        const updatedList = await this.checkAndUpdateExpiredReservas(list);
+        const updatedList = await this.checkAndUpdateReservationStatuses(list);
         const newlyExpiredCount = updatedList.filter(item => 
           item.reservaDto?.estadoReserva === EstadoReserva.EXPIRADA && 
           list.find(originalItem => 

@@ -19,7 +19,7 @@ import { ReservaPuntual } from 'src/app/core/models/reservaPuntual.models';
 import { ReservaRecurrente } from 'src/app/core/models/reservaRecurrente.models';
 import { Organizacion } from 'src/app/core/models/organizacion.models';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
-import { BookingType } from 'src/app/core/constants/Features';
+import { BookingType, TipoOrganizacion } from 'src/app/core/constants/Features';
 import { EstadoReserva, EstadoValidacion } from 'src/app/core/constants/Estados';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
@@ -84,6 +84,11 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   businessHours: any = null;
   requiresValidation = this.actionType==='book'? false:true;
 
+  isFreeReservation = false;
+  freeReservationReason = '';
+  showFreeReservationOption = false;
+  showOrganizationToggle = false;
+  
   minDate = this.safeFormatDate(new Date(), 'yyyy-MM-dd');
   maxDate = this.safeFormatDate(addDays(new Date(), 30), 'yyyy-MM-dd');
   
@@ -172,6 +177,8 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     this.initializeUserContext();
     this.generateReservationNumber();
     this.initializeForm();
+    this.checkFreeReservationEligibility();
+    this.checkOrganizationToggleEligibility();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -179,11 +186,14 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       this.selectedContribuyente = this.contribuyente;
       if (this.formInitialized) {
         this.updateFormWithContribuyente();
+        this.checkFreeReservationEligibility();
+        this.checkOrganizationToggleEligibility();
       }
     }
     if ((changes['selectedTariff'] || changes['selectedSchedule'] || changes['recurrentSchedule'] || changes['dataField'] || changes['systemConfigs']) && this.formInitialized) {
       this.calculateValidationRequirement();
       this.calculatePrice();
+      this.checkFreeReservationEligibility();
     }
   }
 
@@ -202,6 +212,66 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         this.organizationsList = this.contribuyente.organizacionesRepresentadas?.length ? 
           this.contribuyente.organizacionesRepresentadas : [];
       }
+    }
+  }
+
+  private checkOrganizationToggleEligibility(): void {
+      console.log("selected contrib ",this.selectedContribuyente)
+    if (this.userRole === 'Admin' || this.userRole === 'Encargado') {
+      this.showOrganizationToggle = true;
+      this.organizationsList = this.selectedContribuyente?.organizacionesRepresentadas || []
+    } else if (this.userRole === 'Representante') {
+      this.showOrganizationToggle = true;
+    } else if (this.selectedContribuyente?.organizacionesRepresentadas?.length) {
+      this.organizationsList = this.selectedContribuyente.organizacionesRepresentadas
+      console.log("selected contrib  2 ",this.selectedContribuyente)
+      this.showOrganizationToggle = true;
+    } else {
+      this.showOrganizationToggle = false;
+    }
+  }
+
+  private checkFreeReservationEligibility(): void {
+    if (!this.selectedContribuyente && !this.selectedOrganization) {
+      this.showFreeReservationOption = false;
+      this.isFreeReservation = false;
+      return;
+    }
+    const formValue = this.reservationForm?.getRawValue();
+    const selectedOrganization = formValue?.organizacionDto || this.selectedOrganization;
+    const isOrganizationFreeEligible = selectedOrganization?.permiteReservasGratuitas || 
+                                    (selectedOrganization?.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL && 
+                                      selectedOrganization?.permiteReservasGratuitas);
+    const isEliteAthlete = this.selectedContribuyente?.esDeportistaElite;
+    this.showFreeReservationOption = isOrganizationFreeEligible || isEliteAthlete;    
+    if (this.showFreeReservationOption) {
+      if (isOrganizationFreeEligible) {
+        this.isFreeReservation = true;
+        this.setFreeReservationReason(selectedOrganization);
+      } else if (isEliteAthlete && !selectedOrganization) {
+        this.freeReservationReason = 'DEPORTISTA_ELITE';
+      } else if (isEliteAthlete && selectedOrganization && !isOrganizationFreeEligible) {
+        this.isFreeReservation = false;
+        this.freeReservationReason = '';
+        this.showFreeReservationOption = false;
+      }
+    } else {
+      this.isFreeReservation = false;
+      this.freeReservationReason = '';
+    }
+
+    this.calculatePrice();
+  }
+
+  private setFreeReservationReason(organization?: Organizacion): void {
+    if (organization) {
+      if (organization.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL) {
+        this.freeReservationReason = TipoOrganizacion.ESCUELA_MUNICIPAL;
+      } else {
+        this.freeReservationReason = 'ORGANIZACION';
+      }
+    } else if (this.selectedContribuyente?.esDeportistaElite) {
+      this.freeReservationReason = 'DEPORTISTA_ELITE';
     }
   }
 
@@ -260,7 +330,9 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         'Reserva de Cancha Deportiva GAMQ', 
         [Validators.required, Validators.minLength(10), Validators.maxLength(500)]
       ],
-      aceptaTerminos: [false, [Validators.requiredTrue]]
+      aceptaTerminos: [false, [Validators.requiredTrue]],
+      esReservaGratuita: [this.isFreeReservation],
+      motivoGratuidad: [this.freeReservationReason]
     }, {
       validators: [
         this.reservationValidator.bind(this),
@@ -275,14 +347,18 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     this.setupConditionalValidators();
     this.calculatePrice();
   }
+
   private updateFormWithContribuyente(): void {
     if (this.reservationForm && this.selectedContribuyente) {
       this.reservationForm.patchValue({
         contribuyenteDto: this.selectedContribuyente
       });
       this.calculateValidationRequirement();
+      this.checkFreeReservationEligibility();
+      this.checkOrganizationToggleEligibility();
     }
   }
+
   private generateReservationNumber(): void {
     this.reservaService.previewNumeroReserva().subscribe({
       next: (numeroReserva: any) => {
@@ -318,6 +394,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       this.reservationForm.patchValue({ numeroReserva: this.numeroReserva });
     }
   }
+
   generateNewReservationNumber(): void {
     this.reservaService.generateNumeroReserva().subscribe({
       next: (newNumber: string) => {
@@ -337,6 +414,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       }
     });
   }
+
   validateCustomReservationNumber(): void {
     const customNumber = this.reservationForm?.get('numeroReserva')?.value;    
     if (!customNumber) {
@@ -384,6 +462,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       }
     });
   }
+
   private reservationNumberFormatValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const value = control.value;
@@ -406,58 +485,64 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       this.requiresValidation = true;
       return;
     }
+
     const formValue = this.reservationForm?.getRawValue();
     const selectedOrganization = formValue?.organizacionDto;
+    
+    if (this.isFreeReservation && this.showFreeReservationOption) {
+      this.requiresValidation = false;
+      return;
+    }
+      
     if (selectedOrganization?.permiteReservasGratuitas) {
       this.requiresValidation = false;
       return;
     }
       
-      if (this.userRole === 'Admin' || this.userRole === 'Encargado') {
+    if (this.userRole === 'Admin' || this.userRole === 'Encargado') {
+      this.requiresValidation = false;
+      return;
+    } else if(this.actionType==='book'){
+      this.requiresValidation = false;
+    }
+      
+    if (this.selectedContribuyente.puedeReservarGratis && this.dataField.accesoLibre) {
+      this.requiresValidation = false;
+      return;
+    }
+      
+    if (!this.dataField.requiereAprobacion) {
+      this.requiresValidation = false;
+      return;
+    }
+      
+    if (this.bookingType === 'puntual') {
+      let duration = 0;
+      let personas = 1;
+        
+      if (this.selectedSchedule) {
+        duration = this.calculateDurationFromTimes(this.selectedSchedule.start, this.selectedSchedule.end);
+      } else if (this.reservationForm) {
+        const horaInicio = this.reservationForm.get('horaInicio')?.value;
+        const horaFin = this.reservationForm.get('horaFin')?.value;
+        if (horaInicio && horaFin) {
+          duration = this.calculateDurationFromTimes(horaInicio, horaFin);
+        }
+        personas = this.reservationForm.get('cantidadPersonas')?.value || 1;
+      }
+        
+      if (this.dataField.maxDuracionAutoAprobacion && duration <= this.dataField.maxDuracionAutoAprobacion) {
         this.requiresValidation = false;
         return;
-      }else if(this.actionType==='book'){
-        this.requiresValidation = false;
       }
-      
-      
-      if (this.selectedContribuyente.puedeReservarGratis && this.dataField.accesoLibre) {
+        
+      if (this.dataField.maxPersonasAutoAprobacion && personas <= this.dataField.maxPersonasAutoAprobacion) {
         this.requiresValidation = false;
         return;
       }
+    }
       
-      if (!this.dataField.requiereAprobacion) {
-        this.requiresValidation = false;
-        return;
-      }
-      
-      if (this.bookingType === 'puntual') {
-        let duration = 0;
-        let personas = 1;
-        
-        if (this.selectedSchedule) {
-          duration = this.calculateDurationFromTimes(this.selectedSchedule.start, this.selectedSchedule.end);
-        } else if (this.reservationForm) {
-          const horaInicio = this.reservationForm.get('horaInicio')?.value;
-          const horaFin = this.reservationForm.get('horaFin')?.value;
-          if (horaInicio && horaFin) {
-            duration = this.calculateDurationFromTimes(horaInicio, horaFin);
-          }
-          personas = this.reservationForm.get('cantidadPersonas')?.value || 1;
-        }
-        
-        if (this.dataField.maxDuracionAutoAprobacion && duration <= this.dataField.maxDuracionAutoAprobacion) {
-          this.requiresValidation = false;
-          return;
-        }
-        
-        if (this.dataField.maxPersonasAutoAprobacion && personas <= this.dataField.maxPersonasAutoAprobacion) {
-          this.requiresValidation = false;
-          return;
-        }
-      }
-      
-      this.requiresValidation = true;
+    this.requiresValidation = true;
   }
 
   private setupConditionalValidators(): void {
@@ -472,20 +557,37 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     ).subscribe(() => {
       this.calculatePrice();
       this.calculateValidationRequirement();
+      this.checkFreeReservationEligibility();
     });    
     
     this.reservationForm.get('esParaOrganizacion')?.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(esParaOrganizacion => {
-      if (esParaOrganizacion && (this.userRole === 'Admin' || this.userRole === 'Encargado' || this.userRole === 'Representante')) {
+      if (esParaOrganizacion && this.showOrganizationToggle) {
         this.showOrganizationSearch = true;
+        this.loadOrganizations();
       } else {
         this.showOrganizationSearch = false;
         this.selectedOrganization = undefined;
         this.reservationForm.patchValue({ organizacionDto: null });
       }
+      this.checkFreeReservationEligibility();
     });
     
+    this.reservationForm.get('esReservaGratuita')?.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(isFree => {
+      this.isFreeReservation = isFree;
+      this.calculatePrice();
+    });
+
+    this.reservationForm.get('organizacionDto')?.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(organization => {
+      this.selectedOrganization = organization;
+      this.checkFreeReservationEligibility();
+    });
+
     this.reservationForm.get('horaInicio')?.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => {
@@ -536,6 +638,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       return '';
     }
   }
+
   private safeParseDate(dateString: string): Date | null {
     if (!dateString) return null;
     try {
@@ -546,6 +649,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       return null;
     }
   }
+
   private safeCalculateMonthsDuration(startDate: any, endDate: any): number {
     try {
       const start = this.safeParseDate(startDate);
@@ -559,7 +663,6 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
   }
 
-  // VALIDATORS
   private reservationValidator(control: AbstractControl): ValidationErrors | null {
     const errors: ValidationErrors = {};
     const form = control as FormGroup;
@@ -576,6 +679,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
     return Object.keys(errors).length ? errors : null;
   }
+
   private entityValidator(control: AbstractControl): ValidationErrors | null {
     const errors: ValidationErrors = {};
     const form = control as FormGroup;
@@ -590,6 +694,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
     return Object.keys(errors).length ? errors : null;
   }
+
   private tariffSpecificValidator(control: AbstractControl): ValidationErrors | null {
     const errors: ValidationErrors = {};
     const form = control as FormGroup;
@@ -610,6 +715,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
     return Object.keys(errors).length ? errors : null;
   }
+
   private timeRangeValidator(): ValidatorFn {
     return (formGroup: AbstractControl): ValidationErrors | null => {
       if (this.bookingType === 'recurrente') return null;
@@ -633,6 +739,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       return null;
     };
   }
+
   private futureDateValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       if (!control.value) return null;
@@ -670,18 +777,25 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     return format(date, "dd/MM/yyyy 'a las' HH:mm", { locale: es });
   }
 
-  // PRICE CALCULATION
   private calculatePrice(): void {
     const formValue = this.reservationForm?.getRawValue();
     const selectedOrganization = formValue?.organizacionDto;
-    if (selectedOrganization?.permiteReservasGratuitas) {
+    
+    const isFreeReservationActive = this.isFreeReservation && this.showFreeReservationOption;
+    
+    if (isFreeReservationActive) {
       this.calculatedPrice = 0;
-      this.priceDetails = ['Reserva gratuita para organización'];      
+      this.priceDetails = [this.getFreeReservationDescription()];      
       if (this.reservationForm) {
-        this.reservationForm.patchValue({ montoTotal: 0 }, { emitEvent: false });
+        this.reservationForm.patchValue({ 
+          montoTotal: 0,
+          motivoGratuidad: this.freeReservationReason,
+          esReservaGratuita: true
+        }, { emitEvent: false });
       }
       return;
     }
+
     if (!this.selectedTariff || !this.reservationForm) {
       this.calculatedPrice = 0;
       this.priceDetails = [];      
@@ -766,7 +880,24 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     this.priceDetails = detalles;
     
     if (this.reservationForm) {
-      this.reservationForm.patchValue({ montoTotal: this.calculatedPrice }, { emitEvent: false });
+      this.reservationForm.patchValue({ 
+        montoTotal: this.calculatedPrice,
+        esReservaGratuita: false,
+        motivoGratuidad: ''
+      }, { emitEvent: false });
+    }
+  }
+
+  private getFreeReservationDescription(): string {
+    switch (this.freeReservationReason) {
+      case TipoOrganizacion.ESCUELA_MUNICIPAL:
+        return 'Reserva gratuita - Escuela Municipal';
+      case 'DEPORTISTA_ELITE':
+        return 'Reserva gratuita - Deportista de Elite';
+      case 'ORGANIZACION':
+        return 'Reserva gratuita - Organización autorizada';
+      default:
+        return 'Reserva gratuita';
     }
   }
 
@@ -922,6 +1053,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       return 1;
     }
   }
+
   private timeToMinutes(time: string): number {
     if (!time) return 0;
     const [hours, minutes] = time.split(':').map(Number);
@@ -970,6 +1102,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       }
     });
   }
+
   private processReservation(): void {
     this.isSubmitting = true;
     const reservaData = this.prepareReservationData();
@@ -985,13 +1118,15 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
 
   private prepareReservationData(): Reserva {
     const formValue = this.reservationForm.getRawValue();
+    
     let estadoValidacion: EstadoValidacion;
     let estadoReserva: EstadoReserva;
-    const selectedOrganization = formValue.organizacionDto;
-    const isFreeReservation = selectedOrganization?.permiteReservasGratuitas;
+    
+    const isFreeReservation = this.isFreeReservation && this.showFreeReservationOption;
+    
     if (isFreeReservation || !this.requiresValidation || this.userRole === 'Admin' || this.userRole === 'Encargado') {
       estadoValidacion = EstadoValidacion.APROBADA;
-      estadoReserva = EstadoReserva.EN_CURSO;
+      estadoReserva = EstadoReserva.PENDIENTE;
     } else {
       estadoValidacion = EstadoValidacion.PENDIENTE;
       estadoReserva = EstadoReserva.SOLICITADA;
@@ -999,6 +1134,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
 
     const reserva: Reserva = {
       esReservaGratuita: isFreeReservation,
+      motivoGratuidad: isFreeReservation ? this.freeReservationReason : undefined,
       fechaCreacion: new Date(),
       fechaActualizacion: new Date(),
       tipoReserva: this.bookingType,
@@ -1049,6 +1185,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
     return reserva;
   }
+
   private registerReservationInRuat(reservaData: Reserva): void {
     if (!reservaData.contribuyenteDto?.codigoContribuyente) {
       this.handleError('Datos incompletos', 'Falta el código de contribuyente para registrar en RUAT');
@@ -1152,12 +1289,10 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       confirmButtonText: 'Entendido'
     });
   }
+
   getStatusDescription(): string {
-    const formValue = this.reservationForm?.getRawValue();
-    const selectedOrganization = formValue?.organizacionDto;
-    
-    if (selectedOrganization?.permiteReservasGratuitas) {
-      return 'Reserva gratuita - No requiere pago ni registro en RUAT';
+    if (this.isFreeReservation && this.showFreeReservationOption) {
+      return this.getFreeReservationDescription() + ' - No requiere pago';
     } else if (this.requiresValidation) {
       return 'Revisión administrativa requerida antes del pago';
     } else {
@@ -1166,10 +1301,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   }
 
   getStatusClass(): string {
-    const formValue = this.reservationForm?.getRawValue();
-    const selectedOrganization = formValue?.organizacionDto;
-    
-    if (selectedOrganization?.permiteReservasGratuitas) {
+    if (this.isFreeReservation && this.showFreeReservationOption) {
       return 'bg-info bg-opacity-10 border border-info';
     } else if (this.requiresValidation) {
       return 'bg-warning bg-opacity-10 border border-warning';
@@ -1179,10 +1311,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   }
 
   getStatusIcon(): string {
-    const formValue = this.reservationForm?.getRawValue();
-    const selectedOrganization = formValue?.organizacionDto;
-    
-    if (selectedOrganization?.permiteReservasGratuitas) {
+    if (this.isFreeReservation && this.showFreeReservationOption) {
       return 'ri-gift-line text-info';
     } else if (this.requiresValidation) {
       return 'ri-time-line text-warning';
@@ -1192,10 +1321,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   }
 
   getStatusText(): string {
-    const formValue = this.reservationForm?.getRawValue();
-    const selectedOrganization = formValue?.organizacionDto;
-    
-    if (selectedOrganization?.permiteReservasGratuitas) {
+    if (this.isFreeReservation && this.showFreeReservationOption) {
       return 'Reserva Gratuita';
     } else if (this.requiresValidation) {
       return 'Requiere Aprobación';
@@ -1203,7 +1329,6 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       return 'Aprobación Automática';
     }
   }
-  
   
   onContribuyenteSearch(): void {
     this.showContribuyenteSearch = true;
@@ -1219,6 +1344,8 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     });
     this.showContribuyenteSearch = false;
     this.filteredContribuyentes = [];
+    this.checkFreeReservationEligibility();
+    this.checkOrganizationToggleEligibility();
     this.calculateValidationRequirement();
   }
 
@@ -1263,9 +1390,6 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
 
   onOrganizationSearch(): void {
     this.showOrganizationSearch = true;
-    if (this.organizationsList.length === 0) {
-      this.loadOrganizations();
-    }
   }
 
   onOrganizationSelected(organizacion: Organizacion): void {
@@ -1281,8 +1405,8 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         contribuyenteDto: organizacion.representanteDto
       });
     }
+    this.checkFreeReservationEligibility();
     this.calculatePrice();
-    this.calculateValidationRequirement();
   }
 
   searchOrganization(event: Event): void {
@@ -1303,8 +1427,24 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       organizacionDto: null,
       esParaOrganizacion: false
     });
+    this.checkFreeReservationEligibility();
     this.calculatePrice();
-    this.calculateValidationRequirement();
+  }
+
+  toggleFreeReservation(): void {
+    const formValue = this.reservationForm?.getRawValue();
+    const selectedOrganization = formValue?.organizacionDto;
+    const canToggle = this.selectedContribuyente?.esDeportistaElite && 
+                    (!selectedOrganization || selectedOrganization?.permiteReservasGratuitas);
+    
+    if (canToggle) {
+      this.isFreeReservation = !this.isFreeReservation;
+      this.reservationForm.patchValue({
+        esReservaGratuita: this.isFreeReservation,
+        motivoGratuidad: this.isFreeReservation ? 'DEPORTISTA_ELITE' : ''
+      });
+      this.calculatePrice();
+    }
   }
 
   private loadContribuyentes(): void {
@@ -1332,7 +1472,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadOrganizations(): void {
+  private loadAllOrganizations(): void {
     this.organizationService.getAll().subscribe({
       next: (response: any) => {
         if (response.status === 'OK') {
@@ -1352,6 +1492,17 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         });
       }
     });
+  }
+
+
+  private loadOrganizations(): void {
+    if (this.userRole === 'Admin' || this.userRole === 'Encargado') {
+      if (this.selectedContribuyente) {
+        this.organizationsList = this.selectedContribuyente.organizacionesRepresentadas || [];
+      } else {
+        this.loadAllOrganizations()
+      }
+    }
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {
@@ -1449,7 +1600,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   }
 
   get canSelectOrganization(): boolean {
-    return this.userRole === 'Admin' || this.userRole === 'Encargado' || this.userRole === 'Representante';
+    return this.showOrganizationToggle;
   }
 
   get userDisplayName(): string {
@@ -1470,6 +1621,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       .filter(Boolean)
       .join(', ');
   }
+
   getTariffDescription(): string {
     const units = {
       'por_hora': 'por hora',

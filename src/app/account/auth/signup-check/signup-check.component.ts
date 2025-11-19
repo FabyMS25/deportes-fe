@@ -42,7 +42,6 @@ export class SignupCheckComponent {
 
   ngOnInit(): void {
     this.getConfigsSystem();
-    // this.authRuat();    
      this.SignupForm = this.formBuilder.group({
       tipoDocumento:['', [Validators.required]],
       numeroDocumento:['', [Validators.required]],
@@ -191,7 +190,6 @@ export class SignupCheckComponent {
       },
       error: (error: any) => {        
         console.error('Error:', error);
-        // If token might be expired, try to reauthenticate
         if (error.status === 401 || error.status === 403) {
           this.isAuthenticated = false;
           this.notify('La sesión ha expirado, por favor intente nuevamente', 'error');

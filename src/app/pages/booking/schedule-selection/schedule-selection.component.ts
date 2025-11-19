@@ -737,13 +737,32 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
 
   private getHorarioForDate(date: Date): HorarioFijo | undefined {
     if (!this.dataField?.horariosFijosDtoList) return undefined;
-    const dayOfWeek = date.getDay();
-    let diaKey: string;    
-    if (dayOfWeek === 0) diaKey = 'domingo';
-    else if (dayOfWeek === 6) diaKey = 'sabado';
-    else diaKey = 'lunes_viernes';
     
-    return this.dataField.horariosFijosDtoList.find(h => h.dia === diaKey);
+    const dayOfWeek = date.getDay();
+    const dayNames = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    const currentDayName = dayNames[dayOfWeek];
+    
+    // First, try to find an exact day match (lunes, martes, etc.)
+    const exactDayMatch = this.dataField.horariosFijosDtoList.find(h => h.dia === currentDayName);
+    if (exactDayMatch) {
+        return exactDayMatch;
+    }
+    
+    // If no exact match found and it's a weekday, look for lunes_viernes
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+        return this.dataField.horariosFijosDtoList.find(h => h.dia === 'lunes_viernes');
+    }
+    
+    // For weekends
+    if (dayOfWeek === 6) { // sábado
+        return this.dataField.horariosFijosDtoList.find(h => h.dia === 'sabado');
+    }
+    
+    if (dayOfWeek === 0) { // domingo
+        return this.dataField.horariosFijosDtoList.find(h => h.dia === 'domingo');
+    }
+    
+    return undefined;
   }
 
   private getExceptionsForDate(date: Date): HorarioExcepcion[] | undefined {
@@ -780,8 +799,8 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     return days[date.getDay()];
   }
   private getFullDayName(date: Date): string {
-    const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    return days[date.getDay()];
+      const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      return days[date.getDay()];
   }
 
   moveWeek(direction: number): void {

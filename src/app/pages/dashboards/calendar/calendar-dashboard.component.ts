@@ -1,5 +1,5 @@
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CalendarOptions, EventApi, EventClickArg } from '@fullcalendar/core';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -21,6 +21,7 @@ import { ModalRecurrentComponent } from '../../booking-recurrent/modal/modal.com
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { ReservaPuntual } from 'src/app/core/models/reservaPuntual.models';
 import { EstadoReserva } from 'src/app/core/constants/Estados';
+import { ToastService } from '../admin/toast-service';
 
 @Component({
     selector: 'app-calendar-dashboard',
@@ -52,18 +53,39 @@ export class CalendarDashboardComponent implements OnInit {
   @ViewChild('confirmModal') confirmModal!: TemplateRef<any>; 
 
   constructor( 
+    private route: ActivatedRoute,
+    private router: Router,
+    public toastService: ToastService,
     private modalService: NgbModal,
     private campoDeportivoService: CamposDeportivoService,
     private reservasService: ReservaService,
     private reservaPuntualService: ReservaPuntualService,
     private reservaRecurrenteService: ReservaRecurrenteService,
     private authService: AuthenticationService,
-    private router: Router
   ) { 
     this.canActivate = this.authService.hasPermission('Reservas');
   }
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      if (params['message']) {
+        switch (params['message']) {
+          case 'welcome_admin':
+            this.toastService.show('¡Bienvenido Admin!', 'Inicio de sesión exitoso');
+            break;
+          case 'welcome_employee':
+            this.toastService.show('¡Bienvenido Encargado!', 'Inicio de sesión exitoso');
+            break;
+          case 'welcome_taxpayer':
+            this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
+            break;
+        }
+        this.router.navigate([], {
+          queryParams: {},
+          replaceUrl: true
+        });
+      }
+    });
       this.breadCrumbItems = [
           { label: 'Dashboards' },
           { label: 'Encargado', active: true }

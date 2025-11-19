@@ -5,6 +5,7 @@ import { Reserva } from 'src/app/core/models/reserva.models';
 import Swal from 'sweetalert2';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { EstadoReserva, EstadoValidacion } from 'src/app/core/constants/Estados';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
@@ -26,22 +27,35 @@ export class DashboardComponent implements OnInit {
     decimalPlaces: 2,
   };
 
-  constructor(
-    private reservasService: ReservaService,
-    public toastService: ToastService
+  constructor(    
+    private route: ActivatedRoute,
+    private router: Router,
+    public toastService: ToastService,
+    private reservasService: ReservaService
   ) {}
 
   async ngOnInit() {
     const userString = window.sessionStorage.getItem('currentUser');
-    this.userData = userString ? JSON.parse(userString) : null;
-    
-    if (sessionStorage.getItem('toast')) {
-      this.toastService.show('¡Bienvenido!, Inicio de sesión exitoso', { 
-        classname: 'bg-success text-center text-white', 
-        delay: 5000 
-      });
-      sessionStorage.removeItem('toast');
-    }
+    this.userData = userString ? JSON.parse(userString) : null;    
+    this.route.queryParams.subscribe(params => {
+      if (params['message']) {
+        switch (params['message']) {
+          case 'welcome_admin':
+            this.toastService.show('¡Bienvenido Admin!', 'Inicio de sesión exitoso');
+            break;
+          case 'welcome_employee':
+            this.toastService.show('¡Bienvenido Encargado!', 'Inicio de sesión exitoso');
+            break;
+          case 'welcome_taxpayer':
+            this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
+            break;
+        }
+        this.router.navigate([], {
+          queryParams: {},
+          replaceUrl: true
+        });
+      }
+    });
     
     try {
       await this.getReservations();

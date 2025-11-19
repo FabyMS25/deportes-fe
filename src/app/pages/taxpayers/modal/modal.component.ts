@@ -1037,7 +1037,7 @@ export class ModalComponent {
       next: (data: any) => {
         if (data['status'] === 'OK') {
           this.systemConfigList = data.payload;
-          this.authRuat()
+          // this.authRuat()
         }
       }
     });
@@ -1098,23 +1098,6 @@ export class ModalComponent {
     });
   }
 
-  private authRuat() {
-    const usuario = this.systemConfigList.find(config => config.clave === ClaveConfiguracion.USUARIO_RUAT)?.valorTexto || '';
-    const clave = this.systemConfigList.find(config => config.clave === ClaveConfiguracion.CLAVE_RUAT)?.valorTexto || '';
-    if(usuario && clave){
-      this.ruatService.authenticate(usuario,clave).subscribe({
-        next: (response) => {
-          window.sessionStorage.setItem('ruatToken', response.token);
-        },
-        error: (error) => {
-          Swal.fire({
-            text: 'Falla en la coneccion con el RUAT',
-            title: 'Error!', icon: 'error', confirmButtonColor: '#d33'
-          });
-        }
-      });
-    }
-  }
   private async searchContribuyenteInRuat(codigoAlcaldia: string, data: any): Promise<any> {
     return new Promise((resolve, reject) => {
       this.ruatService.getContribuyentePorCi(

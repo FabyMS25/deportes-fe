@@ -25,8 +25,7 @@ export class LoginComponent implements OnInit {
   constructor(
     private formBuilder: UntypedFormBuilder,
     private authenticationService: AuthenticationService,
-    private router: Router,
-    public toastService: ToastService) {
+    private router: Router,) {
       if (!this.authenticationService.currentUserSubject) {
         this.router.navigate(['/auth/login']);
       }
@@ -53,23 +52,22 @@ export class LoginComponent implements OnInit {
           this.authenticationService.loginEmployee(username, password),
           this.authenticationService.loginContribuyente(username, password)
         ]);
-
         if (empleadoResult) {
           const permissionStatus = await this.authenticationService.userHasPermission(empleadoResult);
           if (permissionStatus === 'isAdmin') {
-            this.router.navigate(['/inicio']).then(() => {
-              this.toastService.show('¡Bienvenido Admin!', 'Inicio de sesión exitoso');
+            this.router.navigate(['/inicio'], { 
+              queryParams: { message: 'welcome_admin' } 
             });
           } else if (permissionStatus === 'isEmployee') {
-            this.router.navigate(['/inicio/employee']).then(() => {
-              this.toastService.show('¡Bienvenido Encargado!', 'Inicio de sesión exitoso');
+            this.router.navigate(['/inicio/employee'], { 
+              queryParams: { message: 'welcome_employee' } 
             });
           } else {
             this.loginForm.setErrors({ invalidPermissions: true });
           }
-        } else if (contribuyenteResult) {
-          this.router.navigate(['/inicio/taxpayer']).then(() => {
-            this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
+        } else if (contribuyenteResult) {      
+          this.router.navigate(['/inicio/taxpayer'], { 
+            queryParams: { message: 'welcome_taxpayer' } 
           });
         } else {
           this.loginForm.setErrors({ invalidLogin: true });

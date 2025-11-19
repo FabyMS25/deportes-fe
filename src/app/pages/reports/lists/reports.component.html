@@ -8,16 +8,6 @@
                 <div>
                     <form (ngSubmit)="applyFilters()">
                         <div class="row g-3">
-                            <!-- <div class="col-xxl-2 col-sm-4">
-                                <div>
-                                    <input type="text" 
-                                           class="form-control bg-light" 
-                                           [value]="getReportTypeLabel()" 
-                                           readonly
-                                           style="cursor: default;">
-                                    <small class="text-muted">Tipo de reporte</small>
-                                </div>
-                            </div> -->
                             <div class="col-xxl-2 col-sm-6">
                                 <div>
                                     <input type="text" 
@@ -35,6 +25,8 @@
                                         required>                             
                                 </div>
                             </div>
+                            
+                            <!-- Cancha Field (only for puntual and recurrente) -->
                             <div class="col-xxl-2 col-sm-4" *ngIf="this.reportType !== 'mensual'">
                                 <div>
                                     <select class="form-control" name="cancha" [(ngModel)]="cancha">
@@ -45,15 +37,42 @@
                                     </select>
                                 </div>
                             </div>
+                            
+                            <!-- Payment Type Field (only for puntual and recurrente) -->
                             <div class="col-xxl-2 col-sm-4" *ngIf="this.reportType !== 'mensual'">
                                 <div>
                                     <select class="form-control" name="paymentType" [(ngModel)]="paymentType">
+                                        <option [value]="'TODO'">Todo los Tipos de Cobro</option>
                                         <option *ngFor="let option of paymentTypeOptions" [value]="option.value">
                                             {{option.label}}
                                         </option>
                                     </select>
                                 </div>
                             </div>
+                            
+                            <!-- Escuelita Field (only for mensual) -->
+                            <div class="col-xxl-2 col-sm-4" *ngIf="this.reportType === 'mensual'">
+                                <div>
+                                    <select class="form-control" name="escuelita" [(ngModel)]="escuelita">
+                                        <option  [value]="'TODO'">Todas las Escuelas</option>
+                                        <option *ngFor="let option of organizationsEscuelasList" [value]="option.nombre">
+                                            {{option.nombre}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-xxl-2 col-sm-4" *ngIf="this.reportType === 'mensual'">
+                                <div>
+                                    <select class="form-control" name="estudiante" [(ngModel)]="estudiante">
+                                        <option  [value]="'TODO'">Todos los estudiantes</option>
+                                        <option *ngFor="let option of estudiantesList" [value]="option.nombreCompleto">
+                                            {{option.nombreCompleto}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Status Field (for all report types) -->
                             <div class="col-xxl-2 col-sm-4">
                                 <div>
                                     <select class="form-control" name="status" [(ngModel)]="status">
@@ -63,6 +82,8 @@
                                     </select>
                                 </div>
                             </div>
+                            
+                            <!-- Generate Button -->
                             <div class="col-xxl-2 col-sm-4">
                                 <div>
                                     <button type="submit" class="btn btn-primary w-100" [disabled]="showLoading">
@@ -84,6 +105,7 @@
                             <i class="ri-information-line align-middle"></i>
                             <strong>Reporte:</strong> {{ getReportTypeLabel() }}
                             <span *ngIf="this.reportType !== 'mensual'">| <strong>Complejo:</strong> {{ getCanchaLabel(cancha) }}</span>
+                            <span *ngIf="this.reportType === 'mensual'">| <strong>Escuela:</strong> {{ getEscuelitaLabel(escuelita) }}</span>
                             | <strong>Estado:</strong> {{ getStatusLabel(status) }}
                             <span *ngIf="this.reportType !== 'mensual'">| <strong>Tipo de Cobro:</strong> {{ getPaymentTypeLabel(paymentType) }}</span>
                         </div>

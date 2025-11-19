@@ -5,6 +5,12 @@ import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { ReportsService } from 'src/app/core/services/api/reportes.service';
 import { EstadoReserva } from 'src/app/core/constants/Estados';
+import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
+import { EstudianteEscuelaService } from 'src/app/core/services/api/estudianteEscuela.service';
+import { Organizacion } from 'src/app/core/models/organizacion.models';
+import { EstudianteEscuela } from 'src/app/core/models/EstudianteEscuela.model';
+import { TipoOrganizacion } from 'src/app/core/constants/Features';
+import { TipoCobro } from 'src/app/core/constants/TipoCobro';
 
 @Component({
   selector: 'app-reports',
@@ -20,11 +26,15 @@ export class ListReportComponent implements OnInit {
   date!: { from: Date, to: Date };
   Spanish = Spanish; 
   
-  complejosList: ComplejoDeportivo[] = []
+  complejosList: ComplejoDeportivo[] = [];
+  organizationsEscuelasList: Organizacion[]=[];
+  estudiantesList: EstudianteEscuela[]=[];
   reportType: string = 'mensual';
   status: string = 'TODO';
   paymentType: string = 'TODO';
-  cancha: string = 'TODO'; 
+  cancha: string = 'TODO';
+  escuelita: string = 'TODO';
+  estudiante: string = 'TODO';
   
   statusOptions = [
     { value: 'TODO', label: 'Todos los estados' },
@@ -45,22 +55,17 @@ export class ListReportComponent implements OnInit {
     { value: 'recurrente', label: 'Reservas Recurrentes' }
   ];
 
-  paymentTypeOptions = [
-    { value: 'TODO', label: 'Todos los tipos' },
-    { value: 'por_hora', label: 'Por Hora' },
-    { value: 'por_persona', label: 'Por Persona' },
-    { value: 'por_evento', label: 'Por Evento' },
-    { value: 'por_sesion', label: 'Por Sesión' },
-    { value: 'mensualidad', label: 'Mensualidad' },
-    { value: 'por_club', label: 'Por Club' }
-  ];
+  paymentTypeOptions = TipoCobro
+
 
   @ViewChild('pdfViewer') pdfViewer!: ElementRef;
 
   constructor(
+    private route: ActivatedRoute,
     private reportsService: ReportsService, 
     private complejoService: ComplejosService,
-    private route: ActivatedRoute
+    private organizationService: OrganizacionService,
+    private estudianteEscuelaService: EstudianteEscuelaService
   ) {}
 
   async ngOnInit() {    
@@ -77,6 +82,8 @@ export class ListReportComponent implements OnInit {
       { label: this.title, active: true }
     ];      
     this.getComplejos();  
+    this.getEscuelas(TipoOrganizacion.ESCUELA_MUNICIPAL);// Organizations can be a club , asociation or escuelas municipales
+    this.getEstudiantes();
   }
 
   private updateTitle() {
@@ -105,12 +112,9 @@ export class ListReportComponent implements OnInit {
       alert('Por favor seleccione un rango de fechas');
       return;
     }
-
     const fechaIni = this.formatDateToDDMMYYYY(new Date(this.date.from));
     const fechaFin = this.formatDateToDDMMYYYY(new Date(this.date.to));
-    
     this.showLoading = true;
-
     switch (this.reportType) {
       case 'puntual':
         this.generatePuntualesReport(fechaIni, fechaFin);
@@ -175,10 +179,12 @@ export class ListReportComponent implements OnInit {
   }
 
   private generateMensualesReport(fechaIni: string, fechaFin: string) {
-    this.reportsService.getMonthlyRecurrentReport(
+    this.reportsService.getMonthlyReport(
       fechaIni, 
       fechaFin, 
-      this.status
+      this.status,
+      this.escuelita,
+      this.estudiante
     ).subscribe(
       (data: ArrayBuffer) => {
         this.displayPDF(data);
@@ -219,11 +225,46 @@ export class ListReportComponent implements OnInit {
     return complejo ? complejo.nombre : canchaValue;
   }
 
+  getEscuelitaLabel(escuelitaValue: string): string {
+    if (escuelitaValue === 'TODO') return 'Todas las Escuelas';
+    const option = this.organizationsEscuelasList.find((opt) => opt.nombre === escuelitaValue);
+    return option ? option.nombre : escuelitaValue;
+  }
+
   private getComplejos() {
     this.complejoService.getAll().subscribe({
       next: (data: any) => {
         if (data['status'] === 'OK') {
           this.complejosList = data.payload;
+        }
+      },
+      error: (error) => {
+        console.error('Error loading complejos:', error);
+      }
+    });
+  }
+
+  private getEscuelas(type:string) {
+    this.organizationService.getAll().subscribe({
+      next: (data: any) => {
+        if (data['status'] === 'OK') {
+          const list = data.payload.content
+          this.organizationsEscuelasList = list.filter((item:Organizacion)=>
+            item.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL
+          );
+        }
+      },
+      error: (error) => {
+        console.error('Error loading complejos:', error);
+      }
+    });
+  }
+
+  private getEstudiantes() {
+    this.estudianteEscuelaService.getAll().subscribe({
+      next: (data: any) => {
+        if (data['status'] === 'OK') {
+          this.estudiantesList = data.payload;
         }
       },
       error: (error) => {

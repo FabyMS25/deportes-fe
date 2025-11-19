@@ -54,15 +54,19 @@ export class ReportsService {
     });
   }
 
-  getMonthlyRecurrentReport(
+  getMonthlyReport(
     fechaini: string, 
     fechafin: string, 
-    estado: string = 'TODO'
+    estado: string = 'TODO',
+    escuelita: string = 'TODO',
+    estudiante: string = 'TODO'
   ): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('fechaini', fechaini);
     params = params.append('fechafin', fechafin);
     params = params.append('estado', estado);
+    params = params.append('escuelita', escuelita);
+    params = params.append('estudiante', estudiante);
     
     return this.http.get(`${this.apiUrl}/lista-mensuales`, {
       responseType: 'arraybuffer',
@@ -90,7 +94,6 @@ export class ReportsService {
       params
     });
   }
-
   getTicketReservaPersona(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);
@@ -99,7 +102,6 @@ export class ReportsService {
       params
     });
   }
-
   getTicketReservaEvento(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);
@@ -109,6 +111,7 @@ export class ReportsService {
     });
   }
 
+  
   getTicketRecurrenteSesion(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);
@@ -117,7 +120,6 @@ export class ReportsService {
       params
     });
   }
-
   getTicketRecurrentePersona(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);
@@ -126,7 +128,6 @@ export class ReportsService {
       params
     });
   }
-
   getTicketRecurrenteMensualidad(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);
@@ -154,18 +155,6 @@ export class ReportsService {
     });
   }
 
-  getReportByDepartment(desde: string, hasta: string, departmentUuid: string, status: number): Observable<Blob> {
-    let params = new HttpParams();
-    params = params.append('desde', desde);
-    params = params.append('hasta', hasta);
-    params = params.append('unidad', departmentUuid);
-    params = params.append('estado', status);
-    return this.http.get(`${this.apiUrl}/generar`, { 
-      responseType: 'blob', 
-      params 
-    });
-  }
-
   downloadPdf(observable: Observable<ArrayBuffer>, filename: string = 'report.pdf'): void {
     observable.subscribe({
       next: (data: ArrayBuffer) => {
@@ -183,10 +172,84 @@ export class ReportsService {
     });
   }
 
-  downloadMonthlyReport(fechaini: string, fechafin: string, estado: string = 'TODO', filename: string = 'reporte-mensual.pdf'): void {
+  // Convenience methods for common downloads
+  downloadPuntualReport(
+    fechaini: string, 
+    fechafin: string, 
+    tipocobro: string = 'TODO', 
+    estado: string = 'TODO',
+    cancha: string = 'TODO',
+    filename: string = 'reporte-puntual.pdf'
+  ): void {
     this.downloadPdf(
-      this.getMonthlyRecurrentReport(fechaini, fechafin, estado),
+      this.getPuntualReport(fechaini, fechafin, tipocobro, estado, cancha),
       filename
     );
+  }
+
+  downloadRecurrentReport(
+    fechaini: string, 
+    fechafin: string, 
+    tipocobro: string = 'TODO', 
+    estado: string = 'TODO',
+    cancha: string = 'TODO',
+    filename: string = 'reporte-recurrente.pdf'
+  ): void {
+    this.downloadPdf(
+      this.getRecurrentReport(fechaini, fechafin, tipocobro, estado, cancha),
+      filename
+    );
+  }
+
+  downloadMonthlyReport(
+    fechaini: string, 
+    fechafin: string, 
+    estado: string = 'TODO',
+    escuelita: string = 'TODO',
+    filename: string = 'reporte-mensual.pdf'
+  ): void {
+    this.downloadPdf(
+      this.getMonthlyReport(fechaini, fechafin, estado, escuelita),
+      filename
+    );
+  }
+
+  downloadPaymentsReport(
+    fecha_ini: string, 
+    fecha_fin: string,
+    filename: string = 'reporte-pagos.pdf'
+  ): void {
+    this.downloadPdf(
+      this.getPaymentsReport(fecha_ini, fecha_fin),
+      filename
+    );
+  }
+
+  downloadTicketReservaPuntual(uuid: string, filename: string = 'ticket-reserva-puntual.pdf'): void {
+    this.downloadPdf(this.getTicketReservaPuntual(uuid), filename);
+  }
+
+  downloadTicketReservaPersona(uuid: string, filename: string = 'ticket-reserva-persona.pdf'): void {
+    this.downloadPdf(this.getTicketReservaPersona(uuid), filename);
+  }
+
+  downloadTicketReservaEvento(uuid: string, filename: string = 'ticket-reserva-evento.pdf'): void {
+    this.downloadPdf(this.getTicketReservaEvento(uuid), filename);
+  }
+
+  downloadTicketRecurrenteSesion(uuid: string, filename: string = 'ticket-recurrente-sesion.pdf'): void {
+    this.downloadPdf(this.getTicketRecurrenteSesion(uuid), filename);
+  }
+
+  downloadTicketRecurrentePersona(uuid: string, filename: string = 'ticket-recurrente-persona.pdf'): void {
+    this.downloadPdf(this.getTicketRecurrentePersona(uuid), filename);
+  }
+
+  downloadTicketRecurrenteMensualidad(uuid: string, filename: string = 'ticket-recurrente-mensualidad.pdf'): void {
+    this.downloadPdf(this.getTicketRecurrenteMensualidad(uuid), filename);
+  }
+
+  downloadTicketMensual(uuid: string, filename: string = 'ticket-mensual.pdf'): void {
+    this.downloadPdf(this.getTicketByPeriodo(uuid), filename);
   }
 }

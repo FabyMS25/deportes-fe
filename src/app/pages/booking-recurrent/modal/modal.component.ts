@@ -608,34 +608,69 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
 
   /* RUAT REQUESTS */
   annularData(formValues: any) {
-    if (!formValues || !this.row.reservaDto?.numeroTasa) {
+    if (!formValues || !this.row?.reservaDto) {
       this.notify('No se pudo obtener los datos de la reserva', 'error');
       return;
     }
-    
+    const reserva = this.row.reservaDto;
+    if (reserva.esReservaGratuita && (!reserva.numeroTasa || reserva.numeroTasa.trim() === '')) {
+      this.cancelGratuitousReservation(reserva, formValues);
+    } else {
+      this.cancelPaidReservation(reserva, formValues);
+    }
+  }
+  private cancelGratuitousReservation(reserva: Reserva, formValues: any) {
+    const updatedReserva: Reserva = {
+      ...reserva,
+      estadoReserva: EstadoReserva.CANCELADA,
+      motivoRechazo: formValues.motivo
+    };
+    this.showLoading = true;
+    this.reservaService.update(updatedReserva).subscribe({
+      next: () => {
+        this.showLoading = false;
+        Swal.fire({
+          title: 'Reserva Anulada!',
+          text: 'La reserva gratuita ha sido anulada exitosamente.',
+          icon: 'success',
+          confirmButtonColor: '#299cdb',
+          timer: 5000,
+          timerProgressBar: true,
+        });
+        this.emitList.emit();
+        this.modalService.dismissAll('close click');
+      },
+      error: (error) => {
+        this.showLoading = false;
+        this.notify('Error al anular la reserva gratuita localmente', 'error');
+      }
+    });
+  }
+  private cancelPaidReservation(reserva: Reserva, formValues: any) {
+    if (!reserva.numeroTasa) {
+      this.notify('No se pudo obtener el número de tasa para la anulación en RUAT', 'error');
+      return;
+    }
     const codigoAlcaldia = this.systemConfigList.find(config => config.clave === 'CODIGO_ALCALDIA_RUAT')?.valorTexto || '';
     const codigoUsuario = this.systemConfigList.find(config => config.clave === 'CODIGO_USUARIO_RUAT')?.valorTexto || '';
     const requestData = {
-      numeroTasa: this.row.reservaDto.numeroTasa,
+      numeroTasa: reserva.numeroTasa,
       motivo: formValues.motivo,
       observacion: formValues.observation
     };
-
     this.showLoading = true;
-
     this.ruatService.cancelTasa(codigoAlcaldia, codigoUsuario, requestData).subscribe({
       next: (resp: any) => {
-        this.showLoading = false;
-
         if (resp['status'] === 'OK') {
           const text = resp.payload['mensajeConfirmacion'];
-          const updatedReserva: any = {
-            ...this.row.reservaDto,
-            estadoReserva: EstadoReserva.CANCELADA
+          const updatedReserva: Reserva = {
+            ...reserva,
+            estadoReserva: EstadoReserva.CANCELADA,
+            motivoRechazo: formValues.motivo
           };
-          
           this.reservaService.update(updatedReserva).subscribe({
             next: () => {
+              this.showLoading = false;
               Swal.fire({
                 title: 'Anulado!',
                 text: text,
@@ -648,17 +683,17 @@ export class ModalRecurrentComponent implements OnInit, AfterViewInit {
               this.modalService.dismissAll('close click');
             },
             error: (error) => {
-              console.error('Error updating reservation:', error);
+              this.showLoading = false;
               this.notify('Reserva anulada en RUAT pero error al actualizar localmente', 'warning');
             }
           });
         } else {
+          this.showLoading = false;
           this.notify(resp.payload || 'Error al anular en RUAT', 'error');
         }
       },
       error: (error) => {
         this.showLoading = false;
-        console.error('Error:', error);
         this.notify('Error al realizar la anulación en RUAT', 'error');
       },
     });
