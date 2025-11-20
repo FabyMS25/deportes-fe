@@ -25,6 +25,9 @@ interface TimeSlot {
   reservation?: Reserva;
   conflictReason?: string;
   blockType: 'morning' | 'afternoon' | 'night' | 'operating';
+  isWithinTariffTime: boolean;
+  applicableTariff?: Tarifa;
+  tariffConflict?: boolean;
 }
 
 interface DaySlots {
@@ -89,6 +92,10 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     
   eventDurationHours: number = 8;
   eventDurationError: string = '';
+
+  hasMultipleApplicableTariffs = false;
+  applicableTariffs: Tarifa[] = [];
+  tariffBoundaryTime: string | null = null;
 
   get enableSolicitudEventsBooking(): boolean{
     return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_EVENTOS]?.valorBoolean ?? false;
@@ -170,6 +177,9 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   ) {}
 
   ngOnInit(): void {
+    console.log(this.dataField)
+    console.log("tarifa selected: ", this.dataTariff)
+
     this.systemConfigs = this.authenticationService.getAllConfigs();
     this.initializeBlocks();
     this.scheduleState.currentWeekStart$
@@ -214,6 +224,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       this.timeSlotsCache.clear();
       this.clearSelectedSlots();
       this.generateWeekDays();
+      this.checkMultipleTariffs();
       
       if (this.dataTariff?.tipoCobro === 'por_evento') {
         this.eventDurationHours = this.maxDuration;
@@ -224,6 +235,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       this.timeSlotsCache.clear();
       this.clearSelectedSlots();
       this.generateWeekDays();
+      this.checkMultipleTariffs();
     }
 
     if (changes['systemConfigs'] && !changes['systemConfigs'].firstChange) {
@@ -544,23 +556,49 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     return true;
   }
 
+
   validateCustomTimeSelection(): boolean {
     this.validationErrors = [];    
     const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
     const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
+    
     if (startMinutes >= endMinutes) {
       this.validationErrors.push('La hora de inicio debe ser anterior a la hora de fin');
       return false;
     }
+    
     const duration = endMinutes - startMinutes;
     if (duration < this.minDuration * 60) {
       this.validationErrors.push(`La duración mínima es de ${this.minDurationDisplay}`);
       return false;
     }
+    
     if (duration > this.maxDuration * 60) {
       this.validationErrors.push(`La duración máxima es de ${this.maxDurationDisplay}`);
       return false;
     }
+
+    const startTime = this.timeInputToString(this.startTimeInput);
+    const endTime = this.timeInputToString(this.endTimeInput);
+    
+    if (!this.isTimeWithinTariff(startTime, endTime)) {
+      this.validationErrors.push(
+        `El horario seleccionado está fuera del rango de la tarifa "${this.dataTariff.descripcion}". ` +
+        `Rango permitido: ${this.dataTariff.desde?.slice(0, 5)} - ${this.dataTariff.hasta?.slice(0, 5)}`
+      );
+      return false;
+    }
+    if (this.tariffBoundaryTime) {
+      const boundaryMinutes = this.timeToMinutes(this.tariffBoundaryTime);
+      if (startMinutes < boundaryMinutes && endMinutes > boundaryMinutes) {
+        this.validationErrors.push(
+          `El horario seleccionado cruza el límite entre tarifas (${this.tariffBoundaryTime.slice(0, 5)}). ` +
+          `Seleccione un horario que esté completamente dentro del rango de una sola tarifa.`
+        );
+        return false;
+      }
+    }
+
     const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
     if (daySlots.daySchedule?.abierto && daySlots.daySchedule.horaApertura && daySlots.daySchedule.horaCierre) {
       const openingTime = daySlots.daySchedule.horaApertura;
@@ -574,9 +612,12 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         return false;
       }
     }
+    
     return true;
   }
-
+  private timeInputToString(timeInput: TimeInput): string {
+    return `${timeInput.hours.toString().padStart(2, '0')}:${timeInput.minutes.toString().padStart(2, '0')}:00`;
+  }
   async confirmCustomTimeSelection(): Promise<void> {
     this.isCheckingAvailability = true;
     this.validationErrors = [];
@@ -764,6 +805,54 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     this.generateWeekDays();
   }
 
+
+  private checkMultipleTariffs(): void {
+    if (!this.dataField?.tarifasDtoList || !this.dataTariff) {
+      this.hasMultipleApplicableTariffs = false;
+      this.applicableTariffs = [];
+      this.tariffBoundaryTime = null;
+      return;
+    }
+    const activeTariffs = this.dataField.tarifasDtoList.filter(tarifa => 
+      tarifa.activo && tarifa.tipoCobro !== 'por_evento'
+    );
+    this.applicableTariffs = activeTariffs.filter(tarifa => 
+      tarifa.uuid !== this.dataTariff.uuid && 
+      this.tariffsOverlap(this.dataTariff, tarifa)
+    );
+    this.hasMultipleApplicableTariffs = this.applicableTariffs.length > 0;
+    if (this.hasMultipleApplicableTariffs) {
+      this.tariffBoundaryTime = this.findTariffBoundaryTime();
+    } else {
+      this.tariffBoundaryTime = null;
+    }
+  }
+
+  private tariffsOverlap(tariff1: Tarifa, tariff2: Tarifa): boolean {
+    if (!tariff1.desde || !tariff1.hasta || !tariff2.desde || !tariff2.hasta) {
+      return false;
+    }
+
+    const t1Start = this.timeToMinutes(tariff1.desde);
+    const t1End = this.timeToMinutes(tariff1.hasta);
+    const t2Start = this.timeToMinutes(tariff2.desde);
+    const t2End = this.timeToMinutes(tariff2.hasta);
+
+    return (t1Start < t2End && t1End > t2Start);
+  }
+
+  private findTariffBoundaryTime(): string | null {
+    if (!this.dataTariff.hasta) return null;
+    const overlappingStarts = this.applicableTariffs
+      .map(tarifa => this.timeToMinutes(tarifa.desde || '00:00:00'))
+      .filter(startTime => startTime > this.timeToMinutes(this.dataTariff.desde || '00:00:00'));
+
+    if (overlappingStarts.length === 0) return null;
+
+    const earliestOverlap = Math.min(...overlappingStarts);
+    return this.minutesToTime(earliestOverlap);
+  }
+
   private generateTimeSlots(date: Date, startTime: string, endTime: string): TimeSlot[] {
     const slots: TimeSlot[] = [];
     const now = new Date();    
@@ -787,23 +876,94 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         this.dataField.uuid!,
         timeRange,
         this.reservationsList
-      );        
+      );
+      const isWithinTariffTime = this.isTimeWithinTariff(slotStart, slotEnd);
+      const applicableTariff = this.findApplicableTariffForTime(slotStart);
+      const tariffConflict = applicableTariff && applicableTariff.uuid !== this.dataTariff.uuid;
+
       const slot: TimeSlot = {
         time: `${slotStart.slice(0, 5)} - ${slotEnd.slice(0, 5)}`,
         startTime: slotStart,
         endTime: slotEnd,
-        isAvailable: !isPast && !conflictResult.hasConflict,
+        isAvailable: !isPast && !conflictResult.hasConflict && isWithinTariffTime && !tariffConflict,
         isReserved: conflictResult.hasConflict,
         isPast: isPast,
         isSelected: false,
         reservation: conflictResult.conflictingReservations[0],
         conflictReason: conflictResult.reason,
-        blockType: 'operating'
+        blockType: 'operating',
+        isWithinTariffTime: isWithinTariffTime,
+        applicableTariff: applicableTariff,
+        tariffConflict: tariffConflict
       };        
       slots.push(slot);
     }
     return slots;
   }
+
+  private isTimeWithinTariff(startTime: string, endTime: string): boolean {
+    if (!this.dataTariff.desde || !this.dataTariff.hasta) {
+      return true; 
+    }
+    const slotStart = this.timeToMinutes(startTime);
+    const slotEnd = this.timeToMinutes(endTime);
+    const tariffStart = this.timeToMinutes(this.dataTariff.desde);
+    const tariffEnd = this.timeToMinutes(this.dataTariff.hasta);
+    return slotStart >= tariffStart && slotEnd <= tariffEnd;
+  }
+
+  private findApplicableTariffForTime(time: string): Tarifa | undefined {
+    if (!this.dataField?.tarifasDtoList) return undefined;
+    const timeMinutes = this.timeToMinutes(time);
+    const applicable = this.dataField.tarifasDtoList.filter(tarifa => 
+      tarifa.activo && 
+      tarifa.desde && 
+      tarifa.hasta &&
+      timeMinutes >= this.timeToMinutes(tarifa.desde) && 
+      timeMinutes < this.timeToMinutes(tarifa.hasta)
+    );
+    const selectedTariffApplicable = applicable.find(t => t.uuid === this.dataTariff.uuid);
+    return selectedTariffApplicable || applicable[0];
+  }
+
+  toggleSlotSelection(slot: TimeSlot): void {
+    if (!slot.isAvailable || slot.isReserved || !slot.isWithinTariffTime || slot.tariffConflict) {
+      if (slot.conflictReason) {
+        this.validationErrors = [slot.conflictReason];
+        this.showValidationAlert = true;
+      } else if (slot.tariffConflict && slot.applicableTariff) {
+        this.validationErrors = [
+          `Este horario corresponde a la tarifa "${slot.applicableTariff.descripcion}". ` +
+          `Seleccione solo horarios dentro del rango de la tarifa "${this.dataTariff.descripcion}" ` +
+          `(${this.dataTariff.desde?.slice(0, 5)} - ${this.dataTariff.hasta?.slice(0, 5)})`
+        ];
+        this.showValidationAlert = true;
+      } else if (!slot.isWithinTariffTime) {
+        this.validationErrors = [
+          `Este horario está fuera del rango de la tarifa seleccionada. ` +
+          `Tarifa "${this.dataTariff.descripcion}": ${this.dataTariff.desde?.slice(0, 5)} - ${this.dataTariff.hasta?.slice(0, 5)}`
+        ];
+        this.showValidationAlert = true;
+      }
+      return;
+    }
+    this.validationErrors = [];
+    this.showValidationAlert = false;
+    const index = this.selectedSlots.findIndex(s => 
+      s.startTime === slot.startTime && s.endTime === slot.endTime
+    );
+    if (index > -1) {
+      this.selectedSlots.splice(index, 1);
+      slot.isSelected = false;
+    } else {
+      this.selectedSlots.push(slot);
+      slot.isSelected = true;
+    }
+    this.selectedSlots.sort((a, b) => 
+      this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime)
+    );
+  }
+
 
   private validateEventSelection(): boolean {
     if (!this.fechaReserva) {
@@ -824,31 +984,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       return false;
     }
     return true;
-  }
-
-  toggleSlotSelection(slot: TimeSlot): void {
-    if (!slot.isAvailable || slot.isReserved) {
-      if (slot.conflictReason) {
-        this.validationErrors = [slot.conflictReason];
-        this.showValidationAlert = true;
-      }
-      return;
-    }
-    this.validationErrors = [];
-    this.showValidationAlert = false;
-    const index = this.selectedSlots.findIndex(s => 
-      s.startTime === slot.startTime && s.endTime === slot.endTime
-    );
-    if (index > -1) {
-      this.selectedSlots.splice(index, 1);
-      slot.isSelected = false;
-    } else {
-      this.selectedSlots.push(slot);
-      slot.isSelected = true;
-    }
-    this.selectedSlots.sort((a, b) => 
-      this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime)
-    );
   }
 
   clearSelectedSlots(): void {
@@ -1140,6 +1275,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     if (slot.isSelected) return 'border-primary bg-primary text-white';
     if (!slot.isAvailable) return 'border-secondary bg-light text-muted';
     if (slot.isReserved) return 'border-danger bg-danger-subtle text-danger';
+    if (!slot.isWithinTariffTime || slot.tariffConflict) return 'border-warning bg-warning-subtle text-warning';
     return 'border-success bg-success-subtle text-success cursor-pointer hover-effect';
   }
 
@@ -1147,7 +1283,21 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     if (slot.isSelected) return 'text-white fw-medium';
     if (!slot.isAvailable) return 'text-muted';
     if (slot.isReserved) return 'text-danger';
+    if (!slot.isWithinTariffTime || slot.tariffConflict) return 'text-warning';
     return 'text-success';
+  }
+
+  getSlotTooltip(slot: TimeSlot): string {
+    if (slot.conflictReason) return slot.conflictReason;
+    if (slot.tariffConflict && slot.applicableTariff) {
+      return `Corresponde a: ${slot.applicableTariff.descripcion} (${slot.applicableTariff.desde?.slice(0, 5)} - ${slot.applicableTariff.hasta?.slice(0, 5)})`;
+    }
+    if (!slot.isWithinTariffTime) {
+      return `Fuera del rango de la tarifa seleccionada: ${this.dataTariff.desde?.slice(0, 5)} - ${this.dataTariff.hasta?.slice(0, 5)}`;
+    }
+    if (slot.isPast) return 'Hora pasada';
+    if (slot.isAvailable) return 'Disponible';
+    return '';
   }
 
   getDayCardClasses(day: WeekDay): string {

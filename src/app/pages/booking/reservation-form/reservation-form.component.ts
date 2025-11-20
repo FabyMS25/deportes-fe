@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
-import { FormGroup, FormBuilder, Validators, AbstractControl, ValidationErrors, ValidatorFn, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators, AbstractControl, ValidationErrors, ValidatorFn, ReactiveFormsModule, FormsModule, FormControl } from '@angular/forms';
 import { format, addHours, differenceInHours, startOfDay, isBefore, isSameDay, parseISO, addDays, isAfter, isValid } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -91,7 +91,8 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   
   minDate = this.safeFormatDate(new Date(), 'yyyy-MM-dd');
   maxDate = this.safeFormatDate(addDays(new Date(), 30), 'yyyy-MM-dd');
-  
+  totalSessions: number = 0;
+
   private destroy$ = new Subject<void>();
   private formInitialized = false;
 
@@ -804,10 +805,12 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       }
       return;
     }
-   
+  
     const montoBase = this.selectedTariff.precioBase || 0;
     let total = 0;
     let detalles: string[] = [];
+    
+    // Calculate base price
     switch (this.selectedTariff.tipoCobro) {
       case 'por_hora':
         const horas = formValue.duracionHoras || 1;
@@ -844,6 +847,8 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         detalles.push(`Tarifa club/organización: Bs. ${montoBase.toFixed(2)}`);
         break;
     }
+
+    // Calculate concepts with time interval support
     if (this.selectedTariff.conceptosDtos && this.selectedTariff.conceptosDtos.length > 0) {
       const conceptosActivos = this.selectedTariff.conceptosDtos.filter((concepto: any) => concepto.activo);
       
@@ -864,8 +869,16 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
               conceptoDetalle = `${concepto.concepto}: Bs. ${conceptoMonto.toFixed(2)}`;
               break;
             case 'por_hora':
-              const horasConcepto = this.getDurationForConcepto(formValue);
-              conceptoDetalle = `${concepto.concepto}: ${horasConcepto.toFixed(1)}h × Bs. ${concepto.valor} (Bs. ${conceptoMonto.toFixed(2)})`;
+              // Enhanced display for time-based concepts
+              const horasConcepto = this.getDurationForConcepto(concepto, formValue);
+              const horasCalculadas = horasConcepto.toFixed(1);
+              
+              if (concepto.desde && concepto.hasta) {
+                // Show time range for concepts with specific hours
+                conceptoDetalle = `${concepto.concepto}: ${horasCalculadas}h (${concepto.desde.slice(0, 5)}-${concepto.hasta.slice(0, 5)}) × Bs. ${concepto.valor} (Bs. ${conceptoMonto.toFixed(2)})`;
+              } else {
+                conceptoDetalle = `${concepto.concepto}: ${horasCalculadas}h × Bs. ${concepto.valor} (Bs. ${conceptoMonto.toFixed(2)})`;
+              }
               break;
             default:
               conceptoDetalle = `${concepto.concepto}: Bs. ${conceptoMonto.toFixed(2)}`;
@@ -887,7 +900,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       }, { emitEvent: false });
     }
   }
-  
+
   private calculateConceptoAmount(concepto: any, baseAmount: number, formValue: any): number {
     switch (concepto.tipo) {
       case 'porcentaje':
@@ -897,7 +910,8 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         return concepto.valor || 0;
       
       case 'por_hora':
-        const horas = this.getDurationForConcepto(formValue);
+        // Enhanced calculation for time-based concepts
+        const horas = this.getDurationForConcepto(concepto, formValue);
         return (concepto.valor || 0) * horas;
       
       default:
@@ -905,13 +919,48 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
   }
 
-  private getDurationForConcepto(formValue: any): number {
+  private getDurationForConcepto(concepto: any, formValue: any): number {
     if (this.bookingType === 'puntual') {
-      return formValue.duracionHoras || 1;
+      const horaInicio = formValue.horaInicio;
+      const horaFin = formValue.horaFin;
+      const duracionTotal = formValue.duracionHoras || 1;
+      
+      // If concept has time restrictions, calculate only the overlapping duration
+      if (concepto.desde && concepto.hasta && horaInicio && horaFin) {
+        return this.calculateOverlappingDuration(horaInicio, horaFin, concepto.desde, concepto.hasta);
+      }
+      
+      return duracionTotal;
     } else if (this.bookingType === 'recurrente' && this.recurrentSchedule) {
       return this.recurrentSchedule.duracionSesionHoras || 1;
     }
     return 1;
+  }
+
+  private calculateOverlappingDuration(startTime: string, endTime: string, conceptStart: string, conceptEnd: string): number {
+    try {
+      const startMinutes = this.timeToMinutes(startTime);
+      const endMinutes = this.timeToMinutes(endTime);
+      const conceptStartMinutes = this.timeToMinutes(conceptStart);
+      const conceptEndMinutes = this.timeToMinutes(conceptEnd);
+      
+      // Calculate overlapping minutes
+      const overlapStart = Math.max(startMinutes, conceptStartMinutes);
+      const overlapEnd = Math.min(endMinutes, conceptEndMinutes);
+      
+      // Return duration in hours (0 if no overlap)
+      const overlapMinutes = Math.max(0, overlapEnd - overlapStart);
+      return Math.round((overlapMinutes / 60) * 2) / 2; // Round to nearest 0.5 hours
+    } catch (error) {
+      console.error('Error calculating overlapping duration:', error);
+      return 0;
+    }
+  }
+
+  private timeToMinutes(time: string): number {
+    if (!time) return 0;
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + (minutes || 0);
   }
   
   getBasePrice(): number {
@@ -982,10 +1031,11 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         
         let description = '';
         let quantity = '';
+        let timeRange = '';
         
         switch (concepto.tipo) {
           case 'porcentaje':
-            description = `Aplicado sobre tarifa base (${concepto.valor}%)`;
+            description = `Aplicado sobre tarifa base`;
             quantity = `${concepto.valor}%`;
             break;
           case 'fijo':
@@ -993,9 +1043,15 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
             quantity = 'Fijo';
             break;
           case 'por_hora':
-            const horas = this.getDurationForConcepto(formValue);
+            const horas = this.getDurationForConcepto(concepto, formValue);
             description = `Tarifa por hora aplicada`;
             quantity = `${horas.toFixed(1)}h × Bs. ${concepto.valor}`;
+            
+            // Show time range if concept has specific hours
+            if (concepto.desde && concepto.hasta) {
+              timeRange = `${concepto.desde.slice(0, 5)}-${concepto.hasta.slice(0, 5)}`;
+              description = `Tarifa por hora (${timeRange})`;
+            }
             break;
           default:
             description = 'Concepto adicional';
@@ -1006,7 +1062,8 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
           concepto: concepto.concepto,
           description: description,
           quantity: quantity,
-          amount: amount
+          amount: amount,
+          timeRange: timeRange
         });
       });
     
@@ -1041,11 +1098,6 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
   }
 
-  private timeToMinutes(time: string): number {
-    if (!time) return 0;
-    const [hours, minutes] = time.split(':').map(Number);
-    return hours * 60 + minutes;
-  }
 
   onSubmit(): void {
     this.submitted = true;
@@ -1663,6 +1715,109 @@ getPaidReservationDescription(): string {
     };
     return units[this.selectedTariff.tipoCobro] || '';
   }
+// En tu componente TypeScript
+getRecurrenceSummary(): string {
+  const tipoRecurrencia = this.reservationForm.get('tipoRecurrencia')?.value;
+  const fechaInicio = this.reservationForm.get('fechaInicio')?.value;
+  const fechaFin = this.reservationForm.get('fechaFin')?.value;
+  const diasSemana = this.reservationForm.get('diasSemana')?.value;
+  const horaInicio = this.reservationForm.get('horaInicio')?.value;
+  const duracion = this.reservationForm.get('duracionSesionHoras')?.value;
+
+  if (!tipoRecurrencia || !fechaInicio || !fechaFin) return '';
+
+  let summary = '';
+  const startDate = new Date(fechaInicio);
+  const endDate = new Date(fechaFin);
+  
+  switch (tipoRecurrencia) {
+    case 'diaria':
+      summary = `Diariamente del ${this.formatDate(startDate)} al ${this.formatDate(endDate)}`;
+      break;
+    case 'semanal':
+      const dias = this.getDiasSemanaNames(diasSemana);
+      summary = `Semanalmente los ${dias} del ${this.formatDate(startDate)} al ${this.formatDate(endDate)}`;
+      break;
+    case 'mensual':
+      summary = `Mensualmente del ${this.formatDate(startDate)} al ${this.formatDate(endDate)}`;
+      break;
+  }
+
+  if (horaInicio && duracion) {
+    summary += ` a las ${horaInicio} por ${duracion} horas`;
+  }
+
+  return summary;
+}
+
+calculateTotalSessions(): number {
+  const tipoRecurrencia = this.reservationForm.get('tipoRecurrencia')?.value;
+  const fechaInicio = this.reservationForm.get('fechaInicio')?.value;
+  const fechaFin = this.reservationForm.get('fechaFin')?.value;
+  const diasSemana = this.reservationForm.get('diasSemana')?.value;
+
+  if (!tipoRecurrencia || !fechaInicio || !fechaFin) return 0;
+
+  const start = new Date(fechaInicio);
+  const end = new Date(fechaFin);
+  let sessions = 0;
+
+  switch (tipoRecurrencia) {
+    case 'diaria':
+      // Calcular días entre fechas (incluyendo ambos extremos)
+      const timeDiff = end.getTime() - start.getTime();
+      sessions = Math.floor(timeDiff / (1000 * 3600 * 24)) + 1;
+      break;
+    
+    case 'semanal':
+      if (!diasSemana || diasSemana.length === 0) return 0;
+      
+      const diasArray = Array.isArray(diasSemana) ? diasSemana : [diasSemana];
+      const dayMap = { 'LUN': 1, 'MAR': 2, 'MIE': 3, 'JUE': 4, 'VIE': 5, 'SAB': 6, 'DOM': 0 };
+      
+      let current = new Date(start);
+      while (current <= end) {
+        const dayOfWeek = current.getDay();
+        const dayName = this.getDayName(dayOfWeek);
+        if (diasArray.includes(dayName)) {
+          sessions++;
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      break;
+    
+    case 'mensual':
+      // Para mensual, contar el mismo día de cada mes
+      let monthlyDate = new Date(start);
+      while (monthlyDate <= end) {
+        sessions++;
+        monthlyDate.setMonth(monthlyDate.getMonth() + 1);
+      }
+      break;
+  }
+
+  return sessions;
+}
+
+getDiasSemanaNames(diasSemana: string[]): string {
+  if (!diasSemana || diasSemana.length === 0) return '';
+  
+  const dayNames: { [key: string]: string } = {
+    'LUN': 'Lunes', 'MAR': 'Martes', 'MIE': 'Miércoles', 
+    'JUE': 'Jueves', 'VIE': 'Viernes', 'SAB': 'Sábado', 'DOM': 'Domingo'
+  };
+  
+  return diasSemana.map(dia => dayNames[dia]).join(', ');
+}
+
+getDayName(dayNumber: number): string {
+  const days = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
+  return days[dayNumber];
+}
+
+formatDate(date: Date): string {
+  return date.toLocaleDateString('es-ES');
+}
 
   formatDuration(hours: number): string {
     const totalMinutes = hours * 60;

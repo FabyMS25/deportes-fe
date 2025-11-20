@@ -54,6 +54,23 @@
       </div>
     </div>
     <div class="card-body p-2">
+      
+      <div *ngIf="dataTariff.desde && dataTariff.hasta" 
+          class="alert alert-info alert-sm mb-3">
+        <div class="d-flex align-items-center">
+          <i class="ri-price-tag-3-line me-2"></i>
+          <div class="flex-grow-1">
+            <strong class="d-block">Tarifa: {{ dataTariff.descripcion }}</strong>
+            <small class="d-block">
+              Rango horario: {{ dataTariff.desde.slice(0, 5) }} - {{ dataTariff.hasta.slice(0, 5) }}
+            </small>
+            <small *ngIf="hasMultipleApplicableTariffs" class="d-block text-warning mt-1">
+              <i class="ri-alert-line me-1"></i>
+              Existen otras tarifas en horarios adyacentes. Seleccione horarios dentro del rango indicado.
+            </small>
+          </div>
+        </div>
+      </div>
       <div class="row m-2">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h5 class="mb-0 text-primary">
@@ -122,11 +139,11 @@
                           class="slot-card mb-1"
                           [class.selected]="slot.isSelected"
                           [class.unavailable]="!slot.isAvailable || slot.isReserved"
-                          [attr.title]="slot.conflictReason || ''">
+                          [attr.title]="getSlotTooltip(slot)">
                         
                         <div class="slot-inner py-2 px-2 rounded border" 
                             [class]="getSlotClasses(slot)"
-                            [style.cursor]="slot.isAvailable && !slot.isReserved ? 'pointer' : 'not-allowed'"
+                            [style.cursor]="slot.isAvailable && !slot.isReserved && slot.isWithinTariffTime && !slot.tariffConflict ? 'pointer' : 'not-allowed'"
                             (click)="toggleSlotSelection(slot)">                        
                           <div class="d-flex align-items-center justify-content-between">
                             <div class="flex-grow-1">
@@ -143,7 +160,10 @@
                                 <span *ngIf="slot.isReserved && !slot.isSelected" class="text-danger">
                                   <i class="ri-lock-line me-1"></i>{{ slot.conflictReason || 'Reservado' }}
                                 </span>
-                                <span *ngIf="slot.isAvailable && !slot.isReserved && !slot.isSelected" class="text-success">
+                                <span *ngIf="(!slot.isWithinTariffTime || slot.tariffConflict) && !slot.isSelected" class="text-warning">
+                                  <i class="ri-price-tag-line me-1"></i>Otra tarifa
+                                </span>
+                                <span *ngIf="slot.isAvailable && !slot.isReserved && slot.isWithinTariffTime && !slot.tariffConflict && !slot.isSelected" class="text-success">
                                   <i class="ri-checkbox-circle-line me-1"></i>Disponible
                                 </span>
                               </div>
