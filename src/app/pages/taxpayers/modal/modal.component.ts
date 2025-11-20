@@ -215,17 +215,11 @@ export class ModalComponent {
   private formDataSet() {
   if (this.accion !== '' && this.row) {
     const fechaNacimiento = this.row.fechaNacimiento ? 
-      new Date(this.row.fechaNacimiento).toISOString().split('T')[0] : '';      
-    
-    // FIX: Extract just the date part for the form
+      new Date(this.row.fechaNacimiento).toISOString().split('T')[0] : '';    
     const fechaVerificacionRuat = this.row.fechaVerificacionRuat ?
-      new Date(this.row.fechaVerificacionRuat).toISOString().split('T')[0] : '';
-    
+      new Date(this.row.fechaVerificacionRuat).toISOString().split('T')[0] : '';    
     const fechaUltimoUsoGratuito = this.row.fechaUltimoUsoGratuito ?
-      new Date(this.row.fechaUltimoUsoGratuito).toISOString().split('T')[0] : '';
-
-    console.log(this.row)
-    
+      new Date(this.row.fechaUltimoUsoGratuito).toISOString().split('T')[0] : '';    
     this.editForm.patchValue({
       uuid: this.row.uuid,
       userName: this.row.userName,
@@ -288,7 +282,6 @@ export class ModalComponent {
     this.activeTab = tab;
   }
 
-  // ==================== ESTUDIANTES MANAGEMENT ====================
   toggleEstudianteForm() {
     this.showEstudianteForm = !this.showEstudianteForm;
     if (!this.showEstudianteForm) {
@@ -361,10 +354,8 @@ export class ModalComponent {
     const orgData = this.organizacionForm.getRawValue();    
     if (this.editingOrganizacionIndex >= 0) {
       this.organizacionesTemporales[this.editingOrganizacionIndex] = orgData;
-      // this.notify('Organización actualizada', 'success');
     } else {
       this.organizacionesTemporales.push(orgData);
-      // this.notify('Organización agregada', 'success');
     }
     this.toggleOrganizacionForm();
   }
@@ -402,7 +393,6 @@ export class ModalComponent {
     return labels[tipo] || tipo;
   }
 
-  // ==================== GETTERS AND HELPERS ====================
   get form() { return this.editForm.controls; }
   get organizacion() { return this.organizacionForm.controls; }
   get estudiante() { return this.estudianteForm.controls; }
@@ -519,8 +509,6 @@ export class ModalComponent {
       estudianteEnEscuelas: this.estudiantesTemporales.length > 0 ? this.estudiantesTemporales : undefined,
       organizacionesRepresentadas: this.organizacionesTemporales.length > 0 ? this.organizacionesTemporales : undefined
     };
-    console.log(datos)
-
     try {
       if (this.editForm.get('uuid')?.value) {
         await this.updateData(datos);
@@ -686,7 +674,6 @@ export class ModalComponent {
     return null;
   }
 
-  // ==================== RUAT SEARCH ====================
   async searchInRuat() {
     if (this.searchRuatForm.invalid) {
       this.notify('Complete todos los campos de búsqueda', 'warning');
@@ -820,17 +807,14 @@ export class ModalComponent {
     }
   }
 
-  // ==================== EMAIL VERIFICATION ====================
   async sendVerificationEmail() {
     const email = this.editForm.get('email')?.value;
     if (!email) {
       this.notify('Debe ingresar un email válido', 'warning');
       return;
     }
-
     const code = this.generateCode();
     this.editForm.patchValue({ verificationCode: code });
-
     try {
       await this.sendEmailCode(email, code);
       this.verificationCodeSent = true;
@@ -862,7 +846,6 @@ export class ModalComponent {
     }
   }
 
-  // ==================== SANCTIONS ====================
   async applySanction() {
     this.submitted = true;
     const sanctionData = this.sanctionForm.getRawValue();
@@ -973,7 +956,6 @@ export class ModalComponent {
     }
   }
 
-  // ==================== USER STATE ACTIONS ====================
   async blockUser() {
     const datos = { ...this.row };
     datos.estadoUsuario = EstadoUsuario.BLOQUEADO;
@@ -1013,7 +995,6 @@ export class ModalComponent {
     await this.updateData(datos);
   }
 
-  // ==================== API CALLS ====================
   private getOrganizations() {
     this.organizationService.getAll().subscribe({
       next: (data: any) => {
@@ -1137,7 +1118,6 @@ export class ModalComponent {
     });
   }
 
-  // ==================== EMAIL FUNCTIONS ====================
   private sendCredentialsEmail(userData: any, username: string, password: string): Promise<void> {
     const email = userData.email;
     const name = userData.nombre;
@@ -1175,12 +1155,9 @@ export class ModalComponent {
       throw error;
     });
   }
-
-  // ==================== HELPER FUNCTIONS ====================
   generateCode(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
   }
-
   getDepartmentName(id: string | undefined): string | undefined {
     const found = this.cityAcronym.find(item => '' + item.id === id);
     return found ? found.value : id;

@@ -177,9 +177,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   ) {}
 
   ngOnInit(): void {
-    console.log(this.dataField)
-    console.log("tarifa selected: ", this.dataTariff)
-
     this.systemConfigs = this.authenticationService.getAllConfigs();
     this.initializeBlocks();
     this.scheduleState.currentWeekStart$
@@ -555,18 +552,18 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     }
     return true;
   }
-
-
   validateCustomTimeSelection(): boolean {
     this.validationErrors = [];    
     const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
     const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
-    
+    if (!this.isDayOpenForCustomSelection()) {
+      this.validationErrors.push('El campo está cerrado para este día. No se pueden seleccionar horarios.');
+      return false;
+    }    
     if (startMinutes >= endMinutes) {
       this.validationErrors.push('La hora de inicio debe ser anterior a la hora de fin');
       return false;
-    }
-    
+    }    
     const duration = endMinutes - startMinutes;
     if (duration < this.minDuration * 60) {
       this.validationErrors.push(`La duración mínima es de ${this.minDurationDisplay}`);
@@ -588,6 +585,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       );
       return false;
     }
+    
     if (this.tariffBoundaryTime) {
       const boundaryMinutes = this.timeToMinutes(this.tariffBoundaryTime);
       if (startMinutes < boundaryMinutes && endMinutes > boundaryMinutes) {
@@ -611,8 +609,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         );
         return false;
       }
-    }
-    
+    }    
     return true;
   }
   private timeInputToString(timeInput: TimeInput): string {
@@ -1019,6 +1016,10 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         await this.confirmTimeSlotSelection();
       }
     }
+  }
+  isDayOpenForCustomSelection(): boolean {
+    const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
+    return daySlots.daySchedule?.abierto === true;
   }
   isDayAvailableForEvent(date: Date): boolean {
     if (date < new Date()) return false;    
