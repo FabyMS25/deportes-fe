@@ -391,7 +391,7 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
         const periodo = reserva.reservaPeriodoDto;
         if (date.getFullYear() === periodo.año && date.getMonth() + 1 === periodo.mes) {
           if (this.hasTimeConflictWithPeriodo(slot, reserva)) {
-            return `Mensualidad: ${reserva.estudianteDto?.nombreCompleto || 'Estudiante'} - ${periodo.mes}/${periodo.año}`;
+            return `Mensualidad: ${reserva.estudianteEscuelaDto?.nombreCompleto || 'Estudiante'} - ${periodo.mes}/${periodo.año}`;
           }
         }
       }

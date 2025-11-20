@@ -90,7 +90,6 @@ export class BookingPeriodoComponent implements OnInit {
   ) {
     this.canActivate = this.authService.hasPermission(this.title);
   }
-
   async ngOnInit() {
     this.breadCrumbItems = [
       { label: '' },
@@ -112,11 +111,18 @@ export class BookingPeriodoComponent implements OnInit {
     
     this.loadEscuelas();
     this.loadEstudiantes();
-    // this.authRuat();
+    if (!this.authService.isRuatAuthenticated()) {
+      await this.delay(1000);
+    }
+    
     await this.getReservations();
     this.generatePeriodosDisponibles();
     
     setInterval(() => this.getReservations(), 5 * 60 * 1000);
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   private initializeColumns(): void {
@@ -332,18 +338,22 @@ export class BookingPeriodoComponent implements OnInit {
     }    
     this.consultResults = [];
     this.dataSelected = null;
-    this.loading = true;
+    this.loading = true;    
+    let shouldRefreshData = false;    
     try {
       for (const item of this.selectedItems) {
         try {
           const result = await this.consultData(item);
           this.consultResults.push(result);
-          if (!this.dataSelected && result.hasPayment && result.pagoData) {
+          if (!this.dataSelected && result.hasPayment && result.pagoData && !result.shouldNotUpdate) {
             this.dataSelected = {
               reserva: result.item,
               pago: result.pagoData,
               ruatResponse: result.ruatResponse
             };
+          }
+          if (!result.shouldNotUpdate && result.hasPayment) {
+            shouldRefreshData = true;
           }
         } catch (error) {
           console.error("Error during consultation for item:", error);
@@ -351,12 +361,14 @@ export class BookingPeriodoComponent implements OnInit {
             item, 
             text: 'Error durante la consulta', 
             type: 'error',
-            hasPayment: false 
+            hasPayment: false,
+            shouldNotUpdate: true
           });
         }
       }
     } finally {
       this.loading = false;
+      
       if (this.consultResults.length > 0) {
         if (this.dataSelected) {
           this.modalService.open(content, { 
@@ -366,9 +378,11 @@ export class BookingPeriodoComponent implements OnInit {
         } else {
           this.modalService.open(content, { centered: true });
         }
-      }    
+      }          
       this.selectedItems = [];
-      this.getReservations();
+      if (shouldRefreshData) {
+        this.getReservations();
+      }
     }
   }
 
@@ -377,11 +391,12 @@ export class BookingPeriodoComponent implements OnInit {
     if (!item) {
       return { item, text: 'No se pudo obtener el dato seleccionado', type: 'warning' };
     }
+    
     try {
       const nroTasa = item.reservaDto?.numeroTasa;
       if (!nroTasa) {
         return { item, text: "No hay número de tasa asociado", type: 'warning' };
-      }
+      }      
       const codigoAlcaldia = this.systemConfigList[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI';
       const resp: any = await this.ruatService.consultaPagoTasa(codigoAlcaldia, nroTasa).toPromise();
       if (resp['status'] !== 'OK') {
@@ -392,6 +407,8 @@ export class BookingPeriodoComponent implements OnInit {
             if (jsonMatch) {
               const jsonPayload = JSON.parse(jsonMatch[0]);
               errorMessage = jsonPayload.mensaje || errorMessage;
+            } else {
+              errorMessage = resp.payload || errorMessage;
             }
           } catch (e) {
             errorMessage = resp.payload || errorMessage;
@@ -401,16 +418,18 @@ export class BookingPeriodoComponent implements OnInit {
           item, 
           text: errorMessage, 
           type: 'error',
-          hasPayment: false
+          hasPayment: false,
+          shouldNotUpdate: true 
         };
-      }
+      }      
       const payload = resp.payload;
       if (!payload.continuarFlujo) {
         return { 
           item, 
           text: payload.mensaje || payload.observacion || "No se puede continuar con el flujo", 
           type: 'warning',
-          hasPayment: false
+          hasPayment: false,
+          shouldNotUpdate: true
         };
       }
       if (!payload.pagoTasa) {
@@ -418,11 +437,14 @@ export class BookingPeriodoComponent implements OnInit {
           item, 
           text: payload.mensaje || payload.observacion || "No se encontraron datos de pago", 
           type: 'info',
-          hasPayment: false
+          hasPayment: false,
+          shouldNotUpdate: true
         };
       }
+      
       const pagoData = payload.pagoTasa;
       let text = payload.mensaje || payload.observacion || "La tasa se encuentra pagada";    
+      
       if (item.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE) {
         try {
           const [day, month, year] = pagoData.fechaPago.split('/');
@@ -441,11 +463,14 @@ export class BookingPeriodoComponent implements OnInit {
             respuestaCompletaRuat: JSON.stringify(resp),
             reservaDto: item.reservaDto
           };
+          
           const pagoResp: any = await this.pagoService.save(nuevoPago).toPromise();
+          
           if (pagoResp.status === 'OK') {
             item.reservaDto.estadoReserva = EstadoReserva.PAGADA;
             const updatedReserva = await this.updateReserva(item.reservaDto);
-            item.reservaDto = updatedReserva
+            item.reservaDto = updatedReserva;
+            
             return { 
               item: item, 
               text: `${text} - Pago registrado exitosamente`, 
@@ -458,7 +483,8 @@ export class BookingPeriodoComponent implements OnInit {
               item, 
               text: 'Error al guardar el pago en el sistema', 
               type: 'error',
-              hasPayment: true
+              hasPayment: true,
+              shouldNotUpdate: true
             };
           }
         } catch (error) {
@@ -467,7 +493,8 @@ export class BookingPeriodoComponent implements OnInit {
             item, 
             text: 'Error al procesar el pago', 
             type: 'error',
-            hasPayment: true
+            hasPayment: true,
+            shouldNotUpdate: true
           };
         }
       } else {
@@ -485,7 +512,8 @@ export class BookingPeriodoComponent implements OnInit {
         item, 
         text: 'Error al realizar la consulta al RUAT', 
         type: 'error',
-        hasPayment: false
+        hasPayment: false,
+        shouldNotUpdate: true
       };
     }
   }

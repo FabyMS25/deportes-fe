@@ -254,8 +254,9 @@ export class TicketComponent implements OnChanges {
   private generateTicketUrl(reserva: any): string {
     const baseUrl = environment.backendUrl;
     let endpoint = '';
-
-    if (reserva.tipoReserva === 'puntual') {
+    if(reserva.tipoReserva = 'periodo'){
+      endpoint = '/reporte/ticket-mensual';
+    }else if (reserva.tipoReserva === 'puntual') {
       switch (reserva.tarifaDto?.tipoCobro) {
         case 'por_evento':
           endpoint = '/reporte/ticket-reser-ev';

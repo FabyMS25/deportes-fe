@@ -195,7 +195,7 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
     if (!this.row?.reservaDto) return;
     
     this.reservaForm = this.fb.group({
-      estudiante: [{value: this.row.reservaDto.estudianteDto?.uuid || '', disabled: true}, Validators.required],
+      estudiante: [{value: this.row.reservaDto.estudianteEscuelaDto?.uuid || '', disabled: true}, Validators.required],
       escuela: [{value: this.row.reservaDto.organizacionDto?.uuid || '', disabled: true}, Validators.required],
       reservaRecurrente: [{value: this.row.reservaDto.uuid || '', disabled: true}, Validators.required],
       mes: [this.row.mes, Validators.required],
@@ -205,7 +205,7 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
 
     this.selectedMonth = this.row.mes;
     this.selectedYear = this.row.año;
-    this.selectedEstudiante = this.row.reservaDto.estudianteDto;
+    this.selectedEstudiante = this.row.reservaDto.estudianteEscuelaDto;
     this.selectedEscuela = this.row.reservaDto.organizacionDto;
     this.selectedReservaRecurrente = this.row.reservaDto;
   }
@@ -242,7 +242,7 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
   private loadReservaData(): void {
     if (!this.row?.reservaDto) return;
     
-    this.selectedEstudiante = this.row.reservaDto.estudianteDto;
+    this.selectedEstudiante = this.row.reservaDto.estudianteEscuelaDto;
     this.selectedEscuela = this.row.reservaDto.organizacionDto;
     this.selectedReservaRecurrente = this.row.reservaDto;
     this.selectedMonth = this.row.mes;

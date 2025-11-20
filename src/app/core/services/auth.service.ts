@@ -35,13 +35,13 @@ export class AuthenticationService {
   constructor(
     private http: HttpClient, 
     private store: Store,
+    private router: Router,
     private authUser: UserService,
     private authContribuyente: ContribuyentesService,
     private designationsService: EncargadoService,
     private permissionService: PermissionUserService,
     private systemConfigsService: ConfiguracionSistemaService,
     private ruatService: RuatRequestsService,
-    private router: Router,
     private storageService: TokenStorageService,
     private toastService: ToastService,
   ) {
@@ -314,20 +314,25 @@ export class AuthenticationService {
     }
   }
 
-  
   private authRuat(configsMap: { [key: string]: ConfiguracionSistema }): void {
     const usuario = configsMap[ClaveConfiguracion.USUARIO_RUAT]?.valorTexto || '';
     const clave = configsMap[ClaveConfiguracion.CLAVE_RUAT]?.valorTexto || '';    
+    
     if (usuario && clave) {
       this.ruatService.authenticate(usuario, clave).subscribe({
         next: (response) => {
           if (response && response.token) {
-            window.sessionStorage.setItem('ruatToken', response.token);
+            // Use the service method to set the token
+            this.ruatService.setToken(response.token);
             this.ruatAuthenticated = true;
+            
+            console.log('RUAT Token stored:', response.token); // Debug log
+            
             setTimeout(() => {
               this.toastService.show('Conexión RUAT Exitosa','La conexión con el sistema RUAT se estableció correctamente.');
             }, 2000);
           } else {
+            console.error('RUAT Authentication failed - no token in response:', response);
             setTimeout(() => {
               this.showWarning(
                 'Error RUAT',
@@ -338,6 +343,7 @@ export class AuthenticationService {
           }
         },
         error: (error) => {
+          console.error('RUAT Authentication error:', error);
           setTimeout(() => {
             this.showWarning(
               'Error de Conexión RUAT',
@@ -348,6 +354,7 @@ export class AuthenticationService {
         }
       });
     } else {
+      console.warn('RUAT credentials missing - usuario:', usuario, 'clave:', !!clave);
       setTimeout(() => {
         this.showWarning(
           'Configuración RUAT Incompleta',

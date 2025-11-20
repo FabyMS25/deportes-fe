@@ -34,7 +34,7 @@ export interface Reserva{
   motivoGratuidad?: string; // 'ESCUELA_MUNICIPAL', 'ORGANIZACION', 'EVENTO_ESPECIAL'
 
   organizacionDto?:Organizacion;
-  estudianteDto?: EstudianteEscuela;
+  estudianteEscuelaDto?: EstudianteEscuela;
   contribuyenteDto:Contribuyente;
   campoDeportivoDto:CampoDeportivo;
   tarifaDto: Tarifa;
