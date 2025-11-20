@@ -299,11 +299,7 @@
           <hr *ngIf="bookingState.puntualSchedule || bookingState.recurrentSchedule">
           <div class="summary-item" *ngIf="bookingState.puntualSchedule && bookingType === 'puntual'">
             <div class="d-flex align-items-start">
-              <button type="button" 
-                      class="btn btn-outline-primary btn-sm" 
-                      (click)="openScheduleModal(content)">
-                <i class="ri-calendar-event-line"></i>
-              </button>
+              <i class="ri-calendar-event-line"></i>
               <div class="ms-2 flex-grow-1">
                 <div class="fw-medium small">{{ bookingState.puntualSchedule.date | date:'fullDate':'':'es' }}</div>
                 <small class="text-primary">
@@ -382,7 +378,7 @@
           </div>
         </div>
       </div>
-      <div class="card">
+      <!-- <div class="card">
         <div class="card-body p-2">
           <div class="product-img-slider">
             <ngx-slick-carousel [config]="config" 
@@ -408,21 +404,7 @@
             </ngx-slick-carousel>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
   </div>
 </div>
-<ng-template #content let-modal>
-  <div class="modal-content border-0">
-    <div class="modal-header bg-success-subtle">
-      <h5 class="modal-title">
-        <i class="ri-calendar-2-line me-2"></i>
-        Horarios Disponibles - {{ bookingState.campo?.nombre }}
-      </h5>
-      <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
-    </div>
-    <div class="modal-body">
-      <!-- Your timetable component here -->
-    </div>
-  </div>
-</ng-template>

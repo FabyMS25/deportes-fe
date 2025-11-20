@@ -887,20 +887,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       }, { emitEvent: false });
     }
   }
-
-  private getFreeReservationDescription(): string {
-    switch (this.freeReservationReason) {
-      case TipoOrganizacion.ESCUELA_MUNICIPAL:
-        return 'Reserva gratuita - Escuela Municipal';
-      case 'DEPORTISTA_ELITE':
-        return 'Reserva gratuita - Deportista de Elite';
-      case 'ORGANIZACION':
-        return 'Reserva gratuita - Organización autorizada';
-      default:
-        return 'Reserva gratuita';
-    }
-  }
-
+  
   private calculateConceptoAmount(concepto: any, baseAmount: number, formValue: any): number {
     switch (concepto.tipo) {
       case 'porcentaje':
@@ -1329,7 +1316,49 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       return 'Aprobación Automática';
     }
   }
-  
+  getFreeReservationTitle(): string {
+  if (this.selectedOrganization?.permiteReservasGratuitas) {
+    if (this.selectedOrganization.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL) {
+      return 'Reserva Gratuita - Escuela Municipal';
+    }
+    return 'Reserva Gratuita - Organización Autorizada';
+  } else if (this.selectedContribuyente?.esDeportistaElite) {
+    return 'Reserva Gratuita - Deportista de Elite';
+  }
+  return 'Reserva Gratuita';
+}
+
+getFreeReservationDescription(): string {
+  if (this.selectedOrganization?.permiteReservasGratuitas) {
+    return `La organización "${this.selectedOrganization.nombre}" tiene permisos para reservas gratuitas. Esta reserva no generará costo alguno.`;
+  } else if (this.selectedContribuyente?.esDeportistaElite) {
+    return 'Como deportista de elite registrado, esta reserva se realiza sin costo.';
+  }
+  return 'Reserva autorizada sin costo.';
+}
+
+getPaidReservationTitle(): string {
+  if (this.selectedOrganization && !this.selectedOrganization.permiteReservasGratuitas && this.selectedContribuyente?.esDeportistaElite) {
+    return 'Reserva con Costo Aplicado';
+  } else if (this.selectedOrganization && !this.selectedOrganization.permiteReservasGratuitas) {
+    return 'Reserva con Costo';
+  } else if (this.selectedContribuyente?.esDeportistaElite && !this.isFreeReservation) {
+    return 'Reserva con Costo (Beneficio No Aplicado)';
+  }
+  return 'Reserva con Costo';
+}
+
+getPaidReservationDescription(): string {
+  if (this.selectedOrganization && !this.selectedOrganization.permiteReservasGratuitas && this.selectedContribuyente?.esDeportistaElite) {
+    return `Aunque es deportista de elite, la organización "${this.selectedOrganization.nombre}" no tiene permisos para reservas gratuitas. Esta reserva generará el costo correspondiente.`;
+  } else if (this.selectedOrganization && !this.selectedOrganization.permiteReservasGratuitas) {
+    return `La organización "${this.selectedOrganization.nombre}" no tiene permisos para reservas gratuitas. Esta reserva generará el costo correspondiente.`;
+  } else if (this.selectedContribuyente?.esDeportistaElite && !this.isFreeReservation) {
+    return 'Ha optado por no utilizar su beneficio de deportista elite. Esta reserva generará el costo correspondiente.';
+  }
+  return 'Esta reserva generará el costo correspondiente.';
+}
+
   onContribuyenteSearch(): void {
     this.showContribuyenteSearch = true;
     if (this.contribuyentesList.length === 0) {

@@ -235,7 +235,6 @@ export class AuthenticationService {
     }
     return this.systemConfigList;
   }
-
   getSystemConfig(clave: string): ConfiguracionSistema | undefined {
     return this.systemConfigList[clave];
   }

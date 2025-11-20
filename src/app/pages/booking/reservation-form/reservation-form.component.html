@@ -280,22 +280,6 @@
               </tbody>
             </table>
           </div>
-
-          <div class="p-2 rounded" [ngClass]="requiresValidation ? 'bg-warning bg-opacity-10 border border-warning' : 'bg-success bg-opacity-10 border border-success'">
-            <div class="d-flex align-items-center">
-              <i [class]="requiresValidation ? 'ri-time-line' : 'ri-checkbox-circle-line'" 
-                  class="fs-5 me-2" 
-                  [ngClass]="requiresValidation ? 'text-warning' : 'text-success'"></i>
-              <div>
-                <strong class="d-block small" [ngClass]="requiresValidation ? 'text-warning' : 'text-success'">
-                  {{ requiresValidation ? 'Requiere Aprobación' : 'Aprobación Automática' }}
-                </strong>
-                <small class="text-muted">
-                  {{ requiresValidation ? 'Revisión administrativa requerida' : 'Confirmación inmediata' }}
-                </small>
-              </div>
-            </div>
-          </div>
         </div>
         <hr class="my-2">
         <!-- Contributor Information -->
@@ -473,67 +457,45 @@
                 </div>
               </div>
             </div>
-          </div>  
-              <div class="p-2 rounded" [ngClass]="getStatusClass()">
-                <div class="d-flex align-items-center">
-                  <i [class]="getStatusIcon()" class="fs-5 me-2"></i>
-                  <div>
-                    <strong class="d-block small" [ngClass]="{
-                      'text-info': getStatusText() === 'Reserva Gratuita',
-                      'text-warning': getStatusText() === 'Requiere Aprobación', 
-                      'text-success': getStatusText() === 'Aprobación Automática'
-                    }">
-                      {{ getStatusText() }}
+          </div>
+          <div class="mb-3" *ngIf="showFreeReservationOption || selectedOrganization">
+            <div class="alert" [ngClass]="{
+              'alert-info': isFreeReservation,
+              'alert-warning': !isFreeReservation && (selectedOrganization || selectedContribuyente?.esDeportistaElite)
+            }">
+              <div class="d-flex align-items-start">
+                <i [class]="isFreeReservation ? 'ri-gift-line' : 'ri-information-line'" class="fs-5 me-2 mt-1"></i>
+                <div class="flex-grow-1">
+                  <div *ngIf="isFreeReservation">
+                    <strong class="d-block">
+                      {{ getFreeReservationTitle() }}
                     </strong>
-                    <small class="text-muted">
-                      {{ getStatusDescription() }}
+                    <small class="d-block mt-1">
+                      {{ getFreeReservationDescription() }}
                     </small>
                   </div>
-                </div>
-              </div>        
-          <div class="mb-2" *ngIf="showFreeReservationOption && selectedContribuyente?.esDeportistaElite && !selectedOrganization?.permiteReservasGratuitas">
-            <div class="form-check form-switch">
-              <input 
-                class="form-check-input" 
-                type="checkbox" 
-                [checked]="isFreeReservation"
-                (change)="toggleFreeReservation()"
-                id="freeReservation"
-                style="cursor: pointer;">
-              <label class="form-check-label fw-semibold text-info" for="freeReservation" style="cursor: pointer;">
-                <i class="ri-gift-line me-1"></i>
-                Realizar reserva gratuita como Deportista de Elite
-              </label>
-            </div>
-            <small class="text-muted d-block mt-1">
-              <i class="ri-information-line me-1"></i>
-              Como deportista de elite registrado, puede optar por realizar esta reserva sin costo.
-            </small>
-          </div>
-          <div class="mb-2" *ngIf="selectedOrganization?.permiteReservasGratuitas">
-            <div class="alert alert-info alert-sm py-2 mb-0">
-              <div class="d-flex align-items-center">
-                <i class="ri-gift-line me-2"></i>
-                <div>
-                  <strong class="d-block">Reserva Gratuita Automática</strong>
-                  <small>
-                    La organización seleccionada tiene permisos para reservas gratuitas. 
-                    Esta reserva no generará costo alguno.
-                  </small>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="mb-2" *ngIf="selectedOrganization && !selectedOrganization.permiteReservasGratuitas && selectedContribuyente?.esDeportistaElite">
-            <div class="alert alert-warning alert-sm py-2 mb-0">
-              <div class="d-flex align-items-center">
-                <i class="ri-information-line me-2"></i>
-                <div>
-                  <strong class="d-block">Reserva con Costo</strong>
-                  <small>
-                    Aunque es deportista de elite, la organización seleccionada no tiene permisos para reservas gratuitas.
-                    Esta reserva generará el costo correspondiente.
-                  </small>
+                  <div *ngIf="!isFreeReservation">
+                    <strong class="d-block">
+                      {{ getPaidReservationTitle() }}
+                    </strong>
+                    <small class="d-block mt-1">
+                      {{ getPaidReservationDescription() }}
+                    </small>
+                  </div>
+                  <div class="mb-2" *ngIf="showFreeReservationOption && selectedContribuyente?.esDeportistaElite && !selectedOrganization?.permiteReservasGratuitas">
+                    <div class="form-check form-switch mb-0">
+                      <input 
+                        class="form-check-input" 
+                        type="checkbox" 
+                        [checked]="isFreeReservation"
+                        (change)="toggleFreeReservation()"
+                        id="freeReservationToggle">
+                      <label class="form-check-label small fw-semibold" for="freeReservationToggle">
+                        <i class="ri-gift-line me-1"></i>
+                        Utilizar beneficio de deportista elite (reserva gratuita)
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -592,7 +554,7 @@
               <ul class="mb-0 ps-3">
                 <li>Al confirmar se generará la tasa municipal automáticamente</li>
                 <li>Tendrá <strong>{{ validHours }} horas</strong> para realizar el pago</li>
-                <li>Las reservas requieren <strong>{{ anticipationTimeDisplay }}</strong> de anticipación mínima</li>
+                <li *ngIf="anticipationTimeDisplay">Las reservas requieren <strong>{{ anticipationTimeDisplay }}</strong> de anticipación mínima</li>
               </ul>
             </div>
           </div>

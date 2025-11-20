@@ -12,15 +12,13 @@ import { Reserva } from 'src/app/core/models/reserva.models';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
-import { RuatRequestsService } from 'src/app/core/services/ruat/ruatRequest.service';
 import { GlobalComponent } from 'src/app/global-component';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { BookingType, ReservationType } from 'src/app/core/constants/Features';
+import { BookingType } from 'src/app/core/constants/Features';
 import { ScheduleStateService } from './schedule-state.service';
 import { EstadoActual, EstadoReserva } from 'src/app/core/constants/Estados';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
-import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 
 interface PuntualSchedule {
@@ -86,7 +84,6 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   config = {infinite: true, slidesToShow: 1, slidesToScroll: 1, autoplay: true, arrows: false};
   slidesConfig = {infinite: true, slidesToShow: 4, slidesToScroll: 1, autoplay: true};
 
-
   systemConfigList: { [key: string]: ConfiguracionSistema } = {};
   get enableRecurrentBooking(): boolean | undefined{
     return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? true;
@@ -128,7 +125,6 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     private modalService: NgbModal,
     private complejoService: ComplejosService,
     private reservaService: ReservaService,
-    private ruatService: RuatRequestsService,
     private router: Router,
     private cdRef: ChangeDetectorRef,
     private scheduleState: ScheduleStateService,
@@ -137,14 +133,12 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
-    // await this.configService.ensureConfigsLoaded().toPromise();
-    // this.updatePermissionsBasedOnConfig();
     this.breadCrumbItems = [
       { label: 'Complejo' },
       { label: 'Reserva', active: true }
     ];
     this.currentTime = new Date().toLocaleTimeString(); 
-    this.systemConfigList = this.authenticationService.getAllConfigs()
+    this.systemConfigList = this.authenticationService.getAllConfigs();
     const currentUser = this.authenticationService.currentUser()   
     if (this.userRole === 'Contribuyente') {
         this.bookingState.contribuyente = currentUser;        
@@ -165,7 +159,6 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(end => this.currentWeekEnd = end);
     this.initializeFromNavigation();
-    // await this.authenticateRuat();
   }
 
   ngOnDestroy(): void {
@@ -223,8 +216,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
       [BookingStep.HORARIO_SELECTION]: () => {
         const hasValidSchedule = this.bookingType === 'puntual' 
           ? !!this.bookingState.puntualSchedule 
-          : !!this.bookingState.recurrentSchedule;
-        
+          : !!this.bookingState.recurrentSchedule;        
         if (!hasValidSchedule) {
           this.showNotification('Por favor seleccione un horario', 'warning');
           return false;
@@ -274,12 +266,8 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     this.bookingState.actionType = selection.actionType;  
     this.isLoading = true;    
     try {
-      await this.loadReservationsByField(selection.field.uuid!);      
-      // if (this.bookingState.tarifa?.tipoCobro === 'por_evento') {
-      //   this.bookingStep = BookingStep.RESERVATION_FORM;
-      // } else {
+      await this.loadReservationsByField(selection.field.uuid!);
         this.bookingStep = BookingStep.HORARIO_SELECTION;
-      // }
     } catch (error) {
       this.showNotification('Error al cargar las reservas existentes', 'error');
     } finally {
@@ -302,19 +290,6 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     this.isLoading = false;
     this.showConfirmationModal(reservaData);
   }
-  
-
-  openScheduleModal(content: any): void {
-    if (!this.bookingState.campo) {
-      this.showNotification('Primero debe seleccionar una cancha', 'warning');
-      return;
-    }    
-    this.modalService.open(content, { 
-      size: 'md', 
-      centered: true,
-      backdrop: 'static'
-    });
-  }
 
   getEncargadosActivos(): EncargadoComplejo[] {
     if (!this.bookingState.complejo?.encargadosDtoList?.length) {
@@ -332,6 +307,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
       return fechaAsignacion <= todayNormalized && todayNormalized <= fechaFinAsignacion;
     });
   }
+
   /* API REQUESTS */
   private async loadReservationsByField(fieldUuid: string): Promise<void> {
     if (!fieldUuid) {
@@ -411,60 +387,60 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
       position: 'top-end'
     });
   }
-private showConfirmationModal(reservaData: Reserva): void {
-  const paymentHours = this.HorasValidacionPago ?? 1;
-  const paymentDeadlineMessage = paymentHours > 1 
-    ? `${paymentHours} horas` 
-    : `${paymentHours} hora`;
-  const requiresApproval = this.bookingState.campo?.requiereAprobacion;
-  const title = requiresApproval 
-    ? '¡Solicitud de Reserva Enviada!' 
-    : '¡Reserva Creada Exitosamente!';
-  const html = requiresApproval ? `
-    <div class="text-start">
-      <p class="mb-2">Su solicitud de reserva ha sido enviada para aprobación.</p>
-      <div class="alert alert-info mb-0">
-        <strong>Proceso de aprobación:</strong> 
-        <ul class="mb-0 mt-1 small">
-          <li>Será revisada por el administrador del complejo</li>
-          <li>Recibirá una notificación por correo electrónico</li>
-          <li>Una vez aprobada, tendrá ${paymentDeadlineMessage} para realizar el pago</li>
-        </ul>
+  private showConfirmationModal(reservaData: Reserva): void {
+    const paymentHours = this.HorasValidacionPago ?? 1;
+    const paymentDeadlineMessage = paymentHours > 1 
+      ? `${paymentHours} horas` 
+      : `${paymentHours} hora`;
+    const requiresApproval = this.bookingState.campo?.requiereAprobacion;
+    const title = requiresApproval 
+      ? '¡Solicitud de Reserva Enviada!' 
+      : '¡Reserva Creada Exitosamente!';
+    const html = requiresApproval ? `
+      <div class="text-start">
+        <p class="mb-2">Su solicitud de reserva ha sido enviada para aprobación.</p>
+        <div class="alert alert-info mb-0">
+          <strong>Proceso de aprobación:</strong> 
+          <ul class="mb-0 mt-1 small">
+            <li>Será revisada por el administrador del complejo</li>
+            <li>Recibirá una notificación por correo electrónico</li>
+            <li>Una vez aprobada, tendrá ${paymentDeadlineMessage} para realizar el pago</li>
+          </ul>
+        </div>
       </div>
-    </div>
-  ` : `
-    <div class="text-start">
-      <p class="mb-2">Su reserva ha sido registrada correctamente.</p>
-      <div class="alert alert-warning mb-0">
-        <strong>Importante:</strong> Debe realizar el pago dentro de las próximas 
-        <strong>${paymentDeadlineMessage}</strong>, de lo contrario la reserva será 
-        cancelada automáticamente.
+    ` : `
+      <div class="text-start">
+        <p class="mb-2">Su reserva ha sido registrada correctamente.</p>
+        <div class="alert alert-warning mb-0">
+          <strong>Importante:</strong> Debe realizar el pago dentro de las próximas 
+          <strong>${paymentDeadlineMessage}</strong>, de lo contrario la reserva será 
+          cancelada automáticamente.
+        </div>
       </div>
-    </div>
-  `;
-  Swal.fire({
-    text: title,
-    html: html,
-    icon: requiresApproval ? 'info' : 'success',
-    confirmButtonText: 'Ver Comprobante',
-    confirmButtonColor: '#3085d6',
-    showCancelButton: true,
-    cancelButtonText: 'Ver Mis Reservas',
-    cancelButtonColor: '#6c757d'
-  }).then((result) => {
-    if (result.isConfirmed) {
-      this.bookingState.reservaCreada = reservaData;
-      this.bookingStep = BookingStep.TICKET;
-    } else if (result.dismiss === Swal.DismissReason.cancel) {
-      this.navigateToReservations();
-    }
-  });
-}
+    `;
+    Swal.fire({
+      text: title,
+      html: html,
+      icon: requiresApproval ? 'info' : 'success',
+      confirmButtonText: 'Ver Comprobante',
+      confirmButtonColor: '#3085d6',
+      showCancelButton: true,
+      cancelButtonText: 'Ver Mis Reservas',
+      cancelButtonColor: '#6c757d'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.bookingState.reservaCreada = reservaData;
+        this.bookingStep = BookingStep.TICKET;
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        this.navigateToReservations();
+      }
+    });
+  }
 
-showTicket(reservaData: Reserva): void {
-  this.bookingState.reservaCreada = reservaData;
-  this.bookingStep = BookingStep.TICKET;
-}
+  showTicket(reservaData: Reserva): void {
+    this.bookingState.reservaCreada = reservaData;
+    this.bookingStep = BookingStep.TICKET;
+  }
 
   getTariffDescription(tarifa: Tarifa): string {
     const descriptions = {

@@ -24,14 +24,18 @@ interface TimeSlot {
   isSelected?: boolean;
   reservation?: Reserva;
   conflictReason?: string;
+  blockType: 'morning' | 'afternoon' | 'night' | 'operating';
 }
+
 interface DaySlots {
   morningSlots: TimeSlot[];
   afternoonSlots: TimeSlot[];
   nightSlots: TimeSlot[];
+  operatingSlots: TimeSlot[];
   daySchedule?: HorarioFijo;
   exceptions?: HorarioExcepcion[]; 
 }
+
 interface WeekDay {
   name: string;
   dayName: string;
@@ -39,6 +43,25 @@ interface WeekDay {
   isToday: boolean;
   isPast: boolean;
 }
+
+interface TimeInput {
+  hours: number;
+  minutes: number;
+}
+
+interface BlockDefinition {
+  start: string;
+  end: string;
+  label: string;
+  icon: string;
+  color: string;
+}
+
+interface OperatingPeriod {
+  start: string;
+  end: string;
+}
+
 @Component({
   selector: 'app-schedule-selection',
   standalone: true,
@@ -50,26 +73,27 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   @Input() dataField!: CampoDeportivo;
   @Input() dataTariff!: Tarifa;
   @Input() reservationsList: Reserva[] = []; 
-  // @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
+  @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
   @Input() userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
   @Output() horarioSelected = new EventEmitter<{ date: Date; start: string; end: string }>();
 
   currentWeekStart: Date = new Date();
   currentWeekEnd: Date = new Date();
-  readonly MORNING_END = 12;
-  readonly AFTERNOON_END = 18;
-  slotDuration: number = 60;
-  slotDurationOptions = [
-    { value: 30, label: '30 minutos' },
-    { value: 60, label: '1 hora' },
-  ];
+  
+  blocks: { [key: string]: BlockDefinition } = {};
+  blockKeys: string[] = [];
+  
+  selectionMode: 'slots' | 'custom' = 'slots';
+  startTimeInput: TimeInput = { hours: 8, minutes: 0 };
+  endTimeInput: TimeInput = { hours: 9, minutes: 0 };
+    
   eventDurationHours: number = 8;
   eventDurationError: string = '';
 
-  systemConfigs: { [key: string]: ConfiguracionSistema } = {};
   get enableSolicitudEventsBooking(): boolean{
     return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_EVENTOS]?.valorBoolean ?? false;
   }
+  
   get enableEventsBooking(): boolean {
     return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_EVENTOS]?.valorBoolean ?? false;
   }
@@ -82,32 +106,34 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       case 'por_evento':
         const diasEventos = this.systemConfigs[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico;
         return diasEventos? diasEventos* 24:undefined;
-      case 'mensualidad': 
-      case 'por_sesion': 
-      case 'por_club':
+      case 'mensualidad': case 'por_sesion': case 'por_club':
         return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico;
       default:
         return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
     }
   }
+  
   get anticipationTimeDisplay(): string {
     switch (this.dataTariff.tipoCobro) {
       case 'por_evento':
-        return this.systemConfigs[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico + `días`;
+        return (this.systemConfigs[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico ?? 0) + `días`;
       case 'mensualidad': case 'por_sesion': case 'por_club':
-        return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico+ `días`;
+        return (this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico ?? 0) + `días`;
       default:
-        return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico+`horas`;
+        return (this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico ?? 0) + `horas`;
     }
   }
+  
   get maxDuration(): number {
       const maxHours = this.systemConfigs[ClaveConfiguracion.DURACION_MAXIMA_EVENTOS]?.valorNumerico;
       return (maxHours !== undefined && maxHours !== null ? maxHours : 24);
   }
+  
   get minDuration(): number {
     const minDuration = this.systemConfigs[ClaveConfiguracion.DURACION_MINIMA_RESERVA]?.valorNumerico;
-    return minDuration !== undefined && minDuration !== null ? minDuration : 1;
+    return minDuration ? minDuration : 1;
   }
+  
   get maxDurationDisplay(): string {
     const hours = this.maxDuration;
     if (hours === 1) {
@@ -116,6 +142,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       return `${hours} horas`;
     }
   }
+  
   get minDurationDisplay(): string {
     const hours = this.minDuration;
     if (hours === 1) {
@@ -144,24 +171,27 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
 
   ngOnInit(): void {
     this.systemConfigs = this.authenticationService.getAllConfigs();
+    this.initializeBlocks();
     this.scheduleState.currentWeekStart$
       .pipe(takeUntil(this.destroy$))
       .subscribe(start => {
         this.currentWeekStart = start;
         this.cdr.detectChanges();
       });
+      
     this.scheduleState.currentWeekEnd$
       .pipe(takeUntil(this.destroy$))
       .subscribe(end => {
         this.currentWeekEnd = end;
         this.cdr.detectChanges();
       });
-      this.initializeWeek();
-      this.generateWeekDays();
-      this.setDefaultSlotDuration();
-      if (this.dataTariff?.tipoCobro === 'por_evento') {
-        this.eventDurationHours =this.maxDuration; 
-      }
+      
+    this.initializeWeek();
+    this.generateWeekDays();
+    
+    if (this.dataTariff?.tipoCobro === 'por_evento') {
+      this.eventDurationHours = this.maxDuration; 
+    }
   }
 
   ngOnDestroy(): void {
@@ -170,14 +200,18 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['dataField'] && this.dataField) {
+      this.initializeBlocks();
+    }
+    
     if (changes['reservationsList'] && !changes['reservationsList'].firstChange) {
-      this.clearCache();
+      this.timeSlotsCache.clear();
       this.generateWeekDays();
       this.revalidateSelection();
     }    
+    
     if (changes['dataTariff'] && !changes['dataTariff'].firstChange) {
-      this.setDefaultSlotDuration();
-      this.clearCache();
+      this.timeSlotsCache.clear();
       this.clearSelectedSlots();
       this.generateWeekDays();
       
@@ -187,48 +221,449 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     }
 
     if (changes['dataField'] && !changes['dataField'].firstChange) {
-      this.clearCache();
+      this.timeSlotsCache.clear();
       this.clearSelectedSlots();
       this.generateWeekDays();
     }
 
     if (changes['systemConfigs'] && !changes['systemConfigs'].firstChange) {
-      this.clearCache();
+      this.timeSlotsCache.clear();
       this.generateWeekDays();
     }
   }
 
-  private setDefaultSlotDuration(): void {
-    if (!this.dataTariff) return;
-    
-    switch (this.dataTariff.tipoCobro) {
-      case 'por_hora':
-        this.slotDuration = 60;
-        break;
-      case 'por_persona':
-        this.slotDuration = 60;
-        break;
-      case 'por_evento':
-        this.slotDuration = 120;
-        break;
-      default:
-        this.slotDuration = 60;
+  private initializeBlocks(): void {
+    if (!this.dataField) return;
+    const allSchedules = this.dataField.horariosFijosDtoList || [];
+    let earliestStart = '23:59:59';
+    let latestEnd = '00:00:00';
+    allSchedules.forEach(schedule => {
+      if (schedule.abierto && schedule.horaApertura && schedule.horaCierre) {
+        const scheduleStart = schedule.horaApertura;
+        const scheduleEnd = schedule.horaCierre;        
+        if (this.timeToMinutes(scheduleStart) < this.timeToMinutes(earliestStart)) {
+          earliestStart = scheduleStart;
+        }
+        if (this.timeToMinutes(scheduleEnd) > this.timeToMinutes(latestEnd)) {
+          latestEnd = scheduleEnd;
+        }
+      }
+    });
+    if (earliestStart === '23:59:59') {
+      earliestStart = '08:00:00';
+      latestEnd = '22:00:00';
+    }
+    let fieldStart = earliestStart;
+    let fieldEnd = latestEnd;
+    if (this.dataTariff?.desde) {
+      const tariffStart = this.timeToMinutes(this.dataTariff.desde);
+      const fieldStartMinutes = this.timeToMinutes(fieldStart);
+      if (tariffStart > fieldStartMinutes) {
+        fieldStart = this.dataTariff.desde;
+      }
+    }
+    if (this.dataTariff?.hasta) {
+      const tariffEnd = this.timeToMinutes(this.dataTariff.hasta);
+      const fieldEndMinutes = this.timeToMinutes(fieldEnd);
+      if (tariffEnd < fieldEndMinutes) {
+        fieldEnd = this.dataTariff.hasta;
+      }
+    }
+    const operatingPeriods = this.getOperatingPeriodsForDay(new Date());
+    if (operatingPeriods.length === 1) {
+      this.createDynamicBlocks(fieldStart, fieldEnd);
+    } else {
+      this.createDiscontinuousBlocks(operatingPeriods);
+    }
+    this.blockKeys = Object.keys(this.blocks);
+  }
+
+  private getOperatingPeriodsForDay(date: Date): OperatingPeriod[] {
+    const allSchedules = this.dataField.horariosFijosDtoList || [];
+    const dayOfWeek = date.getDay();
+    const dayNames = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    const currentDayName = dayNames[dayOfWeek];
+    const applicableSchedules = allSchedules.filter(schedule => {
+      if (!schedule.abierto || !schedule.horaApertura || !schedule.horaCierre) return false;
+      if (schedule.dia === currentDayName) return true;
+      if (schedule.dia === 'lunes_viernes' && dayOfWeek >= 1 && dayOfWeek <= 5) return true;
+      if (schedule.dia === 'sabado' && dayOfWeek === 6) return true;
+      if (schedule.dia === 'domingo' && dayOfWeek === 0) return true;
+      return false;
+    });
+    const periods: OperatingPeriod[] = applicableSchedules
+      .map(schedule => ({ 
+        start: schedule.horaApertura!, 
+        end: schedule.horaCierre! 
+      }))
+      .sort((a, b) => this.timeToMinutes(a.start) - this.timeToMinutes(b.start));
+    const mergedPeriods: OperatingPeriod[] = [];
+    let currentPeriod: OperatingPeriod | null = null;
+    for (const period of periods) {
+      if (!currentPeriod) {
+        currentPeriod = { ...period };
+      } else {
+        const currentEnd = this.timeToMinutes(currentPeriod.end);
+        const nextStart = this.timeToMinutes(period.start);
+        if (nextStart <= currentEnd) {
+          const nextEnd = this.timeToMinutes(period.end);
+          if (nextEnd > currentEnd) {
+            currentPeriod.end = period.end;
+          }
+        } else {
+          mergedPeriods.push(currentPeriod);
+          currentPeriod = { ...period };
+        }
+      }
+    }
+    if (currentPeriod) {
+      mergedPeriods.push(currentPeriod);
+    }
+    return mergedPeriods;
+  }
+
+  private createDynamicBlocks(startTime: string, endTime: string): void {
+    const startMinutes = this.timeToMinutes(startTime);
+    const endMinutes = this.timeToMinutes(endTime);
+    const morningEnd = this.timeToMinutes('12:00:00');
+    const afternoonEnd = this.timeToMinutes('18:00:00');
+    this.blocks = {};
+    if (startMinutes < morningEnd) {
+      const morningEndTime = Math.min(morningEnd, endMinutes);
+      if (morningEndTime > startMinutes) {
+        this.blocks['morning'] = { 
+          start: startTime, 
+          end: this.minutesToTime(morningEndTime), 
+          label: 'Mañana',
+          icon: 'ri-sun-line',
+          color: 'text-warning'
+        };
+      }
+    }
+    if (endMinutes > morningEnd && startMinutes < afternoonEnd) {
+      const afternoonStart = Math.max(startMinutes, morningEnd);
+      const afternoonEndTime = Math.min(afternoonEnd, endMinutes);
+      if (afternoonEndTime > afternoonStart) {
+        this.blocks['afternoon'] = { 
+          start: this.minutesToTime(afternoonStart), 
+          end: this.minutesToTime(afternoonEndTime), 
+          label: 'Tarde',
+          icon: 'ri-sun-cloudy-line',
+          color: 'text-orange'
+        };
+      }
+    }
+    if (endMinutes > afternoonEnd && startMinutes < endMinutes) {
+      const nightStart = Math.max(startMinutes, afternoonEnd);
+      if (endMinutes > nightStart) {
+        this.blocks['night'] = { 
+          start: this.minutesToTime(nightStart), 
+          end: endTime, 
+          label: 'Noche',
+          icon: 'ri-moon-line',
+          color: 'text-info'
+        };
+      }
+    }
+    if (Object.keys(this.blocks).length === 0) {
+      this.blocks['operating'] = { 
+        start: startTime, 
+        end: endTime, 
+        label: 'Horario Completo',
+        icon: 'ri-time-line',
+        color: 'text-primary'
+      };
+    }
+  }
+  private createDiscontinuousBlocks(periods: OperatingPeriod[]): void {
+    this.blocks = {};    
+    periods.forEach((period, index) => {
+      const startHour = parseInt(period.start.split(':')[0]);
+      const endHour = parseInt(period.end.split(':')[0]);
+      let blockKey: string;
+      let label: string;
+      let icon: string;
+      let color: string;      
+      if (periods.length === 1) {
+        blockKey = 'operating';
+        label = 'Horario';
+        icon = 'ri-time-line';
+        color = 'text-primary';
+      } else {
+        if (startHour < 12) {
+          blockKey = 'morning';
+          label = 'Mañana';
+          icon = 'ri-sun-line';
+          color = 'text-warning';
+        } else if (startHour < 18) {
+          blockKey = 'afternoon';
+          label = 'Tarde';
+          icon = 'ri-sun-cloudy-line';
+          color = 'text-orange';
+        } else {
+          blockKey = 'night';
+          label = 'Noche';
+          icon = 'ri-moon-line';
+          color = 'text-info';
+        }
+        if (this.blocks[blockKey]) {
+          blockKey = `${blockKey}_${index + 1}`;
+          label = `${label} ${index + 1}`;
+        }
+      }
+      
+      this.blocks[blockKey] = {
+        start: period.start,
+        end: period.end,
+        label: label,
+        icon: icon,
+        color: color
+      };
+    });
+  }
+
+  setSelectionMode(mode: 'slots' | 'custom'): void {
+    this.selectionMode = mode;
+    this.validationErrors = [];
+    this.showValidationAlert = false;    
+    if (mode === 'custom') {
+      this.initializeCustomTimeInputs();
+    } else {
+      this.clearSelectedSlots();
+    }
+  }
+
+  private initializeCustomTimeInputs(): void {
+    const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
+    if (!daySlots.daySchedule?.abierto || !daySlots.daySchedule.horaApertura) return;
+    const openingTime = daySlots.daySchedule.horaApertura;
+    const [openingHour] = openingTime.split(':').map(Number);
+    this.startTimeInput = { hours: openingHour, minutes: 0 };
+    this.endTimeInput = { hours: openingHour + 1, minutes: 0 };
+  }
+
+  getAvailableHours(type: 'start' | 'end'): number[] {
+    const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
+    if (!daySlots.daySchedule?.abierto || !daySlots.daySchedule.horaApertura || !daySlots.daySchedule.horaCierre) return [];
+    const openingTime = daySlots.daySchedule.horaApertura;
+    const closingTime = daySlots.daySchedule.horaCierre;    
+    const openingHour = parseInt(openingTime.split(':')[0]);
+    const closingHour = parseInt(closingTime.split(':')[0]);
+    const hours: number[] = [];
+    for (let hour = openingHour; hour <= closingHour; hour++) {
+      hours.push(hour);
+    }    
+    return hours;
+  }
+
+  private async confirmTimeSlotSelection(): Promise<void> {
+    this.isCheckingAvailability = true;
+    this.validationErrors = [];
+    this.showValidationAlert = false;
+    try {
+      if (!this.validateTimeSlotSelection()) {
+        this.showValidationAlert = true;
+        return;
+      }
+
+      const startTime = this.selectedSlots[0].startTime;
+      const endTime = this.selectedSlots[this.selectedSlots.length - 1].endTime;
+
+      const timeRange: TimeRange = {
+        date: this.fechaReserva,
+        startTime: startTime,
+        endTime: endTime
+      };
+      
+      const validation = this.conflictService.validateReservation(
+        this.dataField.uuid!,
+        timeRange,
+        this.reservationsList,
+        this.anticipationHours
+      );
+      
+      if (!validation.isValid) {
+        this.validationErrors = validation.errors;
+        this.showValidationAlert = true;
+        this.revalidateSelection();
+        return;
+      }      
+      
+      this.horarioSelected.emit({ 
+        date: this.fechaReserva, 
+        start: startTime, 
+        end: endTime 
+      });
+      
+    } catch (error) {
+      console.error('Error confirming selection:', error);
+      this.validationErrors.push('Error al verificar disponibilidad. Por favor, intente nuevamente.');
+      this.showValidationAlert = true;
+    } finally {
+      this.isCheckingAvailability = false;
+    }
+  }
+
+  private validateTimeSlotSelection(): boolean {
+    if (this.selectedSlots.length === 0) {
+      this.validationErrors.push('Debe seleccionar al menos un horario');
+      return false;
+    }
+    if (!this.areConsecutiveSlots(this.selectedSlots)) {
+      this.validationErrors.push('Los horarios seleccionados deben ser consecutivos');
+      return false;
+    }
+    const duration = this.timeToMinutes(this.selectedSlots[this.selectedSlots.length - 1].endTime) - this.timeToMinutes(this.selectedSlots[0].startTime)
+    const durationInHours = duration / 60;
+    if (durationInHours < this.minDuration) {
+      this.validationErrors.push(`La duración mínima de reserva es de ${this.minDurationDisplay}`);
+      return false;
+    }
+    if (durationInHours > this.maxDuration) {
+      this.validationErrors.push(`La duración máxima para este tipo de reserva es de ${this.maxDurationDisplay}`);
+      return false;
+    }
+    if (this.dataField?.requiereAprobacion) {
+      const maxDuration = this.dataField.maxDuracionAutoAprobacion || 120;
+      if (duration > maxDuration) {
+        this.validationErrors.push(
+          `Las reservas de más de ${maxDuration} minutos requieren aprobación del administrador. Su reserva será revisada antes de confirmarse.`
+        );
+      }
+    }
+    return true;
+  }
+
+  private areConsecutiveSlots(slots: TimeSlot[]): boolean {
+    if (slots.length <= 1) return true;
+    for (let i = 0; i < slots.length - 1; i++) {
+      if (slots[i].endTime !== slots[i + 1].startTime) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  validateCustomTimeSelection(): boolean {
+    this.validationErrors = [];    
+    const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
+    const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
+    if (startMinutes >= endMinutes) {
+      this.validationErrors.push('La hora de inicio debe ser anterior a la hora de fin');
+      return false;
+    }
+    const duration = endMinutes - startMinutes;
+    if (duration < this.minDuration * 60) {
+      this.validationErrors.push(`La duración mínima es de ${this.minDurationDisplay}`);
+      return false;
+    }
+    if (duration > this.maxDuration * 60) {
+      this.validationErrors.push(`La duración máxima es de ${this.maxDurationDisplay}`);
+      return false;
+    }
+    const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
+    if (daySlots.daySchedule?.abierto && daySlots.daySchedule.horaApertura && daySlots.daySchedule.horaCierre) {
+      const openingTime = daySlots.daySchedule.horaApertura;
+      const closingTime = daySlots.daySchedule.horaCierre;      
+      const openingMinutes = this.timeToMinutes(openingTime);
+      const closingMinutes = this.timeToMinutes(closingTime);
+      if (startMinutes < openingMinutes || endMinutes > closingMinutes) {
+        this.validationErrors.push(
+          `El horario debe estar dentro del horario de atención (${openingTime.slice(0, 5)} - ${closingTime.slice(0, 5)})`
+        );
+        return false;
+      }
+    }
+    return true;
+  }
+
+  async confirmCustomTimeSelection(): Promise<void> {
+    this.isCheckingAvailability = true;
+    this.validationErrors = [];
+    this.showValidationAlert = false;
+    try {
+      if (!this.validateCustomTimeSelection()) {
+        this.showValidationAlert = true;
+        return;
+      }
+      const startTime = `${this.startTimeInput.hours.toString().padStart(2, '0')}:${this.startTimeInput.minutes.toString().padStart(2, '0')}:00` ;
+      const endTime = `${this.endTimeInput.hours.toString().padStart(2, '0')}:${this.endTimeInput.minutes.toString().padStart(2, '0')}:00`;
+      const timeRange: TimeRange = {
+        date: this.fechaReserva,
+        startTime: startTime,
+        endTime: endTime
+      };
+      const validation = this.conflictService.validateReservation(
+        this.dataField.uuid!,
+        timeRange,
+        this.reservationsList,
+        this.anticipationHours
+      );
+      if (!validation.isValid) {
+        this.validationErrors = validation.errors;
+        this.showValidationAlert = true;
+        return;
+      }
+      this.horarioSelected.emit({ 
+        date: this.fechaReserva, 
+        start: startTime, 
+        end: endTime 
+      });
+
+    } catch (error) {
+      console.error('Error confirming custom time selection:', error);
+      this.validationErrors.push('Error al verificar disponibilidad. Por favor, intente nuevamente.');
+      this.showValidationAlert = true;
+    } finally {
+      this.isCheckingAvailability = false;
+    }
+  }
+
+  getTimeInputValue(timeInput: TimeInput): string {
+    return `${timeInput.hours.toString().padStart(2, '0')}:${timeInput.minutes.toString().padStart(2, '0')}`;
+  }
+
+  onStartTimeChange(event: any): void {
+    const timeString = event.target.value;
+    if (timeString) {
+      const [hours, minutes] = timeString.split(':').map(Number);
+      this.startTimeInput = { hours, minutes };
+    }
+  }
+
+  onEndTimeChange(event: any): void {
+    const timeString = event.target.value;
+    if (timeString) {
+      const [hours, minutes] = timeString.split(':').map(Number);
+      this.endTimeInput = { hours, minutes };
+    }
+  }
+
+  getDurationDisplay(): string {
+    const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
+    const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
+    const durationMinutes = endMinutes - startMinutes;    
+    if (durationMinutes <= 0) return '0 min';    
+    const hours = Math.floor(durationMinutes / 60);
+    const minutes = durationMinutes % 60;    
+    if (hours === 0) {
+      return `${minutes} min`;
+    } else if (minutes === 0) {
+      return `${hours} h`;
+    } else {
+      return `${hours} h ${minutes} min`;
     }
   }
 
   private initializeWeek(): void {
-    const today = new Date();
+    const today = new Date();    
     today.setHours(0, 0, 0, 0);
-    
     const dayOfWeek = today.getDay();
-    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;    
     this.currentWeekStart = new Date(today);
     this.currentWeekStart.setDate(today.getDate() + diff);
-    
     this.currentWeekEnd = new Date(this.currentWeekStart);
     this.currentWeekEnd.setDate(this.currentWeekStart.getDate() + 6);
-    
     this.fechaReserva = new Date(today);
     this.activeDayName = this.getDayName(today);
   }
@@ -236,12 +671,12 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   private generateWeekDays(): void {
     this.weekDays = [];
     const today = new Date();
-    today.setHours(0, 0, 0, 0);    
+    today.setHours(0, 0, 0, 0);
     for (let i = 0; i < 7; i++) {
       const date = new Date(this.currentWeekStart);
-      date.setDate(this.currentWeekStart.getDate() + i);
+      date.setDate(this.currentWeekStart.getDate() + i);        
       const dayName = this.getDayName(date);
-      const isPast = date < today;
+      const isPast = date < today;        
       this.weekDays.push({
         name: dayName,
         dayName: this.getFullDayName(date),
@@ -252,80 +687,8 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     }
   }
 
-  onSlotDurationChange(newDuration?: number): void {
-    if (newDuration !== undefined) {
-      this.slotDuration = newDuration;
-    }
-    if (typeof this.slotDuration === 'string') {
-      this.slotDuration = parseInt(this.slotDuration, 10);
-    }    
-    if (!this.slotDuration || this.slotDuration <= 0) {
-      console.error('Invalid slot duration:', this.slotDuration);
-      return;
-    }    
-    this.timeSlotsCache.clear();
-    this.clearSelectedSlots();
-    const currentDate = new Date(this.fechaReserva);    
-    setTimeout(() => {      
-      this.weekDays = [];
-      this.generateWeekDays();      
-      const matchingDay = this.weekDays.find(d => 
-        d.date.toDateString() === currentDate.toDateString()
-      );      
-      if (matchingDay) {
-        this.fechaReserva = new Date(matchingDay.date);
-        this.activeDayName = matchingDay.name;
-      } else if (this.weekDays.length > 0) {
-        this.fechaReserva = new Date(this.weekDays[0].date);
-        this.activeDayName = this.weekDays[0].name;
-      }
-      
-      this.cdr.detectChanges();
-    }, 0);
-  }
-
-  onEventDurationChange(): void {
-    this.eventDurationError = '';
-    if (this.eventDurationHours < this.minDuration) {
-      this.eventDurationError = `La duración mínima es de ${this.minDurationDisplay}`;
-      return;
-    }    
-    if (this.eventDurationHours > this.maxDuration) {
-      this.eventDurationError = `La duración máxima es de ${this.maxDurationDisplay}`;
-      return;
-    }
-    this.clearCache();
-    this.generateWeekDays();
-  }
-
-  private validateEventSelection(): boolean {
-    if (!this.fechaReserva) {
-      this.validationErrors.push('Debe seleccionar una fecha para el evento');
-      return false;
-    }
-
-    const durationInHours = this.eventDurationHours;
-    
-    if (durationInHours < this.minDuration) {
-      this.validationErrors.push(`La duración mínima del evento es de ${this.minDurationDisplay}`);
-      return false;
-    }
-
-    if (durationInHours > this.maxDuration) {
-      this.validationErrors.push(`La duración máxima del evento es de ${this.maxDurationDisplay}`);
-      return false;
-    }
-
-    if (!this.isDayAvailableForEvent(this.fechaReserva)) {
-      this.validationErrors.push('La fecha seleccionada no está disponible para eventos');
-      return false;
-    }
-
-    return true;
-  }
-
   getTimeSlotsForDay(date: Date): DaySlots {
-    const dateKey = `${date.toISOString().split('T')[0]}-${this.slotDuration}-${this.dataTariff?.uuid || 'no-tariff'}`;
+    const dateKey = `${date.toISOString().split('T')[0]}-${this.minDuration*60}-${this.dataTariff?.uuid || 'no-tariff'}`;
     if (this.timeSlotsCache.has(dateKey)) {
       return this.timeSlotsCache.get(dateKey)!;
     }    
@@ -341,64 +704,80 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       morningSlots: [],
       afternoonSlots: [],
       nightSlots: [],
+      operatingSlots: [],
       daySchedule: daySchedule,
       exceptions: exceptions
     };
-
     if (!daySchedule?.abierto && (!exceptions || exceptions.length === 0)) {
       return result;
     }
-
-    let horaApertura = daySchedule?.horaApertura || '08:00:00';
-    let horaCierre = daySchedule?.horaCierre || '22:00:00';
-
-    if (exceptions && exceptions.length > 0) {
-      const exception = exceptions[0];
-      if (exception.tipoExcepcion === 'cerrado') return result;
-      if (exception.horaApertura) horaApertura = exception.horaApertura;
-      if (exception.horaCierre) horaCierre = exception.horaCierre;
+    const operatingPeriods = this.getOperatingPeriodsForDay(date);
+    if (operatingPeriods.length === 0) {
+      return result;
     }
-
-    if (this.dataTariff?.desde) {
-      const tarifaStart = this.timeToMinutes(this.dataTariff.desde);
-      const scheduleStart = this.timeToMinutes(horaApertura);
-      if (tarifaStart > scheduleStart) horaApertura = this.dataTariff.desde;
-    }
-
-    if (this.dataTariff?.hasta) {
-      const tarifaEnd = this.timeToMinutes(this.dataTariff.hasta);
-      const scheduleEnd = this.timeToMinutes(horaCierre);
-      if (tarifaEnd < scheduleEnd) horaCierre = this.dataTariff.hasta;
-    }
-
-    const slots = this.generateTimeSlots(date, horaApertura, horaCierre);
-    
-    slots.forEach(slot => {
-      const hour = parseInt(slot.startTime.split(':')[0]);
-      if (hour < this.MORNING_END) {
-        result.morningSlots.push(slot);
-      } else if (hour < this.AFTERNOON_END) {
-        result.afternoonSlots.push(slot);
-      } else {
-        result.nightSlots.push(slot);
+    operatingPeriods.forEach(period => {
+      let horaApertura = period.start;
+      let horaCierre = period.end;
+      if (this.dataTariff?.desde) {
+        const tarifaStart = this.timeToMinutes(this.dataTariff.desde);
+        const scheduleStart = this.timeToMinutes(horaApertura);
+        if (tarifaStart > scheduleStart) horaApertura = this.dataTariff.desde;
+      }
+      if (this.dataTariff?.hasta) {
+        const tarifaEnd = this.timeToMinutes(this.dataTariff.hasta);
+        const scheduleEnd = this.timeToMinutes(horaCierre);
+        if (tarifaEnd < scheduleEnd) horaCierre = this.dataTariff.hasta;
+      }
+      if (this.timeToMinutes(horaApertura) < this.timeToMinutes(horaCierre)) {
+        const slots = this.generateTimeSlots(date, horaApertura, horaCierre);
+        
+        slots.forEach(slot => {
+          const startHour = parseInt(slot.startTime.split(':')[0]);
+          const startMinutes = this.timeToMinutes(slot.startTime);        
+          if (startMinutes < this.timeToMinutes('12:00:00')) {
+            slot.blockType = 'morning';
+            result.morningSlots.push(slot);
+          } else if (startMinutes < this.timeToMinutes('18:00:00')) {
+            slot.blockType = 'afternoon';
+            result.afternoonSlots.push(slot);
+          } else {
+            slot.blockType = 'night';
+            result.nightSlots.push(slot);
+          }
+        });
       }
     });
-
     return result;
+  }
+
+  onEventDurationChange(): void {
+    this.eventDurationError = '';
+    if (this.eventDurationHours < this.minDuration) {
+      this.eventDurationError = `La duración mínima es de ${this.minDurationDisplay}`;
+      return;
+    }    
+    if (this.eventDurationHours > this.maxDuration) {
+      this.eventDurationError = `La duración máxima es de ${this.maxDurationDisplay}`;
+      return;
+    }
+    this.timeSlotsCache.clear();
+    this.generateWeekDays();
   }
 
   private generateTimeSlots(date: Date, startTime: string, endTime: string): TimeSlot[] {
     const slots: TimeSlot[] = [];
-    const now = new Date();
-    let minReservationTime = new Date(now.getTime()) ;
-    if(this.anticipationHours) minReservationTime=new Date(now.getTime() + this.anticipationHours * 60 * 60 * 1000)
+    const now = new Date();    
+    let minReservationTime = new Date(now.getTime());
+    if (this.anticipationHours) {
+      minReservationTime = new Date(now.getTime() + this.anticipationHours * 60 * 60 * 1000);
+    }    
     const startMinutes = this.timeToMinutes(startTime);
-    const endMinutes = this.timeToMinutes(endTime);
-    for (let minutes = startMinutes; minutes < endMinutes; minutes += this.slotDuration) {
+    const endMinutes = this.timeToMinutes(endTime);    
+    for (let minutes = startMinutes; minutes < endMinutes; minutes += this.minDuration*60) {
       const slotStart = this.minutesToTime(minutes);
-      const slotEnd = this.minutesToTime(Math.min(minutes + this.slotDuration, endMinutes));
+      const slotEnd = this.minutesToTime(Math.min(minutes + this.minDuration*60, endMinutes));
       const slotDateTime = this.combineDateAndTime(date, slotStart);
-      const isPast = slotDateTime < minReservationTime;
+      const isPast = slotDateTime < minReservationTime;        
       const timeRange: TimeRange = {
         date: date,
         startTime: slotStart,
@@ -408,7 +787,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         this.dataField.uuid!,
         timeRange,
         this.reservationsList
-      );      
+      );        
       const slot: TimeSlot = {
         time: `${slotStart.slice(0, 5)} - ${slotEnd.slice(0, 5)}`,
         startTime: slotStart,
@@ -418,11 +797,33 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         isPast: isPast,
         isSelected: false,
         reservation: conflictResult.conflictingReservations[0],
-        conflictReason: conflictResult.reason
-      };      
+        conflictReason: conflictResult.reason,
+        blockType: 'operating'
+      };        
       slots.push(slot);
     }
     return slots;
+  }
+
+  private validateEventSelection(): boolean {
+    if (!this.fechaReserva) {
+      this.validationErrors.push('Debe seleccionar una fecha para el evento');
+      return false;
+    }
+    const durationInHours = this.eventDurationHours;
+    if (durationInHours < this.minDuration) {
+      this.validationErrors.push(`La duración mínima del evento es de ${this.minDurationDisplay}`);
+      return false;
+    }
+    if (durationInHours > this.maxDuration) {
+      this.validationErrors.push(`La duración máxima del evento es de ${this.maxDurationDisplay}`);
+      return false;
+    }
+    if (!this.isDayAvailableForEvent(this.fechaReserva)) {
+      this.validationErrors.push('La fecha seleccionada no está disponible para eventos');
+      return false;
+    }
+    return true;
   }
 
   toggleSlotSelection(slot: TimeSlot): void {
@@ -457,9 +858,9 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         const allSlots = [
           ...currentDaySlots.morningSlots,
           ...currentDaySlots.afternoonSlots,
-          ...currentDaySlots.nightSlots
-        ];
-        
+          ...currentDaySlots.nightSlots,
+          ...currentDaySlots.operatingSlots
+        ];        
         allSlots.forEach(slot => {
           slot.isSelected = false;
         });
@@ -477,10 +878,13 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     if (this.dataTariff?.tipoCobro === 'por_evento') {
       await this.confirmEventSelection();
     } else {
-      await this.confirmTimeSlotSelection();
+      if (this.selectionMode === 'custom') {
+        await this.confirmCustomTimeSelection();
+      } else {
+        await this.confirmTimeSlotSelection();
+      }
     }
   }
-
   isDayAvailableForEvent(date: Date): boolean {
     if (date < new Date()) return false;    
     const daySlots = this.getTimeSlotsForDay(date);
@@ -494,8 +898,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     let continuousTime = 0;
     for (let i = 0; i < availableSlots.length; i++) {
       const slot = availableSlots[i];
-      const slotDuration = this.calculateDuration(slot.startTime, slot.endTime);
-      
+      const slotDuration = this.timeToMinutes(slot.endTime) - this.timeToMinutes(slot.startTime)
       if (slot.isAvailable && !slot.isReserved) {
         continuousTime += slotDuration;
         if (continuousTime >= durationInMinutes) {
@@ -504,8 +907,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       } else {
         continuousTime = 0;
       }
-    }
-    
+    }    
     return false;
   }
 
@@ -526,13 +928,11 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         this.showValidationAlert = true;
         return;
       }
-
       const timeRange: TimeRange = {
         date: this.fechaReserva,
         startTime: bestTimeSlot.startTime,
         endTime: bestTimeSlot.endTime
-      };
-      
+      };      
       const validation = this.conflictService.validateReservation(
         this.dataField.uuid!,
         timeRange,
@@ -549,7 +949,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         start: bestTimeSlot.startTime, 
         end: bestTimeSlot.endTime 
       });
-
     } catch (error) {
       console.error('Error confirming event selection:', error);
       this.validationErrors.push('Error al verificar disponibilidad. Por favor, intente nuevamente.');
@@ -559,96 +958,14 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     }
   }
 
-  get eventDurationDisplay(): string {
-    return `${this.eventDurationHours} hora${this.eventDurationHours !== 1 ? 's' : ''}`;
-  }
-
-  private async confirmTimeSlotSelection(): Promise<void> {
-    this.isCheckingAvailability = true;
-    this.validationErrors = [];
-    this.showValidationAlert = false;
-
-    try {
-      if (!this.validateTimeSlotSelection()) {
-        this.showValidationAlert = true;
-        return;
-      }
-
-      const startTime = this.selectedSlots[0].startTime;
-      const endTime = this.selectedSlots[this.selectedSlots.length - 1].endTime;
-
-      const timeRange: TimeRange = {
-        date: this.fechaReserva,
-        startTime: startTime,
-        endTime: endTime
-      };
-      
-      const validation = this.conflictService.validateReservation(
-        this.dataField.uuid!,
-        timeRange,
-        this.reservationsList,
-        this.anticipationHours
-      );
-      
-      if (!validation.isValid) {
-        this.validationErrors = validation.errors;
-        this.showValidationAlert = true;
-        this.revalidateSelection();
-        return;
-      }      
-      this.horarioSelected.emit({ 
-        date: this.fechaReserva, 
-        start: startTime, 
-        end: endTime 
-      });
-    } catch (error) {
-      console.error('Error confirming selection:', error);
-      this.validationErrors.push('Error al verificar disponibilidad. Por favor, intente nuevamente.');
-      this.showValidationAlert = true;
-    } finally {
-      this.isCheckingAvailability = false;
+  getSlotProperty(daySlots: DaySlots, blockKey: string): TimeSlot[] {
+    switch (blockKey) {
+      case 'morning': return daySlots.morningSlots;
+      case 'afternoon': return daySlots.afternoonSlots;
+      case 'night': return daySlots.nightSlots;
+      case 'operating': return daySlots.operatingSlots;
+      default: return [];
     }
-  }
-
-  private validateTimeSlotSelection(): boolean {
-    if (this.selectedSlots.length === 0) {
-      this.validationErrors.push('Debe seleccionar al menos un horario');
-      return false;
-    }
-
-    if (!this.areConsecutiveSlots(this.selectedSlots)) {
-      this.validationErrors.push('Los horarios seleccionados deben ser consecutivos');
-      return false;
-    }
-
-    const duration = this.calculateDuration(
-      this.selectedSlots[0].startTime,
-      this.selectedSlots[this.selectedSlots.length - 1].endTime
-    );
-
-    // Convert duration from minutes to hours for comparison
-    const durationInHours = duration / 60;
-
-    if (durationInHours < this.minDuration) {
-      this.validationErrors.push(`La duración mínima de reserva es de ${this.minDurationDisplay}`);
-      return false;
-    }
-
-    if (durationInHours > this.maxDuration) {
-      this.validationErrors.push(`La duración máxima para este tipo de reserva es de ${this.maxDurationDisplay}`);
-      return false;
-    }
-
-    if (this.dataField?.requiereAprobacion) {
-      const maxDuration = this.dataField.maxDuracionAutoAprobacion || 120;
-      if (duration > maxDuration) {
-        this.validationErrors.push(
-          `Las reservas de más de ${maxDuration} minutos requieren aprobación del administrador. Su reserva será revisada antes de confirmarse.`
-        );
-      }
-    }
-
-    return true;
   }
 
   private findBestTimeSlotForEvent(date: Date, duration: number): { startTime: string; endTime: string } | null {
@@ -665,7 +982,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       if (currentStart === null) {
         currentStart = slot.startTime;
       }      
-      accumulatedDuration += this.calculateDuration(slot.startTime, slot.endTime);
+      accumulatedDuration += this.timeToMinutes(slot.endTime) - this.timeToMinutes(slot.startTime)
       if (accumulatedDuration >= duration) {
         return {
           startTime: currentStart,
@@ -676,19 +993,8 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         currentStart = null;
         accumulatedDuration = 0;
       }
-    }
-    
+    }    
     return null;
-  }
-
-  private areConsecutiveSlots(slots: TimeSlot[]): boolean {
-    if (slots.length <= 1) return true;
-    for (let i = 0; i < slots.length - 1; i++) {
-      if (slots[i].endTime !== slots[i + 1].startTime) {
-        return false;
-      }
-    }
-    return true;
   }
 
   private revalidateSelection(): void {
@@ -719,10 +1025,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     if (this.selectedSlots.length === 0) return '';    
     const startTime = this.selectedSlots[0].startTime.slice(0, 5);
     const endTime = this.selectedSlots[this.selectedSlots.length - 1].endTime.slice(0, 5);
-    const duration = this.calculateDuration(
-      this.selectedSlots[0].startTime,
-      this.selectedSlots[this.selectedSlots.length - 1].endTime
-    );    
+    const duration = this.timeToMinutes(this.selectedSlots[this.selectedSlots.length - 1].endTime) - this.timeToMinutes(this.selectedSlots[0].startTime)
     const hours = Math.floor(duration / 60);
     const minutes = duration % 60;
     let durationStr = '';
@@ -731,43 +1034,29 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     return `${startTime} - ${endTime} (${durationStr.trim()})`;
   }
 
-  private calculateDuration(startTime: string, endTime: string): number {
-    return this.timeToMinutes(endTime) - this.timeToMinutes(startTime);
-  }
-
   private getHorarioForDate(date: Date): HorarioFijo | undefined {
     if (!this.dataField?.horariosFijosDtoList) return undefined;
-    
     const dayOfWeek = date.getDay();
     const dayNames = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     const currentDayName = dayNames[dayOfWeek];
-    
-    // First, try to find an exact day match (lunes, martes, etc.)
     const exactDayMatch = this.dataField.horariosFijosDtoList.find(h => h.dia === currentDayName);
     if (exactDayMatch) {
         return exactDayMatch;
     }
-    
-    // If no exact match found and it's a weekday, look for lunes_viernes
     if (dayOfWeek >= 1 && dayOfWeek <= 5) {
         return this.dataField.horariosFijosDtoList.find(h => h.dia === 'lunes_viernes');
     }
-    
-    // For weekends
     if (dayOfWeek === 6) { // sábado
         return this.dataField.horariosFijosDtoList.find(h => h.dia === 'sabado');
-    }
-    
+    }    
     if (dayOfWeek === 0) { // domingo
         return this.dataField.horariosFijosDtoList.find(h => h.dia === 'domingo');
-    }
-    
+    }    
     return undefined;
   }
 
   private getExceptionsForDate(date: Date): HorarioExcepcion[] | undefined {
-    if (!this.dataField?.horariosExcepcionesDtoList) return undefined;
-    
+    if (!this.dataField?.horariosExcepcionesDtoList) return undefined;    
     const dateStr = date.toISOString().split('T')[0];
     return this.dataField.horariosExcepcionesDtoList.filter(exc => exc.fecha === dateStr);
   }
@@ -799,24 +1088,35 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     return days[date.getDay()];
   }
   private getFullDayName(date: Date): string {
-      const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-      return days[date.getDay()];
+    const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    return days[date.getDay()];
   }
 
   moveWeek(direction: number): void {
     this.scheduleState.moveWeek(direction);
-    this.clearCache();
+    this.timeSlotsCache.clear();
     this.clearSelectedSlots();
     this.generateWeekDays();    
     if (this.weekDays.length > 0) {
       this.setSelectedDay(this.weekDays[0].date);
     }
   }
-  goToToday(): void {
+
+  goToToday(): void {  
     this.scheduleState.goToToday();
-    this.clearCache();
+    this.timeSlotsCache.clear();
     this.clearSelectedSlots();
     this.generateWeekDays();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); 
+    const todayInWeek = this.weekDays.find(day => 
+        day.date.toDateString() === today.toDateString()
+    );
+    if (todayInWeek) {
+        this.setSelectedDay(todayInWeek.date);
+    } else if (this.weekDays.length > 0) {
+        this.setSelectedDay(this.weekDays[0].date);
+    }
   }
 
   setSelectedDay(date: Date): void {
@@ -870,9 +1170,5 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       classes.push('border', 'border-primary', 'border-2');
     }
     return classes.join(' ');
-  }
-
-  private clearCache(): void {
-    this.timeSlotsCache.clear();
   }
 }
