@@ -54,21 +54,41 @@
                             <div class="col-xxl-2 col-sm-4" *ngIf="this.reportType === 'mensual'">
                                 <div>
                                     <select class="form-control" name="escuelita" [(ngModel)]="escuelita">
-                                        <option  [value]="'TODO'">Todas las Escuelas</option>
+                                        <option [value]="'TODO'">Todas las Escuelas</option>
                                         <option *ngFor="let option of organizationsEscuelasList" [value]="option.nombre">
                                             {{option.nombre}}
                                         </option>
                                     </select>
                                 </div>
                             </div>
+
+                            <!-- Student Name Field (only for mensual) -->
                             <div class="col-xxl-2 col-sm-4" *ngIf="this.reportType === 'mensual'">
                                 <div>
-                                    <select class="form-control" name="estudiante" [(ngModel)]="estudiante">
-                                        <option  [value]="'TODO'">Todos los estudiantes</option>
+                                    <select class="form-control" name="estudiante" [(ngModel)]="estudiante" (change)="onEstudianteChange()">
+                                        <option [value]="'TODO'">Todos los estudiantes</option>
                                         <option *ngFor="let option of estudiantesList" [value]="option.nombreCompleto">
                                             {{option.nombreCompleto}}
                                         </option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <!-- Matricula Field as Input (only for mensual) -->
+                            <div class="col-xxl-2 col-sm-4" *ngIf="this.reportType === 'mensual'">
+                                <div class="input-group">
+                                    <input type="text" 
+                                           class="form-control" 
+                                           name="matricula" 
+                                           [(ngModel)]="matricula" 
+                                           (input)="onMatriculaInput()"
+                                           placeholder="Matrícula">
+                                    <button type="button" 
+                                            class="btn btn-outline-secondary" 
+                                            (click)="clearMatricula()"
+                                            title="Limpiar matrícula">
+                                        <i class="ri-close-line"></i>
+                                    </button>
                                 </div>
                             </div>
                             
@@ -83,7 +103,6 @@
                                 </div>
                             </div>
                             
-                            <!-- Generate Button -->
                             <div class="col-xxl-2 col-sm-4">
                                 <div>
                                     <button type="submit" class="btn btn-primary w-100" [disabled]="showLoading">
@@ -106,6 +125,8 @@
                             <strong>Reporte:</strong> {{ getReportTypeLabel() }}
                             <span *ngIf="this.reportType !== 'mensual'">| <strong>Complejo:</strong> {{ getCanchaLabel(cancha) }}</span>
                             <span *ngIf="this.reportType === 'mensual'">| <strong>Escuela:</strong> {{ getEscuelitaLabel(escuelita) }}</span>
+                            <span *ngIf="this.reportType === 'mensual' && estudiante !== 'TODO'">| <strong>Estudiante:</strong> {{ getEstudianteLabel(estudiante) }}</span>
+                            <span *ngIf="this.reportType === 'mensual' && matricula">| <strong>Matrícula:</strong> {{ matricula }}</span>
                             | <strong>Estado:</strong> {{ getStatusLabel(status) }}
                             <span *ngIf="this.reportType !== 'mensual'">| <strong>Tipo de Cobro:</strong> {{ getPaymentTypeLabel(paymentType) }}</span>
                         </div>

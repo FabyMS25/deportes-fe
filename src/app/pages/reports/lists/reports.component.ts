@@ -35,6 +35,7 @@ export class ListReportComponent implements OnInit {
   cancha: string = 'TODO';
   escuelita: string = 'TODO';
   estudiante: string = 'TODO';
+  matricula: string = '';
   
   statusOptions = [
     { value: 'TODO', label: 'Todos los estados' },
@@ -57,7 +58,6 @@ export class ListReportComponent implements OnInit {
 
   paymentTypeOptions = TipoCobro
 
-
   @ViewChild('pdfViewer') pdfViewer!: ElementRef;
 
   constructor(
@@ -76,13 +76,12 @@ export class ListReportComponent implements OnInit {
         this.updateTitle();
       }
     });
-
     this.breadCrumbItems = [
       { label: 'Reportes' },
       { label: this.title, active: true }
     ];      
     this.getComplejos();  
-    this.getEscuelas(TipoOrganizacion.ESCUELA_MUNICIPAL);// Organizations can be a club , asociation or escuelas municipales
+    this.getEscuelas(TipoOrganizacion.ESCUELA_MUNICIPAL);
     this.getEstudiantes();
   }
 
@@ -99,8 +98,6 @@ export class ListReportComponent implements OnInit {
         this.title = 'Reservas Mensuales';
         break;
     }
-    
-    // Update breadcrumb
     this.breadCrumbItems = [
       { label: 'Reportes' },
       { label: this.title, active: true }
@@ -179,12 +176,20 @@ export class ListReportComponent implements OnInit {
   }
 
   private generateMensualesReport(fechaIni: string, fechaFin: string) {
+    const shouldUseStudentReport = this.shouldUseStudentMonthlyReport();    
+    if (shouldUseStudentReport) {
+      this.generateStudentMonthlyReport(fechaIni, fechaFin);
+    } else {
+      this.generateGeneralMonthlyReport(fechaIni, fechaFin);
+    }
+  }
+
+  private generateGeneralMonthlyReport(fechaIni: string, fechaFin: string) {
     this.reportsService.getMonthlyReport(
       fechaIni, 
       fechaFin, 
       this.status,
-      this.escuelita,
-      this.estudiante
+      this.escuelita
     ).subscribe(
       (data: ArrayBuffer) => {
         this.displayPDF(data);
@@ -196,6 +201,31 @@ export class ListReportComponent implements OnInit {
         alert('Error al generar el reporte de reservas mensuales');
       }
     );
+  }
+
+  private generateStudentMonthlyReport(fechaIni: string, fechaFin: string) {
+    const matriculaParam = this.matricula.trim() || 'TODO';
+    this.reportsService.getStudentMonthlyReport(
+      fechaIni, 
+      fechaFin, 
+      this.status,
+      matriculaParam,
+      this.estudiante
+    ).subscribe(
+      (data: ArrayBuffer) => {
+        this.displayPDF(data);
+        this.showLoading = false;
+      },
+      (error) => {
+        console.error('Error generating student mensuales report:', error);
+        this.showLoading = false;
+        alert('Error al generar el reporte de reservas mensuales por estudiante');
+      }
+    );
+  }
+
+  private shouldUseStudentMonthlyReport(): boolean {
+    return this.estudiante !== 'TODO' || this.matricula.trim() !== '';
   }
 
   private displayPDF(data: ArrayBuffer) {
@@ -229,6 +259,46 @@ export class ListReportComponent implements OnInit {
     if (escuelitaValue === 'TODO') return 'Todas las Escuelas';
     const option = this.organizationsEscuelasList.find((opt) => opt.nombre === escuelitaValue);
     return option ? option.nombre : escuelitaValue;
+  }
+
+  getEstudianteLabel(estudianteValue: string): string {
+    if (estudianteValue === 'TODO') return 'Todos los estudiantes';
+    const estudiante:any = this.estudiantesList.find(e => e.nombreCompleto === estudianteValue);
+    return estudiante ? estudiante.nombreCompleto : estudianteValue;
+  }
+
+  getMatriculaLabel(): string {
+    if (!this.matricula.trim()) return 'Todas las matrículas';
+    return this.matricula;
+  }
+
+  onEstudianteChange() {
+    if (this.estudiante !== 'TODO') {
+      const selectedEstudiante = this.estudiantesList.find(e => e.nombreCompleto === this.estudiante);
+      if (selectedEstudiante) {
+        this.matricula = selectedEstudiante.matricula;
+      }
+    } else {
+      this.matricula = '';
+    }
+  }
+
+  onMatriculaInput() {
+    if (this.matricula.trim()) {
+      const selectedEstudiante:any = this.estudiantesList.find(e => e.matricula === this.matricula.trim());
+      if (selectedEstudiante) {
+        this.estudiante = selectedEstudiante.nombreCompleto;
+      } else {
+        this.estudiante = 'TODO';
+      }
+    } else {
+      this.estudiante = 'TODO';
+    }
+  }
+
+  clearMatricula() {
+    this.matricula = '';
+    this.estudiante = 'TODO';
   }
 
   private getComplejos() {
@@ -268,7 +338,7 @@ export class ListReportComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading complejos:', error);
+        console.error('Error loading estudiantes:', error);
       }
     });
   }

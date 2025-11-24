@@ -47,7 +47,6 @@ export class ReportsService {
     params = params.append('tipocobro', tipocobro);
     params = params.append('estado', estado);
     params = params.append('cancha', cancha);
-    
     return this.http.get(`${this.apiUrl}/lista-Recurrentes`, {
       responseType: 'arraybuffer',
       params
@@ -67,8 +66,27 @@ export class ReportsService {
     params = params.append('estado', estado);
     params = params.append('escuelita', escuelita);
     params = params.append('estudiante', estudiante);
-    
     return this.http.get(`${this.apiUrl}/lista-mensuales`, {
+      responseType: 'arraybuffer',
+      params
+    });
+  }
+  
+  getStudentMonthlyReport(
+    fechaini: string, 
+    fechafin: string, 
+    estado: string = 'TODO',
+    matricula: string = 'TODO',
+    alumno: string = 'TODO'
+  ): Observable<ArrayBuffer> {
+    let params = new HttpParams();
+    params = params.append('fechaini', fechaini);
+    params = params.append('fechafin', fechafin);
+    params = params.append('estado', estado);
+    params = params.append('matricula', matricula);
+    params = params.append('alumno', alumno);
+    
+    return this.http.get(`${this.apiUrl}/lista-alumno`, {
       responseType: 'arraybuffer',
       params
     });
@@ -110,7 +128,6 @@ export class ReportsService {
       params
     });
   }
-
   
   getTicketRecurrenteSesion(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
@@ -172,7 +189,6 @@ export class ReportsService {
     });
   }
 
-  // Convenience methods for common downloads
   downloadPuntualReport(
     fechaini: string, 
     fechafin: string, 
