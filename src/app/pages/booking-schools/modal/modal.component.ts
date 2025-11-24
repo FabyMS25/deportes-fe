@@ -180,13 +180,11 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
       año: ['', Validators.required],
       observaciones: ['']
     });
-
     const currentDate = new Date();
     this.reservaForm.patchValue({
       mes: currentDate.getMonth() + 1,
       año: currentDate.getFullYear()
     });
-
     this.selectedMonth = currentDate.getMonth() + 1;
     this.selectedYear = currentDate.getFullYear();
   }

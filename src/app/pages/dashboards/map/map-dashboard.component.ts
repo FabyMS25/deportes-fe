@@ -1,19 +1,25 @@
 import { Component, OnInit, TemplateRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as L from 'leaflet';
+import { NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
+import * as L from 'leaflet'
+import 'leaflet.markercluster';
 import * as GeoSearch from 'leaflet-geosearch';
+import { ToastService } from '../admin/toast-service';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
-import { NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
-import { EstadoUsuario } from 'src/app/core/constants/Estados';
-import { ToastService } from '../admin/toast-service';
+import { EstadoActual, EstadoUsuario } from 'src/app/core/constants/Estados';
+import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
+import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo';
+import { Tarifa } from 'src/app/core/models/tarifa.model';
+import { Categoria } from 'src/app/core/models/categoria.model';
+import { TarifaCategoria } from 'src/app/core/models/tarifa-categoria.model';
 
 @Component({
     selector: 'app-map-dashboard',
@@ -21,16 +27,43 @@ import { ToastService } from '../admin/toast-service';
     styleUrls: ['./map-dashboard.component.scss']
 })
 export class MapDashboardComponent implements OnInit {
-
     userRole: string = '';
     assignations!: any[];
     userData: any;
+
+    loading = false;
     temp: any = []
     complexList: any[] = [];
     surfaceList: any[] = [];
     categoryList: any[] = [];
     fieldList: any[] = [];
-    
+
+    selectedCategories: string[] = [];
+    selectedDistrict: string = '';
+    minTarifa: number | null = null;
+    maxTarifa: number | null = null;
+
+    icon = L.icon({
+        iconUrl: 'assets/icons/pin-location.png',
+        iconSize: [44, 52],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    })
+    map: any;
+    layerControl: any;
+    baseMaps: any;
+    overlayMaps: any;
+    main: any;
+    mainList: any;
+
+    searchControl: any;
+    currentSearchMarker: any;
+    searchQuery: string = '';
+    searchResults: any[] = [];
+    showSearchResults: boolean = false;    
+    accuracyCircle!: L.Circle;
+    userLocationMarker: any;
+
     systemConfigList: { [key: string]: ConfiguracionSistema } = {};
     get enableSolicitudRecurrentBooking(): boolean | undefined{
         return this.systemConfigList[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
@@ -38,28 +71,6 @@ export class MapDashboardComponent implements OnInit {
     get enableRecurrentBooking(): boolean | undefined{
         return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
     }
-
-    loading = false;
-    map: any;
-    layerControl: any;
-    searchControl: any;
-    currentSearchMarker: any;
-    
-    icon = L.icon({
-        iconUrl: 'assets/icons/pin-location.png',
-        iconSize: [44, 52],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-    })
-
-    selectedCategories: string[] = [];
-    selectedDistrict: string = '';
-    minTarifa: number | null = null;
-    maxTarifa: number | null = null;
-
-    searchQuery: string = '';
-    searchResults: any[] = [];
-    showSearchResults: boolean = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -74,25 +85,25 @@ export class MapDashboardComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-    this.route.queryParams.subscribe(params => {
-      if (params['message']) {
-        switch (params['message']) {
-          case 'welcome_admin':
-            this.toastService.show('¡Bienvenido Admin!', 'Inicio de sesión exitoso');
-            break;
-          case 'welcome_employee':
-            this.toastService.show('¡Bienvenido Encargado!', 'Inicio de sesión exitoso');
-            break;
-          case 'welcome_taxpayer':
-            this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
-            break;
+        this.route.queryParams.subscribe(params => {
+        if (params['message']) {
+            switch (params['message']) {
+            case 'welcome_admin':
+                this.toastService.show('¡Bienvenido Admin!', 'Inicio de sesión exitoso');
+                break;
+            case 'welcome_employee':
+                this.toastService.show('¡Bienvenido Encargado!', 'Inicio de sesión exitoso');
+                break;
+            case 'welcome_taxpayer':
+                this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
+                break;
+            }
+            this.router.navigate([], {
+            queryParams: {},
+            replaceUrl: true
+            });
         }
-        this.router.navigate([], {
-          queryParams: {},
-          replaceUrl: true
         });
-      }
-    });
         this.systemConfigList = this.authService.getAllConfigs()
         const currentUser = this.authService.currentUser();
         this.userRole = this.authService.getUserRole();
@@ -105,7 +116,6 @@ export class MapDashboardComponent implements OnInit {
             const funcionarioString = localStorage.getItem('assignaments');
             this.assignations = funcionarioString ? JSON.parse(funcionarioString) : null;
         }
-
         this.initializeData();
     }
 
@@ -118,34 +128,260 @@ export class MapDashboardComponent implements OnInit {
             await this.getCategories();
             this.setMaps();
         } catch (error) {
+            console.error('Error initializing data:', error);
         } finally {
             this.loading = false;
         }
     }
+    setMaps() {
+        this.main = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+        });        
+        this.baseMaps = {
+            "Mapa Básico": this.main,
+        };
+        this.setMarkersWithClustering();
+    }
 
-    configDefaultMap() {
+    private setMarkersWithClustering() {
+        this.mainList = L.markerClusterGroup({
+            chunkedLoading: true,
+            maxClusterRadius: 50,
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: true,
+            zoomToBoundsOnClick: true,
+            iconCreateFunction: (cluster: any) => {
+                const count = cluster.getChildCount();
+                let size = 'small';
+                if (count > 10) size = 'medium';
+                if (count > 25) size = 'large';                
+                return L.divIcon({
+                    html: `<div class="cluster-marker cluster-${size}">${count}</div>`,
+                    className: 'marker-cluster-custom',
+                    iconSize: L.point(40, 40)
+                });
+            }
+        });
+        this.complexList.forEach((element, index) => {
+            const complex = this.setPopup(element);
+            this.mainList.addLayer(complex);
+        });
+        setTimeout(() => {
+            console.log('Markers in cluster:', this.mainList.getLayers().length);
+        }, 1000);
+
+        let filteredMarkers: any[] = this.getFilteredList();
+        this.overlayMaps = {
+            "<span style='color: blue'>Todos los Complejos</span>": this.mainList,
+            ...filteredMarkers,
+        };
+        (window as any).handleButtonClick = this.handleButtonClick.bind(this);
+    }
+    private setMarkers() {
+        let listMarkers: any[] = []
+        this.complexList.forEach(element => {
+            const complex = this.setPopup(element);
+            listMarkers.push(complex);
+        });
+        this.mainList = L.layerGroup(listMarkers);
+        let filteredMarkers: any[] = this.getFilteredList();
+        this.overlayMaps = {
+            "<span style='color: blue'>Todos los Complejos</span>": this.mainList,
+            ...filteredMarkers,
+        };
+        (window as any).handleButtonClick = this.handleButtonClick.bind(this);
+        this.configDefaultMap();
+    }
+    private configDefaultMap() {
         this.map = L.map('map', {
             zoom: 14,
             center: [-17.4010000, -66.2871000],
             layers: [this.main, this.mainList]
         });
         this.layerControl = L.control.layers(this.baseMaps, this.overlayMaps).addTo(this.map);
+        this.addLocationControl();
         this.addCustomSearchControl();
+        this.addLegend();
+    }
+        
+    private addLocationControl() {
+        const LocationControl = L.Control.extend({
+            options: {
+                position: 'topleft'
+            },            
+            onAdd: (map: L.Map) => {
+                const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+                container.innerHTML = `
+                    <button class="btn-locate" title="Mi ubicación" style="
+                        width: 30px;
+                        height: 30px;
+                        background: white;
+                        border: 1px solid #ccc;
+                        border-radius: 4px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                    ">
+                        <i class="ri-user-location-line" style="font-size: 18px; color: #555;"></i>
+                    </button>
+                `;                 
+                L.DomEvent.disableClickPropagation(container);
+                
+                const locateButton = container.querySelector('.btn-locate') as HTMLElement;
+                locateButton.addEventListener('mouseenter', () => {
+                    locateButton.style.background = '#f8f9fa';
+                    locateButton.style.borderColor = '#999';
+                });
+                
+                locateButton.addEventListener('mouseleave', () => {
+                    locateButton.style.background = 'white';
+                    locateButton.style.borderColor = '#ccc';
+                });
+                
+                locateButton.addEventListener('click', () => {
+                    this.locateUser();
+                });
+                
+                return container;
+            }
+        });
+
+        const locationControl = new LocationControl();
+        this.map.addControl(locationControl);
+    }
+    private locateUser() {
+        if (!navigator.geolocation) {
+            Swal.fire('Error', 'La geolocalización no es soportada por tu navegador', 'error');
+            return;
+        }
+        Swal.fire({
+            title: 'Buscando tu ubicación...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                Swal.close();
+                const { latitude, longitude, accuracy } = position.coords;                
+                this.map.setView([latitude, longitude], 15, {
+                    animate: true,
+                    duration: 1
+                });
+                if (this.userLocationMarker) {
+                    this.map.removeLayer(this.userLocationMarker);
+                }
+                if (this.accuracyCircle) {
+                    this.map.removeLayer(this.accuracyCircle);
+                }
+                const userIcon = L.divIcon({
+                    html: `
+                        <div class="user-location-marker">
+                            <div class="pulse"></div>
+                            <div class="dot"></div>
+                        </div>
+                    `,
+                    className: 'user-location-icon',
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                });
+                this.accuracyCircle = L.circle([latitude, longitude], {
+                    radius: accuracy,
+                    color: '#007bff',
+                    fillColor: '#007bff',
+                    fillOpacity: 0.1,
+                    weight: 1,
+                    dashArray: '5, 5'
+                }).addTo(this.map);
+                
+                this.userLocationMarker = L.marker([latitude, longitude], {
+                    icon: userIcon,
+                    zIndexOffset: 1000
+                }).addTo(this.map)
+                .bindPopup(`
+                    <div class="text-center">
+                        <strong><i class="ri-user-location-line"></i> Tu ubicación actual</strong>
+                        <br>
+                        <small>Precisión: ±${Math.round(accuracy)} metros</small>
+                        <br>
+                        <small>Lat: ${latitude.toFixed(6)}</small>
+                        <br>
+                        <small>Lng: ${longitude.toFixed(6)}</small>
+                    </div>
+                `)
+                .openPopup();
+            },
+            (error) => {
+                let errorMessage = 'No se pudo obtener tu ubicación';
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = 'Permiso de ubicación denegado. Por favor, habilita la ubicación en tu navegador.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = 'La información de ubicación no está disponible.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = 'Tiempo de espera agotado para obtener la ubicación.';
+                        break;
+                }
+                Swal.fire('Error', errorMessage, 'error');
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000
+            }
+        );
+    }  
+
+    private addLegend() {
+        const LegendControl = L.Control.extend({
+            options: {
+                position: 'bottomright'
+            },
+            onAdd: (map: L.Map) => {
+                const div = L.DomUtil.create('div', 'info legend');
+                div.innerHTML = `
+                    <h6>Leyenda</h6>
+                    <div class="legend-item">
+                        <img src="assets/icons/pin-location.png" width="20" height="24"> Complejo Activo
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #28a745"></span> Complejo Activo
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ffc107"></span> En Mantenimiento
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #dc3545"></span> Cerrado
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #0dcaf0"></span> Con Iluminación
+                    </div>
+                `;
+                return div;
+            }
+        });
+        const legend = new LegendControl();
+        legend.addTo(this.map);
     }
 
     private addCustomSearchControl() {
         const SearchControl = L.Control.extend({
             options: {
-                position: 'topleft'
-            },
-            
+                position: 'topright'
+            },            
             onAdd: (map: any) => {
                 const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control custom-search-control');
                 container.style.background = 'white';
                 container.style.padding = '0';
                 container.style.borderRadius = '8px';
                 container.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
-                container.style.minWidth = '300px';
+                container.style.minWidth = '200px';
+                container.style.zIndex = '1000';
 
                 const searchWrapper = L.DomUtil.create('div', 'search-wrapper', container);
                 searchWrapper.style.position = 'relative';
@@ -154,11 +390,14 @@ export class MapDashboardComponent implements OnInit {
                 searchInput.type = 'text';
                 searchInput.placeholder = 'Buscar complejo deportivo...';
                 searchInput.style.width = '100%';
-                searchInput.style.padding = '10px 40px 10px 15px';
+                searchInput.style.background = 'light';
+                searchInput.style.padding = '12px 45px 12px 15px';
                 searchInput.style.border = 'none';
                 searchInput.style.outline = 'none';
                 searchInput.style.fontSize = '14px';
                 searchInput.style.borderRadius = '8px';
+                searchInput.style.border = '2px solid #e9ecef';
+                searchInput.style.transition = 'border-color 0.2s';
 
                 const searchIcon = L.DomUtil.create('i', 'ri-search-line', searchWrapper);
                 searchIcon.style.position = 'absolute';
@@ -166,36 +405,43 @@ export class MapDashboardComponent implements OnInit {
                 searchIcon.style.top = '50%';
                 searchIcon.style.transform = 'translateY(-50%)';
                 searchIcon.style.color = '#6c757d';
+                searchIcon.style.fontSize = '18px';
                 searchIcon.style.pointerEvents = 'none';
 
                 const resultsContainer = L.DomUtil.create('div', 'search-results', container);
                 resultsContainer.style.display = 'none';
-                resultsContainer.style.maxHeight = '300px';
+                resultsContainer.style.maxHeight = '400px';
                 resultsContainer.style.overflowY = 'auto';
                 resultsContainer.style.borderTop = '1px solid #e9ecef';
+                resultsContainer.style.borderRadius = '0 0 8px 8px';
+                
                 L.DomEvent.disableClickPropagation(container);
                 L.DomEvent.disableScrollPropagation(container);
-                searchInput.addEventListener('input', (e: any) => {
-                    this.onSearchInput(e.target.value, resultsContainer);
-                });
+                
                 searchInput.addEventListener('focus', () => {
+                    searchInput.style.borderColor = '#007bff';
                     if (this.searchResults.length > 0) {
                         resultsContainer.style.display = 'block';
                     }
                 });
-                document.addEventListener('click', (e: any) => {
-                    if (!container.contains(e.target)) {
+                
+                searchInput.addEventListener('blur', () => {
+                    searchInput.style.borderColor = '#e9ecef';
+                    setTimeout(() => {
                         resultsContainer.style.display = 'none';
-                    }
+                    }, 200);
                 });
+                
+                searchInput.addEventListener('input', (e: any) => {
+                    this.onSearchInput(e.target.value, resultsContainer);
+                });
+                
                 return container;
             }
         });
-
         this.searchControl = new SearchControl();
         this.map.addControl(this.searchControl);
     }
-
     private onSearchInput(query: string, resultsContainer: HTMLElement) {
         this.searchQuery = query.toLowerCase().trim();
         if (this.searchQuery.length < 2) {
@@ -203,21 +449,40 @@ export class MapDashboardComponent implements OnInit {
             this.searchResults = [];
             return;
         }
-        this.searchResults = this.complexList.filter(complex => {
+        this.searchResults = this.complexList.filter((complex:ComplejoDeportivo) => {
             const matchName = complex.nombre?.toLowerCase().includes(this.searchQuery);
             const matchLocation = complex.ubicacion?.toLowerCase().includes(this.searchQuery);
             const matchDistrict = complex.distrito?.toLowerCase().includes(this.searchQuery);
-            const matchEncargado = complex.encargadosDtoList?.some((enc: any) => 
+            const matchEncargado = complex.encargadosDtoList?.some(enc => 
                 enc.nombre?.toLowerCase().includes(this.searchQuery)
-            );            
-            return matchName || matchLocation || matchDistrict || matchEncargado;
+            );
+            const matchSurface = complex.camposDeportivosDtoList?.some(campo => 
+                campo.superficieDto?.descripcion?.toLowerCase().includes(this.searchQuery)
+            ); 
+            const matchSport = complex.camposDeportivosDtoList?.some(campo => 
+                campo.tarifasDtoList?.some(tarifa =>
+                tarifa.categoriasDtoList?.some(cat => cat.categoriaDto.nombre?.toLowerCase().includes(this.searchQuery) )
+            ));
+            return matchName || matchLocation || matchDistrict || matchEncargado || matchSport || matchSurface;
+        });
+        this.searchResults.sort((a, b) => {
+            const aScore = this.calculateRelevanceScore(a);
+            const bScore = this.calculateRelevanceScore(b);
+            return bScore - aScore;
         });
         this.renderSearchResults(resultsContainer);
     }
-
+    private calculateRelevanceScore(complex: any): number {
+        let score = 0;
+        if (complex.nombre?.toLowerCase() === this.searchQuery) score += 10;
+        if (complex.nombre?.toLowerCase().includes(this.searchQuery)) score += 5;
+        if (complex.ubicacion?.toLowerCase().includes(this.searchQuery)) score += 3;
+        if (complex.distrito?.toLowerCase().includes(this.searchQuery)) score += 2;
+        if (complex.estadoActual?.toLowerCase() === 'activo') score += 2;        
+        return score;
+    }
     private renderSearchResults(container: HTMLElement) {
         container.innerHTML = '';
-
         if (this.searchResults.length === 0) {
             container.style.display = 'block';
             const noResults = L.DomUtil.create('div', 'search-result-item no-results', container);
@@ -226,46 +491,79 @@ export class MapDashboardComponent implements OnInit {
             noResults.style.color = '#6c757d';
             noResults.innerHTML = '<i class="ri-information-line"></i> No se encontraron resultados';
             return;
-        }
+        }        
         container.style.display = 'block';
         const limitedResults = this.searchResults.slice(0, 10);
-
         limitedResults.forEach(complex => {
             const resultItem = L.DomUtil.create('div', 'search-result-item', container);
             resultItem.style.padding = '12px 15px';
             resultItem.style.cursor = 'pointer';
             resultItem.style.borderBottom = '1px solid #e9ecef';
-            resultItem.style.transition = 'background-color 0.2s';
-
-            const estadoBadge = this.getEstadoBadgeText(complex.estadoActual?.toLowerCase());
-            
+            resultItem.style.transition = 'background-color 0.2s';            
+            const estadoBadge = this.getEstadoBadgeText(complex.estadoActual);
+            const uniqueSurfaces = Array.from(new Set(
+                complex.camposDeportivosDtoList
+                    ?.map((campo: CampoDeportivo) => campo.superficieDto?.descripcion)
+                    .filter(Boolean)
+            )) as string[];
+            const uniqueCategories = this.getAvailableDisciplines(complex);
             resultItem.innerHTML = `
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
-                        <div class="fw-semibold text-dark">${this.highlightMatch(complex.nombre, this.searchQuery)}</div>
-                        <small class="text-muted">
-                            <i class="ri-map-pin-line"></i> ${this.highlightMatch(complex.ubicacion, this.searchQuery)}
-                        </small>
-                        ${complex.distrito ? `<br><small class="text-muted"><i class="ri-building-line"></i> ${complex.distrito}</small>` : ''}
-                    </div>
+                        <div class="fw-semibold text-dark mb-1">${this.highlightMatch(complex.nombre, this.searchQuery)}</div>
+                        <div class="mb-1">
+                            <small class="text-muted">
+                                <i class="ri-map-pin-line"></i> 
+                                ${this.highlightMatch(complex.ubicacion, this.searchQuery)}
+                                ${complex.distrito ? ` - ${this.highlightMatch(complex.distrito, this.searchQuery)}` : ''}
+                            </small>
+                        </div>
+                        ${complex.encargadosDtoList?.length > 0 ? `
+                        <div class="mb-1">
+                            <small class="text-muted">
+                                <i class="ri-user-line"></i> 
+                                ${complex.encargadosDtoList.map((enc: EncargadoComplejo) => 
+                                    this.highlightMatch(enc.nombre, this.searchQuery)
+                                ).join(', ')}
+                            </small>
+                        </div>
+                        ` : ''}
+                        ${uniqueSurfaces.length > 0 ? `
+                        <div class="mb-1">
+                            <small class="text-muted">
+                                <i class="ri-landscape-line"></i> 
+                                ${uniqueSurfaces.map((surface: string) => 
+                                    this.highlightMatch(surface, this.searchQuery)
+                                ).join(', ')}
+                            </small>
+                        </div>
+                        ` : ''}
+                        ${uniqueCategories.length > 0 ? `
+                        <div class="mb-1">
+                            <small class="text-muted">
+                                <i class="ri-basketball-line"></i> 
+                                ${uniqueCategories.map((category: string) => 
+                                    this.highlightMatch(category, this.searchQuery)
+                                ).join(', ')}
+                            </small>
+                        </div>
+                        ` : ''}
+                    </div>                    
                     <span class="badge ${estadoBadge.class} ms-2">${estadoBadge.text}</span>
                 </div>
             `;
-
             resultItem.addEventListener('mouseenter', () => {
                 resultItem.style.backgroundColor = '#f8f9fa';
-            });
-
+            });            
             resultItem.addEventListener('mouseleave', () => {
                 resultItem.style.backgroundColor = 'transparent';
-            });
-
+            });            
             resultItem.addEventListener('click', () => {
                 this.selectSearchResult(complex);
                 container.style.display = 'none';
             });
         });
-
+        
         if (this.searchResults.length > 10) {
             const moreResults = L.DomUtil.create('div', 'search-result-item', container);
             moreResults.style.padding = '10px 15px';
@@ -275,27 +573,6 @@ export class MapDashboardComponent implements OnInit {
             moreResults.innerHTML = `<i class="ri-more-line"></i> +${this.searchResults.length - 10} resultados más...`;
         }
     }
-
-    private highlightMatch(text: string, query: string): string {
-        if (!text || !query) return text || '';
-        
-        const regex = new RegExp(`(${query})`, 'gi');
-        return text.replace(regex, '<mark style="background-color: #fff3cd; padding: 0 2px;">$1</mark>');
-    }
-
-    private getEstadoBadgeText(estado: string): { text: string, class: string } {
-        switch (estado?.toLowerCase()) {
-            case 'activo':
-                return { text: 'Activo', class: 'bg-success' };
-            case 'mantenimiento':
-                return { text: 'Mantenimiento', class: 'bg-warning' };
-            case 'cerrado':
-                return { text: 'Cerrado', class: 'bg-danger' };
-            default:
-                return { text: 'N/A', class: 'bg-secondary' };
-        }
-    }
-
     private selectSearchResult(complex: any) {
         if (this.currentSearchMarker) {
             this.map.removeLayer(this.currentSearchMarker);
@@ -326,115 +603,85 @@ export class MapDashboardComponent implements OnInit {
         }, 3000);
     }
 
-    baseMaps: any;
-    overlayMaps: any;
-    main: any;
-    
-    setMaps() {
-        this.main = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            maxZoom: 19,
-        })
-        
-        this.baseMaps = {
-            "Mapa Básico": this.main,
-        };
-    }
-
-    mainList: any;
-    
-    private setMarkers() {
-        let listMarkers: any[] = []
-
-        this.complexList.forEach(element => {
-            const complex = this.setPopup(element);
-            listMarkers.push(complex);
-        });
-        this.mainList = L.layerGroup(listMarkers);
-
-        let filteredMarkers: any[] = this.getFilteredList();
-
-        this.overlayMaps = {
-            "<span style='color: blue'>Todos los Complejos</span>": this.mainList,
-            ...filteredMarkers,
-        };
-
-        (window as any).handleButtonClick = this.handleButtonClick.bind(this);
-        this.configDefaultMap();
-    }
-
     private setPopup(element: any): any {
         const complex = L.marker([element.latitud, element.longitud], { icon: this.icon });
         const popupContent = document.createElement('div');
-        const camposInfo = this.getCamposInfo(element);
+        const estadoBadge = this.getEstadoBadge(element.estadoActual);
         const encargado = element.encargadosDtoList && element.encargadosDtoList[0] 
             ? element.encargadosDtoList[0].nombre 
             : 'No asignado';
-        const estadoBadge = this.getEstadoBadge(element.estadoActual.toLowerCase());
-        const priceRange = this.getPriceRange(element);
-        
+        const camposInfo = this.getCamposInfo(element);
+        const priceRange = this.getPriceRange(element); 
+        const uniqueCategories = this.getAvailableDisciplines(element); 
         popupContent.innerHTML = `
-            <div class="map-popup-content" style="min-width: 280px;">
+            <div class="map-popup-content" style="min-width: 320px;">
                 <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h6 class="mb-0"><strong>${element.nombre}</strong></h6>
+                    <h5 class="mb-0"><strong>${element.nombre}</strong></h5>
                     ${estadoBadge}
-                </div>
-                
-                <div class="popup-info">
+                </div>                
+                <div class="popup-info">           
                     <div class="info-row">
-                        <i class="ri-user-line"></i>
-                        <span><strong>Encargado:</strong> ${encargado}</span>
-                    </div>
-                    
-                    <div class="info-row">
-                        <i class="ri-building-line"></i>
+                        <i class="ri-building-line me-2"></i>
                         <span><strong>Estructura:</strong> ${element.tipoEstructura || 'N/A'}</span>
                     </div>
-                    
+                    ${element.encargadosDtoList.length >0 ? `
                     <div class="info-row">
-                        <i class="ri-map-pin-line"></i>
-                        <span><strong>Distrito:</strong> ${element.distrito || 'N/A'}</span>
+                        <i class="ri-user-line me-2"></i>
+                        <span><strong>Encargado(s):</strong>                        
+                        ${encargado}
+                        </span>
                     </div>
-                    
+                    ` : ''}    
+                    ${element.telefonoPrincipal ? `
                     <div class="info-row">
-                        <i class="ri-road-map-line"></i>
+                        <i class="ri-phone-line me-2"></i>
+                        <span><strong>Teléfono:</strong> 
+                            <a href="tel:${element.telefonoPrincipal}" class="text-decoration-none">
+                                ${element.telefonoPrincipal}
+                            </a>
+                        </span>
+                    </div>
+                    ` : ''}
+                    <div class="info-row">
+                        <i class="ri-road-map-line me-2"></i>
                         <span><strong>Ubicación:</strong> ${element.ubicacion}</span>
                     </div>
-                    
-                    <div class="info-row">
-                        <i class="ri-phone-line"></i>
-                        <span><strong>Teléfono:</strong> ${element.telefonoPrincipal || 'No disponible'}</span>
-                    </div>
                 </div>
-
                 <hr class="my-2">
-                
                 <div class="campos-section">
-                    <div class="d-flex align-items-center mb-2">
-                        <i class="ri-football-line me-2"></i>
+                    <div class="d-flex align-items-center mb-1">
+                        <i class="ri-landscape-line me-2"></i>
                         <strong>Campos Deportivos (${camposInfo.total})</strong>
                     </div>
                     ${camposInfo.html}
+                    ${uniqueCategories.length > 0 ? `
+                    <div class="available-sports">
+                        <i class="ri-basketball-line me-2"></i> 
+                        <strong>Disiplinas:</strong>
+                        <small class="text-muted">
+                            ${uniqueCategories.map((category: string) => 
+                                this.highlightMatch(category, this.searchQuery)
+                            ).join(', ')}
+                        </small>
+                    </div>
+                    ` : ''}
                 </div>
-
                 ${priceRange ? `
                     <div class="price-range mt-2">
                         <i class="ri-price-tag-3-line"></i>
-                        <strong>Rango de precios:</strong> ${priceRange}
+                        <strong>Precios desde:</strong> ${priceRange}
                     </div>
                 ` : ''}
-
                 <div class="facilities mt-2">
                     ${element.tieneIluminacion ? '<span class="badge bg-info me-1"><i class="ri-lightbulb-line"></i> Iluminación</span>' : ''}
                     ${element.tieneVestuarios ? '<span class="badge bg-info me-1"><i class="ri-door-line"></i> Vestuarios</span>' : ''}
                     ${element.tieneGraderias ? '<span class="badge bg-info me-1"><i class="ri-community-line"></i> Graderías</span>' : ''}
                 </div>
-
                 ${element.observaciones ? `
                     <div class="observaciones mt-2">
                         <small class="text-muted"><i class="ri-information-line"></i> ${element.observaciones}</small>
                     </div>
                 ` : ''}
-
                 ${element.estadoActual.toLowerCase() === 'activo' ? `
                     <div class="mt-3 d-flex gap-1">
                         <button class="btn btn-primary btn-sm w-100 mb-2 btn-reserva-puntual">
@@ -449,44 +696,29 @@ export class MapDashboardComponent implements OnInit {
                 ` : ''}
             </div>
         `;
-        
         const btnPuntual = popupContent.querySelector('.btn-reserva-puntual');
-        const btnRecurrente = popupContent.querySelector('.btn-reserva-recurrente');
-        
+        const btnRecurrente = popupContent.querySelector('.btn-reserva-recurrente');        
         if (btnPuntual) {
             btnPuntual.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 this.goToReservation(element, 'puntual');
             });
-        }
-        
+        }        
         if (btnRecurrente) {
             btnRecurrente.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 this.goToReservation(element, 'recurrente');
             });
-        }
-        
+        }        
         complex.bindPopup(popupContent, { maxWidth: 350 });
         return complex;
     }
-
-    public goToReservation(complejo: ComplejoDeportivo, bookingType: string) {
-        this.router.navigate(['/reservations/details'], { 
-            state: { 
-                data: complejo,
-                tipoReserva: bookingType
-            } 
-        });
-    }
-
     private getCamposInfo(complejo: any): { html: string, total: number } {
         if (!complejo.camposDeportivosDtoList || complejo.camposDeportivosDtoList.length === 0) {
             return { html: '<small class="text-muted">No hay campos disponibles</small>', total: 0 };
-        }
-        
+        }        
         const groupedBySurface: any = {};
         complejo.camposDeportivosDtoList.forEach((campo: any) => {
             const superficie = campo.superficieDto?.descripcion || 'Sin especificar';
@@ -495,12 +727,10 @@ export class MapDashboardComponent implements OnInit {
             }
             groupedBySurface[superficie].push(campo);
         });
-
         let html = '<div class="campos-list">';
         Object.keys(groupedBySurface).forEach(superficie => {
             const campos = groupedBySurface[superficie];
-            const activeCampos = campos.filter((c: any) => c.estadoActual.toLowerCase() === 'activo').length;
-            
+            const activeCampos = campos.filter((c: any) => c.estadoActual === EstadoActual.ACTIVO).length; 
             html += `
                 <div class="surface-group mb-1">
                     <small>
@@ -511,31 +741,27 @@ export class MapDashboardComponent implements OnInit {
             `;
         });
         html += '</div>';
-
         return { html, total: complejo.camposDeportivosDtoList.length };
     }
-
-    private getEstadoBadge(estado: string): string {
-        switch (estado?.toLowerCase()) {
-            case 'activo':
-                return '<span class="badge bg-success">Activo</span>';
-            case 'mantenimiento':
-                return '<span class="badge bg-warning">Mantenimiento</span>';
-            case 'cerrado':
-                return '<span class="badge bg-danger">Cerrado</span>';
-            default:
-                return '<span class="badge bg-secondary">N/A</span>';
-        }
+    private getAvailableDisciplines(complex: any): string[] {        
+        return Array.from(new Set(
+                complex.camposDeportivosDtoList
+                    ?.flatMap((campo: CampoDeportivo) => 
+                        campo.tarifasDtoList
+                            ?.flatMap((tarifa: Tarifa) => 
+                                tarifa.categoriasDtoList
+                                    ?.map((cat: any) => cat.categoriaDto.nombre)
+                            )
+                    )
+                    .filter(Boolean)
+            )) as string[];  
     }
-
     private getPriceRange(complejo: any): string | null {
         if (!complejo.camposDeportivosDtoList || complejo.camposDeportivosDtoList.length === 0) {
             return null;
         }
-
         let minPrice = Infinity;
         let maxPrice = -Infinity;
-
         complejo.camposDeportivosDtoList.forEach((campo: any) => {
             if (campo.tarifasDtoList && campo.tarifasDtoList.length > 0) {
                 campo.tarifasDtoList.forEach((tarifa: any) => {
@@ -547,132 +773,73 @@ export class MapDashboardComponent implements OnInit {
                 });
             }
         });
-
         if (minPrice === Infinity || maxPrice === -Infinity) {
             return null;
         }
-
         if (minPrice === maxPrice) {
             return `Bs. ${minPrice.toFixed(2)}`;
         }
-
         return `Bs. ${minPrice.toFixed(2)} - ${maxPrice.toFixed(2)}`;
     }
-
-    handleButtonClick(data: any): void {
-        this.router.navigate(['/reservations/details'], { state: { data: data } });
+    private getEstadoBadge(estado: string): string {
+        switch (estado) {
+            case EstadoActual.ACTIVO:
+                return '<span class="badge bg-success">Activo</span>';
+            case EstadoActual.MANTENIMIENTO:
+                return '<span class="badge bg-warning">Mantenimiento</span>';
+            case EstadoActual.CERRADO:
+                return '<span class="badge bg-danger">Cerrado</span>';
+            case EstadoActual.EVENTO_MUNICIPAL:
+                return '<span class="badge bg-danger">Reservado para Evento Municipal</span>';
+            default:
+                return '<span class="badge bg-secondary">N/A</span>';
+        }
+    }
+    private getEstadoBadgeText(estado: string): { text: string, class: string } {
+        switch (estado) {
+            case EstadoActual.ACTIVO:
+                return { text: 'Activo', class: 'bg-success' };
+            case EstadoActual.MANTENIMIENTO:
+                return { text: 'Mantenimiento', class: 'bg-warning' };
+            case EstadoActual.CERRADO:
+                return { text: 'Cerrado', class: 'bg-danger' };
+            case EstadoActual.EVENTO_MUNICIPAL:
+                return { text: 'Reservado para Evento Municipal', class: 'bg-danger' };
+            default:
+                return { text: 'N/A', class: 'bg-secondary' };
+        }
+    }
+    private highlightMatch(text: string, query: string): string {
+        if (!text || !query) return text || '';        
+        const regex = new RegExp(`(${query})`, 'gi');
+        return text.replace(regex, '<mark style="background-color: #fff3cd; padding: 0 2px;">$1</mark>');
     }
 
+    filterByStatus(status: string) {
+        const filtered = this.complexList.filter(complex => 
+            complex.estadoActual === status
+        );
+        this.updateMapMarkers(filtered);
+    }
     getFilteredList(): any[] {
-        let filteredMarkers: any[] = []
-        
+        let filteredMarkers: any[] = []        
         this.surfaceList.forEach(item => {
             const complexesBySurface = this.complexList.filter(complex =>
                 complex.camposDeportivosDtoList?.some((c: any) => 
                     c.superficieDto?.descripcion === item.descripcion
                 )
             );
-
             const mergedList = [...new Set([...complexesBySurface])];
-
             const markers = mergedList.map(element => {
                 const complex = this.setPopup(element);
                 return complex;
             });
-
             if (markers.length > 0) {
                 filteredMarkers[item.descripcion] = L.layerGroup(markers);
             }
-        });
-        
+        });        
         return filteredMarkers;
     }
-
-    applyFilters() {
-        let filteredComplexes = [...this.complexList];
-
-        if (this.selectedDistrict) {
-            filteredComplexes = filteredComplexes.filter(c => 
-                c.distrito === this.selectedDistrict
-            );
-        }
-
-        if (this.minTarifa !== null || this.maxTarifa !== null) {
-            filteredComplexes = filteredComplexes.filter(complejo => {
-                if (!complejo.camposDeportivosDtoList) return false;
-                
-                return complejo.camposDeportivosDtoList.some((campo: any) => {
-                    if (!campo.tarifasDtoList) return false;
-                    
-                    return campo.tarifasDtoList.some((tarifa: any) => {
-                        if (!tarifa.activo || !tarifa.precioBase) return false;
-                        const precio = parseFloat(tarifa.precioBase);
-                        
-                        if (this.minTarifa !== null && precio < this.minTarifa) return false;
-                        if (this.maxTarifa !== null && precio > this.maxTarifa) return false;
-                        
-                        return true;
-                    });
-                });
-            });
-        }
-
-        if (this.selectedCategories.length > 0) {
-            filteredComplexes = filteredComplexes.filter(complejo => {
-                if (!complejo.camposDeportivosDtoList) return false;
-                
-                return complejo.camposDeportivosDtoList.some((campo: any) => {
-                    if (!campo.tarifasDtoList) return false;
-                    
-                    return campo.tarifasDtoList.some((tarifa: any) => {
-                        if (!tarifa.categoriasDtoList) return false;
-                        
-                        return tarifa.categoriasDtoList.some((tc: any) => {
-                            return this.selectedCategories.includes(tc.categoriaDto?.nombre);
-                        });
-                    });
-                });
-            });
-        }
-
-        this.updateMapMarkers(filteredComplexes);
-        this.offcanvasService.dismiss();
-    }
-
-    private updateMapMarkers(complexes: any[]) {
-        if (this.mainList) {
-            this.map.removeLayer(this.mainList);
-        }
-
-        let listMarkers: any[] = []
-        complexes.forEach(element => {
-            const complex = this.setPopup(element);
-            listMarkers.push(complex);
-        });
-
-        this.mainList = L.layerGroup(listMarkers);
-        this.mainList.addTo(this.map);
-
-        if (complexes.length === 0) {
-            Swal.fire({
-                title: 'Sin resultados',
-                text: 'No se encontraron complejos con los filtros aplicados',
-                icon: 'info',
-                confirmButtonColor: '#299cdb'
-            });
-        }
-    }
-
-    clearFilters() {
-        this.selectedCategories = [];
-        this.selectedDistrict = '';
-        this.minTarifa = null;
-        this.maxTarifa = null;
-        
-        this.updateMapMarkers(this.complexList);
-        this.offcanvasService.dismiss();
-    }
-
     onCategoryChange(categoryName: string, event: any) {
         if (event.target.checked) {
             this.selectedCategories.push(categoryName);
@@ -683,6 +850,73 @@ export class MapDashboardComponent implements OnInit {
             }
         }
     }
+    applyFilters() {
+        let filteredComplexes = [...this.complexList];
+        if (this.selectedDistrict) {
+            filteredComplexes = filteredComplexes.filter(c => 
+                c.distrito === this.selectedDistrict
+            );
+        }
+        if (this.minTarifa !== null || this.maxTarifa !== null) {
+            filteredComplexes = filteredComplexes.filter(complejo => {
+                if (!complejo.camposDeportivosDtoList) return false;                
+                return complejo.camposDeportivosDtoList.some((campo: any) => {
+                    if (!campo.tarifasDtoList) return false;                    
+                    return campo.tarifasDtoList.some((tarifa: any) => {
+                        if (!tarifa.activo || !tarifa.precioBase) return false;
+                        const precio = parseFloat(tarifa.precioBase);
+                        if (this.minTarifa !== null && precio < this.minTarifa) return false;
+                        if (this.maxTarifa !== null && precio > this.maxTarifa) return false;
+                        return true;
+                    });
+                });
+            });
+        }
+        if (this.selectedCategories.length > 0) {
+            filteredComplexes = filteredComplexes.filter(complejo => {
+                if (!complejo.camposDeportivosDtoList) return false;                
+                return complejo.camposDeportivosDtoList.some((campo: any) => {
+                    if (!campo.tarifasDtoList) return false;                    
+                    return campo.tarifasDtoList.some((tarifa: any) => {
+                        if (!tarifa.categoriasDtoList) return false;                        
+                        return tarifa.categoriasDtoList.some((tc: any) => {
+                            return this.selectedCategories.includes(tc.categoriaDto?.nombre);
+                        });
+                    });
+                });
+            });
+        }
+        this.updateMapMarkers(filteredComplexes);
+        this.offcanvasService.dismiss();
+    }
+    clearFilters() {
+        this.selectedCategories = [];
+        this.selectedDistrict = '';
+        this.minTarifa = null;
+        this.maxTarifa = null;        
+        this.updateMapMarkers(this.complexList);
+        this.offcanvasService.dismiss();
+    }
+    private updateMapMarkers(complexes: any[]) {
+        if (this.mainList) {
+            this.map.removeLayer(this.mainList);
+        }
+        let listMarkers: any[] = []
+        complexes.forEach(element => {
+            const complex = this.setPopup(element);
+            listMarkers.push(complex);
+        });
+        this.mainList = L.layerGroup(listMarkers);
+        this.mainList.addTo(this.map);
+        if (complexes.length === 0) {
+            Swal.fire({
+                title: 'Sin resultados',
+                text: 'No se encontraron complejos con los filtros aplicados',
+                icon: 'info',
+                confirmButtonColor: '#299cdb'
+            });
+        }
+    }
 
     get uniqueDistricts(): string[] {
         const districts = this.complexList
@@ -690,7 +924,6 @@ export class MapDashboardComponent implements OnInit {
             .filter(d => d && d.trim() !== '');
         return [...new Set(districts)].sort();
     }
-
     /* API Services */
     private getComplexes() {
         this.complexService.getAll().subscribe({
@@ -710,7 +943,6 @@ export class MapDashboardComponent implements OnInit {
             }
         });
     }
-
     private getFields() {
         this.fieldService.getAll().subscribe({
             next: (data: any) => {
@@ -727,7 +959,6 @@ export class MapDashboardComponent implements OnInit {
             }
         });
     }
-
     private getCategories() {
         this.categoriesService.getAll().subscribe({
             next: (data: any) => {
@@ -744,7 +975,6 @@ export class MapDashboardComponent implements OnInit {
             }
         });
     }
-
     private getSurfaces() {
         this.surfacesService.getAll().subscribe({
             next: (data: any) => {
@@ -761,8 +991,21 @@ export class MapDashboardComponent implements OnInit {
             }
         });
     }
-
+    
+    handleButtonClick(data: any): void {
+        console.log('Button clicked with data:', data);
+        this.router.navigate(['/reservations/details'], { state: { data: data } });
+    }
+    public goToReservation(complejo: ComplejoDeportivo | null, bookingType: string) {
+        this.router.navigate(['/reservations/details'], { 
+            state: { 
+                data: complejo,
+                tipoReserva: bookingType
+            } 
+        });
+    }
     openEnd(content: TemplateRef<any>) {
         this.offcanvasService.open(content, { position: 'end' });
     }
 }
+

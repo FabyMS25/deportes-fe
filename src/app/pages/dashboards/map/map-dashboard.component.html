@@ -11,6 +11,22 @@
                             <span class="badge bg-primary">{{complexList.length}} Complejos</span>
                             <span class="badge bg-info">{{fieldList.length}} Campos</span>
                         </div>
+                        <div class="d-flex gap-1 flex-wrap">
+                            <button type="button" class="btn btn-outline-success btn-sm" 
+                                    (click)="filterByStatus('ACTIVO')">
+                                <i class="ri-check-line"></i> Activos
+                            </button>
+                        </div>
+                        <div class="d-flex gap-1 flex-wrap">
+                            <button type="button" class="btn btn-outline-danger btn-sm" 
+                                    (click)="filterByStatus('CERRADO')">
+                                <i class="ri-close-line"></i> Cerrados
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" 
+                                (click)="this.goToReservation(null, 'puntual')">
+                            <i class="ri-list-check align-bottom me-1"></i>Ver como Lista
+                        </button>
                         <button type="button" class="btn btn-primary btn-sm" 
                                 (click)="openEnd(filtetcontent)">
                             <i class="ri-filter-3-line align-bottom me-1"></i>Filtrar
@@ -21,7 +37,7 @@
             <div class="card-body p-0 position-relative">
                 <div *ngIf="loading" class="map-loading-overlay">
                     <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Cargando mapa...</span>
+                        <span class="visually-hidden">Cargando mapa...</span>
                     </div>
                 </div>
                 <div id="map" class="map-container" [class.loading]="loading"></div>
@@ -38,7 +54,6 @@
         <button type="button" class="btn-close" 
                 (click)="offcanvas.dismiss('Cross click')"></button>
     </div>
-
     <div class="offcanvas-body">
         <form>
             <div class="mb-2">

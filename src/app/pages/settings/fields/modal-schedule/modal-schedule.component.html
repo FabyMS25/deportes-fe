@@ -1,96 +1,119 @@
 <div class="modal-content">
-  <div class="modal-header bg-info-subtle p-2">
-      <h5 class="modal-title" ngbAutofocus>
-        <i class="ri-calendar-line me-2"></i>
-        <span *ngIf="accion === 'show'">Horarios de Atención</span>
-        <span *ngIf="accion === 'edit'">Editar Horarios de Atención</span>
-        :: {{row.complejoDto.nombre}} - {{row.codigo}}
-      </h5>
-      <button type="button"
-          class="btn-close"
-          data-dismiss="modal" aria-label="Cerrar"
-          [disabled]="submitted"
-          (click)="closeModal()">
-      </button>
-  </div>
-  <form [formGroup]="form" (ngSubmit)="saveData()" class="tablelist-form" autocomplete="off">
-      <div class="modal-body p-0">
-          <div *ngIf="accion === 'show'" class="p-4" style="max-height: 60vh; overflow-y: auto;">
-              <div *ngIf="!hasAnySchedule()" class="alert alert-info">
-                  <i class="ri-information-line me-2"></i>
-                  No hay horarios configurados para este campo deportivo.
-              </div>
-              <div *ngIf="horariosFijos.length > 0" class="mb-4">
-                  <h6 class="mb-3"><i class="ri-calendar-check-line"></i> Horarios Regulares</h6>
-                  <div class="row g-3" formArrayName="horariosFijosDtoList">
-                      <div *ngFor="let horario of horariosFijos.controls; let i = index" [formGroupName]="i" class="col-md-6">
-                          <div class="card border" [ngClass]="horario.get('abierto')?.value ? 'border-success' : 'border-secondary'">
-                              <div class="card-body p-3">
-                                  <div class="d-flex align-items-center mb-2">
-                                      <h6 class="card-title mb-0 flex-grow-1">
-                                          <i class="ri-calendar-check-line me-1"></i>
-                                          {{ getDiaLabel(horario.get('dia')?.value) }}
-                                      </h6>
-                                      <span class="badge" [ngClass]="horario.get('abierto')?.value ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">
-                                          {{ horario.get('abierto')?.value ? 'Abierto' : 'Cerrado' }}
-                                      </span>
-                                  </div>
-                                  <div *ngIf="horario.get('abierto')?.value" class="mt-2">
-                                      <div class="d-flex align-items-center text-muted">
-                                          <i class="ri-time-line me-2"></i>
-                                          <span class="fw-medium">{{ horario.get('horaApertura')?.value || '-' }}</span>
-                                          <i class="ri-arrow-right-line mx-2"></i>
-                                          <span class="fw-medium">{{ horario.get('horaCierre')?.value || '-' }}</span>
-                                      </div>
-                                      <div *ngIf="horario.get('observaciones')?.value" class="mt-2 text-muted small">
-                                          <i class="ri-information-line me-1"></i>
-                                          {{ horario.get('observaciones')?.value }}
-                                      </div>
-                                  </div>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-
-              <!-- Horarios Excepciones Display -->
-              <div *ngIf="horariosExcepciones.length > 0">
-                  <h6 class="mb-3"><i class="ri-calendar-event-line"></i> Excepciones</h6>
-                  <div class="table-responsive">
-                      <table class="table table-bordered" formArrayName="horariosExcepcionesDtoList">
-                          <thead class="table-light">
-                              <tr>
-                                  <th>Fecha</th>
-                                  <th>Tipo</th>
-                                  <th>Horario</th>
-                                  <th>Motivo</th>
-                              </tr>
-                          </thead>
-                          <tbody>
-                              <tr *ngFor="let excepcion of horariosExcepciones.controls; let i = index" [formGroupName]="i">
-                                  <td>{{ excepcion.get('fecha')?.value | date:'dd/MM/yyyy' }}</td>
-                                  <td>
-                                      <span class="badge bg-warning-subtle text-warning">
-                                          {{ excepcion.get('tipoExcepcion')?.value }}
-                                      </span>
-                                  </td>
-                                  <td>
-                                      <span *ngIf="excepcion.get('horaApertura')?.value || excepcion.get('horaCierre')?.value">
-                                          {{ excepcion.get('horaApertura')?.value || '-' }} - {{ excepcion.get('horaCierre')?.value || '-' }}
-                                      </span>
-                                      <span *ngIf="!excepcion.get('horaApertura')?.value && !excepcion.get('horaCierre')?.value" class="text-muted">
-                                          Todo el día
-                                      </span>
-                                  </td>
-                                  <td>{{ excepcion.get('motivo')?.value || '-' }}</td>
-                              </tr>
-                          </tbody>
-                      </table>
-                  </div>
-              </div>
+    <div class="modal-header bg-info-subtle p-2">
+        <div class="d-flex flex-column w-100">
+            <div class="d-flex align-items-center mb-1">
+                <i class="las la-store me-2"></i>
+                <h6 class="modal-title mb-0 fw-semibold">
+                    {{row.complejoDto.nombre}} - <span class="text-muted">{{row.codigo}}</span>
+                </h6>
+            </div>
+            <div class="d-flex align-items-center">
+                <i class="ri-calendar-line me-2"></i>
+                <h5 class="modal-title mb-0">
+                    <span *ngIf="accion === 'show'">Horarios de Atención</span>
+                    <span *ngIf="accion === 'edit'">Editar Horarios de Atención</span>
+                </h5>
+            </div>
+        </div>    
+        <button type="button"
+            class="btn-close"
+            data-dismiss="modal" aria-label="Cerrar"
+            [disabled]="submitted"
+            (click)="closeModal()">
+        </button>
+    </div>
+    <form [formGroup]="form" (ngSubmit)="saveData()" class="tablelist-form" autocomplete="off">
+      <div class="modal-body">
+        <div *ngIf="accion === 'show'">
+          <div *ngIf="!(this.horariosFijos.length > 0 || this.horariosExcepciones.length > 0)" class="alert alert-info">
+                <i class="ri-information-line me-2"></i>
+                No hay horarios configurados para este campo deportivo.
           </div>
-
-          <!-- Edit Mode: Tabs -->
+          <div *ngIf="horariosFijos.length > 0" class="mb-2">
+                <h6><i class="ri-calendar-check-line me-2"></i>Horarios Regulares</h6>
+                <div *ngFor="let dia of getGroupedSchedules()"
+                    class="card schedule-item mb-2"
+                    [ngClass]="dia.isOpen ? 'border-success bg-light' : 'border-secondary bg-secondary-subtle' ">
+                  <div class="row p-1">
+                    <div class="col-md-4 col-12">
+                        <h6 ><i class="ri-calendar-line me-1"></i>{{ dia.label }}</h6>
+                    </div>
+                    <div class="col-md-6 col-6 flex">
+                      <div *ngIf="dia.isOpen; else closedTemplate">
+                        <div *ngFor="let slot of dia.timeSlots" class="d-flex align-items-center my-0">
+                            <i class="ri-time-line me-1 text-muted small"></i>{{ slot.start}}
+                            <i class="ri-arrow-right-line mx-2 text-muted small"></i>{{ slot.end}}
+                            <span *ngIf="slot.observaciones" class="text-info mr-2">
+                              <i class="ri-information-line"></i>
+                            </span>
+                        </div>
+                        <div *ngIf="dia.timeSlots[0]?.observaciones" class="text-muted small mt-0">                                      
+                          <i class="ri-information-line me-1"></i>
+                          <cite title="Source Title">{{ dia.timeSlots[0].observaciones }}</cite>
+                        </div>
+                      </div>
+                      <ng-template #closedTemplate>
+                        <div class="text-muted">
+                            <i class="ri-lock-line me-2"></i>Cerrado
+                        </div>
+                      </ng-template>
+                    </div>
+                    <div class="col-md-2 col-6">
+                        <span class="badge" 
+                            [ngClass]="dia.isOpen ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">
+                            {{ dia.isOpen ? 'Abierto' : 'Cerrado' }}
+                        </span>
+                    </div>
+                  </div>
+                </div>
+            </div>
+            <div *ngIf="horariosExcepciones.length > 0">
+                <h6><i class="ri-calendar-event-line me-2"></i>Excepciones de Horario</h6>
+                <div *ngFor="let excepcion of horariosExcepciones.controls; let i = index" 
+                    class="card border-0 mb-2 shadow-sm h-100" style="border-left: 4px solid !important;"
+                    [ngClass]="{
+                        'border-warning': excepcion.get('tipoExcepcion')?.value === 'horario_especial',
+                        'border-danger': excepcion.get('tipoExcepcion')?.value === 'mantenimiento',
+                        'border-info': excepcion.get('tipoExcepcion')?.value === 'evento_municipal'
+                    }">
+                    <div class="row p-1">
+                        <div class="col-md-4 col-12">
+                            <h6> <i class="ri-calendar-event-line me-2"></i>
+                                {{ excepcion.get('fecha')?.value | date:'dd/MM/yyyy' }}
+                            </h6>
+                        </div>                                
+                        <div class="col">
+                            <div *ngIf="excepcion.get('horaApertura')?.value || excepcion.get('horaCierre')?.value" 
+                                        class="d-flex align-items-center">
+                                        <i class="ri-time-line me-2"></i>
+                                        <span class="fw-medium">{{ excepcion.get('horaApertura')?.value || '-' }}</span>
+                                        <i class="ri-arrow-right-line mx-2"></i>
+                                        <span class="fw-medium">{{ excepcion.get('horaCierre')?.value || '-' }}</span>
+                            </div>
+                            <div *ngIf="!excepcion.get('horaApertura')?.value && !excepcion.get('horaCierre')?.value" 
+                                        class="text-muted">
+                                        <i class="ri-time-line me-2"></i>
+                                        Horario especial
+                            </div>
+                            <div *ngIf="excepcion.get('motivo')?.value" class="mt-2 text-muted small">
+                                <i class="ri-information-line me-1"></i>
+                                {{ excepcion.get('motivo')?.value }}
+                            </div>
+                        </div>                                
+                        <div class="col">
+                            <span class="badge" 
+                                [ngClass]="{
+                                    'bg-warning-subtle text-warning': excepcion.get('tipoExcepcion')?.value === 'horario_especial',
+                                    'bg-danger-subtle text-danger': excepcion.get('tipoExcepcion')?.value === 'mantenimiento',
+                                    'bg-info-subtle text-info': excepcion.get('tipoExcepcion')?.value === 'evento_municipal'
+                                }">
+                                {{ getTipoExcepcionLabel(excepcion.get('tipoExcepcion')?.value) }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
           <div *ngIf="accion === 'edit'">
               <ul class="nav nav-tabs nav-tabs-custom" role="tablist">
                   <li class="nav-item">
@@ -106,9 +129,7 @@
                       </a>
                   </li>
               </ul>
-
               <div class="tab-content p-4" style="max-height: 60vh; overflow-y: auto;">
-                  <!-- Tab 1: Horarios Fijos -->
                   <div class="tab-pane" [class.active]="currentTab === 'fijos'" [class.show]="currentTab === 'fijos'">
                       <div formArrayName="horariosFijosDtoList" class="table-responsive">
                           <table class="table table-sm table-bordered align-middle">
@@ -189,7 +210,6 @@
                           <i class="ri-add-line"></i> Agregar Día
                       </button>
                   </div>
-                  <!-- Tab 2: Horarios Excepciones -->
                   <div class="tab-pane" [class.active]="currentTab === 'excepciones'" [class.show]="currentTab === 'excepciones'">
                       <div formArrayName="horariosExcepcionesDtoList" class="table-responsive">
                           <table class="table table-sm table-bordered align-middle">

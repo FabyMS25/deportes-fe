@@ -163,10 +163,9 @@ export class RuatRequestsService {
     return this.http.post<any>(`${apiUrl}/pago`, requestData);
   }
 
-  // Add token management methods
   setToken(token: string): void {
     sessionStorage.setItem('ruatToken', token);
-    window.sessionStorage.setItem('ruatToken', token); // Store in both for compatibility
+    window.sessionStorage.setItem('ruatToken', token);
   }
 
   removeToken(): void {

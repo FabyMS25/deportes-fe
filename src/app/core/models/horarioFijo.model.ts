@@ -1,5 +1,5 @@
 import { CampoDeportivo } from "./campoDeportivo.model";
-type Dia = 'lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes' | 'sabado' | 'domingo' | 'feriado' | 'lunes_viernes' | 'fin_semana';
+type Dia = 'lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes' | 'sabado' | 'domingo' | 'lunes_viernes' | 'fin_semana';
 
 export interface HorarioFijo {
   uuid?: string;

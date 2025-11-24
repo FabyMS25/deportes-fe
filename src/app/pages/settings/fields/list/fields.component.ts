@@ -196,7 +196,7 @@ export class FieldsComponent {
     'Capacidad', 'Iluminacion', 'Acceso Libre', 'Requiere Aprobacion', 'Estado',
     'Clasificador Ruat','Tipo Cobro', 'Descripcion Tarifa', 'Costo Base', 'Desde Tarifa', 'Hasta Tarifa', 'Categorias de Tarifa',
     'Fecha Inicio', 'Fecha Fin', 'Lista de Tarifas Concepto',
-    'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo', 'Feriado',
+    'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo',
     'Lista de Excepciones'
   ];
   public openModalImport() {
@@ -213,7 +213,7 @@ export class FieldsComponent {
 
   // Csv File Export
   csvFileExport() {
-    const daysOrder = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo', 'Feriado'];
+    const daysOrder = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'];
     const dayMapping: { [key: string]: string[] } = {
       'lunes_viernes': ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'],
       'lunes': ['Lunes'],
@@ -222,8 +222,7 @@ export class FieldsComponent {
       'jueves': ['Jueves'],
       'viernes': ['Viernes'],
       'sabado': ['Sabado'],
-      'domingo': ['Domingo'],
-      'feriado': ['Feriado']
+      'domingo': ['Domingo']
     };
 
     const lista = this.selectedItems.flatMap((item) => {

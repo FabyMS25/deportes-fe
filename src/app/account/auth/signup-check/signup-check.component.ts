@@ -32,11 +32,11 @@ export class SignupCheckComponent {
   private authenticationAttempted = false;
 
   constructor(
-    private formBuilder: UntypedFormBuilder,
-    private contribuyentesService: ContribuyentesService,
-    private ruatService: RuatRequestsService,
     private router: Router,
+    private formBuilder: UntypedFormBuilder,
+    private ruatService: RuatRequestsService,
     private userDataService: UserDataService,
+    private contribuyentesService: ContribuyentesService,
     private systemConfigsService: ConfiguracionSistemaService
   ) { }
 

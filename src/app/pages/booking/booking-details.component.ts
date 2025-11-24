@@ -291,6 +291,11 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     this.showConfirmationModal(reservaData);
   }
 
+  public getAvailableDisciplines(campo: CampoDeportivo): string[] {        
+    return Array.from(new Set(campo.tarifasDtoList?.flatMap((tarifa: Tarifa) => 
+      tarifa.categoriasDtoList?.map((cat: any) => cat.categoriaDto.nombre) || [])
+    )) as string[];  
+  }
   getEncargadosActivos(): EncargadoComplejo[] {
     if (!this.bookingState.complejo?.encargadosDtoList?.length) {
       return [];

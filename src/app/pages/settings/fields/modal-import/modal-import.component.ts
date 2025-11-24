@@ -34,17 +34,6 @@ export class ModalImportComponent {
   categoryList: Categoria[] = [];
   clasificadoresList: ClasificadorRuat[]=[];
 
-  private readonly dayMappingImport: { [key: string]: string } = {
-    'Lunes': 'lunes',
-    'Martes': 'martes', 
-    'Miercoles': 'miercoles',
-    'Jueves': 'jueves',
-    'Viernes': 'viernes',
-    'Sabado': 'sabado',
-    'Domingo': 'domingo',
-    'Feriado': 'feriado'
-  };
-
   constructor(
     private activeModal: NgbActiveModal,
     private fieldService: CamposDeportivoService,
@@ -256,8 +245,7 @@ export class ModalImportComponent {
       'Jueves': 'jueves',
       'Viernes': 'viernes',
       'Sabado': 'sabado',
-      'Domingo': 'domingo',
-      'Feriado': 'feriado'
+      'Domingo': 'domingo'
     };
     Object.keys(daysMapping).forEach(day => {
       const schedule = row[day];

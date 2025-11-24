@@ -44,7 +44,7 @@
                 <div class="tab-pane" [class.active]="currentStep === 1" [class.show]="currentStep === 1">
                     <div class="row g-2">
                         <div class="col-lg-4 col-md-6">
-                            <label class="form-label mb-1 small">Complejo <span class="text-danger">*</span></label>
+                            <label class="form-label mb-0">Complejo <span class="text-danger">*</span></label>
                             <ng-select [items]="complejosList" bindLabel="nombre"
                                     formControlName="complejoDto" placeholder="Seleccione"
                                     [ngClass]="{'is-invalid': submitted && form['complejoDto'].errors }">
@@ -55,7 +55,7 @@
                         </div>
                         
                         <div class="col-lg-4 col-md-6">
-                            <label class="form-label mb-1 small">Superficie <span class="text-danger">*</span></label>
+                            <label class="form-label mb-0">Superficie <span class="text-danger">*</span></label>
                             <ng-select [items]="surfacesList" bindLabel="descripcion"
                                     formControlName="superficieDto" placeholder="Seleccione"
                                     [ngClass]="{'is-invalid': submitted && form['superficieDto'].errors }">
@@ -66,8 +66,8 @@
                         </div>
 
                         <div class="col-lg-4 col-md-6">
-                            <label class="form-label mb-1 small">Categoría <span class="text-danger">*</span></label>
-                            <select class="form-select form-select-sm" formControlName="categoria"
+                            <label class="form-label mb-0">Categoría <span class="text-danger">*</span></label>
+                            <select class="form-select form-select" formControlName="categoria"
                                     [ngClass]="{'is-invalid': submitted && form['categoria'].errors }">
                                 <option value="">Seleccione</option>
                                 <option *ngFor="let cat of categoriaCampoList" [value]="cat">{{cat}}</option>
@@ -78,8 +78,8 @@
                         </div>
 
                         <div class="col-lg-6 col-md-8">
-                            <label class="form-label mb-1 small">Nombre <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-sm" placeholder="Nombre del campo"
+                            <label class="form-label mb-0">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control" placeholder="Nombre del campo"
                                 formControlName="nombre" maxlength="250"
                                 [ngClass]="{ 'is-invalid': submitted && form['nombre'].errors }" />
                             <div *ngIf="submitted && form['nombre'].errors" class="invalid-feedback">
@@ -88,8 +88,8 @@
                         </div>
 
                         <div class="col-lg-3 col-md-4">
-                            <label class="form-label mb-1 small">Código <span class="text-danger">*</span></label>
-                            <div class="input-group input-group-sm">
+                            <label class="form-label mb-0">Código <span class="text-danger">*</span></label>
+                            <div class="input-group">
                                 <input type="text" class="form-control" placeholder="CAMPO-001" 
                                     formControlName="codigo" maxlength="50"
                                     [ngClass]="{ 'is-invalid': submitted && form['codigo'].errors }" />
@@ -105,22 +105,22 @@
                         </div>
 
                         <div class="col-lg-3 col-md-4">
-                            <label class="form-label mb-1 small">Estado <span class="text-danger">*</span></label>
-                            <select class="form-select form-select-sm" formControlName="estadoActual"
+                            <label class="form-label mb-0">Estado <span class="text-danger">*</span></label>
+                            <select class="form-select form-select" formControlName="estadoActual"
                                     [ngClass]="{'is-invalid': submitted && form['estadoActual'].errors }">
                                 <option *ngFor="let estado of estadoActualList" [value]="estado">{{estado}}</option>
                             </select>
                         </div>
 
                         <div class="col-lg-3 col-md-4">
-                            <label class="form-label mb-1 small">Capacidad</label>
-                            <input type="number" class="form-control form-control-sm" placeholder="0"
+                            <label class="form-label mb-0">Capacidad</label>
+                            <input type="number" class="form-control form-control" placeholder="0"
                                 formControlName="capacidadPersonas" min="0" />
                         </div>
 
                         <div class="col-lg-3 col-md-4">
-                            <label class="form-label mb-1 small">Dimensiones</label>
-                            <input type="text" class="form-control form-control-sm" placeholder="105m x 68m"
+                            <label class="form-label mb-0">Dimensiones</label>
+                            <input type="text" class="form-control form-control" placeholder="105m x 68m"
                                 formControlName="dimensiones" maxlength="100" />
                         </div>
 
@@ -128,7 +128,7 @@
                             <div class="form-check form-switch mt-4">
                                 <input class="form-check-input" type="checkbox" id="tieneIluminacion" 
                                     formControlName="tieneIluminacion">
-                                <label class="form-check-label small" for="tieneIluminacion">Iluminación</label>
+                                <label class="form-check-label" for="tieneIluminacion">Iluminación</label>
                             </div>
                         </div>
 
@@ -136,7 +136,7 @@
                             <div class="form-check form-switch mt-4">
                                 <input class="form-check-input" type="checkbox" id="accesoLibre" 
                                     formControlName="accesoLibre">
-                                <label class="form-check-label small" for="accesoLibre">Acceso Libre</label>
+                                <label class="form-check-label" for="accesoLibre">Acceso Libre</label>
                             </div>
                         </div>
                         
@@ -159,21 +159,21 @@
                                         </div>
 
                                         <div class="col-lg-4 col-md-6" *ngIf="fieldsForm.get('requiereAprobacion')?.value">
-                                            <label class="form-label mb-1 small">Horas Mínima Aprobación</label>
+                                            <label class="form-label mb-0 small">Horas Mínima Aprobación</label>
                                             <input type="number" class="form-control form-control-sm" placeholder="24"
                                                 formControlName="horasMinimaAprobacion" min="0" step="1" />
                                             <small class="text-muted d-block">Horas mínimas para aprobación</small>
                                         </div>
 
                                         <div class="col-lg-4 col-md-6" *ngIf="!fieldsForm.get('requiereAprobacion')?.value">
-                                            <label class="form-label mb-1 small">Duración Máx. (min)</label>
+                                            <label class="form-label mb-0 small">Duración Máx. (min)</label>
                                             <input type="number" class="form-control form-control-sm" placeholder="120"
                                                 formControlName="maxDuracionAutoAprobacion" min="0" step="15" />
                                             <small class="text-muted d-block">Para auto-aprobación</small>
                                         </div>
 
                                         <div class="col-lg-4 col-md-6" *ngIf="!fieldsForm.get('requiereAprobacion')?.value">
-                                            <label class="form-label mb-1 small">Personas Máx.</label>
+                                            <label class="form-label mb-0 small">Personas Máx.</label>
                                             <input type="number" class="form-control form-control-sm" placeholder="20"
                                                 formControlName="maxPersonasAutoAprobacion" min="0" step="1" />
                                             <small class="text-muted d-block">Para auto-aprobación</small>
@@ -184,13 +184,12 @@
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label mb-1 small">Observaciones</label>
+                            <label class="form-label mb-0">Observaciones</label>
                             <textarea class="form-control form-control-sm" rows="2" placeholder="Observaciones"
                                     formControlName="observaciones"></textarea>
                         </div>
                     </div>
                 </div>
-
                 <!-- Step 2: Horarios -->
                 <div class="tab-pane" [class.active]="currentStep === 2" [class.show]="currentStep === 2">
                     <div class="mb-3">
@@ -334,7 +333,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Step 3: Tarifas -->
                 <div class="tab-pane" [class.active]="currentStep === 3" [class.show]="currentStep === 3">
                     <div formArrayName="tarifasDtoList">
@@ -353,22 +351,27 @@
                             </div>
                             <div class="card-body p-2">
                                 <div class="row g-2">
-                                    <div class="col-lg-6">
-                                        <label class="form-label mb-1 small">Clasificador RUAT <span class="text-danger">*</span></label>
-                                        <ng-select [items]="clasificadoresRuatList" bindLabel="nombre"
-                                                formControlName="clasificadorRuatDto" placeholder="Seleccionar"
-                                                [ngClass]="{'is-invalid': submitted && tarifa.get('clasificadorRuatDto')?.errors}">
+                                    <div class="col-lg-8 col-6">
+                                        <label class="form-label mb-0 small">Clasificador RUAT <span class="text-danger">*</span></label>
+                                        <ng-select [items]="clasificadoresRuatList" 
+                                            bindLabel="nombre"
+                                            formControlName="clasificadorRuatDto" 
+                                            placeholder="Seleccionar"
+                                            class="ng-select-sm"
+                                            (change)="onClasificadorRuatChange(i)"
+                                            [ngClass]="{'is-invalid': submitted && tarifa.get('clasificadorRuatDto')?.errors}">
                                         </ng-select>
                                         <div *ngIf="submitted && tarifa.get('clasificadorRuatDto')?.errors" class="invalid-feedback d-block">
                                             <div *ngIf="tarifa.get('clasificadorRuatDto')?.errors?.['required']">Campo requerido</div>
                                         </div>
                                     </div>
-                                    <div class="col-lg-3 col-6">
-                                        <label class="form-label mb-1 small">Tipo de Cobro <span class="text-danger">*</span></label>
+                                    <div class="col-lg-4 col-6">
+                                        <label class="form-label mb-0 small">Tipo de Cobro <span class="text-danger">*</span></label>
                                         <select class="form-select form-select-sm" formControlName="tipoCobro"
+                                                (change)="onTipoCobroChange(i)"
                                                 [ngClass]="{'is-invalid': submitted && tarifa.get('tipoCobro')?.errors}">
                                             <option value="">Seleccione</option>
-                                            <option *ngFor="let tipo of tipoCobroOptions" [value]="tipo.value">
+                                            <option *ngFor="let tipo of getFilteredTipoCobroOptions(i)" [value]="tipo.value">
                                                 {{ tipo.label }}
                                             </option>
                                         </select>
@@ -376,37 +379,85 @@
                                             <div *ngIf="tarifa.get('tipoCobro')?.errors?.['required']">Campo requerido</div>
                                         </div>
                                     </div>
-                                    <div class="col-lg-3 col-6" *ngIf="tarifa.get('tipoCobro')?.value === 'mensualidad' || tarifa.get('tipoCobro')?.value === 'por_sesion'">
-                                        <label class="form-label mb-1 small">Frecuencia</label>
-                                        <select class="form-select form-select-sm" formControlName="frecuencia">
+                                    <div class="col-lg-3 col-6" *ngIf="tarifa.get('tipoCobro')?.value === 'mensualidad'">
+                                        <label class="form-label mb-0 small">Frecuencia <span class="text-danger">*</span></label>
+                                        <select class="form-select form-select-sm" formControlName="frecuencia"
+                                                (change)="onFrecuenciaChange(i)"
+                                                [ngClass]="{'is-invalid': submitted && tarifa.get('frecuencia')?.errors}">
                                             <option value="">Seleccione</option>
                                             <option *ngFor="let freq of frecuenciaOptions" [value]="freq.value">
                                                 {{ freq.label }}
                                             </option>
                                         </select>
+                                        <div *ngIf="submitted && tarifa.get('frecuencia')?.errors" class="invalid-feedback">
+                                            <div *ngIf="tarifa.get('frecuencia')?.errors?.['required']">Campo requerido</div>
+                                        </div>
                                     </div>
-                                    <div class="col-lg-3 col-6" *ngIf="tarifa.get('tipoCobro')?.value === 'mensualidad' || tarifa.get('tipoCobro')?.value === 'por_club'">
-                                        <label class="form-label mb-1 small">Sesiones</label>
-                                        <input type="number" class="form-control form-control-sm" placeholder="0" min="0"
-                                            formControlName="sesionesIncluidas">
+
+                                    <div class="col-lg-9 col-6" *ngIf="tarifa.get('tipoCobro')?.value === 'mensualidad'">
+                                        <label class="form-label mb-0 small">Sesiones Incluidas</label>
+                                        <div *ngIf="tarifa.get('frecuencia')?.value && tarifa.get('frecuencia')?.value !== 'personalizado'">
+                                            <div class="border rounded p-2 bg-light">
+                                                <div class="small">
+                                                    {{ getDisplaySesionesFromNumber(tarifa.get('sesionesIncluidas')?.value) }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div *ngIf="tarifa.get('frecuencia')?.value === 'personalizado'">
+                                            <div class="border rounded p-2 bg-light">
+                                                <small class="fw-semibold d-block mb-2">Seleccione los días de sesión:</small>
+                                                <div class="row g-1">
+                                                    <div class="col-4" *ngFor="let dia of [
+                                                        { id: 1, name: 'Lunes' },
+                                                        { id: 2, name: 'Martes' },
+                                                        { id: 3, name: 'Miércoles' },
+                                                        { id: 4, name: 'Jueves' },
+                                                        { id: 5, name: 'Viernes' },
+                                                        { id: 6, name: 'Sábado' },
+                                                        { id: 7, name: 'Domingo' }
+                                                    ]">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                [id]="'dia-' + i + '-' + dia.id"
+                                                                [checked]="getDiasPersonalizados(i)[dia.id]"
+                                                                (change)="onDiaPersonalizadoChange(i, dia.id, $event)">
+                                                            <label class="form-check-label small" 
+                                                                [for]="'dia-' + i + '-' + dia.id">
+                                                                {{ dia.name }}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-2 p-2 border-top bg-white rounded">
+                                                    <small class="fw-semibold">Resumen:</small>
+                                                    <div class="mt-1 small">
+                                                        {{ getDisplaySesionesFromDias(getDiasPersonalizados(i)) }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="col-lg-6">
-                                        <label class="form-label mb-1 small">Descripción</label>
+                                        <label class="form-label mb-0">Descripción</label>
                                         <input type="text" class="form-control form-control-sm" placeholder="Tarifa diurna"
                                             formControlName="descripcion">
                                     </div>
                                     <div class="col-lg-4">
-                                        <label class="form-label mb-1 small">Categoría(s) <span class="text-danger">*</span></label>
-                                        <ng-select [items]="categoriasList" [multiple]="true" bindLabel="nombre" 
-                                                formControlName="categoriasDtoList" placeholder="Seleccione" 
-                                                [ngClass]="{'is-invalid': submitted && tarifa.get('categoriasDtoList')?.errors}">
+                                        <label class="form-label mb-0">Categoría(s) <span class="text-danger">*</span></label>
+                                        <ng-select [items]="categoriasList" 
+                                            [multiple]="true" 
+                                            bindLabel="nombre" 
+                                            formControlName="categoriasDtoList" 
+                                            placeholder="Seleccione"
+                                            class="ng-select-sm"
+                                            [ngClass]="{'is-invalid': submitted && tarifa.get('categoriasDtoList')?.errors}">
                                         </ng-select>
                                         <div *ngIf="submitted && tarifa.get('categoriasDtoList')?.errors" class="invalid-feedback d-block">
                                             <div *ngIf="tarifa.get('categoriasDtoList')?.errors?.['required']">Campo requerido</div>
                                         </div>
                                     </div>
                                     <div class="col-lg-2">
-                                        <label class="form-label mb-1 small">Precio Base<span class="text-danger">*</span></label>
+                                        <label class="form-label mb-0 small">Precio Base<span class="text-danger">*</span></label>
                                         <input type="number" step="0.01" class="form-control form-control-sm" placeholder="150.00"
                                             formControlName="precioBase"
                                             [ngClass]="{'is-invalid': submitted && tarifa.get('precioBase')?.errors}">
@@ -414,35 +465,39 @@
                                             <div *ngIf="tarifa.get('precioBase')?.errors?.['required']">Campo requerido</div>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="row g-2 mt-1">
+                                    <small class="text-muted">
+                                        <i class="ri-time-line me-1"></i>Vigencia e intervalo Valido de la Tarifa
+                                    </small>
                                     <div class="col-lg-3 col-6">
-                                        <label class="form-label mb-1 small">Fecha Inicio <span class="text-danger">*</span></label>
+                                        <label class="form-label mb-0 small">Fecha Inicio <span class="text-danger">*</span></label>
                                         <input type="date" class="form-control form-control-sm" formControlName="fechaInicio"
                                             [ngClass]="{'is-invalid': submitted && tarifa.get('fechaInicio')?.errors}">
                                     </div>
                                     <div class="col-lg-3 col-6">
-                                        <label class="form-label mb-1 small">Fecha Fin</label>
+                                        <label class="form-label mb-0 small">Fecha Fin</label>
                                         <input type="date" class="form-control form-control-sm" formControlName="fechaFin">
                                     </div>
                                     <div class="col-lg-3 col-6">
-                                        <label class="form-label mb-1 small">Hora Desde</label>
+                                        <label class="form-label mb-0 small">Hora Desde</label>
                                         <input type="time" class="form-control form-control-sm" formControlName="desde">
                                     </div>
                                     <div class="col-lg-3 col-6">
-                                        <label class="form-label mb-1 small">Hora Hasta</label>
+                                        <label class="form-label mb-0 small">Hora Hasta</label>
                                         <input type="time" class="form-control form-control-sm" formControlName="hasta">
                                     </div>
                                     <div class="col-12">
-                                        <label class="form-label mb-1 small">Observaciones</label>
+                                        <label class="form-label mb-0 small">Observaciones</label>
                                         <textarea class="form-control form-control-sm" rows="2" formControlName="observaciones"
                                                 placeholder="Observaciones adicionales"></textarea>
-                                    </div>
-                                    
+                                    </div>                                    
                                     <!-- Conceptos Adicionales -->
                                     <div class="col-12">
                                         <div class="card bg-light border-0 mb-0">
                                             <div class="card-header d-flex justify-content-between align-items-center py-1 px-2">
                                                 <h6 class="mb-0 small">
-                                                    <i class="ri-file-list-3-line me-1"></i>Conceptos Adicionales
+                                                    <i class="las la-plus-square me-1"></i>Conceptos Adicionales
                                                 </h6>
                                                 <button type="button" class="btn btn-sm btn-success py-0 px-2" 
                                                         (click)="addConcepto(i)" [disabled]="submitted">
@@ -465,7 +520,7 @@
                                                         </div>
                                                         <div class="row g-2">
                                                             <div class="col-lg-4 col-md-6">
-                                                                <label class="form-label mb-1 small">Concepto <span class="text-danger">*</span></label>
+                                                                <label class="form-label mb-0 small">Concepto <span class="text-danger">*</span></label>
                                                                 <input type="text" class="form-control form-control-sm" 
                                                                         placeholder="Ej: Luz, Agua, Mantenimiento"
                                                                         formControlName="concepto"
@@ -475,7 +530,7 @@
                                                                 </div>
                                                             </div>
                                                             <div class="col-lg-3 col-md-3 col-6">
-                                                                <label class="form-label mb-1 small">Tipo <span class="text-danger">*</span></label>
+                                                                <label class="form-label mb-0 small">Tipo <span class="text-danger">*</span></label>
                                                                 <select class="form-select form-select-sm" formControlName="tipo"
                                                                         [ngClass]="{'is-invalid': submitted && concepto.get('tipo')?.errors}">
                                                                     <option value="">Seleccione</option>
@@ -488,7 +543,7 @@
                                                                 </div>
                                                             </div>
                                                             <div class="col-lg-3 col-md-3 col-6">
-                                                                <label class="form-label mb-1 small">
+                                                                <label class="form-label mb-0 small">
                                                                     Valor <span class="text-danger">*</span>
                                                                     <small class="text-muted">
                                                                         ({{ concepto.get('tipo')?.value === 'porcentaje' ? '%' : 
@@ -504,7 +559,7 @@
                                                                 </div>
                                                             </div>
                                                             <div class="col-lg-2 col-12">
-                                                                <div class="form-check form-switch" [class.mt-4]="!concepto.get('desde')?.value && !concepto.get('hasta')?.value">
+                                                                <div class="form-check form-switch mt-2" [class.mt-4]="!concepto.get('desde')?.value && !concepto.get('hasta')?.value">
                                                                     <input class="form-check-input" type="checkbox" 
                                                                         formControlName="activo"
                                                                         [id]="'concepto-activo-' + i + '-' + j">
@@ -515,7 +570,7 @@
                                                             </div>
                                                             <div class="col-12" *ngIf="showTimeFields(concepto)">
                                                                 <div class="bg-light rounded p-2">
-                                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                    <div class="d-flex justify-content-between align-items-center mb-0">
                                                                         <small class="text-muted">
                                                                             <i class="ri-time-line me-1"></i>Intervalo de Horas (Opcional)
                                                                         </small>
@@ -528,13 +583,13 @@
                                                                     
                                                                     <div class="row g-2" *ngIf="concepto.get('desde')?.value || concepto.get('hasta')?.value">
                                                                         <div class="col-6">
-                                                                            <label class="form-label mb-1 small">Hora Desde</label>
+                                                                            <label class="form-label mb-0 small">Hora Desde</label>
                                                                             <input type="time" class="form-control form-control-sm" 
                                                                                     formControlName="desde"
                                                                                     placeholder="HH:MM">
                                                                         </div>
                                                                         <div class="col-6">
-                                                                            <label class="form-label mb-1 small">Hora Hasta</label>
+                                                                            <label class="form-label mb-0 small">Hora Hasta</label>
                                                                             <input type="time" class="form-control form-control-sm" 
                                                                                     formControlName="hasta"
                                                                                     placeholder="HH:MM">

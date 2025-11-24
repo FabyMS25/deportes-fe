@@ -47,7 +47,6 @@
             <i class="ri-error-warning-line me-2"></i>
             {{ errorMessage }}
           </div>
-
           <div class="row mb-4">
             <div class="col-md-6">
               <label class="form-label fw-medium">
@@ -77,8 +76,7 @@
                 <i class="ri-calendar-event-line me-1"></i>
                 Seleccione Días y Horarios
                 <small class="text-muted">(Puede agregar múltiples horarios por día)</small>
-              </h6>
-              
+              </h6>              
               <div class="days-grid">
                 <div *ngFor="let dia of diasSemana" class="day-selector-card mb-3">
                   <div class="day-card" 
@@ -151,15 +149,12 @@
               <i class="ri-calendar-2-line me-1"></i>
               Vista de Calendario
               <small class="text-muted">(Los días resaltados serán reservados)</small>
-            </h6>
-            
-            <div *ngFor="let monthData of calendarMonths" class="calendar-month mb-4">
+            </h6>            
+            <div *ngFor="let monthData of calendarMonths" class="calendar-month mb-2">
               <div class="month-header text-center mb-3">
                 <h5 class="mb-0">{{ monthData.monthName }} {{ monthData.year }}</h5>
-              </div>
-              
+              </div>              
               <div class="calendar-grid">
-                <!-- Weekday headers -->
                 <div class="calendar-header">Dom</div>
                 <div class="calendar-header">Lun</div>
                 <div class="calendar-header">Mar</div>
@@ -167,8 +162,6 @@
                 <div class="calendar-header">Jue</div>
                 <div class="calendar-header">Vie</div>
                 <div class="calendar-header">Sáb</div>
-                
-                <!-- Calendar days -->
                 <ng-container *ngFor="let week of monthData.weeks">
                   <div *ngFor="let dayCell of week" 
                        class="calendar-day"
@@ -177,18 +170,13 @@
                        [class.selectable]="dayCell.isSelectable"
                        [class.has-schedule]="dayCell.hasSchedule"
                        [class.reserved]="dayCell.isReserved"
-                       (click)="toggleDateInCalendar(dayCell)">
-                    
+                       (click)="toggleDateInCalendar(dayCell)">                    
                     <div class="day-content">
                       <span *ngIf="!dayCell.empty" class="day-number">{{ dayCell.day }}</span>
-                      
-                      <!-- Reservation indicators -->
                       <div class="reservation-indicators" *ngIf="!dayCell.empty">
                         <i *ngIf="dayCell.hasSchedule" class="ri-checkbox-circle-fill schedule-icon" title="Día programado"></i>
                         <i *ngIf="dayCell.isReserved" class="ri-alert-fill conflict-icon" title="Conflicto con reserva existente"></i>
                       </div>
-                      
-                      <!-- Time info for reserved days -->
                       <div *ngIf="dayCell.hasSchedule && !dayCell.empty" class="time-info">
                         <small class="time-text">{{ getDayTimes(dayCell.dayName) }}</small>
                       </div>
@@ -196,8 +184,6 @@
                   </div>
                 </ng-container>
               </div>
-              
-              <!-- Calendar Legend -->
               <div class="calendar-legend mt-3">
                 <div class="legend-item">
                   <div class="legend-color has-schedule"></div>
@@ -226,70 +212,55 @@
           </h6>
         </div>
         <div class="card-body">
-          <div class="summary-item mb-3">
-            <label class="small text-muted d-block mb-1">Período</label>
+          <div class="mb-2">
+            <h6 class="d-block mb-1">Período de Reserva</h6>
             <div class="d-flex align-items-center gap-2">
               <i class="ri-calendar-line text-primary"></i>
               <div>
-                <div class="small">{{ fechaInicio | date:'dd/MM/yyyy' }}</div>
-                <div class="small text-muted">hasta</div>
-                <div class="small">{{ fechaFin | date:'dd/MM/yyyy' }}</div>
+                <small>{{ fechaInicio | date:'dd/MM/yyyy' }}</small>
+                <small class="text-muted me-2 ms-2">hasta</small>
+                <small>{{ fechaFin | date:'dd/MM/yyyy' }}</small>
               </div>
             </div>
           </div>
           <hr>
-          <div class="summary-item mb-3">
-            <label class="small text-muted d-block mb-2">Días y Horarios Seleccionados</label>
-            <div class="alert alert-info small mb-2" *ngIf="selectedDaysCount === 0">
-              <i class="ri-information-line me-1"></i>
-              Seleccione al menos un día
+          <div class="mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="d-block mb-1">{{dataTariff.descripcion}}</h6>              
+              <button 
+                type="button" 
+                class="btn btn-sm btn-outline-secondary"
+                (click)="showTariffBreakdown = !showTariffBreakdown"
+                [disabled]="calculatedTariff === 0">
+                {{ showTariffBreakdown ? 'Ocultar' : 'Ver' }} detalles
+              </button>
             </div>
-            <div *ngIf="selectedDaysCount > 0">
-              <div *ngFor="let dia of diasSemana" class="mb-2">
-                <div *ngIf="dia.selected">
-                  <div class="d-flex align-items-center gap-2 p-2 bg-light rounded mb-1">
-                    <i class="ri-checkbox-circle-fill text-success"></i>
-                    <div class="flex-grow-1">
-                      <div class="fw-medium small">{{ dia.diaDisplay }}</div>
-                      <small class="text-muted">{{ dia.horarios.length }} horario(s)</small>
-                    </div>
-                  </div>
-                  <div class="ps-4">
-                    <div *ngFor="let slot of dia.horarios" class="small text-muted mb-1">
-                      <i class="ri-time-line me-1"></i>
-                      {{ slot.horaInicio }} - {{ slot.horaFin }}
-                      <span class="badge bg-secondary-subtle text-secondary ms-1">
-                        {{ calculateDuration(slot.horaInicio, slot.horaFin) | number:'1.1-1' }}h
-                      </span>
-                    </div>
-                  </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <label class="d-block text-muted">Tarifa Base</label>
+              <span class="text-muted">{{ dataTariff.precioBase | currency:'BOB':'symbol-narrow':'1.2-2' }}
+                <small>/{{ dataTariff.tipoCobro}}</small>
+              </span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <label class=" d-block text-muted">Total Parcial </label>
+              <h4 class="text-success mb-0">
+                Bs. {{ calculatedTariff.toFixed(2) }}
+              </h4>
+            </div>            
+            <div *ngIf="showTariffBreakdown && tariffDetails.length > 0" class="mt-2">
+              <div class="border-top pt-2">
+                <small class="fw-medium d-block mb-1">Desglose:</small>
+                <div *ngFor="let detail of tariffDetails" class="small text-muted mb-1">
+                  {{ detail }}
                 </div>
               </div>
             </div>
-          </div>
-          <hr>
-          <div class="stats-grid">
-            <div class="stat-card text-center p-3 bg-light rounded">
-              <div class="stat-value text-primary h3 mb-1">{{ selectedDaysCount }}</div>
-              <div class="stat-label small text-muted">Días/Semana</div>
-            </div>            
-            <div class="stat-card text-center p-3 bg-light rounded">
-              <div class="stat-value text-success h3 mb-1">{{ totalSessions }}</div>
-              <div class="stat-label small text-muted">Sesiones Totales</div>
-            </div>            
-            <div class="stat-card text-center p-3 bg-light rounded">
-              <div class="stat-value text-info h3 mb-1">{{ totalHours | number:'1.0-0' }}</div>
-              <div class="stat-label small text-muted">Horas Totales</div>
+            
+            <div *ngIf="calculatedTariff === 0" class="text-muted small">
+              <em>Complete los horarios para calcular la tarifa</em>
             </div>
           </div>
           <hr>
-          <div class="summary-item mb-3">
-            <label class="small text-muted d-block mb-1">Tarifa Mensual</label>
-            <div class="h4 text-success mb-0">
-              {{ dataTariff.precioBase | currency:'BOB':'symbol-narrow':'1.2-2' }}
-            </div>
-            <small class="text-muted">Por mes de entrenamiento</small>
-          </div>
           <div class="summary-item mb-3" *ngIf="tablero.length > 0">
             <label class="small text-muted d-block mb-2">
               <i class="ri-list-check me-1"></i>
@@ -305,6 +276,22 @@
                   {{ day.length }} horario(s)
                 </span>
               </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-4 text-center p-3 bg-light rounded">
+              <div class="stat-value text-primary h4 mb-1">{{ selectedDaysCount }}</div>
+              <div class="stat-label small text-muted">Días/Semana</div>
+            </div>
+            
+            <div class="col-4 text-center p-3 bg-light rounded">
+              <div class="stat-value text-success h4 mb-1">{{ totalHours | number:'1.0-0' }}</div>
+              <div class="stat-label small text-muted">Horas</div>
+            </div>
+            
+            <div class="col-4 text-center p-3 bg-light rounded">
+              <div class="stat-value text-info h4 mb-1">{{ calculateTotalMonths() }}</div>
+              <div class="stat-label small text-muted">Meses</div>
             </div>
           </div>
         </div>

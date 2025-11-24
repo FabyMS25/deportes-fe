@@ -72,74 +72,120 @@
     </button>
   </div>
   <!-- Grid View -->
-  <div class="row" *ngIf="!isLoading && filteredCampos.length > 0 && viewMode === 'grid'">
+  <div class="row campos-grid" *ngIf="!isLoading && filteredCampos.length > 0 && viewMode === 'grid'">
     <div class="col-lg-6" *ngFor="let item of filteredCampos">
       <div class="card campo-card border-0 shadow-sm" (click)="toggleCampoExpansion(item)">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start mb-2">
-            <div class="flex-grow-1">
-              <h6 class="mb-1 fw-bold">
-                {{ item.campo.nombre }}
-                <span class="badge bg-success-subtle text-success ms-2">
+        <div class="card-header py-2">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1 me-2">
+              <h5 class="fw-bold mb-1 text-break">{{ item.campo.nombre }}</h5>
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="badge bg-success-subtle text-success">
                   {{ item.campo.categoria }}
                 </span>
-                <span class="badge ms-2" [ngClass]="item.campo.requiereAprobacion 
-                ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success'">
+                <span class="badge" [ngClass]="item.campo.requiereAprobacion 
+                    ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success'">
                   <i class="ri-shield-check-line me-1"></i>
                   {{ item.campo.requiereAprobacion ? 'Requiere aprobación' : 'Aprobación automática'}}
                 </span>
-              </h6>
-              <small class="text-muted">{{ item.campo.codigo }}</small>
+                <span class="badge" [ngClass]="item.campo.accesoLibre 
+                    ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'">
+                  <i class="ri-login-box-line me-1"></i>
+                  Acceso Gratuito: {{ item.campo.accesoLibre ? 'Sí' : 'No' }}
+                </span>
+              </div>
             </div>
-            <div class="form-check">
+            <div class="form-check flex-shrink-0">
               <input class="form-check-input" 
-                     type="radio" 
-                     [checked]="item.isExpanded"
-                     [id]="'campo-' + item.campo.uuid">
+                    type="radio" 
+                    [checked]="item.isExpanded"
+                    [id]="'campo-' + item.campo.uuid">
             </div>
           </div>
-          <div class="mb-2">
-            <div class="row g-2 small">
-              <div class="col-3">
-                <i class="ri-landscape-line text-primary me-1"></i>
-                <strong>Superficie:</strong>
-                <span class="d-block text-muted">
-                  {{ item.campo.superficieDto.descripcion || 'No especificada' }}
-                </span>
+        </div>
+        <div class="card-body py-1 mt-1">    
+          <div class="row mb-2">
+            <div class="col-lg-6 d-flex gap-2 pb-0">
+              <i class="ri-landscape-line text-primary info-icon"></i>
+              <div>
+                <small class="text-muted d-block mb-0">Superficie</small>
+                <strong class="small">{{ item.campo.superficieDto.descripcion }}</strong>
               </div>
-              <div class="col-6">
-                <i class="ri-ruler-line text-primary me-1"></i>
-                <strong>Dimensiones:</strong>
-                <span class="d-block text-muted">
-                  {{ item.campo.dimensiones || 'No especificadas' }}
-                </span>
+            </div>
+            <div class="col-lg-6 d-flex gap-2 pb-0">
+              <i class="ri-lightbulb-line info-icon" 
+                 [class.text-success]="item.campo.tieneIluminacion"
+                 [class.text-muted]="!item.campo.tieneIluminacion"></i>
+              <div>
+                <small class="text-muted d-block mb-0">Iluminación</small>
+                <strong class="small" 
+                        [class.text-success]="item.campo.tieneIluminacion"
+                        [class.text-muted]="!item.campo.tieneIluminacion">
+                  {{ item.campo.tieneIluminacion ? 'Sí' : 'No' }}
+                </strong>
               </div>
-              <div class="col-6">
-                <i class="ri-lightbulb-line text-primary me-1"></i>
-                <strong>Iluminación:</strong>
-                <span class="d-block" 
-                      [class.text-success]="item.campo.tieneIluminacion"
-                      [class.text-muted]="!item.campo.tieneIluminacion">
-                  {{ item.campo.tieneIluminacion ? 'Disponible' : 'No disponible' }}
-                </span>
+            </div>
+            <div class="col-lg-6 d-flex gap-2 pb-0" *ngIf="item.campo.dimensiones">
+              <i class="ri-ruler-line text-primary info-icon"></i>
+              <div>
+                <small class="text-muted d-block mb-0">Dimensiones</small>
+                <strong class="small">{{ item.campo.dimensiones || 'No especificadas' }}</strong>
               </div>
-              <div class="col-6">
-                <i class="ri-time-line text-primary me-1"></i>
-                <strong>Horario:</strong>
-                <span class="d-block text-muted">
-                  {{ getHorarioDisplay(item.campo) }}
-                </span>
+            </div>
+            <div class="d-flex gap-2 pb-0" *ngIf="getAvailableDisciplines(item.campo).length > 0">
+              <i class="ri-basketball-line text-primary info-icon"></i>
+              <div class="gap-2 align-items-center small">
+                  <span *ngFor="let cat of getAvailableDisciplines(item.campo)" 
+                        class="badge bg-success-subtle text-success me-2">
+                    {{ cat }}
+                  </span>
               </div>
             </div>
           </div>
+          <div class="schedule-section bg-light-subtle py-1">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="d-flex">
+                <i class="ri-time-line text-primary me-2"></i>
+                <div>
+                  <small class="text-muted d-block mb-0">Horarios</small>
+                  <strong class="small" 
+                   [class.text-danger]="getHorarioDisplay(item.campo).includes('Cerrado')">
+                    {{ getHorarioDisplay(item.campo) }}
+                  </strong>
+                </div>
+              </div>
+              <button class="btn btn-sm btn-link text-primary p-0" 
+                      (click)="toggleHorarioExpansion(item.campo.uuid!, $event)"
+                      *ngIf="item.campo.horariosFijosDtoList && item.campo.horariosFijosDtoList.length > 0">
+                <i class="ri-arrow-down-s-line" 
+                  [class.rotate-180]="isHorarioExpanded(item.campo.uuid!)"></i>
+              </button>
+            </div>
+            <div *ngIf="isHorarioExpanded(item.campo.uuid!)" class="schedule-list mt-2 pt-2 border-top" @slideDown>
+              <div *ngFor="let horario of getHorarioCompleto(item.campo)" class="small mb-1">
+                {{ horario }}
+              </div>
+              <div *ngIf="getProximasExcepciones(item.campo).length > 0" class="mt-2 pt-2 border-top">
+                <small class="text-warning d-flex align-items-start gap-1">
+                  <i class="ri-alert-line mt-1"></i>
+                  <div>
+                    <strong class="d-block mb-1">Excepciones próximas:</strong>
+                    <div *ngFor="let exc of getProximasExcepciones(item.campo)" class="mb-1">
+                      {{ exc }}
+                    </div>
+                  </div>
+                </small>
+              </div>
+            </div>
+          </div>
+
           <div class="tarifas-section" *ngIf="item.isExpanded" @slideDown>
             <hr class="my-3">
             <h6 class="mb-2">
               <i class="ri-price-tag-3-line me-1"></i>
               Seleccione una tarifa:
             </h6>
-            <div class="tarifa-option gap-2 mb-2"
-                *ngFor="let tarifa of item.tarifasActivas; let i = index"
+            <div class="tarifa-option gap-2 mb-2" *ngFor="let tarifa of item.tarifasActivas; let i = index"
                 [ngClass]="getTarifaButtonClasses(item.campo, tarifa)"
                 (click)="selectTarifa(item, tarifa)"
                 [attr.aria-disabled]="!canSelectTarifa(item.campo, tarifa)"
@@ -148,77 +194,79 @@
                 tabindex="0"
                 (keydown.enter)="canSelectTarifa(item.campo, tarifa) && selectTarifa(item, tarifa)"
                 (keydown.space)="canSelectTarifa(item.campo, tarifa) && selectTarifa(item, tarifa)">
-              <div class="card-header tarifa-header p-0">
-                <div class="tarifa-title">
-                  <h6 class="text-primary mb-1">
-                    <i class="ri-price-tag-3-line" aria-hidden="true"></i>
-                    {{ tarifa.descripcion || 'Tarifa estándar' }}
-                  </h6>
-                </div>
-                <div class="tarifa-price">
-                  <span class="text-primary">{{ tarifa.precioBase | number:'1.2-2' }}</span>
-                  <span class="text-muted">Bs</span>
-                </div>
-              </div>
-              <div class="tarifa-meta mb-0">
-                <div class="tarifa-item">
-                  <p class="text-muted mb-0 small">
-                    <i class="ri-money-dollar-circle-line" aria-hidden="true"></i>
-                    Tipo de Cobro
-                  </p>
-                  <div class="d-flex gap-1 flex-wrap mt-1">
-                    <span class="badge bg-primary-subtle text-primary">
-                      {{ getTipoCobro(tarifa.tipoCobro) }}
-                    </span>
-                    <span class="badge bg-light-subtle text-body" *ngIf="tarifa.frecuencia">
-                      <i class="ri-repeat-line" aria-hidden="true"></i>
-                      {{ tarifa.frecuencia }}
-                    </span>
-                    <span class="badge bg-light-subtle text-body" *ngIf="tarifa.sesionesIncluidas">
-                      {{ tarifa.sesionesIncluidas }} Sesiones
-                    </span>
+                <div class="card-header tarifa-header p-0">
+                  <div class="d-flex gap-2 mb-1">
+                    <h6><i class="ri-price-tag-3-line text-primary  info-icon"></i></h6>
+                    <div>
+                      <h6 class="text-primary mb-0">
+                          {{ tarifa.descripcion || 'Tarifa estándar' }}
+                      </h6>
+                      <div class="m-0 rounded" 
+                          [ngClass]="{
+                          'bg-success-subtle': getTarifaPermission(item.campo, tarifa).canBook,
+                          'bg-warning-subtle': getTarifaPermission(item.campo, tarifa).canRequest,
+                          'bg-danger-subtle': !getTarifaPermission(item.campo, tarifa).canBook && !getTarifaPermission(item.campo, tarifa).canRequest
+                        }">
+                        <small class="d-block">
+                          <i class="ri-information-line me-1"></i>
+                          {{ getTarifaPermission(item.campo, tarifa).message }}
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tarifa-price">
+                        <span class="amount">{{ tarifa.precioBase | number:'1.2-2' }} Bs</span>
+                        <span class="currency">Bs</span>
                   </div>
                 </div>
-                <div *ngIf="tarifa.desde || tarifa.hasta" class="tarifa-item">
-                  <p class="text-muted mb-0 small">
-                    <i class="ri-time-line me-1" aria-hidden="true"></i>
-                    Intervalo Válido
-                  </p>
-                  <div class="d-flex align-items-center mt-1">
-                    <span class="badge bg-light text-dark">
-                      {{ tarifa.desde || '00:00' }} - {{ tarifa.hasta || '23:59' }}
-                    </span>
+                <div class="tarifa-meta mb-1">
+                  <div class="tarifa-item">
+                    <p class="text-muted mb-0 small">
+                      <i class="ri-money-dollar-circle-line" aria-hidden="true"></i>
+                      Tipo de Cobro
+                    </p>
+                    <div class="d-flex gap-1 flex-wrap mt-1">
+                      <span class="badge bg-primary-subtle text-primary">
+                        {{ getTipoCobro(tarifa.tipoCobro) }}
+                      </span>
+                      <span class="badge bg-light-subtle text-body" *ngIf="tarifa.frecuencia">
+                        <i class="ri-repeat-line" aria-hidden="true"></i>
+                        {{ tarifa.frecuencia }}
+                      </span>
+                      <span class="badge bg-light-subtle text-body" *ngIf="tarifa.sesionesIncluidas">
+                        {{ tarifa.sesionesIncluidas }} Sesiones
+                      </span>
+                    </div>
+                  </div>
+                  <div *ngIf="tarifa.desde || tarifa.hasta" class="tarifa-item">
+                    <p class="text-muted mb-0 small">
+                      <i class="ri-time-line me-1" aria-hidden="true"></i>
+                      Intervalo Válido
+                    </p>
+                    <div class="d-flex align-items-center mt-1">
+                      <span class="badge bg-light text-dark">
+                        {{ tarifa.desde || '00:00' }} - {{ tarifa.hasta || '23:59' }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="tarifa-item">
+                    <p class="text-muted mb-0 small">Categorías aplicadas</p>
+                    <div class="d-flex gap-1 flex-wrap mt-1">
+                      <span *ngFor="let cat of tarifa.categoriasDtoList" 
+                            class="badge bg-success-subtle text-success">
+                        {{ cat.categoriaDto.nombre }}
+                      </span>
+                      <span *ngIf="!tarifa.categoriasDtoList?.length" 
+                            class="badge bg-light-subtle text-muted">
+                        Sin categorías
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div class="tarifa-item">
-                  <p class="text-muted mb-0 small">Categorías aplicadas</p>
-                  <div class="d-flex gap-1 flex-wrap mt-1">
-                    <span *ngFor="let cat of tarifa.categoriasDtoList" 
-                          class="badge bg-success-subtle text-success">
-                      {{ cat.categoriaDto.nombre }}
-                    </span>
-                    <span *ngIf="!tarifa.categoriasDtoList?.length" 
-                          class="badge bg-light-subtle text-muted">
-                      Sin categorías
-                    </span>
-                  </div>
+                <div class="card-footer tarifa-action">
+                  <span>{{ getTarifaActionText(item.campo, tarifa) }}</span>
+                  <i class="ri-arrow-right-line" aria-hidden="true"></i>
                 </div>
-              </div>
-              <div class="tarifa-permission-info mt-2 p-2 rounded" 
-                   [ngClass]="{
-                     'bg-success-subtle': getTarifaPermission(item.campo, tarifa).canBook,
-                     'bg-warning-subtle': getTarifaPermission(item.campo, tarifa).canRequest,
-                     'bg-danger-subtle': !getTarifaPermission(item.campo, tarifa).canBook && !getTarifaPermission(item.campo, tarifa).canRequest
-                   }">
-                <small class="d-block mb-1">
-                  <i class="ri-information-line me-1"></i>
-                  {{ getTarifaPermission(item.campo, tarifa).message }}
-                </small>
-              </div>
-              <div class="tarifa-action">
-                <span>{{ getTarifaActionText(item.campo, tarifa) }}</span>
-                <i class="ri-arrow-right-line" aria-hidden="true"></i>
-              </div>
             </div>
           </div>
           <div class="mt-2" *ngIf="item.campo.observaciones">
@@ -249,6 +297,11 @@
                 <i class="ri-shield-check-line me-1"></i>
                 {{ item.campo.requiereAprobacion ? 'Requiere aprobación' : 'Aprobación automática' }}
               </span>
+              <span class="badge" [ngClass]="item.campo.accesoLibre 
+                  ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'">
+                <i class="ri-login-box-line me-1"></i>
+                Acceso Libre: {{ item.campo.accesoLibre ? 'Sí' : 'No' }}
+              </span>
             </div>
             <div class="form-check">
               <input class="form-check-input" 
@@ -258,7 +311,7 @@
             </div>
           </div>
           <div class="row justify-content-between">
-            <div class="col-md-9">              
+            <div class="col-md-10">              
             <div class="d-flex flex-wrap gap-3 align-items-center mb-2">
               <span class="badge bg-primary-subtle text-primary px-2 py-1">
                 <i class="ri-landscape-line me-1"></i>
@@ -274,10 +327,53 @@
                    [class.text-muted]="!item.campo.tieneIluminacion"></i>
                 {{ item.campo.tieneIluminacion ? 'Con iluminación' : 'Sin iluminación' }}
               </span>
-              <span>
-                <i class="ri-time-line me-1"></i>
-                {{ getHorarioDisplay(item.campo) }}
+              <span class="text-muted d-flex gap-2 pb-0" *ngIf="getAvailableDisciplines(item.campo).length > 0">
+                <i class="ri-basketball-line text-primary info-icon"></i>
+                <div class="align-items-center small">
+                    <span *ngFor="let cat of getAvailableDisciplines(item.campo)" 
+                          class="badge bg-success-subtle text-success me-2">
+                      {{ cat }}
+                    </span>
+                </div>
               </span>
+              <div class="d-flex align-items-center justify-content-between bg-light-subtle p-1 rounded">
+                <div class="d-flex">
+                  <i class="ri-time-line text-primary me-2"></i>
+                  <div>
+                    <small class="text-muted d-block mb-0">Horarios</small>
+                    <strong class="small" 
+                    [class.text-danger]="getHorarioDisplay(item.campo).includes('Cerrado')">
+                      {{ getHorarioDisplay(item.campo) }}
+                    </strong>
+                  </div>
+                </div>
+                <button class="btn btn-sm btn-link text-primary p-0" 
+                        (click)="toggleHorarioExpansion(item.campo.uuid!, $event)"
+                        *ngIf="getHorarioCompleto(item.campo).length > 1">
+                  <i class="ri-arrow-down-s-line" 
+                    [class.rotate-180]="isHorarioExpanded(item.campo.uuid!)"></i>
+                </button>
+              </div>
+            </div>
+            <div class="schedule-section bg-light-subtle p-1 rounded"  *ngIf="isHorarioExpanded(item.campo.uuid!)" @slideDown>
+              <div class="row g-3 p-2">
+                <div class="col">
+                  <div *ngFor="let horario of getHorarioCompleto(item.campo)" >
+                    {{ horario }}
+                  </div>
+                </div>
+              <div *ngIf="getProximasExcepciones(item.campo).length > 0" class="col">
+                <small class="text-warning d-flex align-items-start gap-1">
+                  <i class="ri-alert-line mt-1"></i>
+                  <div>
+                    <strong class="d-block mb-1">Excepciones próximas:</strong>
+                    <div *ngFor="let exc of getProximasExcepciones(item.campo)" class="mb-1">
+                      {{ exc }}
+                    </div>
+                  </div>
+                </small>
+              </div>
+              </div>
             </div>
             <div class="mt-2" *ngIf="item.campo.observaciones">
               <small class="text-muted">
@@ -286,24 +382,22 @@
               </small>
             </div>
             </div>
-            <div class="col-md-3 text-md-end">
+            <div class="col-md-2 text-md-end">
               <span class="text-primary small fw-semibold">
                 {{ item.isExpanded ? 'Contraer' : 'Ver tarifas' }}
                 <i class="ri-arrow-right-line ms-1" [class.ri-arrow-down-line]="item.isExpanded"></i>
               </span>
             </div>
           </div>
-          
-          <!-- Tarifas disponibles -->
           <div class="tarifas-section" *ngIf="item.isExpanded" @slideDown>
-            <hr class="my-3">
+            <hr class="my-2">
             <h6 class="mb-2">
               <i class="ri-price-tag-3-line me-1"></i>
               Seleccione una tarifa:
             </h6>
           <div class="row g-3">
             <div class="col-lg-6" *ngFor="let tarifa of item.tarifasActivas">              
-            <div class="tarifa-option gap-2 mb-1"
+            <div class="tarifa-option mb-1"
                 (click)="selectTarifa(item, tarifa)"
                 [attr.aria-disabled]="!canSelectTarifa(item.campo, tarifa)"
                 [class.disabled]="!canSelectTarifa(item.campo, tarifa)"
@@ -311,71 +405,80 @@
                 tabindex="0"
                 (keydown.enter)="canSelectTarifa(item.campo, tarifa) && selectTarifa(item, tarifa)"
                 (keydown.space)="canSelectTarifa(item.campo, tarifa) && selectTarifa(item, tarifa)">
-              <div class="card-header tarifa-header p-0">
-                <div class="tarifa-title">
-                  <h5 class="text-primary mb-1">
-                    <i class="ri-price-tag-3-line"></i>
-                    {{ tarifa.descripcion || 'Tarifa estándar' }}
-                  </h5>
-                </div>
-                <div class="tarifa-price">
-                  <span class="text-primary">{{ tarifa.precioBase | number:'1.2-2' }}</span>
-                  <span class="text-mutted">Bs</span>
-                </div>
-              </div>  
-              <div class="tarifa-meta mb-0">
-                <div class="tarifa-item">
-                  <p class="text-muted mb-0 small">
-                    <i class="ri-money-dollar-circle-line"></i> Tipo de Cobro
-                  </p>
-                  <span class="badge bg-primary-subtle text-primary">
-                    {{ getTipoCobro(tarifa.tipoCobro) }}
-                  </span>
-                  <span class="badge bg-light-subtle text-body" *ngIf="tarifa.frecuencia">
-                    <i class="ri-repeat-line"></i> {{ tarifa.frecuencia }}
-                  </span>
-                  <span class="badge bg-light-subtle text-body" *ngIf="tarifa.sesionesIncluidas">
-                    {{ tarifa.sesionesIncluidas }} Sesiones
-                  </span>
-                </div>
-                <div *ngIf="tarifa.desde || tarifa.hasta" class="tarifa-item">
-                    <p class="text-muted mb-0 small">
-                        <i class="ri-time-line me-1"></i> Intervalo Válido
-                      </p>
-                      <div class="d-flex align-items-center">
-                        <span class="badge bg-light">
-                          {{ tarifa.desde || '00:00' }} - {{ tarifa.hasta || '23:59' }}
-                        </span>
+                <div class="card-header tarifa-header p-0">
+                  <div class="d-flex gap-2 mb-1">
+                    <h6><i class="ri-price-tag-3-line text-primary  info-icon"></i></h6>
+                    <div>
+                      <h6 class="text-primary mb-0">
+                          {{ tarifa.descripcion || 'Tarifa estándar' }}
+                      </h6>
+                      <div class="m-0 rounded" 
+                          [ngClass]="{
+                          'bg-success-subtle': getTarifaPermission(item.campo, tarifa).canBook,
+                          'bg-warning-subtle': getTarifaPermission(item.campo, tarifa).canRequest,
+                          'bg-danger-subtle': !getTarifaPermission(item.campo, tarifa).canBook && !getTarifaPermission(item.campo, tarifa).canRequest
+                        }">
+                        <small class="d-block">
+                          <i class="ri-information-line me-1"></i>
+                          {{ getTarifaPermission(item.campo, tarifa).message }}
+                        </small>
                       </div>
-                </div>
-                <div class="tarifa-item">
-                    <div class="d-flex gap-1 flex-wrap">
-                        <span *ngFor="let cat of tarifa.categoriasDtoList" 
-                              class="badge bg-success-subtle text-success">
-                          {{ cat.categoriaDto.nombre }}
-                        </span>
-                        <span *ngIf="!tarifa.categoriasDtoList || tarifa.categoriasDtoList.length === 0" class="text-muted">
-                          Sin categorías
-                        </span>
                     </div>
-                </div> 
+                  </div>
+                  <div class="tarifa-price">
+                        <span class="amount">{{ tarifa.precioBase | number:'1.2-2' }} Bs</span>
+                        <span class="currency">Bs</span>
+                  </div>
+                </div>
+                <div class="tarifa-meta mb-1">
+                  <div class="tarifa-item">
+                    <p class="text-muted mb-0 small">
+                      <i class="ri-money-dollar-circle-line" aria-hidden="true"></i>
+                      Tipo de Cobro
+                    </p>
+                    <div class="d-flex gap-1 flex-wrap mt-1">
+                      <span class="badge bg-primary-subtle text-primary">
+                        {{ getTipoCobro(tarifa.tipoCobro) }}
+                      </span>
+                      <span class="badge bg-light-subtle text-body" *ngIf="tarifa.frecuencia">
+                        <i class="ri-repeat-line" aria-hidden="true"></i>
+                        {{ tarifa.frecuencia }}
+                      </span>
+                      <span class="badge bg-light-subtle text-body" *ngIf="tarifa.sesionesIncluidas">
+                        {{ tarifa.sesionesIncluidas }} Sesiones
+                      </span>
+                    </div>
+                  </div>
+                  <div *ngIf="tarifa.desde || tarifa.hasta" class="tarifa-item">
+                    <p class="text-muted mb-0 small">
+                      <i class="ri-time-line me-1" aria-hidden="true"></i>
+                      Intervalo Válido
+                    </p>
+                    <div class="d-flex align-items-center mt-1">
+                      <span class="badge bg-light text-dark">
+                        {{ tarifa.desde || '00:00' }} - {{ tarifa.hasta || '23:59' }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="tarifa-item">
+                    <p class="text-muted mb-0 small">Categorías aplicadas</p>
+                    <div class="d-flex gap-1 flex-wrap mt-1">
+                      <span *ngFor="let cat of tarifa.categoriasDtoList" 
+                            class="badge bg-success-subtle text-success">
+                        {{ cat.categoriaDto.nombre }}
+                      </span>
+                      <span *ngIf="!tarifa.categoriasDtoList?.length" 
+                            class="badge bg-light-subtle text-muted">
+                        Sin categorías
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-footer tarifa-action">
+                  <span>{{ getTarifaActionText(item.campo, tarifa) }}</span>
+                  <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                </div>
               </div>
-              <div class="tarifa-permission-info mt-2 p-2 rounded" *ngIf="getTarifaPermission(item.campo, tarifa) as permission"
-                   [ngClass]="{
-                     'bg-success-subtle': permission.canBook,
-                     'bg-warning-subtle': permission.canRequest,
-                     'bg-danger-subtle': !permission.canBook && !permission.canRequest
-                   }">
-                <small class="d-block mb-1">
-                  <i class="ri-information-line me-1"></i>
-                  {{ permission.message }}
-                </small>
-              </div>             
-              <div class="tarifa-action">
-                <span>{{ getTarifaActionText(item.campo, tarifa) }}</span>
-                <i class="ri-arrow-right-line ms-1" aria-hidden="true"></i>
-              </div>
-            </div>
             </div>
             </div>
           </div>

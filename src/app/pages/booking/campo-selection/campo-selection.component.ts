@@ -65,6 +65,7 @@ export class CampoSelectionComponent implements OnInit {
 
   camposConTarifas: CampoWithTariff[] = [];
   selectedCampoItem?: CampoWithTariff;
+  expandedHorarios: Set<string> = new Set();
   
   searchText = '';
   filterByIluminacion?: boolean;
@@ -84,7 +85,6 @@ export class CampoSelectionComponent implements OnInit {
     if (!this.dataComplejo?.camposDeportivosDtoList) {
       return;
     }
-
     this.camposConTarifas = this.dataComplejo.camposDeportivosDtoList
       .filter(campo => campo.estadoActual?.toLowerCase() === 'activo')
       .map(campo => ({
@@ -93,6 +93,8 @@ export class CampoSelectionComponent implements OnInit {
         isExpanded: false
       }))
       .filter(item => item.tarifasActivas.length > 0);
+
+      console.log('Campos con tarifas procesados:', this.camposConTarifas);
   }
 
   private getActiveTarifas(campo: CampoDeportivo): Tarifa[] {
@@ -172,8 +174,6 @@ export class CampoSelectionComponent implements OnInit {
         };
       }
     }
-    
-    // For por_evento - check event-specific permissions
     if (tipoCobro === 'por_evento') {
       if (this.enableEventsBooking) {
         if (campoRequiereAprobacion) {
@@ -215,11 +215,8 @@ export class CampoSelectionComponent implements OnInit {
       actionType: 'none'
     };
   }
-
   private getRecurrentePermission(campo: CampoDeportivo, tarifa: Tarifa, tipoCobro: string): TarifaPermission {
     const campoRequiereAprobacion = campo.requiereAprobacion;
-    
-    // If campo requires approval, only allow requests
     if (campoRequiereAprobacion) {
       if (this.enableSolicitudRecurrentBooking) {
         return {
@@ -237,8 +234,6 @@ export class CampoSelectionComponent implements OnInit {
         };
       }
     }
-    
-    // If campo doesn't require approval, check recurrent booking permissions
     if (this.enableRecurrentBooking) {
       return {
         canBook: true,
@@ -262,7 +257,6 @@ export class CampoSelectionComponent implements OnInit {
       };
     }
   }
-
 
   toggleCampoExpansion(item: CampoWithTariff): void {
     if (this.selectedCampoItem === item) {
@@ -377,22 +371,12 @@ getTarifaButtonClasses(campo: CampoDeportivo, tarifa: Tarifa): string {
     return tipo ? tipoMap[tipo] || tipo : 'No especificado';
   }
 
-  getHorarioDisplay(campo: CampoDeportivo): string {
-    if (!campo.horariosFijosDtoList || campo.horariosFijosDtoList.length === 0) {
-      return 'Horario no definido';
-    }
-
-    const horarioLV = campo.horariosFijosDtoList.find(
-      h => h.dia === 'lunes_viernes' && h.abierto
-    );
-
-    if (horarioLV && horarioLV.horaApertura && horarioLV.horaCierre) {
-      return `${horarioLV.horaApertura.slice(0, 5)} - ${horarioLV.horaCierre.slice(0, 5)}`;
-    }
-
-    return 'Consultar horarios';
+  public getAvailableDisciplines(campo: CampoDeportivo): string[] {        
+    return Array.from(new Set(campo.tarifasDtoList?.flatMap((tarifa: Tarifa) => 
+      tarifa.categoriasDtoList?.map((cat: any) => cat.categoriaDto.nombre) || [])
+    )) as string[];  
   }
-
+  
   getCapacidadDisplay(campo: CampoDeportivo): string {
     return campo.capacidadPersonas 
       ? `${campo.capacidadPersonas} personas` 
@@ -409,4 +393,125 @@ getTarifaButtonClasses(campo: CampoDeportivo, tarifa: Tarifa): string {
   back(): void {
     this.goBack.emit();
   }
+
+  getHorarioDisplay(campo: CampoDeportivo): string {
+    if (!campo.horariosFijosDtoList || campo.horariosFijosDtoList.length === 0) {
+      return 'Horario no definido';
+    }
+    const today = new Date().toLocaleDateString('es-BO', { weekday: 'long' }).toLowerCase();
+    const dayMap: { [key: string]: string } = {
+      'lunes': 'lunes',
+      'martes': 'martes',
+      'miércoles': 'miercoles',
+      'jueves': 'jueves',
+      'viernes': 'viernes',
+      'sábado': 'sabado',
+      'domingo': 'domingo'
+    };
+    const todayKey = dayMap[today];
+    let todayHorarios = campo.horariosFijosDtoList.filter(h => h.dia === todayKey && h.abierto);
+    if (todayHorarios.length === 0 && ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'].includes(todayKey)) {
+      todayHorarios = campo.horariosFijosDtoList.filter(h => h.dia === 'lunes_viernes' && h.abierto);
+    }
+    if (todayHorarios.length === 0) {
+      return 'Hoy: Cerrado';
+    }
+    const times = todayHorarios.map(h => 
+      `${h.horaApertura!.slice(0, 5)}-${h.horaCierre!.slice(0, 5)}`
+    ).join(', ');  
+    return `Hoy: ${times}`;
+  }
+
+  toggleHorarioExpansion(campoUuid: string, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (this.expandedHorarios.has(campoUuid)) {
+      this.expandedHorarios.delete(campoUuid);
+    } else {
+      this.expandedHorarios.add(campoUuid);
+    }
+  }
+
+  isHorarioExpanded(campoUuid: string): boolean {
+    return this.expandedHorarios.has(campoUuid);
+  }
+
+  getHorarioCompleto(campo: CampoDeportivo): string[] {
+    if (!campo.horariosFijosDtoList || campo.horariosFijosDtoList.length === 0) {
+      return ['Horario no definido'];
+    }
+    const daysMap: { [key: string]: string } = {
+      'lunes': 'Lunes',
+      'martes': 'Martes', 
+      'miercoles': 'Miércoles',
+      'jueves': 'Jueves',
+      'viernes': 'Viernes',
+      'sabado': 'Sábado',
+      'domingo': 'Domingo',
+      'lunes_viernes': 'Lunes a Viernes',
+    };
+    const horarios: string[] = [];
+    const grouped: { [key: string]: any[] } = {};
+    campo.horariosFijosDtoList.forEach(h => {
+      if (!grouped[h.dia]) {
+        grouped[h.dia] = [];
+      }
+      grouped[h.dia].push(h);
+    });
+    Object.keys(grouped).sort().forEach(dia => {
+      const dayHorarios = grouped[dia];
+      const dayLabel = daysMap[dia] || dia;    
+      if (dayHorarios.length === 0) return;    
+      const firstHorario = dayHorarios[0];
+      if (!firstHorario.abierto) {
+        horarios.push(`${dayLabel}: Cerrado`);
+        return;
+      }
+      if (dayHorarios.length === 1) {
+        horarios.push(`${dayLabel}: ${firstHorario.horaApertura!.slice(0, 5)}-${firstHorario.horaCierre!.slice(0, 5)}`);
+      } else {
+        const times = dayHorarios
+          .filter(h => h.abierto)
+          .map(h => `${h.horaApertura!.slice(0, 5)}-${h.horaCierre!.slice(0, 5)}`)
+          .join(', ');
+        horarios.push(`${dayLabel}: ${times}`);
+      }
+    });
+    return horarios.length > 0 ? horarios : ['Consultar horarios'];
+  }
+  getProximasExcepciones(campo: CampoDeportivo): string[] {
+    if (!campo.horariosExcepcionesDtoList || campo.horariosExcepcionesDtoList.length === 0) {
+      return [];
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return campo.horariosExcepcionesDtoList
+      .filter(exc => {
+        const excDate = new Date(exc.fecha);
+        excDate.setHours(0, 0, 0, 0);
+        return excDate >= today;
+      })
+      .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+      .slice(0, 3)
+      .map(exc => {
+        const date = new Date(exc.fecha);
+        const dateStr = date.toLocaleDateString('es-BO', { day: '2-digit', month: 'short' });
+        
+        if (exc.tipoExcepcion === 'cerrado') {
+          return `${dateStr}: CERRADO`;
+        }
+        if (exc.tipoExcepcion === 'mantenimiento') {
+          return `${dateStr}: Mantenimiento`;
+        }
+        if (exc.tipoExcepcion === 'evento_municipal') {
+          return `${dateStr}: ${exc.motivo || 'Evento'}`;
+        }
+        if (exc.tipoExcepcion === 'horario_especial' && exc.horaApertura && exc.horaCierre) {
+          return `${dateStr}: ${exc.horaApertura.slice(0, 5)}-${exc.horaCierre.slice(0, 5)}`;
+        }
+        return `${dateStr}: Horario especial`;
+      });
+  }
+  
 }

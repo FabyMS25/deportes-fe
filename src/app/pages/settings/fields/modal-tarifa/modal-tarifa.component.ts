@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, TemplateRef, ViewChild, OnInit } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormGroup, UntypedFormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { catchError, forkJoin, Observable, of, switchMap, tap, map } from 'rxjs';
 import Swal from 'sweetalert2';
 import { TarifaService } from 'src/app/core/services/api/tarifa.service';
@@ -11,7 +11,6 @@ import { ClasificadorRuatService } from 'src/app/core/services/api/clasificadorR
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
-import { TarifaConcepto } from 'src/app/core/models/tarifaConcepto.model';
 
 @Component({
   selector: 'app-modal-tarifa',
@@ -29,6 +28,17 @@ export class ModalTarifaComponent implements OnInit {
   
   clasificadoresRuatList: ClasificadorRuat[] = [];
   categoriasList: Categoria[] = [];
+
+  // Add the same mapping and days functionality
+  clasificadorTipoCobroMap: { [key: string]: string[] } = {
+    'hora': ['por_hora'],
+    'mensualidad': ['mensualidad', 'por_sesion'],
+    'evento': ['por_evento'],
+    'persona': ['por_persona'],
+    'club': ['por_club']
+  };
+
+  diasPersonalizados: { [tarifaIndex: number]: { [diaId: number]: boolean } } = {};
 
   submitted = false;
   form!: FormGroup;
@@ -61,8 +71,14 @@ export class ModalTarifaComponent implements OnInit {
     const tarifasArray = this.form.get('tarifasDtoList') as FormArray;
     
     if (this.row.tarifasDtoList && this.row.tarifasDtoList.length > 0) {
-      this.row.tarifasDtoList.forEach((tarifa: any) => {
+      this.row.tarifasDtoList.forEach((tarifa: any, index: number) => {
         const tarifaGroup = this.createTarifaFormGroup(tarifa);
+        
+        // Initialize personalized days if needed
+        if (tarifa.frecuencia === 'personalizado' && tarifa.sesionesIncluidas) {
+          this.inicializarDiasPersonalizadosDesdeSesiones(index, Number(tarifa.sesionesIncluidas));
+        }
+        
         if (tarifa.conceptosDtos && tarifa.conceptosDtos.length > 0) {
           const conceptosArray = tarifaGroup.get('conceptosDtos') as FormArray;
           tarifa.conceptosDtos.forEach((concepto: any) => {
@@ -73,7 +89,9 @@ export class ModalTarifaComponent implements OnInit {
         tarifasArray.push(tarifaGroup);
       });
     } else if (this.accion === 'edit') {
-      tarifasArray.push(this.createTarifaFormGroup());
+      const newIndex = this.tarifas.length;
+      this.tarifas.push(this.createTarifaFormGroup());
+      this.inicializarDiasPersonalizadosParaTarifa(newIndex);
     }
   }
 
@@ -89,8 +107,11 @@ export class ModalTarifaComponent implements OnInit {
       observaciones: [tarifa.observaciones || ''],
       activo: [tarifa.activo !== undefined ? tarifa.activo : true],
       tipoCobro: [tarifa.tipoCobro || '', Validators.required],
-      frecuencia: [tarifa.frecuencia || ''],
-      sesionesIncluidas: [tarifa.sesionesIncluidas || null],
+      frecuencia: [tarifa.frecuencia || '', this.conditionalValidator('tipoCobro', 'mensualidad')],
+      sesionesIncluidas: [
+        tarifa.sesionesIncluidas || null, 
+        [this.conditionalValidator('tipoCobro', 'mensualidad'), Validators.min(1)]
+      ],
       clasificadorRuatDto: [tarifa.clasificadorRuatDto || null, Validators.required],
       categoriasDtoList: [
         tarifa.categoriasDtoList?.map((cat: any) => cat.categoriaDto || cat) || [], 
@@ -100,6 +121,182 @@ export class ModalTarifaComponent implements OnInit {
     });
   }
 
+  // Add conditional validator
+  private conditionalValidator(dependentField: string, requiredValue: string) {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.parent) return null;      
+      const dependentControlValue = control.parent.get(dependentField)?.value;
+      if (dependentControlValue === requiredValue && !control.value) {
+        return { required: true };
+      }      
+      return null;
+    };
+  }
+
+  // Add the same methods from main modal
+  getFilteredTipoCobroOptions(tarifaIndex: number): any[] {
+    const tarifaGroup = this.tarifas.at(tarifaIndex);
+    const clasificador = tarifaGroup.get('clasificadorRuatDto')?.value;    
+    if (!clasificador || !clasificador.nombre) {
+      return this.tipoCobroOptions;
+    }
+    const nombre = clasificador.nombre.toLowerCase();
+    const matchingKeys = Object.keys(this.clasificadorTipoCobroMap).filter(key => 
+      nombre.includes(key)
+    );
+    if (matchingKeys.length === 0) {
+      return this.tipoCobroOptions;
+    }
+    const allowedTipoCobros = new Set<string>();
+    matchingKeys.forEach(key => {
+      this.clasificadorTipoCobroMap[key].forEach(tipo => allowedTipoCobros.add(tipo));
+    });    
+    return this.tipoCobroOptions.filter(option => 
+      allowedTipoCobros.has(option.value)
+    );
+  }
+
+  onClasificadorRuatChange(tarifaIndex: number) {
+    const tarifaGroup = this.tarifas.at(tarifaIndex);
+    const clasificador = tarifaGroup.get('clasificadorRuatDto')?.value;    
+    if (clasificador && clasificador.nombre) {
+      const nombre = clasificador.nombre.toLowerCase();
+      if (nombre.includes('hora')) {
+        tarifaGroup.patchValue({ tipoCobro: 'por_hora' });
+      } else if (nombre.includes('mensualidad')) {
+        tarifaGroup.patchValue({ tipoCobro: 'mensualidad' });
+      } else if (nombre.includes('evento')) {
+        tarifaGroup.patchValue({ tipoCobro: 'por_evento' });
+      }
+      this.onTipoCobroChange(tarifaIndex);
+    }
+  }
+
+  onTipoCobroChange(tarifaIndex: number) {
+    const tarifaGroup = this.tarifas.at(tarifaIndex);
+    const tipoCobro = tarifaGroup.get('tipoCobro')?.value;    
+    if (tipoCobro !== 'mensualidad') {
+      tarifaGroup.patchValue({
+        frecuencia: '',
+        sesionesIncluidas: null
+      });
+    }
+  }
+
+  onFrecuenciaChange(tarifaIndex: number) {
+    const tarifaGroup = this.tarifas.at(tarifaIndex);
+    const frecuenciaValue = tarifaGroup.get('frecuencia')?.value;
+    const frecuenciaConfig = this.frecuenciaOptions.find(f => f.value === frecuenciaValue);
+    if (frecuenciaConfig) {
+      if (frecuenciaConfig.value === 'personalizado') {
+        this.resetDiasPersonalizadosParaTarifa(tarifaIndex);
+        tarifaGroup.patchValue({
+          sesionesIncluidas: 0
+        });
+      } else {
+        tarifaGroup.patchValue({
+          sesionesIncluidas: frecuenciaConfig.sesiones
+        });
+      }
+    }
+  }
+
+  // Days management methods
+  inicializarDiasPersonalizadosParaTarifa(tarifaIndex: number) {
+    if (!this.diasPersonalizados[tarifaIndex]) {
+      this.diasPersonalizados[tarifaIndex] = {
+        1: false, 2: false, 3: false, 4: false, 5: false, 6: false, 7: false
+      };
+    }
+  }
+
+  getDiasPersonalizados(tarifaIndex: number): { [diaId: number]: boolean } {
+    if (!this.diasPersonalizados[tarifaIndex]) {
+      this.inicializarDiasPersonalizadosParaTarifa(tarifaIndex);
+    }
+    return this.diasPersonalizados[tarifaIndex];
+  }
+
+  resetDiasPersonalizadosParaTarifa(tarifaIndex: number) {
+    this.diasPersonalizados[tarifaIndex] = {
+      1: false, 2: false, 3: false, 4: false, 5: false, 6: false, 7: false
+    };
+  }
+
+  onDiaPersonalizadoChange(tarifaIndex: number, diaId: number, event: any) {
+    const isChecked = event.target.checked;
+    this.inicializarDiasPersonalizadosParaTarifa(tarifaIndex);
+    this.diasPersonalizados[tarifaIndex][diaId] = isChecked;
+    const diasSeleccionados = Object.keys(this.diasPersonalizados[tarifaIndex])
+      .filter(key => this.diasPersonalizados[tarifaIndex][parseInt(key)])
+      .map(key => parseInt(key))
+      .sort();    
+    const sesionesValue = this.calcularSesionesFromDias(diasSeleccionados);
+    const tarifaGroup = this.tarifas.at(tarifaIndex);
+    tarifaGroup.patchValue({
+      sesionesIncluidas: sesionesValue
+    });
+  }
+
+  inicializarDiasPersonalizadosDesdeSesiones(tarifaIndex: number, sesiones: number) {
+    this.inicializarDiasPersonalizadosParaTarifa(tarifaIndex);
+    const dias = this.convertirSesionesToDias(sesiones);
+    dias.forEach(dia => {
+      this.diasPersonalizados[tarifaIndex][dia] = true;
+    });
+  }
+
+  calcularSesionesFromDias(dias: number[]): number {
+    if (dias.length === 0) return 0;
+    return parseInt(dias.join(''));
+  }
+
+  convertirSesionesToDias(sesiones: number): number[] {
+    if (!sesiones || sesiones === 0) return [];    
+    return sesiones.toString().split('').map(Number);
+  }
+
+  // Display methods
+  getDisplaySesionesFromNumber(sesiones: number): string {
+    if (!sesiones || sesiones === 0) {
+      return '❌ Ningún día seleccionado';
+    }  
+    const diasSemanales = [
+      { id: 1, name: 'Lunes' },
+      { id: 2, name: 'Martes' },
+      { id: 3, name: 'Miércoles' },
+      { id: 4, name: 'Jueves' },
+      { id: 5, name: 'Viernes' },
+      { id: 6, name: 'Sábado' },
+      { id: 7, name: 'Domingo' }
+    ];  
+    const sesionesStr = sesiones.toString();
+    const selectedDayIds = sesionesStr.split('').map(Number);
+    const displayParts = diasSemanales.map(dia => {
+      const isSelected = selectedDayIds.includes(dia.id);
+      return `${isSelected ? '✅' : '❌'} ${dia.name}`;
+    });
+    return displayParts.join(' • ');
+  }
+
+  getDisplaySesionesFromDias(diasObj: { [diaId: number]: boolean }): string {
+    const diasSemanales = [
+      { id: 1, name: 'Lunes' },
+      { id: 2, name: 'Martes' },
+      { id: 3, name: 'Miércoles' },
+      { id: 4, name: 'Jueves' },
+      { id: 5, name: 'Viernes' },
+      { id: 6, name: 'Sábado' },
+      { id: 7, name: 'Domingo' }
+    ];     
+    const displayParts = diasSemanales.map(dia => {
+      const isSelected = diasObj[dia.id];
+      return `${isSelected ? '✅' : '❌'} ${dia.name}`;
+    });    
+    return displayParts.join(' • ');
+  }
+
+  // Rest of the existing methods remain the same...
   createConceptoFormGroup(concepto: any = {}): FormGroup {
     return this.formBuilder.group({
       uuid: [concepto.uuid || null],
@@ -141,8 +338,8 @@ export class ModalTarifaComponent implements OnInit {
       desde?.setValue(null);
       hasta?.setValue(null);
     } else {
-      desde?.setValue('18:00');
-      hasta?.setValue('06:00');
+      desde?.setValue('06:00');
+      hasta?.setValue('22:00');
     }
   }
 
@@ -179,7 +376,9 @@ export class ModalTarifaComponent implements OnInit {
   }
 
   addTarifa() {
+    const newIndex = this.tarifas.length;
     this.tarifas.push(this.createTarifaFormGroup());
+    this.inicializarDiasPersonalizadosParaTarifa(newIndex);
   }
 
   addConcepto(tarifaIndex: number) {
@@ -205,6 +404,7 @@ export class ModalTarifaComponent implements OnInit {
               next: (result) => {
                 if (result) {
                   this.tarifas.removeAt(index);
+                  delete this.diasPersonalizados[index];
                 }
               },
               error: (err) => {
@@ -218,6 +418,7 @@ export class ModalTarifaComponent implements OnInit {
       );
     } else {
       this.tarifas.removeAt(index);
+      delete this.diasPersonalizados[index];
     }
   }
 
@@ -259,8 +460,8 @@ export class ModalTarifaComponent implements OnInit {
         observaciones: control.value.observaciones || null,
         activo: control.value.activo,
         tipoCobro: control.value.tipoCobro,
-        frecuencia: control.value.frecuencia || null,
-        sesionesIncluidas: control.value.sesionesIncluidas ? parseInt(control.value.sesionesIncluidas) : null,
+        frecuencia: control.value.tipoCobro === 'mensualidad' ? control.value.frecuencia : null,
+        sesionesIncluidas: control.value.tipoCobro === 'mensualidad' ? parseInt(control.value.sesionesIncluidas) : null,
         clasificadorRuatDto: control.value.clasificadorRuatDto,
         campoDeportivoDto: this.row,
         categoriasDtoList: control.value.categoriasDtoList.map((cat: any) => ({
@@ -374,18 +575,16 @@ export class ModalTarifaComponent implements OnInit {
         }
       }),
       catchError((error) => {
-        Swal.fire({ text: 'No se pudo eliminar la Tarifa', confirmButtonColor: '#299cdb' });
+        Swal.fire({ 
+          text: error, 
+          confirmButtonColor: '#299cdb',
+          icon: 'error'
+        });
         return of(false);
       }),
-      map((data: any) => data.status === 'OK')
+      map((response: string) => true),
+      catchError(() => of(false))
     );
-  }
-
-  public closeModal() {
-    this.accion = '';
-    this.submitted = false;
-    this.form.reset();
-    this.modalService.dismissAll();
   }
 
   private notify(message: any, type: any): void {
@@ -402,5 +601,12 @@ export class ModalTarifaComponent implements OnInit {
       if (result.dismiss === Swal.DismissReason.timer) {
       }
     });
+  }
+  
+  public closeModal() {
+    this.accion = '';
+    this.submitted = false;
+    this.form.reset();
+    this.modalService.dismissAll();
   }
 }

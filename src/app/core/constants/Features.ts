@@ -18,7 +18,6 @@ export enum DiaSemana {
   VIERNES = 'viernes',
   SABADO = 'sabado',
   DOMINGO = 'domingo',
-  FERIADO = 'feriado'
 }
 
 export enum TipoExcepcion {

@@ -7,8 +7,6 @@ export interface Categoria {
   nombre:String;
   descripcion?:String;
   activo: boolean;
-  // maxDuracionAutoAprobacion?:number;
-  // maxPersonasAutoAprobacion?:number;
 
   tipo?:String;
   forAsociacion?:boolean; 
