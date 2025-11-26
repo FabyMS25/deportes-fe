@@ -175,6 +175,14 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    console.log("CONFIGURACIONES O REGLAS DEL SISTEMA SEGUN USURAIO: ",this.systemConfigs)
+    console.log(this.bookingType, this.actionType);
+    console.log("COMPLEJO ", this.dataComplejo);
+    console.log("CAMPO ", this.dataField);
+    console.log("TARIFA ", this.selectedTariff);
+    console.log("horario o horarios ", this.selectedSchedule, this.recurrentSchedule);
+    console.log("RESERVAS HECHAS EN CAMPO ", this.reservationsList);
+    
     this.initializeUserContext();
     this.generateReservationNumber();
     this.initializeForm();
@@ -856,6 +864,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
               break;
             case 'por_hora':
               const horasConcepto = this.getDurationForConcepto(concepto, formValue);
+              console.log(horasConcepto)
               const horasCalculadas = horasConcepto.toFixed(1);              
               if (concepto.desde && concepto.hasta) {
                 conceptoDetalle = `${concepto.concepto}: ${horasCalculadas}h (${concepto.desde.slice(0, 5)}-${concepto.hasta.slice(0, 5)}) × Bs. ${concepto.valor} (Bs. ${conceptoMonto.toFixed(2)})`;
@@ -898,20 +907,116 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
   }
 
-  private getDurationForConcepto(concepto: any, formValue: any): number {
-    if (this.bookingType === 'puntual') {
-      const horaInicio = formValue.horaInicio;
-      const horaFin = formValue.horaFin;
-      const duracionTotal = formValue.duracionHoras || 1;
-      if (concepto.desde && concepto.hasta && horaInicio && horaFin) {
-        return this.calculateOverlappingDuration(horaInicio, horaFin, concepto.desde, concepto.hasta);
-      }      
-      return duracionTotal;
-    } else if (this.bookingType === 'recurrente' && this.recurrentSchedule) {
-      return this.recurrentSchedule.duracionSesionHoras || 1;
-    }
+private calculateTotalHoursForRecurrentSessions(): number {
+  if (this.bookingType !== 'recurrente' || !this.recurrentSchedule) {
     return 1;
   }
+  let totalHours = 0;
+  const start = new Date(this.recurrentSchedule.fechaInicio);
+  const end = new Date(this.recurrentSchedule.fechaFin);
+  const selectedDays = this.recurrentSchedule.diasSeleccionados || [];  
+  selectedDays.forEach((dia: any) => {
+    if (dia.selected) {
+      const dayOccurrences = this.countDayOccurrencesInRange(dia.dia, start, end);
+      dia.horarios.forEach((slot: any) => {
+        const duration = this.calculateDurationFromTimes(slot.horaInicio, slot.horaFin);
+        totalHours += duration * dayOccurrences;
+      });
+    }
+  });
+  
+  return totalHours;
+}
+
+private countDayOccurrencesInRange(dayName: string, start: Date, end: Date): number {
+  const dayMap: {[key: string]: number} = {
+    'domingo': 0,
+    'lunes': 1,
+    'martes': 2,
+    'miercoles': 3,
+    'jueves': 4,
+    'viernes': 5,
+    'sabado': 6
+  };
+  
+  const targetDay = dayMap[dayName];
+  let count = 0;
+  const current = new Date(start);
+  
+  while (current <= end) {
+    if (current.getDay() === targetDay) {
+      count++;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+  
+  return count;
+}
+
+private calculateTotalOverlappingHoursFromTablero(conceptoDesde: string, conceptoHasta: string): number {
+  if (!this.recurrentSchedule?.tablero || !this.recurrentSchedule.fechaInicio || !this.recurrentSchedule.fechaFin) {
+    return 0;
+  }
+
+  let totalOverlappingHours = 0;
+  const tablero = this.recurrentSchedule.tablero;
+  const start = new Date(this.recurrentSchedule.fechaInicio);
+  const end = new Date(this.recurrentSchedule.fechaFin);
+  const dayMap: {[key: number]: string} = {
+    0: 'lunes',
+    1: 'martes', 
+    2: 'miercoles',
+    3: 'jueves',
+    4: 'viernes',
+    5: 'sabado',
+    6: 'domingo'
+  };
+
+  tablero.forEach((horariosDelDia: string[], dayIndex: number) => {
+    if (horariosDelDia && horariosDelDia.length > 0) {
+      const dayName = dayMap[dayIndex];
+      const dayOccurrences = this.countDayOccurrencesInRange(dayName, start, end);
+      
+      horariosDelDia.forEach((horarioStr: string) => {
+        const [sessionStart, sessionEnd] = horarioStr.split('-');
+        
+        if (sessionStart && sessionEnd) {
+          const sessionOverlap = this.calculateOverlappingDuration(
+            sessionStart, 
+            sessionEnd, 
+            conceptoDesde, 
+            conceptoHasta
+          );
+          
+          totalOverlappingHours += sessionOverlap * dayOccurrences;
+        }
+      });
+    }
+  });
+
+  return totalOverlappingHours;
+}
+
+private getDurationForConcepto(concepto: any, formValue: any): number {
+  if (this.bookingType === 'puntual') {
+    const horaInicio = formValue.horaInicio;
+    const horaFin = formValue.horaFin;
+    const duracionTotal = formValue.duracionHoras || 1;
+    
+    if (concepto.desde && concepto.hasta && horaInicio && horaFin) {
+      return this.calculateOverlappingDuration(horaInicio, horaFin, concepto.desde, concepto.hasta);
+    }
+    
+    return duracionTotal;
+  } else if (this.bookingType === 'recurrente' && this.recurrentSchedule) {
+    if (concepto.desde && concepto.hasta) {
+      return this.calculateTotalOverlappingHoursFromTablero(concepto.desde, concepto.hasta);
+    }
+    return this.calculateTotalHoursForRecurrentSessions();
+  }
+  
+  return 1;
+}
 
   private calculateOverlappingDuration(startTime: string, endTime: string, conceptStart: string, conceptEnd: string): number {
     try {
