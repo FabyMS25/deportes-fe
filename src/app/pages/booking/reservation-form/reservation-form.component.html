@@ -64,8 +64,6 @@
                 [class.is-invalid]="isFieldInvalid('numeroReserva')"
                 [class.bg-light]="!canEditReservationNumber"
                 placeholder="0010/25">
-              
-              <!-- Action buttons for editable users -->
               <div class="btn-group" *ngIf="canEditReservationNumber">
                 <button
                   *ngIf="reservationForm.get('numeroReserva')?.value !== numeroReserva && reservationForm.get('numeroReserva')?.valid"
@@ -75,14 +73,6 @@
                   [disabled]="isSubmitting"
                   title="Validar número personalizado">
                   <i class="ri-check-line"></i>
-                </button>
-                <button
-                  class="btn btn-outline-secondary"
-                  type="button"
-                  (click)="generateNewReservationNumber()"
-                  [disabled]="isSubmitting"
-                  title="Generar nuevo número">
-                  <i class="ri-refresh-line"></i>
                 </button>
               </div>
               

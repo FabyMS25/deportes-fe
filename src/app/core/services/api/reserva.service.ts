@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Reserva } from '../../models/reserva.models';
+import { BookingType } from '../../constants/Features';
 
 @Injectable({
   providedIn: 'root'
@@ -116,33 +117,19 @@ export class ReservaService {
   verificarRequisitosAprobacion(uuidCampo: string, reservaData: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/campo/${uuidCampo}/verificar-aprobacion`, reservaData);
   }
-  
-  /**
-   * Previews the next reservation number without reserving it
-   * Use this to show the number to the user before creating the reservation
-   */
-  previewNumeroReserva(): Observable<string> {
-    return this.http.get<string>(`${this.apiUrl}/numero-reserva/preview`);
+
+  previewNumeroReserva(tipoReserva: BookingType): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/numero-reserva/preview?tipo=${tipoReserva}`);
   }
 
-  /**
-   * Generates the next available reservation number
-   * Use this when the user confirms they want to use this number
-   */
-  generateNumeroReserva(): Observable<string> {
-    return this.http.get<string>(`${this.apiUrl}/numero-reserva/generar`);
+  generateNumeroReserva(tipoReserva: BookingType): Observable<string> {
+    return this.http.post<string>(`${this.apiUrl}/numero-reserva/generar`, { tipoReserva });
   }
 
-  /**
-   * Validates a custom reservation number provided by the user
-   */
   validateNumeroReserva(numeroReserva: string): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/numero-reserva/validar`, numeroReserva);
   }
 
-  /**
-   * Checks if a specific reservation number is available
-   */
   verificarDisponibilidadNumeroReserva(numeroReserva: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/numero-reserva/verificar/${numeroReserva}`);
   }
