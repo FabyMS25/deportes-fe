@@ -49,8 +49,7 @@ export class ListComponent implements OnInit {
     this.breadCrumbItems = [
       { label: '' },
       { label: this.title, active: true }
-    ];
-    
+    ];    
     this.itemsList = [
       { name: 'Nombre Completo', prop: 'nombreCompleto', visible: true },
       { name: 'Nombre', prop: 'nombre', visible: false },
@@ -68,7 +67,7 @@ export class ListComponent implements OnInit {
       { name: 'Email', prop: 'email', visible: false },
       { name: 'Dirección', prop: 'direccion', visible: false },
       { name: 'Estado Usuario', prop: 'estadoUsuario', tag: true, visible: true },
-      { name: 'Estado Ruat', prop: 'estadoRuat', visible: true, tag: true },
+      { name: 'Estado Ruat', prop: 'estadoRuat', visible: false, tag: true },
       { name: 'Es Deportista Elite', prop: 'esDeportistaElite', visible: false, tag: true },
       { name: 'Puede Reservar Gratis', prop: 'puedeReservarGratis', visible: false, tag: true },
       { name: 'Pertenece Escuela Municipal', prop: 'perteneceEscuelaMunicipal', visible: false, tag:true},
@@ -81,9 +80,19 @@ export class ListComponent implements OnInit {
       { name: 'Estado Sancionado', prop: 'estaSancionado', visible: false, tag: true },
       { name: 'Fecha fin Sancion', prop: 'fechaFinSancion', visible: false, date: false },
       { name: 'Motivo', prop: 'motivoSancion', visible: false },
-    ];
-    
+    ];    
     this.getTaxpayers();
+  }
+
+  getSelectedItems(items: any) {
+    this.selectedItems = items;
+  }
+  toggleColumn(column: any) {
+      column.visible = !column.visible;
+  }
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
+    localStorage.setItem('dataTableViewMode', this.viewMode);
   }
 
   applyFilters() {
@@ -130,11 +139,6 @@ export class ListComponent implements OnInit {
     );
   }
 
-  performSearch(): void {
-    this.applyFilters();
-  }
-
-  // Handle tab navigation changes
   onNavChange(changeEvent: NgbNavChangeEvent) {
     switch (changeEvent.nextId) {
       case 1: 
@@ -156,14 +160,6 @@ export class ListComponent implements OnInit {
         this.contribuyentesList = this.temp.filter(item => item.estaSancionado === true);
         break;
     }
-  }
-
-  getSelectedItems(items: any[]) {
-    this.selectedItems = items;
-  }
-
-  toggleColumn(column: any) {
-    column.visible = !column.visible;
   }
 
   public openModal(content: any | undefined, accion: string, size: string) {

@@ -335,11 +335,6 @@ getTarifaButtonClasses(campo: CampoDeportivo, tarifa: Tarifa): string {
     this.filterByCategoria = undefined;
   }
 
-  hasActiveFilters(): boolean {
-    return !!(this.searchText || this.filterByIluminacion !== undefined || 
-              this.filterBySuperficie || this.filterByCategoria);
-  }
-
   get superficiesDisponibles(): string[] {
     const superficies = new Set<string>();
     this.camposConTarifas.forEach(item => {

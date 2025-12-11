@@ -32,6 +32,8 @@ export class ClasificadoresRuatComponent {
   checkedList: any;
   searchResults: any;
   searchTerm: any;
+  selectedItems: any[] = [];
+
   constructor(private modalService: NgbModal,
     private authService: AuthenticationService,
     public translate: TranslateService,
@@ -49,8 +51,6 @@ export class ClasificadoresRuatComponent {
       { label: 'Administración' },
       { label: this.title, active: true }
     ];
-
-    // Update itemsList - remove tipoReserva since it's commented out
     this.itemsList = [
       {name: 'Código', prop: 'codigo', visible: true},
       {name: 'Nombre', prop: 'nombre', visible: true},
@@ -58,7 +58,6 @@ export class ClasificadoresRuatComponent {
       {name: 'Tipo Arancel', prop: 'tipoArancel', visible: true},
       {name: 'Estado', prop: 'activo', visible: true, tag:true},
     ];
-
     this.contentForm = this.formBuilder.group({
       uuid: [''],
       estado: [''],
@@ -69,6 +68,17 @@ export class ClasificadoresRuatComponent {
       activo: [true]
     });
     this.getClasificadores();
+  }
+
+  getSelectedItems(items: any) {
+    this.selectedItems = items;
+  }
+  toggleColumn(column: any) {
+      column.visible = !column.visible;
+  }
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
+    localStorage.setItem('dataTableViewMode', this.viewMode);
   }
 
   get form() {
@@ -84,11 +94,6 @@ export class ClasificadoresRuatComponent {
       tipoArancel: row.tipoArancel,
       activo: row.activo
     });
-  }
-
-  selectedItems: any[] = [];
-  getSelectedItems(items: any[]) {
-    this.selectedItems = items;
   }
 
   performSearch(): void {

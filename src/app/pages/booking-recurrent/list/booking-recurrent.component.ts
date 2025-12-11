@@ -46,6 +46,8 @@ export class BookingRecurrentComponent implements OnInit {
 
   contribuyente!: any;
   dataSelected!: any;
+  selectedItems: ReservaRecurrente[] = [];
+  consultResults: any[] = [];
 
   searchResults: any;
   searchTerm: string = '';
@@ -150,10 +152,15 @@ export class BookingRecurrentComponent implements OnInit {
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
-  selectedItems: ReservaRecurrente[] = [];
-  consultResults: any[] = [];
-  getSelectedItems(items: any[]) {
+  getSelectedItems(items: any) {
     this.selectedItems = items;
+  }
+  toggleColumn(column: any) {
+      column.visible = !column.visible;
+  }
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
+    localStorage.setItem('dataTableViewMode', this.viewMode);
   }
 
   applyFilters() {
@@ -367,15 +374,23 @@ export class BookingRecurrentComponent implements OnInit {
             return consultResult.item;
           }
         }
-        if (reservaDto.estadoReserva === EstadoReserva.PAGADA && this.isUsageDatePassed(reserva)) {
-          return await this.handleCompletedReservation(reserva);
+        if (reservaDto.estadoReserva === EstadoReserva.PAGADA) {
+          if (this.isSessionCurrentlyActive(reserva)) {
+            return await this.handleInProgressReservation(reserva);
+          }
+          else if (this.isTodaySessionCompleted(reserva)) {
+            return reserva;
+          }
         }
-        if (reservaDto.estadoReserva === EstadoReserva.EN_CURSO && this.isSessionCompleted(reserva)) {
-          return await this.handleCompletedReservation(reserva);
+        if (reservaDto.estadoReserva === EstadoReserva.EN_CURSO) {
+          if (!this.isSessionCurrentlyActive(reserva) && this.isTodaySessionCompleted(reserva)) {
+            return await this.handleReturnToPagada(reserva);
+          }
         }
-        if (reservaDto.estadoReserva === EstadoReserva.PAGADA && this.isSessionCurrentlyActive(reserva)) {
-          return await this.handleInProgressReservation(reserva);
-        }        
+        if (this.isReservationPeriodCompleted(reserva) && 
+            reservaDto.estadoReserva !== EstadoReserva.COMPLETADA) {
+          return await this.handleCompletedReservation(reserva);
+        }     
         return reserva;
       } catch (error) {
         return reserva;
@@ -396,66 +411,153 @@ export class BookingRecurrentComponent implements OnInit {
     expirationDate.setHours(expirationDate.getHours() + horasValidacion);    
     return currentDate > expirationDate;
   }
-  private isUsageDatePassed(reserva: ReservaRecurrente): boolean {
-    if (reserva.fechaFin) {
-      const endDate = new Date(reserva.fechaFin);
-      const currentDate = new Date();
-      endDate.setHours(23, 59, 59, 999);
-      return endDate < currentDate;
-    }    
-    return false;
-  }
-  private isSessionCompleted(reserva: ReservaRecurrente): boolean {
+  
+  private isReservationPeriodCompleted(reserva: ReservaRecurrente): boolean {
+    if (!reserva.fechaFin) return false;
+    
     const currentDate = new Date();
-    if (this.isTodayScheduledDay(reserva)) {
-      const todaysSessions = this.getTodaysSessions(reserva);
-      const lastSessionEndTime = this.getLastSessionEndTime(todaysSessions);
-      return lastSessionEndTime !== null && lastSessionEndTime < currentDate;
-    }    
-    return false;
+    let endDate: Date;
+    
+    if (reserva.fechaFin instanceof Date) {
+      endDate = new Date(reserva.fechaFin);
+    } else {
+      // Handle fechaFin as string
+      const fechaFinStr = String(reserva.fechaFin);
+      const [year, month, day] = fechaFinStr.split('-').map(Number);
+      endDate = new Date(year, month - 1, day);
+    }
+    
+    // Set to end of the day for comparison
+    endDate.setHours(23, 59, 59, 999);
+    
+    return endDate < currentDate;
   }
+  
   private isSessionCurrentlyActive(reserva: ReservaRecurrente): boolean {
-    const currentDate = new Date();    
-    if (this.isTodayScheduledDay(reserva)) {
-      const todaysSessions = this.getTodaysSessions(reserva);
-      return todaysSessions.some(session => 
-        currentDate >= session.startTime && currentDate <= session.endTime
-      );
-    }    
-    return false;
-  }
-  private isTodayScheduledDay(reserva: ReservaRecurrente): boolean {
-    if (!reserva.diasSemana || !reserva.fechaInicio || !reserva.fechaFin) return false;    
     const currentDate = new Date();
-    const startDate = new Date(reserva.fechaInicio);
-    const endDate = new Date(reserva.fechaFin);
-    if (currentDate < startDate || currentDate > endDate) return false;
-    const todayIndex = (currentDate.getDay() + 6) % 7;
+    
+    // Check if today is within the reservation period
+    if (!this.isTodayWithinReservationPeriod(reserva)) {
+      return false;
+    }
+    
+    // Check if today is a scheduled day
+    if (!this.isTodayScheduledDay(reserva)) {
+      return false;
+    }
+    
+    // Get today's sessions
+    const todaysSessions = this.getTodaysSessions(reserva);
+    
+    // Check if current time is within any session
+    return todaysSessions.some(session => 
+      currentDate >= session.startTime && currentDate <= session.endTime
+    );
+  }
+  
+  private isTodaySessionCompleted(reserva: ReservaRecurrente): boolean {
+    const currentDate = new Date();
+    
+    // Check if today is within the reservation period
+    if (!this.isTodayWithinReservationPeriod(reserva)) {
+      return true; // If not within period, consider "completed"
+    }
+    
+    // Check if today is a scheduled day
+    if (!this.isTodayScheduledDay(reserva)) {
+      return true; // If not a scheduled day, consider "completed"
+    }
+    
+    // Get today's sessions
+    const todaysSessions = this.getTodaysSessions(reserva);
+    
+    if (todaysSessions.length === 0) {
+      return true; // No sessions scheduled for today
+    }
+    
+    // Get the last session end time
+    const lastSessionEndTime = this.getLastSessionEndTime(todaysSessions);
+    
+    // If current time is after the last session, today's sessions are completed
+    return lastSessionEndTime !== null && lastSessionEndTime < currentDate;
+  }
+  
+  private isTodayWithinReservationPeriod(reserva: ReservaRecurrente): boolean {
+    if (!reserva.fechaInicio || !reserva.fechaFin) return false;
+    
+    const currentDate = new Date();
+    let startDate: Date;
+    let endDate: Date;
+    
+    // Parse fechaInicio
+    if (reserva.fechaInicio instanceof Date) {
+      startDate = new Date(reserva.fechaInicio);
+    } else {
+      const fechaInicioStr = String(reserva.fechaInicio);
+      const [startYear, startMonth, startDay] = fechaInicioStr.split('-').map(Number);
+      startDate = new Date(startYear, startMonth - 1, startDay);
+    }
+    
+    // Parse fechaFin
+    if (reserva.fechaFin instanceof Date) {
+      endDate = new Date(reserva.fechaFin);
+    } else {
+      const fechaFinStr = String(reserva.fechaFin);
+      const [endYear, endMonth, endDay] = fechaFinStr.split('-').map(Number);
+      endDate = new Date(endYear, endMonth - 1, endDay);
+    }
+    
+    // Set times for comparison
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+    const todayStart = new Date(currentDate);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(currentDate);
+    todayEnd.setHours(23, 59, 59, 999);
+    
+    return todayStart >= startDate && todayEnd <= endDate;
+  }
+  
+  private isTodayScheduledDay(reserva: ReservaRecurrente): boolean {
+    if (!reserva.diasSemana) return false;
+    
+    const currentDate = new Date();
+    const todayIndex = (currentDate.getDay() + 6) % 7; // Convert to 0=lunes, 6=domingo
     const scheduledDays = reserva.diasSemana.split(',').map(day => this.parseDayToTableroIndex(day.trim()));
     
     return scheduledDays.includes(todayIndex);
   }
+  
   private getTodaysSessions(reserva: ReservaRecurrente): { startTime: Date, endTime: Date }[] {
-    if (!reserva.tableroDto?.horario) return [];    
+    if (!reserva.tableroDto?.horario) return [];
+    
     const currentDate = new Date();
     const todayIndex = (currentDate.getDay() + 6) % 7;
-    const todaysSchedule = reserva.tableroDto.horario[todayIndex];    
-    if (!todaysSchedule || todaysSchedule.length === 0) return [];    
-    const sessions: { startTime: Date, endTime: Date }[] = [];    
+    const todaysSchedule = reserva.tableroDto.horario[todayIndex];
+    
+    if (!todaysSchedule || todaysSchedule.length === 0) return [];
+    
+    const sessions: { startTime: Date, endTime: Date }[] = [];
+    
     todaysSchedule.forEach(timeSlot => {
       const [startTimeStr, endTimeStr] = timeSlot.split('-');
       if (startTimeStr && endTimeStr) {
         const [startHours, startMinutes] = startTimeStr.split(':').map(Number);
-        const [endHours, endMinutes] = endTimeStr.split(':').map(Number);        
+        const [endHours, endMinutes] = endTimeStr.split(':').map(Number);
+        
         const startTime = new Date(currentDate);
-        startTime.setHours(startHours, startMinutes, 0, 0);        
+        startTime.setHours(startHours, startMinutes, 0, 0);
+        
         const endTime = new Date(currentDate);
-        endTime.setHours(endHours, endMinutes, 0, 0);        
+        endTime.setHours(endHours, endMinutes, 0, 0);
+        
         sessions.push({ startTime, endTime });
       }
-    });    
+    });
+    
     return sessions;
   }
+  
   private parseDayToTableroIndex(day: string): number {
     const dayMap: { [key: string]: number } = {
       'lunes': 0, 'martes': 1, 'miercoles': 2, 'miércoles': 2,
@@ -469,7 +571,17 @@ export class BookingRecurrentComponent implements OnInit {
     const sortedSessions = sessions.sort((a, b) => b.endTime.getTime() - a.endTime.getTime());
     return sortedSessions[0].endTime;
   }
-
+  
+  private async handleReturnToPagada(reserva: ReservaRecurrente): Promise<ReservaRecurrente> {
+    const updatedReservaDto: any = {
+      ...reserva.reservaDto,
+      estadoReserva: EstadoReserva.PAGADA,
+      fechaActualizacion: new Date()
+    };    
+    const updatedReserva = await this.reservaService.update(updatedReservaDto).toPromise();
+    reserva.reservaDto = updatedReserva;
+    return reserva;
+  }
   private async handleCompletedReservation(reserva: ReservaRecurrente): Promise<ReservaRecurrente> {
     const updatedReservaDto: any = {
       ...reserva.reservaDto,
@@ -531,6 +643,7 @@ export class BookingRecurrentComponent implements OnInit {
       showCloseButton: true
     });
   }
+  
   /* API RUAT Services */
   private async consultData(item: ReservaRecurrente): Promise<any> {
     if (!item) {

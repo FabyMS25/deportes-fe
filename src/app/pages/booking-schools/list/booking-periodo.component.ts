@@ -56,6 +56,8 @@ export class BookingPeriodoComponent implements OnInit {
   contribuyente!: Contribuyente;
 
   dataSelected!: any;
+  selectedItems: ReservaPeriodo[] = [];
+  consultResults: any[] = [];
 
   searchResults: any;
   searchTerm: string = '';
@@ -107,17 +109,14 @@ export class BookingPeriodoComponent implements OnInit {
       }
     } else {
       this.userData = currentUser.designacion.personaDto;
-    }
-    
+    }    
     this.loadEscuelas();
     this.loadEstudiantes();
     if (!this.authService.isRuatAuthenticated()) {
       await this.delay(1000);
-    }
-    
+    }    
     await this.getReservations();
     this.generatePeriodosDisponibles();
-    
     setInterval(() => this.getReservations(), 5 * 60 * 1000);
   }
 
@@ -144,6 +143,18 @@ export class BookingPeriodoComponent implements OnInit {
       { name: 'Observaciones', prop: 'reservaDto.observaciones', visible: false, fallbackProp: 'observaciones' },
     ];
   }
+  
+  getSelectedItems(items: any) {
+    this.selectedItems = items;
+  }
+  toggleColumn(column: any) {
+      column.visible = !column.visible;
+  }
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
+    localStorage.setItem('dataTableViewMode', this.viewMode);
+  }
+  
   private generatePeriodosDisponibles(): void {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
@@ -167,12 +178,6 @@ export class BookingPeriodoComponent implements OnInit {
     const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     return `${monthNames[item.mes - 1]} ${item.año}`;
-  }
-
-  selectedItems: ReservaPeriodo[] = [];
-  consultResults: any[] = [];
-  getSelectedItems(items: any[]) {
-    this.selectedItems = items;
   }
 
   applyFilters() {

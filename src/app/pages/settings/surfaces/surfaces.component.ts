@@ -28,6 +28,7 @@ export class SurfacesComponent {
   submitted = false;
   contentForm!: UntypedFormGroup;
   superficiesList:any[]=[];
+  selectedItems:any[] =[];
 
   constructor(private modalService: NgbModal,
     private authService: AuthenticationService,
@@ -54,10 +55,19 @@ export class SurfacesComponent {
       estado:[''],
       descripcion: ['', [Validators.required]]
     });
-
     this.getSurfaces();
   }
 
+  getSelectedItems(items: any) {
+    this.selectedItems = items;
+  }
+  toggleColumn(column: any) {
+      column.visible = !column.visible;
+  }
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
+    localStorage.setItem('dataTableViewMode', this.viewMode);
+  }
 
   private formDataSet(row:any) {
         this.contentForm.patchValue({
@@ -68,11 +78,6 @@ export class SurfacesComponent {
 
   get form() {
     return this.contentForm.controls;
-  }
-
-  selectedItems:any[] =[];
-  getSelectedItems(items: any[]) {
-    this.selectedItems = items;
   }
 
   // Search Data

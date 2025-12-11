@@ -43,6 +43,7 @@ export class EmployeesComponent implements OnInit {
   employeesList: EncargadoComplejo[] = [];
   funcionarioSelected!: any;
   complejosList: any[] = [];
+  selectedItems: any[] = [];
 
   @ViewChild('viewModel') viewModel!: ElementRef;
 
@@ -77,7 +78,6 @@ export class EmployeesComponent implements OnInit {
       { name: 'Hora Entrada', prop: 'horaEntrada', visible: false },
       { name: 'Hora Salida', prop: 'horaSalida', visible: false },
     ];
-
     this.loadData();
   }
   
@@ -88,9 +88,15 @@ export class EmployeesComponent implements OnInit {
     await this.getEmployees();
   }
 
-  selectedItems: any[] = [];
-  getSelectedItems(items: any[]) {
+  getSelectedItems(items: any) {
     this.selectedItems = items;
+  }
+  toggleColumn(column: any) {
+      column.visible = !column.visible;
+  }
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
+    localStorage.setItem('dataTableViewMode', this.viewMode);
   }
   
   // Search Data

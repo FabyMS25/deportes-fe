@@ -1,4 +1,5 @@
 <app-breadcrumbs title="Reservas" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
 <div *ngIf="isLoading" 
      class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
      style="background-color: rgba(0,0,0,0.5); z-index: 9999;">
@@ -11,78 +12,136 @@
 </div>
 
 <div class="row" *ngIf="!isLoading">
-  <div class="col-lg-9 col-sm-12">
+  <div class="col-lg-9 col-12">
     <div class="wizard-container">
-      <div class="card border-0 shadow-sm mb-2">
+      <div class="card border-0 shadow-sm mb-3">
         <div class="card-header">
-          <div class="d-flex align-items-center">
-            <div class="flex-grow-1">
-              <h4 *ngIf="bookingStep === BookingStep.COMPLEJO_SELECTION" 
-                  class="card-title mb-1 text-primary">
+          <!-- Mobile Layout -->
+          <div class="d-lg-none">
+            <div class="mb-2">
+              <h5 *ngIf="bookingStep === BookingStep.COMPLEJO_SELECTION" class="mb-1">
                 <i class="ri-building-line me-2 text-primary"></i>
+                Seleccionar Complejo
+              </h5>
+              <h5 *ngIf="bookingStep === BookingStep.CAMPO_SELECTION" class="mb-1">
+                <i class="ri-football-line me-2 text-primary"></i>
+                Seleccionar Campo
+              </h5>
+              <h5 *ngIf="bookingStep === BookingStep.HORARIO_SELECTION" class="mb-1">
+                <i class="ri-calendar-check-line me-2 text-primary"></i>
+                {{ bookingType === 'puntual' ? 'Fecha y Horario' : 'Reserva Recurrente' }}
+              </h5>
+              <h5 *ngIf="bookingStep === BookingStep.RESERVATION_FORM" class="mb-1">
+                <i class="ri-file-text-line me-2 text-primary"></i>
+                Formulario de Reserva
+              </h5>
+              <h5 *ngIf="bookingStep === BookingStep.TICKET" class="mb-1">
+                <i class="ri-ticket-line me-2 text-primary"></i>
+                Ticket de Reserva
+              </h5>
+              
+              <!-- Subtitle -->
+              <small class="text-muted d-block" *ngIf="bookingStep === BookingStep.COMPLEJO_SELECTION">
+                Elija el complejo deportivo
+              </small>
+              <small class="text-muted d-block text-truncate" *ngIf="bookingStep === BookingStep.CAMPO_SELECTION">
+                {{ bookingState.complejo?.nombre }}
+              </small>
+              <small class="text-muted d-block" *ngIf="bookingStep === BookingStep.HORARIO_SELECTION && bookingType === 'puntual'">
+                <i class="ri-calendar-2-line me-1"></i>
+                {{ currentWeekStart | date:'dd/MM' }} - {{ currentWeekEnd | date:'dd/MM' }}
+              </small>
+              <small class="text-muted d-block" *ngIf="bookingStep === BookingStep.HORARIO_SELECTION && bookingType === 'recurrente'">
+                Configure días y horarios
+              </small>
+              <small class="text-muted d-block text-truncate" *ngIf="bookingStep === BookingStep.RESERVATION_FORM">
+                {{ bookingState.complejo?.nombre }} - {{ bookingState.campo?.nombre }}
+              </small>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              <span class="badge bg-primary-subtle text-primary" *ngIf="bookingType">
+                {{ bookingType === 'puntual' ? 'Puntual' : 'Recurrente' }}
+              </span>
+              <span class="badge bg-success-subtle text-success" 
+                    *ngIf="bookingStep === BookingStep.COMPLEJO_SELECTION && !isLoading">
+                {{ complejosList.length }} disponibles
+              </span>
+              <span class="badge bg-success-subtle text-success"
+                    *ngIf="bookingStep === BookingStep.CAMPO_SELECTION && !isLoading">
+                {{ bookingState.complejo?.camposDeportivosDtoList?.length }} disponibles
+              </span>
+              <span class="badge bg-warning-subtle text-warning" *ngIf="bookingState.tarifa">
+                {{ getTariffDescription(bookingState.tarifa) }}
+              </span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="back()">
+                <i class="ri-arrow-left-line me-1"></i>
+                Volver
+              </button>
+            </div>
+          </div>          
+          <!-- Desktop Layout -->
+          <div class="d-none d-lg-flex align-items-start">
+            <div class="flex-grow-1">
+              <h4 *ngIf="bookingStep === BookingStep.COMPLEJO_SELECTION" class="card-title mb-1 text-primary">
+                <i class="ri-building-line me-2"></i>
                 Seleccionar Complejo Deportivo
+              </h4>
+              <h4 *ngIf="bookingStep === BookingStep.CAMPO_SELECTION" class="card-title mb-1 text-primary">
+                <i class="ri-football-line me-2"></i>
+                Seleccionar Campo Deportivo
+              </h4>
+              <h4 *ngIf="bookingStep === BookingStep.HORARIO_SELECTION" class="card-title mb-1 text-primary">
+                <i class="ri-calendar-check-line me-2"></i>
+                {{ bookingType === 'puntual' ? 'Selección de Fecha y Horario' : 'Configurar Reserva Recurrente' }}
+              </h4>
+              <h4 *ngIf="bookingStep === BookingStep.RESERVATION_FORM" class="card-title mb-1 text-primary">
+                <i class="ri-file-text-line me-2"></i>
+                Nueva Reserva {{ bookingType === 'puntual' ? 'Puntual' : 'Recurrente' }}
+              </h4>
+              <h4 *ngIf="bookingStep === BookingStep.TICKET" class="card-title mb-1 text-primary">
+                <i class="ri-ticket-line me-2"></i>
+                Ticket de Reserva
               </h4>
               <small *ngIf="bookingStep === BookingStep.COMPLEJO_SELECTION" class="text-muted">
                 Elija el complejo deportivo donde desea realizar su reserva
-              </small>              
-              <h4 *ngIf="bookingStep === BookingStep.CAMPO_SELECTION" 
-                  class="card-title mb-1 text-primary">
-                <i class="ri-football-line me-2 text-primary"></i>
-                Seleccionar Campo Deportivo
-              </h4>
+              </small>
               <small *ngIf="bookingStep === BookingStep.CAMPO_SELECTION" class="text-muted">
                 {{ bookingState.complejo?.nombre }} • {{ bookingState.complejo?.ubicacion }}
-              </small>              
-              <h4 *ngIf="bookingStep === BookingStep.HORARIO_SELECTION" 
-                  class="card-title mb-1 text-primary">
-                <i class="ri-calendar-check-line me-2 text-primary"></i>
-                {{ this.bookingType === 'puntual' ? 'Selección de Fecha y Horario' : 'Configurar Reserva Recurrente' }}
-              </h4>
-              <small *ngIf="bookingStep === BookingStep.HORARIO_SELECTION && this.bookingType === 'puntual'" class="text-muted">
+              </small>
+              <small *ngIf="bookingStep === BookingStep.HORARIO_SELECTION && bookingType === 'puntual'" class="text-muted">
                 <i class="ri-calendar-2-line me-1"></i>
                 Semana del {{ currentWeekStart | date:'dd/MM/yyyy' }} al {{ currentWeekEnd | date:'dd/MM/yyyy' }}
               </small>
-              <small *ngIf="bookingStep === BookingStep.HORARIO_SELECTION && this.bookingType === 'recurrente'" class="text-muted">
+              <small *ngIf="bookingStep === BookingStep.HORARIO_SELECTION && bookingType === 'recurrente'" class="text-muted">
                 Seleccione los días y horarios para entrenamientos programados
-              </small>              
-              <h4 *ngIf="bookingStep === BookingStep.RESERVATION_FORM" 
-                  class="card-title mb-1 text-primary">
-                <i class="ri-calendar-check-line text-primary"></i>
-                Nueva Reserva {{ bookingType === 'puntual' ? 'Puntual' : 'Recurrente' }}
-              </h4>
+              </small>
               <small *ngIf="bookingStep === BookingStep.RESERVATION_FORM" class="text-muted">
                 <i class="ri-building-line me-1"></i>
                 {{ bookingState.complejo?.nombre }} - {{ bookingState.campo?.nombre }}
               </small>
-              <h4 *ngIf="bookingStep === BookingStep.TICKET" 
-                  class="card-title mb-1 text-primary">
-                <i class="ri-building-line me-2 text-primary"></i>
-                Ticked de Reserva
-              </h4>
               <small *ngIf="bookingStep === BookingStep.TICKET" class="text-muted">
                 Reserva Completada
-              </small>  
-            </div>            
-            <div class="flex-shrink-0 d-flex align-items-center gap-2">
-              <div *ngIf="bookingStep === BookingStep.COMPLEJO_SELECTION && !isLoading">
-                <span class="badge bg-success-subtle text-success fs-6">
-                  {{ complejosList.length }} 
-                  {{ complejosList.length === 1 ? 'complejo' : 'complejos' }}
-                </span>
-              </div>              
-              <span *ngIf="bookingStep === BookingStep.CAMPO_SELECTION && !isLoading"
-                    class="badge bg-success-subtle text-success fs-6">
+              </small>
+            </div>
+            <div class="flex-shrink-0 d-flex align-items-center gap-2 ms-3">
+              <span class="badge bg-success-subtle text-success fs-6"
+                    *ngIf="bookingStep === BookingStep.COMPLEJO_SELECTION && !isLoading">
+                {{ complejosList.length }} {{ complejosList.length === 1 ? 'complejo' : 'complejos' }}
+              </span>
+              <span class="badge bg-success-subtle text-success fs-6"
+                    *ngIf="bookingStep === BookingStep.CAMPO_SELECTION && !isLoading">
                 {{ bookingState.complejo?.camposDeportivosDtoList?.length }} disponibles
-              </span>              
-              <span class="badge bg-primary-subtle text-primary px-3 py-2" *ngIf="bookingState.tarifa">
+              </span>
+              <span class="badge bg-warning-subtle text-warning px-3 py-2" *ngIf="bookingState.tarifa">
                 <i class="ri-price-tag-3-line me-1"></i>
                 {{ getTariffDescription(bookingState.tarifa) }}
-              </span>              
-              <span class="badge bg-primary-subtle text-primary fs-6 ms-2">
+              </span>
+              <span class="badge bg-primary-subtle text-primary fs-6">
                 {{ bookingType === 'puntual' ? 'Reserva Puntual' : 'Reserva Recurrente' }}
-              </span>              
-              <button type="button" class="btn btn-outline-secondary" 
-                      (click)="back()">
+              </span>
+              <button type="button" class="btn btn-outline-secondary" (click)="back()">
                 <i class="ri-arrow-left-line me-1"></i>
                 Volver
               </button>
@@ -155,8 +214,7 @@
         </app-ticket>}
       </ng-container>
     </div>
-  </div>
-
+  </div>  
   <div class="col-lg-3 d-none d-lg-block">
     <div class="sticky-side-div">
       <div class="card mb-2 sticky-top" style="top: 80px; z-index: 1020">
@@ -384,8 +442,7 @@
                      alt="Imagen del campo deportivo" 
                      class="img-fluid d-block rounded" />
               </div>
-            </ngx-slick-carousel>
-            
+            </ngx-slick-carousel>            
             <ngx-slick-carousel [config]="slidesConfig" class="mt-2">
               <div *ngFor="let image of defaultImages; let i = index" 
                    ngxSlickItem 

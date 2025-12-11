@@ -60,7 +60,7 @@ export class SystemConfigurationsComponent implements OnInit {
       { name: 'Valor Boolean', prop: 'valorBoolean', visible: false },
       { name: 'Unidad', prop: 'unidadMedida', visible: false },
       { name: 'Estado', prop: 'activo', tag: true, visible: true },
-      { name: 'Modificable', prop: 'modificablePorUsuario', tag: true, visible: true },
+      { name: 'Modificable', prop: 'modificablePorUsuario', tag: true, visible: false },
       { name: 'Requiere Aprobación', prop: 'requiereAprobacion', tag: true, visible: false },
       { name: 'Aplica A', prop: 'aplicaA', visible: false },
       { name: 'Fecha Creación', prop: 'fechaCreacion', visible: false, date: true },
@@ -68,6 +68,17 @@ export class SystemConfigurationsComponent implements OnInit {
     
     this.getConfiguraciones();
     this.getCategorias();
+  }
+
+  getSelectedItems(items: any) {
+    this.selectedItems = items;
+  }
+  toggleColumn(column: any) {
+      column.visible = !column.visible;
+  }
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
+    localStorage.setItem('dataTableViewMode', this.viewMode);
   }
 
   applyFilters() {
@@ -101,10 +112,6 @@ export class SystemConfigurationsComponent implements OnInit {
     );
   }
 
-  performSearch(): void {
-    this.applyFilters();
-  }
-
   onNavChange(changeEvent: NgbNavChangeEvent) {
     switch (changeEvent.nextId) {
       case 1: 
@@ -120,14 +127,6 @@ export class SystemConfigurationsComponent implements OnInit {
         this.configuracionesList = this.temp.filter(item => item.aplicaA === 'global');
         break;
     }
-  }
-
-  getSelectedItems(items: any[]) {
-    this.selectedItems = items;
-  }
-
-  toggleColumn(column: any) {
-    column.visible = !column.visible;
   }
 
   public openModal(content: any | undefined, accion: string, size: string) {

@@ -95,12 +95,6 @@ export class ComplejoSelectionComponent implements OnInit {
     this.filteredComplejos = [...this.complejosList];
   }
 
-  hasActiveFilters(): boolean {
-    return !!(this.searchText || this.filterByDistrito || 
-              this.filterByIluminacion !== undefined || 
-              this.filterByTipoEstructura);
-  }
-
   
   selectComplejo(complejo: ComplejoDeportivo): void {
     if (!complejo || !this.hasActiveFields(complejo)) return;

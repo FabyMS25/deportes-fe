@@ -36,6 +36,7 @@ export class FacilitiesComponent {
   distictList=Districts
   tipoEstructuraList = Object.values(TipoEstructura);
   estadoActualList = Object.values(EstadoActual);
+  selectedItems:any[] =[];
 
   @ViewChild('viewModel') viewModel!: ElementRef;
 
@@ -71,18 +72,20 @@ export class FacilitiesComponent {
     this.getFacilities()
   }
 
+  getSelectedItems(items: any) {
+    this.selectedItems = items;
+  }
+  toggleColumn(column: any) {
+      column.visible = !column.visible;
+  }
   toggleViewMode(): void {
     this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
     localStorage.setItem('dataTableViewMode', this.viewMode);
   }
-  selectedItems:any[] =[];
-  getSelectedItems(items: any[]) {
-    this.selectedItems = items;
-  }
 
   // Search Data
   searchTerm: any;
-  performSearch(): void {
+  applyFilters(): void {
     this.facilitiesList = this.temp.filter((item: any) => {
       return (
         item.nombre?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||

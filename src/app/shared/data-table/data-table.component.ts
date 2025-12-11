@@ -129,7 +129,7 @@ export class DataTableComponent implements OnChanges {
       case 'validate':
         return data.reservaDto && data.reservaDto.estadoValidacion ===statusData.EstadoValidacion.PENDIENTE;
       case 'Anular':
-        return data.reservaDto && (data.reservaDto.estadoReserva ===statusData.EstadoReserva.PENDIENTE || data.reservaDto.estadoReserva ===statusData.EstadoReserva.EN_CURSO);
+        return data.reservaDto && (data.reservaDto.estadoReserva ===statusData.EstadoReserva.PENDIENTE);
       case 'Bloquear':
         return data.estadoUsuario === statusData.EstadoUsuario.ACTIVO;
       case 'Desbloquear':
@@ -149,7 +149,7 @@ export class DataTableComponent implements OnChanges {
     }
     const value = prop.split('.').reduce((o, p) => o?.[p], obj);
     switch (prop) {
-      case 'requiereAprobacion': case 'accesoLibre':case 'tieneIluminacion':
+      case 'requiereAprobacion': case 'accesoLibre':case 'tieneIluminacion': case 'forAsociacion':
       case 'puedeReservarGratis': case 'esDeportistaElite': case 'perteneceEscuelaMunicipal': case 'estaSancionado':
         return this.formatBoolean(value, 'SI', 'NO');
       case 'esValido':

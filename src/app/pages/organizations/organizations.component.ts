@@ -56,8 +56,7 @@ export class OrganizationsComponent implements OnInit {
     const currentUser = this.authService.currentUser();
     if (this.authService.getUserRole() === 'Contribuyente') {
       this.contribuyente =currentUser;
-    }   
-    
+    }    
     this.itemsList = [
       { name: 'Nombre', prop: 'nombre', visible: true },
       { name: 'Tipo Organización', prop: 'tipoOrganizacion', visible: true },
@@ -75,6 +74,17 @@ export class OrganizationsComponent implements OnInit {
     ];
     this.getOrganizaciones();
     this.getContribuyentesForRepresentatives();
+  }
+
+  getSelectedItems(items: any) {
+    this.selectedItems = items;
+  }
+  toggleColumn(column: any) {
+      column.visible = !column.visible;
+  }
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
+    localStorage.setItem('dataTableViewMode', this.viewMode);
   }
 
   applyFilters() {
@@ -116,10 +126,6 @@ export class OrganizationsComponent implements OnInit {
     );
   }
 
-  performSearch(): void {
-    this.applyFilters();
-  }
-
   onNavChange(changeEvent: NgbNavChangeEvent) {
     switch (changeEvent.nextId) {
       case 1: 
@@ -141,14 +147,6 @@ export class OrganizationsComponent implements OnInit {
         this.organizacionesList = this.temp.filter(item => !item.representanteDto || !item.representanteNombre);
         break;
     }
-  }
-
-  getSelectedItems(items: any[]) {
-    this.selectedItems = items;
-  }
-
-  toggleColumn(column: any) {
-    column.visible = !column.visible;
   }
 
   public openModal(content: any | undefined, accion: string, size: string) {

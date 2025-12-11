@@ -1,5 +1,5 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
 import { UntypedFormGroup } from '@angular/forms';
 
 import { ngxCsv } from 'ngx-csv/ngx-csv';
@@ -48,6 +48,7 @@ export class FieldsComponent {
   selectedComplejo: string = '';
   selectedSuperficie: string = '';
   selectedCategoria: string = '';
+  selectedItems: any[] = [];
 
   @ViewChild('viewModel') viewModel!: ElementRef;
 
@@ -90,13 +91,19 @@ export class FieldsComponent {
     this.getFields();
   }
 
-  selectedItems: any[] = [];
-  getSelectedItems(items: any[]) {
+  getSelectedItems(items: any) {
     this.selectedItems = items;
   }
-
-  // Perform search with all filters
-  performSearch(): void {
+  toggleColumn(column: any) {
+      column.visible = !column.visible;
+  }
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
+    localStorage.setItem('dataTableViewMode', this.viewMode);
+  }
+  
+  applyFilters(): void {
+    console.log(this.selectedCategoria)
     this.fieldsList = this.temp.filter((item: any) => {
       const matchesSearch = !this.searchTerm || 
         item.codigo?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
@@ -104,34 +111,27 @@ export class FieldsComponent {
         item.categoria?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.superficieDto?.descripcion?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         item.complejoDto?.nombre?.toLowerCase().includes(this.searchTerm.toLowerCase());
-
       const matchesComplejo = !this.selectedComplejo || 
         item.complejoDto?.uuid === this.selectedComplejo;
-
       const matchesSuperficie = !this.selectedSuperficie || 
         item.superficieDto?.uuid === this.selectedSuperficie;
-
       const matchesCategoria = !this.selectedCategoria || 
         item.categoria === this.selectedCategoria;
-
-
       return matchesSearch && matchesComplejo && matchesSuperficie && 
              matchesCategoria ;
     });
   }
-
-  // Apply filters
-  applyFilters(): void {
-    this.performSearch();
+  onNavChange(newTabId: string) {
+    this.selectedCategoria = newTabId;
+    this.applyFilters(); // Apply ALL filters including the new tab
   }
-
   // Clear all filters
   clearFilters(): void {
     this.selectedComplejo = '';
     this.selectedSuperficie = '';
     this.selectedCategoria = '';
     this.searchTerm = '';
-    this.performSearch();
+    this.applyFilters();
   }
 
 
@@ -142,7 +142,6 @@ export class FieldsComponent {
     const middleOffset = elementTop - (window.innerHeight / 2) + (element.offsetHeight / 2);
     window.scrollTo({ top: middleOffset, behavior: 'smooth' });
   }
-
   /**
    * Open modal
    * @param content modal content

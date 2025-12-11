@@ -1,43 +1,31 @@
 <app-breadcrumbs [title]="title | translate" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
 
-<div class="row">
-  <div class="col-lg-12">
-    <div class="card">
-      <div class="card-header border-0 d-flex flex-wrap align-items-center">
-        <h5 class="card-title flex-grow-1">{{'Lista de '+title|translate }}</h5>
-        <div class="flex-shrink-0">
-          <div class="d-flex gap-1 flex-wrap">
-            <button *ngIf="canActivate.includes('CREAR')" (click)="openModal(undefined,'','lg')"
-              type="button" class="btn btn-soft-secondary">
-              <i class="ri-add-circle-line align-middle"></i>
-              {{"Agregar" | translate}}
-            </button>
-            <button *ngIf="canActivate.includes('VER')" (click)="csvFileExport()"
-              class="btn btn-soft-info" id="remove-actions" style="display: none">
-              <i class="ri-file-download-line align-bottom"></i>
-              {{"Exportar" | translate}}
-            </button>
-          </div>
-        </div>
-      </div>
-
+<div class="content">
+    <app-data-header
+        [title]="title"
+        [newShow]="canActivate.includes('CREAR')"
+        [exportShow]="canActivate.includes('VER')"
+        (createEmitter)="openModal( undefined,'','lg')"
+        (exportEmitter)="csvFileExport()"
+    ></app-data-header>
+    <div class="card rounded-2">
       <div class="card-header border border-dashed border-end-0 border-start-0">
         <form (ngSubmit)="applyFilters()">
-          <div class="row g-1">
-            <div class="col-xxl-3 col-md-6 col-sm-6">
+          <div class="row g-2">
+            <div class="col-6 col-sm-6 col-lg-3">
               <div class="search-box">
                 <input type="text" class="form-control search" name="searchTerm"
-                  placeholder="Buscar organizaciones ..."
-                  [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
+                  placeholder="Buscar ..."
+                  [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()">
                 <i class="ri-search-line search-icon"></i>
               </div>
             </div>
-            <div class="col-xxl-2 col-md-3 col-sm-3">
+            <div class="col-6 col-sm-6 col-lg-2">
               <input type="text" class="form-control" name="tipoOrganizacion"
                 placeholder="Tipo Organización"
                 [(ngModel)]="tipoOrganizacion">
             </div>
-            <div class="col-xxl-2 col-md-3 col-sm-3">
+            <div class="col-6 col-sm-6 col-lg-2">
               <select class="form-control" data-choices data-choices-search-false 
                 name="estado" id="idEstado" [(ngModel)]="estado">
                 <option value="" selected>Estado</option>
@@ -45,7 +33,7 @@
                 <option value="INACTIVO">Inactivo</option>
               </select>
             </div>
-            <div class="col-xxl-2 col-md-3 col-sm-3">
+            <div class="col-6 col-sm-6 col-lg-2">
               <select class="form-control" data-choices data-choices-search-false 
                 name="tieneNit" id="idTieneNit" [(ngModel)]="tieneNit">
                 <option value="" selected>Tiene NIT</option>
@@ -53,7 +41,7 @@
                 <option value="NO">No</option>
               </select>
             </div>
-            <div class="col-xxl-2 col-md-3 col-sm-3">
+            <div class="col-6 col-sm-6 col-lg-2">
               <select class="form-control" data-choices data-choices-search-false 
                 name="tienePersoneriaJuridica" id="idTienePersoneria" [(ngModel)]="tienePersoneriaJuridica">
                 <option value="" selected>Personería Jurídica</option>
@@ -61,82 +49,90 @@
                 <option value="NO">No</option>
               </select>
             </div>
-            <div class="col-xxl-1 col-md-3 col-sm-3">
-              <button type="submit" class="btn btn-primary w-100">
-                <i class="ri-equalizer-fill align-bottom"></i>
-                Filtrar
+            <div class="col-6 col-sm-6 col-lg-1">
+              <button class="btn btn-primary w-100" 
+                title="Filtrar" type="submit">
+                <i class="ri-filter-line align-bottom"></i>
               </button>
             </div>
           </div>
         </form>
       </div>
-
       <div class="card-header p-0">
-        <div class="d-flex align-items-center gap-2">
-          <ul ngbNav #nav="ngbNav" [activeId]="1" (navChange)="onNavChange($event)" 
-            class="nav nav-tabs nav-tabs-custom nav-success mb-3" role="tablist">
+        <div class="row g-2">
+          <div class="col-auto flex-grow-1">
+            <ul ngbNav #nav="ngbNav" [activeId]="1" (navChange)="onNavChange($event)"
+              class="nav nav-tabs nav-tabs-custom nav-success " role="tablist">
             <li [ngbNavItem]="1" class="nav-item">
-              <a ngbNavLink class="nav-link All py-3" data-bs-toggle="tab" id="All" 
+              <a ngbNavLink class="nav-link py-2" data-bs-toggle="tab" id="All" 
                 href="javascript:void(0);" role="tab" aria-selected="true">
-                Todas las Organizaciones<span class="badge bg-danger align-middle ms-1">{{temp.length}}</span>
+                Todo<span class="badge bg-danger align-middle ms-1">{{temp.length}}</span>
               </a>
             </li>
             <li [ngbNavItem]="2" class="nav-item">
-              <a ngbNavLink class="nav-link py-3 New" data-bs-toggle="tab" id="Activas" 
+              <a ngbNavLink class="nav-link py-2" data-bs-toggle="tab" id="Activas" 
                 href="javascript:void(0);" role="tab" aria-selected="false">
-                Organizaciones Activas
+                Activas
               </a>
             </li>
             <li [ngbNavItem]="3" class="nav-item">
-              <a ngbNavLink class="nav-link py-3 Pending" data-bs-toggle="tab" id="Inactivas" 
+              <a ngbNavLink class="nav-link py-2" data-bs-toggle="tab" id="Inactivas" 
                 href="javascript:void(0);" role="tab" aria-selected="false">
-                Organizaciones Inactivas
+                Inactivas
               </a>
             </li>
             <li [ngbNavItem]="4" class="nav-item">
-              <a ngbNavLink class="nav-link py-3 Approved" data-bs-toggle="tab" id="ConNit" 
+              <a ngbNavLink class="nav-link py-2" data-bs-toggle="tab" id="ConNit" 
                 href="javascript:void(0);" role="tab" aria-selected="false">
                 Con NIT
               </a>
             </li>
             <li [ngbNavItem]="5" class="nav-item">
-              <a ngbNavLink class="nav-link py-3 Rejected" data-bs-toggle="tab" id="ConPersoneria" 
+              <a ngbNavLink class="nav-link py-2" data-bs-toggle="tab" id="ConPersoneria" 
                 href="javascript:void(0);" role="tab" aria-selected="false">
                 Con Personería Jurídica
               </a>
             </li>
             <li [ngbNavItem]="6" class="nav-item">
-              <a ngbNavLink class="nav-link py-3 Rejected" data-bs-toggle="tab" id="SinRepresentante" 
+              <a ngbNavLink class="nav-link py-2" data-bs-toggle="tab" id="SinRepresentante" 
                 href="javascript:void(0);" role="tab" aria-selected="false">
                 Sin Representante
               </a>
             </li>
-          </ul>
-          <div class="hstack gap-2 ms-auto p-2 mb-2">
-            <span class="dropdown d-md-inline-block" ngbDropdown>
-              <button class="btn btn-soft-info btn-icon fs-14 arrow-none d-block" type="button"
-                id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false" ngbDropdownToggle>
-                <i class="ri-settings-4-line"></i>
-              </button>
-              <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
-                @for (column of itemsList; track column) {
-                  <li class="dropdown-item p-1">
-                    <div class="form-check form-check-outline form-check-primary">
-                      <input class="form-check-input" type="checkbox" [id]="'formCheck' + column.prop"
-                        [(ngModel)]="column.visible">
-                      <label class="form-check-label" [for]="'formCheck' + column.prop">
-                        {{column.name}}
-                      </label>
-                    </div>
-                  </li>
-                }
-              </ul>
-            </span>
+            </ul>
+          </div>
+          <div class="col-auto ms-auto d-flex justify-content-end align-items-center gap-2">
+            <button class="btn btn-soft-secondary btn-sm d-flex align-items-center"
+                    (click)="toggleViewMode()">
+                <i *ngIf="viewMode === 'table'" class="ri-grid-fill me-1"></i>
+                <i *ngIf="viewMode === 'cards'" class="ri-list-check me-1"></i>
+                <span>{{ viewMode === 'cards' ? 'Lista' : 'Grid' }}</span>
+            </button>
+            <div class="hstack ms-auto">
+              <span class="dropdown d-md-inline-block" ngbDropdown>
+                <button type="button" class="btn btn-soft-info btn-sm arrow-none"
+                   id="dropdownMenuButton1" data-bs-toggle="dropdown" ngbDropdownToggle>
+                  <i class="ri-settings-4-line"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
+                  @for (column of itemsList; track column) {
+                    <li class="dropdown-item p-1">
+                      <div class="form-check form-check-outline form-check-primary">
+                        <input class="form-check-input" type="checkbox" [id]="'formCheck' + column.prop"
+                            [(ngModel)]="column.visible">
+                        <label class="form-check-label" [for]="'formCheck' + column.prop">
+                            {{column.name}}
+                        </label>
+                      </div>
+                    </li>
+                  }
+                </ul>
+              </span>
+            </div>
           </div>
         </div>
       </div>
-
-      <div class="card-body pt-0">
+      <div class="card-body">
         <app-data-table
           [loading]="loading"
           [itemsList]="itemsList"
@@ -154,5 +150,4 @@
         </app-data-table>
       </div>
     </div>
-  </div>
 </div>

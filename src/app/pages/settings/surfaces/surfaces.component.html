@@ -1,8 +1,6 @@
-<!-- Start Breadcrumbs -->
 <app-breadcrumbs [title]="title | translate" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
-<!-- End Breadcrumbs -->
 
-<div class="row">
+<div class="content">
     <app-data-header
         [title]="title"
         [headersImport]="headersImport"
@@ -13,20 +11,48 @@
         (importEmitter)="openModalImport()"
         (exportEmitter)="csvFileExport()"
     ></app-data-header>
-    <div class="col-lg-12">
-        <div class="card">
-            <div class="card-header">
-                <div class="row g-2">
-                    <div class="col-12 col-lg-6">
+    <div class="card rounded-2">
+        <div class="card-header pb-1">
+            <div class="row g-2">
+                <div class="col-7 col-lg-6">
                         <div class="search-box">
                             <input type="text" name="searchTerm" class="form-control" placeholder="Buscar por ..."
                                 [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
                             <i class="ri-search-line search-icon"></i>
                         </div>
+                </div>
+                <div class="col-auto ms-auto d-flex justify-content-end align-items-center gap-2">
+                    <button class="btn btn-soft-secondary btn-sm d-flex align-items-center"
+                        (click)="toggleViewMode()">
+                        <i *ngIf="viewMode === 'table'" class="ri-grid-fill me-1"></i>
+                        <i *ngIf="viewMode === 'cards'" class="ri-list-check me-1"></i>
+                        <span>{{ viewMode === 'cards' ? 'Lista' : 'Grid' }}</span>
+                    </button>
+                    <div class="hstack ms-auto">
+                        <span class="dropdown d-md-inline-block" ngbDropdown>
+                            <button type="button" class="btn btn-soft-info btn-sm arrow-none"
+                            id="dropdownMenuButton1" data-bs-toggle="dropdown" ngbDropdownToggle>
+                            <i class="ri-settings-4-line"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
+                            @for (column of itemsList; track column) {
+                                <li class="dropdown-item p-1">
+                                <div class="form-check form-check-outline form-check-primary">
+                                    <input class="form-check-input" type="checkbox" [id]="'formCheck' + column.prop"
+                                        [(ngModel)]="column.visible">
+                                    <label class="form-check-label" [for]="'formCheck' + column.prop">
+                                        {{column.name}}
+                                    </label>
+                                </div>
+                                </li>
+                            }
+                            </ul>
+                        </span>
                     </div>
                 </div>
             </div>
-            <div class="card-body">
+        </div>
+        <div class="card-body">
             <app-data-table
                 [loading]="loading"
                 [itemsList]="itemsList"
@@ -42,12 +68,9 @@
                 (selectedItemEmitter)="getSelectedItems($event)" 
                 [viewMode]="viewMode"   
             ></app-data-table>
-            </div>
         </div>
-
     </div>
 </div>
-<!--end row-->
 
 <!-- Modals -->
 <ng-template #content role="document" let-modal>

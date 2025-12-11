@@ -47,6 +47,8 @@ export class BookingOneTimeComponent implements OnInit {
   contribuyente!: Contribuyente;
 
   dataSelected!: any;
+  selectedItems: ReservaPuntual[] = [];
+  consultResults: any[] = [];
 
   searchResults: any;
   searchTerm: string = '';
@@ -124,10 +126,15 @@ export class BookingOneTimeComponent implements OnInit {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  selectedItems: ReservaPuntual[] = [];
-  consultResults: any[] = [];
-  getSelectedItems(items: any[]) {
+  getSelectedItems(items: any) {
     this.selectedItems = items;
+  }
+  toggleColumn(column: any) {
+      column.visible = !column.visible;
+  }
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
+    localStorage.setItem('dataTableViewMode', this.viewMode);
   }
 
   applyFilters() {

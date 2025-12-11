@@ -1,6 +1,6 @@
 <app-breadcrumbs [title]="title" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
 
-<div class="row">
+<div class="content">
     <app-data-header
         [title]="title"
         [headersImport]="headersImport"
@@ -11,47 +11,20 @@
         (importEmitter)="openModalImport()"
         (exportEmitter)="csvFileExport()"
     ></app-data-header>
-    <div class="col-xxl-8">
-        <div class="card">
-            <div class="card-header">
-                <div class="row">
-                    <div class="col-4 col-lg-6">
+    <div class="row px-3 px-md-0">
+      <div class="col-md-8">
+        <div class="card rounded-2">
+            <div class="card-header border border-dashed border-end-0 border-start-0">
+                <div class="row g-2">
+                    <div class="col-6 col-sm-3 col-lg-4">
                         <div class="search-box">
-                            <input type="text" name="searchTerm" class="form-control" placeholder="Buscar por ..." 
-                                [(ngModel)]="searchTerm" (ngModelChange)="performSearch()">
+                            <input type="text" name="searchTerm" class="form-control" placeholder="Buscar..." 
+                                [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()">
                             <i class="ri-search-line search-icon"></i>
                         </div>
                     </div>
-                    <div class="col-2 col-lg-1 col-sm-1 ms-md-auto">
-                        <div class="d-flex align-items-center gap-2">
-                          <div class="hstack gap-2">
-                            <span class="dropdown d-md-inline-block" ngbDropdown>
-                              <button class="btn btn-soft-info btn-icon fs-14 arrow-none d-block" type="button"
-                                      id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false"
-                                      ngbDropdownToggle>
-                                <i class="ri-settings-4-line"></i>
-                              </button>
-                              <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
-                                  @for (column of itemsList; track column) {
-                                    <li class="dropdown-item p-1">
-                                      <div class="form-check form-check-outline form-check-primary">
-                                        <input class="form-check-input" type="checkbox" [id]="'formCheck' + column.prop"
-                                               [(ngModel)]="column.visible">
-                                        <label class="form-check-label" [for]="'formCheck' + column.prop">
-                                          {{column.name}}
-                                        </label>
-                                      </div>
-                                    </li>
-                                  }
-                              </ul>
-                            </span>
-                          </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-3">
-                        <label class="form-label mb-0">Complejo</label>
+                    <div class="col-6 col-sm-3 col-lg-4">
+                        <!-- <label class="form-label mb-0">Complejo</label> -->
                         <select class="form-select" [(ngModel)]="selectedComplejo" (ngModelChange)="applyFilters()">
                             <option value="">Todos los complejos</option>
                             <option *ngFor="let complejo of complejosList" [value]="complejo.uuid">
@@ -59,8 +32,8 @@
                             </option>
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label mb-0">Superficie</label>
+                    <div class="col-6 col-sm-3 col-lg-3">
+                        <!-- <label class="form-label mb-0">Superficie</label> -->
                         <select class="form-select" [(ngModel)]="selectedSuperficie" (ngModelChange)="applyFilters()">
                             <option value="">Todas las superficies</option>
                             <option *ngFor="let superficie of superficiesList" [value]="superficie.uuid">
@@ -68,19 +41,59 @@
                             </option>
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label mb-0">Categoría</label>
-                        <select class="form-select" [(ngModel)]="selectedCategoria" (ngModelChange)="applyFilters()">
-                            <option value="">Todas</option>
-                            <option *ngFor="let categoria of categoryList" [value]="categoria">
-                                {{categoria}}
-                            </option>
-                        </select>
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button class="btn btn-outline-secondary" (click)="clearFilters()">
-                            <i class="ri-refresh-line me-1"></i>
+                    <div class="col-6 col-sm-3 col-lg-1">
+                        <button class="btn btn-outline-secondary w-100" 
+                            title="Limpiar" (click)="clearFilters()">
+                            <i class="ri-refresh-line align-bottom"></i>
                         </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-header p-0">
+                <div class="row g-2">
+                    <div class="col-auto flex-grow-1">
+                        <ul ngbNav #nav="ngbNav" [(activeId)]="selectedCategoria" (navChange)="onNavChange($event.nextId)"
+                            class="nav nav-tabs nav-tabs-custom nav-success " role="tablist">
+                            <li [ngbNavItem]="''" class="nav-item flex-shrink-0">
+                            <a ngbNavLink class="nav-link py-2">
+                                Todas las Categorías <span class="badge bg-secondary ms-1">{{ fieldsList.length }}</span>
+                            </a>
+                            </li>
+                            <li *ngFor="let cat of categoryList" [ngbNavItem]="cat" class="nav-item flex-shrink-0">
+                            <a ngbNavLink class="nav-link py-2">
+                                {{ cat }}
+                            </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-auto ms-auto d-flex justify-content-end align-items-center gap-2">
+                        <button class="btn btn-soft-secondary btn-sm d-flex align-items-center"
+                                (click)="toggleViewMode()">
+                            <i *ngIf="viewMode === 'table'" class="ri-grid-fill me-1"></i>
+                            <i *ngIf="viewMode === 'cards'" class="ri-list-check me-1"></i>
+                            <span>{{ viewMode === 'cards' ? 'Lista' : 'Grid' }}</span>
+                        </button>
+                        <div class="hstack ms-auto">
+                        <span class="dropdown d-md-inline-block" ngbDropdown>
+                            <button type="button" class="btn btn-soft-info btn-sm arrow-none"
+                            id="dropdownMenuButton1" data-bs-toggle="dropdown" ngbDropdownToggle>
+                            <i class="ri-settings-4-line"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
+                            @for (column of itemsList; track column) {
+                                <li class="dropdown-item p-1">
+                                <div class="form-check form-check-outline form-check-primary">
+                                    <input class="form-check-input" type="checkbox" [id]="'formCheck' + column.prop"
+                                        [(ngModel)]="column.visible">
+                                    <label class="form-check-label" [for]="'formCheck' + column.prop">
+                                        {{column.name}}
+                                    </label>
+                                </div>
+                                </li>
+                            }
+                            </ul>
+                        </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -103,8 +116,8 @@
                 ></app-data-table>
             </div>
         </div>
-    </div>
-    <div class="col-xxl-4" #viewModel>
+      </div>
+    <div class="col-md-4" #viewModel>
         <div class="card" id="content-view-detail" *ngIf="dataSelected">
             <div class="card-head text-center company-details">
                 <h5 class="mt-2">{{dataSelected.nombre}}</h5>
@@ -227,6 +240,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </div>
 </div>
 

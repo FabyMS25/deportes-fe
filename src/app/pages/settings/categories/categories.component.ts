@@ -37,6 +37,7 @@ export class CategoriesComponent {
   checkedList: any;
   searchResults: any;
   searchTerm: any;
+  selectedItems: any[] = [];
 
   constructor(private modalService: NgbModal,
     private authService: AuthenticationService,
@@ -62,7 +63,7 @@ export class CategoriesComponent {
       {name: 'Descripción', prop: 'descripcion', visible: true},
       {name: 'Tipo Cobro', prop: 'tipo', visible: true},
       {name: 'Activo', prop: 'activo', visible: true},
-      {name: 'Para Asociación', prop: 'forAsociacion', visible: true},
+      {name: 'Para Asociación', prop: 'forAsociacion', visible: true, tag:true},
     ];
 
     this.contentForm = this.formBuilder.group({
@@ -79,6 +80,17 @@ export class CategoriesComponent {
       maxPersonasAutoAprobacion:[],
     });
     this.getCategories();
+  }
+
+  getSelectedItems(items: any) {
+    this.selectedItems = items;
+  }
+  toggleColumn(column: any) {
+      column.visible = !column.visible;
+  }
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
+    localStorage.setItem('dataTableViewMode', this.viewMode);
   }
 
   get form() {
@@ -98,11 +110,6 @@ export class CategoriesComponent {
       maxDuracionAutoAprobacion:row.maxDuracionAutoAprobacion,
       maxPersonasAutoAprobacion:row.maxPersonasAutoAprobacion,
     });
-  }
-
-  selectedItems: any[] = [];
-  getSelectedItems(items: any[]) {
-    this.selectedItems = items;
   }
 
   // Search Data
