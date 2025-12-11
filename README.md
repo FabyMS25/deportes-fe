@@ -1,4 +1,3 @@
-<!-- PROJECT LOGO -->
 <br />
 <div align="center">
   <a href="http://www.quillacollo.gob.bo">
@@ -86,7 +85,7 @@ Run project in a local environment
 
 1. Clone the repo
    ```sh
-   git clone https://gitlab.com/devgamq1/parqui-frontend.git
+   git clone https://gitlab.com/devgamq1/deprotes-frontend.git
    ```
 2. Go to project
    ```sh

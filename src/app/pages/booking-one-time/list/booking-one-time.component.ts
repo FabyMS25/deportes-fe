@@ -114,8 +114,7 @@ export class BookingOneTimeComponent implements OnInit {
     }
     if (!this.authService.isRuatAuthenticated()) {
       await this.delay(1000);
-    }
-    
+    }    
     await this.getReservations();
     await this.getCategories();
     setInterval(() => this.getReservations(), 5 * 60 * 1000);
@@ -339,20 +338,24 @@ export class BookingOneTimeComponent implements OnInit {
             return consultResult.item;
           }
         }
-        if (reservaDto.estadoReserva === EstadoReserva.PAGADA && this.isUsageDatePassed(reserva)) {
-          return await this.handleCompletedReservation(reserva);
+        if (reservaDto.estadoReserva === EstadoReserva.PAGADA) {
+          if (this.isReservationCurrentlyActive(reserva)) {
+            return await this.handleInProgressReservation(reserva);
+          }
+          else if (this.isReservationTimeCompleted(reserva)) {
+            return await this.handleCompletedReservation(reserva);
+          }
         }
         if (reservaDto.estadoReserva === EstadoReserva.EN_CURSO && this.isReservationTimeCompleted(reserva)) {
           return await this.handleCompletedReservation(reserva);
-        }
-        if (reservaDto.estadoReserva === EstadoReserva.PAGADA && this.isReservationCurrentlyActive(reserva)) {
-          return await this.handleInProgressReservation(reserva);
-        }        
+        }                
         return reserva;
       } catch (error) {
+        console.error('Error updating reservation status:', error);
         return reserva;
       }
     });    
+      
     return await Promise.all(updatePromises);
   }
   private isPaymentPeriodExpired(reserva: ReservaPuntual): boolean {
@@ -368,23 +371,70 @@ export class BookingOneTimeComponent implements OnInit {
     expirationDate.setHours(expirationDate.getHours() + horasValidacion);    
     return currentDate > expirationDate;
   }
-  private isUsageDatePassed(reserva: ReservaPuntual): boolean {
-    if (reserva.fechaUso) {
-      const usoDate = new Date(reserva.fechaUso);
-      const currentDate = new Date();
-      usoDate.setHours(23, 59, 59, 999);
-      return usoDate < currentDate;
-    }    
-    return false;
-  }
+
+  
   private isReservationTimeCompleted(reserva: ReservaPuntual): boolean {
     const currentDate = new Date();    
     if (reserva.fechaUso && reserva.horaFin) {
-      const usoDate = new Date(reserva.fechaUso);
-      const [hours, minutes, seconds = 0] = reserva.horaFin.split(':').map(Number);
-      const endTime = new Date(usoDate);
-      endTime.setHours(hours, minutes, seconds, 0);
+      let endTime: Date;
+      
+      if (reserva.fechaUso instanceof Date) {
+        const usoDate = new Date(reserva.fechaUso);
+        const [hours, minutes, seconds = 0] = reserva.horaFin.split(':').map(Number);
+        endTime = new Date(usoDate);
+        endTime.setHours(hours, minutes, seconds, 0);
+      } else {
+        const fechaUsoStr = reserva.fechaUso as string;
+        const [year, month, day] = fechaUsoStr.split('-').map(Number);
+        const [hours, minutes, seconds = 0] = reserva.horaFin.split(':').map(Number);
+        endTime = new Date(year, month - 1, day, hours, minutes, seconds);
+      }
+      
       return endTime < currentDate;
+    }    
+    return false;
+  }
+  private isReservationCurrentlyActive(reserva: ReservaPuntual): boolean {
+    const currentDate = new Date();
+    
+    if (reserva.fechaUso && reserva.horaInicio && reserva.horaFin) {
+      let startTime: Date;
+      let endTime: Date;
+      
+      if (reserva.fechaUso instanceof Date) {
+        const usoDate = new Date(reserva.fechaUso);
+        const [startHours, startMinutes, startSeconds = 0] = reserva.horaInicio.split(':').map(Number);
+        startTime = new Date(usoDate);
+        startTime.setHours(startHours, startMinutes, startSeconds, 0);
+        const [endHours, endMinutes, endSeconds = 0] = reserva.horaFin.split(':').map(Number);
+        endTime = new Date(usoDate);
+        endTime.setHours(endHours, endMinutes, endSeconds, 0);
+      } else {
+        const fechaUsoStr = reserva.fechaUso as string;
+        const [year, month, day] = fechaUsoStr.split('-').map(Number);
+        const [startHours, startMinutes, startSeconds = 0] = reserva.horaInicio.split(':').map(Number);
+        startTime = new Date(year, month - 1, day, startHours, startMinutes, startSeconds);
+        const [endHours, endMinutes, endSeconds = 0] = reserva.horaFin.split(':').map(Number);
+        endTime = new Date(year, month - 1, day, endHours, endMinutes, endSeconds);
+      }      
+      return currentDate >= startTime && currentDate <= endTime;
+    }
+    
+    return false;
+  }
+  private isUsageDatePassed(reserva: ReservaPuntual): boolean {
+    if (reserva.fechaUso) {
+      const currentDate = new Date();
+      let usoDate: Date;      
+      if (reserva.fechaUso instanceof Date) {
+        usoDate = new Date(reserva.fechaUso);
+      } else {
+        const fechaUsoStr = reserva.fechaUso as string;
+        const [year, month, day] = fechaUsoStr.split('-').map(Number);
+        usoDate = new Date(year, month - 1, day);
+      }
+      usoDate.setHours(23, 59, 59, 999);      
+      return usoDate < currentDate;
     }    
     return false;
   }
@@ -397,21 +447,6 @@ export class BookingOneTimeComponent implements OnInit {
     const updatedReserva = await this.reservaService.update(updatedReservaDto).toPromise();
     reserva.reservaDto = updatedReserva;
     return reserva;
-  }
-  private isReservationCurrentlyActive(reserva: ReservaPuntual): boolean {
-    const currentDate = new Date();    
-    if (reserva.fechaUso && reserva.horaInicio && reserva.horaFin) {
-      const usoDate = new Date(reserva.fechaUso);
-      const [startHours, startMinutes, startSeconds = 0] = reserva.horaInicio.split(':').map(Number);
-      const startTime = new Date(usoDate);
-      startTime.setHours(startHours, startMinutes, startSeconds, 0);
-      const [endHours, endMinutes, endSeconds = 0] = reserva.horaFin.split(':').map(Number);
-      const endTime = new Date(usoDate);
-      endTime.setHours(endHours, endMinutes, endSeconds, 0);
-      
-      return currentDate >= startTime && currentDate <= endTime;
-    }
-    return false;
   }
   private async handleCompletedReservation(reserva: ReservaPuntual): Promise<ReservaPuntual> {
     const updatedReservaDto:any = {
@@ -657,9 +692,6 @@ export class BookingOneTimeComponent implements OnInit {
             item.reservaDto?.campoDeportivoDto?.complejoDto?.uuid === employee.complejoDto?.uuid
           );
         }
-        const originalPendingCount = list.filter(item => 
-          item.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE
-        ).length;
         const updatedList = await this.checkAndUpdateReservationStatuses(list);
         const newlyExpiredCount = updatedList.filter(item => 
           item.reservaDto?.estadoReserva === EstadoReserva.EXPIRADA && 

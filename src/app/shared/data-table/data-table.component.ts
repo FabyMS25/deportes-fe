@@ -62,10 +62,9 @@ export class DataTableComponent implements OnChanges {
   @Output() processItemEmitter = new EventEmitter<any>();
   @Output() recordsEmitter = new EventEmitter<any>();
   @Output() notifyItemEmitter = new EventEmitter<any>();
-  @Output() selectedItemEmitter = new EventEmitter<any[]>();
-  // @Output() ticketEmitter = new EventEmitter<any[]>();
   @Output() consultItemEmitter = new EventEmitter<any[]>();
   @Output() validateItemEmitter = new EventEmitter<any>();
+  @Output() selectedItemEmitter = new EventEmitter<any[]>();
   @Output() pageChange = new EventEmitter<number>();
   @Output() pageSizeChange = new EventEmitter<number>(); 
   
