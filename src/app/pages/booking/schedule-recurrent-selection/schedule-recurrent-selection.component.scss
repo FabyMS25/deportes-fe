@@ -1,8 +1,11 @@
+.card-body {
+padding: 0.5;
+}
 .calendar-section {
   .calendar-month {
     border: 1px solid #e9ecef;
     border-radius: 8px;
-    padding: 0.5rem;
+    padding: 0rem;
   }
 
   .month-header {
@@ -10,18 +13,55 @@
     color: white;
     padding: 0.2rem;
     border-radius: 4px;
-    margin: -1rem -1rem 1rem -1rem;
   }
+.calendar-grid-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0;
+  padding: 0 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f5f5f5;
+  
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f5f5f5;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+}
 
+.calendar-grid {
+  min-width: 400px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+@media (min-width: 768px) {
   .calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-    margin-bottom: 1rem;
+    min-width: 700px;
   }
+}
 
+@media (min-width: 992px) {
+  .calendar-grid {
+    min-width: 400px;
+  }
+}
   .calendar-header {
-    background: #f8f9fa;
     padding: 0.7rem;
     text-align: center;
     font-weight: 600;
@@ -38,7 +78,6 @@
     padding: 0.25rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    background: #f8f9fa;
     
     &:hover:not(.empty):not(.out-of-range) {
       border-color: #007bff;
@@ -166,30 +205,6 @@
     .legend-text {
       font-size: 0.8rem;
       color: #6c757d;
-    }
-  }
-}
-
-// Responsive adjustments
-@media (max-width: 768px) {
-  .calendar-section {
-    .calendar-day {
-      min-height: 60px;
-      padding: 0.15rem;
-      
-      .day-number {
-        font-size: 0.8rem;
-      }
-      
-      .time-info .time-text {
-        font-size: 0.65rem;
-      }
-    }
-    
-    .calendar-legend {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.5rem;
     }
   }
 }

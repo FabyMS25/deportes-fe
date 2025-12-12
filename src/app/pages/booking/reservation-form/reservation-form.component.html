@@ -114,7 +114,7 @@
           </div>
           <div *ngIf="bookingType === 'puntual'">
             <div class="row g-2">
-              <div class="col-md-3">
+              <div class="col-6 col-md-3">
                 <label class="form-label mb-0 fw-semibold">
                   <i class="ri-calendar-event-line me-1"></i>
                   Fecha <span class="text-danger">*</span>
@@ -138,7 +138,7 @@
                   </small>
                 </div>
               </div>
-              <div class="col-md-3">
+              <div class="col-6 col-md-3">
                 <label class="form-label mb-0 fw-semibold">
                   <i class="ri-time-line me-1"></i>
                   Hora Inicio <span class="text-danger">*</span>
@@ -160,7 +160,7 @@
                   </small>
                 </div>
               </div>
-              <div class="col-md-3">
+              <div class="col-6 col-md-3">
                 <label class="form-label mb-0 fw-semibold">
                   <i class="ri-time-line me-1"></i>
                   Hora Fin <span class="text-danger">*</span>
@@ -182,7 +182,7 @@
                   </small>
                 </div>
               </div>
-              <div class="col-md-3">
+              <div class="col-6 col-md-3">
                 <label class="form-label mb-0 fw-semibold">
                   <i class="ri-group-line me-1"></i>
                   Personas <span class="text-danger" *ngIf="selectedTariff.tipoCobro === 'por_persona'">*</span>
@@ -209,120 +209,114 @@
               </div>
             </div>
           </div>
-<!-- Add this section after the punctual booking section -->
-<div *ngIf="bookingType === 'recurrente'">
-  <div class="row g-2">
-    <!-- Fecha Inicio -->
-    <div class="col-md-3">
-      <label class="form-label mb-0 fw-semibold">
-        <i class="ri-calendar-event-line me-1"></i>
-        Fecha Inicio <span class="text-danger">*</span>
-      </label>
-      <input 
-        type="date" 
-        class="form-control form-control-sm" 
-        formControlName="fechaInicio"
-        [class.is-invalid]="isFieldInvalid('fechaInicio')"
-        [disabled]="shouldDisableScheduleFields"
-        [class.bg-light]="shouldDisableScheduleFields">
-      <div *ngIf="getFieldError('fechaInicio')" class="invalid-feedback">
-        {{ getFieldError('fechaInicio') }}
-      </div>
-    </div>
+        <div *ngIf="bookingType === 'recurrente'">
+          <div class="row g-2">
+            <div class="col-6 col-md-3">
+              <label class="form-label mb-0 fw-semibold">
+                <i class="ri-calendar-event-line me-1"></i>
+                Fecha Inicio <span class="text-danger">*</span>
+              </label>
+              <input 
+                type="date" 
+                class="form-control form-control-sm" 
+                formControlName="fechaInicio"
+                [class.is-invalid]="isFieldInvalid('fechaInicio')"
+                [disabled]="shouldDisableScheduleFields"
+                [class.bg-light]="shouldDisableScheduleFields">
+              <div *ngIf="getFieldError('fechaInicio')" class="invalid-feedback">
+                {{ getFieldError('fechaInicio') }}
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label mb-0 fw-semibold">
+                <i class="ri-calendar-event-line me-1"></i>
+                Fecha Fin <span class="text-danger">*</span>
+              </label>
+              <input 
+                type="date" 
+                class="form-control form-control-sm" 
+                formControlName="fechaFin"
+                [class.is-invalid]="isFieldInvalid('fechaFin')"
+                [disabled]="shouldDisableScheduleFields"
+                [class.bg-light]="shouldDisableScheduleFields">
+              <div *ngIf="getFieldError('fechaFin')" class="invalid-feedback">
+                {{ getFieldError('fechaFin') }}
+              </div>
+            </div>
 
-    <!-- Fecha Fin -->
-    <div class="col-md-3">
-      <label class="form-label mb-0 fw-semibold">
-        <i class="ri-calendar-event-line me-1"></i>
-        Fecha Fin <span class="text-danger">*</span>
-      </label>
-      <input 
-        type="date" 
-        class="form-control form-control-sm" 
-        formControlName="fechaFin"
-        [class.is-invalid]="isFieldInvalid('fechaFin')"
-        [disabled]="shouldDisableScheduleFields"
-        [class.bg-light]="shouldDisableScheduleFields">
-      <div *ngIf="getFieldError('fechaFin')" class="invalid-feedback">
-        {{ getFieldError('fechaFin') }}
-      </div>
-    </div>
+            <!-- Duración Sesión -->
+            <!-- <div class="col-md-3">
+              <label class="form-label mb-0 fw-semibold">
+                <i class="ri-timer-line me-1"></i>
+                Duración (horas) <span class="text-danger">*</span>
+              </label>
+              <input 
+                type="number" 
+                class="form-control form-control-sm" 
+                formControlName="duracionSesionHoras"
+                [class.is-invalid]="isFieldInvalid('duracionSesionHoras')"
+                min="1" 
+                max="8"
+                step="0.5"
+                placeholder="Ej: 2"
+                [disabled]="shouldDisableScheduleFields"
+                [class.bg-light]="shouldDisableScheduleFields">
+              <div *ngIf="getFieldError('duracionSesionHoras')" class="invalid-feedback">
+                {{ getFieldError('duracionSesionHoras') }}
+              </div>
+            </div> -->
 
-    <!-- Duración Sesión -->
-    <!-- <div class="col-md-3">
-      <label class="form-label mb-0 fw-semibold">
-        <i class="ri-timer-line me-1"></i>
-        Duración (horas) <span class="text-danger">*</span>
-      </label>
-      <input 
-        type="number" 
-        class="form-control form-control-sm" 
-        formControlName="duracionSesionHoras"
-        [class.is-invalid]="isFieldInvalid('duracionSesionHoras')"
-        min="1" 
-        max="8"
-        step="0.5"
-        placeholder="Ej: 2"
-        [disabled]="shouldDisableScheduleFields"
-        [class.bg-light]="shouldDisableScheduleFields">
-      <div *ngIf="getFieldError('duracionSesionHoras')" class="invalid-feedback">
-        {{ getFieldError('duracionSesionHoras') }}
-      </div>
-    </div> -->
+            <div class="col-md-3">
+              <label class="form-label mb-0 fw-semibold">
+                <i class="ri-group-line me-1"></i>
+                Personas <span class="text-danger" *ngIf="selectedTariff.tipoCobro === 'por_persona'">*</span>
+              </label>
+              <input 
+                type="number" 
+                class="form-control form-control-sm" 
+                formControlName="cantidadPersonas"
+                [class.is-invalid]="isFieldInvalid('cantidadPersonas')"
+                min="1" 
+                [max]="dataField.capacidadPersonas || 100"
+                placeholder="Ej: 10"
+                [disabled]="shouldDisableScheduleFields && selectedTariff.tipoCobro === 'por_persona'"
+                [class.bg-light]="shouldDisableScheduleFields && selectedTariff.tipoCobro === 'por_persona'">
+              <div *ngIf="getFieldError('cantidadPersonas')" class="invalid-feedback">
+                {{ getFieldError('cantidadPersonas') }}
+              </div>
+            </div>
+          </div>
 
-    <div class="col-md-3">
-      <label class="form-label mb-0 fw-semibold">
-        <i class="ri-group-line me-1"></i>
-        Personas <span class="text-danger" *ngIf="selectedTariff.tipoCobro === 'por_persona'">*</span>
-      </label>
-      <input 
-        type="number" 
-        class="form-control form-control-sm" 
-        formControlName="cantidadPersonas"
-        [class.is-invalid]="isFieldInvalid('cantidadPersonas')"
-        min="1" 
-        [max]="dataField.capacidadPersonas || 100"
-        placeholder="Ej: 10"
-        [disabled]="shouldDisableScheduleFields && selectedTariff.tipoCobro === 'por_persona'"
-        [class.bg-light]="shouldDisableScheduleFields && selectedTariff.tipoCobro === 'por_persona'">
-      <div *ngIf="getFieldError('cantidadPersonas')" class="invalid-feedback">
-        {{ getFieldError('cantidadPersonas') }}
-      </div>
-    </div>
-  </div>
-
-  <!-- Resumen de Sesiones -->
-  <div *ngIf="reservationForm.get('fechaInicio')?.value && reservationForm.get('fechaFin')?.value && reservationForm.get('tipoRecurrencia')?.value" 
-       class="alert alert-info mt-3 py-2">
-    <div class="row align-items-center">
-      <div class="col">
-        <div class="d-flex align-items-center">
-          <i class="ri-calendar-check-line me-2"></i>
-          <div>
-            <strong class="d-block">Resumen de Programación</strong>
-            <small class="text-muted">
-              {{ getRecurrenceSummary() }}
-            </small>
+          <!-- Resumen de Sesiones -->
+          <div *ngIf="reservationForm.get('fechaInicio')?.value && reservationForm.get('fechaFin')?.value && reservationForm.get('tipoRecurrencia')?.value" 
+              class="alert alert-info mt-3 py-2">
+            <div class="row align-items-center">
+              <div class="col">
+                <div class="d-flex align-items-center">
+                  <i class="ri-calendar-check-line me-2"></i>
+                  <div>
+                    <strong class="d-block">Resumen de Programación</strong>
+                    <small class="text-muted">
+                      {{ getRecurrenceSummary() }}
+                    </small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-auto">
+                <span class="badge bg-primary fs-6">
+                  {{ calculateTotalSessions() }} sesiones
+                </span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="col-auto">
-        <span class="badge bg-primary fs-6">
-          {{ calculateTotalSessions() }} sesiones
-        </span>
-      </div>
-    </div>
-  </div>
-</div>
         </div>
         <hr class="my-2">
-        <!-- Price Calculation -->
-        <div class="mb-4">
+        <div class="mb-2">
           <h6 class="fw-bold">
             <i class="ri-calculator-line text-primary me-2"></i>
             Cálculo de Pago
           </h6>
-
           <div class="table-responsive">
             <table class="table table-sm table-borderless mb-2">
               <tbody>

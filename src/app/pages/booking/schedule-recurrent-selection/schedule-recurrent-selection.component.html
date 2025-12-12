@@ -47,9 +47,9 @@
             <i class="ri-error-warning-line me-2"></i>
             {{ errorMessage }}
           </div>
-          <div class="row mb-4">
-            <div class="col-md-6">
-              <label class="form-label fw-medium">
+          <div class="row mb-2 g-1 g-md-2">
+            <div class="col-6">
+              <label class="form-label fw-medium mb-0">
                 <i class="bx bx-calendar-check me-1"></i>
                 Fecha de Inicio
               </label>
@@ -58,8 +58,8 @@
                      [(ngModel)]="fechaInicio"
                      (change)="onFechaInicioChange()">
             </div>
-            <div class="col-md-6">
-              <label class="form-label fw-medium">
+            <div class="col-6">
+              <label class="form-label fw-medium mb-0">
                 <i class="bx bx-calendar-x me-1"></i>
                 Fecha de Fin
               </label>
@@ -72,7 +72,7 @@
           </div>
           <div class="card bg-light mb-2">
             <div class="card-body">
-              <h6 class="mb-3">
+              <h6 class="mb-2">
                 <i class="ri-calendar-event-line me-1"></i>
                 Seleccione Días y Horarios
                 <small class="text-muted">(Puede agregar múltiples horarios por día)</small>
@@ -145,15 +145,16 @@
             </div>
           </div>
           <div class="calendar-section">
-            <h6 class="mb-3">
+            <h6 class="mb-2">
               <i class="ri-calendar-2-line me-1"></i>
               Vista de Calendario
               <small class="text-muted">(Los días resaltados serán reservados)</small>
             </h6>            
             <div *ngFor="let monthData of calendarMonths" class="calendar-month mb-2">
-              <div class="month-header text-center mb-3">
+              <div class="month-header text-center mb-2">
                 <h5 class="mb-0">{{ monthData.monthName }} {{ monthData.year }}</h5>
-              </div>              
+              </div>
+              <div class="calendar-grid-container">
               <div class="calendar-grid">
                 <div class="calendar-header">Dom</div>
                 <div class="calendar-header">Lun</div>
@@ -164,7 +165,7 @@
                 <div class="calendar-header">Sáb</div>
                 <ng-container *ngFor="let week of monthData.weeks">
                   <div *ngFor="let dayCell of week" 
-                       class="calendar-day"
+                       class="calendar-day bg-light"
                        [class.empty]="dayCell.empty"
                        [class.out-of-range]="dayCell.isInRange === false"
                        [class.selectable]="dayCell.isSelectable"
@@ -184,7 +185,8 @@
                   </div>
                 </ng-container>
               </div>
-              <div class="calendar-legend mt-3">
+              </div>       
+              <div class="calendar-legend mt-2">
                 <div class="legend-item">
                   <div class="legend-color has-schedule"></div>
                   <span class="legend-text">Día reservado</span>
