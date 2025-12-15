@@ -330,3 +330,24 @@
 .mobile-events-list .card {
   animation: fadeIn 0.3s ease-in-out;
 }
+
+  @media (max-width: 576px) {
+    .card-title {
+      font-size: 0.9rem !important;
+    }
+    
+    .badge {
+      font-size: 0.7rem;
+    }
+    
+    .form-check-label {
+      font-size: 0.85rem;
+    }
+  }
+  
+  @media (min-width: 992px) {
+    .mobile-events-list {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+  }

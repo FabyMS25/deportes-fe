@@ -134,7 +134,6 @@ export class FieldsComponent {
     this.applyFilters();
   }
 
-
   viewDataGet(data: any) {
     this.dataSelected = data;
     const element = this.viewModel.nativeElement;

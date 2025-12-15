@@ -38,7 +38,7 @@ export class CalendarDashboardComponent implements OnInit {
   direction: any = 'ltr';
   selectedLocale: any = 'es';
   masterSelected: any = true;
-  showFilters: boolean = true;
+  showFilters: boolean = false;
 
   filterArray: any = [
     { name: 'reserva-puntual', label: 'Reservas Puntuales', checked: true, color: '#10b981' },
