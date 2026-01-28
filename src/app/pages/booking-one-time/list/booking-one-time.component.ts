@@ -353,7 +353,7 @@ export class BookingOneTimeComponent implements OnInit {
             return await this.handleCompletedReservation(reserva);
           }
         }
-        if (reservaDto.estadoReserva === EstadoReserva.EN_CURSO && this.isReservationTimeCompleted(reserva)) {
+        if ((reservaDto.estadoReserva === EstadoReserva.PAGADA || reservaDto.estadoReserva === EstadoReserva.EN_CURSO) && this.isReservationTimeCompleted(reserva)) {
           return await this.handleCompletedReservation(reserva);
         }                
         return reserva;

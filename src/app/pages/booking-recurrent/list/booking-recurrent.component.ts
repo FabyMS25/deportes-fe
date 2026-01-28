@@ -388,7 +388,7 @@ export class BookingRecurrentComponent implements OnInit {
           }
         }
         if (this.isReservationPeriodCompleted(reserva) && 
-            reservaDto.estadoReserva !== EstadoReserva.COMPLETADA) {
+            (reservaDto.estadoReserva === EstadoReserva.PAGADA || reservaDto.estadoReserva === EstadoReserva.EN_CURSO)) {
           return await this.handleCompletedReservation(reserva);
         }     
         return reserva;
