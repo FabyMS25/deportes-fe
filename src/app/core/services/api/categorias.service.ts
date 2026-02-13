@@ -19,18 +19,18 @@ export class CategoriasService {
   constructor(private http: HttpClient) { }
 
   getAll(): Observable<Categoria[]> {
-    return this.http.get<Categoria[]>(`${this.apiUrl}`);
+    return this.http.get<any>(`${this.apiUrl}`);
   }
 
   getByUuid(uuid:string):Observable<Categoria>{
-    return this.http.get<Categoria>(`${this.apiUrl}/${uuid}`);
+    return this.http.get<any>(`${this.apiUrl}/${uuid}`);
   }
   save(data: Categoria): Observable<Categoria> {    
-    return this.http.post<Categoria>(`${this.apiUrl}`, data);
+    return this.http.post<any>(`${this.apiUrl}`, data);
   }
 
   update(data: Categoria): Observable<Categoria> {
-    return this.http.put<Categoria>(`${this.apiUrl}`, data);
+    return this.http.put<any>(`${this.apiUrl}`, data);
   }
   delete(uuid: string) {
     return this.http.delete(`${this.apiUrl}/${uuid}`);

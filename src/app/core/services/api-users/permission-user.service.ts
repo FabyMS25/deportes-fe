@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -13,12 +13,18 @@ export class PermissionUserService {
 
   constructor(private http: HttpClient) { }
 
-  getPermisosApp(): Observable<any[]> {
+  getPermissionsApp(): Observable<any[]> {
     return this.http.get<any[]>(`${USERS_API}/padres/${CODE_APP}`);
   }
 
-  getPermisosUsuario(uuid: String): Observable<any[]> {
-    return this.http.get<any[]>(`${USERS_API}/permisos-porusuario?uuidUsuario=${uuid}&codigoModulo=${CODE_APP}`);
+  getPermissionsUser(user: any): Observable<any[]> {
+    let params = new HttpParams();
+    params = params.append('uuidUsuario', user.uuid);
+    params = params.append('codigoModulo', CODE_APP);
+    let headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + user.token
+    });
+    return this.http.get<any[]>(`${USERS_API}/permisos-porusuario`, { params: params, headers: headers });
   }
-
 }

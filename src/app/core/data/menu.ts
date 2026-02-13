@@ -1,4 +1,4 @@
-import { MenuItem } from './menu.model';
+import { MenuItem } from "../models/menu.model";
 export const MENU_BASE: MenuItem[] = [
   /* SECTION OF THE MENU THAT CAN BE ACCESED BY ADMIN OR ENCARGADOS OR CONTRIBUYENTES (the uncomenteds menus are for contribuyente the others can be used for admins or encargados) */
   // {"uuid":"91b69bcd-6273-479c-88a3-9c3bd796584c","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Dashboard de Admin","accion":"VER","ruta":"/inicio","orden":0,"icono":"ri-dashboard-2-line","estado":false,"permisoHijoListDto":[],"subNivel":false},

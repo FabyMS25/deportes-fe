@@ -230,7 +230,7 @@
         <div class="col col-xxl-6">
             <div class="text-sm-right float-sm-end listjs-pagination">
                 <ngb-pagination 
-                    [collectionSize]="getTotalElements()" 
+                    [collectionSize]="getTotalElements()"
                     [(page)]="service.page" 
                     [pageSize]="itemsPerPage" 
                     [boundaryLinks]="true" 
@@ -238,6 +238,9 @@
                     [ellipses]="true"
                     (pageChange)="onPageChange($event)">
                 </ngb-pagination>
+                    <!-- 
+                    [page]="(paginationInfo?.pageNumber ?? 0) + 1"
+                    [collectionSize]="paginationInfo?.totalElements ?? 0" -->
             </div>
         </div>
     </div> 

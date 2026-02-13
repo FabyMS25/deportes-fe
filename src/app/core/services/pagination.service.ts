@@ -1,10 +1,10 @@
-// pagination.service.ts
 import { Injectable, Input } from '@angular/core';
 
 @Injectable({
     providedIn: 'root',
 })
 export class PaginationService {
+    // Pagination
     pageSize: any = 5;
     page: any = 1;
     startIndex: number = 1;
@@ -13,14 +13,12 @@ export class PaginationService {
     private sortColumn: string = '';
     private sortDirection: 'asc' | 'desc' = 'asc';
 
-    changePage(alldata: any[], pageSize:number) {
-        const startItem = (this.page - 1) * pageSize + 1;
-        const endItem = (this.page - 1) * pageSize + pageSize;
-        this.endIndex = endItem;
-        if (this.endIndex > alldata.length) {
-            this.endIndex = alldata.length;
-        }
-        return alldata.slice(startItem - 1, endItem);
+    changePage(alldata: any[], pageSize: number) {
+        const startItem = (this.page - 1) * pageSize;
+        const endItem = startItem + pageSize;
+        this.startIndex = startItem + 1;
+        this.endIndex = Math.min(endItem, alldata.length);
+        return alldata.slice(startItem, endItem);
     }
 
     onSort(column: string, items: any[], isAscending: boolean = true): any[] {

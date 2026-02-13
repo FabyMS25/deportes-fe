@@ -16,10 +16,11 @@ import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.m
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { EstadoActual, EstadoUsuario } from 'src/app/core/constants/Estados';
 import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
-import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo';
+import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
 import { Categoria } from 'src/app/core/models/categoria.model';
 import { TarifaCategoria } from 'src/app/core/models/tarifa-categoria.model';
+import { take } from 'rxjs';
 
 @Component({
     selector: 'app-map-dashboard',
@@ -85,24 +86,10 @@ export class MapDashboardComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.route.queryParams.subscribe(params => {
-        if (params['message']) {
-            switch (params['message']) {
-            case 'welcome_admin':
-                this.toastService.show('¡Bienvenido Admin!', 'Inicio de sesión exitoso');
-                break;
-            case 'welcome_employee':
-                this.toastService.show('¡Bienvenido Encargado!', 'Inicio de sesión exitoso');
-                break;
-            case 'welcome_taxpayer':
-                this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
-                break;
-            }
-            this.router.navigate([], {
-            queryParams: {},
-            replaceUrl: true
-            });
-        }
+        this.authService.loginEvent$
+            .pipe(take(1))
+            .subscribe(event => {
+            this.showConsolidatedSystemStatus(event);
         });
         this.systemConfigList = this.authService.getAllConfigs()
         const currentUser = this.authService.currentUser();
@@ -113,11 +100,59 @@ export class MapDashboardComponent implements OnInit {
             this.userData = currentUser.designacion.personaDto;
         } else {
             this.userData = currentUser.designacion.personaDto;
-            const funcionarioString = localStorage.getItem('assignaments');
-            this.assignations = funcionarioString ? JSON.parse(funcionarioString) : null;
+            this.assignations = this.authService.staff();
         }
         this.initializeData();
     }
+    
+  private showConsolidatedSystemStatus(event: any): void {
+    const configsLoaded = event.configsLoaded || 0;
+    const finalRuatConnected = event.ruatStatus;
+    let welcomeTitle = '';
+    let welcomeMessage = '';
+    switch(event.message) {
+      case 'welcome_admin':
+        welcomeTitle = '🎉 ¡Bienvenido Administrador!';
+        welcomeMessage = 'Inicio de sesión exitoso con privilegios de administrador.';
+        break;
+      case 'welcome_staff':
+        welcomeTitle = '👤 ¡Bienvenido Encargado!';
+        welcomeMessage = 'Inicio de sesión exitoso.';
+        break;
+      default:
+        welcomeTitle = '🎉 ¡Bienvenido!';
+        welcomeMessage = 'Inicio de sesión exitoso.';
+    }    
+    let statusMessage = '📊 Estado del Sistema:\n\n';
+    if (configsLoaded > 0) {
+      statusMessage += '✅ Sistema Principal: CONECTADO\n';
+      statusMessage += `⚙️ Configuraciones: ${configsLoaded} cargadas\n`;
+    } else {
+      statusMessage += '⚠️ Sistema Principal: CONEXIÓN LIMITADA\n';
+      statusMessage += `⚙️ Configuraciones: 0 cargadas\n`;
+    }
+    if (finalRuatConnected) {
+      statusMessage += '✅ RUAT: CONECTADO\n';
+      statusMessage += '   → Todas las funciones disponibles';
+    } else {
+      statusMessage += '❌ RUAT: NO DISPONIBLE\n\n';
+      statusMessage += '   ⚠️ ADVERTENCIA IMPORTANTE:\n';
+      statusMessage += '   • No se puede conectar al sistema RUAT\n';
+      statusMessage += '   • Las reservas nuevas NO estarán disponibles\n';
+      statusMessage += '   • Solo podrá consultar reservas existentes\n';
+      statusMessage += '   • La verificación de contribuyentes estará limitada\n\n';
+      statusMessage += '   💡 Recomendación:\n';
+      statusMessage += '   • Si necesita realizar reservas, cierre sesión y vuelva a intentar más tarde\n';
+      statusMessage += '   • Contacte al administrador si el problema persiste';
+    }
+    const fullMessage = `${welcomeMessage}\n\n${statusMessage}`;
+    this.toastService.show(fullMessage, {
+      classname: finalRuatConnected ? 'bg-success text-light' : 'bg-warning text-dark',
+      header: welcomeTitle,
+      delay: 15000
+    });
+  }
+
 
     async initializeData() {
         this.loading = true;
@@ -166,9 +201,6 @@ export class MapDashboardComponent implements OnInit {
             const complex = this.setPopup(element);
             this.mainList.addLayer(complex);
         });
-        setTimeout(() => {
-            console.log('Markers in cluster:', this.mainList.getLayers().length);
-        }, 1000);
 
         let filteredMarkers: any[] = this.getFilteredList();
         this.overlayMaps = {
@@ -993,7 +1025,6 @@ export class MapDashboardComponent implements OnInit {
     }
     
     handleButtonClick(data: any): void {
-        console.log('Button clicked with data:', data);
         this.router.navigate(['/reservations/details'], { state: { data: data } });
     }
     public goToReservation(complejo: ComplejoDeportivo | null, bookingType: string) {

@@ -8,7 +8,7 @@ import { environment } from 'src/environments/environment';
 })
 export class AppComponent {
   title = 'deportes-gamq';
-
+  
   subscriberId = environment.subscriberId;
 
   applicationIdentifier = environment.applicationIdentifier;
@@ -94,10 +94,4 @@ styles = {
 
   };
 
-
-  sessionLoaded = (data: unknown) => {
-
-    console.log('loaded', { data });
-
-  };
 }

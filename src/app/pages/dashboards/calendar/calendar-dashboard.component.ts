@@ -8,20 +8,23 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import multiMonthPlugin from '@fullcalendar/multimonth'
 import esLocale from '@fullcalendar/core/locales/es';
+import { CookieService } from 'ngx-cookie-service';
 import Swal from 'sweetalert2';
 
-import { ReservaService } from 'src/app/core/services/api/reserva.service';
-import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { BookingOneTimeModalComponent } from '../../booking-one-time/modal/modal.component';
-import { Reserva } from 'src/app/core/models/reserva.models';
-import { ReservaPuntualService } from 'src/app/core/services/api/reserva-puntual.service';
-import { ReservaRecurrenteService } from 'src/app/core/services/api/reserva-recurrente.service';
-import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
-import { ModalRecurrentComponent } from '../../booking-recurrent/modal/modal.component';
-import { Contribuyente } from 'src/app/core/models/contribuyente.model';
-import { ReservaPuntual } from 'src/app/core/models/reservaPuntual.models';
-import { EstadoReserva } from 'src/app/core/constants/Estados';
 import { ToastService } from '../admin/toast-service';
+import { AuthenticationService } from 'src/app/core/services/auth.service';
+import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
+import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { EstadoReserva } from 'src/app/core/constants/Estados';
+import { ReservaService } from 'src/app/core/services/api/reserva.service';
+
+import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
+import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
+import { Reserva } from 'src/app/core/models/reserva.model';
+import { BookingOneTimeModalComponent } from '../../modals/modal-booking-one-time/modal-booking-one-time.component';
+import { take } from 'rxjs';
+// import { BookingOneTimeModalComponent } from '../../booking-one-time/modal/modal.component';
 
 @Component({
     selector: 'app-calendar-dashboard',
@@ -33,23 +36,24 @@ export class CalendarDashboardComponent implements OnInit {
   breadCrumbItems!: Array<{}>;
   canActivate:string[];
 
+  allcalendarEvents: any[] = [];
+  contribuyente!:Contribuyente;
+  employee! : EncargadoComplejo;
+  complejosList: ComplejoDeportivo[] = [];
+  selectedComplejoUuid: string = 'all'; 
+
   calendarEvents: any[] = [];
   upcomingEvents: any[] = [];
   direction: any = 'ltr';
   selectedLocale: any = 'es';
   masterSelected: any = true;
   showFilters: boolean = false;
-
   filterArray: any = [
     { name: 'reserva-puntual', label: 'Reservas Puntuales', checked: true, color: '#10b981' },
     { name: 'reserva-recurrente', label: 'Reservas Recurrentes', checked: true, color: '#3b82f6' },
     { name: 'excepcion', label: 'Excepciones (Cerrado/Mantenimiento/Eventos)', checked: true, color: '#ef4444' }
   ];
-  
   filterEvents: any = [];
-  allcalendarEvents: any[] = [];
-  contribuyente!:Contribuyente;
-
   @ViewChild('confirmModal') confirmModal!: TemplateRef<any>; 
 
   constructor( 
@@ -58,43 +62,107 @@ export class CalendarDashboardComponent implements OnInit {
     public toastService: ToastService,
     private modalService: NgbModal,
     private campoDeportivoService: CamposDeportivoService,
+    private complejoService: ComplejosService,
     private reservasService: ReservaService,
-    private reservaPuntualService: ReservaPuntualService,
-    private reservaRecurrenteService: ReservaRecurrenteService,
     private authService: AuthenticationService,
+    private cookieService: CookieService,
   ) { 
     this.canActivate = this.authService.hasPermission('Reservas');
   }
 
-  ngOnInit(): void {
-    this.route.queryParams.subscribe(params => {
-      if (params['message']) {
-        switch (params['message']) {
-          case 'welcome_admin':
-            this.toastService.show('¡Bienvenido Admin!', 'Inicio de sesión exitoso');
-            break;
-          case 'welcome_employee':
-            this.toastService.show('¡Bienvenido Encargado!', 'Inicio de sesión exitoso');
-            break;
-          case 'welcome_taxpayer':
-            this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
-            break;
-        }
-        this.router.navigate([], {
-          queryParams: {},
-          replaceUrl: true
+  async ngOnInit(): Promise<void> {
+    this.breadCrumbItems = [
+      { label: 'Dashboards' },
+      { label: 'Calendario', active: true }
+    ]; 
+    const currentUser = this.authService.currentUser();
+    this.employee = this.authService.staff();
+    if (this.authService.tokenUser() === 'CONTRIBUYENTE_SESSION') {
+      this.contribuyente = currentUser ? JSON.parse(currentUser) : null;
+    }
+    this.authService.loginEvent$
+    .pipe(take(1))
+    .subscribe(event => {
+      this.showConsolidatedSystemStatus(event);
+    });    
+    this.loadCalendarViewPreference();
+    if(this.employee){
+      this.complejosList = this.employee && this.employee.complejoDto ? [this.employee.complejoDto] : [];
+    }else{
+      try {
+        this.complejosList = await this.complejoService.getAll().toPromise().then((res:any) => {
+          if (res.status === 'OK') {
+            return res.payload as ComplejoDeportivo[];
+          } else {
+            return [];
+          }
         });
+      }catch (error) {
+        this.complejosList = [];
       }
-    });
-      this.breadCrumbItems = [
-          { label: 'Dashboards' },
-          { label: 'Encargado', active: true }
-      ];  
-      const currentUser = window.sessionStorage.getItem("currentUser");
-      if (window.sessionStorage.getItem("auth-token") === 'isContribuyente') {
-        this.contribuyente = currentUser ? JSON.parse(currentUser) : null;
-      }   
+    }
+    this.selectedComplejoUuid = this.employee && this.employee.complejoDto?.uuid ? this.employee.complejoDto.uuid : 'all';
     this._fetchData();
+  }
+
+  private showConsolidatedSystemStatus(event: any): void {
+    const configsLoaded = event.configsLoaded || 0;
+    const finalRuatConnected = event.ruatStatus;
+    let welcomeTitle = '';
+    let welcomeMessage = '';
+    const configsCount = Object.keys(this.authService.getAllConfigs() || {}).length;
+    switch(event.message) {
+      case 'welcome_admin':
+        welcomeTitle = '🎉 ¡Bienvenido Administrador!';
+        welcomeMessage = 'Inicio de sesión exitoso con privilegios de administrador.';
+        break;
+      case 'welcome_staff':
+        welcomeTitle = '👤 ¡Bienvenido Encargado!';
+        welcomeMessage = 'Inicio de sesión exitoso.';
+        break;
+      default:
+        welcomeTitle = '🎉 ¡Bienvenido!';
+        welcomeMessage = 'Inicio de sesión exitoso.';
+    }    
+    let statusMessage = '📊 Estado del Sistema:\n\n';
+    if (configsLoaded > 0) {
+      statusMessage += '✅ Sistema Principal: CONECTADO\n';
+      statusMessage += `⚙️ Configuraciones: ${configsLoaded} cargadas\n`;
+    } else {
+      statusMessage += '⚠️ Sistema Principal: CONEXIÓN LIMITADA\n';
+      statusMessage += `⚙️ Configuraciones: 0 cargadas\n`;
+    }
+    if (finalRuatConnected) {
+      statusMessage += '✅ RUAT: CONECTADO\n';
+      statusMessage += '   → Todas las funciones disponibles';
+    } else {
+      statusMessage += '❌ RUAT: NO DISPONIBLE\n\n';
+      statusMessage += '   ⚠️ ADVERTENCIA IMPORTANTE:\n';
+      statusMessage += '   • No se puede conectar al sistema RUAT\n';
+      statusMessage += '   • Las reservas nuevas NO estarán disponibles\n';
+      statusMessage += '   • Solo podrá consultar reservas existentes\n';
+      statusMessage += '   • La verificación de contribuyentes estará limitada\n\n';
+      statusMessage += '   💡 Recomendación:\n';
+      statusMessage += '   • Si necesita realizar reservas, cierre sesión y vuelva a intentar más tarde\n';
+      statusMessage += '   • Contacte al administrador si el problema persiste';
+    }
+    const fullMessage = `${welcomeMessage}\n\n${statusMessage}`;
+    this.toastService.show(fullMessage, {
+      classname: finalRuatConnected ? 'bg-success text-light' : 'bg-warning text-dark',
+      header: welcomeTitle,
+      delay: 15000
+    });
+  }
+
+
+  onComplejoFilterChange(): void {
+    this._fetchData();
+  }
+  getSelectedComplejo(): ComplejoDeportivo | null {
+    if (this.selectedComplejoUuid === 'all') {
+      return null;
+    }
+    return this.complejosList.find(c => c.uuid === this.selectedComplejoUuid) || null;
   }
 
   private async _fetchData() {    
@@ -104,10 +172,7 @@ export class CalendarDashboardComponent implements OnInit {
         this.reservasService.getByTipo('recurrente').toPromise(),
         this.campoDeportivoService.getAll().toPromise()
       ]);
-
-      const assignaments = localStorage.getItem("assignaments");
-      const employee = assignaments ? JSON.parse(assignaments) : null;
-      
+ 
       let allEvents: any[] = [];
 
       if (reservasPuntuales?.status === 'OK') {
@@ -117,9 +182,13 @@ export class CalendarDashboardComponent implements OnInit {
           item.estadoReserva === EstadoReserva.COMPLETADA || item.estadoReserva===EstadoReserva.EN_CURSO
         );
         
-        if (employee) {
+        if (this.employee) {
           reservasPuntualesData = reservasPuntualesData.filter((item: Reserva) => 
-            item.campoDeportivoDto?.complejoDto?.uuid === employee.complejoDto.uuid
+            item.campoDeportivoDto?.complejoDto?.uuid === this.employee.complejoDto?.uuid
+          );
+        }else if (this.selectedComplejoUuid !== 'all') {
+          reservasPuntualesData = reservasPuntualesData.filter((item: Reserva) => 
+            item.campoDeportivoDto?.complejoDto?.uuid === this.selectedComplejoUuid
           );
         }
         if(this.contribuyente){
@@ -145,7 +214,7 @@ export class CalendarDashboardComponent implements OnInit {
 
           return {
             id: `puntual-${evt.uuid}`,
-            title: `${startTime}-${endTime} | ${campoNombre}`,
+            title: `${startTime}-${endTime} | ${complejoNombre} -${campoNombre}`,
             start: `${fechaBase.split('T')[0]}T${horaEntrada}`,
             end: `${fechaBase.split('T')[0]}T${horaSalida}`,
             backgroundColor: '#10b981',
@@ -173,9 +242,13 @@ export class CalendarDashboardComponent implements OnInit {
           item.estadoReserva === EstadoReserva.COMPLETADA || item.estadoReserva===EstadoReserva.EN_CURSO
         );
         
-        if (employee) {
+        if (this.employee) {
           reservasRecurrentesData = reservasRecurrentesData.filter((item: any) => 
-            item.campoDeportivoDto?.complejoDto?.uuid === employee.complejoDto.uuid
+            item.campoDeportivoDto?.complejoDto?.uuid === this.employee.complejoDto?.uuid
+          );
+        }else if (this.selectedComplejoUuid !== 'all') {
+          reservasRecurrentesData = reservasRecurrentesData.filter((item: Reserva) => 
+            item.campoDeportivoDto?.complejoDto?.uuid === this.selectedComplejoUuid
           );
         }
         if(this.contribuyente){
@@ -202,9 +275,13 @@ export class CalendarDashboardComponent implements OnInit {
           }
         });
 
-        if (employee) {
+        if (this.employee) {
           horariosExcepcion = horariosExcepcion.filter((exc: any) => 
-            exc.campoDeportivoDto?.complejoDto?.uuid === employee.complejoDto.uuid
+            exc.campoDeportivoDto?.complejoDto?.uuid === this.employee.complejoDto?.uuid
+          );
+        } else if (this.selectedComplejoUuid !== 'all') {
+          horariosExcepcion = horariosExcepcion.filter((exc: any) => 
+            exc.campoDeportivoDto?.complejoDto?.uuid === this.selectedComplejoUuid
           );
         }
 
@@ -238,7 +315,7 @@ export class CalendarDashboardComponent implements OnInit {
 
           return {
             id: `excepcion-${exc.uuid}`,
-            title: `${startTime}-${endTime} | ${campoNombre} - ${title}`,
+            title: `${startTime}-${endTime} | ${complejoNombre} -${campoNombre} - ${title}`,
             start: `${exc.fecha.split('T')[0]}T${horaInicio}`,
             end: `${exc.fecha.split('T')[0]}T${horaFin}`,
             backgroundColor: backgroundColor,
@@ -267,7 +344,6 @@ export class CalendarDashboardComponent implements OnInit {
       this.calendarOptions.events = this.calendarEvents;
       
     } catch (error) {
-      console.error('Error fetching calendar data:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
@@ -377,56 +453,59 @@ export class CalendarDashboardComponent implements OnInit {
   /**
    * Calendar configuration
    */
-calendarOptions: CalendarOptions = {
-  plugins: [dayGridPlugin, listPlugin, interactionPlugin, timeGridPlugin, multiMonthPlugin],
-  headerToolbar: {
-    right: 'multiMonthYear,dayGridMonth,timeGridWeek,timeGridDay,listWeek',
-    center: 'title',
-    left: 'prev,next today'
-  },
-  initialView: 'dayGridMonth',
-  themeSystem: "bootstrap",
-  weekends: true,
-  droppable: false,
-  editable: false,
-  selectable: true,
-  selectMirror: true,
-  dayMaxEvents: 3,
-  dayMaxEventRows: 3,
-  dayPopoverFormat: { 
-    month: 'long', 
-    day: 'numeric', 
-    year: 'numeric' 
-  },
-  moreLinkClick: 'popover',
-  moreLinkContent: (args) => {
-    return `+${args.num} más`;
-  },
-  direction: 'ltr',
-  locale: 'es',
-  locales: [esLocale],
-  slotMinTime: '06:00:00',
-  slotMaxTime: '23:00:00',
-  allDaySlot: false,
-  eventTimeFormat: {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  },
-  eventDisplay: 'block', 
-  eventColor: '#3788d8', 
-  eventTextColor: '#ffffff',
-  eventBackgroundColor: '#3788d8',
-  eventBorderColor: '#3788d8',
+  calendarOptions: CalendarOptions = {
+    plugins: [dayGridPlugin, listPlugin, interactionPlugin, timeGridPlugin, multiMonthPlugin],
+    headerToolbar: {
+      right: 'multiMonthYear,dayGridMonth,timeGridWeek,timeGridDay,listWeek',
+      center: 'title',
+      left: 'prev,next today'
+    },
+    initialView: 'dayGridMonth',
+    themeSystem: "bootstrap",
+    weekends: true,
+    droppable: false,
+    editable: false,
+    selectable: true,
+    selectMirror: true,
+    dayMaxEvents: 3,
+    dayMaxEventRows: 3,
+    dayPopoverFormat: { 
+      month: 'long', 
+      day: 'numeric', 
+      year: 'numeric' 
+    },
+    moreLinkClick: 'popover',
+    moreLinkContent: (args) => {
+      return `+${args.num} más`;
+    },
+    direction: 'ltr',
+    locale: 'es',
+    locales: [esLocale],
+    slotMinTime: '06:00:00',
+    slotMaxTime: '23:00:00',
+    allDaySlot: false,
+    eventTimeFormat: {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    },
+    eventDisplay: 'block', 
+    eventColor: '#3788d8', 
+    eventTextColor: '#ffffff',
+    eventBackgroundColor: '#3788d8',
+    eventBorderColor: '#3788d8',
+    
+    select: this.redirectTo.bind(this),
+    eventClick: this.handleEventClick.bind(this),
+    eventsSet: this.handleEvents.bind(this),
+    datesSet: this.handleViewChange.bind(this),
+  };
   
-  select: this.redirectTo.bind(this),
-  eventClick: this.handleEventClick.bind(this),
-  eventsSet: this.handleEvents.bind(this),
-};
-
-  /**
-   * Event click modal show
-   */
+  currentEvents: EventApi[] = [];
+  handleEvents(events: EventApi[]) {
+    this.currentEvents = events;
+    this.updateUpcomingEvents();
+  }
   handleEventClick(clickInfo: EventClickArg) {
     const eventType = clickInfo.event.extendedProps['type'];
     const row: Reserva = clickInfo.event.extendedProps['row'];
@@ -466,10 +545,6 @@ calendarOptions: CalendarOptions = {
       }
     }
   }
-
-  /**
-   * Handle click on upcoming event card
-   */
   handleUpcomingEventClick(event: any) {
     const eventType = event.extendedProps?.type;
     const row: Reserva = event.extendedProps?.row;
@@ -510,7 +585,47 @@ calendarOptions: CalendarOptions = {
       }
     }
   }
-
+  /**
+   * calendar preference
+   */
+  private saveCalendarViewPreference(view: string): void {
+    try {
+      const userId = this.authService.currentUser()?.uuid || 'anonymous';
+      const key = `calendar_view_${userId}`;
+      localStorage.setItem(key, view);
+    } catch (error) {
+      console.error('Error saving calendar view preference:', error);
+    }
+  }
+  private loadCalendarViewPreference(): void {
+    try {
+      const userId = this.authService.currentUser()?.uuid || 'anonymous';
+      const key = `calendar_view_${userId}`;
+      const savedView = localStorage.getItem(key);    
+      if (savedView && this.isValidView(savedView)) {
+        this.calendarOptions.initialView = savedView;
+      }
+    } catch (error) {
+      console.error('Error loading calendar view preference:', error);
+    }
+  }  
+  private isValidView(view: string): boolean {
+    const validViews = [
+      'dayGridMonth', 
+      'timeGridWeek', 
+      'timeGridDay', 
+      'listWeek',
+      'multiMonthYear'
+    ];
+    return validViews.includes(view);
+  }
+  private handleViewChange(viewInfo: any): void {
+    const currentView = viewInfo.view.type;
+    if (currentView && this.isValidView(currentView)) {
+      this.saveCalendarViewPreference(currentView);
+    }
+  }
+  
   opemModalReservationPuntual(row: Reserva){
     const modalRef = this.modalService.open(BookingOneTimeModalComponent, {
         backdrop: 'static',
@@ -525,7 +640,7 @@ calendarOptions: CalendarOptions = {
   }
   
   opemModalReservationRecurrente(row: Reserva){
-    const modalRef = this.modalService.open(ModalRecurrentComponent, {
+    const modalRef = this.modalService.open(BookingOneTimeModalComponent, {
         backdrop: 'static',
         size:''
     });
@@ -537,15 +652,7 @@ calendarOptions: CalendarOptions = {
     });
   }
 
-  /**
-  * Events bind in calendar
-  */
-  currentEvents: EventApi[] = [];
-  handleEvents(events: EventApi[]) {
-    this.currentEvents = events;
-    this.updateUpcomingEvents();
-  }
-
+  
   changeDirection() {
     this.calendarOptions.direction = this.direction;
   }

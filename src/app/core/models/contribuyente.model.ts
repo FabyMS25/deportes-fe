@@ -1,7 +1,7 @@
 import { EstadoRuat, EstadoUsuario } from "../constants/Estados";
 import { EstudianteEscuela } from "./EstudianteEscuela.model";
-import { Organizacion } from "./organizacion.models";
-import { Reserva } from "./reserva.models";
+import { Organizacion } from "./organizacion.model";
+import { Reserva } from "./reserva.model";
 export interface Contribuyente {
   uuid?: string;
   estado?: boolean;

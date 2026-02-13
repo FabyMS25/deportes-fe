@@ -4,7 +4,7 @@ import { HorarioExcepcion } from './horarioExcepcion.model';
 import { Superficie } from './superficie.model';
 import { Tarifa } from './tarifa.model';
 import { HorarioFijo } from './horarioFijo.model';
-import { Reserva } from './reserva.models';
+import { Reserva } from './reserva.model';
 import { EstadoActual } from '../constants/Estados';
 import { CategoriaCampo } from '../constants/Features';
 export interface CampoDeportivo {

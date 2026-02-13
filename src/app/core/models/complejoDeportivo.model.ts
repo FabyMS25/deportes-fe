@@ -1,7 +1,7 @@
 import { EstadoActual } from "../constants/Estados";
 import { TipoEstructura } from "../constants/Features";
 import { CampoDeportivo } from "./campoDeportivo.model";
-import { EncargadoComplejo } from "./encargadoComplejo";
+import { EncargadoComplejo } from "./encargadoComplejo.model";
 
 export interface ComplejoDeportivo {
   uuid?: string;

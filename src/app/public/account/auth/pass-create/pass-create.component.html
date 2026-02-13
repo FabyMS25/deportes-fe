@@ -1,0 +1,120 @@
+<div class="auth-page-wrapper pt-5">
+    <div class="auth-one-bg-position auth-one-bg"  id="auth-particles">
+        <div class="bg-overlay"></div>
+  
+        <div class="shape">
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1440 120">
+                <path d="M 0,36 C 144,53.6 432,123.2 720,124 C 1008,124.8 1296,56.8 1440,40L1440 140L0 140z"></path>
+            </svg>
+            <!-- <img src="assets/images/fondo_deportes.jpg " alt="" height="90"> -->
+        </div>
+    </div>
+  
+    <div class="auth-page-content">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="text-center mb-2 text-white-50">
+                        <div>
+                            <a href="/" class="d-inline-block auth-logo">
+                                <img src="assets/icons/logos/LOGO-COMPUESTO-LARGO.png" alt="" height="90">
+                            </a>
+                        </div>
+                        <p class="mt-2 fs-15 fw-medium">Sistema de Reserva de Canchas Deportivas de GAMQ</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6 col-xl-5">
+                    <div class="card mt-4">
+                    
+                        <div class="card-body p-4"> 
+                            <div class="text-center mt-2">
+                                <h5 class="text-primary">Crear nueva contraseña</h5>
+                                <p class="text-muted">Tu nueva contraseña debe ser diferente a tu contraseña anterior.</p>
+                            </div>
+
+                            <div class="p-2">
+                                <form [formGroup]="passresetForm" (ngSubmit)="onSubmit()">
+                                    <div class="mb-3">
+                                        <label class="form-label" for="password-input">Contraseña</label>
+                                        <div class="position-relative auth-pass-inputgroup">
+                                            <input [type]="passwordField ? 'text' : 'password'" class="form-control pe-5 password-input" placeholder="Ingresar contraseña" id="password-input" aria-describedby="passwordInput" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" required formControlName="password"
+                                            [ngClass]="{ 'is-invalid': submitted && f['password'].errors }">
+                                            <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button"
+                                                id="password-addon"><i class="ri-eye-fill align-middle" [ngClass]="{'mdi-eye-off-outline': !passwordField, 'mdi-eye-outline': passwordField
+                                            }" (click)="togglepasswordField()"></i></button>
+                                            @if(submitted && f['password'].errors){
+                                            <div class="invalid-feedback">
+                                                @if(f['password'].errors['required']){
+                                                    <span>Escriba su contraseña</span>
+                                                }
+                                            </div>
+                                            }
+                                            
+                                        </div>
+                                        <div id="passwordInput" class="form-text">Debe tener un mínimo de <b>8 caracteres</b></div>
+                                    </div>            
+                                    <div class="mb-3">
+                                        <label class="form-label" for="confirm-password-input">Confirmar Contraseña</label>
+                                        <div class="position-relative auth-pass-inputgroup mb-3">
+                                            <input [type]="confirmField ? 'text' : 'password'" class="form-control pe-5 password-input" placeholder="Confirmar contraseña" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" id="confirm-password-input" required formControlName="cpassword"
+                                            [ngClass]="{ 'is-invalid': submitted && f['cpassword'].errors }">
+                                            <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button" id="confirm-password-input"><i class="ri-eye-fill align-middle" [ngClass]="{'mdi-eye-off-outline': !passwordField, 'mdi-eye-outline': passwordField
+                                            }" (click)="toggleconfirmField()"></i></button>
+                                            @if(submitted && f['cpassword'].errors){
+                                                <div class="invalid-feedback">
+                                                    <span *ngIf="f['cpassword'].errors['required']">Confirme su contraseña</span>
+                                                    <span *ngIf="f['cpassword'].errors['mustMatch']">Las contraseñas no coinciden</span>
+                                            </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="password-contain" class="p-3 bg-light mb-2 rounded">
+                                        <h5 class="fs-13">La contraseña debe contener:</h5>
+                                        <p id="pass-length" class="invalid fs-12 mb-2">Mínimo <b>8 caracteres</b></p>
+                                        <p id="pass-lower" class="invalid fs-12 mb-2">Al menos una <b>letra minúscula</b> (a-z)</p>
+                                        <p id="pass-upper" class="invalid fs-12 mb-2">Al menos una <b>letra mayúscula</b> (A-Z)</p>
+                                        <p id="pass-number" class="invalid fs-12 mb-0">Al menos un <b>número</b> (0-9)</p>
+                                    </div>
+
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="" id="auth-remember-check">
+                                        <label class="form-check-label" for="auth-remember-check">Recuerdame</label>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <button class="btn btn-secondary w-100" type="submit">Cambiar Contraseña</button>
+                                    </div>
+
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-center">
+                        <p class="mb-0">Espera, recuerdo mi contraseña...  
+                          <a routerLink="/auth/login" class="fw-semibold text-primary text-decoration-underline"> Haga clic aquí </a> </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    
+  <footer class="footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="text-center">
+                    <p class="mb-0 text-muted">&copy; {{year}} G.A.M.Q. <i class="mdi mdi-heart text-danger"></i> 
+                      Jefatura de Tecnologías de Información.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+</div>

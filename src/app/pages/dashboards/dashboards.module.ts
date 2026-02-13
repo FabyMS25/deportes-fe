@@ -24,7 +24,6 @@ import { FlatpickrModule } from 'angularx-flatpickr';
 
 
 //Module
-import { DashboardsRoutingModule } from "./dashboards-routing.module";
 import { SharedModule } from '../../shared/shared.module';
 import { WidgetModule } from '../../shared/widget/widget.module';
 
@@ -70,7 +69,6 @@ import { ListComponent } from './cards-row/list.component';
     SimplebarAngularModule,
     SlickCarouselModule,
     FlatpickrModule.forRoot(),
-    DashboardsRoutingModule,
 
     SharedModule,
     WidgetModule,

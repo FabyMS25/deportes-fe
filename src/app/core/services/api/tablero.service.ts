@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { Observable } from 'rxjs';
-import { Tablero } from '../../models/tablero.models';
+import { Tablero } from '../../models/tablero.model';
 
 
 @Injectable({

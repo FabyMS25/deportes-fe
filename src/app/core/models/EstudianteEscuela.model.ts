@@ -1,6 +1,6 @@
 import { Contribuyente } from "./contribuyente.model";
-import { Organizacion } from "./organizacion.models";
-import { Reserva } from "./reserva.models";
+import { Organizacion } from "./organizacion.model";
+import { Reserva } from "./reserva.model";
 
 export interface EstudianteEscuela {
   uuid?: string;

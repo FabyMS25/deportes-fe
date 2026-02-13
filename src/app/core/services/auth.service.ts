@@ -1,205 +1,433 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Store } from '@ngrx/store';
-import { logout, logoutSuccess } from 'src/app/store/Authentication/authentication.actions';
 import { Router } from '@angular/router';
-import { ToastService } from 'src/app/account/auth/login/toast-service';
-import { TokenStorageService } from './token-storage.service';
+import { HttpClient } from '@angular/common/http';
+import { logout, logoutSuccess } from 'src/app/store/Authentication/authentication.actions';
 import { PermissionUserService } from './api-users/permission-user.service';
+import { TokenStorageService } from './token-storage.service';
 
 import { UserRol } from 'src/app/core/constants/UserData';
 import { EncargadoService } from './api/encargado.service';
 import { ContribuyentesService } from './api/contribuyentes.service';
-import { of } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, of, Subject } from 'rxjs';
 import { UserService } from './api-users/users.service';
-import { Contribuyente } from '../models/contribuyente.model';
-import { EncargadoComplejo } from '../models/encargadoComplejo';
 import { ConfiguracionSistemaService } from './api/configuracionSistema.service';
 import { ConfiguracionSistema } from '../models/configuracionSistema.model';
 import { AplicaAConfiguracion, ClaveConfiguracion } from '../constants/Configurations';
-import { RuatRequestsService } from './ruat/ruatRequest.service';
+import { RuatRequestsService } from './ruatRequest.service';
+import { LoginResponse } from '../models/user/login-response.model';
+import { GlobalComponent } from 'src/app/global-component';
+import { MenuItem } from '../models/menu.model';
+import { MENU_BASE } from '../data/menu';
+
+export interface LoginResult {
+  success: boolean;
+  errorType?: 'BAD_CREDENTIALS' |'NO_MODULE' | 'NO_PERMISSIONS' | 'NO_ASSIGNATION'|'BACKEND' | 'CONFIG_ERROR';
+  message?: string;
+  redirect?: string;
+  ruatStatus?: boolean;
+  restrictions?: string;
+}
+export interface LoginEvent {
+  message: 'welcome_admin' | 'welcome_staff' | 'welcome_contribuyente' | 'login_success';
+  configsLoaded?: number;
+  ruatStatus?: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthenticationService {
-
-  adminPermission = 'Administracion'
+  APP_NAME = GlobalComponent.NAME_APP;
+  adminPermission = GlobalComponent.ADMIN_MENU;  
   userRole!: 'Contribuyente' | 'Admin' | 'Encargado';
-  currentUserSubject: any;
-  isAuthenticated: boolean = false;
+  private currentUserSubject: any;
+  private loginEventSubject = new Subject<LoginEvent>();
+  loginEvent$ = this.loginEventSubject.asObservable();
   private systemConfigList: { [key: string]: ConfiguracionSistema } = {};
-  private configsLoaded: boolean = false;
-  private ruatAuthenticated: boolean = false;
-  private backendAvailable: boolean = false;
+  public systemStatus = {
+    backend: false,
+    configurations: false,
+    ruat: false,
+    message: ''
+  };
 
   constructor(
     private http: HttpClient, 
-    private store: Store,
     private router: Router,
-    private authUser: UserService,
+    private authUserService: UserService,
     private authContribuyente: ContribuyentesService,
-    private designationsService: EncargadoService,
+    private staffService: EncargadoService,
     private permissionService: PermissionUserService,
     private systemConfigsService: ConfiguracionSistemaService,
     private ruatService: RuatRequestsService,
     private storageService: TokenStorageService,
-    private toastService: ToastService,
   ) {
     this.currentUserSubject = storageService.getUser()
-    this.isAuthenticated = !!storageService.getToken();
+    this.systemConfigList = this.storageService.getConfigs() || {};
   }
 
-  async loginEmployee(username: string, password: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      this.authUser.loginByUsername(username, password).subscribe({
-        next: async (data) => {
-          this.currentUserSubject = data;
-          this.storageService.saveToken(data.token);          
-          // const configsLoaded = await this.loadSystemConfigs(false);
-          // if (!configsLoaded) {
-          //   this.showBackendDownError();
-          //   this.logout();
-          //   resolve(null);
-          //   return;
-          // }       
-          resolve(data);
-        },
-        error: (error) => {
-          if (this.isBackendError(error)) {
-            resolve({ backendError: true, error });
-          } else {
-            resolve(null);
-          }
+  initializeSession(){
+
+  }
+  emitLoginEvent(event: LoginEvent) {
+    this.loginEventSubject.next(event);
+  }
+
+  async login(username: string, password: string, rememberMe: boolean): Promise<LoginResult> {
+    let staffResult: any = null;
+    try {
+      staffResult = await this.loginStaffUser(username, password);
+    } catch (e) {
+      staffResult = null;
+    }
+    if (staffResult?.token) {
+        const modulos: string[] = staffResult.modulos || [];
+        if (!modulos.includes(this.APP_NAME)) {
+          return {
+          success: false,
+          errorType: 'NO_MODULE',
+          message: 'No tiene acceso a este módulo'
+        };
+      };
+      const permissionResult = await this.userHasPermission(staffResult);
+      if(permissionResult.status !=='ADMIN' && permissionResult.status!== 'STAFF'){
+        switch (permissionResult.status) {
+          case 'NO_ADMIN_PERMISSION':
+          case 'NO_PERMISSIONS':
+            return {
+              success: false,
+              errorType: 'NO_PERMISSIONS',
+              message: 'No tiene permisos para acceder a este módulo'
+            };
+          case 'NO_ASSIGNATION':
+            return {
+              success: false,
+              errorType: 'NO_ASSIGNATION',
+              message: 'No tiene asignación como encargado o staff'
+            };
         }
+      }
+      const configResult = await this.loadSystemConfigs(false);
+      if (!configResult.configsStatus) {
+        return {
+          success: false,
+          errorType: 'CONFIG_ERROR',
+          message: configResult.errorMessage
+        };
+      }
+      this.storageService.saveAuthData({
+        menu: this.sortMenuItemsRecursive(permissionResult.permissions),
+        configs: configResult.configs || {},
+        user: staffResult,
+        staff: permissionResult.assignations,
+        token: staffResult.token,
+        ruatToken: configResult.ruatToken || ''
+      }, rememberMe);
+      this.emitLoginEvent({
+        message: permissionResult.status ==='ADMIN' ? 'welcome_admin' : 'welcome_staff',
+        configsLoaded: Object.keys(this.getAllConfigs() || {}).length,
+        ruatStatus: configResult.ruatStatus
       });
+      return { success: true,
+        redirect: permissionResult.status === 'ADMIN' ? '/inicio' : '/inicio/employee',
+      };
+    }
+    let contribuyenteResult: any = null;
+    try {
+      contribuyenteResult = await this.loginContribuyente(username, password);
+    } catch (e) {
+      contribuyenteResult = null;
+    }
+    if (!contribuyenteResult?.uuid) {
+      return {
+        success: false,
+        errorType: 'BAD_CREDENTIALS',
+        message: 'Usuario o contraseña incorrectos'
+      };
+    }
+    const configResult = await this.loadSystemConfigs(true);
+    if (!configResult.configsStatus) {
+      return {
+        success: false,
+        errorType: 'CONFIG_ERROR',
+        message: configResult.errorMessage
+      };
+    }
+    this.storageService.saveAuthData({
+      menu: this.sortMenuItemsRecursive(MENU_BASE),
+      configs: configResult.configs || {},
+      user: contribuyenteResult,
+      staff: null,
+      token: 'CONTRIBUYENTE_SESSION',
+      ruatToken: configResult.ruatToken || ''
+    }, rememberMe);
+    this.emitLoginEvent({
+      message: 'welcome_contribuyente',
+      configsLoaded: Object.keys(this.getAllConfigs() || {}).length,
+      ruatStatus: configResult.ruatStatus
     });
+    return { success: true, redirect: '/inicio/taxpayer',};
+  }
+
+  async loginStaffUser(username: string, password: string): Promise<LoginResponse> {
+    try {
+      const response = await firstValueFrom(
+        this.authUserService.loginByUsername(username, password)
+      );
+      if (!response?.token) throw 'badCredentials';
+      this.currentUserSubject = response;
+      return response;
+    } catch (error: any) {
+      if (this.isBackendError(error)) throw { backendError: true };
+      if (error.status === 401) throw 'badCredentials';
+      throw 'serverError';
+    }
   }
   async loginContribuyente(username: string, password: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      this.authContribuyente.loginByUsername(username, password).subscribe({
-        next: async (data: any) => {
-          if (data['status'] === 'OK') {
-            this.currentUserSubject = data.payload;
-            this.storageService.saveToken("isContribuyente");
-            this.storageService.saveUser(this.currentUserSubject);            
-            // const configsLoaded = await this.loadSystemConfigs(true);
-            // if (!configsLoaded) {
-            //   this.showBackendDownError();
-            //   this.logout();
-            //   resolve(false);
-            //   return;
-            // } 
-            // const sortedMenu = this.sortMenuItemsRecursive(MENU_BASE);
-            // localStorage.setItem('menu', JSON.stringify(sortedMenu));          
-            resolve(data);
-          } else {
-            resolve(null);
-          }
-        },
-        error: (error) => {
-        if (this.isBackendError(error)) {
-          resolve({ backendError: true, error });
-        } else {
-          resolve(null);
-        }
-        }
-      });
-    });
+    try {
+      const response = await firstValueFrom(
+        this.authContribuyente.loginByUsername(username, password)
+      );
+      if (response?.status !=='OK') throw 'badCredentials';      
+      this.currentUserSubject = response.payload;
+      return response.payload;
+    } catch (error: any) {
+      if (this.isBackendError(error)) throw { backendError: true };
+      if (error.status === 401) throw 'badCredentials';
+      throw 'serverError';
+    }
   }
 
+  async userHasPermission(user: any): Promise<{
+    status: 'ADMIN' | 'STAFF' | 'NO_ADMIN_PERMISSION' | 'NO_ASSIGNATION' | 'NO_PERMISSIONS';
+    permissions: MenuItem[];
+    assignations?: any;
+  }> {
+    try {
+      const [userPermissions, userAssignations] = await Promise.all([
+        firstValueFrom(this.permissionService.getPermissionsUser(user)),
+        firstValueFrom(this.staffService.getByUserUuid(user.uuid))
+          .then((res: any) => res?.status === 'OK' ? res.payload : null)
+          .catch(() => null),
+      ]);
+      if (!Array.isArray(userPermissions) || userPermissions.length === 0) {
+        return { status: 'NO_PERMISSIONS',permissions:[] };
+      }
+      const isAdmin = userPermissions.some(
+        (p: any) => p.nombreMenu === this.adminPermission
+      );
+      if (isAdmin) {
+        userPermissions.forEach((menu: any) => {
+          if (!menu.permisoPadreDto) menu.isCollapsed = true;
+        });
+        return {
+          status: 'ADMIN',
+          permissions: userPermissions
+        };
+      }
+      if (userAssignations && userAssignations.complejoDto) {
+        userPermissions.forEach((menu: any) => {
+          if (!menu.permisoPadreDto) menu.isCollapsed = true;
+        });
+        return {
+          status: 'STAFF',
+          permissions: userPermissions,
+          assignations: userAssignations
+        };
+      }
+      return { status: 'NO_ASSIGNATION' , permissions:[]};
+    } catch (error) {
+      throw new Error('Ocurrió un error al verificar los permisos');
+    }
+  }
+  public async loadSystemConfigs(
+    isContribuyente: boolean
+  ): Promise<{
+    configsStatus: boolean;
+    configs?: { [key: string]: ConfiguracionSistema };
+    ruatStatus: boolean;
+    ruatToken?: string;
+    errorType?: 'BACKEND' | 'CORS' | 'INVALID_RESPONSE' | 'RUAT' | 'UNKNOWN';
+    errorMessage?: string;
+  }> {    
+    this.systemStatus = {
+      backend: false,
+      configurations: false,
+      ruat: false,
+      message: ''
+    };
+    try {
+      const configResponse = await firstValueFrom(
+        this.systemConfigsService.getAll()
+      );
+      if (!configResponse) {
+        this.systemStatus.message = 'No response from backend';
+        return {
+          configsStatus: false,
+          ruatStatus: false,
+          errorType: 'BACKEND',
+          errorMessage: this.systemStatus.message
+        };
+      }
+      if (configResponse.status !== 'OK' || !Array.isArray(configResponse.payload)) {
+        this.systemStatus.message = 'Invalid configuration response';
+        return {
+          configsStatus: false,
+          ruatStatus: false,
+          errorType: 'INVALID_RESPONSE',
+          errorMessage: this.systemStatus.message
+        };
+      }
+      const configsMap: { [key: string]: ConfiguracionSistema } = {};
+      for (const config of configResponse.payload) {
+        if (!config.activo) continue;
+        if (!isContribuyente && config.aplicaA === AplicaAConfiguracion.USUARIO) continue;
+        configsMap[config.clave] = config;
+      }
+      this.systemConfigList = configsMap;
+      this.systemStatus.backend = true;
+      this.systemStatus.configurations = true;
+      const ruatResult = await this.authRuat(configsMap);
+      this.systemStatus.ruat = ruatResult.success;
+      if (!ruatResult.success) {
+        this.systemStatus.message = 'RUAT authentication failed';
+      }
+      return {
+        configsStatus: true,
+        configs: configsMap,
+        ruatStatus: ruatResult.success,
+        ruatToken: ruatResult.token,
+        errorType: ruatResult.success ? undefined : 'RUAT',
+        errorMessage: ruatResult.error
+      };
+    } catch (error: any) {
+      if (error?.status === 0) {
+        this.systemStatus.message = 'Backend unreachable or CORS blocked';
+        return {
+          configsStatus: false,
+          ruatStatus: false,
+          errorType: 'CORS',
+          errorMessage: this.systemStatus.message
+        };
+      }
+      this.systemStatus.message = error?.message || 'Unknown error';
+      return {
+        configsStatus: false,
+        ruatStatus: false,
+        errorType: 'UNKNOWN',
+        errorMessage: this.systemStatus.message
+      };
+    }
+  }
+
+  private async authRuat(
+    configsMap: { [key: string]: ConfiguracionSistema }
+  ): Promise<{ success: boolean; token?: string; error?: any }> {
+    if (this.storageService.getTokenRuat()) {
+      return { success: true, token: this.storageService.getTokenRuat()?? undefined }
+    }
+    const usuario = configsMap[ClaveConfiguracion.USUARIO_RUAT]?.valorTexto || '';
+    const clave = configsMap[ClaveConfiguracion.CLAVE_RUAT]?.valorTexto || '';
+    if (!usuario || !clave) {
+      return { success: false, error: 'Missing RUAT credentials' };
+    }
+    try {
+      const response: any = await firstValueFrom(
+        this.ruatService.authenticate(usuario, clave)
+      );
+      if (response?.token) {
+        this.ruatService.setToken(response.token);
+        return { success: true, token: response.token };
+      }
+      return { success: false, error: 'Invalid RUAT token' };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+  
   private isBackendError(error: any): boolean {
     return (
       error.status === 0 ||
+      error.status === 504 ||
+      error.status === 502 ||
       error.name === 'HttpErrorResponse' ||
       (error.error && error.error instanceof ProgressEvent) ||
       error.message?.includes('CORS') ||
       error.message?.includes('Network') ||
-      error.message?.includes('Failed to fetch')
+      error.message?.includes('Failed to fetch') ||
+      error.message?.includes('Http failure')
     );
   }
-  async userHasPermission(user: any): Promise<{status: 'isAdmin' | 'isEmployee' | 'hasNoPermissions', permissions?: any[], assignations?: any}> {
-    try {
-      const [userPermissions, userAssignations] = await Promise.all([
-        this.permissionService.getPermisosUsuario(user.uuid).toPromise(),
-        this.designationsService.getByUserUuid(user.uuid).toPromise()
-          .then((response: any) => response?.status === 'OK' ? response.payload : null)
-          .catch(error => null),
-      ]);
-      if (userPermissions && Array.isArray(userPermissions) && userPermissions.length > 0) {
-        const isAdmin = userPermissions.some(permission => permission.nombreMenu === this.adminPermission);
-        if (userAssignations !== null || isAdmin) {
-          this.isAuthenticated = true;
-          userPermissions.forEach((menu: any) => {
-            if (!menu.permisoPadreDto) {
-              menu.isCollapsed = true;
-            }
-          });
-          this.storageService.saveUser(user);
-          if (isAdmin) {
-            return { 
-              status: 'isAdmin', 
-              permissions: userPermissions, 
-              assignations: null 
-            };
-          } else {
-            return { 
-              status: 'isEmployee', 
-              permissions: userPermissions, 
-              assignations: userAssignations 
-            };
-          }
-        } else {
-          return { status: 'hasNoPermissions' };
-        }
-      } else {
-        return { status: 'hasNoPermissions' };
-      }
-    } catch (error) {
-      this.toastService.show(
-        'Error de Permisos: Ocurrió un error al verificar los permisos de usuario. Por favor, contacte al administrador.',
-        'error'
-      );
-      throw new Error('Ocurrió un error al verificar los permisos');
-    }
-  }
 
-  hasPermission(modulo: string): string[] {
-    const menuString = localStorage.getItem('menu');
-    const menu: any[] = menuString ? JSON.parse(menuString) : null;
-    const permissions = menu.filter(permission => permission.nombreMenu === modulo);
-    return permissions.map(permission => permission.accion);
-  }
-  hasRoutePermission(route: string): boolean {
-    const menuString = localStorage.getItem('menu');
-    const menu: any[] = menuString ? JSON.parse(menuString) : null;
-    const permissions = menu.filter(permission => permission.ruta === route);
-    return menu.find(permission => permission.ruta === route) ? true : false;
-  }
-  
-  getDashboardUrl(): string {
-    const dashboardRoutes = ['/inicio', '/inicio/employee', '/inicio/taxpayer'];
-    const storedMenu = localStorage.getItem('menu');
-    const userMenu = storedMenu ? JSON.parse(storedMenu) : null;
-    const userDashboard = userMenu.find((item: any) => dashboardRoutes.includes(item.ruta));
-    return userDashboard ? userDashboard.ruta : '/auth/login';
+  /*
+   * Logout the user
+   */
+  logout() {
+    this.storageService.signOut();
+    this.currentUserSubject = null;
+    this.router.navigate(['/auth/login']);
+    return of(undefined).pipe();
   }
 
   /**
    * GETTERS
-   */ 
+   */
+  hasPermission(modulo: string): string[] {
+    const menu = this.storageService.getMenu();
+    return menu
+      .filter(permission => permission.nombreMenu === modulo)
+      .map(permission => permission.accion) as string[];
+  }
+  hasRoutePermission(route: string): boolean {
+    const menu = this.storageService.getMenu();
+    return menu.some(permission => permission.ruta === route);
+  }
+
+  public tokenUser(): any {
+    return this.storageService.getToken();
+  }
   public currentUser(): any {
     return this.currentUserSubject;
   }
-  public isLoggedIn(): boolean {
-    return this.isAuthenticated;
+  public staff(): any {
+    return this.storageService.getStaff();
   }
+  public isLoggedIn(): boolean {
+    const token = this.storageService.getToken();
+    return !!token;
+  }
+  get isAuthenticated(): boolean {
+    return !!this.storageService.getToken();
+  }
+
+  isRuatAuthenticated(): boolean {
+    return !!(this.storageService.getTokenRuat())
+  }
+  getSystemConfig(clave: string): ConfiguracionSistema | undefined {
+    return this.systemConfigList[clave];
+  }
+  getAllConfigs(): { [key: string]: ConfiguracionSistema } {
+    return this.storageService.getConfigs();
+  }
+
+
   isAdmin(): boolean {
-    const menuString = localStorage.getItem('menu');
-    const menu: any[] = menuString ? JSON.parse(menuString) : null;
+    const menu = this.storageService.getMenu();
     return menu.some(permission => permission.nombreMenu === this.adminPermission)
+  }
+  getUserRole(): 'Contribuyente' | 'Admin' | 'Encargado' {
+    const token =  this.storageService.getToken()?.trim();
+    const menu =this.storageService.getMenu();
+      if(token==='CONTRIBUYENTE_SESSION'){
+      return 'Contribuyente';
+    } else { 
+      if (this.isAdmin()) {
+        return 'Admin';
+      }
+      return 'Encargado';
+    }
   }
   getUserFullName(): string {
     if (!this.currentUserSubject) return '';    
-    if (this.storageService.getToken() === 'isContribuyente') {
+    if (this.storageService.getToken() === 'CONTRIBUYENTE_SESSION') {
       return this.currentUserSubject.nombreCompleto || 
              (this.currentUserSubject.nombre + ' ' + this.currentUserSubject.primerApellido + 
               (this.currentUserSubject.segundoApellido ? ' ' + this.currentUserSubject.segundoApellido : '')) || 
@@ -213,160 +441,60 @@ export class AuthenticationService {
              'Usuario';
     }
   }
-  getUserRole(): 'Contribuyente' | 'Admin' | 'Encargado' {
-    if (this.storageService.getToken() === 'isContribuyente') {
-      return 'Contribuyente';
-    } else { 
-      if (this.isAdmin()) {
-        return 'Admin';
-      }
-      return 'Encargado';
-    }
-  }
-  getAvatar(): string {
-    if (!this.currentUserSubject) return 'default-profile1.png';       
-    if (this.storageService.getToken() === 'isContribuyente') {
-      const tipoUser = UserRol.find(item => item.tipo == 2); // Contribuyente
-      if (this.currentUserSubject.genero === 'F') {
-        return tipoUser?.avatarF || '';
-      } else return tipoUser?.avatarM || ''
-    } else if (this.isAdmin()) {
-      const tipoUser = UserRol.find(item => item.tipo === 0); // ADMINISTRADOR
-      if (this.currentUserSubject.designacion.personaDto.sexo === 'F') {
-        return tipoUser?.avatarF || '';
-      } else return tipoUser?.avatarM || ''
+  
+  public getAvatar(): string{    
+    const token = this.storageService.getToken(); 
+    const user =  this.storageService.getUser(); 
+    const menu = this.storageService.getMenu();
+    let avatar="default-profile1.png";
+    let role;
+    if(token==='CONTRIBUYENTE_SESSION'){
+      role = UserRol.find(item => item.tipo == 2);//CLIENT
+    }else if (menu.some((permission:any) => permission.nombreMenu === this.adminPermission)) {
+      role = UserRol.find(item => item.tipo === 0);//ADMINISTRADOR
     } else {
-      const data = localStorage.getItem('assignaments')
-      const employee = data ? JSON.parse(data) : null;      
-      return employee.avatar;
+      role = UserRol.find(item => item.tipo == 1);//STAFF
     }
-  }
-  getAllConfigs(): { [key: string]: ConfiguracionSistema } {
-    try {
-      const storedConfigs = localStorage.getItem('systemConfigs');
-      if (storedConfigs) {
-        this.systemConfigList = JSON.parse(storedConfigs);
+    if (role !== undefined) {
+      avatar = role.avatarF;
+      if (user?.designacion && user.designacion.personaDto.sexo === 'M') {
+        avatar = role.avatarM;
       }
-    } catch (error) {
-      this.systemConfigList = {};
-    }
-    return this.systemConfigList;
-  }
-  getSystemConfig(clave: string): ConfiguracionSistema | undefined {
-    return this.systemConfigList[clave];
-  }
-  areConfigsLoaded(): boolean {
-    return this.configsLoaded;
-  }
-  isRuatAuthenticated(): boolean {
-    return this.ruatAuthenticated;
-  }
-  isBackendAvailable(): boolean {
-    return this.backendAvailable;
+    }  
+    return avatar
   }
 
-  public async loadSystemConfigs(isContribuyente: boolean): Promise<{success: boolean, configCount?: number, error?: any}> {
-    try {
-      const configResponse: any = await this.systemConfigsService.getAll().toPromise();
-      if (!configResponse) {
-        this.backendAvailable = false;
-        this.configsLoaded = false;
-        return { success: false, error: 'No response from backend' };
-      }      
-      if (configResponse.status !== 'OK') {
-        this.backendAvailable = false;
-        this.configsLoaded = false;
-        return { success: false, error: 'Invalid response status' };
-      }      
-      const configsMap: { [key: string]: ConfiguracionSistema } = {};
-      let configCount = 0;
-      configResponse.payload.forEach((config: ConfiguracionSistema) => {
-        if (config.activo) {
-          if (!isContribuyente && config.aplicaA === AplicaAConfiguracion.USUARIO) {
-            return;
-          }
-          configsMap[config.clave] = config;
-          configCount++;
-        }
-      });      
-      this.systemConfigList = configsMap;
-      localStorage.setItem('systemConfigs', JSON.stringify(this.systemConfigList));
-      this.configsLoaded = true;
-      this.backendAvailable = true;
-      if (configCount > 0) {
-        this.toastService.show('Configuración Cargada',`Se cargaron ${configCount} configuraciones del sistema correctamente.`);
-        this.authRuat(configsMap);
-      } else {
-        this.toastService.show(
-          'Configuración del Sistema, No se encontraron configuraciones activas en el sistema. Algunas funcionalidades podrían no estar disponibles.',
-          'warning'
-        );
-      }      
-      return { success: true, configCount };
-    } catch (error) {
-      console.error('Configuration load error:', error);
-      this.backendAvailable = false;
-      this.configsLoaded = false;
-      return { success: false, error };
-    }
-  }
 
-  // private async authRuat(usuario: string, clave: string): Promise<boolean> {
-  //   return new Promise((resolve) => {
-  //     if (usuario && clave) {
-  private authRuat(configsMap: { [key: string]: ConfiguracionSistema }): void {
-    const usuario = configsMap[ClaveConfiguracion.USUARIO_RUAT]?.valorTexto || '';
-    const clave = configsMap[ClaveConfiguracion.CLAVE_RUAT]?.valorTexto || '';    
-    if (!usuario || !clave) {
-      console.warn('RUAT credentials not found in configurations');
-      return;
-    }    
-    this.ruatService.authenticate(usuario, clave).subscribe({
-      next: (response) => {
-        if (response && response.token) {
-          this.ruatService.setToken(response.token);
-          this.ruatAuthenticated = true;
-          setTimeout(() => {
-            this.toastService.show('Conexión RUAT Exitosa','La conexión con el sistema RUAT se estableció correctamente.');
-          }, 500);
-          } else {
-            setTimeout(() => {
-              this.toastService.show(
-                'Error RUAT: No se recibió un token válido del RUAT. La integración con RUAT no estará disponible.',
-                'error'
-              );
-            }, 2000);
-          }
-          // resolve(false);
-      },
-      error: (error) => {
-          console.error('RUAT Authentication error:', error);
-          setTimeout(() => {
-            this.toastService.show(
-              'Error de Conexión RUAT: No se pudo conectar con el RUAT. Algunas funcionalidades podrían estar limitadas.',
-              'error'
-            );
-          }, 2000);
-          // resolve(false);
+  private sortMenuItemsRecursive(menuItems: MenuItem[]): MenuItem[] {
+    return menuItems.map(item => {
+      if (item.permisoHijoListDto && item.permisoHijoListDto.length > 0) {
+        return {
+          ...item,
+          permisoHijoListDto: this.sortMenuItems(item.permisoHijoListDto)
+        };
       }
+      return item;
+    }).sort((a, b) => {
+      const orderCompare = (a.orden || 0) - (b.orden || 0);
+      if (orderCompare !== 0) return orderCompare;
+      const aPriority = this.getActionPriority(a.accion);
+      const bPriority = this.getActionPriority(b.accion);
+      return aPriority - bPriority;
     });
   }
-  
-  /*
-   * Logout the user
-   */
-  logout() {
-    this.store.dispatch(logout());
-    localStorage.removeItem('assignaments');
-    localStorage.removeItem('menu');
-    localStorage.removeItem('systemConfigs');
-    this.storageService.signOut();
-    this.isAuthenticated = false;
-    this.currentUserSubject = null;
-    this.configsLoaded = false;
-    this.ruatAuthenticated = false;
-    this.router.navigate(['/auth/login']);
-    this.store.dispatch(logoutSuccess());
-    return of(undefined).pipe();
+  private sortMenuItems(menuItems: MenuItem[]): any[] {
+    return menuItems.sort((a, b) => {
+      const orderCompare = (a.orden || 0) - (b.orden || 0);
+      if (orderCompare !== 0) return orderCompare;
+      const aPriority = this.getActionPriority(a.accion);
+      const bPriority = this.getActionPriority(b.accion);
+      return aPriority - bPriority;
+    });
   }
+  private getActionPriority(accion: any): number {
+    const actionOrder = ['LISTAR','VER', 'CREAR', 'EDITAR', 'ACTUALIZAR', 'VALIDAR', 'ANULAR', 'GENERAR TICKET', 'CAMBIAR-HORARIO', 'EXPORTAR', 'BLOQUEAR', 'ELIMINAR'];
+    const index = actionOrder.indexOf(accion);
+    return index !== -1 ? index : actionOrder.length;
+  }
+
 }

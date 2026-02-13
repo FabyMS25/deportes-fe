@@ -2,7 +2,19 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { ReservaRecurrente } from '../../models/reservaRecurrente.models';
+import { ReservaRecurrente } from '../../models/reservaRecurrente.model';
+
+export interface ReservaRecurrenteFilters {
+  tab?: number;
+  searchTerm?: string;
+  estadoReserva?: string;
+  estadoValidacion?: string;
+  categoria?: string;
+  tipoRecurrencia?: string ,
+  activo?: string ,
+  fromDate?: string; // ISO
+  toDate?: string;   // ISO
+}
 
 @Injectable({
   providedIn: 'root'
@@ -12,12 +24,29 @@ export class ReservaRecurrenteService {
 
   constructor(private http: HttpClient) { }
   
-  getAll(page: number = 0, size: number = 20): Observable<any[]> {
+  // getAll(page: number = 0, size: number = 20): Observable<any[]> {
+  //   let params = new HttpParams()
+  //     .set('page', page.toString())
+  //     .set('size', size.toString());
+    
+  //   return this.http.get<any[]>(`${this.apiUrl}`, { params });
+  // }
+  getAll(
+    page: number = 0,
+    size: number = 20,
+    filters?: ReservaRecurrenteFilters
+  ): Observable<any> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString());
-    
-    return this.http.get<any[]>(`${this.apiUrl}`, { params });
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '') {
+          params = params.set(key, value.toString());
+        }
+      });
+    }
+    return this.http.get<any>(`${this.apiUrl}`, { params });
   }
 
   checkExpiredReservations(horasTimeout: number): Observable<any> {

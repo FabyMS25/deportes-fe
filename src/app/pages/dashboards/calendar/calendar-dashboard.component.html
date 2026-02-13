@@ -9,31 +9,78 @@
         </div>
         <div [class.collapse]="!showFilters" [class.show]="showFilters" id="filterCollapse">
           <div class="card-body border-bottom py-3">
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-              <label class="form-check mb-0">
-                <input class="form-check-input" type="checkbox" [checked]="masterSelected" (change)="checkUncheckAll($event)">
-                <span class="form-check-label fw-semibold">Seleccionar Todo</span>
-              </label>
-              <div class="vr d-none d-md-block"></div>
-              @for (filter of filterArray; track filter.name) {
-                <label class="form-check mb-0">
-                  <input class="form-check-input" type="checkbox" [(ngModel)]="filter.checked" (change)="onCheckboxChange()">
-                  <span class="form-check-label d-flex align-items-center gap-1">
-                    <span class="badge rounded-pill" [style.background-color]="filter.color" style="width: 12px; height: 12px;"></span>
-                    {{ filter.label }}
-                  </span>
-                </label>
-              }
+            <div class="row align-items-center">
+              <!-- Left column: Checkbox filters -->
+              <div class="col-md-6 col-lg-8">
+                <div class="d-flex flex-wrap gap-3 align-items-center">
+                  <label class="form-check mb-0">
+                    <input class="form-check-input" type="checkbox" [checked]="masterSelected" (change)="checkUncheckAll($event)">
+                    <span class="form-check-label fw-semibold">Seleccionar Todo</span>
+                  </label>
+                  <div class="vr"></div>
+                  @for (filter of filterArray; track filter.name) {
+                    <label class="form-check mb-0">
+                      <input class="form-check-input" type="checkbox" [(ngModel)]="filter.checked" (change)="onCheckboxChange()">
+                      <span class="form-check-label d-flex align-items-center gap-1">
+                        <span class="badge rounded-pill" [style.background-color]="filter.color" style="width: 12px; height: 12px;"></span>
+                        {{ filter.label }}
+                      </span>
+                    </label>
+                  }
+                </div>
+              </div>
+              
+              <!-- Right column: Complejo filter for admins -->
+              <div class="col-md-6 col-lg-4 mt-3 mt-md-0">
+                @if (!employee && complejosList.length > 0) {
+                  <div class="d-flex align-items-center gap-2">
+                    <label class="form-label fw-semibold mb-0 d-none d-md-block">Complejo:</label>
+                    <select class="form-select form-select-sm" [(ngModel)]="selectedComplejoUuid" (ngModelChange)="onComplejoFilterChange()">
+                      <option value="all">Todos los Complejos</option>
+                      @for (complejo of complejosList; track complejo.uuid) {
+                        <option [value]="complejo.uuid">{{ complejo.nombre }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="form-text small mt-1 text-end text-md-start">
+                    @if (selectedComplejoUuid === 'all') {
+                      <i class="ri-eye-line me-1"></i>Mostrando todos
+                    } @else {
+                      @if (getSelectedComplejo(); as selectedComplejo) {
+                        <i class="ri-filter-line me-1"></i>{{ selectedComplejo.nombre }}
+                      }
+                    }
+                  </div>
+                }
+              </div>
             </div>
+            
+            <!-- For Encargado, show their assigned complejo -->
+            @if (employee && employee.complejoDto) {
+              <div class="row mt-3">
+                <div class="col-12">
+                  <div class="alert alert-info py-2 mb-0">
+                    <div class="d-flex align-items-center">
+                      <i class="ri-building-4-line me-2"></i>
+                      <div>
+                        <strong>{{ employee.complejoDto.nombre }}</strong>
+                        <div class="small text-muted">Mostrando solo eventos de este complejo</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
           </div>
         </div>
         <div class="card-body">
-            <full-calendar [options]="calendarOptions" [events]="this.calendarEvents"></full-calendar>
+            <full-calendar [options]="calendarOptions" [events]="calendarEvents"></full-calendar>
         </div>
       </div>
     </div>
 </div>
 
+<!-- Rest of your template remains the same -->
 <div class="row g-0 mt-2">
     <div class="col-12">
       <div class="card mobile-events-list">

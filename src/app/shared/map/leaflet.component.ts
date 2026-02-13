@@ -183,7 +183,6 @@ export class LeafletComponent implements OnInit, OnDestroy {
       (error:any) => {
         this.isLoadingLocation = false;
         this.errorMessage = 'No se pudo obtener la ubicación actual. Verifica los permisos del navegador.';
-        console.error('Error getting position:', error);
       }
     );
   }

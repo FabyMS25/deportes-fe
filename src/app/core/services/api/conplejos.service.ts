@@ -9,10 +9,6 @@ import { environment } from 'src/environments/environment';
 import { ComplejoDeportivo } from '../../models/complejoDeportivo.model';
 
 
-const httpOptions = {
-  headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${window.sessionStorage.getItem('auth-token')}` })
-};
-
 @Injectable({
   providedIn: 'root'
 })
@@ -31,7 +27,6 @@ export class ComplejosService {
   }
 
   save(data: ComplejoDeportivo): Observable<ComplejoDeportivo> {  
-    // var headerToken = {'Authorization': `Bearer `+ window.sessionStorage.getItem('auth-token')};
     return this.http.post<ComplejoDeportivo>(`${this.apiUrl}`, data);
   }
 

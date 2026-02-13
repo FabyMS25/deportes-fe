@@ -7,13 +7,15 @@ import { allIcons } from 'angular-feather/icons';
 import { NgbToastModule, NgbProgressbarModule,
   NgbTooltipModule, NgbNavModule, NgbCollapseModule,
   NgbPaginationModule,
-  NgbAccordionModule
+  NgbAccordionModule,
+  NgbModule
 } from '@ng-bootstrap/ng-bootstrap';
 // Counter
 import { CountUpModule } from 'ngx-countup';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateModule } from '@ngx-translate/core';
 // Scrollto
 import { ScrollToModule } from '@nicky-lenaers/ngx-scroll-to';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
@@ -24,101 +26,106 @@ import { LightboxModule } from 'ngx-lightbox';
 // Load Icons
 import { defineElement } from "@lordicon/element";
 import lottie from 'lottie-web';
+import { FullCalendarModule } from '@fullcalendar/angular';
 
 import { SharedModule } from "../shared/shared.module";
 import { WidgetModule } from '../shared/widget/widget.module';
-// Pages Routing
-import { PagesRoutingModule } from "./pages-routing.module";
+
+import { ProfileComponent } from './account/profile/profile.component';
+import { SettingsComponent } from './account/settings/settings.component';
+import { PassResetComponent } from './account/password-reset/pass-reset.component';
+
 //compoments
-import { ModalComponent } from './taxpayers/modal/modal.component';
+import { SystemConfigurationsComponent } from './modules/system-configurations/system-configurations.component';
+import { ClasificadoresRuatComponent } from './modules/clasificadores-ruat/clasificadores-ruat.component';
+import { FacilitiesComponent } from './modules/facilities/facilities.component';
+import { FieldsComponent } from './modules/fields/fields.component';
+import { CategoriesComponent } from './modules/categories/categories.component';
+import { SurfacesComponent } from './modules/surfaces/surfaces.component';
+import { EmployeesComponent } from './modules/employees/employees.component';
+import { OrganizationsComponent } from './modules/organizations/organizations.component';
+import { TaxpayersComponent } from './modules/taxpayers/taxpayers.component';
 
-import { TicketComponent } from './reports/ticket/ticket.component';
-import { BookingRecurrentComponent } from './booking-recurrent/list/booking-recurrent.component';
-import { TranslateModule } from '@ngx-translate/core';
-import { BookingOneTimeComponent } from './booking-one-time/list/booking-one-time.component';
-import { BookingDetailsComponent } from './booking/booking-details.component';
-import { ComplejoSelectionComponent } from './booking/complejo-selection/complejo-selection.component';
-import { CampoSelectionComponent } from './booking/campo-selection/campo-selection.component';
-import { ScheduleSelectionComponent } from './booking/schedule-selection/schedule-selection.component';
-import { ReservationFormComponent } from './booking/reservation-form/reservation-form.component';
-import { ScheduleRecurrentSelectionComponent } from './booking/schedule-recurrent-selection/schedule-recurrent-selection.component';
-import { OrganizationsComponent } from './organizations/organizations.component';
-import { EmployeesComponent } from './settings/employees/employees.component';
-import { FieldsComponent } from './settings/fields/list/fields.component';
-import { FacilitiesComponent } from './settings/facilities/list/facilities.component';
-import { CategoriesComponent } from './settings/categories/categories.component';
-import { ClasificadoresRuatComponent } from './settings/clasificadores-ruat/clasificadores-ruat.component';
-import { SurfacesComponent } from './settings/surfaces/surfaces.component';
-import { ModalFacilitiesComponent } from './settings/facilities/modal/modal.component';
-import { ModalFieldsComponent } from './settings/fields/modal/modal.component';
-import { ModalEmployeeComponent } from './settings/employees/modal/modalEmployee.component';
-import { ModalScheduleComponent } from './settings/fields/modal-schedule/modal-schedule.component';
-import { ModalTarifaComponent } from './settings/fields/modal-tarifa/modal-tarifa.component';
-import { SystemConfigurationsComponent } from './settings/system-configurations/system-configurations.component';
-import { BookingPeriodoComponent } from './booking-schools/list/booking-periodo.component';
-import { BookingPeriodoModalComponent } from './booking-schools/modal/modal.component';
-
+import { BookingOneTimeComponent } from './modules/booking-one-time/booking-one-time.component';
+import { BookingRecurrentComponent } from './modules/booking-recurrent/booking-recurrent.component';
+import { BookingPeriodoComponent } from './modules/booking-schools/booking-periodo.component';
+import { BookingDetailsComponent } from './modals/booking/booking-details.component';
+import { ComplejoSelectionComponent } from './modals/booking/complejo-selection/complejo-selection.component';
+import { CampoSelectionComponent } from './modals/booking/campo-selection/campo-selection.component';
+import { ScheduleRecurrentSelectionComponent } from './modals/booking/schedule-recurrent-selection/schedule-recurrent-selection.component';
+import { ScheduleSelectionComponent } from './modals/booking/schedule-selection/schedule-selection.component';
+import { ReservationFormComponent } from './modals/booking/reservation-form/reservation-form.component';
+;
+import { TicketComponent } from './modules/reports/ticket/ticket.component';
+// import { BookingPeriodoModalComponent } from './booking-schools/modal/modal.component';
 
 @NgModule({
   declarations: [
-    ModalComponent,
+    ProfileComponent,
+    SettingsComponent,
+    PassResetComponent,
 
+    SystemConfigurationsComponent,
+    ClasificadoresRuatComponent,
+    FieldsComponent,
+    FacilitiesComponent,
+    CategoriesComponent,
+    SurfacesComponent,
+    EmployeesComponent,
+    OrganizationsComponent,
+    TaxpayersComponent,
+    
     BookingOneTimeComponent,
     BookingRecurrentComponent,
-    BookingDetailsComponent,
     BookingPeriodoComponent,
-    OrganizationsComponent,
+    BookingDetailsComponent,
 
-        EmployeesComponent,
-        FieldsComponent,
-        FacilitiesComponent,
-        CategoriesComponent,
-        ClasificadoresRuatComponent,
-        SystemConfigurationsComponent,
-        SurfacesComponent,
-        ModalFacilitiesComponent,
-        ModalFieldsComponent,
-        ModalEmployeeComponent,
-        ModalScheduleComponent,
-        ModalTarifaComponent
+        
+    // ModalComponent,
+    //     ModalFacilitiesComponent,
+    //     ModalFieldsComponent,
+    //     ModalEmployeeComponent,
+    //     ModalScheduleComponent,
+    //     ModalTarifaComponent
   ],
   imports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    NgbNavModule,
-    NgbCollapseModule,
-    NgbToastModule,
-    NgbProgressbarModule,
-    NgbAccordionModule,
     CountUpModule,
-    NgApexchartsModule,
-    NgbDropdownModule,
-    NgSelectModule,
-    NgbPaginationModule,
-    SimplebarAngularModule,
-    PagesRoutingModule,
-    SlickCarouselModule,
-    LightboxModule,  
-    NgbTooltipModule,
-    // FlatpickrModule,
+
     LeafletModule,
-    SharedModule,
-    WidgetModule,
+    LightboxModule,
+    SimplebarAngularModule,
+    FeatherModule.pick(allIcons),
+    NgbNavModule,
+    NgbProgressbarModule,
+    NgApexchartsModule,
+
+    NgbModule,
+    NgSelectModule,
+    NgbDropdownModule,
+    NgbToastModule,
+    NgbTooltipModule,
+    FullCalendarModule,
+    SlickCarouselModule,
+    FlatpickrModule.forRoot(),
     TranslateModule,
-    
+    WidgetModule,
+    SharedModule,
+
+    NgbPaginationModule,
+    NgbToastModule,
+    NgbAccordionModule,    
+
     ComplejoSelectionComponent,
     CampoSelectionComponent,
     ScheduleRecurrentSelectionComponent,
     ScheduleSelectionComponent,
     ReservationFormComponent,
     TicketComponent,
-    BookingPeriodoModalComponent,
-
-    ScrollToModule.forRoot(),
-    FeatherModule.pick(allIcons),
-    FlatpickrModule.forRoot(),
-
+    
+    // BookingPeriodoModalComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

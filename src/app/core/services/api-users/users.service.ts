@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import {  Observable } from 'rxjs';
+import {  catchError, map, Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { LoginResponse } from '../../models/user/login-response.model';
+import { handleError } from '../apiResponses';
 
 const usersUrl = `${environment.apiLoginUrl}`;
 
@@ -11,9 +13,16 @@ export class UserService {
 
     constructor(private http: HttpClient ) {}
   
-    loginByUsername(username: String, password: String) {
-        return this.http.post<any>(`${usersUrl}/auth/signin`, {username, password});
+    loginByUsername(username: String, password: String): Observable<any> {
+      return this.http.post<LoginResponse>(`${usersUrl}/auth/signin`, {username, password}).pipe(
+        map((res) => res),
+        catchError(handleError(`loguear usuario`))
+      );
     }
+
+    // loginByUsername(username: String, password: String) {
+    //     return this.http.post<any>(`${usersUrl}/auth/signin`, {username, password});
+    // }
 
     getAllUsers(): Observable<any[]> {
         return this.http.get<any[]>(`${usersUrl}/listar/usuarios`);

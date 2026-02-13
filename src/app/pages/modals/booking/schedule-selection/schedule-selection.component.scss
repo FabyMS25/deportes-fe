@@ -1,0 +1,42 @@
+// Very soft blue for partially reserved/selected slots
+.bg-info.bg-opacity-10 {
+  background-color: rgba(13, 202, 240, 0.1) !important;
+  
+  &:hover {
+    background-color: rgba(13, 202, 240, 0.15) !important;
+  }
+}
+
+// Soft red for partially reserved slots (can still click)
+.bg-danger.bg-opacity-10 {
+  background-color: rgba(220, 53, 69, 0.1) !important;
+  
+  &:hover {
+    background-color: rgba(220, 53, 69, 0.15) !important;
+  }
+}
+
+// Stronger red for fully reserved (blocked)
+.bg-danger.bg-opacity-25 {
+  background-color: rgba(220, 53, 69, 0.25) !important;
+}
+
+// Hover effect for available slots
+.hover-effect {
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// Make sure slot cards have proper positioning
+.slot-card {
+  position: relative;
+  
+  .slot-inner {
+    position: relative;
+    z-index: 1;
+  }
+}

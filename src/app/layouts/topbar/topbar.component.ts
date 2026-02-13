@@ -51,12 +51,11 @@ export class TopbarComponent implements OnInit {
     public translate: TranslateService, 
     private authService: AuthenticationService, 
     private router: Router, 
-    private tokenStorageService: TokenStorageService
+    private storage: TokenStorageService
   ) { }
 
   ngOnInit(): void {
-    const menu = localStorage.getItem('menu');
-    this.menuItems = menu ? JSON.parse(menu) : null;
+    this.menuItems =this.storage.getMenu();
     this.userData = this.authService.currentUser();
     this.avatar = this.authService.getAvatar();
     this.userRole = this.authService.getUserRole();

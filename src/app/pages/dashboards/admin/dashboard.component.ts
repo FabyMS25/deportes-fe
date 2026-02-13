@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ToastService } from './toast-service';
 import { ChartType } from './dashboard.model';
-import { Reserva } from 'src/app/core/models/reserva.models';
+import { Reserva } from 'src/app/core/models/reserva.model';
 import Swal from 'sweetalert2';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { EstadoReserva, EstadoValidacion } from 'src/app/core/constants/Estados';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AuthenticationService } from 'src/app/core/services/auth.service';
+import { take } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
@@ -14,11 +16,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 })
 
 export class DashboardComponent implements OnInit {
-
   userData: any;
-  analyticsChart!: any;
   loading: boolean = true;
 
+  analyticsChart!: any;
   num: number = 0;
   option = {
     startVal: this.num,
@@ -31,32 +32,17 @@ export class DashboardComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     public toastService: ToastService,
-    private reservasService: ReservaService
+    private reservasService: ReservaService,
+    private authService: AuthenticationService
   ) {}
 
   async ngOnInit() {
-    const userString = window.sessionStorage.getItem('currentUser');
-    this.userData = userString ? JSON.parse(userString) : null;    
-    this.route.queryParams.subscribe(params => {
-      if (params['message']) {
-        switch (params['message']) {
-          case 'welcome_admin':
-            this.toastService.show('¡Bienvenido Admin!', 'Inicio de sesión exitoso');
-            break;
-          case 'welcome_employee':
-            this.toastService.show('¡Bienvenido Encargado!', 'Inicio de sesión exitoso');
-            break;
-          case 'welcome_taxpayer':
-            this.toastService.show('¡Bienvenido!', 'Inicio de sesión exitoso');
-            break;
-        }
-        this.router.navigate([], {
-          queryParams: {},
-          replaceUrl: true
-        });
-      }
+    this.userData = this.authService.currentUser();
+    this.authService.loginEvent$
+    .pipe(take(1))
+    .subscribe(event => {
+      this.showConsolidatedSystemStatus(event);
     });
-    
     try {
       await this.getReservations();
       this.setRevenueValue('all');
@@ -65,6 +51,54 @@ export class DashboardComponent implements OnInit {
     } catch (error) {
       console.error('Error during initialization:', error);
     }
+  }
+
+  private showConsolidatedSystemStatus(event: any): void {
+    const configsLoaded = event.configsLoaded || 0;
+    const finalRuatConnected = event.ruatStatus;
+    let welcomeTitle = '';
+    let welcomeMessage = '';
+    switch(event.message) {
+      case 'welcome_admin':
+        welcomeTitle = '🎉 ¡Bienvenido Administrador!';
+        welcomeMessage = 'Inicio de sesión exitoso con privilegios de administrador.';
+        break;
+      case 'welcome_staff':
+        welcomeTitle = '👤 ¡Bienvenido Encargado!';
+        welcomeMessage = 'Inicio de sesión exitoso.';
+        break;
+      default:
+        welcomeTitle = '🎉 ¡Bienvenido!';
+        welcomeMessage = 'Inicio de sesión exitoso.';
+    }    
+    let statusMessage = '📊 Estado del Sistema:\n\n';
+    if (configsLoaded > 0) {
+      statusMessage += '✅ Sistema Principal: CONECTADO\n';
+      statusMessage += `⚙️ Configuraciones: ${configsLoaded} cargadas\n`;
+    } else {
+      statusMessage += '⚠️ Sistema Principal: CONEXIÓN LIMITADA\n';
+      statusMessage += `⚙️ Configuraciones: 0 cargadas\n`;
+    }
+    if (finalRuatConnected) {
+      statusMessage += '✅ RUAT: CONECTADO\n';
+      statusMessage += '   → Todas las funciones disponibles';
+    } else {
+      statusMessage += '❌ RUAT: NO DISPONIBLE\n\n';
+      statusMessage += '   ⚠️ ADVERTENCIA IMPORTANTE:\n';
+      statusMessage += '   • No se puede conectar al sistema RUAT\n';
+      statusMessage += '   • Las reservas nuevas NO estarán disponibles\n';
+      statusMessage += '   • Solo podrá consultar reservas existentes\n';
+      statusMessage += '   • La verificación de contribuyentes estará limitada\n\n';
+      statusMessage += '   💡 Recomendación:\n';
+      statusMessage += '   • Si necesita realizar reservas, cierre sesión y vuelva a intentar más tarde\n';
+      statusMessage += '   • Contacte al administrador si el problema persiste';
+    }
+    const fullMessage = `${welcomeMessage}\n\n${statusMessage}`;
+    this.toastService.show(fullMessage, {
+      classname: finalRuatConnected ? 'bg-success text-light' : 'bg-warning text-dark',
+      header: welcomeTitle,
+      delay: 15000
+    });
   }
 
   /**
@@ -247,9 +281,9 @@ export class DashboardComponent implements OnInit {
         case EstadoReserva.CANCELADA:
           monthlyData.canceladas[month]++;
           break;
-        case EstadoReserva.RECHAZADA:
-          monthlyData.rechazadas[month]++;
-          break;
+        // case EstadoReserva.RECHAZADA:
+        //   monthlyData.rechazadas[month]++;
+        //   break;
         case EstadoReserva.EXPIRADA:
           monthlyData.expiradas[month]++;
           break;

@@ -281,7 +281,6 @@ export class DataTableComponent implements OnChanges {
 
   onSort(column: string): void {
     if (this.serverSidePagination) {
-      console.warn('Sorting should be handled server-side when using server-side pagination');
       return;
     }
     if (this.currentSortColumn === column) {
@@ -314,10 +313,10 @@ export class DataTableComponent implements OnChanges {
         this.content = this.allcontent.content;
         this.totalElements = this.allcontent.totalElements || 0;
         const pageNumber = this.allcontent.number ?? this.allcontent.pageable?.pageNumber ?? 0;
-        const pageSize = this.allcontent.size ?? this.allcontent.pageable?.pageSize ?? this.itemsPerPage;
+        // const pageSize = this.allcontent.size ?? this.allcontent.pageable?.pageSize ?? this.itemsPerPage;
         this.service.page = pageNumber + 1;
-        this.itemsPerPage = pageSize;
-        this.service.pageSize = this.itemsPerPage;
+        // this.itemsPerPage = pageSize;
+        // this.service.pageSize = this.itemsPerPage;
     } else if (Array.isArray(this.allcontent)) {
         this.content = this.allcontent;
         this.totalElements = this.allcontent.length;

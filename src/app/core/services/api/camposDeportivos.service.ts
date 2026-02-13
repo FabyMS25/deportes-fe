@@ -33,7 +33,6 @@ export class CamposDeportivoService {
   }
 
   save(data: any): Observable<any> {
-    // var headerToken = {'Authorization': `Bearer `+ window.sessionStorage.getItem('auth-token')};
     return this.http.post<any>(`${this.apiUrl}`, data);
   }
 

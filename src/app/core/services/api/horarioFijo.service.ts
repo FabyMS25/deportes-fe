@@ -4,9 +4,6 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { HorarioFijo } from '../../models/horarioFijo.model';
 
-const httpOptions = {
-  headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${window.sessionStorage.getItem('auth-token')}` })
-};
 
 @Injectable({
   providedIn: 'root'

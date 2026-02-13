@@ -1,4 +1,4 @@
-import { Reserva } from "./reserva.models";
+import { Reserva } from "./reserva.model";
 
 export interface  Pago{
     uuid?: String;

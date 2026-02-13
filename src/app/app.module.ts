@@ -14,7 +14,7 @@ import { PagesModule } from "./pages/pages.module";
 import { HttpClientModule, HttpClient, HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { environment } from '../environments/environment';
-import { ErrorInterceptor } from './core/models/helpers/error.interceptor';
+import { ErrorInterceptor } from './core/helpers/error.interceptor';
 
 // Language
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -23,11 +23,11 @@ import { StoreModule } from '@ngrx/store';
 import { rootReducer } from './store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { EffectsModule } from '@ngrx/effects';
-import { AuthenticationEffects } from './store/Authentication/authentication.effects';
-import { AuthInterceptor } from './core/models/helpers/auth.interceptor';
+import { AuthInterceptor } from './core/helpers/auth.interceptor';
 
 import localeEs from '@angular/common/locales/es';
 import { registerLocaleData } from '@angular/common';
+import { DashboardsModule } from './pages/dashboards/dashboards.module';
 // import { NotificationCenterModule } from '@novu/notification-center-angular';
 
 registerLocaleData(localeEs, 'es');
@@ -54,13 +54,13 @@ export function createTranslateLoader(http: HttpClient): any {
     NgPipesModule,
     LayoutsModule,
     PagesModule,
+    DashboardsModule,
     StoreModule.forRoot(rootReducer),
     StoreDevtoolsModule.instrument({
       maxAge: 25, 
       logOnly: environment.production,
     }),
     EffectsModule.forRoot([
-      AuthenticationEffects
     ]),
     // NotificationCenterModule
   ],

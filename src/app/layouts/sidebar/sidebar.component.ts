@@ -1,9 +1,10 @@
 import { Component, OnInit, EventEmitter, Output, ViewChild, ElementRef } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { MenuItem } from 'src/app/core/models/menu.model';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { MenuItem } from '../../core/data/menu.model';
+import { TokenStorageService } from 'src/app/core/services/token-storage.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -23,18 +24,15 @@ export class SidebarComponent implements OnInit {
   avatar="default-profile1.png";
 
   constructor(private router: Router, public translate: TranslateService,
-    private authService:AuthenticationService
-  ) {
+    private authService:AuthenticationService,
+    private storage: TokenStorageService) {
     translate.setDefaultLang('es');
   }
 
   ngOnInit(): void {
-    const userString =  window.sessionStorage.getItem('currentUser');
-    this.userData =userString ? JSON.parse(userString) : null;
+    this.userData = this.authService.currentUser();
     this.avatar=this.authService.getAvatar();
-    // Menu Items    
-    const menu = localStorage.getItem('menu');
-    this.menuItems =menu ? JSON.parse(menu) : null;
+    this.menuItems =this.storage.getMenu();
     
     this.router.events.subscribe((event) => {
       if (document.documentElement.getAttribute('data-layout') != "twocolumn") {

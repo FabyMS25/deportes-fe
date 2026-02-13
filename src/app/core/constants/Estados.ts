@@ -1,32 +1,32 @@
 // Estados de Reserva (estadoReserva)
 export enum EstadoReserva { 
-  BORRADOR = 'BORRADOR',           // Draft, not submitted yet
-  SOLICITADA = 'SOLICITADA',       // Requested, pending approval
-  PENDIENTE = 'PENDIENTE',         // Approved, waiting for payment/confirmation
-  RECHAZADA = 'RECHAZADA',         // Rejected by admin/manager
+  SOLICITADA = 'SOLICITADA',       // Requested, pending approval --> initial state when compljo is restricted and needs admin approval
+  // RECHAZADA = 'RECHAZADA',         // when is Solicitada and needs aproval but is Rejected by admin/manager but then is changed to CANCELADA so not more rechazada estado needed 
+  PENDIENTE = 'PENDIENTE',         // waiting for payment/confirmation -> initial state after creation
   PAGADA = 'PAGADA',               // Payment verified in RUAT (ready to use)
-  EN_CURSO = 'EN_CURSO',           // Currently active during scheduled time
-  COMPLETADA = 'COMPLETADA',       // Successfully completed
-  CANCELADA = 'CANCELADA',         // Cancelled by user/admin before start
-  EXPIRADA = 'EXPIRADA',           // Didn't complete payment in time
-  NO_SHOW = 'NO_SHOW'              // User didn't show up
+  EN_CURSO = 'EN_CURSO',           // Currently active during scheduled time -> updated by system after start time
+  COMPLETADA = 'COMPLETADA',       // Successfully completed --> updated by system after end time in puntual and after last date end in recurrent
+  CANCELADA = 'CANCELADA',         // Cancelled reservation when paymet not completed so first check if is paid and then check timing -> updated by user/admin or system if not paid in time or in the deadline time and when esReservaGratuita is true then not cancelled automatically but only with user
+  EXPIRADA = 'EXPIRADA',           // Didn't complete payment in time stipulated  -> updated by system after payment deadline
+  NO_SHOW = 'NO_SHOW'              // User didn't show up for reservation -> updated by user
 }
 // Estados de Validación (estadoValidacion)
 export enum EstadoValidacion {
   // NO_REQUIERE = 'NO_REQUIERE',     // Campo no requiere aprobación
   PENDIENTE = 'PENDIENTE',         // Esperando aprobación
-  APROBADA = 'APROBADA',           // Aprobada por encargado/admin
-  RECHAZADA = 'RECHAZADA',         // Rechazada
+  APROBADA = 'APROBADA',           // Aprobada por encargado/admin or automatic if complejo is open to automatic reservations
+  RECHAZADA = 'RECHAZADA',         // when is Solicitada and needs aproval but is Rejected by admin/manager but then is changed to CANCELADA so not more rechazada estado needed 
 }
 // Estados de Pago (estadoPago)
 export enum EstadoPago {
   PENDIENTE = 'PENDIENTE',        // No pagado
   PAGADO = 'PAGADO',              // Pagado y verificado
-  PARCIAL = 'PARCIAL',            // Pago parcial (para recurrentes)
-  VERIFICANDO = 'VERIFICANDO',    // Consultando RUAT
+  PARCIAL = 'PARCIAL',            // Pago parcial
   REEMBOLSADO = 'REEMBOLSADO',    // Devuelto por cancelación
-  VENCIDO = 'VENCIDO'             // Tiempo de pago expiró
+  FALLIDO = 'FALLIDO',            // Intento de pago fallido
+
 }
+
 // Estados de Usuario (estadoUsuario)
 export enum EstadoUsuario {
   PENDIENTE_VERIFICACION = 'PENDIENTE_VERIFICACION', // Registro en Ruat no verificado

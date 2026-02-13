@@ -1,7 +1,8 @@
 import { Component, OnInit, EventEmitter, Output, ViewChild, ElementRef } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MenuItem } from '../../core/data/menu.model';
+import { MenuItem } from 'src/app/core/models/menu.model';
+import { TokenStorageService } from 'src/app/core/services/token-storage.service';
 
 @Component({
   selector: 'app-two-column-sidebar',
@@ -15,14 +16,13 @@ export class TwoColumnSidebarComponent implements OnInit {
   @ViewChild('sideMenu') sideMenu!: ElementRef;
   @Output() mobileMenuButtonClicked = new EventEmitter();
 
-  constructor(private router: Router, public translate: TranslateService) {
+  constructor(private router: Router, public translate: TranslateService,
+    private storage: TokenStorageService) {
     translate.setDefaultLang('es');
   }
 
   ngOnInit(): void {
-    // Menu Items
-    const menu = localStorage.getItem('menu');
-    this.menuItems =menu ? JSON.parse(menu) : null;
+    this.menuItems =this.storage.getMenu();
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         this.initActiveMenu();
