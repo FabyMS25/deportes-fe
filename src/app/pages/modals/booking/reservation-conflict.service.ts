@@ -80,7 +80,6 @@ export class ReservationConflictService {
     excludeReservaId?: string
   ): Map<string, ConflictResult> {
     const results = new Map<string, ConflictResult>();
-
     for (const range of timeRanges) {
       const key = this.getTimeRangeKey(range);
       const result = this.checkConflict(
@@ -91,7 +90,6 @@ export class ReservationConflictService {
       );
       results.set(key, result);
     }
-
     return results;
   }
 
@@ -183,28 +181,23 @@ export class ReservationConflictService {
     const availableSlots: TimeRange[] = [];
     const startMinutes = this.timeToMinutes(openTime);
     const endMinutes = this.timeToMinutes(closeTime);
-
     for (let minutes = startMinutes; minutes < endMinutes; minutes += slotDuration) {
       const slotStart = this.minutesToTime(minutes);
       const slotEnd = this.minutesToTime(Math.min(minutes + slotDuration, endMinutes));
-
       const timeRange: TimeRange = {
         date: date,
         startTime: slotStart,
         endTime: slotEnd
       };
-
       const conflict = this.checkConflict(
         campoDeportivo.uuid!,
         timeRange,
         existingReservations
       );
-
       if (!conflict.hasConflict) {
         availableSlots.push(timeRange);
       }
     }
-
     return availableSlots;
   }
 
@@ -221,7 +214,6 @@ export class ReservationConflictService {
     const currentDate = new Date(startDate);
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + maxDaysToSearch);
-
     while (currentDate <= endDate) {
       const slots = this.getAvailableSlots(
         { uuid: campoDeportivoId } as CampoDeportivo,
@@ -229,11 +221,9 @@ export class ReservationConflictService {
         duration,
         existingReservations
       );
-
       if (slots.length > 0) {
         return slots[0];
       }
-
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
@@ -283,7 +273,6 @@ export class ReservationConflictService {
     stats.averageConflictsPerDay = stats.totalDays > 0 
       ? stats.totalConflicts / stats.totalDays 
       : 0;
-
     return stats;
   }
 
@@ -300,7 +289,6 @@ export class ReservationConflictService {
     const now = new Date();
     const minReservationTime = anticipationHours? new Date(now.getTime() + anticipationHours * 60 * 60 * 1000):undefined;
     const reservationDateTime = this.combineDateAndTime(timeRange.date, timeRange.startTime);
-
     if (minReservationTime && reservationDateTime < minReservationTime) {
       errors.push(`La reserva debe realizarse con al menos ${anticipationHours} horas de anticipación`);
     }
@@ -309,7 +297,6 @@ export class ReservationConflictService {
       timeRange,
       existingReservations
     );
-
     if (conflict.hasConflict) {
       errors.push(conflict.reason || 'El horario seleccionado tiene conflictos con otras reservas');
     }
@@ -318,7 +305,6 @@ export class ReservationConflictService {
     if (timeRange.date < today) {
       errors.push('No se pueden crear reservas para fechas pasadas');
     }
-
     return {
       isValid: errors.length === 0,
       errors: errors

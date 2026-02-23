@@ -1,6 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
-// import { Reserva } from 'src/app/core/models/reserva.models';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
@@ -24,10 +23,10 @@ interface TimeSlot {
   isPast: boolean;
   isSelected?: boolean;
   isPartialSelection?: boolean; 
-  partialStart?: number; // minutes from midnight
-  partialEnd?: number; // minutes from midnight
-  partialStartTime?: string; // formatted time string
-  partialEndTime?: string; // formatted time string
+  partialStart?: number;
+  partialEnd?: number;
+  partialStartTime?: string;
+  partialEndTime?: string;
   reservation?: Reserva;
   conflictReason?: string;
   blockType: 'morning' | 'afternoon' | 'night' | 'operating';
@@ -421,13 +420,11 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   validateTimeSelection(): boolean {
     this.validationErrors = [];    
     const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
-    const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
-    
+    const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;    
     if (!this.isDayOpen()) {
       this.validationErrors.push('El campo está cerrado para este día. No se pueden seleccionar horarios.');
       return false;
-    }    
-      
+    }      
     if (startMinutes >= endMinutes) {
       this.validationErrors.push('La hora de inicio debe ser anterior a la hora de fin');
       return false;
@@ -469,16 +466,13 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     }
     const now = new Date();
     const selectedDateTime = this.combineDateAndTime(this.fechaReserva, startTime);
-    let minReservationTime = new Date(now.getTime());
-    
+    let minReservationTime = new Date(now.getTime());    
     if (this.anticipationHours) {
       minReservationTime = new Date(now.getTime() + this.anticipationHours * 60 * 60 * 1000);
-    }
-    
+    }    
     if (selectedDateTime < minReservationTime) {
       const timeDiff = minReservationTime.getTime() - now.getTime();
       const hoursDiff = Math.ceil(timeDiff / (1000 * 60 * 60));
-      
       if (this.dataTariff.tipoCobro === 'por_evento') {
         this.validationErrors.push(
           `Las reservas de eventos deben realizarse con al menos ${this.anticipationTimeDisplay} de anticipación`
@@ -509,7 +503,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   private isTimeWithinAnyOperatingPeriod(startTime: string, endTime: string): boolean {
     const operatingPeriods = this.getOperatingPeriodsForDay(this.fechaReserva);
     if (operatingPeriods.length === 0) return false;
-
     const startMinutes = this.timeToMinutes(startTime);
     const endMinutes = this.timeToMinutes(endTime);
     return operatingPeriods.some(period => {
@@ -542,7 +535,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     }
   }
 
-
   getDurationTime(): number {
     const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
     const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
@@ -563,375 +555,345 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       return `${hours} h ${minutes} min`;
     }
   }
- toggleSlotSelection(slot: TimeSlot): void {
-  // Handle partially reserved slots - allow selection of available portion
-  if (slot.isPartiallyReserved && !slot.isSelected) {
-    this.validationErrors = [];
-    this.showValidationAlert = false;
-    
-    // Set time inputs to the available portion ONLY
-    if (slot.availableStartTime && slot.availableEndTime) {
-      const [startHours, startMinutes] = slot.availableStartTime.split(':').map(Number);
-      const [endHours, endMinutes] = slot.availableEndTime.split(':').map(Number);
-      
-      this.startTimeInput = { hours: startHours, minutes: startMinutes };
-      this.endTimeInput = { hours: endHours, minutes: endMinutes };
-      
-      this.updateSlotsFromTimeInputs();
-      this.calculateTariff();
-    }
-    return;
-  }
-  
-  // Rest of your existing validation code...
-  if (!slot.isAvailable || slot.isReserved || !slot.isWithinTariffTime || slot.tariffConflict) {
-    // ... existing validation
-    return;
-  }
-  
-  this.validationErrors = [];
-  this.showValidationAlert = false;
-  
-  // When selecting a new slot, check if it's partially reserved
-  if (slot.isPartiallyReserved && slot.availableStartTime && slot.availableEndTime) {
-    // Select only the available portion
-    const [startHours, startMinutes] = slot.availableStartTime.split(':').map(Number);
-    const [endHours, endMinutes] = slot.availableEndTime.split(':').map(Number);
-    
-    this.startTimeInput = { hours: startHours, minutes: startMinutes };
-    this.endTimeInput = { hours: endHours, minutes: endMinutes };
-    
-    this.updateSlotsFromTimeInputs();
-    this.calculateTariff();
-    return;
-  }
-  
-  // Regular slot selection logic
-  const index = this.selectedSlots.findIndex(s => 
-    s.startTime === slot.startTime && s.endTime === slot.endTime
-  );  
-  
-  if (index > -1) {
-    this.deselectSlotAndDependents(slot);
-  } else {
-    this.selectSlotWithConsecutive(slot);
-  }
-  
-  this.selectedSlots.sort((a, b) => 
-    this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime)
-  );
-  
-  this.updateTimeInputsFromSlots();
-}
-private updateTimeInputsFromSlots(): void {
-  if (this.selectedSlots.length === 0) {
-    return;
-  }
-  
-  let earliestStartMinutes = Infinity;
-  let latestEndMinutes = 0;
-  
-  this.selectedSlots.forEach(slot => {
-    // Para slots con selección parcial (por el usuario)
-    if (slot.isPartialSelection && slot.partialStartTime && slot.partialEndTime) {
-      const startMinutes = this.timeToMinutes(slot.partialStartTime + ':00');
-      const endMinutes = this.timeToMinutes(slot.partialEndTime + ':00');
-      
-      earliestStartMinutes = Math.min(earliestStartMinutes, startMinutes);
-      latestEndMinutes = Math.max(latestEndMinutes, endMinutes);
-    } 
-    // Para slots parcialmente reservados (por otros)
-    else if (slot.isPartiallyReserved && slot.availableStartTime && slot.availableEndTime) {
-      const startMinutes = this.timeToMinutes(slot.availableStartTime + ':00');
-      const endMinutes = this.timeToMinutes(slot.availableEndTime + ':00');
-      
-      earliestStartMinutes = Math.min(earliestStartMinutes, startMinutes);
-      latestEndMinutes = Math.max(latestEndMinutes, endMinutes);
-    }
-    // Para slots normales
-    else {
-      const startMinutes = this.timeToMinutes(slot.startTime);
-      const endMinutes = this.timeToMinutes(slot.endTime);
-      
-      earliestStartMinutes = Math.min(earliestStartMinutes, startMinutes);
-      latestEndMinutes = Math.max(latestEndMinutes, endMinutes);
-    }
-  });
-  
-  // Solo actualizar si encontramos tiempos válidos
-  if (earliestStartMinutes !== Infinity && latestEndMinutes > 0) {
-    const startHours = Math.floor(earliestStartMinutes / 60);
-    const startMins = earliestStartMinutes % 60;
-    const endHours = Math.floor(latestEndMinutes / 60);
-    const endMins = latestEndMinutes % 60;
-    
-    this.startTimeInput = { hours: startHours, minutes: startMins };
-    this.endTimeInput = { hours: endHours, minutes: endMins };
-    
-    // Forzar detección de cambios
-    this.cdr.detectChanges();
-  }
-}
-private deselectSlotAndDependents(deselectedSlot: TimeSlot): void {
-  // Si el slot deseleccionado es el único seleccionado, limpiar todo
-  if (this.selectedSlots.length === 1) {
-    this.clearSelectedSlots();
-    this.startTimeInput = { hours: 0, minutes: 0 };
-    this.endTimeInput = { hours: 0, minutes: 0 };
-    return;
-  }
-  
-  // Encontrar el rango actual excluyendo el slot deseleccionado
-  let newMinTime = Infinity;
-  let newMaxTime = 0;
-  let foundOthers = false;
-  
-  this.selectedSlots.forEach(slot => {
-    if (slot.startTime === deselectedSlot.startTime && slot.endTime === deselectedSlot.endTime) {
-      return; // Saltar el slot deseleccionado
-    }
-    
-    foundOthers = true;
-    
-    if (slot.isPartialSelection && slot.partialStartTime && slot.partialEndTime) {
-      const start = this.timeToMinutes(slot.partialStartTime + ':00');
-      const end = this.timeToMinutes(slot.partialEndTime + ':00');
-      newMinTime = Math.min(newMinTime, start);
-      newMaxTime = Math.max(newMaxTime, end);
-    } else {
-      const start = this.timeToMinutes(slot.startTime);
-      const end = this.timeToMinutes(slot.endTime);
-      newMinTime = Math.min(newMinTime, start);
-      newMaxTime = Math.max(newMaxTime, end);
-    }
-  });
-  
-  if (!foundOthers) {
-    this.clearSelectedSlots();
-    this.startTimeInput = { hours: 0, minutes: 0 };
-    this.endTimeInput = { hours: 0, minutes: 0 };
-    return;
-  }
-  
-  // Actualizar inputs con el nuevo rango
-  this.startTimeInput = { 
-    hours: Math.floor(newMinTime / 60), 
-    minutes: newMinTime % 60 
-  };
-  this.endTimeInput = { 
-    hours: Math.floor(newMaxTime / 60), 
-    minutes: newMaxTime % 60 
-  };
-  
-  // Actualizar los slots basado en los nuevos inputs
-  this.updateSlotsFromTimeInputs();
-}
-private selectSlotWithConsecutive(newSlot: TimeSlot): void {
-  const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
-  const allSlots = [
-    ...daySlots.morningSlots,
-    ...daySlots.afternoonSlots,
-    ...daySlots.nightSlots
-  ].sort((a, b) => this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime));
-  
-  // Si no hay slots seleccionados
-  if (this.selectedSlots.length === 0) {
-    // Para slot parcialmente reservado, usar solo la porción disponible
-    if (newSlot.isPartiallyReserved && newSlot.availableStartTime && newSlot.availableEndTime) {
-      const [startHours, startMinutes] = newSlot.availableStartTime.split(':').map(Number);
-      const [endHours, endMinutes] = newSlot.availableEndTime.split(':').map(Number);
-      
-      this.startTimeInput = { hours: startHours, minutes: startMinutes };
-      this.endTimeInput = { hours: endHours, minutes: endMinutes };
-      this.updateSlotsFromTimeInputs();
-    } else {
-      // Slot normal
-      newSlot.isSelected = true;
-      this.selectedSlots.push(newSlot);
+  toggleSlotSelection(slot: TimeSlot): void {
+    if (slot.isPartiallyReserved && !slot.isSelected) {
+      this.validationErrors = [];
+      this.showValidationAlert = false;
+      if (slot.availableStartTime && slot.availableEndTime) {
+        const [startHours, startMinutes] = slot.availableStartTime.split(':').map(Number);
+        const [endHours, endMinutes] = slot.availableEndTime.split(':').map(Number);
+        this.startTimeInput = { hours: startHours, minutes: startMinutes };
+        this.endTimeInput = { hours: endHours, minutes: endMinutes };      
+        this.updateSlotsFromTimeInputs();
+        this.calculateTariff();
+      }
+      return;
+    }  
+    if (!slot.isAvailable || slot.isReserved || !slot.isWithinTariffTime || slot.tariffConflict) {
+      if (slot.conflictReason) {
+        this.validationErrors = [slot.conflictReason];
+        this.showValidationAlert = true;
+      } else if (slot.tariffConflict && slot.applicableTariff) {
+        this.validationErrors = [
+          `Este horario corresponde a la tarifa "${slot.applicableTariff.descripcion}". ` +
+          `Seleccione solo horarios dentro del rango de la tarifa "${this.dataTariff.descripcion}" ` +
+          `(${this.dataTariff.desde?.slice(0, 5)} - ${this.dataTariff.hasta?.slice(0, 5)})`
+        ];
+        this.showValidationAlert = true;
+      } else if (!slot.isWithinTariffTime) {
+        this.validationErrors = [
+          `Este horario está fuera del rango de la tarifa seleccionada. ` +
+          `Tarifa "${this.dataTariff.descripcion}": ${this.dataTariff.desde?.slice(0, 5)} - ${this.dataTariff.hasta?.slice(0, 5)}`
+        ];
+        this.showValidationAlert = true;
+      } else if (slot.isPast) {
+        this.validationErrors = ['No se pueden seleccionar horarios en el pasado'];
+        this.showValidationAlert = true;
+      }
       this.updateTimeInputsFromSlots();
+      this.calculateTariff();
+      return;
     }
-    return;
-  }
-  
-  // Obtener los tiempos actuales de selección (considerando parciales)
-  let currentMinTime = Infinity;
-  let currentMaxTime = 0;
-  
-  this.selectedSlots.forEach(slot => {
-    if (slot.isPartialSelection && slot.partialStartTime && slot.partialEndTime) {
-      const start = this.timeToMinutes(slot.partialStartTime + ':00');
-      const end = this.timeToMinutes(slot.partialEndTime + ':00');
-      currentMinTime = Math.min(currentMinTime, start);
-      currentMaxTime = Math.max(currentMaxTime, end);
-    } else if (slot.isPartiallyReserved && slot.availableStartTime && slot.availableEndTime) {
-      // Si el slot es parcialmente reservado pero está seleccionado, usar la porción disponible
-      const start = this.timeToMinutes(slot.availableStartTime + ':00');
-      const end = this.timeToMinutes(slot.availableEndTime + ':00');
-      currentMinTime = Math.min(currentMinTime, start);
-      currentMaxTime = Math.max(currentMaxTime, end);
+    this.validationErrors = [];
+    this.showValidationAlert = false;  
+    const index = this.selectedSlots.findIndex(s => 
+      s.startTime === slot.startTime && s.endTime === slot.endTime
+    );  
+    if (index > -1) {
+      this.deselectSlotAndDependents(slot);
     } else {
-      const start = this.timeToMinutes(slot.startTime);
-      const end = this.timeToMinutes(slot.endTime);
-      currentMinTime = Math.min(currentMinTime, start);
-      currentMaxTime = Math.max(currentMaxTime, end);
+      const tempSelected = [...this.selectedSlots, slot];
+      const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
+      const allSlots = [
+        ...daySlots.morningSlots,
+        ...daySlots.afternoonSlots,
+        ...daySlots.nightSlots
+      ].sort((a, b) => this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime));
+      let minTime = Math.min(
+        ...tempSelected.map(s => this.timeToMinutes(s.startTime)),
+        ...(slot.isPartiallyReserved && slot.availableStartTime ? 
+            [this.timeToMinutes(slot.availableStartTime + ':00')] : [])
+      );    
+      let maxTime = Math.max(
+        ...tempSelected.map(s => this.timeToMinutes(s.endTime)),
+        ...(slot.isPartiallyReserved && slot.availableEndTime ? 
+            [this.timeToMinutes(slot.availableEndTime + ':00')] : [])
+      );
+      let hasGap = false;
+      for (const s of allSlots) {
+        const slotStart = this.timeToMinutes(s.startTime);
+        const slotEnd = this.timeToMinutes(s.endTime);
+        if (slotStart >= minTime && slotEnd <= maxTime) {
+          let isSlotAvailable = false;        
+          if (s.isPartiallyReserved && s.availableStartTime && s.availableEndTime) {
+            const availStart = this.timeToMinutes(s.availableStartTime + ':00');
+            const availEnd = this.timeToMinutes(s.availableEndTime + ':00');
+            if (availStart < maxTime && availEnd > minTime) {
+              isSlotAvailable = true;
+            }
+          } else {
+            isSlotAvailable = s.isAvailable && !s.isReserved;
+          }        
+          if (!isSlotAvailable) {
+            hasGap = true;
+            break;
+          }
+        }
+      }    
+      if (hasGap) {
+        this.validationErrors = ['Solo se pueden seleccionar horarios consecutivos. Hay reservas en medio del rango seleccionado.'];
+        this.showValidationAlert = true;
+        return;
+      } 
+      this.selectSlotWithConsecutive(slot);
     }
-  });
-  
-  // Determinar el tiempo del nuevo slot (usando solo porción disponible si es parcial)
-  let newSlotStart: number;
-  let newSlotEnd: number;
-  
-  if (newSlot.isPartiallyReserved && newSlot.availableStartTime && newSlot.availableEndTime) {
-    newSlotStart = this.timeToMinutes(newSlot.availableStartTime + ':00');
-    newSlotEnd = this.timeToMinutes(newSlot.availableEndTime + ':00');
-  } else {
-    newSlotStart = this.timeToMinutes(newSlot.startTime);
-    newSlotEnd = this.timeToMinutes(newSlot.endTime);
+    this.selectedSlots.sort((a, b) => 
+      this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime)
+    );
+    if (!this.areSlotsConsecutive(this.selectedSlots)) {
+      this.validationErrors = ['Los horarios seleccionados no son consecutivos'];
+      this.showValidationAlert = true;
+      this.clearSelectedSlots();
+      return;
+    }  
+    this.updateTimeInputsFromSlots();
   }
-  
-  // Calcular el nuevo rango
-  let newStartTime: number;
-  let newEndTime: number;
-  
-  if (newSlotStart < currentMinTime) {
-    newStartTime = newSlotStart;
-    newEndTime = currentMaxTime;
-  } else if (newSlotEnd > currentMaxTime) {
-    newStartTime = currentMinTime;
-    newEndTime = newSlotEnd;
-  } else {
-    newStartTime = currentMinTime;
-    newEndTime = currentMaxTime;
-  }
-  
-  // Actualizar los inputs con el nuevo rango
-  this.startTimeInput = { 
-    hours: Math.floor(newStartTime / 60), 
-    minutes: newStartTime % 60 
-  };
-  this.endTimeInput = { 
-    hours: Math.floor(newEndTime / 60), 
-    minutes: newEndTime % 60 
-  };
-  
-  this.updateSlotsFromTimeInputs();
-}
-private selectRangeFromNewToExisting(newSlot: TimeSlot, allSlots: TimeSlot[], minSelectedTime: number): void {
-  const newSlotTime = this.timeToMinutes(newSlot.startTime);
-  this.clearSelectedSlots();
-  const startIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === newSlotTime);
-  const endIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === minSelectedTime);
-  for (let i = startIndex; i <= endIndex; i++) {
-    const currentSlot = allSlots[i];
-    if (currentSlot.isAvailable && !currentSlot.isReserved && 
-        currentSlot.isWithinTariffTime && !currentSlot.tariffConflict) {
-      currentSlot.isSelected = true;
-      this.selectedSlots.push(currentSlot);
-    }
-  }
-}
-private selectRangeFromExistingToNew(newSlot: TimeSlot, allSlots: TimeSlot[], maxSelectedTime: number): void {
-  const newSlotTime = this.timeToMinutes(newSlot.startTime);
-  this.clearSelectedSlots();
-  const startIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === maxSelectedTime);
-  const endIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === newSlotTime);
-  for (let i = startIndex; i <= endIndex; i++) {
-    const currentSlot = allSlots[i];
-    if (currentSlot.isAvailable && !currentSlot.isReserved && 
-        currentSlot.isWithinTariffTime && !currentSlot.tariffConflict) {
-      currentSlot.isSelected = true;
-      this.selectedSlots.push(currentSlot);
-    }
-  }
-}
-private selectEntireRange(minTime: number, maxTime: number, allSlots: TimeSlot[]): void {
-  this.clearSelectedSlots();
-  const startIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === minTime);
-  const endIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === maxTime);
-  for (let i = startIndex; i <= endIndex; i++) {
-    const currentSlot = allSlots[i];
-    if (currentSlot.isAvailable && !currentSlot.isReserved && 
-        currentSlot.isWithinTariffTime && !currentSlot.tariffConflict) {
-      currentSlot.isSelected = true;
-      this.selectedSlots.push(currentSlot);
-    }
-  }
-}
-private updateSlotsFromTimeInputs(): void {
-  this.clearSelectedSlots();  
-  
-  const startTime = this.timeInputToString(this.startTimeInput);
-  const endTime = this.timeInputToString(this.endTimeInput);
-  
-  if (!this.isTimeWithinAnyOperatingPeriod(startTime, endTime)) {
-    return;
-  }
-  
-  const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
-  const allSlots = [
-    ...daySlots.morningSlots,
-    ...daySlots.afternoonSlots,
-    ...daySlots.nightSlots
-  ];
-  
-  const startMinutes = this.timeToMinutes(startTime);
-  const endMinutes = this.timeToMinutes(endTime);
-  
-  allSlots.forEach(slot => {
-    const slotStart = this.timeToMinutes(slot.startTime);
-    const slotEnd = this.timeToMinutes(slot.endTime);
-    const overlaps = slotStart < endMinutes && slotEnd > startMinutes;
-    
-    // Determinar si el slot está disponible para selección
-    let isAvailableForSelection = false;
-    let effectiveSlotStart = slotStart;
-    let effectiveSlotEnd = slotEnd;
-    
-    if (slot.isPartiallyReserved && slot.availableStartTime && slot.availableEndTime) {
-      // Para slots parcialmente reservados, solo la porción disponible es seleccionable
-      const availableStart = this.timeToMinutes(slot.availableStartTime + ':00');
-      const availableEnd = this.timeToMinutes(slot.availableEndTime + ':00');
-      
-      // Verificar si el rango seleccionado se superpone con la porción disponible
-      const overlapsAvailable = availableStart < endMinutes && availableEnd > startMinutes;
-      
-      if (overlapsAvailable && slot.isWithinTariffTime && !slot.tariffConflict) {
-        isAvailableForSelection = true;
-        effectiveSlotStart = availableStart;
-        effectiveSlotEnd = availableEnd;
-      }
-    } else {
-      // Slot normal
-      isAvailableForSelection = slot.isAvailable && !slot.isReserved;
-    }
-    
-    if (overlaps && isAvailableForSelection && slot.isWithinTariffTime && !slot.tariffConflict) {
-      slot.isSelected = true;
-      this.selectedSlots.push(slot);      
-      
-      // Verificar si es una selección parcial dentro del slot
-      if (startMinutes > effectiveSlotStart || endMinutes < effectiveSlotEnd) {
-        slot.isPartialSelection = true;
-        slot.partialStart = Math.max(effectiveSlotStart, startMinutes);
-        slot.partialEnd = Math.min(effectiveSlotEnd, endMinutes);
-        
-        // Formatear tiempos parciales
-        slot.partialStartTime = this.minutesToTime(slot.partialStart).slice(0, 5);
-        slot.partialEndTime = this.minutesToTime(slot.partialEnd).slice(0, 5);
+  private areSlotsConsecutive(slots: TimeSlot[]): boolean {
+    if (slots.length <= 1) return true;
+    const sortedSlots = [...slots].sort((a, b) => 
+      this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime)
+    );
+    for (let i = 0; i < sortedSlots.length - 1; i++) {
+      const currentSlot = sortedSlots[i];
+      const nextSlot = sortedSlots[i + 1];
+      let currentEnd: number;
+      if (currentSlot.isPartialSelection && currentSlot.partialEndTime) {
+        currentEnd = this.timeToMinutes(currentSlot.partialEndTime + ':00');
+      } else if (currentSlot.isPartiallyReserved && currentSlot.availableEndTime) {
+        currentEnd = this.timeToMinutes(currentSlot.availableEndTime + ':00');
       } else {
-        slot.isPartialSelection = false;
-        slot.partialStart = undefined;
-        slot.partialEnd = undefined;
-        slot.partialStartTime = undefined;
-        slot.partialEndTime = undefined;
+        currentEnd = this.timeToMinutes(currentSlot.endTime);
+      }
+      let nextStart: number;
+      if (nextSlot.isPartialSelection && nextSlot.partialStartTime) {
+        nextStart = this.timeToMinutes(nextSlot.partialStartTime + ':00');
+      } else if (nextSlot.isPartiallyReserved && nextSlot.availableStartTime) {
+        nextStart = this.timeToMinutes(nextSlot.availableStartTime + ':00');
+      } else {
+        nextStart = this.timeToMinutes(nextSlot.startTime);
+      }
+      if (currentEnd !== nextStart) {
+        return false;
+      }
+    }  
+    return true;
+  }
+  private updateTimeInputsFromSlots(): void {
+    if (this.selectedSlots.length === 0) {
+      return;
+    }
+    let earliestStartMinutes = Infinity;
+    let latestEndMinutes = 0;
+    this.selectedSlots.forEach(slot => {
+      if (slot.isPartialSelection && slot.partialStartTime && slot.partialEndTime) {
+        const startMinutes = this.timeToMinutes(slot.partialStartTime + ':00');
+        const endMinutes = this.timeToMinutes(slot.partialEndTime + ':00');      
+        earliestStartMinutes = Math.min(earliestStartMinutes, startMinutes);
+        latestEndMinutes = Math.max(latestEndMinutes, endMinutes);
+      } 
+      else if (slot.isPartiallyReserved && slot.availableStartTime && slot.availableEndTime) {
+        const startMinutes = this.timeToMinutes(slot.availableStartTime + ':00');
+        const endMinutes = this.timeToMinutes(slot.availableEndTime + ':00');      
+        earliestStartMinutes = Math.min(earliestStartMinutes, startMinutes);
+        latestEndMinutes = Math.max(latestEndMinutes, endMinutes);
+      }
+      else {
+        const startMinutes = this.timeToMinutes(slot.startTime);
+        const endMinutes = this.timeToMinutes(slot.endTime);      
+        earliestStartMinutes = Math.min(earliestStartMinutes, startMinutes);
+        latestEndMinutes = Math.max(latestEndMinutes, endMinutes);
+      }
+    });
+    if (earliestStartMinutes !== Infinity && latestEndMinutes > 0) {
+      const startHours = Math.floor(earliestStartMinutes / 60);
+      const startMins = earliestStartMinutes % 60;
+      const endHours = Math.floor(latestEndMinutes / 60);
+      const endMins = latestEndMinutes % 60;
+      this.startTimeInput = { hours: startHours, minutes: startMins };
+      this.endTimeInput = { hours: endHours, minutes: endMins };
+      this.cdr.detectChanges();
+    }
+  }
+  private deselectSlotAndDependents(deselectedSlot: TimeSlot): void {
+    if (this.selectedSlots.length === 1) {
+      this.clearSelectedSlots();
+      this.startTimeInput = { hours: 0, minutes: 0 };
+      this.endTimeInput = { hours: 0, minutes: 0 };
+      return;
+    }
+    let newMinTime = Infinity;
+    let newMaxTime = 0;
+    let foundOthers = false;  
+    this.selectedSlots.forEach(slot => {
+      if (slot.startTime === deselectedSlot.startTime && slot.endTime === deselectedSlot.endTime) {
+        return;
+      }    
+      foundOthers = true;
+      if (slot.isPartialSelection && slot.partialStartTime && slot.partialEndTime) {
+        const start = this.timeToMinutes(slot.partialStartTime + ':00');
+        const end = this.timeToMinutes(slot.partialEndTime + ':00');
+        newMinTime = Math.min(newMinTime, start);
+        newMaxTime = Math.max(newMaxTime, end);
+      } else {
+        const start = this.timeToMinutes(slot.startTime);
+        const end = this.timeToMinutes(slot.endTime);
+        newMinTime = Math.min(newMinTime, start);
+        newMaxTime = Math.max(newMaxTime, end);
+      }
+    });  
+    if (!foundOthers) {
+      this.clearSelectedSlots();
+      this.startTimeInput = { hours: 0, minutes: 0 };
+      this.endTimeInput = { hours: 0, minutes: 0 };
+      return;
+    }
+    this.startTimeInput = { 
+      hours: Math.floor(newMinTime / 60), 
+      minutes: newMinTime % 60 
+    };
+    this.endTimeInput = { 
+      hours: Math.floor(newMaxTime / 60), 
+      minutes: newMaxTime % 60 
+    };
+    this.updateSlotsFromTimeInputs();
+  }
+  private selectSlotWithConsecutive(newSlot: TimeSlot): void {
+    const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
+    const allSlots = [
+      ...daySlots.morningSlots,
+      ...daySlots.afternoonSlots,
+      ...daySlots.nightSlots
+    ].sort((a, b) => this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime));
+    if (this.selectedSlots.length === 0) {
+      if (newSlot.isPartiallyReserved && newSlot.availableStartTime && newSlot.availableEndTime) {
+        const [startHours, startMinutes] = newSlot.availableStartTime.split(':').map(Number);
+        const [endHours, endMinutes] = newSlot.availableEndTime.split(':').map(Number);
+        
+        this.startTimeInput = { hours: startHours, minutes: startMinutes };
+        this.endTimeInput = { hours: endHours, minutes: endMinutes };
+        this.updateSlotsFromTimeInputs();
+      } else {
+        newSlot.isSelected = true;
+        this.selectedSlots.push(newSlot);
+        this.updateTimeInputsFromSlots();
+      }
+      return;
+    }
+    let minTime = Math.min(
+      ...this.selectedSlots.map(s => this.timeToMinutes(s.startTime)),
+      this.timeToMinutes(newSlot.startTime)
+    );    
+    let maxTime = Math.max(
+      ...this.selectedSlots.map(s => this.timeToMinutes(s.endTime)),
+      this.timeToMinutes(newSlot.endTime)
+    );
+    let startFound = false;
+    let validStart = minTime;
+    let validEnd = maxTime;    
+    for (const slot of allSlots) {
+      const slotStart = this.timeToMinutes(slot.startTime);
+      const slotEnd = this.timeToMinutes(slot.endTime);      
+      if (slotStart >= minTime && slotStart < maxTime) {
+        let isSlotAvailable = false;        
+        if (slot.isPartiallyReserved && slot.availableStartTime && slot.availableEndTime) {
+          const availStart = this.timeToMinutes(slot.availableStartTime + ':00');
+          const availEnd = this.timeToMinutes(slot.availableEndTime + ':00');
+          if (availStart < maxTime && availEnd > minTime) {
+            isSlotAvailable = true;
+            validStart = Math.min(validStart, availStart);
+            validEnd = Math.max(validEnd, availEnd);
+          }
+        } else {
+          isSlotAvailable = slot.isAvailable && !slot.isReserved;
+        }        
+        if (!isSlotAvailable && !startFound) {
+          this.validationErrors = ['No se pueden seleccionar horarios no consecutivos'];
+          this.showValidationAlert = true;
+          return;
+        }
       }
     }
-  });  
-  
-  this.selectedSlots.sort((a, b) => 
-    this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime)
-  );
-}
+    this.startTimeInput = { 
+      hours: Math.floor(validStart / 60), 
+      minutes: validStart % 60 
+    };
+    this.endTimeInput = { 
+      hours: Math.floor(validEnd / 60), 
+      minutes: validEnd % 60 
+    };
+    this.updateSlotsFromTimeInputs();
+  }
+  private updateSlotsFromTimeInputs(): void {
+    this.clearSelectedSlots();  
+    
+    const startTime = this.timeInputToString(this.startTimeInput);
+    const endTime = this.timeInputToString(this.endTimeInput);
+    
+    if (!this.isTimeWithinAnyOperatingPeriod(startTime, endTime)) {
+      return;
+    }
+    
+    const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
+    const allSlots = [
+      ...daySlots.morningSlots,
+      ...daySlots.afternoonSlots,
+      ...daySlots.nightSlots
+    ];
+    
+    const startMinutes = this.timeToMinutes(startTime);
+    const endMinutes = this.timeToMinutes(endTime);
+    
+    allSlots.forEach(slot => {
+      const slotStart = this.timeToMinutes(slot.startTime);
+      const slotEnd = this.timeToMinutes(slot.endTime);
+      const overlaps = slotStart < endMinutes && slotEnd > startMinutes;
+      let isAvailableForSelection = false;
+      let effectiveSlotStart = slotStart;
+      let effectiveSlotEnd = slotEnd;      
+      if (slot.isPartiallyReserved && slot.availableStartTime && slot.availableEndTime) {
+        const availableStart = this.timeToMinutes(slot.availableStartTime + ':00');
+        const availableEnd = this.timeToMinutes(slot.availableEndTime + ':00');
+        const overlapsAvailable = availableStart < endMinutes && availableEnd > startMinutes;
+        if (overlapsAvailable && slot.isWithinTariffTime && !slot.tariffConflict) {
+          isAvailableForSelection = true;
+          effectiveSlotStart = availableStart;
+          effectiveSlotEnd = availableEnd;
+        }
+      } else {
+        isAvailableForSelection = slot.isAvailable && !slot.isReserved;
+      }    
+      if (overlaps && isAvailableForSelection && slot.isWithinTariffTime && !slot.tariffConflict) {
+        slot.isSelected = true;
+        this.selectedSlots.push(slot);      
+        if (startMinutes > effectiveSlotStart || endMinutes < effectiveSlotEnd) {
+          slot.isPartialSelection = true;
+          slot.partialStart = Math.max(effectiveSlotStart, startMinutes);
+          slot.partialEnd = Math.min(effectiveSlotEnd, endMinutes);
+          slot.partialStartTime = this.minutesToTime(slot.partialStart).slice(0, 5);
+          slot.partialEndTime = this.minutesToTime(slot.partialEnd).slice(0, 5);
+        } else {
+          slot.isPartialSelection = false;
+          slot.partialStart = undefined;
+          slot.partialEnd = undefined;
+          slot.partialStartTime = undefined;
+          slot.partialEndTime = undefined;
+        }
+      }
+    });  
+    this.selectedSlots.sort((a, b) => 
+      this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime)
+    );
+  }
 
   async confirmSelection(): Promise<void> {
     this.isCheckingAvailability = true;
@@ -1061,159 +1023,124 @@ private updateSlotsFromTimeInputs(): void {
     return result;
   }
   private generateTimeSlots(date: Date, startTime: string, endTime: string): TimeSlot[] {
-  const slots: TimeSlot[] = [];
-  const now = new Date();    
-  let minReservationTime = new Date(now.getTime());
-  if (this.anticipationHours) {
-    minReservationTime = new Date(now.getTime() + this.anticipationHours * 60 * 60 * 1000);
-  }    
-  
-  const startMinutes = this.timeToMinutes(startTime);
-  const endMinutes = this.timeToMinutes(endTime);
-  
-  // Get all reservations for this date
-  const dayReservations = this.reservationsList.filter(r => {
-    if (r.campoDeportivoDto?.uuid !== this.dataField.uuid) return false;
-    if (!this.conflictService.isBlockingState(r.estadoReserva as any)) return false;
-    
-    if (r.reservaPuntualDto) {
-      const reservaDate = new Date(r.reservaPuntualDto.fechaUso);
-      const reservaDateStr = reservaDate.toISOString().split('T')[0];
-      const targetDateStr = date.toISOString().split('T')[0];
-      return reservaDateStr === targetDateStr;
-    }
-    return false;
-  });
-  
-  // Convert reservations to occupied time ranges
-  const occupiedRanges: { start: number; end: number; reservation: Reserva }[] = [];
-  
-  dayReservations.forEach(reserva => {
-    if (reserva.reservaPuntualDto) {
-      const reservaStart = this.timeToMinutes(reserva.reservaPuntualDto.horaInicio);
-      const reservaEnd = this.timeToMinutes(reserva.reservaPuntualDto.horaFin);
+    const slots: TimeSlot[] = [];
+    const now = new Date();    
+    let minReservationTime = new Date(now.getTime());
+    if (this.anticipationHours) {
+      minReservationTime = new Date(now.getTime() + this.anticipationHours * 60 * 60 * 1000);
+    }  
+    const startMinutes = this.timeToMinutes(startTime);
+    const endMinutes = this.timeToMinutes(endTime);
+    const dayReservations = this.reservationsList.filter(r => {
+      if (r.campoDeportivoDto?.uuid !== this.dataField.uuid) return false;
+      if (!this.conflictService.isBlockingState(r.estadoReserva as any)) return false;
       
-      occupiedRanges.push({
-        start: reservaStart,
-        end: reservaEnd,
-        reservation: reserva
-      });
-    }
-  });
-  
-  // Sort occupied ranges by start time
-  occupiedRanges.sort((a, b) => a.start - b.start);
-  
-  // Generate slots based on minDuration
-  for (let minutes = startMinutes; minutes < endMinutes; minutes += this.minDuration * 60) {
-    const slotStart = this.minutesToTime(minutes);
-    const slotEnd = this.minutesToTime(Math.min(minutes + this.minDuration * 60, endMinutes));
-    const slotStartMinutes = minutes;
-    const slotEndMinutes = Math.min(minutes + this.minDuration * 60, endMinutes);
-    
-    const slotDateTime = this.combineDateAndTime(date, slotStart);
-    const isPast = slotDateTime < minReservationTime;
-    
-    // Check if this slot overlaps with any occupied range
-    let isReserved = false;
-    let isPartiallyReserved = false;
-    let reservedStart: number | undefined;
-    let reservedEnd: number | undefined;
-    let availableStart = slotStartMinutes;
-    let availableEnd = slotEndMinutes;
-    let conflictingReservation: Reserva | undefined;
-    
-    for (const range of occupiedRanges) {
-      const overlapStart = Math.max(slotStartMinutes, range.start);
-      const overlapEnd = Math.min(slotEndMinutes, range.end);
-      
-      if (overlapStart < overlapEnd) {
-        // There is overlap
-        isReserved = true;
-        conflictingReservation = range.reservation;
-        
-        if (overlapStart === slotStartMinutes && overlapEnd === slotEndMinutes) {
-          // Full slot reserved
-          isPartiallyReserved = false;
-        } else {
-          // Partial reservation
-          isPartiallyReserved = true;
-          reservedStart = overlapStart;
-          reservedEnd = overlapEnd;
-          
-          // Adjust available portions
-          if (overlapStart > slotStartMinutes) {
-            availableEnd = overlapStart; // Available from slotStart to overlapStart
-          } else if (overlapEnd < slotEndMinutes) {
-            availableStart = overlapEnd; // Available from overlapEnd to slotEnd
-          }
-        }
-        break; // Found a conflict
+      if (r.reservaPuntualDto) {
+        const reservaDate = new Date(r.reservaPuntualDto.fechaUso);
+        const reservaDateStr = reservaDate.toISOString().split('T')[0];
+        const targetDateStr = date.toISOString().split('T')[0];
+        return reservaDateStr === targetDateStr;
       }
-    }
-    
-    const timeRange: TimeRange = {
-      date: date,
-      startTime: slotStart,
-      endTime: slotEnd
-    };
-    
-    // Only check conflict service if we don't already have a reservation
-    let conflictResult: ConflictResult | undefined;
-    if (!conflictingReservation) {
-      conflictResult = this.conflictService.checkConflict(
-        this.dataField.uuid!,
-        timeRange,
-        this.reservationsList
-      );
-    }
-    
-    const isWithinTariffTime = this.isTimeWithinTariff(slotStart, slotEnd);
-    const applicableTariff = this.findApplicableTariffForTime(slotStart);
-    const tariffConflict = applicableTariff && applicableTariff.uuid !== this.dataTariff.uuid;
-    
-    // Determine if slot is available for selection
-    let isAvailable = !isPast && !isReserved && isWithinTariffTime && !tariffConflict;
-    
-    // For partially reserved slots, they are available for the non-reserved portion
-    if (isPartiallyReserved && !isPast && isWithinTariffTime && !tariffConflict) {
-      isAvailable = true;
-    }
-    
-    const slot: TimeSlot = {
-      time: `${slotStart.slice(0, 5)} - ${slotEnd.slice(0, 5)}`,
-      startTime: slotStart,
-      endTime: slotEnd,
-      isAvailable: isAvailable,
-      isReserved: isReserved && !isPartiallyReserved, // Only mark as fully reserved if not partial
-      isPartiallyReserved: isPartiallyReserved,
-      isPast: isPast,
-      isSelected: false,
-      reservation: conflictingReservation || conflictResult?.conflictingReservations[0],
-      conflictReason: conflictResult?.reason,
-      blockType: 'operating',
-      isWithinTariffTime: isWithinTariffTime,
-      applicableTariff: applicableTariff,
-      tariffConflict: tariffConflict
-    };
-    
-    // Add partial reservation info
-    if (isPartiallyReserved && reservedStart !== undefined && reservedEnd !== undefined) {
-      slot.reservedStart = reservedStart;
-      slot.reservedEnd = reservedEnd;
-      slot.reservedStartTime = this.minutesToTime(reservedStart).slice(0, 5);
-      slot.reservedEndTime = this.minutesToTime(reservedEnd).slice(0, 5);
-      slot.availableStart = availableStart;
-      slot.availableEnd = availableEnd;
-      slot.availableStartTime = this.minutesToTime(availableStart).slice(0, 5);
-      slot.availableEndTime = this.minutesToTime(availableEnd).slice(0, 5);
-    }
-    
-    slots.push(slot);
+      return false;
+    });
+    const occupiedRanges: { start: number; end: number; reservation: Reserva }[] = [];  
+    dayReservations.forEach(reserva => {
+      if (reserva.reservaPuntualDto) {
+        const reservaStart = this.timeToMinutes(reserva.reservaPuntualDto.horaInicio);
+        const reservaEnd = this.timeToMinutes(reserva.reservaPuntualDto.horaFin);      
+        occupiedRanges.push({
+          start: reservaStart,
+          end: reservaEnd,
+          reservation: reserva
+        });
+      }
+    });
+    occupiedRanges.sort((a, b) => a.start - b.start);
+    for (let minutes = startMinutes; minutes < endMinutes; minutes += this.minDuration * 60) {
+      const slotStart = this.minutesToTime(minutes);
+      const slotEnd = this.minutesToTime(Math.min(minutes + this.minDuration * 60, endMinutes));
+      const slotStartMinutes = minutes;
+      const slotEndMinutes = Math.min(minutes + this.minDuration * 60, endMinutes);    
+      const slotDateTime = this.combineDateAndTime(date, slotStart);
+      const isPast = slotDateTime < minReservationTime;
+      let isReserved = false;
+      let isPartiallyReserved = false;
+      let reservedStart: number | undefined;
+      let reservedEnd: number | undefined;
+      let availableStart = slotStartMinutes;
+      let availableEnd = slotEndMinutes;
+      let conflictingReservation: Reserva | undefined;    
+      for (const range of occupiedRanges) {
+        const overlapStart = Math.max(slotStartMinutes, range.start);
+        const overlapEnd = Math.min(slotEndMinutes, range.end);
+        if (overlapStart < overlapEnd) {
+          isReserved = true;
+          conflictingReservation = range.reservation;
+          if (overlapStart === slotStartMinutes && overlapEnd === slotEndMinutes) {
+            isPartiallyReserved = false;
+          } else {
+            isPartiallyReserved = true;
+            reservedStart = overlapStart;
+            reservedEnd = overlapEnd;
+            if (overlapStart > slotStartMinutes) {
+              availableEnd = overlapStart;
+            } else if (overlapEnd < slotEndMinutes) {
+              availableStart = overlapEnd;
+            }
+          }
+          break;
+        }
+      }    
+      const timeRange: TimeRange = {
+        date: date,
+        startTime: slotStart,
+        endTime: slotEnd
+      };
+      let conflictResult: ConflictResult | undefined;
+      if (!conflictingReservation) {
+        conflictResult = this.conflictService.checkConflict(
+          this.dataField.uuid!,
+          timeRange,
+          this.reservationsList
+        );
+      }
+      const isWithinTariffTime = this.isTimeWithinTariff(slotStart, slotEnd);
+      const applicableTariff = this.findApplicableTariffForTime(slotStart);
+      const tariffConflict = applicableTariff && applicableTariff.uuid !== this.dataTariff.uuid;
+      let isAvailable = !isPast && !isReserved && isWithinTariffTime && !tariffConflict;
+      if (isPartiallyReserved && !isPast && isWithinTariffTime && !tariffConflict) {
+        isAvailable = true;
+      }    
+      const slot: TimeSlot = {
+        time: `${slotStart.slice(0, 5)} - ${slotEnd.slice(0, 5)}`,
+        startTime: slotStart,
+        endTime: slotEnd,
+        isAvailable: isAvailable,
+        isReserved: isReserved && !isPartiallyReserved,
+        isPartiallyReserved: isPartiallyReserved,
+        isPast: isPast,
+        isSelected: false,
+        reservation: conflictingReservation || conflictResult?.conflictingReservations[0],
+        conflictReason: conflictResult?.reason,
+        blockType: 'operating',
+        isWithinTariffTime: isWithinTariffTime,
+        applicableTariff: applicableTariff,
+        tariffConflict: tariffConflict
+      };
+      if (isPartiallyReserved && reservedStart !== undefined && reservedEnd !== undefined) {
+        slot.reservedStart = reservedStart;
+        slot.reservedEnd = reservedEnd;
+        slot.reservedStartTime = this.minutesToTime(reservedStart).slice(0, 5);
+        slot.reservedEndTime = this.minutesToTime(reservedEnd).slice(0, 5);
+        slot.availableStart = availableStart;
+        slot.availableEnd = availableEnd;
+        slot.availableStartTime = this.minutesToTime(availableStart).slice(0, 5);
+        slot.availableEndTime = this.minutesToTime(availableEnd).slice(0, 5);
+      }    
+      slots.push(slot);
+    }  
+    return slots;
   }
-  
-  return slots;
-}
   private combineDateAndTime(date: Date, time: string): Date {
     const [hours, minutes] = time.split(':').map(Number);
     const result = new Date(date);
