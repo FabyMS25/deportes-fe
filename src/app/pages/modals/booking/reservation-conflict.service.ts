@@ -43,23 +43,18 @@ export class ReservationConflictService {
       r.uuid !== excludeReservaId &&
       this.BLOCKING_STATES.includes(r.estadoReserva as EstadoReserva)
     );
-
     for (const reserva of campoReservations) {
-      // Check puntual reservations
       if (reserva.reservaPuntualDto) {
         if (this.checkPuntualConflict(timeRange, reserva.reservaPuntualDto)) {
           conflicts.push(reserva);
         }
       }
-
-      // Check recurrent reservations
       if (reserva.reservaRecurrenteDto && reserva.reservaRecurrenteDto.activo) {
         if (this.checkRecurrentConflict(timeRange, reserva.reservaRecurrenteDto)) {
           conflicts.push(reserva);
         }
       }
     }
-
     if (conflicts.length > 0) {
       return {
         hasConflict: true,
@@ -68,7 +63,6 @@ export class ReservationConflictService {
         severity: 'error'
       };
     }
-
     return {
       hasConflict: false,
       conflictingReservations: [],
@@ -110,11 +104,9 @@ export class ReservationConflictService {
   ): boolean {
     const targetDate = this.formatDate(timeRange.date);
     const reservaDate = this.formatDate(new Date(puntual.fechaUso));
-
     if (targetDate !== reservaDate) {
       return false;
     }
-
     return this.timesOverlap(
       timeRange.startTime,
       timeRange.endTime,
@@ -130,26 +122,19 @@ export class ReservationConflictService {
     timeRange: TimeRange,
     recurrent: ReservaRecurrente
   ): boolean {
-    // Check if date is within recurrent range
     const targetDate = timeRange.date;
     const startDate = new Date(recurrent.fechaInicio);
     const endDate = new Date(recurrent.fechaFin);
-
     if (targetDate < startDate || targetDate > endDate) {
       return false;
     }
-
-    // Check if day of week matches
     const dayName = this.getDayName(targetDate);
     if (!recurrent.diasSemana || !recurrent.diasSemana.includes(dayName)) {
       return false;
     }
-
-    // Check schedule from tablero if available
     if (recurrent.tableroDto?.horario) {
       const dayIndex = targetDate.getDay();
       const daySchedule = recurrent.tableroDto.horario[dayIndex];
-
       if (daySchedule && Array.isArray(daySchedule)) {
         return daySchedule.some(timeSlot => {
           if (typeof timeSlot === 'string' && timeSlot.includes('-')) {
@@ -165,7 +150,6 @@ export class ReservationConflictService {
         });
       }
     }
-
     return false;
   }
 
@@ -182,8 +166,6 @@ export class ReservationConflictService {
     const e1 = this.timeToMinutes(end1);
     const s2 = this.timeToMinutes(start2);
     const e2 = this.timeToMinutes(end2);
-
-    // Check for overlap: start1 < end2 AND start2 < end1
     return s1 < e2 && s2 < e1;
   }
 
@@ -282,28 +264,22 @@ export class ReservationConflictService {
     const currentDate = new Date(startDate);
     while (currentDate <= endDate) {
       stats.totalDays++;
-      
       const dayConflicts = existingReservations.filter(r => {
         if (r.campoDeportivoDto?.uuid !== campoDeportivoId) return false;
         if (!this.BLOCKING_STATES.includes(r.estadoReserva as EstadoReserva)) return false;
-
         if (r.reservaPuntualDto) {
           const reservaDate = this.formatDate(new Date(r.reservaPuntualDto.fechaUso));
           const currentDateStr = this.formatDate(currentDate);
           return reservaDate === currentDateStr;
         }
-
         return false;
       });
-
       if (dayConflicts.length > 0) {
         stats.daysWithConflicts++;
         stats.totalConflicts += dayConflicts.length;
       }
-
       currentDate.setDate(currentDate.getDate() + 1);
     }
-
     stats.averageConflictsPerDay = stats.totalDays > 0 
       ? stats.totalConflicts / stats.totalDays 
       : 0;

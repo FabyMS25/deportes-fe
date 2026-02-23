@@ -45,8 +45,6 @@ export class CampoSelectionComponent implements OnInit {
   @Input() bookingType!: BookingType;
   @Input() userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente'; 
   @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
-
-  // Configuration getters
   get enableSolicitudEventsBooking(): boolean {
     return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_EVENTOS]?.valorBoolean ?? false;
   }
@@ -97,13 +95,10 @@ export class CampoSelectionComponent implements OnInit {
 
   private getActiveTarifas(campo: CampoDeportivo): Tarifa[] {
     if (!campo.tarifasDtoList) return [];
-    
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     return campo.tarifasDtoList.filter((tarifa: Tarifa) => {
       if (!tarifa.activo) return false;
-      
       const fechaInicio = new Date(tarifa.fechaInicio!);
       fechaInicio.setHours(0, 0, 0, 0);
       if (fechaInicio > today) return false;
@@ -112,18 +107,15 @@ export class CampoSelectionComponent implements OnInit {
         fechaFin.setHours(23, 59, 59, 999);
         if (fechaFin < today) return false;
       }
-
       const tipoCobro = tarifa.tipoCobro.toLowerCase();
       const isPuntual = tipoCobro === 'por_hora' || 
                        tipoCobro === 'por_persona' || 
                        tipoCobro === 'por_evento';
-
       if (this.bookingType === 'puntual') {
         return isPuntual;
       } else if (this.bookingType === 'recurrente') {
         return !isPuntual;
       }
-      
       return false;
     });
   }
@@ -277,13 +269,13 @@ export class CampoSelectionComponent implements OnInit {
     if (permission.canRequest) return 'Solicitar';
     return 'No disponible';
   }
-getTarifaButtonClasses(campo: CampoDeportivo, tarifa: Tarifa): string {
-  const permission = this.getTarifaPermission(campo, tarifa);
-  
-  if (permission.canBook) return 'can-book';
-  if (permission.canRequest) return 'can-request';
-  return 'cannot-select';
-}
+  getTarifaButtonClasses(campo: CampoDeportivo, tarifa: Tarifa): string {
+    const permission = this.getTarifaPermission(campo, tarifa);
+    
+    if (permission.canBook) return 'can-book';
+    if (permission.canRequest) return 'can-request';
+    return 'cannot-select';
+  }
   selectTarifa(item: CampoWithTariff, tarifa: Tarifa): void {
     if (!tarifa || !item) return;
     const permission = this.getTarifaPermission(item.campo, tarifa);
@@ -296,7 +288,6 @@ getTarifaButtonClasses(campo: CampoDeportivo, tarifa: Tarifa): string {
       actionType: permission.actionType // 'book' | 'request' | 'none'
     });
   }
-
   get filteredCampos(): CampoWithTariff[] {
     let filtered = [...this.camposConTarifas];
     if (this.searchText?.trim()) {
@@ -490,7 +481,6 @@ getTarifaButtonClasses(campo: CampoDeportivo, tarifa: Tarifa): string {
       .map(exc => {
         const date = new Date(exc.fecha);
         const dateStr = date.toLocaleDateString('es-BO', { day: '2-digit', month: 'short' });
-        
         if (exc.tipoExcepcion === 'cerrado') {
           return `${dateStr}: CERRADO`;
         }
