@@ -199,38 +199,17 @@ export class DataTableComponent implements OnChanges {
   private formatBoolean(val: any, trueText: string, falseText: string): string {
     return val === true ? trueText : val === false ? falseText : '';
   }
-
   getBadgeStatus(value: any): string {
-    const statuses: Record<string, string> = {
-      'ENVIADA': 'success', 'ENTREGADA': 'success',
-      'PROGRAMADA': 'primary', 'NO_ENTREGADO': 'danger',
-      'VALIDO': 'success','INVALIDO': 'danger', 
-      'SI': 'success', 'NO': 'danger',
-      // Estados de Reserva
-      'BORRADOR': 'secondary', 'EXPIRADA': 'warning', 
-      'PENDIENTE': 'warning', 'CONFIRMADA': 'primary',
-      'PAGADA': 'success', 'COMPLETADA': 'success',
-      'CANCELADA': 'danger', 'RECHAZADA': 'danger',
-      'EN_CURSO': 'info', 'NO_SHOW': 'danger',
-      // Estados de Validación
-      'NO_REQUIERE': 'secondary',// 'PENDIENTE': 'warning',
-      'APROBADA': 'success', // 'RECHAZADA': 'danger',
-      'REVISION': 'info',
-      // Estados de Pago
-      'PAGADO': 'success', // 'PENDIENTE': 'warning',
-      'PARCIAL': 'info', 'VERIFICANDO': 'primary',
-      'REEMBOLSADO': 'secondary','VENCIDO': 'danger',
-      // Estados de Usuario
-      'ACTIVO': 'success', 'INACTIVO': 'secondary',
-      'PENDIENTE_VERIFICACION': 'warning',
-      'SANCIONADO': 'danger', 'BLOQUEADO': 'danger',
-      // Estados de Complejo/Campo
-      // 'ACTIVO': 'success',
-      'CERRADO': 'danger',
-      'MANTENIMIENTO': 'warning', 'EVENTO_MUNICIPAL': 'info',
+    const customMappings: Record<string, string> = {
+      'ENVIADA': 'success',   'PROGRAMADA': 'primary',
+      'ENTREGADA': 'success', 'NO_ENTREGADO': 'danger',
+      'VALIDO': 'success', 'INVALIDO': 'danger',
+      'SI': 'success',     'NO': 'danger',
     };
-    
-    return statuses[value] || 'info';
+    if (customMappings.hasOwnProperty(value)) {
+      return customMappings[value];
+    }
+    return statusData.StatusUtils.getStatusColor(value);
   }
   //#endregion
 

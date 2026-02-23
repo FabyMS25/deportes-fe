@@ -12,11 +12,11 @@ import { PagoService } from 'src/app/core/services/api/pago.service';
 import { ReservaPuntualService } from 'src/app/core/services/api/reserva-puntual.service';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
-import { EstadoPago, EstadoReserva, EstadoUsuario, EstadoValidacion } from 'src/app/core/constants/Estados';
+import { EstadoReserva, EstadoValidacion, EstadoPago, EstadoUsuario, EstadoRuat, EstadoActual, StatusUtils} from 'src/app/core/constants/Estados';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
+import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { Categoria } from 'src/app/core/models/categoria.model';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
-import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { ReservaPuntual } from 'src/app/core/models/reservaPuntual.model';
 import { Reserva } from 'src/app/core/models/reserva.model';
 import { Pago } from 'src/app/core/models/pago.model';
@@ -42,6 +42,9 @@ export class BookingOneTimeComponent implements OnInit {
   userData!:any;
   contribuyente!: Contribuyente;
 
+  estadoReservaOptions = StatusUtils.getEstadoReservaOptions();
+  estadoValidacionOptions = StatusUtils.getEstadoValidacionOptions();
+
   loading: boolean = true;
   reservasList: any;
   temp: any[] = [];
@@ -51,12 +54,7 @@ export class BookingOneTimeComponent implements OnInit {
   consultResults: any[] = [];
   searchResults: any;
 
-  // searchTerm: string = '';
-  date!: { from: Date, to: Date };
-  // estadoValidacion: string = '';
-  // estadoReserva: string = '';
-  // categoria: string = '';
-
+  dateRange: { from: Date, to: Date } | null = null;
   filters = {
     searchTerm: '',
     estadoReserva: '',
@@ -107,7 +105,7 @@ export class BookingOneTimeComponent implements OnInit {
       { name: 'Duración', prop: 'duracionHoras', visible: false },
       { name: 'Cant. Personas', prop: 'cantidadPersonas', visible: false },
       { name: 'Tasa', prop: 'reservaDto.numeroTasa', visible: false },
-      { name: 'Estado Validación', prop: 'reservaDto.estadoValidacion', tag: true, visible: true },
+      { name: 'Estado Validación', prop: 'reservaDto.estadoValidacion', tag: true, visible: this.canActivate.includes('VALIDAR') },
       { name: 'Estado Reserva', prop: 'reservaDto.estadoReserva', tag: true, visible: true },
       { name: 'Monto Total', prop: 'reservaDto.montoTotal', visible: false },
       { name: 'Observaciones', prop: 'observaciones', visible: false },
@@ -129,8 +127,8 @@ export class BookingOneTimeComponent implements OnInit {
     if (!this.authService.isRuatAuthenticated()) {
       await this.delay(1000);
     }
-    await this.getPuntualReservations();
     await this.getCategories();
+    await this.getPuntualReservations();
     setInterval(() => this.getPuntualReservations(), 5 * 60 * 1000);
   }
   private delay(ms: number): Promise<void> {
@@ -157,28 +155,16 @@ export class BookingOneTimeComponent implements OnInit {
     this.currentPage = 1;
     this.getPuntualReservations();
   }
-  private readonly TAB_FILTERS: { [key: number]: (item: any) => boolean } = {
-      0: () => true,
-      1: (item) => item.reservaDto?.estadoReserva === EstadoReserva.SOLICITADA,
-      2: (item) => item.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE,
-      3: (item) => item.reservaDto?.estadoReserva === EstadoReserva.PAGADA,
-      4: (item) => item.reservaDto?.estadoReserva === EstadoReserva.EN_CURSO,
-      5: (item) => item.reservaDto?.estadoReserva === EstadoReserva.COMPLETADA,
-      6: (item) => item.reservaDto?.estadoReserva === EstadoReserva.CANCELADA || 
-                  item.reservaDto?.estadoReserva === EstadoReserva.EXPIRADA ||
-                  item.reservaDto?.estadoReserva === EstadoReserva.NO_SHOW,
-  };
+
   onNavChange(changeEvent: NgbNavChangeEvent) {
     this.filters.tab = changeEvent.nextId;
     this.currentPage = 1;
     this.getPuntualReservations();
   }
-
   applyFilters() {
     this.currentPage = 1;
     this.getPuntualReservations();
   }
-
   clearFilters() {
     this.filters = {
       searchTerm: '',
@@ -189,94 +175,23 @@ export class BookingOneTimeComponent implements OnInit {
       toDate: null,
       tab: 0
     };
+    this.dateRange = null;
     this.currentPage = 1;
     this.getPuntualReservations();
   }
-  // onNavChange(changeEvent: NgbNavChangeEvent) {
-  //     const filterFn = this.TAB_FILTERS[changeEvent.nextId];
-  //     if (filterFn) {
-  //         this.reservasList = this.temp.filter(filterFn);
-  //     }
-  // }
-  // clearFilters() {
-  //   this.searchTerm = '';
-  //   this.date = { from: null!, to: null! };
-  //   this.estadoValidacion = '';
-  //   this.estadoReserva = '';
-  //   this.categoria = '';
-  //   this.applyFilters();
-  // }
-  // applyFilters() {
-  //   if (!this.temp || this.temp.length === 0) return;
-  //   this.reservasList = this.temp.filter(item => {
-  //     const searchMatch = !this.searchTerm || this.searchInReserva(item, this.searchTerm);
-  //     let dateMatch = true;
-  //     if (this.date && this.date.from && this.date.to) {
-  //       const itemDate = new Date(item.fechaUso);
-  //       const fromDate = new Date(this.date.from);
-  //       const toDate = new Date(this.date.to);
-  //       itemDate.setHours(0, 0, 0, 0);
-  //       fromDate.setHours(0, 0, 0, 0);
-  //       toDate.setHours(0, 0, 0, 0);        
-  //       dateMatch = itemDate >= fromDate && itemDate <= toDate;
-  //     }
-  //     const estadoValidacionMatch = !this.estadoValidacion || 
-  //       item.reservaDto?.estadoValidacion === this.estadoValidacion;
-  //     const estadoReservaMatch = !this.estadoReserva || 
-  //       item.reservaDto?.estadoReserva === this.estadoReserva;
-  //     const categoriaMatch = !this.categoria || 
-  //       item.categoria?.toLowerCase().includes(this.categoria.toLowerCase());
-  //     return searchMatch && dateMatch && estadoValidacionMatch && estadoReservaMatch && categoriaMatch;
-  //   });
-  // }
-  // private searchInReserva(item: ReservaPuntual, searchTerm: string): boolean {
-  //   if (!searchTerm) return true;
-  //   const term = searchTerm.toLowerCase();
-  //   if (item.categoria?.toLowerCase().includes(term) ||
-  //       item.superficie?.toLowerCase().includes(term) ||
-  //       item.observaciones?.toLowerCase().includes(term) ||
-  //       item.horaInicio?.toLowerCase().includes(term) ||
-  //       item.horaFin?.toLowerCase().includes(term)) {
-  //     return true;
-  //   }
-  //   if (item.reservaDto) {
-  //     const reserva = item.reservaDto;      
-  //     if (reserva.numeroTasa?.toLowerCase().includes(term) ||
-  //         reserva.numeroReserva?.toLowerCase().includes(term) ||
-  //         reserva.montoTotal?.toString().includes(term)) {
-  //       return true;
-  //     }
-  //     if (reserva.campoDeportivoDto) {
-  //       if (reserva.campoDeportivoDto.nombre?.toLowerCase().includes(term) ||
-  //           reserva.campoDeportivoDto.complejoDto.nombre.toLowerCase().includes(term) ||
-  //           reserva.campoDeportivoDto.complejoDto?.nombre?.toLowerCase().includes(term)) {
-  //         return true;
-  //       }
-  //     }
-  //     if (reserva.contribuyenteDto) {
-  //       const contrib = reserva.contribuyenteDto;
-  //       if (contrib.nombreCompleto?.toLowerCase().includes(term) ||
-  //           contrib.nombre?.toLowerCase().includes(term) ||
-  //           contrib.primerApellido?.toLowerCase().includes(term) ||
-  //           contrib.segundoApellido?.toLowerCase().includes(term) ||
-  //           contrib.numeroDocumento?.toLowerCase().includes(term) ||
-  //           contrib.email?.toLowerCase().includes(term) ||
-  //           contrib.telefono?.toLowerCase().includes(term)) {
-  //         return true;
-  //       }
-  //     }
-  //   }
-  //   return false;
-  // }
+  onDateRangeChange(value: { from: Date, to: Date } | null): void {
+      this.dateRange = value;
+      if (value) {
+          this.filters.fromDate = value.from;
+          this.filters.toDate = value.to;
+      } else {
+          this.filters.fromDate = null;
+          this.filters.toDate = null;
+      }
+      this.applyFilters();
+  }
 
   /* NAVIGATIONS & MODALS */
-  public agregarReserva() {
-    this.router.navigate(['/reservations/details'], { 
-      state: { 
-        tipoReserva: 'puntual'
-      } 
-    });
-  }
   public showTicket(data: ReservaPuntual) {
     const modalRef = this.modalService.open(TicketComponent, { 
       size: 'lg',
@@ -286,6 +201,13 @@ export class BookingOneTimeComponent implements OnInit {
     modalRef.componentInstance.reservationData = data.reservaDto;
     modalRef.componentInstance.showAsModal = true;
     modalRef.componentInstance.autoLoad = true;
+  }
+  public agregarReserva() {
+    this.router.navigate(['/reservations/details'], { 
+      state: { 
+        tipoReserva: 'puntual'
+      } 
+    });
   }
   public openModal(data: any | undefined, accion: string, size: string) {
     const modalRef = this.modalService.open(BookingOneTimeModalComponent, {
@@ -312,14 +234,14 @@ export class BookingOneTimeComponent implements OnInit {
         try {
           const result = await this.consultData(item);
           this.consultResults.push(result);
-          if (!this.dataSelected && result.hasPayment && result.pagoData && !result.shouldNotUpdate) {
+          if (!this.dataSelected && result.hasPayment && result.pagoData) {
             this.dataSelected = {
               reserva: result.item,
               pago: result.pagoData,
               ruatResponse: result.ruatResponse
             };
           }
-          if (!result.shouldNotUpdate && result.hasPayment) {
+          if ( result.hasPayment) {
             shouldRefreshData = true;
           }
         } catch (error) {
@@ -328,13 +250,11 @@ export class BookingOneTimeComponent implements OnInit {
             text: 'Error durante la consulta', 
             type: 'error',
             hasPayment: false,
-            shouldNotUpdate: true
           });
         }
       }
     } finally {
-      this.loading = false;
-      
+      this.loading = false;      
       if (this.consultResults.length > 0) {
         if (this.dataSelected) {
           this.modalService.open(content, { 
@@ -351,7 +271,7 @@ export class BookingOneTimeComponent implements OnInit {
       }
     }
   }
-  csvFileExport() {
+  public csvFileExport() {
     const lista = this.selectedItems.flatMap((item: ReservaPuntual) => {
       const baseData = {
         complejo: item.reservaDto?.campoDeportivoDto?.complejoDto?.nombre || '-',
@@ -411,7 +331,6 @@ export class BookingOneTimeComponent implements OnInit {
   }
 
 
-
   /* BUSINESS LOGIC */
   private async checkAndUpdateReservationStatuses(list: ReservaPuntual[]): Promise<ReservaPuntual[]> {
     const updatePromises = list.map(async (reservaPun:ReservaPuntual) => {
@@ -445,7 +364,7 @@ export class BookingOneTimeComponent implements OnInit {
               });
             }
             return reservaPun;
-          }          
+          }
           const consultResult = await this.consultData(reservaPun);
           if (consultResult.hasPayment) {
             if (this.isTimeCompleted(reservaPun)) {
@@ -460,8 +379,7 @@ export class BookingOneTimeComponent implements OnInit {
               return await this.updateReservationByPR(reservaPun, {
                 estadoReserva: EstadoReserva.PAGADA,
               });
-            }
-            
+            }            
           } else {
             if (this.isPeriodExpired(reservaPun)) {
               return await this.handleExpiredgReservation(reservaPun);
@@ -484,8 +402,7 @@ export class BookingOneTimeComponent implements OnInit {
         }             
         return reservaPun;
       } catch (error) { return reservaPun;}
-    });    
-      
+    });      
     return await Promise.all(updatePromises);
   }
   private isCurrentlyActive(reserva: ReservaPuntual): boolean {
@@ -559,7 +476,6 @@ export class BookingOneTimeComponent implements OnInit {
   }
 
 
-
   /* API RUAT Services */
   private async consultData(item: ReservaPuntual): Promise<any> {
     try {
@@ -567,7 +483,7 @@ export class BookingOneTimeComponent implements OnInit {
       if (!nroTasa) {
         return { item, text: "No hay número de tasa asociado", 
           type: 'warning', hasPayment: false };
-      }      
+      }
       const codigoAlcaldia = this.systemConfigList[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI';
       const resp: any = await this.ruatService.consultaPagoTasa(codigoAlcaldia, nroTasa).toPromise();      
       if (resp['status'] !== 'OK') {
@@ -609,7 +525,6 @@ export class BookingOneTimeComponent implements OnInit {
           hasPayment: false, 
         };
       }
-      
       let text = resp.payload.mensaje || resp.payload.observacion || "La tasa se encuentra pagada";
       try {
         const [day, month, year] = pagoTasa.fechaPago.split('/');

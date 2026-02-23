@@ -24,13 +24,6 @@ export class ReservaRecurrenteService {
 
   constructor(private http: HttpClient) { }
   
-  // getAll(page: number = 0, size: number = 20): Observable<any[]> {
-  //   let params = new HttpParams()
-  //     .set('page', page.toString())
-  //     .set('size', size.toString());
-    
-  //   return this.http.get<any[]>(`${this.apiUrl}`, { params });
-  // }
   getAll(
     page: number = 0,
     size: number = 20,

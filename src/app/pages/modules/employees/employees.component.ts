@@ -74,7 +74,7 @@ export class EmployeesComponent implements OnInit {
       { name: 'Nombre', prop: 'nombre', avatar: true, visible: true },
       { name: 'Complejo', prop: 'complejoDto.nombre', visible: true },
       { name: 'Telefono', prop: 'telefono', visible: true },
-      { name: 'Activo', prop: 'activo', visible: true },
+      { name: 'Activo', prop: 'activo', visible: true , tag:true},
       { name: 'Fecha Asignación', prop: 'fechaAsignacion', visible: false },
       { name: 'Fecha Fin', prop: 'fechaFinAsignacion', visible: false },
       { name: 'Hora Entrada', prop: 'horaEntrada', visible: false },

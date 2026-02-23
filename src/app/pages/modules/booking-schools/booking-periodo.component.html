@@ -21,14 +21,14 @@
                     <div class="search-box">
                         <input type="text" class="form-control search" name="searchTerm"
                             placeholder="Buscar estudiante, matrícula, período..."
-                            [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()">
+                            [(ngModel)]="filters.searchTerm" (ngModelChange)="applyFilters()">
                             <i class="ri-search-line search-icon"></i>
                     </div>
                 </div>
                 <div class="col-6 col-sm-3 col-lg-2">
                     <select class="form-control" data-choices data-choices-search-false 
                             name="periodo" id="idPeriodo"
-                            [(ngModel)]="periodoFiltro" (ngModelChange)="applyFilters()">
+                            [(ngModel)]="filters.periodoFiltro" (ngModelChange)="applyFilters()">
                         <option value="" selected>Período</option>
                         <option *ngFor="let periodo of periodosDisponibles" [value]="periodo">
                             {{ getPeriodoDisplay(periodo) }}
@@ -36,28 +36,18 @@
                     </select>
                 </div>
                 <div class="col-6 col-sm-3 col-lg-2">
-                    <select class="form-control" data-choices data-choices-search-false name="estadoValidacion" id="idEstadoValidacion"
-                        [(ngModel)]="estadoValidacion" (ngModelChange)="applyFilters()">
-                        <option value="" selected>Estado Validación</option>
-                        <option value="PENDIENTE">Pendiente</option>
-                        <option value="APROBADA">Aprobada</option>
-                        <option value="RECHAZADA">Rechazada</option>
-                    </select>
-                </div>
-                <div class="col-6 col-sm-3 col-lg-2">
                     <select class="form-control" data-choices data-choices-search-false name="estadoReserva" id="idEstadoReserva"
-                        [(ngModel)]="estadoReserva" (ngModelChange)="applyFilters()">
-                        <option value="" selected>Estado Pago</option>
-                        <option value="PENDIENTE_PAGO">Pendiente Pago</option>
-                        <option value="PAGADA">Pagada</option>
-                        <option value="VENCIDA">Vencida</option>
-                        <option value="CANCELADA">Cancelada</option>
+                        [(ngModel)]="filters.estadoReserva" (ngModelChange)="applyFilters()">
+                        <option value="" selected>Estado Reserva</option>
+                        <option *ngFor="let option of estadoReservaOptions" [value]="option.value">
+                            {{option.label}}
+                        </option>
                     </select>
                 </div>
                 <div class="col-6 col-sm-3 col-lg-2">
                     <select class="form-control" data-choices data-choices-search-false
                             name="escuela" id="idEscuela" 
-                            [(ngModel)]="escuelaFiltro" (ngModelChange)="applyFilters()">
+                            [(ngModel)]="filters.escuelaFiltro" (ngModelChange)="applyFilters()">
                         <option value="" selected>Escuela</option>
                         <option *ngFor="let escuela of escuelasList" [value]="escuela.uuid">
                             {{escuela.nombre}}
@@ -82,24 +72,29 @@
                             Todas las Mensualidades<span class="badge bg-danger align-middle ms-1">{{temp.length || 0}}</span>
                             </a>
                         </li>
-                        <li [ngbNavItem]="1" class="nav-item">
-                            <a ngbNavLink class="nav-link py-3 New" data-bs-toggle="tab" id="PendientesPago" href="javascript:void(0);" role="tab" aria-selected="false">
+                        <li [ngbNavItem]="2" class="nav-item">
+                            <a ngbNavLink class="nav-link py-3 New" data-bs-toggle="tab" id="Pendientes" href="javascript:void(0);" role="tab" aria-selected="false">
                             Pendientes de Pago
                             </a>
                         </li>
-                        <li [ngbNavItem]="2" class="nav-item">
+                        <li [ngbNavItem]="3" class="nav-item">
                             <a ngbNavLink class="nav-link py-3 Pending" data-bs-toggle="tab" id="Pagadas" href="javascript:void(0);" role="tab" aria-selected="false">
                             Pagadas
                             </a>
                         </li>
-                        <li [ngbNavItem]="3" class="nav-item">
-                            <a ngbNavLink class="nav-link py-3 Approved" data-bs-toggle="tab" id="Vencidas" href="javascript:void(0);" role="tab" aria-selected="false">
-                            Vencidas
+                        <li [ngbNavItem]="4" class="nav-item">
+                            <a ngbNavLink class="nav-link py-3 Approved" data-bs-toggle="tab" id="EnCurso" href="javascript:void(0);" role="tab" aria-selected="false">
+                            Mes en Curso
                             </a>
                         </li>
-                        <li [ngbNavItem]="4" class="nav-item">
-                            <a ngbNavLink class="nav-link py-3 Completed" data-bs-toggle="tab" id="EsteMes" href="javascript:void(0);" role="tab" aria-selected="false">
-                            Este Mes
+                        <li [ngbNavItem]="5" class="nav-item">
+                            <a ngbNavLink class="nav-link py-3 Completed" data-bs-toggle="tab" id="Completadas" href="javascript:void(0);" role="tab" aria-selected="false">
+                            Completadas
+                            </a>
+                        </li>
+                        <li [ngbNavItem]="6" class="nav-item">
+                            <a ngbNavLink class="nav-link py-3 Rejected" data-bs-toggle="tab" id="Canceladas" href="javascript:void(0);" role="tab" aria-selected="false">
+                            Canceladas/Expiradas
                             </a>
                         </li>
                     </ul>
@@ -142,6 +137,16 @@
                 [itemsList]="itemsList"
                 [allcontent]="reservasList"
                 [serverSidePagination]="true"
+                [paginationInfo]="{
+                    pageNumber: currentPage - 1,
+                    pageSize: pageSize,
+                    totalElements: reservasList?.totalElements,
+                    totalPages: reservasList?.totalPages ,
+                    first: reservasList?.first,
+                    last: reservasList?.last
+                }"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)"
                 [actions]="{
                   show: canActivate.includes('VER'),
                   edit: canActivate.includes('ACTUALIZAR'),
@@ -155,8 +160,6 @@
                 (validateItemEmitter)="openModal($event,'validarModal','')"
                 (closeItemEmitter)="openModal($event,'annularModal','')"
                 (recordsEmitter)="showTicket($event)"
-                (pageChange)="onPageChange($event)"
-                (pageSizeChange)="onPageSizeChange($event)"
                 [multiCheck]="canActivate.includes('CREAR')"
                 (selectedItemEmitter)="getSelectedItems($event)" 
                 [viewMode]="viewMode">
@@ -165,7 +168,6 @@
         </div>
     </div>
 </div>
-
 
 <ng-template #consultModel role="document" let-modal>
     <div class="modal-header">

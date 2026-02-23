@@ -24,40 +24,37 @@
                             [(ngModel)]="filters.searchTerm" (ngModelChange)="applyFilters()">
                             <i class="ri-search-line search-icon"></i>
                     </div>
-                </div>
-                <div class="col-6 col-sm-3 col-lg-2">
-                    <input type="text" class="form-control" mwlFlatpickr name="date" mode="range"
-                        placeholder="Fecha de Uso"
+                </div>            
+                <div class="col-6 col-sm-3 col-lg-3">
+                    <input type="text" 
+                        class="form-control" 
+                        mwlFlatpickr 
+                        name="dateRange" 
+                        mode="range"
+                        placeholder="Fecha Uso"
                         [convertModelValue]="true"
-                        [(ngModel)]="date"
+                        [ngModel]="dateRange"
+                        (ngModelChange)="onDateRangeChange($event)"
                         [altInput]="true"
                         [altFormat]="'F j, Y'"
-                        dateFormat="Y-m-d"
-                        (ngModelChange)="applyFilters()">
+                        dateFormat="Y-m-d">
                 </div>
                 <div class="col-6 col-sm-3 col-lg-2">
                     <select class="form-control" data-choices data-choices-search-false name="estadoValidacion" id="idEstadoValidacion"
                         [(ngModel)]="filters.estadoValidacion" (ngModelChange)="applyFilters()">
                         <option value="" selected>Estado Validación</option>
-                        <option value="PENDIENTE">Pendiente</option>
-                        <option value="APROBADA">Aprobada</option>
-                        <option value="RECHAZADA">Rechazada</option>
+                        <option *ngFor="let option of estadoValidacionOptions" [value]="option.value">
+                            {{option.label}}
+                        </option>
                     </select>
                 </div>
                 <div class="col-6 col-sm-3 col-lg-2">
                     <select class="form-control" data-choices data-choices-search-false name="estadoReserva" id="idEstadoReserva"
                         [(ngModel)]="filters.estadoReserva" (ngModelChange)="applyFilters()">
                         <option value="" selected>Estado Reserva</option>
-                        <option value="BORRADOR">Borrador</option>
-                        <option value="SOLICITADA">Solicitada</option>
-                        <option value="PENDIENTE">Pendiente</option>
-                        <option value="PAGADA">Pagada</option>
-                        <option value="EN_CURSO">En Curso</option>
-                        <option value="COMPLETADA">Completada</option>
-                        <option value="CANCELADA">Cancelada</option>
-                        <option value="EXPIRADA">Expirada</option>
-                        <option value="NO_SHOW">No Show</option>
-                        <option value="RECHAZADA">Rechazada</option>
+                        <option *ngFor="let option of estadoReservaOptions" [value]="option.value">
+                            {{option.label}}
+                        </option>
                     </select>
                 </div>
                 <div class="col-6 col-sm-3 col-lg-2">

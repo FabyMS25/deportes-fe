@@ -1,19 +1,41 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+
+export interface ReservaPeriodFilters {
+  tab?: number;
+  searchTerm?: string;
+  estadoReserva?: string;
+  categoria?: string;
+  escuelaFiltro?:string,
+  periodoFiltro?:string,
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class ReservaPeriodoService {
-
   apiUrl = environment.backendUrl + '/reservas-periodo';
 
   constructor(private http: HttpClient) { }
 
-  getAll(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}`);
+  getAll(
+    page: number = 0,
+    size: number = 20,
+    filters?: ReservaPeriodFilters
+  ): Observable<any> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '') {
+          params = params.set(key, value.toString());
+        }
+      });
+    }
+    return this.http.get<any>(`${this.apiUrl}`, { params });
   }
 
   getByUuid(uuid: string): Observable<any> {
@@ -36,7 +58,6 @@ export class ReservaPeriodoService {
     return this.http.delete(`${this.apiUrl}/${uuid}`);
   }
 
-  // Business Operations
   getByContribuyente(contribuyenteUuid: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/contribuyente/${contribuyenteUuid}`);
   }
@@ -65,7 +86,6 @@ export class ReservaPeriodoService {
     return this.http.get<{ matricula: string }>(`${this.apiUrl}/generar-matricula/${codigoEscuela}`);
   }
 
-  // Payment related operations
   getMensualidadesByEstudiante(estudianteUuid: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/${estudianteUuid}/mensualidades`);
   }

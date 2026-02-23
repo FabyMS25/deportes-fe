@@ -62,7 +62,7 @@ export class CategoriesComponent {
       {name: 'Nombre', prop: 'nombre', visible: true},
       {name: 'Descripción', prop: 'descripcion', visible: true},
       {name: 'Tipo Cobro', prop: 'tipo', visible: true},
-      {name: 'Activo', prop: 'activo', visible: true},
+      {name: 'Activo', prop: 'activo', visible: true, tag:true},
       {name: 'Para Asociación', prop: 'forAsociacion', visible: true, tag:true},
     ];
 

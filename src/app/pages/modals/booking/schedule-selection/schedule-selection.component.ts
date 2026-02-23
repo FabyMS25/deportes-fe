@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
-import { Reserva } from 'src/app/core/models/reserva.model';
+// import { Reserva } from 'src/app/core/models/reserva.models';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
@@ -13,6 +13,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
+import { Reserva } from 'src/app/core/models/reserva.model';
 
 interface TimeSlot {
   time: string;
@@ -23,7 +24,6 @@ interface TimeSlot {
   isPast: boolean;
   isSelected?: boolean;
   isPartialSelection?: boolean; 
-  isUserPartialSelection?: boolean; // NEW: true when user selects partial slot (vs existing reservation)
   partialStart?: number; 
   partialEnd?: number;
   reservation?: Reserva;
@@ -83,7 +83,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
   @Input() userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
   @Output() horarioSelected = new EventEmitter<{ date: Date; start: string; end: string }>();
-
   currentWeekStart: Date = new Date();
   currentWeekEnd: Date = new Date();
   blocks: { [key: string]: BlockDefinition } = {};
@@ -106,15 +105,15 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       default:
         return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
     }
-  }
+  }  
   get anticipationTimeDisplay(): string {
     switch (this.dataTariff.tipoCobro) {
       case 'por_evento':
-        return (this.systemConfigs[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico ?? 0) + ` días`;
+        return (this.systemConfigs[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico ?? 0) + `días`;
       case 'mensualidad': case 'por_sesion': case 'por_club':
-        return (this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico ?? 0) + ` días`;
+        return (this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico ?? 0) + `días`;
       default:
-        return (this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico ?? 0) + ` horas`;
+        return (this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico ?? 0) + `horas`;
     }
   }  
   get maxDuration(): number {
@@ -177,12 +176,10 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     this.generateWeekDays();
     this.calculateTariff();
   }
-
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
-
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['dataField'] && this.dataField) {
       this.initializeBlocks();
@@ -212,11 +209,9 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
 
   private initializeBlocks(): void {
     if (!this.dataField) return;
-
     const allSchedules = this.dataField.horariosFijosDtoList || [];
     let earliestStart = '23:59:59';
     let latestEnd = '00:00:00';
-
     allSchedules.forEach(schedule => {
       if (schedule.abierto && schedule.horaApertura && schedule.horaCierre) {
         const scheduleStart = schedule.horaApertura;
@@ -229,10 +224,8 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         }
       }
     });
-
     let fieldStart = earliestStart;
     let fieldEnd = latestEnd;
-
     if (this.dataTariff?.desde) {
       const tariffStart = this.timeToMinutes(this.dataTariff.desde);
       const fieldStartMinutes = this.timeToMinutes(fieldStart);
@@ -240,7 +233,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         fieldStart = this.dataTariff.desde;
       }
     }
-
     if (this.dataTariff?.hasta) {
       const tariffEnd = this.timeToMinutes(this.dataTariff.hasta);
       const fieldEndMinutes = this.timeToMinutes(fieldEnd);
@@ -248,24 +240,19 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         fieldEnd = this.dataTariff.hasta;
       }
     }
-
     const operatingPeriods = this.getOperatingPeriodsForDay(new Date());
-
     if (operatingPeriods.length === 1) {
       this.createDynamicBlocks(fieldStart, fieldEnd);
     } else {
       this.createDiscontinuousBlocks(operatingPeriods);
     }
   }
-
   private createDynamicBlocks(startTime: string, endTime: string): void {
     const startMinutes = this.timeToMinutes(startTime);
     const endMinutes = this.timeToMinutes(endTime);
     const morningEnd = this.timeToMinutes('12:00:00');
     const afternoonEnd = this.timeToMinutes('18:00:00');
-
     this.blocks = {};
-
     if (startMinutes < morningEnd) {
       const morningEndTime = Math.min(morningEnd, endMinutes);
       if (morningEndTime > startMinutes) {
@@ -278,7 +265,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         };
       }
     }
-
     if (endMinutes > morningEnd && startMinutes < afternoonEnd) {
       const afternoonStart = Math.max(startMinutes, morningEnd);
       const afternoonEndTime = Math.min(afternoonEnd, endMinutes);
@@ -292,7 +278,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         };
       }
     }
-
     if (endMinutes > afternoonEnd && startMinutes < endMinutes) {
       const nightStart = Math.max(startMinutes, afternoonEnd);
       if (endMinutes > nightStart) {
@@ -305,7 +290,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         };
       }
     }
-
     if (Object.keys(this.blocks).length === 0) {
       this.blocks['operating'] = { 
         start: startTime, 
@@ -316,18 +300,15 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       };
     }
   }
-
   private createDiscontinuousBlocks(periods: OperatingPeriod[]): void {
     this.blocks = {};    
     periods.forEach((period, index) => {
       const startHour = parseInt(period.start.split(':')[0]);
       const endHour = parseInt(period.end.split(':')[0]);
-      
       let blockKey: string;
       let label: string;
       let icon: string;
       let color: string;      
-      
       if (periods.length === 1) {
         blockKey = 'operating';
         label = 'Horario';
@@ -350,7 +331,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
           icon = 'ri-moon-line';
           color = 'text-info';
         }
-        
         if (this.blocks[blockKey]) {
           blockKey = `${blockKey}_${index + 1}`;
           label = `${label} ${index + 1}`;
@@ -371,7 +351,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
     const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
     const minDurationMinutes = this.minDuration * 60;
-
     if (endMinutes <= startMinutes) {
       const newEndMinutes = startMinutes + minDurationMinutes;
       this.endTimeInput = {
@@ -382,61 +361,52 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     }
   }
 
+
   async confirmTimeSelection(): Promise<void> {
     if (!this.validateTimeSelection()) {
       this.showValidationAlert = true;
       return;
     }
-
     const startTime = this.timeInputToString(this.startTimeInput);
     const endTime = this.timeInputToString(this.endTimeInput);
-
     const timeRange: TimeRange = {
       date: this.fechaReserva,
       startTime: startTime,
       endTime: endTime
     };
-
     const validation = this.conflictService.validateReservation(
       this.dataField.uuid!,
       timeRange,
       this.reservationsList,
       this.anticipationHours
     );
-
     if (!validation.isValid) {
       this.validationErrors = validation.errors;
       this.showValidationAlert = true;
       return;
     }
-
     this.horarioSelected.emit({ 
       date: this.fechaReserva, 
       start: startTime, 
       end: endTime 
     });
   }
-
   isFormValid(): boolean {
     if (this.startTimeInput.hours === 0 && this.startTimeInput.minutes === 0 &&
         this.endTimeInput.hours === 0 && this.endTimeInput.minutes === 0) {
       return false;
     }
-
     if (this.startTimeInput.hours === this.endTimeInput.hours && 
         this.startTimeInput.minutes === this.endTimeInput.minutes) {
       return false;
     }
-
     const originalErrors = [...this.validationErrors];
     const originalShowAlert = this.showValidationAlert;
     const isValid = this.validateTimeSelection();
     this.validationErrors = originalErrors;
     this.showValidationAlert = originalShowAlert;
-
     return isValid;
   }
-
   validateTimeSelection(): boolean {
     this.validationErrors = [];    
     const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
@@ -451,21 +421,17 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       this.validationErrors.push('La hora de inicio debe ser anterior a la hora de fin');
       return false;
     }     
-
     const duration = endMinutes - startMinutes;
     if (duration < this.minDuration * 60) {
       this.validationErrors.push(`La duración mínima es de ${this.minDurationDisplay}`);
       return false;
     } 
-
     if (duration > this.maxDuration * 60) {
       this.validationErrors.push(`La duración máxima es de ${this.maxDurationDisplay}`);
       return false;
     }
-
     const startTime = this.timeInputToString(this.startTimeInput);
     const endTime = this.timeInputToString(this.endTimeInput);
-
     if (!this.isTimeWithinAnyOperatingPeriod(startTime, endTime)) {
       const operatingHours = this.getOperatingHoursDisplay();
       this.validationErrors.push(
@@ -473,7 +439,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       );
       return false;
     }
-
     if (!this.isTimeWithinTariff(startTime, endTime)) {
       this.validationErrors.push(
         `El horario seleccionado está fuera del rango de la tarifa "${this.dataTariff.descripcion}". ` +
@@ -481,7 +446,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       );
       return false;
     }      
-
     if (this.tariffBoundaryTime) {
       const boundaryMinutes = this.timeToMinutes(this.tariffBoundaryTime);
       if (startMinutes < boundaryMinutes && endMinutes > boundaryMinutes) {
@@ -492,7 +456,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         return false;
       }
     }
-
     const now = new Date();
     const selectedDateTime = this.combineDateAndTime(this.fechaReserva, startTime);
     let minReservationTime = new Date(now.getTime());
@@ -516,62 +479,51 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       }
       return false;
     }
-
     const timeRange: TimeRange = {
       date: this.fechaReserva,
       startTime: startTime,
       endTime: endTime
     };    
-
     const conflictResult = this.conflictService.checkConflict(
       this.dataField.uuid!,
       timeRange,
       this.reservationsList
     );    
-
     if (conflictResult.hasConflict) {
       this.validationErrors.push(conflictResult.reason || 'El horario seleccionado tiene conflictos con reservas existentes');
       return false;
     }    
-
     return true;
   }
-
   private isTimeWithinAnyOperatingPeriod(startTime: string, endTime: string): boolean {
     const operatingPeriods = this.getOperatingPeriodsForDay(this.fechaReserva);
     if (operatingPeriods.length === 0) return false;
 
     const startMinutes = this.timeToMinutes(startTime);
     const endMinutes = this.timeToMinutes(endTime);
-
     return operatingPeriods.some(period => {
       const periodStart = this.timeToMinutes(period.start);
       const periodEnd = this.timeToMinutes(period.end);
       return startMinutes >= periodStart && endMinutes <= periodEnd;
     });
   }
-
   private revalidateSelection(): void {
     if (this.selectedSlots.length === 0) return;
-
     const currentDaySlots = this.getTimeSlotsForDay(this.fechaReserva);
     const allSlots = [
       ...currentDaySlots.morningSlots,
       ...currentDaySlots.afternoonSlots,
       ...currentDaySlots.nightSlots
     ];
-
     const invalidSlots: TimeSlot[] = [];
     this.selectedSlots.forEach(selectedSlot => {
       const currentSlot = allSlots.find(s => 
         s.startTime === selectedSlot.startTime && s.endTime === selectedSlot.endTime
       );
-
       if (!currentSlot || !currentSlot.isAvailable || currentSlot.isReserved) {
         invalidSlots.push(selectedSlot);
       }
     });
-
     if (invalidSlots.length > 0) {
       this.clearSelectedSlots();
       this.validationErrors.push('Algunos horarios seleccionados ya no están disponibles');
@@ -579,22 +531,19 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     }
   }
 
+
   getDurationTime(): number {
     const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
     const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
     return endMinutes - startMinutes;
   }
-
   getDurationDisplay(): string {
     const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
     const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
     const durationMinutes = endMinutes - startMinutes;
-
     if (durationMinutes <= 0) return '0 min';
-
     const hours = Math.floor(durationMinutes / 60);
     const minutes = durationMinutes % 60;
-
     if (hours === 0) {
       return `${minutes} min`;
     } else if (minutes === 0) {
@@ -603,287 +552,199 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       return `${hours} h ${minutes} min`;
     }
   }
-
-  toggleSlotSelection(slot: TimeSlot): void {
-    if (!slot.isAvailable || !slot.isWithinTariffTime || slot.tariffConflict) {
-      if (slot.tariffConflict && slot.applicableTariff) {
-        this.validationErrors = [
-          `Este horario corresponde a la tarifa "${slot.applicableTariff.descripcion}". ` +
-          `Seleccione solo horarios dentro del rango de la tarifa "${this.dataTariff.descripcion}" ` +
-          `(${this.dataTariff.desde?.slice(0, 5)} - ${this.dataTariff.hasta?.slice(0, 5)})`
-        ];
-        this.showValidationAlert = true;
-      } else if (!slot.isWithinTariffTime) {
-        this.validationErrors = [
-          `Este horario está fuera del rango de la tarifa seleccionada. ` +
-          `Tarifa "${this.dataTariff.descripcion}": ${this.dataTariff.desde?.slice(0, 5)} - ${this.dataTariff.hasta?.slice(0, 5)}`
-        ];
-        this.showValidationAlert = true;
-      } else if (slot.isPast) {
-        this.validationErrors = ['No se pueden seleccionar horarios en el pasado'];
-        this.showValidationAlert = true;
-      } else if (slot.isReserved) {
-        this.validationErrors = [slot.conflictReason || 'Este horario está completamente reservado'];
-        this.showValidationAlert = true;
-      }
-      return;
+toggleSlotSelection(slot: TimeSlot): void {
+  if (!slot.isAvailable || slot.isReserved || !slot.isWithinTariffTime || slot.tariffConflict) {
+    if (slot.conflictReason) {
+      this.validationErrors = [slot.conflictReason];
+      this.showValidationAlert = true;
+    } else if (slot.tariffConflict && slot.applicableTariff) {
+      this.validationErrors = [
+        `Este horario corresponde a la tarifa "${slot.applicableTariff.descripcion}". ` +
+        `Seleccione solo horarios dentro del rango de la tarifa "${this.dataTariff.descripcion}" ` +
+        `(${this.dataTariff.desde?.slice(0, 5)} - ${this.dataTariff.hasta?.slice(0, 5)})`
+      ];
+      this.showValidationAlert = true;
+    } else if (!slot.isWithinTariffTime) {
+      this.validationErrors = [
+        `Este horario está fuera del rango de la tarifa seleccionada. ` +
+        `Tarifa "${this.dataTariff.descripcion}": ${this.dataTariff.desde?.slice(0, 5)} - ${this.dataTariff.hasta?.slice(0, 5)}`
+      ];
+      this.showValidationAlert = true;
+    } else if (slot.isPast) {
+      const now = new Date();
+      const slotTime = this.combineDateAndTime(this.fechaReserva, slot.startTime);
+      this.validationErrors = ['No se pueden seleccionar horarios en el pasado'];
+      this.showValidationAlert = true;
     }
-    
-    this.validationErrors = [];
-    this.showValidationAlert = false;
-    
-    // If clicking a partially reserved slot, auto-fill the available time range
-    if (slot.isPartialSelection && !slot.isSelected && slot.partialStart !== undefined && slot.partialEnd !== undefined) {
-      this.autoFillAvailableTime(slot);
-      return;
-    }
-    
-    const index = this.selectedSlots.findIndex(s => 
-      s.startTime === slot.startTime && s.endTime === slot.endTime
-    );  
-    
-    if (index > -1) {
-      this.deselectSlotAndDependents(slot);
-    } else {
-      this.selectSlotWithConsecutive(slot);
-    }
-    
-    this.selectedSlots.sort((a, b) => 
-      this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime)
-    );
-    
     this.updateTimeInputsFromSlots();
+    this.calculateTariff();
+    return;
   }
   
-  private autoFillAvailableTime(slot: TimeSlot): void {
-    const slotStartMinutes = this.timeToMinutes(slot.startTime);
-    const slotEndMinutes = this.timeToMinutes(slot.endTime);
-    const reservedStart = slot.partialStart!;
-    const reservedEnd = slot.partialEnd!;
-    
-    // Determine which part is available
-    let availableStart: number;
-    let availableEnd: number;
-    
-    if (reservedStart === slotStartMinutes) {
-      // Reservation starts at slot beginning, available time is at the end
-      availableStart = reservedEnd;
-      availableEnd = slotEndMinutes;
-    } else if (reservedEnd === slotEndMinutes) {
-      // Reservation ends at slot end, available time is at the beginning
-      availableStart = slotStartMinutes;
-      availableEnd = reservedStart;
-    } else {
-      // Reservation in the middle (rare case) - take the larger available chunk
-      const beforeChunk = reservedStart - slotStartMinutes;
-      const afterChunk = slotEndMinutes - reservedEnd;
-      
-      if (beforeChunk >= afterChunk) {
-        availableStart = slotStartMinutes;
-        availableEnd = reservedStart;
-      } else {
-        availableStart = reservedEnd;
-        availableEnd = slotEndMinutes;
-      }
-    }
-    
-    // Set the time inputs to the available range
-    this.startTimeInput = {
-      hours: Math.floor(availableStart / 60),
-      minutes: availableStart % 60
-    };
-    
-    this.endTimeInput = {
-      hours: Math.floor(availableEnd / 60),
-      minutes: availableEnd % 60
-    };
-    
-    // Update the slot selection visualization
-    this.updateSlotsFromTimeInputs();
-    this.calculateTariff();
+  this.validationErrors = [];
+  this.showValidationAlert = false;
+  
+  const index = this.selectedSlots.findIndex(s => 
+    s.startTime === slot.startTime && s.endTime === slot.endTime
+  );  
+  
+  if (index > -1) {
+    this.deselectSlotAndDependents(slot);
+  } else {
+    this.selectSlotWithConsecutive(slot);
   }
-
-  private updateTimeInputsFromSlots(): void {
-    if (this.selectedSlots.length === 0) {
-      return;
-    }
-
-    const firstSlot = this.selectedSlots[0];
-    const lastSlot = this.selectedSlots[this.selectedSlots.length - 1];
-
-    const [startHours, startMinutes] = firstSlot.startTime.split(':').map(Number);
-    const [endHours, endMinutes] = lastSlot.endTime.split(':').map(Number); 
-
-    this.startTimeInput = { hours: startHours, minutes: startMinutes };
-    this.endTimeInput = { hours: endHours, minutes: endMinutes };
+  
+  this.selectedSlots.sort((a, b) => 
+    this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime)
+  );
+  
+  this.updateTimeInputsFromSlots();
+}
+private updateTimeInputsFromSlots(): void {
+  if (this.selectedSlots.length === 0) {
+    return;
   }
-
-  private deselectSlotAndDependents(deselectedSlot: TimeSlot): void {
-    const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
-    const allSlots = [
-      ...daySlots.morningSlots,
-      ...daySlots.afternoonSlots,
-      ...daySlots.nightSlots
-    ].sort((a, b) => this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime));
-
-    const deselectedIndex = this.selectedSlots.findIndex(s => 
-      s.startTime === deselectedSlot.startTime && s.endTime === deselectedSlot.endTime
-    );
-
-    this.clearSelectedSlots();
-
-    if (this.selectedSlots.length > 0) {
-      const firstSelected = this.selectedSlots[0];
-      const lastSelected = this.selectedSlots[this.selectedSlots.length - 1];
-      const firstIndex = allSlots.findIndex(s => s.startTime === firstSelected.startTime);
-      const lastIndex = allSlots.findIndex(s => s.startTime === lastSelected.startTime);
-
-      for (let i = firstIndex; i <= lastIndex; i++) {
-        if (i !== deselectedIndex) {
-          const currentSlot = allSlots[i];
-          if (currentSlot.isAvailable && !currentSlot.isReserved && 
-              currentSlot.isWithinTariffTime && !currentSlot.tariffConflict) {
-            currentSlot.isSelected = true;
-            this.selectedSlots.push(currentSlot);
-          }
+  const firstSlot = this.selectedSlots[0];
+  const lastSlot = this.selectedSlots[this.selectedSlots.length - 1];
+  const [startHours, startMinutes] = firstSlot.startTime.split(':').map(Number);
+  const [endHours, endMinutes] = lastSlot.endTime.split(':').map(Number); 
+  this.startTimeInput = { hours: startHours, minutes: startMinutes };
+  this.endTimeInput = { hours: endHours, minutes: endMinutes };
+}
+private deselectSlotAndDependents(deselectedSlot: TimeSlot): void {
+  const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
+  const allSlots = [
+    ...daySlots.morningSlots,
+    ...daySlots.afternoonSlots,
+    ...daySlots.nightSlots
+  ].sort((a, b) => this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime));
+  const deselectedIndex = this.selectedSlots.findIndex(s => 
+    s.startTime === deselectedSlot.startTime && s.endTime === deselectedSlot.endTime
+  );
+  this.clearSelectedSlots();
+  if (this.selectedSlots.length > 0) {
+    const firstSelected = this.selectedSlots[0];
+    const lastSelected = this.selectedSlots[this.selectedSlots.length - 1];
+    const firstIndex = allSlots.findIndex(s => s.startTime === firstSelected.startTime);
+    const lastIndex = allSlots.findIndex(s => s.startTime === lastSelected.startTime);
+    for (let i = firstIndex; i <= lastIndex; i++) {
+      if (i !== deselectedIndex) {
+        const currentSlot = allSlots[i];
+        if (currentSlot.isAvailable && !currentSlot.isReserved && 
+            currentSlot.isWithinTariffTime && !currentSlot.tariffConflict) {
+          currentSlot.isSelected = true;
+          this.selectedSlots.push(currentSlot);
         }
       }
     }
   }
-
-  private selectSlotWithConsecutive(newSlot: TimeSlot): void {
-    const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
-    const allSlots = [
-      ...daySlots.morningSlots,
-      ...daySlots.afternoonSlots,
-      ...daySlots.nightSlots
-    ].sort((a, b) => this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime));
-
-    if (this.selectedSlots.length === 0) {
-      newSlot.isSelected = true;
-      this.selectedSlots.push(newSlot);
-      return;
-    }
-
-    const selectedStartTimes = this.selectedSlots.map(s => this.timeToMinutes(s.startTime));
-    const minSelectedTime = Math.min(...selectedStartTimes);
-    const maxSelectedTime = Math.max(...selectedStartTimes);
-    const newSlotTime = this.timeToMinutes(newSlot.startTime);
-
-    if (newSlotTime < minSelectedTime) {
-      this.selectRangeFromNewToExisting(newSlot, allSlots, minSelectedTime);
-    } else if (newSlotTime > maxSelectedTime) {
-      this.selectRangeFromExistingToNew(newSlot, allSlots, maxSelectedTime);
-    } else {
-      this.selectEntireRange(minSelectedTime, maxSelectedTime, allSlots);
+}
+private selectSlotWithConsecutive(newSlot: TimeSlot): void {
+  const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
+  const allSlots = [
+    ...daySlots.morningSlots,
+    ...daySlots.afternoonSlots,
+    ...daySlots.nightSlots
+  ].sort((a, b) => this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime));
+  if (this.selectedSlots.length === 0) {
+    newSlot.isSelected = true;
+    this.selectedSlots.push(newSlot);
+    return;
+  }
+  const selectedStartTimes = this.selectedSlots.map(s => this.timeToMinutes(s.startTime));
+  const minSelectedTime = Math.min(...selectedStartTimes);
+  const maxSelectedTime = Math.max(...selectedStartTimes);
+  const newSlotTime = this.timeToMinutes(newSlot.startTime);
+  if (newSlotTime < minSelectedTime) {
+    this.selectRangeFromNewToExisting(newSlot, allSlots, minSelectedTime);
+  } else if (newSlotTime > maxSelectedTime) {
+    this.selectRangeFromExistingToNew(newSlot, allSlots, maxSelectedTime);
+  } else {
+    this.selectEntireRange(minSelectedTime, maxSelectedTime, allSlots);
+  }
+}
+private selectRangeFromNewToExisting(newSlot: TimeSlot, allSlots: TimeSlot[], minSelectedTime: number): void {
+  const newSlotTime = this.timeToMinutes(newSlot.startTime);
+  this.clearSelectedSlots();
+  const startIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === newSlotTime);
+  const endIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === minSelectedTime);
+  for (let i = startIndex; i <= endIndex; i++) {
+    const currentSlot = allSlots[i];
+    if (currentSlot.isAvailable && !currentSlot.isReserved && 
+        currentSlot.isWithinTariffTime && !currentSlot.tariffConflict) {
+      currentSlot.isSelected = true;
+      this.selectedSlots.push(currentSlot);
     }
   }
-
-  private selectRangeFromNewToExisting(newSlot: TimeSlot, allSlots: TimeSlot[], minSelectedTime: number): void {
-    const newSlotTime = this.timeToMinutes(newSlot.startTime);
-    this.clearSelectedSlots();
-
-    const startIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === newSlotTime);
-    const endIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === minSelectedTime);
-
-    for (let i = startIndex; i <= endIndex; i++) {
-      const currentSlot = allSlots[i];
-      if (currentSlot.isAvailable && !currentSlot.isReserved && 
-          currentSlot.isWithinTariffTime && !currentSlot.tariffConflict) {
-        currentSlot.isSelected = true;
-        this.selectedSlots.push(currentSlot);
-      }
+}
+private selectRangeFromExistingToNew(newSlot: TimeSlot, allSlots: TimeSlot[], maxSelectedTime: number): void {
+  const newSlotTime = this.timeToMinutes(newSlot.startTime);
+  this.clearSelectedSlots();
+  const startIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === maxSelectedTime);
+  const endIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === newSlotTime);
+  for (let i = startIndex; i <= endIndex; i++) {
+    const currentSlot = allSlots[i];
+    if (currentSlot.isAvailable && !currentSlot.isReserved && 
+        currentSlot.isWithinTariffTime && !currentSlot.tariffConflict) {
+      currentSlot.isSelected = true;
+      this.selectedSlots.push(currentSlot);
     }
   }
-
-  private selectRangeFromExistingToNew(newSlot: TimeSlot, allSlots: TimeSlot[], maxSelectedTime: number): void {
-    const newSlotTime = this.timeToMinutes(newSlot.startTime);
-    this.clearSelectedSlots();
-
-    const startIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === maxSelectedTime);
-    const endIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === newSlotTime);
-
-    for (let i = startIndex; i <= endIndex; i++) {
-      const currentSlot = allSlots[i];
-      if (currentSlot.isAvailable && !currentSlot.isReserved && 
-          currentSlot.isWithinTariffTime && !currentSlot.tariffConflict) {
-        currentSlot.isSelected = true;
-        this.selectedSlots.push(currentSlot);
-      }
+}
+private selectEntireRange(minTime: number, maxTime: number, allSlots: TimeSlot[]): void {
+  this.clearSelectedSlots();
+  const startIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === minTime);
+  const endIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === maxTime);
+  for (let i = startIndex; i <= endIndex; i++) {
+    const currentSlot = allSlots[i];
+    if (currentSlot.isAvailable && !currentSlot.isReserved && 
+        currentSlot.isWithinTariffTime && !currentSlot.tariffConflict) {
+      currentSlot.isSelected = true;
+      this.selectedSlots.push(currentSlot);
     }
   }
+}
 
-  private selectEntireRange(minTime: number, maxTime: number, allSlots: TimeSlot[]): void {
-    this.clearSelectedSlots();
-
-    const startIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === minTime);
-    const endIndex = allSlots.findIndex(s => this.timeToMinutes(s.startTime) === maxTime);
-
-    for (let i = startIndex; i <= endIndex; i++) {
-      const currentSlot = allSlots[i];
-      if (currentSlot.isAvailable && !currentSlot.isReserved && 
-          currentSlot.isWithinTariffTime && !currentSlot.tariffConflict) {
-        currentSlot.isSelected = true;
-        this.selectedSlots.push(currentSlot);
+private updateSlotsFromTimeInputs(): void {
+  this.clearSelectedSlots();  
+  const startTime = this.timeInputToString(this.startTimeInput);
+  const endTime = this.timeInputToString(this.endTimeInput);
+  if (!this.isTimeWithinAnyOperatingPeriod(startTime, endTime)) {
+    return;
+  }
+  const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
+  const allSlots = [
+    ...daySlots.morningSlots,
+    ...daySlots.afternoonSlots,
+    ...daySlots.nightSlots
+  ];
+  const startMinutes = this.timeToMinutes(startTime);
+  const endMinutes = this.timeToMinutes(endTime);
+  allSlots.forEach(slot => {
+    const slotStart = this.timeToMinutes(slot.startTime);
+    const slotEnd = this.timeToMinutes(slot.endTime);
+    const overlaps = slotStart < endMinutes && slotEnd > startMinutes;
+    if (overlaps && slot.isAvailable && !slot.isReserved && slot.isWithinTariffTime && !slot.tariffConflict) {
+      slot.isSelected = true;
+      this.selectedSlots.push(slot);      
+      if (slotStart < startMinutes || slotEnd > endMinutes) {
+        slot.isPartialSelection = true;
+        slot.partialStart = Math.max(slotStart, startMinutes);
+        slot.partialEnd = Math.min(slotEnd, endMinutes);
+      } else {
+        slot.isPartialSelection = false;
       }
     }
-  }
-
-  private updateSlotsFromTimeInputs(): void {
-    // First, get fresh slots from cache to preserve their original partial reservation state
-    const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
-    const allSlots = [
-      ...daySlots.morningSlots,
-      ...daySlots.afternoonSlots,
-      ...daySlots.nightSlots
-    ];
-    
-    // Clear only the user selections, not the partial reservation flags from existing reservations
-    allSlots.forEach(slot => {
-      if (slot.isSelected) {
-        slot.isSelected = false;
-        slot.isUserPartialSelection = false;
-      }
-    });
-    
-    this.selectedSlots = [];
-
-    const startTime = this.timeInputToString(this.startTimeInput);
-    const endTime = this.timeInputToString(this.endTimeInput);
-
-    if (!this.isTimeWithinAnyOperatingPeriod(startTime, endTime)) {
-      return;
-    }
-
-    const startMinutes = this.timeToMinutes(startTime);
-    const endMinutes = this.timeToMinutes(endTime);
-
-    allSlots.forEach(slot => {
-      const slotStart = this.timeToMinutes(slot.startTime);
-      const slotEnd = this.timeToMinutes(slot.endTime);
-      
-      const overlaps = slotStart < endMinutes && slotEnd > startMinutes;
-
-      if (overlaps && slot.isAvailable && !slot.isReserved && slot.isWithinTariffTime && !slot.tariffConflict) {
-        slot.isSelected = true;
-        this.selectedSlots.push(slot);      
-        
-        // Check if user is selecting only part of this slot
-        const isUserSelectingPartially = slotStart < startMinutes || slotEnd > endMinutes;
-        slot.isUserPartialSelection = isUserSelectingPartially;
-      }
-    });  
-
-    this.selectedSlots.sort((a, b) => 
-      this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime)
-    );
-  }
+  });  
+  this.selectedSlots.sort((a, b) => 
+    this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime)
+  );
+}
 
   async confirmSelection(): Promise<void> {
     this.isCheckingAvailability = true;
     this.validationErrors = [];
     this.showValidationAlert = false;
-
     try {
         await this.confirmTimeSelection();
     } catch (error) {
@@ -894,7 +755,6 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       this.isCheckingAvailability = false;
     }
   }
-
   clearSelectedSlots(): void {
     if (this.fechaReserva) {
       try {
@@ -905,15 +765,13 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
           ...currentDaySlots.nightSlots
         ];        
         allSlots.forEach(slot => {
-          // Clear user selection flags only, preserve reservation-based flags
           slot.isSelected = false;
-          slot.isUserPartialSelection = false;
+          slot.isPartialSelection = false;
         });
       } catch (error) {
         console.warn('Error clearing slot selection:', error);
       }
     }
-
     this.selectedSlots = [];
     this.validationErrors = [];
     this.showValidationAlert = false;
@@ -922,31 +780,24 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   private initializeWeek(): void {
     const today = new Date();    
     today.setHours(0, 0, 0, 0);
-
     const dayOfWeek = today.getDay();
     const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;    
-
     this.currentWeekStart = new Date(today);
     this.currentWeekStart.setDate(today.getDate() + diff);
-
     this.currentWeekEnd = new Date(this.currentWeekStart);
     this.currentWeekEnd.setDate(this.currentWeekStart.getDate() + 6);
-
     this.fechaReserva = new Date(today);
     this.activeDayName = this.getDayName(today);
   }
-
   private generateWeekDays(): void {
     this.weekDays = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     for (let i = 0; i < 7; i++) {
       const date = new Date(this.currentWeekStart);
       date.setDate(this.currentWeekStart.getDate() + i);        
       const dayName = this.getDayName(date);
       const isPast = date < today;        
-
       this.weekDays.push({
         name: dayName,
         dayName: this.getFullDayName(date),
@@ -956,23 +807,18 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       });
     }
   }
-
   getTimeSlotsForDay(date: Date): DaySlots {
     const dateKey = `${date.toISOString().split('T')[0]}-${this.minDuration*60}-${this.dataTariff?.uuid || 'no-tariff'}`;
-
     if (this.timeSlotsCache.has(dateKey)) {
       return this.timeSlotsCache.get(dateKey)!;
     }    
-
     const slots = this.generateDaySlots(date);
     this.timeSlotsCache.set(dateKey, slots);
     return slots;
   }
-
   private generateDaySlots(date: Date): DaySlots {
     const daySchedule = this.getHorarioForDate(date);
     const exceptions = this.getExceptionsForDate(date);    
-
     const result: DaySlots = {
       morningSlots: [],
       afternoonSlots: [],
@@ -981,40 +827,32 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       daySchedule: daySchedule,
       exceptions: exceptions
     };
-
     if (!daySchedule?.abierto && (!exceptions || exceptions.length === 0)) {
       return result;
     }
-
     const operatingPeriods = this.getOperatingPeriodsForDay(date);
-
     if (operatingPeriods.length === 0) {
       return result;
     }
-
     operatingPeriods.forEach(period => {
       let horaApertura = period.start;
       let horaCierre = period.end;
-
       if (this.dataTariff?.desde) {
         const tarifaStart = this.timeToMinutes(this.dataTariff.desde);
         const scheduleStart = this.timeToMinutes(horaApertura);
         if (tarifaStart > scheduleStart) horaApertura = this.dataTariff.desde;
       }
-
       if (this.dataTariff?.hasta) {
         const tarifaEnd = this.timeToMinutes(this.dataTariff.hasta);
         const scheduleEnd = this.timeToMinutes(horaCierre);
         if (tarifaEnd < scheduleEnd) horaCierre = this.dataTariff.hasta;
       }
-
       if (this.timeToMinutes(horaApertura) < this.timeToMinutes(horaCierre)) {
         const slots = this.generateTimeSlots(date, horaApertura, horaCierre);
         
         slots.forEach(slot => {
           const startHour = parseInt(slot.startTime.split(':')[0]);
           const startMinutes = this.timeToMinutes(slot.startTime);        
-
           if (startMinutes < this.timeToMinutes('12:00:00')) {
             slot.blockType = 'morning';
             result.morningSlots.push(slot);
@@ -1028,343 +866,73 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         });
       }
     });
-
     return result;
   }
-private generateTimeSlots(date: Date, startTime: string, endTime: string): TimeSlot[] {
-  const slots: TimeSlot[] = [];
-  const now = new Date();
-  
-  let minReservationTime = new Date(now.getTime());
-  if (this.anticipationHours) {
-    minReservationTime = new Date(now.getTime() + this.anticipationHours * 60 * 60 * 1000);
-  }
-  
-  const startMinutes = this.timeToMinutes(startTime);
-  const endMinutes = this.timeToMinutes(endTime);
-  const hourInMinutes = 60; // 1 hora en minutos
-  const minDurationMinutes = this.minDuration * 60;
-  
-  // Obtener todas las reservas activas para esta fecha
-  const activeReservations = this.getActiveReservationsForDate(date)
-    .map(res => ({
-      start: this.timeToMinutes(res.reservaPuntualDto!.horaInicio),
-      end: this.timeToMinutes(res.reservaPuntualDto!.horaFin),
-      reservation: res
-    }))
-    .sort((a, b) => a.start - b.start);
-  
-  let currentMinute = startMinutes;
-  let reservationIndex = 0;
-  
-  while (currentMinute < endMinutes) {
-    // Verificar si hay una reserva que comienza en el minuto actual
-    const currentReservation = reservationIndex < activeReservations.length 
-      ? activeReservations[reservationIndex] 
-      : null;
-    
-    // Si estamos en el inicio exacto de una reserva
-    if (currentReservation && currentMinute === currentReservation.start) {
-      // Crear slot para la reserva COMPLETA (sin dividir)
-      const slotStart = currentReservation.start;
-      const slotEnd = Math.min(currentReservation.end, endMinutes);
-      
-      const slotStartTime = this.minutesToTime(slotStart);
-      const slotEndTime = this.minutesToTime(slotEnd);
-      const slotDateTime = this.combineDateAndTime(date, slotStartTime);
-      const isPast = slotDateTime < minReservationTime;
-      
+  private generateTimeSlots(date: Date, startTime: string, endTime: string): TimeSlot[] {
+    const slots: TimeSlot[] = [];
+    const now = new Date();    
+    let minReservationTime = new Date(now.getTime());
+    if (this.anticipationHours) {
+      minReservationTime = new Date(now.getTime() + this.anticipationHours * 60 * 60 * 1000);
+    }    
+    const startMinutes = this.timeToMinutes(startTime);
+    const endMinutes = this.timeToMinutes(endTime);    
+    for (let minutes = startMinutes; minutes < endMinutes; minutes += this.minDuration*60) {
+      const slotStart = this.minutesToTime(minutes);
+      const slotEnd = this.minutesToTime(Math.min(minutes + this.minDuration*60, endMinutes));
+      const slotDateTime = this.combineDateAndTime(date, slotStart);
+      const isPast = slotDateTime < minReservationTime;        
       const timeRange: TimeRange = {
         date: date,
-        startTime: slotStartTime,
-        endTime: slotEndTime
+        startTime: slotStart,
+        endTime: slotEnd
       };
-      
       const conflictResult = this.conflictService.checkConflict(
         this.dataField.uuid!,
         timeRange,
         this.reservationsList
       );
-      
-      const isWithinTariffTime = this.isTimeWithinTariff(slotStartTime, slotEndTime);
-      const applicableTariff = this.findApplicableTariffForTime(slotStartTime);
+      const isWithinTariffTime = this.isTimeWithinTariff(slotStart, slotEnd);
+      const applicableTariff = this.findApplicableTariffForTime(slotStart);
       const tariffConflict = applicableTariff && applicableTariff.uuid !== this.dataTariff.uuid;
-      
       const slot: TimeSlot = {
-        time: `${slotStartTime.slice(0, 5)} - ${slotEndTime.slice(0, 5)}`,
-        startTime: slotStartTime,
-        endTime: slotEndTime,
-        isAvailable: false,
-        isReserved: true,
+        time: `${slotStart.slice(0, 5)} - ${slotEnd.slice(0, 5)}`,
+        startTime: slotStart,
+        endTime: slotEnd,
+        isAvailable: !isPast && !conflictResult.hasConflict && isWithinTariffTime && !tariffConflict,
+        isReserved: conflictResult.hasConflict,
         isPast: isPast,
         isSelected: false,
-        isPartialSelection: false,
         reservation: conflictResult.conflictingReservations[0],
-        conflictReason: 'Reservado',
+        conflictReason: conflictResult.reason,
         blockType: 'operating',
         isWithinTariffTime: isWithinTariffTime,
         applicableTariff: applicableTariff,
         tariffConflict: tariffConflict
-      };
-      
+      };        
       slots.push(slot);
-      
-      // Avanzar al final de la reserva
-      currentMinute = slotEnd;
-      reservationIndex++;
-    } 
-    else {
-      // Estamos en tiempo disponible
-      
-      // Calcular el final del slot disponible:
-      // - Si hay una reserva próxima, el slot termina cuando empieza la reserva
-      // - Si no hay reserva, termina al final de la hora actual (currentMinute + 60)
-      // - Pero siempre respetando el horario de cierre
-      
-      let slotEndMinute: number;
-      
-      if (currentReservation) {
-        // Hay una reserva próxima, el slot disponible termina cuando empieza la reserva
-        slotEndMinute = Math.min(
-          currentMinute + hourInMinutes,
-          currentReservation.start,
-          endMinutes
-        );
-      } else {
-        // No hay reservas, slot normal de 1 hora
-        slotEndMinute = Math.min(
-          currentMinute + hourInMinutes,
-          endMinutes
-        );
-      }
-      
-      // Solo crear el slot si tiene al menos la duración mínima
-      if (slotEndMinute - currentMinute >= minDurationMinutes) {
-        const slotStartTime = this.minutesToTime(currentMinute);
-        const slotEndTime = this.minutesToTime(slotEndMinute);
-        const slotDateTime = this.combineDateAndTime(date, slotStartTime);
-        const isPast = slotDateTime < minReservationTime;
-        
-        const timeRange: TimeRange = {
-          date: date,
-          startTime: slotStartTime,
-          endTime: slotEndTime
-        };
-        
-        const conflictResult = this.conflictService.checkConflict(
-          this.dataField.uuid!,
-          timeRange,
-          this.reservationsList
-        );
-        
-        const isWithinTariffTime = this.isTimeWithinTariff(slotStartTime, slotEndTime);
-        const applicableTariff = this.findApplicableTariffForTime(slotStartTime);
-        const tariffConflict = applicableTariff && applicableTariff.uuid !== this.dataTariff.uuid;
-        
-        // Verificar si es un slot parcial (menos de 1 hora)
-        const isPartialSlot = (slotEndMinute - currentMinute) < hourInMinutes;
-        
-        const slot: TimeSlot = {
-          time: `${slotStartTime.slice(0, 5)} - ${slotEndTime.slice(0, 5)}`,
-          startTime: slotStartTime,
-          endTime: slotEndTime,
-          isAvailable: !isPast && !conflictResult.hasConflict && isWithinTariffTime && !tariffConflict,
-          isReserved: conflictResult.hasConflict,
-          isPast: isPast,
-          isSelected: false,
-          isPartialSelection: isPartialSlot && !conflictResult.hasConflict, // Solo marcar como parcial si es disponible
-          reservation: conflictResult.conflictingReservations[0],
-          conflictReason: conflictResult.reason,
-          blockType: 'operating',
-          isWithinTariffTime: isWithinTariffTime,
-          applicableTariff: applicableTariff,
-          tariffConflict: tariffConflict
-        };
-        
-        slots.push(slot);
-      }
-      
-      // Avanzar al siguiente minuto (siempre en incrementos de 1 hora, 
-      // o hasta donde termina el slot actual)
-      if (currentReservation && slotEndMinute === currentReservation.start) {
-        // Si llegamos exactamente al inicio de una reserva, no avanzamos más
-        // El siguiente ciclo se encargará de la reserva
-        currentMinute = slotEndMinute;
-      } else {
-        // Avanzar a la siguiente hora completa
-        // Redondear hacia arriba a la siguiente hora exacta
-        const nextHour = Math.ceil((currentMinute + 1) / hourInMinutes) * hourInMinutes;
-        currentMinute = Math.min(nextHour, endMinutes);
-      }
     }
+    return slots;
   }
-  
-  return slots;
-}
-
-/**
- * Obtiene reservas activas para una fecha específica
- */
-private getActiveReservationsForDate(date: Date): Reserva[] {
-  const dateStr = date.toISOString().split('T')[0];
-  
-  return this.reservationsList.filter(reservation => {
-    if (!reservation.reservaPuntualDto) {
-      return false;
-    }
-    
-    // Excluir estados no válidos
-    const excludedStates = ['CANCELADA', 'RECHAZADA', 'EXPIRADA', 'NO_SHOW'];
-    if (excludedStates.includes(reservation.estadoReserva as string)) {
-      return false;
-    }
-    
-    const reservationDateStr = typeof reservation.reservaPuntualDto.fechaUso === 'string' 
-      ? reservation.reservaPuntualDto.fechaUso 
-      : new Date(reservation.reservaPuntualDto.fechaUso).toISOString().split('T')[0];
-    
-    return reservationDateStr === dateStr;
-  });
-}
-
-/**
- * Get all reservation boundary times (start and end) for a specific date
- * that fall within the operating hours
- */
-private getReservationBoundariesForDate(date: Date): number[] {
-  const boundaries: number[] = [];
-  const dateStr = date.toISOString().split('T')[0];
-  
-  // Filter active reservations for this date
-  const activeReservations = this.reservationsList.filter(reservation => {
-    if (!reservation.reservaPuntualDto) {
-      return false;
-    }
-    
-    // Exclude cancelled, rejected, expired, and no-show reservations
-    const excludedStates = ['CANCELADA', 'RECHAZADA', 'EXPIRADA', 'NO_SHOW'];
-    if (excludedStates.includes(reservation.estadoReserva as string)) {
-      return false;
-    }
-    
-    const reservationDateStr = typeof reservation.reservaPuntualDto.fechaUso === 'string' 
-      ? reservation.reservaPuntualDto.fechaUso 
-      : new Date(reservation.reservaPuntualDto.fechaUso).toISOString().split('T')[0];
-    
-    return reservationDateStr === dateStr;
-  });
-  
-  // Add reservation start and end times as boundaries
-  activeReservations.forEach(reservation => {
-    const startMinutes = this.timeToMinutes(reservation.reservaPuntualDto!.horaInicio);
-    const endMinutes = this.timeToMinutes(reservation.reservaPuntualDto!.horaFin);
-    
-    boundaries.push(startMinutes);
-    boundaries.push(endMinutes);
-  });
-  
-  // Remove duplicates and sort
-  return [...new Set(boundaries)].sort((a, b) => a - b);
-}
-  
-  private checkPartialReservation(date: Date, slotStart: string, slotEnd: string): { 
-    isPartial: boolean; 
-    partialStart?: number; 
-    partialEnd?: number;
-  } {
-    const slotStartMinutes = this.timeToMinutes(slotStart);
-    const slotEndMinutes = this.timeToMinutes(slotEnd);
-    const dateStr = date.toISOString().split('T')[0];
-    
-    // Find reservations that overlap with this slot but don't completely cover it
-    const overlappingReservations = this.reservationsList.filter(reservation => {
-      if (!reservation.reservaPuntualDto) {
-        return false;
-      }
-      
-      // Exclude cancelled, rejected, expired, and no-show reservations
-      const excludedStates = ['CANCELADA', 'RECHAZADA', 'EXPIRADA', 'NO_SHOW'];
-      if (excludedStates.includes(reservation.estadoReserva as string)) {
-        return false;
-      }
-      
-      const reservationDateStr = typeof reservation.reservaPuntualDto.fechaUso === 'string' 
-        ? reservation.reservaPuntualDto.fechaUso 
-        : new Date(reservation.reservaPuntualDto.fechaUso).toISOString().split('T')[0];
-      
-      if (reservationDateStr !== dateStr) {
-        return false;
-      }
-      
-      const reservationStart = this.timeToMinutes(reservation.reservaPuntualDto.horaInicio);
-      const reservationEnd = this.timeToMinutes(reservation.reservaPuntualDto.horaFin);
-      
-      // Check if there's an overlap but not complete coverage
-      const hasOverlap = reservationStart < slotEndMinutes && reservationEnd > slotStartMinutes;
-      const isCompleteOverlap = reservationStart <= slotStartMinutes && reservationEnd >= slotEndMinutes;
-      
-      return hasOverlap && !isCompleteOverlap;
-    });
-    
-    if (overlappingReservations.length === 0) {
-      return { isPartial: false };
-    }
-    
-    // Get the overlapping time range
-    const reservation = overlappingReservations[0];
-    const reservationStart = this.timeToMinutes(reservation.reservaPuntualDto!.horaInicio);
-    const reservationEnd = this.timeToMinutes(reservation.reservaPuntualDto!.horaFin);
-    
-    const overlapStart = Math.max(slotStartMinutes, reservationStart);
-    const overlapEnd = Math.min(slotEndMinutes, reservationEnd);
-    
-    return {
-      isPartial: true,
-      partialStart: overlapStart,
-      partialEnd: overlapEnd
-    };
-  }
-
-  private getPartialReservationLabel(slotStart: number, slotEnd: number, reservedStart: number, reservedEnd: number): string {
-    // If reservation starts at the beginning of the slot
-    if (reservedStart === slotStart && reservedEnd < slotEnd) {
-      return `Reservado hasta ${this.minutesToTime(reservedEnd).slice(0, 5)}`;
-    }
-    
-    // If reservation ends at the end of the slot
-    if (reservedStart > slotStart && reservedEnd === slotEnd) {
-      return `Reservado desde ${this.minutesToTime(reservedStart).slice(0, 5)}`;
-    }
-    
-    // If reservation is in the middle (shouldn't happen often)
-    return `Reservado ${this.minutesToTime(reservedStart).slice(0, 5)} - ${this.minutesToTime(reservedEnd).slice(0, 5)}`;
-  }
-
   private combineDateAndTime(date: Date, time: string): Date {
     const [hours, minutes] = time.split(':').map(Number);
     const result = new Date(date);
     result.setHours(hours, minutes, 0, 0);
     return result;
   }
-
   private isTimeWithinTariff(startTime: string, endTime: string): boolean {
     if (!this.dataTariff.desde || !this.dataTariff.hasta) {
       return true; 
     }
-
     const slotStart = this.timeToMinutes(startTime);
     const slotEnd = this.timeToMinutes(endTime);
     const tariffStart = this.timeToMinutes(this.dataTariff.desde);
     const tariffEnd = this.timeToMinutes(this.dataTariff.hasta);
-
     return slotStart >= tariffStart && slotEnd <= tariffEnd;
   }
-
   private findApplicableTariffForTime(time: string): Tarifa | undefined {
     if (!this.dataField?.tarifasDtoList) return undefined;
-
     const timeMinutes = this.timeToMinutes(time);
-
     const applicable = this.dataField.tarifasDtoList.filter(tarifa => 
       tarifa.activo && 
       tarifa.desde && 
@@ -1372,11 +940,9 @@ private getReservationBoundariesForDate(date: Date): number[] {
       timeMinutes >= this.timeToMinutes(tarifa.desde) && 
       timeMinutes < this.timeToMinutes(tarifa.hasta)
     );
-
     const selectedTariffApplicable = applicable.find(t => t.uuid === this.dataTariff.uuid);
     return selectedTariffApplicable || applicable[0];
   }
-
   private checkMultipleTariffs(): void {
     if (!this.dataField?.tarifasDtoList || !this.dataTariff) {
       this.hasMultipleApplicableTariffs = false;
@@ -1384,41 +950,32 @@ private getReservationBoundariesForDate(date: Date): number[] {
       this.tariffBoundaryTime = null;
       return;
     }
-
     const activeTariffs = this.dataField.tarifasDtoList.filter(tarifa => 
       tarifa.activo && tarifa.tipoCobro !== 'por_evento'
     );
-
     this.applicableTariffs = activeTariffs.filter(tarifa => 
       tarifa.uuid !== this.dataTariff.uuid && 
       this.tariffsOverlap(this.dataTariff, tarifa)
     );
-
     this.hasMultipleApplicableTariffs = this.applicableTariffs.length > 0;
-
     if (this.hasMultipleApplicableTariffs) {
       this.tariffBoundaryTime = this.findTariffBoundaryTime();
     } else {
       this.tariffBoundaryTime = null;
     }
   }
-
   private tariffsOverlap(tariff1: Tarifa, tariff2: Tarifa): boolean {
     if (!tariff1.desde || !tariff1.hasta || !tariff2.desde || !tariff2.hasta) {
       return false;
     }
-
     const t1Start = this.timeToMinutes(tariff1.desde);
     const t1End = this.timeToMinutes(tariff1.hasta);
     const t2Start = this.timeToMinutes(tariff2.desde);
     const t2End = this.timeToMinutes(tariff2.hasta);
-
     return (t1Start < t2End && t1End > t2Start);
   }
-
   private findTariffBoundaryTime(): string | null {
     if (!this.dataTariff.hasta) return null;
-
     const overlappingStarts = this.applicableTariffs
       .map(tarifa => this.timeToMinutes(tarifa.desde || '00:00:00'))
       .filter(startTime => startTime > this.timeToMinutes(this.dataTariff.desde || '00:00:00'));
@@ -1428,13 +985,11 @@ private getReservationBoundariesForDate(date: Date): number[] {
     const earliestOverlap = Math.min(...overlappingStarts);
     return this.minutesToTime(earliestOverlap);
   }
-
   private getOperatingPeriodsForDay(date: Date): OperatingPeriod[] {
     const allSchedules = this.dataField.horariosFijosDtoList || [];
     const dayOfWeek = date.getDay();
     const dayNames = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     const currentDayName = dayNames[dayOfWeek];
-
     const applicableSchedules = allSchedules.filter(schedule => {
       if (!schedule.abierto || !schedule.horaApertura || !schedule.horaCierre) return false;
       if (schedule.dia === currentDayName) return true;
@@ -1443,24 +998,20 @@ private getReservationBoundariesForDate(date: Date): number[] {
       if (schedule.dia === 'domingo' && dayOfWeek === 0) return true;
       return false;
     });
-
     const periods: OperatingPeriod[] = applicableSchedules
       .map(schedule => ({ 
         start: schedule.horaApertura!, 
         end: schedule.horaCierre! 
       }))
       .sort((a, b) => this.timeToMinutes(a.start) - this.timeToMinutes(b.start));
-
     const mergedPeriods: OperatingPeriod[] = [];
     let currentPeriod: OperatingPeriod | null = null;
-
     for (const period of periods) {
       if (!currentPeriod) {
         currentPeriod = { ...period };
       } else {
         const currentEnd = this.timeToMinutes(currentPeriod.end);
         const nextStart = this.timeToMinutes(period.start);
-
         if (nextStart <= currentEnd) {
           const nextEnd = this.timeToMinutes(period.end);
           if (nextEnd > currentEnd) {
@@ -1472,201 +1023,164 @@ private getReservationBoundariesForDate(date: Date): number[] {
         }
       }
     }
-
     if (currentPeriod) {
       mergedPeriods.push(currentPeriod);
     }
-
     return mergedPeriods;
   }
-
   private getHorarioForDate(date: Date): HorarioFijo | undefined {
     if (!this.dataField?.horariosFijosDtoList) return undefined;
-
     const dayOfWeek = date.getDay();
     const dayNames = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     const currentDayName = dayNames[dayOfWeek];
-
     const exactDayMatch = this.dataField.horariosFijosDtoList.find(h => h.dia === currentDayName);
     if (exactDayMatch) {
         return exactDayMatch;
     }
-
     if (dayOfWeek >= 1 && dayOfWeek <= 5) {
         return this.dataField.horariosFijosDtoList.find(h => h.dia === 'lunes_viernes');
     }
-
     if (dayOfWeek === 6) { // sábado
         return this.dataField.horariosFijosDtoList.find(h => h.dia === 'sabado');
     }    
-
     if (dayOfWeek === 0) { // domingo
         return this.dataField.horariosFijosDtoList.find(h => h.dia === 'domingo');
     }    
-
     return undefined;
   }
-
   private getExceptionsForDate(date: Date): HorarioExcepcion[] | undefined {
     if (!this.dataField?.horariosExcepcionesDtoList) return undefined;    
     const dateStr = date.toISOString().split('T')[0];
     return this.dataField.horariosExcepcionesDtoList.filter(exc => exc.fecha === dateStr);
   }
 
-  calculatedTariff: number = 0;
-  tariffDetails: string[] = [];
-  showTariffBreakdown: boolean = false;
 
-  calculateTariff(): void {
-    this.calculatedTariff = 0;
-    this.tariffDetails = [];
+calculatedTariff: number = 0;
+tariffDetails: string[] = [];
+showTariffBreakdown: boolean = false;
+calculateTariff(): void {
+  this.calculatedTariff = 0;
+  this.tariffDetails = [];
+  if (!this.dataTariff) return;
 
-    if (!this.dataTariff) return;
-
-    const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
-    const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
-    const durationInHours= (endMinutes - startMinutes) / 60;
-    
-    switch (this.dataTariff.tipoCobro) {
-      case 'por_hora':
-        const baseAmount = this.dataTariff.precioBase * durationInHours;
-        this.calculatedTariff = baseAmount;
-        this.tariffDetails.push(`Tarifa base: Bs. ${this.dataTariff.precioBase} × ${durationInHours.toFixed(1)}h = Bs. ${baseAmount.toFixed(2)}`);
-        this.calculateAdditionalConcepts(durationInHours);
-        break;
-
-      case 'por_persona':
-        this.calculatedTariff = this.dataTariff.precioBase;
-        this.tariffDetails.push(`Tarifa base por persona: Bs. ${this.dataTariff.precioBase}`);
-        this.tariffDetails.push('* Número de personas se definirá en el siguiente formulario');
-        this.calculateAdditionalConcepts(1);
-        break;
-
-      case 'por_evento':
-        this.calculatedTariff = this.dataTariff.precioBase;
-        this.tariffDetails.push(`Tarifa por evento: Bs. ${this.dataTariff.precioBase}`);
-        this.calculateAdditionalConcepts(1);
-        break;
-
-      case 'mensualidad':
-        break;
-
-      case 'por_sesion':
-        break;
-
-      case 'por_club':
-        break;
-
-      default:
-        console.warn('Tipo de cobro no reconocido:', this.dataTariff.tipoCobro);
-    }
+  const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
+  const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
+  const durationInHours= (endMinutes - startMinutes) / 60;
+  
+  switch (this.dataTariff.tipoCobro) {
+    case 'por_hora':
+      const baseAmount = this.dataTariff.precioBase * durationInHours;
+      this.calculatedTariff = baseAmount;
+      this.tariffDetails.push(`Tarifa base: Bs. ${this.dataTariff.precioBase} × ${durationInHours.toFixed(1)}h = Bs. ${baseAmount.toFixed(2)}`);
+      this.calculateAdditionalConcepts(durationInHours);
+      break;
+    case 'por_persona':
+      this.calculatedTariff = this.dataTariff.precioBase;
+      this.tariffDetails.push(`Tarifa base por persona: Bs. ${this.dataTariff.precioBase}`);
+      this.tariffDetails.push('* Número de personas se definirá en el siguiente formulario');
+      this.calculateAdditionalConcepts(1);
+      break;
+    case 'por_evento':
+      this.calculatedTariff = this.dataTariff.precioBase;
+      this.tariffDetails.push(`Tarifa por evento: Bs. ${this.dataTariff.precioBase}`);
+      this.calculateAdditionalConcepts(1);
+      break;
+    case 'mensualidad':
+      break;
+    case 'por_sesion':
+      break;
+    case 'por_club':
+      break;
+    default:
+      console.warn('Tipo de cobro no reconocido:', this.dataTariff.tipoCobro);
   }
-
-  private calculateAdditionalConcepts(baseHours: number): void {
-    if (!this.dataTariff.conceptosDtos || this.dataTariff.conceptosDtos.length === 0) {
-      return;
-    }
-
-    let conceptTotal = 0;
-
-    this.dataTariff.conceptosDtos.forEach(concepto => {
-      if (!concepto.activo) return;
-
-      let conceptAmount = 0;
-      let conceptDetail = '';    
-
-      if (concepto.tipo === 'por_hora') {
-        const applicableHours = this.getApplicableHoursForConcept(concepto);
-        conceptAmount = (concepto.valor || 0) * applicableHours;
-        conceptDetail = `${concepto.concepto}: $${concepto.valor} × ${applicableHours.toFixed(1)}h = $${conceptAmount.toFixed(2)}`;
-      } else if (concepto.tipo === 'porcentaje') {
-        conceptAmount = (this.calculatedTariff * (concepto.valor || 0)) / 100;
-        conceptDetail = `${concepto.concepto}: ${concepto.valor}% = $${conceptAmount.toFixed(2)}`;
-      } else if (concepto.tipo === 'monto_fijo') {
-        conceptAmount = concepto.valor || 0;
-        conceptDetail = `${concepto.concepto}: $${conceptAmount.toFixed(2)}`;
-      }
-
-      if (conceptAmount > 0) {
-        this.calculatedTariff += conceptAmount;
-        conceptTotal += conceptAmount;
-        this.tariffDetails.push(conceptDetail);
-      }
-    });
-
-    if (conceptTotal > 0) {
-      this.tariffDetails.push(`Total conceptos adicionales: $${conceptTotal.toFixed(2)}`);
-    }
+}
+private calculateAdditionalConcepts(baseHours: number): void {
+  if (!this.dataTariff.conceptosDtos || this.dataTariff.conceptosDtos.length === 0) {
+    return;
   }
-
-  private getApplicableHoursForConcept(concepto: any): number {
-    if (!concepto.desde || !concepto.hasta) return 0;
-
-    const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
-    const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
-    const conceptStart = this.timeToMinutes(concepto.desde);
-    const conceptEnd = this.timeToMinutes(concepto.hasta);
-
-    const overlapStart = Math.max(startMinutes, conceptStart);
-    const overlapEnd = Math.min(endMinutes, conceptEnd);
-    
-    const overlapHours = Math.max(0, overlapEnd - overlapStart) / 60;
-    return overlapHours;
+  let conceptTotal = 0;
+  this.dataTariff.conceptosDtos.forEach(concepto => {
+    if (!concepto.activo) return;
+    let conceptAmount = 0;
+    let conceptDetail = '';    
+    if (concepto.tipo === 'por_hora') {
+      const applicableHours = this.getApplicableHoursForConcept(concepto);
+      conceptAmount = (concepto.valor || 0) * applicableHours;
+      conceptDetail = `${concepto.concepto}: $${concepto.valor} × ${applicableHours.toFixed(1)}h = $${conceptAmount.toFixed(2)}`;
+    } else if (concepto.tipo === 'porcentaje') {
+      conceptAmount = (this.calculatedTariff * (concepto.valor || 0)) / 100;
+      conceptDetail = `${concepto.concepto}: ${concepto.valor}% = $${conceptAmount.toFixed(2)}`;
+    } else if (concepto.tipo === 'monto_fijo') {
+      conceptAmount = concepto.valor || 0;
+      conceptDetail = `${concepto.concepto}: $${conceptAmount.toFixed(2)}`;
+    }
+    if (conceptAmount > 0) {
+      this.calculatedTariff += conceptAmount;
+      conceptTotal += conceptAmount;
+      this.tariffDetails.push(conceptDetail);
+    }
+  });
+  if (conceptTotal > 0) {
+    this.tariffDetails.push(`Total conceptos adicionales: $${conceptTotal.toFixed(2)}`);
   }
+}
+private getApplicableHoursForConcept(concepto: any): number {
+  if (!concepto.desde || !concepto.hasta) return 0;
+  const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
+  const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
+  const conceptStart = this.timeToMinutes(concepto.desde);
+  const conceptEnd = this.timeToMinutes(concepto.hasta);
+  const overlapStart = Math.max(startMinutes, conceptStart);
+  const overlapEnd = Math.min(endMinutes, conceptEnd);
+  
+  const overlapHours = Math.max(0, overlapEnd - overlapStart) / 60;
+  return overlapHours;
+}
+
 
   setSelectedDay(date: Date): void {
     this.clearSelectedSlots();
     this.fechaReserva = date;
     this.activeDayName = this.getDayName(date);
   }
-
   onStartTimeChange(event: any): void {
     const timeString = event.target.value;
     if (timeString) {
       const [hours, minutes] = timeString.split(':').map(Number);
       this.startTimeInput = { hours, minutes };
-
       const startTime = this.timeInputToString(this.startTimeInput);
       const endTime = this.timeInputToString(this.endTimeInput);
-
       if (this.timeToMinutes(startTime) >= this.timeToMinutes(endTime)) {
         this.autoAdjustEndTime();
       }    
-
       this.updateSlotsFromTimeInputs();
       this.calculateTariff();
-
       if (!this.validateTimeSelection()) {
         this.showValidationAlert = true;
       }
     }
   }
-
   onEndTimeChange(event: any): void {
     const timeString = event.target.value;
     if (timeString) {
       const [hours, minutes] = timeString.split(':').map(Number);
       this.endTimeInput = { hours, minutes };
-
       this.updateSlotsFromTimeInputs();
       this.calculateTariff();
-
       if (!this.validateTimeSelection()) {
         this.showValidationAlert = true;
       }
     }
   }
-
   private getDayName(date: Date): string {
     const days = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     return days[date.getDay()];
   }
-
   private getFullDayName(date: Date): string {
     const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     return days[date.getDay()];
   }
-
   private timeToMinutes(time: string): number {
     const parts = time.split(':');
     const hours = parseInt(parts[0], 10);
@@ -1674,21 +1188,18 @@ private getReservationBoundariesForDate(date: Date): number[] {
     const result = hours * 60 + minutes;
     return result;
   }
-
   private minutesToTime(minutes: number): string {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     const result = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:00`;
     return result;
   }
-
   getTimeInputValue(timeInput: TimeInput): string {
     if (timeInput.hours === 0 && timeInput.minutes === 0) {
       return '';
     }
     return `${timeInput.hours.toString().padStart(2, '0')}:${timeInput.minutes.toString().padStart(2, '0')}`;
   }
-
   private timeInputToString(timeInput: TimeInput): string {
     return `${timeInput.hours.toString().padStart(2, '0')}:${timeInput.minutes.toString().padStart(2, '0')}:00`;
   }
@@ -1697,92 +1208,50 @@ private getReservationBoundariesForDate(date: Date): number[] {
   trackBySlot(index: number, slot: TimeSlot): string {
     return `${slot.startTime}-${slot.endTime}`;
   }
-
   moveWeek(direction: number): void {
     this.scheduleState.moveWeek(direction);
     this.timeSlotsCache.clear();
     this.clearSelectedSlots();
     this.generateWeekDays();    
-
     if (this.weekDays.length > 0) {
       this.setSelectedDay(this.weekDays[0].date);
     }
   }
-
   goToToday(): void {  
     this.scheduleState.goToToday();
     this.timeSlotsCache.clear();
     this.clearSelectedSlots();
     this.generateWeekDays();
-
     const today = new Date();
     today.setHours(0, 0, 0, 0); 
-
     const todayInWeek = this.weekDays.find(day => 
         day.date.toDateString() === today.toDateString()
     );
-
     if (todayInWeek) {
         this.setSelectedDay(todayInWeek.date);
     } else if (this.weekDays.length > 0) {
         this.setSelectedDay(this.weekDays[0].date);
     }
   }
-
   isDayOpen(): boolean {
     const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
     return daySlots.daySchedule?.abierto === true;
   }
 
-getSlotClasses(slot: TimeSlot): string {
-  // User's selection - SOLID BLUE
-  if (slot.isSelected) {
-    return 'border-primary bg-primary text-white';
-  }
-  
-  // Past or outside tariff - MUTED
-  if (!slot.isAvailable && slot.isPast) {
-    return 'border-secondary bg-light text-muted';
-  }
-  if (!slot.isAvailable && (!slot.isWithinTariffTime || slot.tariffConflict)) {
-    return 'border-warning bg-warning-subtle text-warning';
-  }
-  
-  // Fully reserved - SOLID RED (blocked, cannot click)
-  if (slot.isReserved) {
-    return 'border-danger bg-danger bg-opacity-25 text-danger';
-  }
-  
-  // Available - GREEN
-  if (slot.isAvailable) {
+  getSlotClasses(slot: TimeSlot): string {
+    if (slot.isSelected) return 'border-primary bg-primary text-white';
+    if (!slot.isAvailable) return 'border-secondary bg-light text-muted';
+    if (slot.isReserved) return 'border-danger bg-danger-subtle text-danger';
+    if (!slot.isWithinTariffTime || slot.tariffConflict) return 'border-warning bg-warning-subtle text-warning';
     return 'border-success bg-success-subtle text-success cursor-pointer hover-effect';
   }
-  
-  // Fallback
-  return 'border-secondary bg-light text-muted';
-}
-
-getSlotTextClasses(slot: TimeSlot): string {
-  // Fully selected - white text
-  if (slot.isSelected) {
-    return 'text-white fw-medium';
+  getSlotTextClasses(slot: TimeSlot): string {
+    if (slot.isSelected) return 'text-white fw-medium';
+    if (!slot.isAvailable) return 'text-muted';
+    if (slot.isReserved) return 'text-danger';
+    if (!slot.isWithinTariffTime || slot.tariffConflict) return 'text-warning';
+    return 'text-success';
   }
-  // Reserved
-  if (slot.isReserved) {
-    return 'text-danger';
-  }
-  // Not available
-  if (!slot.isAvailable) {
-    return 'text-muted';
-  }
-  // Tariff issues
-  if (!slot.isWithinTariffTime || slot.tariffConflict) {
-    return 'text-warning';
-  }
-  // Available
-  return 'text-success';
-}
-
   getSlotTooltip(slot: TimeSlot): string {
     if (slot.conflictReason) return slot.conflictReason;
     if (slot.tariffConflict && slot.applicableTariff) {
@@ -1798,9 +1267,7 @@ getSlotTextClasses(slot: TimeSlot): string {
 
   getDayCardClasses(day: WeekDay): string {
     const classes: string[] = ['rounded-3', 'me-1', 'mb-2'];
-
     const daySlots = this.getTimeSlotsForDay(day.date);
-
     if (day.isPast) {
       classes.push('bg-secondary-subtle');
     } else if (daySlots.daySchedule?.abierto) {
@@ -1808,33 +1275,23 @@ getSlotTextClasses(slot: TimeSlot): string {
     } else {
       classes.push('bg-danger-subtle');
     }
-
     if (day.isToday) {
       classes.push('border', 'border-primary', 'border-2');
     }
-
     return classes.join(' ');
   }
-
   getOperatingHoursDisplay(): string {
     const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
-
     if (!daySlots.daySchedule?.abierto) return 'Cerrado';
-
     const operatingPeriods = this.getOperatingPeriodsForDay(this.fechaReserva);
-
     if (operatingPeriods.length === 0) return 'Cerrado';
-
     const periodDisplays = operatingPeriods.map(period => 
       `${period.start.slice(0, 5)} - ${period.end.slice(0, 5)}`
     );    
-
     return periodDisplays.join(', ');
   }
-
   getTipoCobroDisplay(): string {
     if (!this.dataTariff?.tipoCobro) return '';  
-
     const tipoCobroMap: { [key: string]: string } = {
       'por_hora': 'Por Hora',
       'por_persona': 'Por Persona',
@@ -1843,7 +1300,7 @@ getSlotTextClasses(slot: TimeSlot): string {
       'por_sesion': 'Por Sesión',
       'por_club': 'Por Club'
     };
-
     return tipoCobroMap[this.dataTariff.tipoCobro] || this.dataTariff.tipoCobro;
   }
+
 }

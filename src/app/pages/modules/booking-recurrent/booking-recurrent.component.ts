@@ -9,10 +9,10 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { PagoService } from 'src/app/core/services/api/pago.service';
-import { ReservaRecurrenteService } from 'src/app/core/services/api/reserva-recurrente.service';
+import { ReservaRecurrenteFilters, ReservaRecurrenteService } from 'src/app/core/services/api/reserva-recurrente.service';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
-import { EstadoPago, EstadoReserva, EstadoUsuario, EstadoValidacion } from 'src/app/core/constants/Estados';
+import { EstadoReserva, EstadoValidacion, EstadoPago, EstadoUsuario, EstadoRuat, EstadoActual, StatusUtils} from 'src/app/core/constants/Estados';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { Categoria } from 'src/app/core/models/categoria.model';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
@@ -42,6 +42,9 @@ export class BookingRecurrentComponent implements OnInit {
   userData!: any;
   contribuyente!: Contribuyente;
 
+  estadoReservaOptions = StatusUtils.getEstadoReservaOptions();
+  estadoValidacionOptions = StatusUtils.getEstadoValidacionOptions();
+
   loading: boolean = true;
   reservasList: any;
   temp: any[] = [];
@@ -51,14 +54,7 @@ export class BookingRecurrentComponent implements OnInit {
   consultResults: any[] = [];
   searchResults: any;
 
-  // searchTerm: string = '';
-  date!: { from: Date, to: Date };
-  // estadoValidacion: string = '';
-  // estadoReserva: string = '';
-  // tipoRecurrencia: string = '';
-  // categoria: string = '';
-  // activo: string = '';
-  
+  dateRange: { from: Date, to: Date } | null = null;  
   filters = {
     searchTerm: '',
     estadoReserva: '',
@@ -130,7 +126,7 @@ export class BookingRecurrentComponent implements OnInit {
       { name: 'Activo', prop: 'activo', tag: true, visible: false },
       { name: 'Fecha Creación', prop: 'reservaDto.fechaCreacion', date: true, visible: false },
       { name: 'Tasa', prop: 'reservaDto.numeroTasa', visible: true },
-      { name: 'Estado Validación', prop: 'reservaDto.estadoValidacion', tag: true, visible: true },
+      { name: 'Estado Validación', prop: 'reservaDto.estadoValidacion', tag: true, visible: this.canActivate.includes('VALIDAR') },
       { name: 'Estado Reserva', prop: 'reservaDto.estadoReserva', tag: true, visible: true },
       { name: 'Monto Total', prop: 'reservaDto.montoTotal', visible: false },
       { name: 'Observaciones', prop: 'observaciones', visible: false },
@@ -186,17 +182,6 @@ export class BookingRecurrentComponent implements OnInit {
     this.getRecurrentReservations();
   }
 
-  private readonly TAB_FILTERS: { [key: number]: (item: any) => boolean } = {
-      0: () => true,
-      1: (item) => item.reservaDto?.estadoReserva === EstadoReserva.SOLICITADA,
-      2: (item) => item.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE,
-      3: (item) => item.reservaDto?.estadoReserva === EstadoReserva.PAGADA,
-      4: (item) => item.reservaDto?.estadoReserva === EstadoReserva.EN_CURSO,
-      5: (item) => item.reservaDto?.estadoReserva === EstadoReserva.COMPLETADA,
-      6: (item) => item.reservaDto?.estadoReserva === EstadoReserva.CANCELADA || 
-                  item.reservaDto?.estadoReserva === EstadoReserva.EXPIRADA ||
-                  item.reservaDto?.estadoReserva === EstadoReserva.NO_SHOW,
-  };
   onNavChange(changeEvent: NgbNavChangeEvent) {
     this.filters.tab = changeEvent.nextId;
     this.currentPage = 1;
@@ -220,92 +205,21 @@ export class BookingRecurrentComponent implements OnInit {
       toDate: null,
       tab: 0
     };
+    this.dateRange = null
     this.currentPage = 1;
     this.getRecurrentReservations();
   }
-  // onNavChange(changeEvent: NgbNavChangeEvent) {
-  //     const filterFn = this.TAB_FILTERS[changeEvent.nextId];
-  //     if (filterFn) {
-  //         this.reservasList = this.temp.filter(filterFn);
-  //     }
-  // }
-  // clearFilters() {
-  //   this.searchTerm = '';
-  //   this.date = { from: null!, to: null! };
-  //   this.estadoValidacion = '';
-  //   this.estadoReserva = '';
-  //   this.categoria = '';
-  //   this.tipoRecurrencia = '';
-  //   this.activo = '';
-  //   this.applyFilters();
-  // }
-  // applyFilters() {
-  //   if (!this.temp || this.temp.length === 0) return;
-  //   this.reservasList = this.temp.filter(item => {
-  //     const searchMatch = !this.searchTerm || this.searchInReserva(item, this.searchTerm);
-  //     let dateMatch = true;
-  //     if (this.date && this.date.from && this.date.to) {
-  //       const itemDate = new Date(item.fechaInicio);
-  //       const fromDate = new Date(this.date.from);
-  //       const toDate = new Date(this.date.to);        
-  //       itemDate.setHours(0, 0, 0, 0);
-  //       fromDate.setHours(0, 0, 0, 0);
-  //       toDate.setHours(0, 0, 0, 0);        
-  //       dateMatch = itemDate >= fromDate && itemDate <= toDate;
-  //     }
-  //     const estadoValidacionMatch = !this.estadoValidacion || 
-  //       item.reservaDto?.estadoValidacion === this.estadoValidacion;
-  //       const estadoReservaMatch = !this.estadoReserva || 
-  //       item.reservaDto?.estadoReserva === this.estadoReserva;
-  //     const categoriaMatch = !this.categoria || 
-  //       item.categoria?.toLowerCase().includes(this.categoria.toLowerCase());
-  //     const tipoRecurrenciaMatch = !this.tipoRecurrencia || 
-  //       item.tipoRecurrencia?.toLowerCase().includes(this.tipoRecurrencia.toLowerCase());
-  //     const activoMatch = !this.activo || 
-  //       (this.activo === 'activo' && item.activo === true) ||
-  //       (this.activo === 'inactivo' && item.activo === false);
-  //     return searchMatch && dateMatch && estadoValidacionMatch && estadoReservaMatch && 
-  //            categoriaMatch && tipoRecurrenciaMatch && activoMatch;
-  //   });
-  // }
-  // private searchInReserva(item: ReservaRecurrente, searchTerm: string): boolean {
-  //   if (!searchTerm) return true;
-  //   const term = searchTerm.toLowerCase();
-  //   if (item.categoria?.toLowerCase().includes(term) ||
-  //       item.superficie?.toLowerCase().includes(term) ||
-  //       item.observaciones?.toLowerCase().includes(term) ||
-  //       item.tipoRecurrencia?.toLowerCase().includes(term) ||
-  //       item.diasSemana?.toLowerCase().includes(term)) {
-  //     return true;
-  //   }
-  //   if (item.reservaDto) {
-  //     const reserva = item.reservaDto;      
-  //     if (reserva.numeroTasa?.toLowerCase().includes(term) ||
-  //         reserva.numeroReserva?.toLowerCase().includes(term) ||
-  //         reserva.montoTotal?.toString().includes(term)) {
-  //       return true;
-  //     }      
-  //     if (reserva.contribuyenteDto) {
-  //       const contrib = reserva.contribuyenteDto;
-  //       if (contrib.nombreCompleto?.toLowerCase().includes(term) ||
-  //           contrib.nombre?.toLowerCase().includes(term) ||
-  //           contrib.primerApellido?.toLowerCase().includes(term) ||
-  //           contrib.segundoApellido?.toLowerCase().includes(term) ||
-  //           contrib.numeroDocumento?.toLowerCase().includes(term) ||
-  //           contrib.email?.toLowerCase().includes(term) ||
-  //           contrib.telefono?.toLowerCase().includes(term)) {
-  //         return true;
-  //       }
-  //     }
-  //   }
-  //   if (item.reservaDto) {
-  //     if (item.reservaDto?.campoDeportivoDto.complejoDto.nombre?.toLowerCase().includes(term) ||
-  //         item.reservaDto?.campoDeportivoDto?.nombre?.toLowerCase().includes(term)) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }
+  onDateRangeChange(value: { from: Date, to: Date } | null): void {
+      this.dateRange = value;
+      if (value) {
+          this.filters.fromDate = value.from;
+          this.filters.toDate = value.to;
+      } else {
+          this.filters.fromDate = null;
+          this.filters.toDate = null;
+      }
+      this.applyFilters();
+  }
 
   /* NAVIGATIONS & MODALS */
   public agregarReserva() {
@@ -470,9 +384,9 @@ export class BookingRecurrentComponent implements OnInit {
               } 
               return reservaRec;
             } else if(reservaDto.estadoValidacion === EstadoValidacion.RECHAZADA) {
-                return await this.updateReservationByRR(reservaRec, {
-                  estadoReserva: EstadoReserva.CANCELADA
-                });
+              return await this.updateReservationByRR(reservaRec, {
+                estadoReserva: EstadoReserva.CANCELADA
+              });
             }
             return reservaRec;
           }
@@ -661,7 +575,7 @@ export class BookingRecurrentComponent implements OnInit {
         const existingPayment = item.reservaDto?.pagosDtoList?.find(pago => 
           pago.folio === pagoTasa.folio && pago.numeroTasa === pagoTasa.numeroTasa
         );      
-          if (!existingPayment && item.reservaDto) {
+        if (!existingPayment && item.reservaDto) {
             const nuevoPago: Pago = {
               numeroTasa: pagoTasa.numeroTasa,
               tipoTasa: "TO",
@@ -677,14 +591,14 @@ export class BookingRecurrentComponent implements OnInit {
               reservaDto: item.reservaDto
             };            
             await this.pagoService.save(nuevoPago).toPromise();
-          }
-          return { 
+        }
+        return { 
             item, 
             text: `${text} - Pago verificado`, 
             type: 'success',
             hasPayment: true,
             pagoData: pagoTasa,
-          };
+        };
           // const pagoResp: any = await this.pagoService.save(nuevoPago).toPromise();
           // if (pagoResp.status === 'OK') {
           //   item.reservaDto.estadoReserva = EstadoReserva.PAGADA;
@@ -731,7 +645,7 @@ export class BookingRecurrentComponent implements OnInit {
           numeroTasa: reserva.reservaDto.numeroTasa,
           motivo: "NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO",
           observacion: "ANULADO AUTOMATICO, VENCIDO PLAZO DE RESERVA"
-        };        
+        };
         if (!this.ruatService.isTokenAvailable()) {
           console.warn('RUAT token not available, skipping tasa cancellation');
         } else {
@@ -748,6 +662,7 @@ export class BookingRecurrentComponent implements OnInit {
       fechaRechazo: new Date()
     });
   }
+
   /* API Services */
   private async updateReservationByRR(reserva: ReservaRecurrente, updates: any): Promise<ReservaRecurrente> {
     if (!reserva.reservaDto) return reserva;    
@@ -800,11 +715,11 @@ export class BookingRecurrentComponent implements OnInit {
           fromDate: this.filters.fromDate?.toISOString(),
           toDate: this.filters.toDate?.toISOString(),
         }
-      ).toPromise(); 
+      ).toPromise();
       if (!data || data['status'] !== 'OK') {
         throw new Error(data?.payload || 'Respuesta inválida del servidor');
       }
-      let list: ReservaRecurrente[] = [];        
+      let list: ReservaRecurrente[] = [];
       if (data.payload?.content && Array.isArray(data.payload.content)) {
         list = data.payload.content;
       } else if (Array.isArray(data.payload)) {
