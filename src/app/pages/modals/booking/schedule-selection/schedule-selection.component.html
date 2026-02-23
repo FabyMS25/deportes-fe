@@ -72,8 +72,7 @@
             </button>
           </div>
         </div>
-      </div>
-      
+      </div>      
       <div class="position-relative mb-2">
         <ul ngbNav #Header="ngbNav" class="nav nav-pills nav-fill mb-3 week-nav-custom" 
           [activeId]="activeDayName" [destroyOnHide]="false">        
@@ -135,36 +134,31 @@
                                   <span class="fw-bold fs-8" [class]="getSlotTextClasses(slot)">
                                     {{ slot.time }}
                                   </span>
-                                  
-                                  <!-- Badge for partially selected (user's selection) -->
                                   <span *ngIf="slot.isPartialSelection && slot.isSelected" 
                                         class="badge bg-primary text-white small">
                                     <i class="ri-time-line me-1"></i>
                                     {{ slot.partialStartTime }} - {{ slot.partialEndTime }}
                                   </span>
-                                  
-                                  <!-- Badge for partially reserved (existing reservation) -->
                                   <span *ngIf="slot.isPartiallyReserved && !slot.isSelected" 
                                         class="badge bg-danger bg-opacity-25 text-danger small">
                                     <i class="ri-lock-line me-1"></i>
                                     Reservado {{ slot.reservedStartTime }} - {{ slot.reservedEndTime }}
                                   </span>
                                 </div>
-                                
                                 <div class="small">
-                                  <!-- Slot seleccionado por el usuario (current selection) -->
                                   <span *ngIf="slot.isSelected" class="text-white">
                                     <i class="ri-check-double-line me-1"></i>
                                     <span *ngIf="slot.isPartialSelection">
                                       Por reservar {{ slot.partialStartTime }} - {{ slot.partialEndTime }}
                                     </span>
-                                    <span *ngIf="!slot.isPartialSelection">
+                                    <span *ngIf="!slot.isPartialSelection && !slot.isPartiallyReserved">
                                       Por reservar
                                     </span>
+                                    <span *ngIf="!slot.isPartialSelection && slot.isPartiallyReserved && slot.availableStartTime && slot.availableEndTime">
+                                      Por reservar {{ slot.availableStartTime }} - {{ slot.availableEndTime }}
+                                    </span>
                                   </span>
-                                  
-                                  <!-- Slot parcialmente reservado (muestra disponibilidad) -->
-                                  <span *ngIf="slot.isPartiallyReserved && !slot.isSelected && slot.isAvailable" 
+                                  <span *ngIf="slot.isPartiallyReserved && !slot.isSelected && slot.availableStartTime && slot.availableEndTime" 
                                         class="text-warning">
                                     <i class="ri-time-line me-1"></i> 
                                     <span *ngIf="slot.availableStartTime && slot.availableEndTime">
@@ -174,31 +168,21 @@
                                       Parcialmente reservado
                                     </span>
                                   </span>
-                                  
-                                  <!-- Slot parcial disponible para seleccionar (no reservado) -->
                                   <span *ngIf="slot.isPartialSelection && !slot.isReserved && slot.isAvailable && !slot.isSelected && !slot.isPartiallyReserved" 
                                         class="text-info">
                                     <i class="ri-time-line me-1"></i> 
                                     Disponible {{ slot.partialStartTime }} - {{ slot.partialEndTime }}
                                   </span>
-                                  
-                                  <!-- Slot pasado -->
                                   <span *ngIf="slot.isPast && !slot.isSelected" class="text-muted">
                                     <i class="ri-time-line me-1"></i> No disponible
                                   </span>
-                                  
-                                  <!-- Slot completamente reservado -->
                                   <span *ngIf="slot.isReserved && !slot.isSelected && !slot.isPartiallyReserved" class="text-danger">
                                     <i class="ri-lock-line me-1"></i> Reservado
                                   </span>
-                                  
-                                  <!-- Otra tarifa -->
                                   <span *ngIf="(!slot.isWithinTariffTime || slot.tariffConflict) && !slot.isSelected && !slot.isPast" 
                                         class="text-warning">
                                     <i class="ri-price-tag-line me-1"></i> Otra tarifa
                                   </span>
-                                  
-                                  <!-- Slot disponible completo -->
                                   <span *ngIf="slot.isAvailable && !slot.isReserved && !slot.isPartialSelection && !slot.isPartiallyReserved && slot.isWithinTariffTime && !slot.tariffConflict && !slot.isSelected" 
                                         class="text-success">
                                     <i class="ri-checkbox-circle-line me-1"></i> Disponible
@@ -239,15 +223,11 @@
                                   <span class="fw-bold fs-8" [class]="getSlotTextClasses(slot)">
                                     {{ slot.time }}
                                   </span>
-                                  
-                                  <!-- Badge for partially selected (user's selection) -->
                                   <span *ngIf="slot.isPartialSelection && slot.isSelected" 
                                         class="badge bg-primary text-white small">
                                     <i class="ri-time-line me-1"></i>
                                     {{ slot.partialStartTime }} - {{ slot.partialEndTime }}
                                   </span>
-                                  
-                                  <!-- Badge for partially reserved (existing reservation) -->
                                   <span *ngIf="slot.isPartiallyReserved && !slot.isSelected" 
                                         class="badge bg-danger bg-opacity-25 text-danger small">
                                     <i class="ri-lock-line me-1"></i>
@@ -256,19 +236,19 @@
                                 </div>
                                 
                                 <div class="small">
-                                  <!-- Slot seleccionado por el usuario (current selection) -->
                                   <span *ngIf="slot.isSelected" class="text-white">
                                     <i class="ri-check-double-line me-1"></i>
                                     <span *ngIf="slot.isPartialSelection">
                                       Por reservar {{ slot.partialStartTime }} - {{ slot.partialEndTime }}
                                     </span>
-                                    <span *ngIf="!slot.isPartialSelection">
+                                    <span *ngIf="!slot.isPartialSelection && !slot.isPartiallyReserved">
                                       Por reservar
                                     </span>
+                                    <span *ngIf="!slot.isPartialSelection && slot.isPartiallyReserved && slot.availableStartTime && slot.availableEndTime">
+                                      Por reservar {{ slot.availableStartTime }} - {{ slot.availableEndTime }}
+                                    </span>
                                   </span>
-                                  
-                                  <!-- Slot parcialmente reservado (muestra disponibilidad) -->
-                                  <span *ngIf="slot.isPartiallyReserved && !slot.isSelected && slot.isAvailable" 
+                                  <span *ngIf="slot.isPartiallyReserved && !slot.isSelected && slot.availableStartTime && slot.availableEndTime" 
                                         class="text-warning">
                                     <i class="ri-time-line me-1"></i> 
                                     <span *ngIf="slot.availableStartTime && slot.availableEndTime">
@@ -278,31 +258,21 @@
                                       Parcialmente reservado
                                     </span>
                                   </span>
-                                  
-                                  <!-- Slot parcial disponible para seleccionar (no reservado) -->
                                   <span *ngIf="slot.isPartialSelection && !slot.isReserved && slot.isAvailable && !slot.isSelected && !slot.isPartiallyReserved" 
                                         class="text-info">
                                     <i class="ri-time-line me-1"></i> 
                                     Disponible {{ slot.partialStartTime }} - {{ slot.partialEndTime }}
                                   </span>
-                                  
-                                  <!-- Slot pasado -->
                                   <span *ngIf="slot.isPast && !slot.isSelected" class="text-muted">
                                     <i class="ri-time-line me-1"></i> No disponible
                                   </span>
-                                  
-                                  <!-- Slot completamente reservado -->
                                   <span *ngIf="slot.isReserved && !slot.isSelected && !slot.isPartiallyReserved" class="text-danger">
                                     <i class="ri-lock-line me-1"></i> Reservado
                                   </span>
-                                  
-                                  <!-- Otra tarifa -->
                                   <span *ngIf="(!slot.isWithinTariffTime || slot.tariffConflict) && !slot.isSelected && !slot.isPast" 
                                         class="text-warning">
                                     <i class="ri-price-tag-line me-1"></i> Otra tarifa
                                   </span>
-                                  
-                                  <!-- Slot disponible completo -->
                                   <span *ngIf="slot.isAvailable && !slot.isReserved && !slot.isPartialSelection && !slot.isPartiallyReserved && slot.isWithinTariffTime && !slot.tariffConflict && !slot.isSelected" 
                                         class="text-success">
                                     <i class="ri-checkbox-circle-line me-1"></i> Disponible
@@ -343,36 +313,31 @@
                                   <span class="fw-bold fs-8" [class]="getSlotTextClasses(slot)">
                                     {{ slot.time }}
                                   </span>
-                                  
-                                  <!-- Badge for partially selected (user's selection) -->
                                   <span *ngIf="slot.isPartialSelection && slot.isSelected" 
                                         class="badge bg-primary text-white small">
                                     <i class="ri-time-line me-1"></i>
                                     {{ slot.partialStartTime }} - {{ slot.partialEndTime }}
                                   </span>
-                                  
-                                  <!-- Badge for partially reserved (existing reservation) -->
                                   <span *ngIf="slot.isPartiallyReserved && !slot.isSelected" 
                                         class="badge bg-danger bg-opacity-25 text-danger small">
                                     <i class="ri-lock-line me-1"></i>
                                     Reservado {{ slot.reservedStartTime }} - {{ slot.reservedEndTime }}
                                   </span>
                                 </div>
-                                
                                 <div class="small">
-                                  <!-- Slot seleccionado por el usuario (current selection) -->
                                   <span *ngIf="slot.isSelected" class="text-white">
                                     <i class="ri-check-double-line me-1"></i>
                                     <span *ngIf="slot.isPartialSelection">
                                       Por reservar {{ slot.partialStartTime }} - {{ slot.partialEndTime }}
                                     </span>
-                                    <span *ngIf="!slot.isPartialSelection">
+                                    <span *ngIf="!slot.isPartialSelection && !slot.isPartiallyReserved">
                                       Por reservar
                                     </span>
+                                    <span *ngIf="!slot.isPartialSelection && slot.isPartiallyReserved && slot.availableStartTime && slot.availableEndTime">
+                                      Por reservar {{ slot.availableStartTime }} - {{ slot.availableEndTime }}
+                                    </span>
                                   </span>
-                                  
-                                  <!-- Slot parcialmente reservado (muestra disponibilidad) -->
-                                  <span *ngIf="slot.isPartiallyReserved && !slot.isSelected && slot.isAvailable" 
+                                  <span *ngIf="slot.isPartiallyReserved && !slot.isSelected && slot.availableStartTime && slot.availableEndTime" 
                                         class="text-warning">
                                     <i class="ri-time-line me-1"></i> 
                                     <span *ngIf="slot.availableStartTime && slot.availableEndTime">
@@ -382,31 +347,21 @@
                                       Parcialmente reservado
                                     </span>
                                   </span>
-                                  
-                                  <!-- Slot parcial disponible para seleccionar (no reservado) -->
                                   <span *ngIf="slot.isPartialSelection && !slot.isReserved && slot.isAvailable && !slot.isSelected && !slot.isPartiallyReserved" 
                                         class="text-info">
                                     <i class="ri-time-line me-1"></i> 
                                     Disponible {{ slot.partialStartTime }} - {{ slot.partialEndTime }}
                                   </span>
-                                  
-                                  <!-- Slot pasado -->
                                   <span *ngIf="slot.isPast && !slot.isSelected" class="text-muted">
                                     <i class="ri-time-line me-1"></i> No disponible
                                   </span>
-                                  
-                                  <!-- Slot completamente reservado -->
                                   <span *ngIf="slot.isReserved && !slot.isSelected && !slot.isPartiallyReserved" class="text-danger">
                                     <i class="ri-lock-line me-1"></i> Reservado
                                   </span>
-                                  
-                                  <!-- Otra tarifa -->
                                   <span *ngIf="(!slot.isWithinTariffTime || slot.tariffConflict) && !slot.isSelected && !slot.isPast" 
                                         class="text-warning">
                                     <i class="ri-price-tag-line me-1"></i> Otra tarifa
                                   </span>
-                                  
-                                  <!-- Slot disponible completo -->
                                   <span *ngIf="slot.isAvailable && !slot.isReserved && !slot.isPartialSelection && !slot.isPartiallyReserved && slot.isWithinTariffTime && !slot.tariffConflict && !slot.isSelected" 
                                         class="text-success">
                                     <i class="ri-checkbox-circle-line me-1"></i> Disponible
