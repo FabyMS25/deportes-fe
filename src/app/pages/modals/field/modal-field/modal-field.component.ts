@@ -19,6 +19,7 @@ import { CategoriasService } from 'src/app/core/services/api/categorias.service'
 import { frecuencia, TipoCobro, tiposConcepto } from 'src/app/core/constants/TipoCobro';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
 import { EstadoActual } from 'src/app/core/constants/Estados';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 @Component({
   selector: 'app-modal-field',
@@ -28,7 +29,8 @@ import { EstadoActual } from 'src/app/core/constants/Estados';
       FormsModule,
       ReactiveFormsModule,
       NgbDatepickerModule,
-      TranslateModule    
+      TranslateModule,
+      NgSelectModule 
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './modal-field.component.html',
