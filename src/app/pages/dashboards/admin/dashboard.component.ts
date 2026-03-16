@@ -671,19 +671,33 @@ export class DashboardComponent implements OnInit {
   private async getReservations() {
     try {
       this.loading = true;
-      const data: any = await this.reservasService.getAll().toPromise();      
-      if (data['status'] === 'OK') {
-        this.reservationsList = data.payload.content;
-      } else {
-      }
+      const allReservations = await this.getAllPages(0, []);
+      this.reservationsList = allReservations;
+      console.log('Total reservas cargadas:', this.reservationsList.length);
     } catch (error) {
-      Swal.fire({ 
-        text: 'Error al obtener las reservas', 
-        icon: 'error', 
-        confirmButtonColor: '#299cdb' 
+      Swal.fire({
+        text: 'Error al obtener las reservas',
+        icon: 'error',
+        confirmButtonColor: '#299cdb'
       });
     } finally {
       this.loading = false;
+    }
+  }
+
+  private async getAllPages(page: number, accumulatedData: any[]): Promise<any[]> {
+    const data: any = await this.reservasService.getAll(page, 20).toPromise();
+    if (data['status'] === 'OK') {
+      const newData = accumulatedData.concat(data.payload.content);
+      const pageInfo = data.payload;
+      if (!pageInfo.last) {
+        return this.getAllPages(page + 1, newData);
+      } else {
+        return newData;
+      }
+    } else {
+      console.error('Error en la respuesta de la API', data);
+      return accumulatedData;
     }
   }
 }
