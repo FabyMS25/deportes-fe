@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 import { Contribuyente } from '../models/contribuyente.model';
+import { TokenStorageService } from './token-storage.service';
 
 const apiUrl = `${environment.backendUrl}/ruat`;
 
@@ -14,6 +15,7 @@ export class RuatRequestsService {
 
   constructor(
     private http: HttpClient,
+    private storageService: TokenStorageService,
   ) { }
 
   private getToken(): string | null {
@@ -160,12 +162,10 @@ export class RuatRequestsService {
   }
 
   setToken(token: string): void {
-    sessionStorage.setItem('ruat-token', token);
-    window.sessionStorage.setItem('ruat-token', token);
+    this.storageService.saveRuatToken(token);
   }
 
   removeToken(): void {
-    sessionStorage.removeItem('ruat-token');
-    window.sessionStorage.removeItem('ruat-token');
+    this.storageService.clearRuatToken();
   }
 }

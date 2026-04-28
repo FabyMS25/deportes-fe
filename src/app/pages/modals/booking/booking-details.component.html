@@ -249,6 +249,18 @@
               <strong>Aprobación automática:</strong> Su reserva será confirmada inmediatamente 
               después del pago, sin necesidad de revisión manual.
             </div>
+            <div class="alert alert-warning small py-2 mb-0"
+                 *ngIf="bookingStep >= BookingStep.HORARIO_SELECTION && bookingState.tarifa?.tipoCobro === 'por_evento' && maxEventDurationDisplay"
+                 ngxSlickItem>
+              <i class="ri-timer-line me-1"></i>
+              <strong>Evento:</strong> Duración máxima permitida: <strong>{{ maxEventDurationDisplay }}</strong>.
+            </div>
+            <div class="alert alert-light border small py-2 mb-0"
+                 *ngIf="bookingStep >= BookingStep.HORARIO_SELECTION && minReservationDurationDisplay"
+                 ngxSlickItem>
+              <i class="ri-time-line me-1"></i>
+              <strong>Duración mínima:</strong> {{ minReservationDurationDisplay }}.
+            </div>
             <div class="alert alert-info small py-2 mb-0" 
                  *ngIf="bookingStep > BookingStep.CAMPO_SELECTION && this.bookingType === 'recurrente'" 
                  ngxSlickItem>
@@ -271,8 +283,8 @@
                   <p class="mb-1 fs-13" *ngIf="anticipationTime">
                     Reserva con <strong>{{ anticipationTime }}</strong> de anticipación mínima.
                   </p>
-                  <small class="text-muted fs-12" *ngIf="this.systemConfigList['HORAS_VALIDACION_PAGO']?.valorNumerico">
-                    Pago en <strong>{{ this.systemConfigList['HORAS_VALIDACION_PAGO'].valorNumerico }}h</strong> para confirmar.
+                  <small class="text-muted fs-12" *ngIf="paymentValidationDisplay">
+                    Pago en <strong>{{ paymentValidationDisplay }}</strong> para confirmar.
                   </small>
                 </div>
               </div>

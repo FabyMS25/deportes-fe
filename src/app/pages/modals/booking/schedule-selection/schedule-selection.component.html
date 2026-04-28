@@ -393,7 +393,7 @@
                   </div>
                 </div>
                   <div class="row g-2 align-items-end" [class.opacity-50]="!isDayOpen()">
-                    <div class="col-6 col-md-4">
+                    <div class="col-6 col-md-3">
                       <label class="form-label fw-semibold small mb-0">
                         <i class="ri-time-line me-1 text-primary"></i>Hora Inicio
                       </label>
@@ -405,7 +405,7 @@
                         step="300"
                         [disabled]="!isDayOpen()">
                     </div>
-                    <div class="col-6 col-md-4">
+                    <div class="col-6 col-md-3">
                       <label class="form-label fw-semibold mb-0">
                         <i class="ri-time-line me-2 text-primary"></i>Hora Fin
                       </label>
@@ -417,7 +417,24 @@
                         step="300"
                         [disabled]="!isDayOpen()">
                     </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-6 col-md-3">
+                      <label class="form-label fw-semibold small mb-0">
+                        <i class="ri-group-line me-1 text-primary"></i>Personas
+                        <span class="text-danger" *ngIf="requiresCantidadPersonas">*</span>
+                        <small class="text-muted fw-normal" *ngIf="!requiresCantidadPersonas">(opcional)</small>
+                      </label>
+                      <input
+                        type="number"
+                        class="form-control"
+                        [(ngModel)]="cantidadPersonas"
+                        (ngModelChange)="onCantidadPersonasChange()"
+                        min="1"
+                        [max]="dataField.capacidadPersonas || null"
+                        placeholder="Ej: 10"
+                        [required]="requiresCantidadPersonas"
+                        [disabled]="!isDayOpen()">
+                    </div>
+                    <div class="col-6 col-md-3">
                       <div class="bg-white rounded-2 p-2 border text-center">
                         <small class="text-muted d-block">Duración</small>
                         <strong class="text-primary">{{ getDurationDisplay() }}</strong>
@@ -432,6 +449,17 @@
                       </div>
                     </div>
                   </div>
+                  <ng-container *ngIf="getCurrentValidationErrors() as currentErrors">
+                    <div *ngIf="currentErrors.length > 0" class="alert alert-warning py-2 px-3 mt-2 mb-0">
+                      <div class="d-flex align-items-start">
+                        <i class="ri-error-warning-line me-2 mt-1"></i>
+                        <div class="small">
+                          <strong class="d-block">Revise la selección</strong>
+                          <div *ngFor="let error of currentErrors">{{ error }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </ng-container>
               </div>
             </ng-template>
           </li>
@@ -454,12 +482,14 @@
           <button type="button" class="btn-close" (click)="showValidationAlert = false"></button>
         </div>
       </div>
-      <div *ngIf="dataTariff.desde && dataTariff.hasta" class="border rounded bg-light my-2 p-2">
+      <div *ngIf="dataTariff" class="border rounded bg-light my-2 p-2">
         <div class="d-flex justify-content-between align-items-center">
           <i class="ri-price-tag-3-line me-2"></i>
+
           <div class="flex-grow-1">
             <div class="d-flex justify-content-between align-items-center">
               <strong class="d-block">Tarifa: {{ dataTariff.descripcion }}</strong>
+
               <button 
                 type="button" 
                 class="btn btn-sm btn-outline-secondary"
@@ -467,26 +497,32 @@
                 [disabled]="calculatedTariff === 0">
                 {{ showTariffBreakdown ? 'Ocultar' : 'Mostrar' }} detalles
               </button>
-            </div>            
+            </div>
+
+            <small *ngIf="dataTariff.desde && dataTariff.hasta" class="d-block text-muted mt-1">
+              <i class="ri-time-line me-1"></i>
+              Rango horario aplicable: {{ dataTariff.desde.slice(0, 5) }} - {{ dataTariff.hasta.slice(0, 5) }}
+            </small>
+
             <small *ngIf="hasMultipleApplicableTariffs" class="d-block text-warning mt-1">
               <i class="ri-alert-line me-1"></i>
               Existen otras tarifas en horarios adyacentes. Seleccione horarios dentro del rango indicado.
-              <small class="d-block">
-                Rango horario Aplicable: {{ dataTariff.desde.slice(0, 5) }} - {{ dataTariff.hasta.slice(0, 5) }}
-              </small>
             </small>
           </div>
         </div>
+
         <div class="mt-2">
           <div class="d-flex justify-content-between align-items-center">
             <span class="fw-medium">
-              Total Pacial: 
-              <small class="text-mutted">{{ getTipoCobroDisplay() }}</small>
+              Total Parcial:
+              <small class="text-muted">{{ getTipoCobroDisplay() }}</small>
             </span>
+
             <span class="h5 mb-0 text-primary fw-bold">
               Bs. {{ calculatedTariff.toFixed(2) }}
             </span>
           </div>
+
           <div *ngIf="showTariffBreakdown && tariffDetails.length > 0" class="mt-2">
             <div class="border-top pt-2">
               <small class="fw-medium">Desglose:</small>
@@ -495,27 +531,25 @@
               </div>
             </div>
           </div>
+
           <div *ngIf="calculatedTariff === 0" class="text-muted small mt-1">
             <em>Seleccione un horario para calcular la tarifa</em>
           </div>
         </div>
       </div>
-      <!-- <div class="alert alert-info mt-3 mb-0" role="alert">
+      <div class="alert alert-info alert-smb-0" role="alert">
         <div class="d-flex">
-          <div class="flex-shrink-0">
-            <i class="ri-information-line fs-18"></i>
-          </div>
-          <div class="flex-grow-1 ms-3">
-            <h6 class="alert-heading mb-2">Información Importante</h6>
+          <i class="ri-information-line fs-5 me-2"></i>
+          <div class="small">
+            <strong class="d-block mb-1">Información Importante:</strong>
             <ul class="mb-0 ps-3">
               <li class="mb-1" *ngIf="anticipationTimeDisplay">
                 Las reservas deben realizarse con <strong>{{ anticipationTimeDisplay }}</strong> de anticipación mínima.
               </li>
               <li *ngIf="this.dataTariff.tipoCobro === 'por_evento'" class="mb-1">
-                Para eventos, seleccione un día disponible y la duración deseada.
-              </li>
-              
-              <li class="mb-1">
+                Para eventos, la duración máxima permitida es <strong>{{ maxDurationDisplay }}</strong>.
+              </li>              
+              <li class="mb-1" *ngIf="systemConfigs['HORAS_VALIDACION_PAGO']?.valorNumerico">
                 Después de crear la reserva, tendrá <strong>{{ systemConfigs['HORAS_VALIDACION_PAGO'].valorNumerico }} horas</strong> para realizar el pago.
               </li>
               <li *ngIf="dataField.requiereAprobacion && dataField.maxDuracionAutoAprobacion">
@@ -527,7 +561,7 @@
             </ul>
           </div>
         </div>
-      </div> -->
+      </div>
     </div>
     <div class="card-footer bg-light">
       <div class="d-flex justify-content-between align-items-center">
@@ -546,6 +580,7 @@
         <button type="button" 
                 class="btn btn-primary" 
                 [disabled]="!isFormValid() || isCheckingAvailability" 
+                [title]="getConfirmDisabledReason() || ''"
                 (click)="confirmSelection()">
           <span *ngIf="!isCheckingAvailability">
             <i class="ri-check-line me-1"></i>

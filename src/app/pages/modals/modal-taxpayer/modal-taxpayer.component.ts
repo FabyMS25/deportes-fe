@@ -1,10 +1,26 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, EventEmitter, Input, Output, TemplateRef, ViewChild, OnInit } from '@angular/core';
+import {
+  Component,
+  CUSTOM_ELEMENTS_SCHEMA,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AbstractControl, FormBuilder,FormArray, FormGroup, UntypedFormBuilder,UntypedFormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { NgbDatepickerModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import Swal from 'sweetalert2';
-import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
+import emailjs from 'emailjs-com';
+import { Observable } from 'rxjs';
 
 import { CityAcronym } from 'src/app/core/constants/Places';
 import { UserStatus, UserCivilStatus, UserDocType, UserGender } from 'src/app/core/constants/UserData';
@@ -22,7 +38,6 @@ import { EstudianteEscuela } from 'src/app/core/models/EstudianteEscuela.model';
 import { TipoOrganizacion } from 'src/app/core/constants/Features';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { MustMatch } from 'src/app/public/account/auth/pass-create/must-match';
-import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-modal-taxpayer',
@@ -32,13 +47,13 @@ import { Observable } from 'rxjs';
     FormsModule,
     ReactiveFormsModule,
     NgbDatepickerModule,
-    TranslateModule    
+    TranslateModule,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './modal-taxpayer.component.html',
-  styleUrls: ['./modal-taxpayer.component.scss']
+  styleUrls: ['./modal-taxpayer.component.scss'],
 })
-export class ModalTaxpayerComponent {
+export class ModalTaxpayerComponent implements OnInit {
   @Input() accion!: string;
   @Input() row!: Contribuyente;
   @Input() clientsList: Contribuyente[] = [];
@@ -48,6 +63,7 @@ export class ModalTaxpayerComponent {
   systemConfigList: ConfiguracionSistema[] = [];
   organizationsList: Organizacion[] = [];
   estudiantesList: EstudianteEscuela[] = [];
+
   civilStatus = UserCivilStatus;
   identityTypes = UserDocType;
   cityAcronym = CityAcronym;
@@ -61,26 +77,35 @@ export class ModalTaxpayerComponent {
   verificationForm!: UntypedFormGroup;
   estudianteForm!: UntypedFormGroup;
   organizacionForm!: UntypedFormGroup;
-  
+
   submitted = false;
   searchingRuat = false;
   ruatDataFound: any = null;
   showRuatSearch = false;
   showVerificationCode = false;
   verificationCodeSent = false;
+  emailVerified = false;
   passwordField = false;
   confirmField = false;
   today = new Date().toISOString().split('T')[0];
   canSanction = false;
   activeTab: 'basic' | 'estudiantes' | 'organizaciones' | 'deportivo' = 'basic';
-  
+
   estudiantesTemporales: any[] = [];
-  editingEstudianteIndex: number = -1;
+  editingEstudianteIndex = -1;
   showEstudianteForm = false;
 
   organizacionesTemporales: any[] = [];
-  editingOrganizacionIndex: number = -1;
+  editingOrganizacionIndex = -1;
   showOrganizacionForm = false;
+
+  private originalEmail = '';
+
+  // Arrow function so `this.today` is always in scope when used as a validator
+  private futureDateValidator = (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value) return null;
+    return control.value >= this.today ? null : { pastDate: true };
+  };
 
   constructor(
     private modalService: NgbModal,
@@ -98,76 +123,146 @@ export class ModalTaxpayerComponent {
     this.getEstudiantes();
     this.canSanction = this.userPermissions.includes('SANCIONAR');
     this.initForms();
-    this.formDataSet();    
+    this.formDataSet();
+    this.initEmailChangeWatcher();
     if (this.accion === 'show') {
-      setTimeout(() => {
-        document.getElementById('form-event')?.classList.add('view-event');
-      }, 100);
+      setTimeout(() => document.getElementById('form-event')?.classList.add('view-event'), 100);
     }
     if (this.accion === '') {
       this.showRuatSearch = true;
     }
   }
 
-  private initForms() {
+  // ─── Date Utilities ───────────────────────────────────────────────────────
+
+  /**
+   * Converts any date value (ISO string, Date, undefined) into the YYYY-MM-DD
+   * format expected by <input type="date">. Uses UTC parts to prevent timezone
+   * shifts from moving the date one day backward.
+   */
+  private toDateInputValue(dateStr: string | Date | undefined | null): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr as string);
+    if (isNaN(d.getTime())) return '';
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  /** Converts YYYY-MM-DD → ISO UTC midnight for the backend. */
+  private formatDateForBackend(dateString: string): string | null {
+    if (!dateString) return null;
+    return `${dateString}T00:00:00.000Z`;
+  }
+
+  /** Converts YYYY-MM-DD → DD/MM/YYYY for the RUAT API. */
+  private formatDateForRuat(dateString: string): string {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    return [
+      String(d.getUTCDate()).padStart(2, '0'),
+      String(d.getUTCMonth() + 1).padStart(2, '0'),
+      d.getUTCFullYear(),
+    ].join('/');
+  }
+
+  /** Escapes HTML characters to prevent XSS in Swal HTML blocks. */
+  private escapeHtml(text: string): string {
+    return (text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // ─── Form Initialization ──────────────────────────────────────────────────
+
+  private initForms(): void {
     this.searchRuatForm = this.formBuilder.group({
       tipoDocumento: ['CI', [Validators.required]],
       numeroDocumento: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(20)]],
-      expedido: ['', [Validators.required]]
-    });
-    this.editForm = this.formBuilder.group({
-      uuid: [null],
-      userName: ['', [Validators.required, Validators.minLength(6), this.usernameFormatValidator]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      cpassword: ['', [Validators.required]],
-      estadoUsuario: [EstadoUsuario.PENDIENTE_VERIFICACION],
-      verificationCode: [null],
-      
-      tipoContribuyente: ['NA', [Validators.required]],
-      codigoContribuyente: [''],
-      
-      nombre: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(250)]],
-      primerApellido: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(100)]],
-      segundoApellido: ['', [Validators.minLength(1), Validators.maxLength(100)]],
-      apellidoEsposo: [''],
-      estadoCivil: [''],
-      fechaNacimiento: ['', [Validators.required]],
-      genero: [''],
-      
-      tipoDocumento: ['CI', [Validators.required]],
-      numeroDocumento: ['', [Validators.required], [this.identityNumberValidator.bind(this)]],
       expedido: ['', [Validators.required]],
-      nroNit: ['', [Validators.maxLength(20)]],
-      
-      telefono: ['', [Validators.required, Validators.maxLength(20)]],
-      email: ['', [Validators.required, Validators.email, Validators.maxLength(255)], [this.emailValidator.bind(this)]],
-      direccion: ['', [Validators.maxLength(250)]],
-      
-      estadoRuat: [EstadoRuat.ACTIVO],
-      verificadoRuat: [false],
-      fechaVerificacionRuat: [''],
-      
-      esDeportistaElite: [false],
-      registroUnicoDeportivo: [''],
-      puedeReservarGratis: [false],
-      fechaUltimoUsoGratuito: [''],
-      
-      observacionesMunicipales: ['', [Validators.maxLength(1000)]]
-    }, {
-      validator: MustMatch('password', 'cpassword')
     });
-    this.editForm.get('esDeportistaElite')?.valueChanges.subscribe(value => {
+
+    // Async-validator controls use updateOn:'blur' so the duplicate-check fires
+    // only when the user leaves the field, not on every keystroke.
+    const numeroDocumentoControl = this.formBuilder.control('', {
+      validators: [Validators.required, Validators.maxLength(20)],
+      asyncValidators: [this.identityNumberValidator.bind(this)],
+      updateOn: 'blur',
+    });
+    const emailControl = this.formBuilder.control('', {
+      validators: [Validators.required, Validators.email, Validators.maxLength(255)],
+      asyncValidators: [this.emailValidator.bind(this)],
+      updateOn: 'blur',
+    });
+
+    this.editForm = this.formBuilder.group(
+      {
+        uuid: [null],
+        userName: ['', [Validators.required, Validators.minLength(6), this.usernameFormatValidator]],
+        password: ['', [Validators.required, Validators.minLength(6)]],
+        cpassword: ['', [Validators.required]],
+        estadoUsuario: [EstadoUsuario.PENDIENTE_VERIFICACION],
+        verificationCode: [null],
+
+        tipoContribuyente: ['NA', [Validators.required]],
+        codigoContribuyente: [''],
+
+        nombre: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(250)]],
+        primerApellido: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(100)]],
+        segundoApellido: ['', [Validators.maxLength(100)]],
+        apellidoEsposo: [''],
+        estadoCivil: [''],
+        fechaNacimiento: ['', [Validators.required]],
+        genero: [''],
+
+        tipoDocumento: ['CI', [Validators.required]],
+        numeroDocumento: numeroDocumentoControl,
+        expedido: ['', [Validators.required]],
+        nroNit: ['', [Validators.maxLength(20)]],
+
+        telefono: [
+          '',
+          [
+            Validators.required,
+            Validators.minLength(7),
+            Validators.maxLength(15),
+            Validators.pattern(/^[0-9+\-()\s]+$/),
+          ],
+        ],
+        email: emailControl,
+        direccion: ['', [Validators.maxLength(250)]],
+
+        estadoRuat: [EstadoRuat.ACTIVO],
+        verificadoRuat: [false],
+        fechaVerificacionRuat: [''],
+
+        esDeportistaElite: [false],
+        registroUnicoDeportivo: [''],
+        puedeReservarGratis: [false],
+        fechaUltimoUsoGratuito: [''],
+
+        observacionesMunicipales: ['', [Validators.maxLength(1000)]],
+      },
+      { validator: MustMatch('password', 'cpassword') }
+    );
+
+    // Reactively toggle registroUnicoDeportivo requirement
+    this.editForm.get('esDeportistaElite')?.valueChanges.subscribe((value) => {
+      if (this.accion === 'show') return;
       const registroControl = this.editForm.get('registroUnicoDeportivo');
       if (value) {
         registroControl?.setValidators([Validators.required, Validators.maxLength(50)]);
-        this.editForm.patchValue({ puedeReservarGratis: true });
       } else {
         registroControl?.setValidators([Validators.maxLength(50)]);
-        const canReserveFree = this.estudiantesTemporales.length > 0;
-        this.editForm.patchValue({ puedeReservarGratis: canReserveFree });
       }
       registroControl?.updateValueAndValidity();
+      this.updatePuedeReservarGratis();
     });
+
     this.estudianteForm = this.formBuilder.group({
       uuid: [null],
       nombreCompleto: ['', [Validators.required, Validators.maxLength(250)]],
@@ -178,8 +273,9 @@ export class ModalTaxpayerComponent {
       email: ['', [Validators.email]],
       matricula: ['', [Validators.required, Validators.maxLength(50)]],
       fechaInscripcion: [new Date().toISOString().split('T')[0], [Validators.required]],
-      activo: [true]
+      activo: [true],
     });
+
     this.organizacionForm = this.formBuilder.group({
       uuid: [null],
       nombre: ['', [Validators.required, Validators.maxLength(250)]],
@@ -195,14 +291,13 @@ export class ModalTaxpayerComponent {
       requierePagoMensualidad: [false],
       tarifaMensual: [0, [Validators.min(0)]],
       permiteReservasGratuitas: [false],
-      activo: [true]
+      activo: [true],
     });
-    this.organizacionForm.get('tipoOrganizacion')?.valueChanges.subscribe(tipo => {
-      if (tipo === TipoOrganizacion.ESCUELA_MUNICIPAL) {
-        this.organizacionForm.patchValue({
-          requierePagoMensualidad: true,
-          permiteReservasGratuitas: true
-        });
+
+    this.organizacionForm.get('tipoOrganizacion')?.valueChanges.subscribe((tipo) => {
+      const esEscuela = tipo === TipoOrganizacion.ESCUELA_MUNICIPAL;
+      if (esEscuela) {
+        this.organizacionForm.patchValue({ requierePagoMensualidad: true, permiteReservasGratuitas: true });
         this.organizacionForm.get('disciplina')?.setValidators([Validators.required]);
         this.organizacionForm.get('codigoEscuela')?.setValidators([Validators.required]);
       } else {
@@ -212,118 +307,180 @@ export class ModalTaxpayerComponent {
       this.organizacionForm.get('disciplina')?.updateValueAndValidity();
       this.organizacionForm.get('codigoEscuela')?.updateValueAndValidity();
     });
+
     this.sanctionForm = this.formBuilder.group({
       uuid: [null],
       estaSancionado: [true],
-      fechaFinSancion: ['', [Validators.required]],
-      motivoSancion: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(500)]]
+      fechaFinSancion: ['', [Validators.required, this.futureDateValidator]],
+      motivoSancion: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(500)]],
     });
+
     this.verificationForm = this.formBuilder.group({
-      code: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(4)]]
+      code: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(4)]],
     });
   }
 
-  private formDataSet() {
-  if (this.accion !== '' && this.row) {
-    const fechaNacimiento = this.row.fechaNacimiento ? 
-      new Date(this.row.fechaNacimiento).toISOString().split('T')[0] : '';    
-    const fechaVerificacionRuat = this.row.fechaVerificacionRuat ?
-      new Date(this.row.fechaVerificacionRuat).toISOString().split('T')[0] : '';    
-    const fechaUltimoUsoGratuito = this.row.fechaUltimoUsoGratuito ?
-      new Date(this.row.fechaUltimoUsoGratuito).toISOString().split('T')[0] : '';    
-    this.editForm.patchValue({
-      uuid: this.row.uuid,
-      userName: this.row.userName,
-      password: this.row.password,
-      cpassword: this.row.password,
-      estadoUsuario: this.row.estadoUsuario,        
-      tipoContribuyente: this.row.tipoContribuyente,
-      codigoContribuyente: this.row.codigoContribuyente,        
-      nombre: this.row.nombre,
-      primerApellido: this.row.primerApellido,
-      segundoApellido: this.row.segundoApellido,
-      apellidoEsposo: this.row.apellidoEsposo,
-      estadoCivil: this.row.estadoCivil,
-      fechaNacimiento: fechaNacimiento,
-      genero: this.row.genero,        
-      tipoDocumento: this.row.tipoDocumento,
-      numeroDocumento: this.row.numeroDocumento,
-      expedido: this.row.expedido,
-      nroNit: this.row.nroNit,        
-      telefono: this.row.telefono,
-      email: this.row.email,
-      direccion: this.row.direccion,        
-      estadoRuat: this.row.estadoRuat,
-      verificadoRuat: this.row.verificadoRuat,
-      fechaVerificacionRuat: fechaVerificacionRuat,
-      esDeportistaElite: this.row.esDeportistaElite,
-      registroUnicoDeportivo: this.row.registroUnicoDeportivo,
-      puedeReservarGratis: this.row.puedeReservarGratis,
-      fechaUltimoUsoGratuito: fechaUltimoUsoGratuito,
-      observacionesMunicipales: this.row.observacionesMunicipales
-    });
-      if (this.row.estudianteEnEscuelas && this.row.estudianteEnEscuelas.length > 0) {
-        this.estudiantesTemporales = this.row.estudianteEnEscuelas.map(est => ({
+  // ─── Form Data Population ─────────────────────────────────────────────────
+
+  private formDataSet(): void {
+    if (this.accion !== '' && this.row) {
+      this.originalEmail = (this.row.email || '').toLowerCase().trim();
+      // Existing email is already verified
+      this.emailVerified = true;
+
+      this.editForm.patchValue({
+        uuid: this.row.uuid,
+        userName: this.row.userName,
+        password: this.row.password,
+        cpassword: this.row.password,
+        estadoUsuario: this.row.estadoUsuario,
+        tipoContribuyente: this.row.tipoContribuyente,
+        codigoContribuyente: this.row.codigoContribuyente,
+        nombre: this.row.nombre,
+        primerApellido: this.row.primerApellido,
+        segundoApellido: this.row.segundoApellido,
+        apellidoEsposo: this.row.apellidoEsposo,
+        estadoCivil: this.row.estadoCivil,
+        fechaNacimiento: this.toDateInputValue(this.row.fechaNacimiento),
+        genero: this.row.genero,
+        tipoDocumento: this.row.tipoDocumento,
+        numeroDocumento: this.row.numeroDocumento,
+        expedido: this.row.expedido,
+        nroNit: this.row.nroNit,
+        telefono: this.row.telefono,
+        email: this.row.email,
+        direccion: this.row.direccion,
+        estadoRuat: this.row.estadoRuat,
+        verificadoRuat: this.row.verificadoRuat,
+        fechaVerificacionRuat: this.toDateInputValue(this.row.fechaVerificacionRuat),
+        esDeportistaElite: this.row.esDeportistaElite,
+        registroUnicoDeportivo: this.row.registroUnicoDeportivo,
+        puedeReservarGratis: this.row.puedeReservarGratis,
+        fechaUltimoUsoGratuito: this.toDateInputValue(this.row.fechaUltimoUsoGratuito),
+        observacionesMunicipales: this.row.observacionesMunicipales,
+      });
+
+      // Normalise child dates so date inputs display correctly
+      if (this.row.estudianteEnEscuelas?.length) {
+        this.estudiantesTemporales = this.row.estudianteEnEscuelas.map((est) => ({
           ...est,
-          fechaNacimiento: est.fechaNacimiento ? new Date(est.fechaNacimiento).toISOString().split('T')[0] : '',
-          fechaInscripcion: est.fechaInscripcion ? new Date(est.fechaInscripcion).toISOString().split('T')[0] : ''
+          fechaNacimiento: this.toDateInputValue(est.fechaNacimiento),
+          fechaInscripcion: this.toDateInputValue(est.fechaInscripcion),
         }));
       }
-      if (this.row.organizacionesRepresentadas && this.row.organizacionesRepresentadas.length > 0) {
+      if (this.row.organizacionesRepresentadas?.length) {
         this.organizacionesTemporales = [...this.row.organizacionesRepresentadas];
       }
-      const fechaFinSancion = this.row.fechaFinSancion ? 
-        new Date(this.row.fechaFinSancion).toISOString().split('T')[0] : '';      
+
       this.sanctionForm.patchValue({
         uuid: this.row.uuid,
         estaSancionado: this.row.estaSancionado,
-        fechaFinSancion: fechaFinSancion,
-        motivoSancion: this.row.motivoSancion
+        fechaFinSancion: this.toDateInputValue(this.row.fechaFinSancion),
+        motivoSancion: this.row.motivoSancion,
       });
+
       if (this.accion === 'show') {
         this.editForm.disable();
-      }      
+      }
       if (this.row.verificadoRuat && this.accion === 'edit') {
         this.disableRuatVerifiedFields();
       }
     }
   }
 
-  setActiveTab(tab: 'basic' | 'estudiantes' | 'organizaciones' | 'deportivo') {
+  // ─── Email Verification Watchers ──────────────────────────────────────────
+
+  private initEmailChangeWatcher(): void {
+    this.editForm.get('email')?.valueChanges.subscribe((value) => {
+      if (this.accion === 'show') return;
+      const current = (value || '').toLowerCase().trim();
+      const ctrl = this.editForm.get('email');
+
+      if (this.accion === 'edit') {
+        if (current !== this.originalEmail) {
+          this.emailVerified = false;
+          this.verificationCodeSent = false;
+          this.showVerificationCode = false;
+          ctrl?.setErrors({ ...(ctrl.errors || {}), emailNotVerified: true });
+        } else {
+          // User typed back the original email — it's already verified
+          this.emailVerified = true;
+          const errors = { ...(ctrl?.errors || {}) };
+          delete errors['emailNotVerified'];
+          ctrl?.setErrors(Object.keys(errors).length ? errors : null);
+        }
+      }
+    });
+  }
+
+  isEmailChanged(): boolean {
+    const current = (this.editForm.get('email')?.value || '').toLowerCase().trim();
+    return this.accion === 'edit' && current !== this.originalEmail;
+  }
+
+  shouldShowEmailVerifyButton(): boolean {
+    if (this.accion === '') return !this.verificationCodeSent;
+    if (this.accion === 'edit') return this.isEmailChanged() && !this.emailVerified;
+    return false;
+  }
+
+  shouldShowVerificationCodeBox(): boolean {
+    return this.showVerificationCode && (this.accion === '' || this.accion === 'edit');
+  }
+
+  // ─── Tab Navigation ───────────────────────────────────────────────────────
+
+  setActiveTab(tab: 'basic' | 'estudiantes' | 'organizaciones' | 'deportivo'): void {
     this.activeTab = tab;
   }
 
-  toggleEstudianteForm() {
+  // ─── puedeReservarGratis helper ───────────────────────────────────────────
+
+  private updatePuedeReservarGratis(): void {
+    const esElite = this.editForm.get('esDeportistaElite')?.value;
+    const tieneEstudiantes = this.estudiantesTemporales.length > 0;
+    const tieneOrgGratis = this.organizacionesTemporales.some((o) => o.permiteReservarGratis);
+    this.editForm.patchValue({ puedeReservarGratis: esElite || tieneEstudiantes || tieneOrgGratis });
+  }
+
+  // ─── Estudiantes CRUD ─────────────────────────────────────────────────────
+
+  toggleEstudianteForm(): void {
     this.showEstudianteForm = !this.showEstudianteForm;
     if (!this.showEstudianteForm) {
-      this.estudianteForm.reset({
-        activo: true,
-        fechaInscripcion: new Date().toISOString().split('T')[0]
-      });
+      this.estudianteForm.reset({ activo: true, fechaInscripcion: new Date().toISOString().split('T')[0] });
       this.editingEstudianteIndex = -1;
     }
   }
-  addOrUpdateEstudiante() {
+
+  addOrUpdateEstudiante(): void {
     if (this.estudianteForm.invalid) {
       this.markAllFieldsAsTouched(this.estudianteForm);
       this.notify('Complete todos los campos requeridos del estudiante', 'warning');
       return;
     }
-    const estudianteData = this.estudianteForm.getRawValue();    
+    const data = this.estudianteForm.getRawValue();
     if (this.editingEstudianteIndex >= 0) {
-      this.estudiantesTemporales[this.editingEstudianteIndex] = estudianteData;
+      this.estudiantesTemporales[this.editingEstudianteIndex] = data;
     } else {
-      this.estudiantesTemporales.push(estudianteData);
+      this.estudiantesTemporales.push(data);
     }
+    this.updatePuedeReservarGratis();
     this.toggleEstudianteForm();
   }
-  editEstudiante(index: number) {
-    const estudiante = this.estudiantesTemporales[index];
-    this.estudianteForm.patchValue(estudiante);
+
+  editEstudiante(index: number): void {
+    const est = this.estudiantesTemporales[index];
+    this.estudianteForm.patchValue({
+      ...est,
+      fechaNacimiento: this.toDateInputValue(est.fechaNacimiento),
+      fechaInscripcion: this.toDateInputValue(est.fechaInscripcion),
+    });
     this.editingEstudianteIndex = index;
     this.showEstudianteForm = true;
   }
-  removeEstudiante(index: number) {
+
+  removeEstudiante(index: number): void {
     Swal.fire({
       title: '¿Eliminar estudiante?',
       text: 'Esta acción no se puede deshacer',
@@ -332,19 +489,19 @@ export class ModalTaxpayerComponent {
       confirmButtonColor: '#f06548',
       cancelButtonColor: '#6c757d',
       confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
     }).then((result) => {
       if (result.isConfirmed) {
         this.estudiantesTemporales.splice(index, 1);
-        if (this.estudiantesTemporales.length === 0 && !this.editForm.get('esDeportistaElite')?.value) {
-          this.editForm.patchValue({ puedeReservarGratis: false });
-        }        
+        this.updatePuedeReservarGratis();
         this.notify('Estudiante eliminado', 'info');
       }
     });
   }
 
-  toggleOrganizacionForm() {
+  // ─── Organizaciones CRUD ──────────────────────────────────────────────────
+
+  toggleOrganizacionForm(): void {
     this.showOrganizacionForm = !this.showOrganizacionForm;
     if (!this.showOrganizacionForm) {
       this.organizacionForm.reset({
@@ -352,31 +509,34 @@ export class ModalTaxpayerComponent {
         requierePagoMensualidad: false,
         tarifaMensual: 0,
         permiteReservasGratuitas: false,
-        activo: true
+        activo: true,
       });
       this.editingOrganizacionIndex = -1;
     }
   }
-  addOrUpdateOrganizacion() {
+
+  addOrUpdateOrganizacion(): void {
     if (this.organizacionForm.invalid) {
       this.markAllFieldsAsTouched(this.organizacionForm);
       return;
     }
-    const orgData = this.organizacionForm.getRawValue();    
+    const data = this.organizacionForm.getRawValue();
     if (this.editingOrganizacionIndex >= 0) {
-      this.organizacionesTemporales[this.editingOrganizacionIndex] = orgData;
+      this.organizacionesTemporales[this.editingOrganizacionIndex] = data;
     } else {
-      this.organizacionesTemporales.push(orgData);
+      this.organizacionesTemporales.push(data);
     }
+    this.updatePuedeReservarGratis();
     this.toggleOrganizacionForm();
   }
-  editOrganizacion(index: number) {
-    const org = this.organizacionesTemporales[index];
-    this.organizacionForm.patchValue(org);
+
+  editOrganizacion(index: number): void {
+    this.organizacionForm.patchValue(this.organizacionesTemporales[index]);
     this.editingOrganizacionIndex = index;
     this.showOrganizacionForm = true;
   }
-  removeOrganizacion(index: number) {
+
+  removeOrganizacion(index: number): void {
     Swal.fire({
       title: '¿Eliminar organización?',
       text: 'Esta acción no se puede deshacer',
@@ -385,24 +545,17 @@ export class ModalTaxpayerComponent {
       confirmButtonColor: '#f06548',
       cancelButtonColor: '#6c757d',
       confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
     }).then((result) => {
       if (result.isConfirmed) {
         this.organizacionesTemporales.splice(index, 1);
+        this.updatePuedeReservarGratis();
         this.notify('Organización eliminada', 'info');
       }
     });
   }
 
-  getTipoOrganizacionLabel(tipo: string): string {
-    const labels: any = {
-      [TipoOrganizacion.ASOCIACION]: 'Asociación',
-      [TipoOrganizacion.CLUB]: 'Club',
-      [TipoOrganizacion.ESCUELA_MUNICIPAL]: 'Escuela Municipal',
-      [TipoOrganizacion.ORGANIZACION]: 'Organización'
-    };
-    return labels[tipo] || tipo;
-  }
+  // ─── Accessors ────────────────────────────────────────────────────────────
 
   get form() { return this.editForm.controls; }
   get organizacion() { return this.organizacionForm.controls; }
@@ -410,140 +563,131 @@ export class ModalTaxpayerComponent {
   get sanction() { return this.sanctionForm.controls; }
   get searchForm() { return this.searchRuatForm.controls; }
 
-  private disableRuatVerifiedFields() {
-    this.editForm.get('tipoContribuyente')?.disable();
-    this.editForm.get('nombre')?.disable();
-    this.editForm.get('primerApellido')?.disable();
-    this.editForm.get('segundoApellido')?.disable();
-    // this.editForm.get('fechaNacimiento')?.disable();
-    // this.editForm.get('genero')?.disable();
-    // this.editForm.get('estadoCivil')?.disable();
-    this.editForm.get('tipoDocumento')?.disable();
-    this.editForm.get('numeroDocumento')?.disable();
-    this.editForm.get('expedido')?.disable();
+  // ─── RUAT Field Locking ───────────────────────────────────────────────────
+
+  private disableRuatVerifiedFields(): void {
+    ['tipoContribuyente', 'nombre', 'primerApellido', 'segundoApellido',
+     'tipoDocumento', 'numeroDocumento', 'expedido'].forEach((f) =>
+      this.editForm.get(f)?.disable()
+    );
   }
 
-  private getInvalidFields(): string[] {
-    const invalidFields: string[] = [];
-    Object.keys(this.editForm.controls).forEach(key => {
-      const control = this.editForm.get(key);
-      if (control?.invalid) {
-        invalidFields.push(key);
-      }
-    });
-    return invalidFields;
-  }
+  // ─── Save ─────────────────────────────────────────────────────────────────
 
-  private getFieldDisplayName(fieldName: string): string {
-    const fieldNames: { [key: string]: string } = {
-      'tipoContribuyente': 'Tipo de Contribuyente',
-      'tipoDocumento': 'Tipo de Documento',
-      'numeroDocumento': 'Número de Documento',
-      'expedido': 'Expedido',
-      'nombre': 'Nombre',
-      'primerApellido': 'Primer Apellido',
-      'fechaNacimiento': 'Fecha de Nacimiento',
-      'telefono': 'Teléfono',
-      'email': 'Email',
-      'userName': 'Usuario',
-      'password': 'Contraseña',
-      'cpassword': 'Confirmar Contraseña',
-      'registroUnicoDeportivo': 'Registro Único Deportivo (requerido para Deportista Elite)'
-    };    
-    return fieldNames[fieldName] || fieldName;
-  }
-
-  async saveData() {
+  async saveData(): Promise<void> {
     this.submitted = true;
-    this.editForm.enable();    
+
+    // getRawValue() captures disabled fields — no need to enable the form,
+    // which would otherwise permanently unlock RUAT-verified fields on validation failure.
     const formData = this.editForm.getRawValue();
-    const userName = formData.userName.trim() || formData.numeroDocumento.trim();
-    const password = formData.password.trim() || formData.numeroDocumento.trim();    
-    this.editForm.patchValue({ userName, password, cpassword: password });    
-    if (this.accion === '') {
-      if (!this.verificationCodeSent) {
-        this.notify('Debe verificar el email antes de guardar', 'warning');
-        this.submitted = false;
-        return;
-      }      
-      if (this.showVerificationCode) {
-        this.notify('Debe completar la verificación del email', 'warning');
-        this.submitted = false;
-        return;
-      }
-    }    
+
+    const userName = (formData.userName || '').trim() || (formData.numeroDocumento || '').trim();
+    const password = (formData.password || '').trim() || (formData.numeroDocumento || '').trim();
+    this.editForm.patchValue({ userName, password, cpassword: password });
+
+    // ── Email verification ──────────────────────────────────────────────────
+    if (this.accion === '' && !this.emailVerified) {
+      this.notify(
+        this.verificationCodeSent
+          ? 'Debe completar la verificación del código enviado a su correo'
+          : 'Debe verificar el email antes de guardar',
+        'warning'
+      );
+      this.submitted = false;
+      return;
+    }
+    if (this.accion === 'edit' && this.isEmailChanged() && !this.emailVerified) {
+      this.notify('Debe verificar el nuevo email antes de guardar', 'warning');
+      this.submitted = false;
+      return;
+    }
+
+    // ── Deportista Elite ────────────────────────────────────────────────────
     if (formData.esDeportistaElite && !formData.registroUnicoDeportivo) {
       this.notify('Deportista Elite requiere Registro Único Deportivo', 'error');
       this.setActiveTab('deportivo');
       this.submitted = false;
       return;
-    }    
+    }
+
+    // ── Wait for any pending async validators ───────────────────────────────
     await this.waitForAsyncValidation(this.editForm);
+
     if (this.editForm.invalid) {
       this.markAllFieldsAsTouched(this.editForm);
-      const invalidFields = this.getInvalidFields();      
-      let errorMessage = 'Por favor complete los siguientes campos requeridos:';
-      invalidFields.forEach(field => {
-        errorMessage += `\n• ${this.getFieldDisplayName(field)}`;
-      });      
-      this.notify(errorMessage, 'error');
+      const fields = this.getInvalidFields().map((f) => `\n• ${this.getFieldDisplayName(f)}`).join('');
+      this.notify(`Por favor complete los siguientes campos requeridos:${fields}`, 'error');
       this.setActiveTab('basic');
       this.submitted = false;
       return;
     }
-    
+
+    // ── Final user status ───────────────────────────────────────────────────
     let estadoFinal = formData.estadoUsuario;
     if (this.accion === '') {
-      if (formData.verificadoRuat && this.verificationCodeSent) {
-        estadoFinal = EstadoUsuario.ACTIVO;
-      } else {
-        estadoFinal = EstadoUsuario.PENDIENTE_VERIFICACION;
-      }
+      estadoFinal = formData.verificadoRuat ? EstadoUsuario.ACTIVO : EstadoUsuario.PENDIENTE_VERIFICACION;
     }
-    const fechaVerificacionRuat = formData.fechaVerificacionRuat ? 
-      this.formatDateForBackend(formData.fechaVerificacionRuat) : null;    
-    const fechaUltimoUsoGratuito = formData.fechaUltimoUsoGratuito ? 
-      this.formatDateForBackend(formData.fechaUltimoUsoGratuito) : null;
+
+    // ── Attach back-references so backend can link FK relationships ─────────
+    const contribuyenteUuid = formData.uuid;
+    const contribuyenteRef = contribuyenteUuid
+      ? ({ uuid: contribuyenteUuid } as Contribuyente)
+      : undefined;
+
+    const estudiantesPreparados = this.estudiantesTemporales.map((est) => ({
+      ...est,
+      ...(contribuyenteRef ? { contribuyenteDto: contribuyenteRef } : {}),
+    }));
+    const organizacionesPreparadas = this.organizacionesTemporales.map((org) => ({
+      ...org,
+      ...(contribuyenteRef ? { representanteDto: contribuyenteRef } : {}),
+    }));
+
+    const puedeReservarGratis =
+      formData.esDeportistaElite ||
+      estudiantesPreparados.length > 0 ||
+      organizacionesPreparadas.some((o: any) => o.permiteReservasGratuitas);
 
     const datos: Contribuyente = {
       ...formData,
-      fechaVerificacionRuat: fechaVerificacionRuat,
-      fechaUltimoUsoGratuito: fechaUltimoUsoGratuito,
+      userName,
+      password,
+      fechaVerificacionRuat: formData.fechaVerificacionRuat
+        ? this.formatDateForBackend(formData.fechaVerificacionRuat)
+        : null,
+      fechaUltimoUsoGratuito: formData.fechaUltimoUsoGratuito
+        ? this.formatDateForBackend(formData.fechaUltimoUsoGratuito)
+        : null,
       fechaCreacion: this.row?.fechaCreacion || new Date().toISOString(),
-      fechaActualizacion: new Date().toISOString(),      
+      fechaActualizacion: new Date().toISOString(),
       estadoUsuario: estadoFinal,
-      nombreCompleto: `${formData.nombre} ${formData.primerApellido} ${formData.segundoApellido || ''}`.trim(),
-      puedeReservarGratis: formData.esDeportistaElite || this.estudiantesTemporales.length > 0,      
+      nombreCompleto:
+        `${formData.nombre} ${formData.primerApellido} ${formData.segundoApellido || ''}`.trim(),
+      puedeReservarGratis,
       estaSancionado: this.row?.estaSancionado || false,
       fechaFinSancion: this.row?.fechaFinSancion,
-      motivoSancion: this.row?.motivoSancion,      
-      estudianteEnEscuelas: this.estudiantesTemporales.length > 0 ? this.estudiantesTemporales : undefined,
-      organizacionesRepresentadas: this.organizacionesTemporales.length > 0 ? this.organizacionesTemporales : undefined
+      motivoSancion: this.row?.motivoSancion,
+      // Always send arrays (even empty) so the backend can clear removed records
+      estudianteEnEscuelas: estudiantesPreparados,
+      organizacionesRepresentadas: organizacionesPreparadas,
     };
+
     try {
-      if (this.editForm.get('uuid')?.value) {
-        await this.updateData(datos);
+      if (formData.uuid) {
+        await this.updateData(datos, this.buildUpdateSuccessMessage());
       } else {
         if (!datos.verificadoRuat) {
-          const ruatResponse = await this.registerContribuyenteInRuat(datos);          
-          if (ruatResponse && ruatResponse.continuarFlujo) {
+          const ruatResponse = await this.registerContribuyenteInRuat(datos);
+          if (ruatResponse?.continuarFlujo) {
             datos.codigoContribuyente = ruatResponse.codigoContribuyente;
             datos.verificadoRuat = true;
             datos.estadoRuat = EstadoRuat.ACTIVO;
             datos.fechaVerificacionRuat = new Date().toISOString();
             datos.estadoUsuario = EstadoUsuario.ACTIVO;
-            
-            const savedContribuyente = await this.addData(datos);            
-            if (savedContribuyente) {
-              await this.sendCredentialsEmail(savedContribuyente, datos.userName, datos.password);              
-              let message = 'Contribuyente registrado exitosamente en RUAT y sistema local!';
-              if (this.estudiantesTemporales.length > 0) {
-                message += `\n${this.estudiantesTemporales.length} estudiante(s) registrado(s)`;
-              }
-              if (this.organizacionesTemporales.length > 0) {
-                message += `\n${this.organizacionesTemporales.length} organización(es) registrada(s)`;
-              }              
-              this.notify(message, 'success');
+            const saved = await this.addData(datos);
+            if (saved) {
+              await this.sendCredentialsEmail(saved, userName, password);
+              this.notify(this.buildCreateSuccessMessage(), 'success');
               this.closeModal();
               this.emitList.emit();
             } else {
@@ -551,14 +695,12 @@ export class ModalTaxpayerComponent {
             }
           } else {
             this.notify('No se pudo registrar el contribuyente en RUAT. Operación cancelada.', 'error');
-            this.submitted = false;
-            return;
           }
         } else {
-          const savedContribuyente = await this.addData(datos);
-          if (savedContribuyente) {
-            await this.sendCredentialsEmail(savedContribuyente, datos.userName, datos.password);
-            this.notify('Contribuyente registrado exitosamente!', 'success');
+          const saved = await this.addData(datos);
+          if (saved) {
+            await this.sendCredentialsEmail(saved, userName, password);
+            this.notify(this.buildCreateSuccessMessage(), 'success');
             this.closeModal();
             this.emitList.emit();
           }
@@ -571,463 +713,366 @@ export class ModalTaxpayerComponent {
     }
   }
 
+  private buildCreateSuccessMessage(): string {
+    let msg = 'Contribuyente registrado exitosamente!';
+    if (this.estudiantesTemporales.length > 0)
+      msg += `\n${this.estudiantesTemporales.length} estudiante(s) registrado(s)`;
+    if (this.organizacionesTemporales.length > 0)
+      msg += `\n${this.organizacionesTemporales.length} organización(es) registrada(s)`;
+    return msg;
+  }
+
+  private buildUpdateSuccessMessage(): string {
+    let msg = 'Datos actualizados exitosamente!';
+    if (this.estudiantesTemporales.length > 0)
+      msg += `\n${this.estudiantesTemporales.length} estudiante(s) guardado(s)`;
+    if (this.organizacionesTemporales.length > 0)
+      msg += `\n${this.organizacionesTemporales.length} organización(es) guardada(s)`;
+    return msg;
+  }
+
+  // ─── RUAT Integration ─────────────────────────────────────────────────────
+
   private async registerContribuyenteInRuat(datos: Contribuyente): Promise<any> {
-    try {
-      const codigoAlcaldia = this.systemConfigList.find(config => config.clave === ClaveConfiguracion.CODIGO_ALCALDIA_RUAT)?.valorTexto || '';
-      const codigoUsuario = this.systemConfigList.find(config => config.clave === ClaveConfiguracion.CODIGO_USUARIO_RUAT)?.valorTexto || '';
-      const ruatData = {
-        tipoDocumento: datos.tipoDocumento,
-        numeroDocumento: datos.numeroDocumento,
-        expedido: datos.expedido,
-        nombre: datos.nombre,
-        primerApellido: datos.primerApellido,
-        segundoApellido: datos.segundoApellido,
-        fechaNacimiento: datos.fechaNacimiento ? this.formatDateForRuat(datos.fechaNacimiento) : '',
-        genero: datos.genero,
-        estadoCivil: datos.estadoCivil,
-        telefono: datos.telefono,
-        email: datos.email,
-        direccion: datos.direccion,
-        nroNit: datos.nroNit
-      };
-      this.notify('Registrando contribuyente en RUAT...', 'info');      
-      const ruatResp = await this.registerContribuyente(codigoAlcaldia, codigoUsuario, ruatData);      
-      if (ruatResp && ruatResp.continuarFlujo) {
-        this.notify('Contribuyente registrado exitosamente en RUAT', 'success');
-        return ruatResp;
-      } else {
-        throw new Error(ruatResp?.mensaje || 'Error desconocido en RUAT');
-      }
-    } catch (error) {
-      throw error;
+    const codigoAlcaldia =
+      this.systemConfigList.find((c) => c.clave === ClaveConfiguracion.CODIGO_ALCALDIA_RUAT)?.valorTexto || '';
+    const codigoUsuario =
+      this.systemConfigList.find((c) => c.clave === ClaveConfiguracion.CODIGO_USUARIO_RUAT)?.valorTexto || '';
+    const ruatData = {
+      tipoDocumento: datos.tipoDocumento,
+      numeroDocumento: datos.numeroDocumento,
+      expedido: datos.expedido,
+      nombre: datos.nombre,
+      primerApellido: datos.primerApellido,
+      segundoApellido: datos.segundoApellido,
+      fechaNacimiento: datos.fechaNacimiento ? this.formatDateForRuat(datos.fechaNacimiento) : '',
+      genero: datos.genero,
+      estadoCivil: datos.estadoCivil,
+      telefono: datos.telefono,
+      email: datos.email,
+      direccion: datos.direccion,
+      nroNit: datos.nroNit,
+    };
+    this.notify('Registrando contribuyente en RUAT...', 'info');
+    const ruatResp = await this.registerContribuyente(codigoAlcaldia, codigoUsuario, ruatData);
+    if (ruatResp?.continuarFlujo) {
+      this.notify('Contribuyente registrado exitosamente en RUAT', 'success');
+      return ruatResp;
     }
-  }
- 
-  private formatDateForBackend(dateString: string): string |null{
-    if (!dateString) return null;
-    return `${dateString}T00:00:00`;
-  }
-  private formatDateForRuat(dateString: string): string {
-    if (!dateString) return '';    
-    const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();    
-    return `${day}/${month}/${year}`;
+    throw new Error(ruatResp?.mensaje || 'Error desconocido en RUAT');
   }
 
-  private markAllFieldsAsTouched(form: UntypedFormGroup) {
-    Object.keys(form.controls).forEach(key => {
-      const control = form.get(key);
-      control?.markAsTouched();
-    });
-  }
-  private async waitForAsyncValidation(form: UntypedFormGroup): Promise<void> {
-    return new Promise((resolve) => {
-      if (form.pending) {
-        const subscription = form.statusChanges.subscribe(status => {
-          if (status !== 'PENDING') {
-            subscription.unsubscribe();
-            resolve();
-          }
-        });
-      } else {
-        resolve();
-      }
-    });
-  }
-  // Validators
-  identityNumberValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (this.clientsList && (this.accion === '')) {
-          const itExist = this.clientsList.some(user => 
-            user.numeroDocumento === control.value && user.uuid !== this.editForm.get('uuid')?.value
-          );
-          resolve(itExist ? { itExist: true } : null);
-        } else { 
-          resolve(null); 
-        }
-      }, 300);
-    });
-  }
-  emailValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (this.clientsList && (this.accion === '')) {
-          const isEmailTaken = this.clientsList.some(user => 
-            user.email === control.value && user.uuid !== this.editForm.get('uuid')?.value
-          );
-          resolve(isEmailTaken ? { emailTaken: true } : null);
-        } else { 
-          resolve(null); 
-        }
-      }, 300);
-    });
-  }
-  usernameFormatValidator(control: AbstractControl): ValidationErrors | null {
-    const value = control.value;
-    if (!value) return null;
-    
-    const lowercaseValue = value.toLowerCase();
-    const validFormat = /^[a-z0-9.]+$/.test(lowercaseValue);
-    
-    if (!validFormat) {
-      return { invalidFormat: true };
-    }
-    
-    if (value !== lowercaseValue) {
-      control.setValue(lowercaseValue, { emitEvent: false });
-    }
-    
-    return null;
-  }
-
-  async searchInRuat() {
+  async searchInRuat(): Promise<void> {
     if (this.searchRuatForm.invalid) {
       this.notify('Complete todos los campos de búsqueda', 'warning');
       return;
-    }    
+    }
     this.searchingRuat = true;
     try {
-      const codigoAlcaldia = this.systemConfigList.find(config => config.clave === ClaveConfiguracion.CODIGO_ALCALDIA_RUAT)?.valorTexto || '';
-      const ruatResp = await this.searchContribuyenteInRuat(codigoAlcaldia, this.searchRuatForm.value);      
-      if (ruatResp && ruatResp.continuarFlujo) {
+      const codigoAlcaldia =
+        this.systemConfigList.find((c) => c.clave === ClaveConfiguracion.CODIGO_ALCALDIA_RUAT)?.valorTexto || '';
+      const ruatResp = await this.searchContribuyenteInRuat(codigoAlcaldia, this.searchRuatForm.value);
+      if (ruatResp?.continuarFlujo) {
         this.ruatDataFound = ruatResp;
         this.fillFormFromRuat(ruatResp);
         this.notify('Datos encontrados en RUAT', 'success');
-        this.showRuatSearch = false;
       } else {
         this.notify(ruatResp?.mensaje || 'No se encontraron datos en RUAT. Puede continuar con registro manual', 'info');
         this.fillFormManually();
-        this.showRuatSearch = false;
       }
-    } catch (error) {
+    } catch {
       this.notify('Error al consultar RUAT. Puede continuar con registro manual', 'warning');
       this.fillFormManually();
-      this.showRuatSearch = false;
     } finally {
       this.searchingRuat = false;
+      this.showRuatSearch = false;
     }
   }
 
-  private fillFormFromRuat(ruatData: any) {
+  private fillFormFromRuat(ruatData: any): void {
     const client = ruatData.contribuyente;
-    let fechaNacimientoValue = '';
-    if (client.fechaNacimiento && client.fechaNacimiento.includes('/')) {
-      const [day, month, year] = client.fechaNacimiento.split('/').map(Number);
-      const date = new Date(year, month - 1, day);
-      fechaNacimientoValue = date.toISOString().split('T')[0];
-    }
-    const tipoDocumentoCode = this.getTipoDocumentoCode(client.tipoDocumento);
-    const expedidoCode = this.getExpedidoCode(client.expedido);
     this.editForm.patchValue({
       codigoContribuyente: ruatData.codigoContribuyente,
       estadoRuat: EstadoRuat.ACTIVO,
       verificadoRuat: true,
       fechaVerificacionRuat: new Date().toISOString().split('T')[0],
-      estadoUsuario: EstadoUsuario.ACTIVO,      
+      estadoUsuario: EstadoUsuario.ACTIVO,
       nombre: client.nombre,
       primerApellido: client.primerApellido,
       segundoApellido: client.segundoApellido,
-      fechaNacimiento: fechaNacimientoValue,
+      fechaNacimiento: this.toDateInputValue(client.fechaNacimiento),
       genero: this.getUserGender(client.genero),
       estadoCivil: this.getCivilStatusCode(client.estadoCivil),
-      tipoDocumento: tipoDocumentoCode,
+      tipoDocumento: this.getTipoDocumentoCode(client.tipoDocumento),
       numeroDocumento: client.numeroDocumento,
-      expedido: expedidoCode,      
+      expedido: this.getExpedidoCode(client.expedido),
       userName: client.numeroDocumento,
       password: client.numeroDocumento,
-      cpassword: client.numeroDocumento
+      cpassword: client.numeroDocumento,
     });
     this.disableRuatVerifiedFields();
   }
 
-  private getTipoDocumentoCode(description: string): string {
-    const found = this.identityTypes.find(item => item.description === description);
-    return found ? found.type : 'CI';
-  }
-  private getExpedidoCode(value: string): string {
-    const found = this.cityAcronym.find(item => item.value === value);
-    return found ? found.id.toString() : '3';
-  }
-
-  private fillFormManually() {
+  private fillFormManually(): void {
     this.editForm.patchValue({
       tipoDocumento: this.searchRuatForm.value.tipoDocumento,
       numeroDocumento: this.searchRuatForm.value.numeroDocumento,
       expedido: this.searchRuatForm.value.expedido,
-      
       userName: this.searchRuatForm.value.numeroDocumento,
       password: this.searchRuatForm.value.numeroDocumento,
       cpassword: this.searchRuatForm.value.numeroDocumento,
-      
       verificadoRuat: false,
       estadoRuat: EstadoRuat.ACTIVO,
-      estadoUsuario: EstadoUsuario.PENDIENTE_VERIFICACION
+      estadoUsuario: EstadoUsuario.PENDIENTE_VERIFICACION,
     });
   }
 
-  skipRuatSearch() {
+  skipRuatSearch(): void {
     this.showRuatSearch = false;
     this.editForm.patchValue({
       verificadoRuat: false,
       estadoRuat: EstadoRuat.ACTIVO,
-      estadoUsuario: EstadoUsuario.PENDIENTE_VERIFICACION
+      estadoUsuario: EstadoUsuario.PENDIENTE_VERIFICACION,
     });
   }
 
-  async verifyInRuat() {
+  async verifyInRuat(): Promise<void> {
     this.submitted = true;
     const formData = this.editForm.getRawValue();
-    const ruatData = { ...formData };
-    if (ruatData.fechaNacimiento) {
-      const date = new Date(ruatData.fechaNacimiento);
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const year = date.getFullYear();
-      ruatData.fechaNacimiento = `${day}/${month}/${year}`;
-    }
+    const ruatData = { ...formData, fechaNacimiento: formData.fechaNacimiento ? this.formatDateForRuat(formData.fechaNacimiento) : '' };
     try {
-      const codigoAlcaldia = this.systemConfigList.find(config => config.clave === 'CODIGO_ALCALDIA_RUAT')?.valorTexto || '';
-      const codigoUsuario = this.systemConfigList.find(config => config.clave === 'CODIGO_USUARIO_RUAT')?.valorTexto || '';
-      const ruatResp = await this.registerContribuyente(codigoAlcaldia, codigoUsuario, ruatData);      
-      if (ruatResp && ruatResp.continuarFlujo) {
-        let nuevoEstado = this.editForm.get('estadoUsuario')?.value;        
-        if (nuevoEstado === EstadoUsuario.PENDIENTE_VERIFICACION) {
-          nuevoEstado = EstadoUsuario.ACTIVO;
-        }        
+      const codigoAlcaldia =
+        this.systemConfigList.find((c) => c.clave === ClaveConfiguracion.CODIGO_ALCALDIA_RUAT)?.valorTexto || '';
+      const codigoUsuario =
+        this.systemConfigList.find((c) => c.clave === ClaveConfiguracion.CODIGO_USUARIO_RUAT)?.valorTexto || '';
+      const ruatResp = await this.registerContribuyente(codigoAlcaldia, codigoUsuario, ruatData);
+      if (ruatResp?.continuarFlujo) {
+        const nuevoEstado =
+          formData.estadoUsuario === EstadoUsuario.PENDIENTE_VERIFICACION
+            ? EstadoUsuario.ACTIVO
+            : formData.estadoUsuario;
         this.editForm.patchValue({
           codigoContribuyente: ruatResp.codigoContribuyente,
           verificadoRuat: true,
           estadoRuat: EstadoRuat.ACTIVO,
-          fechaVerificacionRuat: new Date(),
-          estadoUsuario: nuevoEstado
-        });        
-        await this.updateData(this.editForm.getRawValue());
-        this.notify('Verificación RUAT exitosa', 'success');
+          fechaVerificacionRuat: new Date().toISOString().split('T')[0],
+          estadoUsuario: nuevoEstado,
+        });
+        await this.updateData(this.editForm.getRawValue(), 'Verificación RUAT exitosa');
       } else {
         this.notify(ruatResp?.mensaje || 'No se pudo verificar en RUAT', 'error');
       }
-    } catch (error) {
+    } catch {
       this.notify('Error al verificar en RUAT', 'error');
     } finally {
       this.submitted = false;
     }
   }
 
-  async sendVerificationEmail() {
-    const email = this.editForm.get('email')?.value;
-    if (!email) {
-      this.notify('Debe ingresar un email válido', 'warning');
+  // ─── Email Verification ───────────────────────────────────────────────────
+
+  async sendVerificationEmail(): Promise<void> {
+    const emailCtrl = this.editForm.get('email');
+    const emailValue = emailCtrl?.value;
+
+    if (!emailValue) {
+      this.notify('Ingrese un email antes de verificar', 'warning');
       return;
     }
+    if (emailCtrl?.hasError('email')) {
+      this.notify('El formato del email no es válido', 'warning');
+      return;
+    }
+    // Ensure async emailTaken check has settled before sending
+    await this.waitForAsyncValidation(this.editForm);
+    if (emailCtrl?.hasError('emailTaken')) {
+      this.notify('Este email ya está registrado por otro contribuyente', 'warning');
+      return;
+    }
+
     const code = this.generateCode();
     this.editForm.patchValue({ verificationCode: code });
     try {
-      await this.sendEmailCode(email, code);
+      await this.sendEmailCode(emailValue, code);
       this.verificationCodeSent = true;
       this.showVerificationCode = true;
       this.notify('Código de verificación enviado al email', 'success');
-    } catch (error) {
-      this.notify('Error al enviar el código de verificación', 'error');
+    } catch {
+      this.notify('Error al enviar el código de verificación. Intente nuevamente.', 'error');
     }
   }
-  verifyEmailCode() {
-    const enteredCode = this.verificationForm.get('code')?.value;
-    const storedCode = this.editForm.get('verificationCode')?.value;
-    if (enteredCode === storedCode) {
-      const isVerifiedRuat = this.editForm.get('verificadoRuat')?.value;
-      const newStatus = isVerifiedRuat ? EstadoUsuario.ACTIVO : EstadoUsuario.PENDIENTE_VERIFICACION;      
-      this.editForm.patchValue({
-        estadoUsuario: newStatus
-      });      
+
+  verifyEmailCode(): void {
+    const entered = this.verificationForm.get('code')?.value;
+    const stored = this.editForm.get('verificationCode')?.value;
+    if (entered === stored) {
+      this.emailVerified = true;
+      this.verificationCodeSent = true;
       this.showVerificationCode = false;
-      this.verificationForm.reset();      
-      if (isVerifiedRuat) {
-        this.notify('Email verificado correctamente. Usuario ACTIVO', 'success');
-      } else {
-        this.notify('Email verificado. Pendiente verificación RUAT', 'info');
-      }
+      this.verificationForm.reset();
+
+      const ctrl = this.editForm.get('email');
+      const errors = { ...(ctrl?.errors || {}) };
+      delete errors['emailNotVerified'];
+      ctrl?.setErrors(Object.keys(errors).length ? errors : null);
+
+      const isVerifiedRuat = this.editForm.get('verificadoRuat')?.value;
+      this.editForm.patchValue({
+        estadoUsuario: isVerifiedRuat ? EstadoUsuario.ACTIVO : EstadoUsuario.PENDIENTE_VERIFICACION,
+      });
+      this.notify('Email verificado correctamente', 'success');
     } else {
-      this.notify('Código incorrecto', 'error');
+      this.notify('Código incorrecto. Verifique e intente de nuevo.', 'error');
       this.verificationForm.patchValue({ code: '' });
     }
   }
 
-  async applySanction() {
+  // ─── Sanctions ────────────────────────────────────────────────────────────
+
+  async applySanction(): Promise<void> {
     this.submitted = true;
-    const sanctionData = this.sanctionForm.getRawValue();
     await this.waitForAsyncValidation(this.sanctionForm);
+
     if (this.sanctionForm.invalid) {
-      this.notify('Por favor complete todos los campos de sanción', 'error');
-      this.submitted = false;
       this.markAllFieldsAsTouched(this.sanctionForm);
+      const msgs: string[] = [];
+      if (this.sanction['fechaFinSancion'].errors?.['required']) msgs.push('La fecha de fin de sanción es requerida');
+      if (this.sanction['fechaFinSancion'].errors?.['pastDate']) msgs.push('La fecha de fin debe ser posterior a hoy');
+      if (this.sanction['motivoSancion'].errors?.['required']) msgs.push('El motivo de la sanción es requerido');
+      if (this.sanction['motivoSancion'].errors?.['minlength']) msgs.push('El motivo debe tener al menos 5 caracteres');
+      this.notify(msgs.join('\n'), 'error');
+      this.submitted = false;
       return;
     }
-    const fechaFinSancion = sanctionData.fechaFinSancion ? 
-      new Date(sanctionData.fechaFinSancion + 'T23:59:59') : undefined;
-    const datos: Contribuyente = { 
+
+    const sd = this.sanctionForm.getRawValue();
+    const fechaFinSancion = sd.fechaFinSancion ? new Date(`${sd.fechaFinSancion}T23:59:59.000Z`) : undefined;
+    const datos: Contribuyente = {
       ...this.row,
-      userName: this.row.userName,
-      password: this.row.password,
       estaSancionado: true,
       estadoUsuario: EstadoUsuario.SANCIONADO,
       fechaActualizacion: new Date(),
-      fechaFinSancion: fechaFinSancion,
-      motivoSancion: sanctionData.motivoSancion
+      fechaFinSancion,
+      motivoSancion: sd.motivoSancion,
     };
     try {
-      await this.updateData(datos);
-      this.notify('Sanción aplicada correctamente', 'success');
-      this.closeModal();
-      this.emitList.emit();
+      await this.updateData(datos, 'Sanción aplicada correctamente');
     } catch (error) {
       this.notify('Error al aplicar la sanción: ' + error, 'error');
     } finally {
       this.submitted = false;
     }
   }
-  async removeSanction() {
+
+  async removeSanction(): Promise<void> {
+    const escapedNombre = this.escapeHtml(this.row.nombreCompleto as string);
+    const escapedMotivo = this.escapeHtml(this.row.motivoSancion as string);
+    const fechaFin = this.row.fechaFinSancion
+      ? new Date(this.row.fechaFinSancion as string).toLocaleDateString('es-BO')
+      : '—';
+    const nuevoEstadoLabel = this.row.verificadoRuat ? 'ACTIVO' : 'PENDIENTE VERIFICACIÓN';
+
     const result = await Swal.fire({
       title: '¿Levantar Sanción?',
       html: `
         <div class="text-start">
-          <p><strong>Contribuyente:</strong> ${this.row.nombreCompleto}</p>
-          <p><strong>Motivo actual:</strong> ${this.row.motivoSancion}</p>
-          <p><strong>Fecha fin:</strong> ${this.row?.fechaFinSancion}</p>
+          <p><strong>Contribuyente:</strong> ${escapedNombre}</p>
+          <p><strong>Motivo actual:</strong> ${escapedMotivo}</p>
+          <p><strong>Fecha fin:</strong> ${fechaFin}</p>
           <hr>
-          <p class="text-muted">
-            <i class="ri-information-line"></i> 
-            El usuario quedará en estado: 
-            <strong>${this.row.verificadoRuat ? 'ACTIVO' : 'PENDIENTE VERIFICACIÓN'}</strong>
-          </p>
-        </div>
-      `,
+          <p class="text-muted">El usuario quedará en estado: <strong>${nuevoEstadoLabel}</strong></p>
+        </div>`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#0ab39c',
       cancelButtonColor: '#6c757d',
       confirmButtonText: '<i class="ri-check-line me-1"></i> Sí, Levantar',
-      cancelButtonText: '<i class="ri-close-line me-1"></i> Cancelar'
-    });    
-    if (!result.isConfirmed) return;    
-    this.submitted = true;    
+      cancelButtonText: '<i class="ri-close-line me-1"></i> Cancelar',
+    });
+    if (!result.isConfirmed) return;
+
+    this.submitted = true;
     try {
-      let nuevoEstado = EstadoUsuario.ACTIVO;
-      if (!this.row.verificadoRuat) {
-        nuevoEstado = EstadoUsuario.PENDIENTE_VERIFICACION;
-      }
+      let nuevoEstado: EstadoUsuario;
       if (this.row.estadoUsuario === EstadoUsuario.BLOQUEADO) {
-        nuevoEstado = EstadoUsuario.BLOQUEADO;
+        nuevoEstado = EstadoUsuario.BLOQUEADO; // stay blocked — just lift the sanction flag
+      } else if (!this.row.verificadoRuat) {
+        nuevoEstado = EstadoUsuario.PENDIENTE_VERIFICACION;
+      } else {
+        nuevoEstado = EstadoUsuario.ACTIVO;
       }
-      const datos: Contribuyente = { 
+      const datos: Contribuyente = {
         ...this.row,
-        userName: this.row.userName,
-        password: this.row.password,
         estaSancionado: false,
         fechaFinSancion: undefined,
         motivoSancion: '',
         estadoUsuario: nuevoEstado,
-        fechaActualizacion: new Date()
-      };      
-      await this.updateData(datos);      
-      let mensaje = 'Sanción levantada correctamente';
-      let icon: any = 'success';      
-      if (nuevoEstado === EstadoUsuario.PENDIENTE_VERIFICACION) {
-        mensaje += '<br><small class="text-muted">El usuario debe completar verificación RUAT</small>';
-        icon = 'info';
-      } else if (nuevoEstado === EstadoUsuario.BLOQUEADO) {
-        mensaje += '<br><small class="text-muted">El usuario permanece bloqueado</small>';
-        icon = 'warning';
-      } else {
-        mensaje += '<br><small class="text-success">Usuario ACTIVO</small>';
-      }      
-      await Swal.fire({
-        title: 'Sanción Levantada',
-        html: mensaje,
-        icon: icon,
-        confirmButtonColor: '#0ab39c'
-      });      
-      this.closeModal();
-      this.emitList.emit();
-    } catch (error) {
-      Swal.fire({
-        title: 'Error',
-        text: 'No se pudo levantar la sanción. Por favor, intente nuevamente.',
-        icon: 'error',
-        confirmButtonColor: '#f06548'
-      });
+        fechaActualizacion: new Date(),
+      };
+      await this.updateData(datos, 'Sanción levantada correctamente');
+    } catch {
+      Swal.fire({ title: 'Error', text: 'No se pudo levantar la sanción.', icon: 'error', confirmButtonColor: '#f06548' });
     } finally {
       this.submitted = false;
     }
   }
 
-  async blockUser() {
-    const datos = { ...this.row };
-    datos.estadoUsuario = EstadoUsuario.BLOQUEADO;
-    datos.fechaActualizacion = new Date();
-    await this.updateData(datos);
-  }
-  async unblockUser() {
-    const datos = { ...this.row };
-    if (datos.estaSancionado) {
-      datos.estadoUsuario = EstadoUsuario.SANCIONADO;
-    } else if (!datos.verificadoRuat) {
-      datos.estadoUsuario = EstadoUsuario.PENDIENTE_VERIFICACION;
-    } else {
-      datos.estadoUsuario = EstadoUsuario.ACTIVO;
-    }
-    datos.fechaActualizacion = new Date();
-    await this.updateData(datos);
-  }
-  async inactivateUser() {
-    const datos = { ...this.row };
-    datos.estadoUsuario = EstadoUsuario.INACTIVO;
-    datos.fechaActualizacion = new Date();
-    await this.updateData(datos);
-  }
-  async activateUser() {
-    const datos = { ...this.row };
-    if (!datos.verificadoRuat) {
-      this.notify('No se puede activar. El usuario debe estar verificado en RUAT', 'warning');
-      return;
-    }    
-    if (datos.estaSancionado) {
-      this.notify('No se puede activar. El usuario tiene una sanción activa', 'warning');
-      return;
-    }    
-    datos.estadoUsuario = EstadoUsuario.ACTIVO;
-    datos.fechaActualizacion = new Date();
-    await this.updateData(datos);
+  // ─── Block / Unblock ──────────────────────────────────────────────────────
+
+  async blockUser(): Promise<void> {
+    await this.updateData(
+      { ...this.row, estadoUsuario: EstadoUsuario.BLOQUEADO, fechaActualizacion: new Date() },
+      'Contribuyente bloqueado'
+    );
   }
 
-  private getOrganizations() {
+  async unblockUser(): Promise<void> {
+    let estadoUsuario: EstadoUsuario;
+    if (this.row.estaSancionado) estadoUsuario = EstadoUsuario.SANCIONADO;
+    else if (!this.row.verificadoRuat) estadoUsuario = EstadoUsuario.PENDIENTE_VERIFICACION;
+    else estadoUsuario = EstadoUsuario.ACTIVO;
+    await this.updateData({ ...this.row, estadoUsuario, fechaActualizacion: new Date() }, 'Contribuyente desbloqueado');
+  }
+
+  async inactivateUser(): Promise<void> {
+    await this.updateData(
+      { ...this.row, estadoUsuario: EstadoUsuario.INACTIVO, fechaActualizacion: new Date() },
+      'Contribuyente inactivado'
+    );
+  }
+
+  async activateUser(): Promise<void> {
+    if (!this.row.verificadoRuat) {
+      this.notify('No se puede activar. El usuario debe estar verificado en RUAT', 'warning');
+      return;
+    }
+    if (this.row.estaSancionado) {
+      this.notify('No se puede activar. El usuario tiene una sanción activa', 'warning');
+      return;
+    }
+    await this.updateData(
+      { ...this.row, estadoUsuario: EstadoUsuario.ACTIVO, fechaActualizacion: new Date() },
+      'Contribuyente activado'
+    );
+  }
+
+  // ─── API Calls ────────────────────────────────────────────────────────────
+
+  private getOrganizations(): void {
     this.organizationService.getAll().subscribe({
-      next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.organizationsList = data.payload;
-        }
-      }
+      next: (data: any) => { if (data['status'] === 'OK') this.organizationsList = data.payload; },
     });
   }
-  private getEstudiantes() {
+
+  private getEstudiantes(): void {
     this.estudianteEscuelaService.getAll().subscribe({
-      next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.estudiantesList = data.payload;
-        }
-      }
+      next: (data: any) => { if (data['status'] === 'OK') this.estudiantesList = data.payload; },
     });
   }
-  private getConfigsSystem() {
+
+  private getConfigsSystem(): void {
     this.systemConfigsService.getAll().subscribe({
-      next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.systemConfigList = data.payload;
-          // this.authRuat()
-        }
-      }
+      next: (data: any) => { if (data['status'] === 'OK') this.systemConfigList = data.payload; },
     });
   }
 
@@ -1036,228 +1081,282 @@ export class ModalTaxpayerComponent {
       this.contribuyentesService.save(datos).subscribe({
         next: (data: any) => {
           this.submitted = false;
-          if (data['status'] === 'OK') {
-            resolve(data.payload);
-          } else {
-            this.notify(data.payload, 'error');
-            resolve(null);
-          }
+          data['status'] === 'OK' ? resolve(data.payload) : (this.notify(data.payload, 'error'), resolve(null));
         },
-        error: (error) => {
+        error: (err) => {
           this.submitted = false;
-          reject(error);
-          this.notify('No se pudo guardar los datos! ' + error, 'error');
-        }
+          this.notify('No se pudo guardar los datos! ' + err, 'error');
+          reject(err);
+        },
       });
     });
   }
-  private updateData(datos: Contribuyente): Promise<any> {
+
+  private updateData(datos: Contribuyente, successMessage = 'Datos actualizados exitosamente!'): Promise<any> {
     return new Promise((resolve, reject) => {
       this.contribuyentesService.update(datos).subscribe({
         next: (data: any) => {
           this.submitted = false;
-          this.notify('Datos actualizados exitosamente!', 'success');
+          this.notify(successMessage, 'success');
           this.closeModal();
           this.emitList.emit();
           resolve(data);
         },
-        error: (error) => {
+        error: (err) => {
           this.submitted = false;
-          this.notify('No se pudo actualizar los datos! ' + error, 'error');
-          reject(error);
-        }
+          this.notify('No se pudo actualizar los datos! ' + err, 'error');
+          reject(err);
+        },
       });
     });
   }
-  deleteData(uuid: string) {
+
+  deleteData(uuid: string): void {
     this.contribuyentesService.delete(uuid).subscribe({
       next: (data: any) => {
         this.submitted = false;
-        if (data.status == 'OK') {
+        if (data.status === 'OK') {
           this.closeModal();
           this.emitList.emit();
           this.notify(data.payload, 'info');
         }
       },
-      error: err => {
+      error: () => {
         this.submitted = false;
         this.notify('No se pudo eliminar el registro!', 'error');
-      }
+      },
     });
   }
 
-  private async searchContribuyenteInRuat(codigoAlcaldia: string, data: any): Promise<any> {
+  private searchContribuyenteInRuat(codigoAlcaldia: string, data: any): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.ruatService.getContribuyentePorCi(
-        codigoAlcaldia,
-        data.numeroDocumento,
-        data.tipoDocumento, 
-        data.expedido
-      ).subscribe({ 
-        next: (resp: any) => {
-          if (resp['status'] === 'OK') {
-            resolve(resp.payload);
-          } else {
-            resolve(null);
-          }
-        },
-        error: (error) => {
-          reject(error);
-        }
-      });
+      this.ruatService
+        .getContribuyentePorCi(codigoAlcaldia, data.numeroDocumento, data.tipoDocumento, data.expedido)
+        .subscribe({
+          next: (resp: any) => resolve(resp['status'] === 'OK' ? resp.payload : null),
+          error: (err) => reject(err),
+        });
     });
   }
-  private async registerContribuyente(codigoAlcaldia: string, codigoUsuario: string, data: any): Promise<any> {
+
+  private registerContribuyente(codigoAlcaldia: string, codigoUsuario: string, data: any): Promise<any> {
     return new Promise((resolve, reject) => {
       this.ruatService.registerContribuyente(codigoAlcaldia, codigoUsuario, data).subscribe({
         next: (resp: any) => {
-          if (resp['status'] === 'OK') {
-            resolve(resp.payload);
-          } else {
-            this.notify(resp.payload, 'error');
-            resolve(null);
-          }
+          if (resp['status'] === 'OK') resolve(resp.payload);
+          else { this.notify(resp.payload, 'error'); resolve(null); }
         },
-        error: (error) => {
-          reject(error);
-        }
+        error: (err) => reject(err),
       });
     });
   }
 
+  // ─── Email Sending ────────────────────────────────────────────────────────
+
   private sendCredentialsEmail(userData: any, username: string, password: string): Promise<void> {
-    const email = userData.email;
-    const name = userData.nombre;
-    
-    return emailjs.send(
-      environment.EmailJS.idService,
-      environment.EmailJS.idTemplate,
-      {
-        from_name: "GAMQ-DEPORTES",
-        to_name: name,
-        message: `USUARIO: ${username}, CONTRASEÑA: ${password}`,
-        reply_to: email,
-      },
-      environment.EmailJS.publicKey
-    ).then((response: EmailJSResponseStatus) => {
-      this.notify("Un email fue enviado a " + email + " con su USUARIO y CONTRASEÑA", 'success');
-    }).catch((error) => {
-      this.notify("No se pudo enviar el email con las credenciales", 'warning');
-    });
+    return emailjs
+      .send(
+        environment.EmailJS.idService,
+        environment.EmailJS.idTemplate,
+        { from_name: 'GAMQ-DEPORTES', to_name: userData.nombre, message: `USUARIO: ${username}, CONTRASEÑA: ${password}`, reply_to: userData.email },
+        environment.EmailJS.publicKey
+      )
+      .then(() => this.notify('Un email fue enviado a ' + userData.email + ' con su USUARIO y CONTRASEÑA', 'success'))
+      .catch(() => this.notify('No se pudo enviar el email con las credenciales', 'warning'));
   }
+
   private sendEmailCode(email: string, code: string): Promise<void> {
-    return emailjs.send(
-      environment.EmailJS.idService,
-      environment.EmailJS.idTemplate,
-      {
-        from_name: "GAMQ-DEPORTES",
-        to_name: this.editForm.get('nombre')?.value || 'Usuario',
-        message: `Su código de verificación es: ${code}`,
-        reply_to: email,
-      },
-      environment.EmailJS.publicKey
-    ).then(() => {
-      // Success
-    }).catch((error) => {
-      throw error;
-    });
+    return emailjs
+      .send(
+        environment.EmailJS.idService,
+        environment.EmailJS.idTemplate,
+        { from_name: 'GAMQ-DEPORTES', to_name: this.editForm.get('nombre')?.value || 'Usuario', message: `Su código de verificación es: ${code}. Válido por un solo uso.`, reply_to: email },
+        environment.EmailJS.publicKey
+      )
+      .then(() => undefined)
+      .catch((err) => { throw err; });
   }
+
   generateCode(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
   }
+
+  // ─── Validators ───────────────────────────────────────────────────────────
+
+  identityNumberValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const itExist = (this.clientsList || []).some(
+          (u) => u.numeroDocumento === control.value && u.uuid !== this.editForm.get('uuid')?.value
+        );
+        resolve(itExist ? { itExist: true } : null);
+      }, 300);
+    });
+  }
+
+  emailValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const taken = (this.clientsList || []).some(
+          (u) =>
+            (u.email || '').toLowerCase() === (control.value || '').toLowerCase() &&
+            u.uuid !== this.editForm.get('uuid')?.value
+        );
+        resolve(taken ? { emailTaken: true } : null);
+      }, 300);
+    });
+  }
+
+  usernameFormatValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (!value) return null;
+    const lower = value.toLowerCase();
+    if (!/^[a-z0-9.]+$/.test(lower)) return { invalidFormat: true };
+    if (value !== lower) control.setValue(lower, { emitEvent: false });
+    return null;
+  }
+
+  // ─── Private Helpers ──────────────────────────────────────────────────────
+
+  private markAllFieldsAsTouched(form: UntypedFormGroup): void {
+    Object.keys(form.controls).forEach((key) => form.get(key)?.markAsTouched());
+  }
+
+  private async waitForAsyncValidation(form: UntypedFormGroup): Promise<void> {
+    return new Promise((resolve) => {
+      if (!form.pending) { resolve(); return; }
+      const sub = form.statusChanges.subscribe((status) => {
+        if (status !== 'PENDING') { sub.unsubscribe(); resolve(); }
+      });
+    });
+  }
+
+  private getInvalidFields(): string[] {
+    return Object.keys(this.editForm.controls).filter((k) => this.editForm.get(k)?.invalid);
+  }
+
+  private getFieldDisplayName(fieldName: string): string {
+    const map: { [k: string]: string } = {
+      tipoContribuyente: 'Tipo de Contribuyente',
+      tipoDocumento: 'Tipo de Documento',
+      numeroDocumento: 'Número de Documento',
+      expedido: 'Expedido',
+      nombre: 'Nombre',
+      primerApellido: 'Primer Apellido',
+      fechaNacimiento: 'Fecha de Nacimiento',
+      telefono: 'Teléfono',
+      email: 'Email',
+      userName: 'Usuario',
+      password: 'Contraseña',
+      cpassword: 'Confirmar Contraseña',
+      registroUnicoDeportivo: 'Registro Único Deportivo (requerido para Deportista Elite)',
+    };
+    return map[fieldName] || fieldName;
+  }
+
+  private getTipoDocumentoCode(description: string): string {
+    return this.identityTypes.find((i) => i.description === description)?.type ?? 'CI';
+  }
+
+  private getExpedidoCode(value: string): string {
+    return this.cityAcronym.find((i) => i.value === value)?.id.toString() ?? '3';
+  }
+
+  // ─── Display Helpers ──────────────────────────────────────────────────────
+
+  getTipoOrganizacionLabel(tipo: string): string {
+    const labels: Record<string, string> = {
+      [TipoOrganizacion.ASOCIACION]: 'Asociación',
+      [TipoOrganizacion.CLUB]: 'Club',
+      [TipoOrganizacion.ESCUELA_MUNICIPAL]: 'Escuela Municipal',
+      [TipoOrganizacion.ORGANIZACION]: 'Organización',
+    };
+    return labels[tipo] || tipo;
+  }
+
   getDepartmentName(id: string | undefined): string | undefined {
-    const found = this.cityAcronym.find(item => '' + item.id === id);
-    return found ? found.value : id;
+    return this.cityAcronym.find((i) => '' + i.id === id)?.value ?? id;
   }
+
   getCivilStatus(acronym: string | undefined): string | undefined {
-    const found = this.civilStatus.find(item => item.type === acronym);
-    return found ? found.description : acronym;
+    return this.civilStatus.find((i) => i.type === acronym)?.description ?? acronym;
   }
+
   getCivilStatusCode(description: string): string {
-    const found = this.civilStatus.find(item => item.description === description);
-    return found ? found.type : '';
+    return this.civilStatus.find((i) => i.description === description)?.type ?? '';
   }
+
   getUserGender(description: string): string {
-    const found = this.userSex.find(item => item.description === description);
-    return found ? found.id : '';
+    return this.userSex.find((i) => i.description === description)?.id ?? '';
   }
+
   getGenderText(genero: string | undefined): string {
-    return genero === 'F' ? 'FEMENINO' : genero === 'M' ? 'MASCULINO' : 'NO ESPECIFICADO';
+    return genero === 'F' ? 'FEMENINO' : genero === 'M' ? 'MASCULINO' : 'No especificado';
   }
+
   getTipoContribuyenteText(tipo: string): string {
     return tipo === 'NA' ? 'CONTRIBUYENTE NATURAL' : 'CONTRIBUYENTE JURÍDICO';
   }
+
   getTipoDocumentoDescription(code: string): string {
-    const found = this.identityTypes.find(item => item.type === code);
-    return found ? found.description : code;
+    return this.identityTypes.find((i) => i.type === code)?.description ?? code;
   }
+
   getExpedidoDescription(id: string): string {
-    const found = this.cityAcronym.find(item => item.id.toString() === id);
-    return found ? found.value : id;
-  }
-  calculateAge(fechaNacimiento: string): number {
-    if (!fechaNacimiento) return 0;
-    const birthDate = new Date(fechaNacimiento);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
+    return this.cityAcronym.find((i) => i.id.toString() === id)?.value ?? id;
   }
 
   getEstadoUsuarioText(estado: string): string {
-    switch (estado) {
-      case EstadoUsuario.ACTIVO: return 'ACTIVO';
-      case EstadoUsuario.INACTIVO: return 'INACTIVO';
-      case EstadoUsuario.PENDIENTE_VERIFICACION: return 'PENDIENTE VERIFICACIÓN';
-      case EstadoUsuario.SANCIONADO: return 'SANCIONADO';
-      case EstadoUsuario.BLOQUEADO: return 'BLOQUEADO';
-      default: return estado;
-    }
+    const map: Record<string, string> = {
+      [EstadoUsuario.ACTIVO]: 'ACTIVO',
+      [EstadoUsuario.INACTIVO]: 'INACTIVO',
+      [EstadoUsuario.PENDIENTE_VERIFICACION]: 'PENDIENTE VERIFICACIÓN',
+      [EstadoUsuario.SANCIONADO]: 'SANCIONADO',
+      [EstadoUsuario.BLOQUEADO]: 'BLOQUEADO',
+    };
+    return map[estado] || estado;
   }
 
-  togglePasswordField() {
-    this.passwordField = !this.passwordField;
-  }
-  toggleConfirmField() {
-    this.confirmField = !this.confirmField;
+  calculateAge(fechaNacimiento: string): number {
+    if (!fechaNacimiento) return 0;
+    const birth = new Date(fechaNacimiento);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
   }
 
-  public closeModal() {
+  togglePasswordField(): void { this.passwordField = !this.passwordField; }
+  toggleConfirmField(): void { this.confirmField = !this.confirmField; }
+
+  // ─── Modal Close ──────────────────────────────────────────────────────────
+
+  public closeModal(): void {
     this.editForm.enable();
+    this.editForm.reset();
     this.sanctionForm.reset();
     this.estudianteForm.reset();
     this.organizacionForm.reset();
-    this.modalService.dismissAll();
-    this.editForm.reset();
     this.searchRuatForm.reset();
     this.verificationForm.reset();
+    this.modalService.dismissAll();
     this.showRuatSearch = false;
     this.showVerificationCode = false;
     this.verificationCodeSent = false;
+    this.emailVerified = false;
     this.ruatDataFound = null;
     this.estudiantesTemporales = [];
     this.organizacionesTemporales = [];
     this.showEstudianteForm = false;
     this.showOrganizacionForm = false;
     this.activeTab = 'basic';
+    this.originalEmail = '';
   }
 
-  private notify(message: any, type: any): void {
-    let timerInterval: any;
-    Swal.fire({
-      text: message,
-      icon: type,
-      timer: 5000,
-      timerProgressBar: true,
-      willClose: () => {
-        clearInterval(timerInterval);
-      },
-    }).then((result) => {
-      if (result.dismiss === Swal.DismissReason.timer) {
-      }
-    });
+  // ─── Notify ───────────────────────────────────────────────────────────────
+
+  private notify(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
+    Swal.fire({ text: message, icon: type, timer: 5000, timerProgressBar: true });
   }
 }

@@ -71,9 +71,14 @@
                 "ngx-lightbox",
                 "ngx-masonry",
                 "leaflet",
+                "leaflet.markercluster",
                 "sweetalert2",
                 "lodash",
                 "@ckeditor/ckeditor5-build-classic",
+                "apexcharts",
+                "flatpickr/dist/l10n/es",
+                "flatpickr/dist/l10n/es.js",
+                "ngx-csv",
                 "ngx-csv/ngx-csv",
                 "dropzone",
                 "file-saver",
@@ -90,7 +95,7 @@
                   },
                   {
                     "type": "anyComponentStyle",
-                    "maximumWarning": "6kB",
+                    "maximumWarning": "8kB",
                     "maximumError": "10kB"
                   }
                 ],                

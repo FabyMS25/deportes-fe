@@ -10,9 +10,9 @@
         <div class="col-6 col-sm-3 col-lg-2">
           <label class="form-label small fw-medium mb-0">Iluminación</label>
           <select class="form-select" [(ngModel)]="filterByIluminacion">
-            <option [value]="undefined">Todas</option>
-            <option [value]="true">Con iluminación</option>
-            <option [value]="false">Sin iluminación</option>
+            <option [ngValue]="undefined">Todas</option>
+            <option [ngValue]="true">Con iluminación</option>
+            <option [ngValue]="false">Sin iluminación</option>
           </select>
         </div>
         <div class="col-6 col-sm-3 col-lg-2">
@@ -160,7 +160,7 @@
                   [class.rotate-180]="isHorarioExpanded(item.campo.uuid!)"></i>
               </button>
             </div>
-            <div *ngIf="!isHorarioExpanded(item.campo.uuid!)" class="schedule-list mt-2 pt-2 border-top" @slideDown>
+            <div *ngIf="isHorarioExpanded(item.campo.uuid!)" class="schedule-list mt-2 pt-2 border-top" @slideDown>
               <div *ngFor="let horario of getHorarioCompleto(item.campo)" class="small mb-1">
                 {{ horario }}
               </div>

@@ -45,6 +45,39 @@ export class ReservaPuntualService {
       params: new HttpParams().set('horasTimeout', horasTimeout.toString())
     });
   }
+  
+  validarCambioHorario(
+    uuidCampo: string,
+    fechaUso: string | Date,
+    horaInicio: string,
+    horaFin: string,
+    excludeReservaUuid?: string
+  ): Observable<any> {
+    const fecha =
+      typeof fechaUso === 'string'
+        ? fechaUso
+        : this.formatDateLocal(fechaUso);
+
+    let params = new HttpParams()
+      .set('campoUuid', uuidCampo)
+      .set('fechaUso', fecha)
+      .set('horaInicio', horaInicio.slice(0, 5))
+      .set('horaFin', horaFin.slice(0, 5));
+
+    if (excludeReservaUuid) {
+      params = params.set('excludeReservaUuid', excludeReservaUuid);
+    }
+
+    return this.http.get<any>(`${this.apiUrl}/conflictos`, { params });
+  }
+
+  private formatDateLocal(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
 
   getByUuid(uuid: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/${uuid}`);

@@ -225,8 +225,8 @@
               <div class="input-group">
                 <input type="email" id="email" class="form-control" placeholder="Email" formControlName="email"
                   [ngClass]="{'is-invalid': submitted && form['email'].errors}">
-                <button class="btn btn-outline-secondary" type="button" 
-                  *ngIf="(accion === '') && !verificationCodeSent"
+                <button class="btn btn-outline-secondary" type="button"
+                  *ngIf="shouldShowEmailVerifyButton()"
                   (click)="sendVerificationEmail()">
                   <i class="ri-mail-send-line"></i> Verificar
                 </button>
@@ -237,7 +237,7 @@
                 <span *ngIf="form['email'].errors['emailTaken']">Email ya registrado</span>
               </div>
             </div>
-            <div class="col-12" *ngIf="showVerificationCode && (accion === '')">
+            <div class="col-12" *ngIf="shouldShowVerificationCodeBox()">
               <div class="alert alert-info">
                 <h6 class="alert-heading"><i class="ri-mail-line me-2"></i>Verificación de Email</h6>
                 <p class="mb-2">Se ha enviado un código de 4 dígitos a su correo electrónico</p>

@@ -151,6 +151,7 @@ export class DataTableComponent implements OnChanges {
     switch (prop) {
       case 'requiereAprobacion': case 'accesoLibre':case 'tieneIluminacion': case 'forAsociacion':
       case 'puedeReservarGratis': case 'esDeportistaElite': case 'perteneceEscuelaMunicipal': case 'estaSancionado':
+      case 'esReservaGratuita': case 'reservaDto.esReservaGratuita':
         return this.formatBoolean(value, 'SI', 'NO');
       case 'esValido':
         return this.formatBoolean(value, 'VALIDO', 'INVALIDO');

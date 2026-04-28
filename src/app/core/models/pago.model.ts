@@ -1,7 +1,7 @@
 import { Reserva } from "./reserva.model";
 
 export interface  Pago{
-    uuid?: String;
+    uuid?: string;
     estado?:boolean;
     fechaCreacion?: Date;
     fechaActualizacion?:Date;

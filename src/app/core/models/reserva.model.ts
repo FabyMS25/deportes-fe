@@ -42,5 +42,5 @@ export interface Reserva{
   reservaPeriodoDto?: ReservaPeriodo;
 
   pagosDtoList?:Pago[];
-  auditoriasDtoList?:ReservaAuditoria;
+  auditoriasDtoList?: ReservaAuditoria[];
 }

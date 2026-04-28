@@ -93,22 +93,37 @@ export class BookingOneTimeComponent implements OnInit {
       { label: this.title, active: true }
     ];
     this.itemsList = [
+      { name: 'Número Reserva', prop: 'reservaDto.numeroReserva', visible: false },
       { name: 'Contribuyente', prop: 'reservaDto.contribuyenteDto.nombreCompleto', visible: !this.contribuyente },
       { name: 'Complejo', prop: 'reservaDto.campoDeportivoDto.complejoDto.nombre', visible: true },
-      { name: 'Campo Deportivo', prop: 'reservaDto.campoDeportivoDto.nombre', visible: false },
+      { name: 'Campo Deportivo', prop: 'reservaDto.campoDeportivoDto.nombre', visible: true },
       { name: 'Superficie', prop: 'superficie', visible: false },
-      { name: 'Categoría', prop: 'categoria', visible: false , tag:true},
-      { name: 'Fecha Creación', prop: 'reservaDto.fechaCreacion', date: true, visible: false },
+      { name: 'Categoría', prop: 'categoria', visible: false, tag: true },
+
+      { name: 'Clasificador RUAT', prop: 'reservaDto.tarifaDto.clasificadorRuatDto.nombre', visible: false },
+      { name: 'Tipo Cobro', prop: 'reservaDto.tarifaDto.tipoCobro', visible: true },
+
       { name: 'Fecha Uso', prop: 'fechaUso', date: true, visible: true },
       { name: 'Hora Inicio', prop: 'horaInicio', visible: false },
       { name: 'Hora Fin', prop: 'horaFin', visible: false },
       { name: 'Duración', prop: 'duracionHoras', visible: false },
       { name: 'Cant. Personas', prop: 'cantidadPersonas', visible: false },
-      { name: 'Tasa', prop: 'reservaDto.numeroTasa', visible: false },
+      { name: 'Monto Total', prop: 'reservaDto.montoTotal', visible: true },
+      { name: 'Tasa', prop: 'reservaDto.numeroTasa', visible: true },
+
+      { name: 'Gratuita', prop: 'reservaDto.esReservaGratuita', visible: true, tag: true },
+      { name: 'Motivo Gratuidad', prop: 'reservaDto.motivoGratuidad', visible: false },
+
+      { name: 'Organización', prop: 'reservaDto.organizacionDto.nombre', visible: false },
+      { name: 'Estudiante', prop: 'reservaDto.estudianteEscuelaDto.nombreCompleto', visible: false },
+
       { name: 'Estado Validación', prop: 'reservaDto.estadoValidacion', tag: true, visible: this.canActivate.includes('VALIDAR') },
       { name: 'Estado Reserva', prop: 'reservaDto.estadoReserva', tag: true, visible: true },
-      { name: 'Monto Total', prop: 'reservaDto.montoTotal', visible: false },
+      { name: 'Estado Pago', prop: 'reservaDto.pagosDtoList[0].estadoPago', tag: true, visible: true },
       { name: 'Observaciones', prop: 'observaciones', visible: false },
+
+      { name: 'Fecha Creación', prop: 'reservaDto.fechaCreacion', date: true, visible: false },
+      { name: 'Activo', prop: 'activo', tag: true, visible: false },
     ];
     const savedViewMode = localStorage.getItem('dataTableViewMode');
     if (savedViewMode === 'table' || savedViewMode === 'cards') {
@@ -203,10 +218,10 @@ export class BookingOneTimeComponent implements OnInit {
     modalRef.componentInstance.autoLoad = true;
   }
   public agregarReserva() {
-    this.router.navigate(['/reservations/details'], { 
-      state: { 
+    this.router.navigate(['/reservations/details'], {
+      state: {
         tipoReserva: 'puntual'
-      } 
+      }
     });
   }
   public openModal(data: any | undefined, accion: string, size: string) {
@@ -222,7 +237,7 @@ export class BookingOneTimeComponent implements OnInit {
     });
   }
   public async consultModal(data: any, content: any, size: string) {
-    if (this.selectedItems.length === 0) {
+    if (this.selectedItems.length === 0 && data) {
       this.selectedItems.push(data);
     }    
     this.consultResults = [];
@@ -232,7 +247,7 @@ export class BookingOneTimeComponent implements OnInit {
     try {
       for (const item of this.selectedItems) {
         try {
-          const result = await this.consultData(item);
+          const result = await this.consultData(item, { silent: false });
           this.consultResults.push(result);
           if (!this.dataSelected && result.hasPayment && result.pagoData) {
             this.dataSelected = {
@@ -250,6 +265,9 @@ export class BookingOneTimeComponent implements OnInit {
             text: 'Error durante la consulta', 
             type: 'error',
             hasPayment: false,
+            consultationSuccessful: false,
+            ruatResponse: error,
+            errorCode: 'RUAT_EXCEPTION'
           });
         }
       }
@@ -283,14 +301,17 @@ export class BookingOneTimeComponent implements OnInit {
         horaFin: item.horaFin || '-',
         duracion: item.duracionHoras ? `${item.duracionHoras} hrs` : '-',
         cantidadPersonas: item.cantidadPersonas || '-',
-        // fechaUsoReal: item.fechaUsoReal ? new Date(item.fechaUsoReal).toLocaleDateString() : '-',
-        fechaCreacion: item.reservaDto?.fechaCreacion ? new Date(item.reservaDto.fechaCreacion).toLocaleDateString() : '-',
-        // fechaActualizacion: item.reservaDto?.fechaActualizacion ? new Date(item.reservaDto.fechaActualizacion).toLocaleDateString() : '-',
         tipoReserva: item.reservaDto?.tipoReserva || '-',
         tipoCobro: item.reservaDto?.tarifaDto?.tipoCobro || '-',
         numeroReserva: item.reservaDto?.numeroReserva || '-',
         tasa: item.reservaDto?.numeroTasa || '-',
-        montoTotal: item.reservaDto?.montoTotal || '-',        
+        montoTotal: item.reservaDto?.montoTotal || '-',  
+        clasificadorRuat: item.reservaDto?.tarifaDto?.clasificadorRuatDto?.nombre || '-',
+        esReservaGratuita: item.reservaDto?.esReservaGratuita ? 'SI' : 'NO',
+        motivoGratuidad: item.reservaDto?.motivoGratuidad || '-',
+        estudiante: item.reservaDto?.estudianteEscuelaDto?.nombreCompleto || '-',
+        matricula: item.reservaDto?.estudianteEscuelaDto?.matricula || '-',
+        tipoOrganizacion: item.reservaDto?.organizacionDto?.tipoOrganizacion || '-',      
         estadoValidacion: item.reservaDto?.estadoValidacion || '-',
         estadoReserva: item.reservaDto?.estadoReserva || '-',
         observaciones: item.observaciones || '-',  
@@ -304,6 +325,7 @@ export class BookingOneTimeComponent implements OnInit {
         carnet: item.reservaDto?.contribuyenteDto?.numeroDocumento || '-',        
         esOrganizacion: item.reservaDto?.organizacionDto ? 'SI' : 'NO',
         nombreOrganizacion: item.reservaDto?.organizacionDto?.nombre || '-',
+        fechaCreacion: item.reservaDto?.fechaCreacion ? new Date(item.reservaDto.fechaCreacion).toLocaleDateString() : '-',
       };      
       return [{ ...baseData }];
     });    
@@ -318,92 +340,127 @@ export class BookingOneTimeComponent implements OnInit {
       noDownload: false,
       headers: [
         "Complejo", "Campo Deportivo", "Superficie","Categoría",        
-        "Fecha Uso", "Hora Inicio", "Hora Fin", "Duración", "Cant. Personas",/* "Fecha Uso Real", */                  
-        "Fecha Creación", /* "Fecha Actualización", */ "Tipo Reserva", "Tipo Cobro", 
-        "Número Reserva", "Número Tasa", "Monto Total",/* "Clasificador RUAT", */
+        "Fecha Uso", "Hora Inicio", "Hora Fin", "Duración", "Cant. Personas",                
+        "Tipo Reserva", "Tipo Cobro", 
+        "Número Reserva", "Número Tasa", "Monto Total",
+        "Clasificador RUAT",
+        "Reserva Gratuita", "Motivo Gratuidad",
+        "Tipo Organización",
+        "Estudiante", "Matrícula",
         "Estado Validación", "Estado Reserva", "Observaciones",
         "Fecha Aprobación", "Fecha Rechazo", "Motivo Rechazo", "Aprobado Por",  
         "Tipo Contribuyente", "Contribuyente", "Carnet",
         "Es Para Organización", "Nombre Organización",
+        "Fecha Creación", /* "Fecha Actualización", */ 
       ]
     };
     new ngxCsv(lista, `Reservas_Puntuales_${new Date().toISOString().split('T')[0]}`, data);
   }
 
-
   /* BUSINESS LOGIC */
-  private async checkAndUpdateReservationStatuses(list: ReservaPuntual[]): Promise<ReservaPuntual[]> {
-    const updatePromises = list.map(async (reservaPun:ReservaPuntual) => {
+  private async checkAndUpdateReservationStatuses(
+    list: ReservaPuntual[]
+  ): Promise<ReservaPuntual[]> {
+    const updatedList: ReservaPuntual[] = [];
+    for (const reservaPun of list) {
+      updatedList.push(await this.checkAndUpdateSingleReservationStatus(reservaPun));
+    }
+    return updatedList;
+  }
+  private async checkAndUpdateSingleReservationStatus(
+    reservaPun: ReservaPuntual
+  ): Promise<ReservaPuntual> {
       if (!reservaPun.reservaDto) return reservaPun;
-      const reservaDto : Reserva = reservaPun.reservaDto;
+      const reservaDto: Reserva = reservaPun.reservaDto;
       const terminalStates = [
-        EstadoReserva.COMPLETADA, EstadoReserva.NO_SHOW,
-        EstadoReserva.CANCELADA, EstadoReserva.EXPIRADA,        
+        EstadoReserva.COMPLETADA,
+        EstadoReserva.NO_SHOW,
+        EstadoReserva.CANCELADA,
+        EstadoReserva.EXPIRADA,
       ];
-      if (terminalStates.includes(reservaDto.estadoReserva)) {
-        return reservaPun;
-      }
+      if (terminalStates.includes(reservaDto.estadoReserva)) return reservaPun;
       try {
-        if (reservaDto.estadoReserva === EstadoReserva.PENDIENTE || 
-            reservaDto.estadoReserva === EstadoReserva.SOLICITADA) {
+        if (reservaDto.estadoReserva === EstadoReserva.SOLICITADA) {
+          if (
+            reservaDto.estadoValidacion === EstadoValidacion.PENDIENTE &&
+            this.isTimeCompleted(reservaPun)
+          ) {
+            return await this.updateReservationByPR(reservaPun, {
+              estadoReserva:    EstadoReserva.CANCELADA,
+              estadoValidacion: EstadoValidacion.VENCIDA,
+              motivoRechazo:    'RESERVA VENCIDA SIN VALIDACIÓN ADMINISTRATIVA',
+              fechaRechazo:     new Date(),
+            });
+          }
+          if (reservaDto.estadoValidacion === EstadoValidacion.RECHAZADA) {
+            return await this.updateReservationByPR(reservaPun, {
+              estadoReserva: EstadoReserva.CANCELADA,
+            });
+          }
+          return reservaPun;
+        }
+        if (reservaDto.estadoReserva === EstadoReserva.PENDIENTE) {
           if (reservaDto.esReservaGratuita) {
             if (reservaDto.estadoValidacion === EstadoValidacion.APROBADA) {
               if (this.isTimeCompleted(reservaPun)) {
                 return await this.updateReservationByPR(reservaPun, {
-                  estadoReserva: EstadoReserva.COMPLETADA
-                });
-              } else if (this.isCurrentlyActive(reservaPun)) {
-                return await this.updateReservationByPR(reservaPun, {
-                  estadoReserva: EstadoReserva.EN_CURSO
+                  estadoReserva: EstadoReserva.COMPLETADA,
                 });
               }
-              return reservaPun;
-            } else if(reservaDto.estadoValidacion === EstadoValidacion.RECHAZADA) {
-              return await this.updateReservationByPR(reservaPun, {
-                  estadoReserva: EstadoReserva.CANCELADA
-              });
+              if (this.isCurrentlyActive(reservaPun)) {
+                return await this.updateReservationByPR(reservaPun, {
+                  estadoReserva: EstadoReserva.EN_CURSO,
+                });
+              }
             }
             return reservaPun;
           }
-          const consultResult = await this.consultData(reservaPun);
-          if (consultResult.hasPayment) {
-            if (this.isTimeCompleted(reservaPun)) {
-              return await this.updateReservationByPR(reservaPun, {
-                estadoReserva: EstadoReserva.COMPLETADA,
-              });
-            } else if (this.isCurrentlyActive(reservaPun)) {
-              return await this.updateReservationByPR(reservaPun, {
-                estadoReserva: EstadoReserva.EN_CURSO,
-              });
-            } else {
+          const consultResult = await this.consultData(reservaPun, { silent: true });
+          if (consultResult.consultationSuccessful) {
+            if (consultResult.hasPayment) {
+              if (this.isTimeCompleted(reservaPun)) {
+                return await this.updateReservationByPR(reservaPun, {
+                  estadoReserva: EstadoReserva.COMPLETADA,
+                });
+              }
+              if (this.isCurrentlyActive(reservaPun)) {
+                return await this.updateReservationByPR(reservaPun, {
+                  estadoReserva: EstadoReserva.EN_CURSO,
+                });
+              }
               return await this.updateReservationByPR(reservaPun, {
                 estadoReserva: EstadoReserva.PAGADA,
               });
-            }            
-          } else {
-            if (this.isPeriodExpired(reservaPun)) {
-              return await this.handleExpiredgReservation(reservaPun);
+            } else {
+              if (this.isPeriodExpired(reservaPun)) {
+                return await this.handleExpiredReservation(reservaPun);
+              }
             }
           }
+          return reservaPun;
         }
-        if (reservaDto.estadoReserva === EstadoReserva.PAGADA || 
-            reservaDto.estadoReserva === EstadoReserva.EN_CURSO) {
+        if (
+          reservaDto.estadoReserva === EstadoReserva.PAGADA ||
+          reservaDto.estadoReserva === EstadoReserva.EN_CURSO
+        ) {
           if (this.isTimeCompleted(reservaPun)) {
-            return await this.updateReservationByPR(reservaPun, { 
-              estadoReserva: EstadoReserva.COMPLETADA 
+            return await this.updateReservationByPR(reservaPun, {
+              estadoReserva: EstadoReserva.COMPLETADA,
             });
           }
-          if (this.isCurrentlyActive(reservaPun) && 
-          (reservaDto.estadoReserva !== EstadoReserva.EN_CURSO)) {
-            return await this.updateReservationByPR(reservaPun, { 
-              estadoReserva: EstadoReserva.EN_CURSO 
+          if (
+            this.isCurrentlyActive(reservaPun) &&
+            reservaDto.estadoReserva !== EstadoReserva.EN_CURSO
+          ) {
+            return await this.updateReservationByPR(reservaPun, {
+              estadoReserva: EstadoReserva.EN_CURSO,
             });
           }
-        }             
+        }
         return reservaPun;
-      } catch (error) { return reservaPun;}
-    });      
-    return await Promise.all(updatePromises);
+      } catch {
+        return reservaPun;
+      }
   }
   private isCurrentlyActive(reserva: ReservaPuntual): boolean {
     const now = new Date();    
@@ -474,61 +531,142 @@ export class BookingOneTimeComponent implements OnInit {
     }
     return new Date();
   }
-
+  private isRuatConnectionError(payload: any): boolean {
+    const rawPayload = typeof payload === 'string'
+      ? payload
+      : JSON.stringify(payload || '');
+    return [
+      'Connection timed out',
+      'ConnectException',
+      'I/O error',
+      'Read timed out',
+      'SocketTimeoutException',
+      '503',
+      '502',
+      '504',
+      'Service Unavailable'
+    ].some(term => rawPayload.includes(term));
+  }
+  private parseRuatPaymentDate(fechaPago: string): Date | null {
+    if (!fechaPago || !/^\d{2}\/\d{2}\/\d{4}$/.test(fechaPago)) {
+      return null;
+    }
+    const [day, month, year] = fechaPago.split('/').map(Number);
+    return new Date(year, month - 1, day, 12, 0, 0, 0);
+  }
+  private extractRuatBusinessPayload(payload: any): any | null {
+    if (!payload) return null;
+    if (typeof payload === 'object') {
+      return payload;
+    }
+    if (typeof payload !== 'string') {
+      return null;
+    }
+    try {
+      const jsonMatch = payload.match(/\{.*\}/s);
+      if (!jsonMatch) return null;
+      return JSON.parse(jsonMatch[0]);
+    } catch {
+      return null;
+    }
+  }
 
   /* API RUAT Services */
-  private async consultData(item: ReservaPuntual): Promise<any> {
+  private async consultData(item: ReservaPuntual, options: { silent?: boolean } = {}): Promise<any> {
     try {
       const nroTasa = item.reservaDto?.numeroTasa;
       if (!nroTasa) {
         return { item, text: "No hay número de tasa asociado", 
-          type: 'warning', hasPayment: false };
+          type: 'warning', hasPayment: false, consultationSuccessful: false };
       }
       const codigoAlcaldia = this.systemConfigList[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI';
-      const resp: any = await this.ruatService.consultaPagoTasa(codigoAlcaldia, nroTasa).toPromise();      
-      if (resp['status'] !== 'OK') {
-        let errorMessage = 'Error en la consulta al RUAT';
-        if (typeof resp.payload === 'string') {
-          try {
-            const jsonMatch = resp.payload.match(/\{.*\}/);
-            if (jsonMatch) {
-              const jsonPayload = JSON.parse(jsonMatch[0]);
-              errorMessage = jsonPayload.mensaje || errorMessage;
-            } else {
-              errorMessage = resp.payload || errorMessage;
-            }
-          } catch (e) {
-            errorMessage = resp.payload || errorMessage;
-          }
+      const resp: any = await this.ruatService.consultaPagoTasa(codigoAlcaldia, nroTasa).toPromise();
+      if (resp?.status !== 'OK') {
+        if (this.isRuatConnectionError(resp?.payload)) {
+          return {
+            item,
+            text: 'RUAT no respondió a tiempo. No se pudo verificar el pago ni actualizar la reserva. Intente nuevamente en unos minutos.',
+            type: 'warning',
+            hasPayment: false,
+            consultationSuccessful: false,
+            ruatResponse: resp,
+            errorCode: 'RUAT_TIMEOUT'
+          };
         }
-        return { 
-          item, 
-          text: errorMessage, 
-          type: 'error',
-          hasPayment: false
-        };
-      }
-      if (!resp.payload.continuarFlujo) {
-        return { 
-          item, 
-          text: resp.payload.mensaje || resp.payload.observacion || "No se puede continuar con el flujo", 
+        const ruatPayload = this.extractRuatBusinessPayload(resp?.payload);
+        if (
+          resp?.status === 'NOT_FOUND' &&
+          ruatPayload &&
+          String(ruatPayload.continuarFlujo).toLowerCase() !== 'true'
+        ) {
+          return {
+            item,
+            text: 'No se encontraron pagos realizados para esta tasa.',
+            type: 'info',
+            hasPayment: false,
+            consultationSuccessful: true,
+            ruatResponse: resp,
+            errorCode: 'PAYMENT_NOT_FOUND'
+          };
+        }
+        if (resp?.status === 'NOT_FOUND') {
+          return {
+            item,
+            text: 'No se encontraron pagos realizados para esta tasa.',
+            type: 'info',
+            hasPayment: false,
+            consultationSuccessful: false,
+            ruatResponse: resp,
+            errorCode: 'PAYMENT_NOT_FOUND'
+          };
+        }
+        return {
+          item,
+          text: 'RUAT devolvió una respuesta inválida. No se actualizó la reserva.',
           type: 'warning',
           hasPayment: false,
+          consultationSuccessful: false,
+          ruatResponse: resp,
+          errorCode: 'INVALID_RESPONSE'
+        };
+      }
+      if (String(resp.payload?.continuarFlujo).toLowerCase() !== 'true') {
+        return { 
+          item, 
+          text: resp.payload?.mensaje || resp.payload?.observacion || "No se puede continuar con el flujo", 
+          type: 'warning',
+          hasPayment: false,
+          consultationSuccessful: true,
+          ruatResponse: resp,
+          errorCode: 'RUAT_FLOW_STOPPED'
         };
       }
       const pagoTasa = resp.payload.pagoTasa;
       if (!pagoTasa) {
         return { 
           item, 
-          text: resp.payload.mensaje || resp.payload.observacion || "No se encontraron datos de pago", 
+          text: resp.payload?.mensaje || resp.payload?.observacion || "No se encontraron datos de pago", 
           type: 'info',
-          hasPayment: false, 
+          hasPayment: false,
+          consultationSuccessful: true,
+          ruatResponse: resp,
+          errorCode: 'PAYMENT_NOT_FOUND'
         };
       }
       let text = resp.payload.mensaje || resp.payload.observacion || "La tasa se encuentra pagada";
       try {
-        const [day, month, year] = pagoTasa.fechaPago.split('/');
-        const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        const fechaPagoLocal = this.parseRuatPaymentDate(pagoTasa.fechaPago);
+        if (!fechaPagoLocal) {
+          return {
+            item,
+            text: 'RUAT devolvió una fecha de pago inválida. No se registró el pago.',
+            type: 'error',
+            hasPayment: false,
+            consultationSuccessful: false,
+            ruatResponse: resp,
+            errorCode: 'INVALID_RESPONSE'
+          };
+        }
         const existingPayment = item.reservaDto?.pagosDtoList?.find(pago => 
           pago.folio === pagoTasa.folio && pago.numeroTasa === pagoTasa.numeroTasa
         );
@@ -538,7 +676,7 @@ export class BookingOneTimeComponent implements OnInit {
             tipoTasa: "TO",
             folio: pagoTasa.folio,
             formaPago: pagoTasa.formaPago,
-            fechaPago: new Date(formattedDate),
+            fechaPago: fechaPagoLocal,
             entidadFinanciera: pagoTasa.entidadFinanciera,
             montoPagado: parseFloat(pagoTasa.montoPago) || 0,
             observaciones: pagoTasa.observacion,
@@ -553,73 +691,28 @@ export class BookingOneTimeComponent implements OnInit {
           item, 
           text: `${text} - Pago verificado`, 
           type: 'success',
-          hasPayment: true,
           pagoData: pagoTasa,
-        };          
-      // if (item.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE) {
-      //   try {
-      //     const nuevoPago: Pago = {
-      //       numeroTasa: pagoData.numeroTasa,
-      //       tipoTasa: "TO",
-      //       folio: pagoData.folio,
-      //       formaPago: pagoData.formaPago,
-      //       fechaPago: new Date(formattedDate),
-      //       entidadFinanciera: pagoData.entidadFinanciera,
-      //       montoPagado: parseFloat(pagoData.montoPago) || 0,
-      //       observaciones: pagoData.observacion,
-      //       estadoPago: EstadoPago.PAGADO,
-      //       ultimaConsulta: new Date(),
-      //       respuestaCompletaRuat: JSON.stringify(resp),
-      //       reservaDto: item.reservaDto
-      //     };
-          
-      //     const pagoResp: any = await this.pagoService.save(nuevoPago).toPromise();
-          
-      //     if (pagoResp.status === 'OK') {
-      //       item.reservaDto.estadoReserva = EstadoReserva.PAGADA;
-      //       const updatedReserva = await this.updateReservation(item.reservaDto);
-      //       return { 
-      //         item: updatedReserva.reservaPuntualDto, 
-      //         text: `${text} - Pago registrado exitosamente`, 
-      //         type: 'success',
-      //         hasPayment: true,
-      //         pagoData: pagoResp.payload
-      //       };
-      //     } else {
-      //       return { 
-      //         item, 
-      //         text: 'Error al guardar el pago en el sistema', 
-      //         type: 'error',
-      //         hasPayment: true,
-      //         shouldNotUpdate: true
-      //       };
-      //     }
-      //   } catch (error) {
-      //     console.error('Error saving pago:', error);
-      //     return { 
-      //       item, 
-      //       text: 'Error al procesar el pago', 
-      //       type: 'error',
-      //       hasPayment: true,
-      //       shouldNotUpdate: true
-      //     };
-      //   }
-      // } else {
-      //   return { 
-      //     item, 
-      //     text: `${text} - Reserva en estado: ${item.reservaDto?.estadoReserva}`, 
-      //     type: 'info',
-      //     hasPayment: true,
-      //     pagoData: pagoData
-      //   };
-      // }
+          hasPayment: true,
+          consultationSuccessful: true,
+          ruatResponse: resp
+        };
       } catch (error) {
         return { 
           item, 
-          text: 'Error al guardar el pago', 
+          text: 'El pago fue encontrado en RUAT, pero no pudo registrarse en el sistema.',
           type: 'error',
-          hasPayment: true,
+          hasPayment: false,
+          consultationSuccessful: false,
+          ruatResponse: resp,
+          errorCode: 'PAYMENT_SAVE_ERROR'
         };
+        // return { 
+        //   item, 
+        //   text: 'Error al procesar el pago', 
+        //   type: 'error',
+        //   hasPayment: true,
+        //   consultationSuccessful: true
+        // };
       }
     } catch (error) {
       return { 
@@ -627,10 +720,13 @@ export class BookingOneTimeComponent implements OnInit {
         text: 'Error al realizar la consulta al RUAT', 
         type: 'error',
         hasPayment: false,
+        consultationSuccessful: false,
+        ruatResponse: error,
+        errorCode: 'RUAT_EXCEPTION'
       };
     }
   }
-  private async handleExpiredgReservation(reserva: ReservaPuntual): Promise<ReservaPuntual> {
+  private async handleExpiredReservation(reserva: ReservaPuntual): Promise<ReservaPuntual> {
     const codigoAlcaldia = this.systemConfigList[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI';
     const codigoUsuario = this.systemConfigList[ClaveConfiguracion.CODIGO_USUARIO_RUAT]?.valorTexto || '';
     if (reserva.reservaDto?.numeroTasa) {
@@ -756,25 +852,29 @@ export class BookingOneTimeComponent implements OnInit {
   }
 
   /* NOTIFICATIONS */
-  private notifyAboutExpiredReservations(originalList: ReservaPuntual[], updatedList: ReservaPuntual[]): void {
-    const newlyExpired = updatedList.filter(item => {
-      const originalItem = originalList.find(item => 
-        item.reservaDto?.uuid === item.reservaDto?.uuid
+  private notifyAboutExpiredReservations(
+    originalList: ReservaPuntual[],
+    updatedList: ReservaPuntual[]
+  ): void {
+    const newlyExpired = updatedList.filter(updatedItem => {
+      const originalItem = originalList.find(original =>
+        original.reservaDto?.uuid === updatedItem.reservaDto?.uuid
       );
       return originalItem?.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE &&
-            item.reservaDto?.estadoReserva === EstadoReserva.EXPIRADA;
-    });    
-    if (newlyExpired.length > 0) {      
+            updatedItem.reservaDto?.estadoReserva === EstadoReserva.EXPIRADA;
+    });
+    if (newlyExpired.length > 0) {
       const expiredCount = newlyExpired.length;
-      const message = expiredCount === 1 
-        ? '1 reserva ha expirado por falta de pago y ha sido cancelada automáticamente' 
-        : `${expiredCount} reservas han expirado por falta de pago y han sido canceladas automáticamente`;
+      const message = expiredCount === 1
+        ? '1 reserva ha expirado por falta de pago y ha sido cancelada automáticamente.'
+        : `${expiredCount} reservas han expirado por falta de pago y han sido canceladas automáticamente.`;
       Swal.fire({
         title: 'Reservas Expiradas',
         html: `
           <p>${message}</p>
           <p class="text-sm text-muted mt-2">
             <i class="fas fa-info-circle me-1"></i>
+            Esta acción solo ocurre cuando la consulta RUAT fue completada correctamente y no se encontró pago.
           </p>
         `,
         icon: 'warning',

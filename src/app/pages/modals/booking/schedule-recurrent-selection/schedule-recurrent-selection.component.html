@@ -1,311 +1,516 @@
 <div class="recurrent-schedule-container">
   <div class="row">
+
+    <!-- LEFT COLUMN -->
     <div class="col-lg-8">
-      <div class="card">        
+      <div class="card">
         <div class="card-body">
+
           <div *ngIf="showConflicts && reservationConflicts.length > 0" class="alert alert-warning mt-3">
             <div class="d-flex justify-content-between align-items-center">
-              <h6 class="mb-0">
-                <i class="ri-alert-line me-2"></i>
-                Conflictos de Reserva Encontrados
-              </h6>
+              <h6 class="mb-0"><i class="ri-alert-line me-2"></i>Conflictos de Reserva</h6>
               <button type="button" class="btn-close" (click)="hideConflicts()"></button>
             </div>
-            
             <div class="mt-2">
               <p class="mb-2">Las siguientes fechas tienen conflictos con reservas existentes:</p>
-              
-              <div class="conflicts-list">
-                <div *ngFor="let conflict of reservationConflicts" class="conflict-item border rounded p-2 mb-2">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                      <strong>{{ conflict.date | date:'fullDate' }}</strong> - {{ conflict.dayName }}
-                    </div>
-                    <span class="badge bg-danger">Ocupado</span>
-                  </div>
-                  
-                  <div class="conflict-slots mt-1">
-                    <div *ngFor="let slotConflict of conflict.conflictingSlots" class="slot-conflict small text-muted">
-                      • {{ slotConflict.slot.horaInicio }}-{{ slotConflict.slot.horaFin }}: 
-                      {{ slotConflict.conflictWith }}
-                    </div>
-                  </div>
+              <div *ngFor="let conflict of reservationConflicts" class="border rounded p-2 mb-2">
+                <div class="d-flex justify-content-between">
+                  <strong>{{ conflict.date | date:'fullDate' }}</strong>
+                  <span class="badge bg-danger">Ocupado</span>
+                </div>
+                <div *ngFor="let sc of conflict.conflictingSlots" class="small text-muted">
+                  • {{ sc.slot.horaInicio }}-{{ sc.slot.horaFin }}: {{ sc.conflictWith }}
                 </div>
               </div>
-              
-              <div class="mt-2">
-                <small class="text-muted">
-                  <i class="ri-information-line me-1"></i>
-                  Por favor, ajuste sus horarios o fechas para evitar estos conflictos.
+            </div>
+          </div>
+
+          <!-- Error message -->
+          <div class="alert alert-danger"
+               *ngIf="errorMessage && !errorMessage.startsWith('✅') && !errorMessage.startsWith('📦') && reservationConflicts.length === 0">
+            <i class="ri-error-warning-line me-2"></i>{{ errorMessage }}
+          </div>
+
+          <!-- Info / move-mode message -->
+          <div class="alert alert-info py-2"
+               *ngIf="errorMessage && (errorMessage.startsWith('✅') || errorMessage.startsWith('📦'))">
+            {{ errorMessage }}
+            <button *ngIf="errorMessage.startsWith('📦')" type="button"
+                    class="btn btn-sm btn-outline-secondary ms-2" (click)="cancelMove()">Cancelar</button>
+          </div>
+
+          <!-- ─── STEP 1: Date range ─────────────────────────────────────────── -->
+          <div class="mb-3">
+            <h6 class="fw-semibold mb-2"><span class="badge bg-primary me-2">1</span>Período de la reserva</h6>
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label small mb-1"><i class="bx bx-calendar-check me-1"></i>Fecha de Inicio</label>
+                <input type="date" class="form-control" [(ngModel)]="fechaInicio" (change)="onFechaInicioChange()">
+              </div>
+              <div class="col-6">
+                <label class="form-label small mb-1"><i class="bx bx-calendar-x me-1"></i>Fecha de Fin</label>
+                <input type="date" class="form-control" [(ngModel)]="fechaFin"
+                       (change)="onFechaFinChange()" [min]="fechaInicio">
+              </div>
+              <div class="col-12">
+                <label class="form-label small mb-1">
+                  <i class="ri-group-line me-1"></i>Personas
+                  <span class="text-danger" *ngIf="requiresCantidadPersonas">*</span>
+                  <small class="text-muted fw-normal" *ngIf="!requiresCantidadPersonas">(opcional)</small>
+                </label>
+                <input
+                  type="number"
+                  class="form-control"
+                  [(ngModel)]="cantidadPersonas"
+                  (ngModelChange)="onCantidadPersonasChange()"
+                  min="1"
+                  [max]="dataField.capacidadPersonas || null"
+                  placeholder="Ej: 10"
+                  [required]="requiresCantidadPersonas">
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-2">
+
+          <!-- ─── STEP 2: Day selection ──────────────────────────────────────── -->
+          <div class="mb-3">
+            <h6 class="fw-semibold mb-2">
+              <span class="badge bg-primary me-2">2</span>Días de la semana
+              <span *ngIf="frecuenciaLabel" class="badge bg-success-subtle text-success ms-2 small fw-normal">
+                <i class="ri-repeat-line me-1"></i>{{ frecuenciaLabel }}
+              </span>
+            </h6>
+            <p *ngIf="frecuenciaLabel" class="text-muted small mb-2">
+              <i class="ri-information-line me-1"></i>Días preseleccionados según la frecuencia de la tarifa. Puedes ajustarlos.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+              <div *ngFor="let dia of diasSemana"
+                   class="day-chip"
+                   [class.day-chip--selected]="dia.selected"
+                   [class.day-chip--overridden]="isWeekdayOverridden(dia.dia)"
+                   (click)="toggleDay(dia)">
+                <span class="day-chip__label">{{ dia.diaDisplay }}</span>
+                <small *ngIf="dia.selected" class="day-chip__time"
+                       [class.text-warning]="isWeekdayOverridden(dia.dia)">
+                  <i *ngIf="isWeekdayOverridden(dia.dia)" class="ri-edit-fill"></i>
+                  {{ getDisplaySlotsForWeekday(dia.dia) }}
                 </small>
               </div>
             </div>
           </div>
 
-          <!-- Error Message -->
-          <div class="alert alert-danger" *ngIf="errorMessage && reservationConflicts.length === 0">
-            <i class="ri-error-warning-line me-2"></i>
-            {{ errorMessage }}
-          </div>
-          <div class="row mb-2 g-1 g-md-2">
-            <div class="col-6">
-              <label class="form-label fw-medium mb-0">
-                <i class="bx bx-calendar-check me-1"></i>
-                Fecha de Inicio
-              </label>
-              <input type="date" 
-                     class="form-control" 
-                     [(ngModel)]="fechaInicio"
-                     (change)="onFechaInicioChange()">
-            </div>
-            <div class="col-6">
-              <label class="form-label fw-medium mb-0">
-                <i class="bx bx-calendar-x me-1"></i>
-                Fecha de Fin
-              </label>
-              <input type="date" 
-                     class="form-control" 
-                     [(ngModel)]="fechaFin"
-                     (change)="onFechaFinChange()"
-                     [min]="fechaInicio">
-            </div>
-          </div>
-          <div class="card bg-light mb-2">
-            <div class="card-body">
-              <h6 class="mb-2">
-                <i class="ri-calendar-event-line me-1"></i>
-                Seleccione Días y Horarios
-                <small class="text-muted">(Puede agregar múltiples horarios por día)</small>
-              </h6>              
-              <div class="days-grid">
-                <div *ngFor="let dia of diasSemana" class="day-selector-card mb-3">
-                  <div class="day-card" 
-                       [class.selected]="dia.selected"
-                       (click)="toggleDay(dia)">
-                    <div class="form-check">
-                      <input class="form-check-input" 
-                             type="checkbox" 
-                             [checked]="dia.selected"
-                             [id]="'dia-' + dia.dia">
-                      <label class="form-check-label fw-medium" [for]="'dia-' + dia.dia">
-                        {{ dia.diaDisplay }}
-                      </label>
+          <hr class="my-2">
+
+          <!-- ─── STEP 3: Global time slots ─────────────────────────────────── -->
+          <div class="mb-3">
+            <h6 class="fw-semibold mb-2">
+              <span class="badge bg-primary me-2">3</span>Horarios para todos los días seleccionados
+              <small class="text-muted fw-normal ms-1">(hasta {{ MAX_SLOTS }} franjas)</small>
+            </h6>
+
+            <!-- Slot rows -->
+            <div *ngFor="let slot of globalSlots; let i = index"
+                 class="slot-row mb-2 p-2 border rounded bg-light">
+              <div class="row g-2 align-items-end">
+                <div class="col-5">
+                  <label class="form-label small mb-1">Inicio{{ globalSlots.length > 1 ? ' ' + (i + 1) : '' }}</label>
+                  <input type="time" class="form-control" [(ngModel)]="slot.horaInicio"
+                         (ngModelChange)="onGlobalTimeChange()" [min]="minTime" [max]="maxTime">
+                </div>
+                <div class="col-5">
+                  <label class="form-label small mb-1">Fin{{ globalSlots.length > 1 ? ' ' + (i + 1) : '' }}</label>
+                  <input type="time" class="form-control" [(ngModel)]="slot.horaFin"
+                         (ngModelChange)="onGlobalTimeChange()" [min]="minTime" [max]="maxTime">
+                </div>
+                <div class="col-2">
+                  <div class="d-flex gap-1 align-items-center">
+                    <div class="text-center p-1 bg-white border rounded flex-grow-1">
+                      <small class="d-block text-muted" style="font-size:10px">Dur.</small>
+                      <strong class="text-primary small">{{ calculateDuration(slot.horaInicio, slot.horaFin) | number:'1.1-1' }}h</strong>
                     </div>
-                  </div>
-                  <div class="time-slots-container" *ngIf="dia.selected">
-                    <div *ngFor="let slot of dia.horarios; let i = index" 
-                         class="time-slot-item mb-1 p-2 rounded border">
-                      <div class="d-flex align-items-center gap-2">
-                        <div class="flex-grow-1">
-                          <div class="row g-2">
-                            <div class="col-5">
-                              <label class="form-label small text-muted mb-1">Inicio</label>
-                              <input type="time" 
-                                     class="form-control form-control-sm" 
-                                     [(ngModel)]="slot.horaInicio"
-                                     (change)="updateTimeSlot(dia, slot)"
-                                     [min]="minTime"
-                                     [max]="maxTime">
-                            </div>
-                            <div class="col-5">
-                              <label class="form-label small text-muted mb-1">Fin</label>
-                              <input type="time" 
-                                     class="form-control form-control-sm" 
-                                     [(ngModel)]="slot.horaFin"
-                                     (change)="updateTimeSlot(dia, slot)"
-                                     [min]="minTime"
-                                     [max]="maxTime">
-                            </div>
-                            <div class="col-2 d-flex align-items-end">
-                              <button type="button" 
-                                      class="btn btn-sm btn-outline-danger w-100"
-                                      (click)="removeTimeSlot(dia, i)"
-                                      [disabled]="dia.horarios.length === 1"
-                                      title="Eliminar horario">
-                                <i class="ri-delete-bin-line"></i>
-                              </button>
-                            </div>
-                          </div>
-                          <small class="text-muted d-block mt-1">
-                            <i class="ri-time-line me-1"></i>
-                            Duración: {{ (calculateDuration(slot.horaInicio, slot.horaFin)) | number:'1.1-1' }}h
-                          </small>
-                        </div>
-                      </div>
-                    </div>
-                    <button type="button" 
-                            class="btn btn-sm btn-outline-primary w-100"
-                            (click)="addTimeSlot(dia)">
-                      <i class="ri-add-line me-1"></i>
-                      Agregar otro horario
+                    <button *ngIf="globalSlots.length > 1" type="button"
+                            class="btn btn-sm btn-outline-danger p-1"
+                            (click)="removeGlobalSlot(i)"
+                            title="Eliminar franja">
+                      <i class="ri-delete-bin-line"></i>
                     </button>
                   </div>
                 </div>
               </div>
             </div>
+
+            <!-- Add slot button -->
+            <button type="button" class="btn btn-sm btn-outline-primary w-100 mt-1"
+                    (click)="addGlobalSlot()"
+                    [disabled]="globalSlots.length >= MAX_SLOTS">
+              <i class="ri-add-line me-1"></i>
+              Agregar otra franja horaria
+              <span *ngIf="globalSlots.length >= MAX_SLOTS" class="text-muted">(máx. {{ MAX_SLOTS }})</span>
+            </button>
+
+            <div *ngIf="overriddenWeekdaysCount > 0" class="mt-2 alert alert-warning py-2 mb-0">
+              <small>
+                <i class="ri-edit-fill me-1"></i>
+                <strong>{{ overriddenWeekdaysCount }}</strong> día(s) de la semana con horario personalizado.
+                <span class="text-muted">Haz clic en el calendario para editar o restablecer.</span>
+              </small>
+            </div>
           </div>
+
+          <hr class="my-2">
+
+          <!-- ─── STEP 4: Calendar ───────────────────────────────────────────── -->
           <div class="calendar-section">
-            <h6 class="mb-2">
-              <i class="ri-calendar-2-line me-1"></i>
-              Vista de Calendario
-              <small class="text-muted">(Los días resaltados serán reservados)</small>
-            </h6>            
-            <div *ngFor="let monthData of calendarMonths" class="calendar-month mb-2">
+            <h6 class="fw-semibold mb-1">
+              <span class="badge bg-primary me-2">4</span>Vista de Calendario
+              <small class="text-muted fw-normal ms-1">– haz clic en un día para personalizarlo</small>
+            </h6>
+            <p *ngIf="overriddenDatesCount > 0" class="small text-warning mb-2">
+              <i class="ri-edit-fill me-1"></i>{{ overriddenDatesCount }} fecha(s) con horario personalizado
+            </p>
+
+            <!-- ── Date Edit Panel ─────────────────────────────────────────── -->
+            <div *ngIf="selectedDateForEdit" class="date-edit-panel card border-primary mb-3">
+              <div class="card-header bg-primary-subtle d-flex justify-content-between align-items-center py-2">
+                <h6 class="mb-0 text-primary">
+                  <i class="ri-calendar-edit-line me-1"></i>{{ getSelectedDateDisplay() }}
+                  <span *ngIf="isDateOverridden(selectedDateForEdit)" class="badge bg-warning text-dark ms-2 small">Modificado</span>
+                </h6>
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelDateEdit()">
+                  <i class="ri-close-line"></i>
+                </button>
+              </div>
+              <div class="card-body">
+
+                <!-- Mode selection -->
+                <div *ngIf="!editMode" class="mb-0">
+                  <p class="text-muted small mb-3">¿Qué deseas hacer con este día?</p>
+                  <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-primary text-start" (click)="setEditMode('date')">
+                      <i class="ri-calendar-2-line me-2"></i>
+                      <strong>Cambiar horario solo este día</strong>
+                      <small class="d-block text-muted">Solo afecta esta fecha específica</small>
+                    </button>
+                    <button type="button" class="btn btn-outline-warning text-start" (click)="setEditMode('weekday')">
+                      <i class="ri-repeat-line me-2"></i>
+                      <strong>Cambiar todos los {{ getWeekdayDisplayName(editingWeekday!) }}</strong>
+                      <small class="d-block text-muted">Aplica a cada {{ getWeekdayDisplayName(editingWeekday!) }} en el período</small>
+                    </button>
+                    <div class="d-flex gap-2">
+                      <button type="button" class="btn btn-outline-info flex-grow-1"
+                              (click)="startMoveSession(parseDateFromInput(selectedDateForEdit!)); cancelDateEdit()">
+                        <i class="ri-arrow-right-line me-1"></i>Mover a otra fecha
+                      </button>
+                      <button type="button" class="btn btn-outline-danger flex-grow-1"
+                              (click)="clearDateSlots(parseDateFromInput(selectedDateForEdit!))">
+                        <i class="ri-close-circle-line me-1"></i>Excluir este día
+                      </button>
+                    </div>
+                    <button *ngIf="isDateOverridden(selectedDateForEdit)" type="button"
+                            class="btn btn-outline-secondary" (click)="resetDateToGlobal()">
+                      <i class="ri-refresh-line me-1"></i>Restablecer al patrón global
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Slot editor (shown once mode is chosen) -->
+                <div *ngIf="editMode">
+                  <div class="alert py-2 mb-3"
+                       [class.alert-primary]="editMode === 'date'"
+                       [class.alert-warning]="editMode === 'weekday'">
+                    <small>
+                      <i class="ri-information-line me-1"></i>
+                      <span *ngIf="editMode === 'date'">Editando horario <strong>solo para este día</strong></span>
+                      <span *ngIf="editMode === 'weekday'">Editando horario para <strong>todos los {{ getWeekdayDisplayName(editingWeekday!) }}</strong></span>
+                    </small>
+                  </div>
+
+                  <!-- Editing slot list -->
+                  <div *ngFor="let slot of editingSlots; let i = index"
+                       class="slot-row mb-2 p-2 border rounded bg-light">
+                    <div class="row g-2 align-items-end">
+                      <div class="col-5">
+                        <label class="form-label small mb-1">Inicio{{ editingSlots.length > 1 ? ' ' + (i + 1) : '' }}</label>
+                        <input type="time" class="form-control" [(ngModel)]="slot.horaInicio"
+                               [min]="minTime" [max]="maxTime">
+                      </div>
+                      <div class="col-5">
+                        <label class="form-label small mb-1">Fin{{ editingSlots.length > 1 ? ' ' + (i + 1) : '' }}</label>
+                        <input type="time" class="form-control" [(ngModel)]="slot.horaFin"
+                               [min]="minTime" [max]="maxTime">
+                      </div>
+                      <div class="col-2">
+                        <div class="d-flex gap-1 align-items-center">
+                          <div class="text-center p-1 bg-white border rounded flex-grow-1">
+                            <small class="d-block text-muted" style="font-size:10px">Dur.</small>
+                            <strong class="small">{{ calculateDuration(slot.horaInicio, slot.horaFin) | number:'1.1-1' }}h</strong>
+                          </div>
+                          <button *ngIf="editingSlots.length > 1" type="button"
+                                  class="btn btn-sm btn-outline-danger p-1"
+                                  (click)="removeEditingSlot(i)">
+                            <i class="ri-delete-bin-line"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Add editing slot -->
+                  <button type="button" class="btn btn-sm btn-outline-secondary w-100 mb-3"
+                          (click)="addEditingSlot()"
+                          [disabled]="editingSlots.length >= MAX_SLOTS">
+                    <i class="ri-add-line me-1"></i>
+                    Agregar otra franja
+                    <span *ngIf="editingSlots.length >= MAX_SLOTS">(máx. {{ MAX_SLOTS }})</span>
+                  </button>
+
+                  <div class="d-flex gap-2 flex-wrap">
+                    <button type="button" class="btn btn-sm btn-primary flex-grow-1" (click)="applyDateEdit()">
+                      <i class="ri-check-line me-1"></i>Aplicar
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="setEditMode(null)">
+                      <i class="ri-arrow-left-line me-1"></i>Atrás
+                    </button>
+                    <button *ngIf="editMode === 'weekday' && isWeekdayOverridden(editingWeekday!)"
+                            type="button" class="btn btn-sm btn-outline-warning"
+                            (click)="resetWeekdayToGlobal()">
+                      <i class="ri-refresh-line me-1"></i>Restablecer día
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Calendar months -->
+            <div *ngFor="let monthData of calendarMonths" class="calendar-month mb-3">
               <div class="month-header text-center mb-2">
                 <h5 class="mb-0">{{ monthData.monthName }} {{ monthData.year }}</h5>
               </div>
               <div class="calendar-grid-container">
-              <div class="calendar-grid">
-                <div class="calendar-header">Dom</div>
-                <div class="calendar-header">Lun</div>
-                <div class="calendar-header">Mar</div>
-                <div class="calendar-header">Mié</div>
-                <div class="calendar-header">Jue</div>
-                <div class="calendar-header">Vie</div>
-                <div class="calendar-header">Sáb</div>
-                <ng-container *ngFor="let week of monthData.weeks">
-                  <div *ngFor="let dayCell of week" 
-                       class="calendar-day bg-light"
-                       [class.empty]="dayCell.empty"
-                       [class.out-of-range]="dayCell.isInRange === false"
-                       [class.selectable]="dayCell.isSelectable"
-                       [class.has-schedule]="dayCell.hasSchedule"
-                       [class.reserved]="dayCell.isReserved"
-                       (click)="toggleDateInCalendar(dayCell)">                    
-                    <div class="day-content">
-                      <span *ngIf="!dayCell.empty" class="day-number">{{ dayCell.day }}</span>
-                      <div class="reservation-indicators" *ngIf="!dayCell.empty">
-                        <i *ngIf="dayCell.hasSchedule" class="ri-checkbox-circle-fill schedule-icon" title="Día programado"></i>
-                        <i *ngIf="dayCell.isReserved" class="ri-alert-fill conflict-icon" title="Conflicto con reserva existente"></i>
-                      </div>
-                      <div *ngIf="dayCell.hasSchedule && !dayCell.empty" class="time-info">
-                        <small class="time-text">{{ getDayTimes(dayCell.dayName) }}</small>
+                <div class="calendar-grid">
+                  <div class="calendar-header">Dom</div>
+                  <div class="calendar-header">Lun</div>
+                  <div class="calendar-header">Mar</div>
+                  <div class="calendar-header">Mié</div>
+                  <div class="calendar-header">Jue</div>
+                  <div class="calendar-header">Vie</div>
+                  <div class="calendar-header">Sáb</div>
+
+                  <ng-container *ngFor="let week of monthData.weeks">
+                    <div *ngFor="let dayCell of week"
+                         class="calendar-day bg-light"
+                         [class.empty]="dayCell.empty"
+                         [class.out-of-range]="dayCell.isInRange === false"
+                         [class.selectable]="dayCell.isSelectable"
+                         [class.has-schedule]="dayCell.hasSchedule"
+                         [class.overridden]="dayCell.isDateOverride"
+                         [class.weekday-override]="dayCell.isWeekdayOverride"
+                         [class.empty-override]="dayCell.isEmptyOverride"
+                         [class.selected-for-edit]="dayCell.isSelectedForEdit"
+                         [class.move-source]="dayCell.isMoveSource"
+                         [class.reserved]="dayCell.isReserved"
+                         [class.move-target]="moveFromDate && dayCell.isInRange && !dayCell.isMoveSource"
+                         (click)="selectDateForEdit(dayCell)">
+                      <div class="day-content">
+                        <span *ngIf="!dayCell.empty" class="day-number">{{ dayCell.day }}</span>
+                        <div class="reservation-indicators" *ngIf="!dayCell.empty">
+                          <i *ngIf="dayCell.isEmptyOverride"
+                             class="ri-close-circle-fill text-danger" title="Día excluido"></i>
+                          <i *ngIf="dayCell.hasSchedule && !dayCell.isDateOverride && !dayCell.isWeekdayOverride"
+                             class="ri-checkbox-circle-fill schedule-icon" title="Patrón global"></i>
+                          <i *ngIf="dayCell.isDateOverride && !dayCell.isEmptyOverride"
+                             class="ri-edit-fill text-warning" title="Horario de fecha personalizado"></i>
+                          <i *ngIf="dayCell.isWeekdayOverride"
+                             class="ri-repeat-fill text-info" title="Horario de día de semana personalizado"></i>
+                          <i *ngIf="dayCell.isReserved"
+                             class="ri-alert-fill conflict-icon" title="Conflicto"></i>
+                          <i *ngIf="dayCell.isMoveSource"
+                             class="ri-arrow-right-circle-fill text-info" title="Sesión a mover"></i>
+                        </div>
+                        <!-- Show times + slot count badge if > 1 slot -->
+                        <div *ngIf="dayCell.hasSchedule && !dayCell.empty" class="time-info">
+                          <small class="time-text">{{ getDateDisplayTimes(dayCell.date) }}</small>
+                          <span *ngIf="dayCell.slotCount > 1"
+                                class="badge bg-secondary ms-1"
+                                style="font-size:9px">×{{ dayCell.slotCount }}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </ng-container>
+                  </ng-container>
+                </div>
               </div>
-              </div>       
-              <div class="calendar-legend mt-2">
-                <div class="legend-item">
-                  <div class="legend-color has-schedule"></div>
-                  <span class="legend-text">Día reservado</span>
-                </div>
-                <div class="legend-item">
-                  <div class="legend-color reserved"></div>
-                  <span class="legend-text">Conflicto de reserva</span>
-                </div>
-                <div class="legend-item">
-                  <div class="legend-color out-of-range"></div>
-                  <span class="legend-text">Fuera del rango</span>
-                </div>
+
+              <div class="calendar-legend mt-2 d-flex flex-wrap gap-3">
+                <div class="legend-item"><div class="legend-color has-schedule"></div><span class="legend-text">Patrón global</span></div>
+                <div class="legend-item"><i class="ri-repeat-fill text-info me-1"></i><span class="legend-text">Día personalizado</span></div>
+                <div class="legend-item"><i class="ri-edit-fill text-warning me-1"></i><span class="legend-text">Fecha personalizada</span></div>
+                <div class="legend-item"><div class="legend-color reserved"></div><span class="legend-text">Conflicto</span></div>
+                <div class="legend-item"><div class="legend-color out-of-range"></div><span class="legend-text">Fuera de rango</span></div>
               </div>
             </div>
+
           </div>
         </div>
       </div>
-    </div>
+    </div><!-- /col-lg-8 -->
+
+    <!-- RIGHT COLUMN -->
     <div class="col-lg-4">
       <div class="card">
         <div class="card-header bg-success-subtle">
-          <h6 class="mb-0 text-success">
-            <i class="ri-calendar-check-line me-1"></i>
-            Resumen de Reserva
-          </h6>
+          <h6 class="mb-0 text-success"><i class="ri-calendar-check-line me-1"></i>Resumen de Reserva</h6>
         </div>
         <div class="card-body">
+
           <div class="mb-2">
-            <h6 class="d-block mb-1">Período de Reserva</h6>
+            <h6 class="mb-1">Período</h6>
             <div class="d-flex align-items-center gap-2">
               <i class="ri-calendar-line text-primary"></i>
-              <div>
-                <small>{{ fechaInicio | date:'dd/MM/yyyy' }}</small>
-                <small class="text-muted me-2 ms-2">hasta</small>
-                <small>{{ fechaFin | date:'dd/MM/yyyy' }}</small>
-              </div>
+              <small>{{ fechaInicio | date:'dd/MM/yyyy' }}</small>
+              <small class="text-muted">hasta</small>
+              <small>{{ fechaFin | date:'dd/MM/yyyy' }}</small>
             </div>
           </div>
+
+          <div class="mb-2">
+            <h6 class="mb-1">Días seleccionados</h6>
+            <div class="d-flex flex-wrap gap-1">
+              <ng-container *ngFor="let dia of diasSemana">
+                <span *ngIf="dia.selected"
+                      class="badge"
+                      [class.bg-primary]="!isWeekdayOverridden(dia.dia)"
+                      [class.bg-warning]="isWeekdayOverridden(dia.dia)"
+                      [class.text-dark]="isWeekdayOverridden(dia.dia)">
+                  {{ dia.diaDisplay }}
+                  <i *ngIf="isWeekdayOverridden(dia.dia)" class="ri-edit-fill ms-1"></i>
+                </span>
+              </ng-container>
+            </div>
+          </div>
+
+          <!-- Global slot summary -->
+          <div class="mb-2">
+            <h6 class="mb-1">Franjas horarias base</h6>
+            <div *ngFor="let slot of globalSlots; let i = index" class="d-flex align-items-center gap-2 mb-1">
+              <i class="ri-time-line text-muted small"></i>
+              <small>{{ slot.horaInicio }} – {{ slot.horaFin }}</small>
+              <small class="text-muted">({{ calculateDuration(slot.horaInicio, slot.horaFin) | number:'1.1-1' }}h)</small>
+            </div>
+          </div>
+
           <hr>
+
           <div class="mb-2">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <h6 class="d-block mb-1">{{dataTariff.descripcion}}</h6>              
-              <button 
-                type="button" 
-                class="btn btn-sm btn-outline-secondary"
-                (click)="showTariffBreakdown = !showTariffBreakdown"
-                [disabled]="calculatedTariff === 0">
+              <h6 class="mb-0">{{ dataTariff.descripcion }}</h6>
+              <button type="button" class="btn btn-sm btn-outline-secondary"
+                      (click)="showTariffBreakdown = !showTariffBreakdown"
+                      [disabled]="calculatedTariff === 0">
                 {{ showTariffBreakdown ? 'Ocultar' : 'Ver' }} detalles
               </button>
             </div>
-            <div class="d-flex justify-content-between align-items-center">
-              <label class="d-block text-muted">Tarifa Base</label>
-              <span class="text-muted">{{ dataTariff.precioBase | currency:'BOB':'symbol-narrow':'1.2-2' }}
-                <small>/{{ dataTariff.tipoCobro}}</small>
-              </span>
+            <div class="d-flex justify-content-between">
+              <small class="text-muted">Tarifa Base</small>
+              <small class="text-muted">{{ dataTariff.precioBase | currency:'BOB':'symbol-narrow':'1.2-2' }}/{{ dataTariff.tipoCobro }}</small>
             </div>
             <div class="d-flex justify-content-between align-items-center">
-              <label class=" d-block text-muted">Total Parcial </label>
-              <h4 class="text-success mb-0">
-                Bs. {{ calculatedTariff.toFixed(2) }}
-              </h4>
-            </div>            
-            <div *ngIf="showTariffBreakdown && tariffDetails.length > 0" class="mt-2">
-              <div class="border-top pt-2">
-                <small class="fw-medium d-block mb-1">Desglose:</small>
-                <div *ngFor="let detail of tariffDetails" class="small text-muted mb-1">
-                  {{ detail }}
-                </div>
-              </div>
+              <small class="text-muted">Total Parcial</small>
+              <h4 class="text-success mb-0">Bs. {{ calculatedTariff.toFixed(2) }}</h4>
             </div>
-            
-            <div *ngIf="calculatedTariff === 0" class="text-muted small">
-              <em>Complete los horarios para calcular la tarifa</em>
+            <div *ngIf="showTariffBreakdown && tariffDetails.length > 0" class="border-top pt-2 mt-2">
+              <div *ngFor="let detail of tariffDetails" class="small text-muted mb-1">{{ detail }}</div>
             </div>
+            <div *ngIf="calculatedTariff === 0" class="text-muted small"><em>Complete los horarios para calcular</em></div>
           </div>
+
           <hr>
-          <div class="summary-item mb-3" *ngIf="tablero.length > 0">
-            <label class="small text-muted d-block mb-2">
-              <i class="ri-list-check me-1"></i>
-              Resumen de Horarios
-            </label>
-            <div class="small">
-              <div *ngFor="let day of tablero; let i = index" class="mb-1">
-                <span class="badge bg-primary-subtle text-primary me-1">
-                  {{ i === 0 ? 'Lun' : i === 1 ? 'Mar' : i === 2 ? 'Mié' : i === 3 ? 'Jue' : i === 4 ? 'Vie' : i === 5 ? 'Sáb' : 'Dom' }}
-                </span>
-                <span *ngIf="day.length === 0" class="text-muted">Sin horarios</span>
-                <span *ngIf="day.length > 0" class="text-muted">
-                  {{ day.length }} horario(s)
-                </span>
+
+          <div *ngIf="overriddenDatesCount > 0 || overriddenWeekdaysCount > 0" class="alert alert-warning py-2 mb-2">
+            <small>
+              <i class="ri-edit-fill me-1"></i>
+              <span *ngIf="overriddenWeekdaysCount > 0"><strong>{{ overriddenWeekdaysCount }}</strong> día(s) de semana personalizado(s). </span>
+              <span *ngIf="overriddenDatesCount > 0"><strong>{{ overriddenDatesCount }}</strong> fecha(s) personalizada(s).</span>
+            </small>
+          </div>
+
+          <div class="row g-2 text-center">
+            <div class="col-4">
+              <div class="p-2 bg-light rounded">
+                <div class="h4 mb-0 text-primary">{{ selectedDaysCount }}</div>
+                <small class="text-muted">Días/Sem.</small>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="p-2 bg-light rounded">
+                <div class="h4 mb-0 text-success">{{ totalHours | number:'1.0-0' }}</div>
+                <small class="text-muted">Horas</small>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="p-2 bg-light rounded">
+                <div class="h4 mb-0 text-info">{{ calculateTotalMonths() }}</div>
+                <small class="text-muted">
+                  {{ dataTariff.tipoCobro === 'mensualidad' || dataTariff.tipoCobro === 'por_club' ? 'Meses cobro' : 'Meses' }}
+                </small>
               </div>
             </div>
           </div>
-          <div class="row">
-            <div class="col-4 text-center p-3 bg-light rounded">
-              <div class="stat-value text-primary h4 mb-1">{{ selectedDaysCount }}</div>
-              <div class="stat-label small text-muted">Días/Semana</div>
-            </div>
-            
-            <div class="col-4 text-center p-3 bg-light rounded">
-              <div class="stat-value text-success h4 mb-1">{{ totalHours | number:'1.0-0' }}</div>
-              <div class="stat-label small text-muted">Horas</div>
-            </div>
-            
-            <div class="col-4 text-center p-3 bg-light rounded">
-              <div class="stat-value text-info h4 mb-1">{{ calculateTotalMonths() }}</div>
-              <div class="stat-label small text-muted">Meses</div>
-            </div>
+
+        </div>
+        <div class="card-footer">
+          <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-primary" [disabled]="!canConfirm" (click)="confirmar()">
+              <i class="ri-check-line me-1"></i>Confirmar Horarios
+            </button>
           </div>
         </div>
-        <div class="card-footer">          
-          <div class="d-flex justify-content-end">
-            <button type="button" 
-                    class="btn btn-primary" 
-                    [disabled]="!canConfirm"
-                    (click)="confirmar()">
-              <i class="ri-check-line me-1"></i>
-              Confirmar Horarios
-            </button>
+      </div>
+
+      <!-- Scheduled sessions list -->
+      <div class="card mt-3" *ngIf="getScheduledDates().length > 0">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">
+            <i class="ri-calendar-check-line me-1"></i>Sesiones Programadas
+            <span class="badge bg-primary ms-2">{{ getBillableSessionCount() | number:'1.0-1' }}</span>
+          </h6>
+        </div>
+        <div class="card-body p-2" style="max-height: 300px; overflow-y: auto;">
+          <div
+            *ngFor="let s of getScheduledDates()"
+            class="scheduled-session border rounded p-2 mb-2"
+            [class.scheduled-session--selected]="s.isSelectedForEdit"
+            (click)="selectDateForEdit({
+              date: s.date,
+              empty: false,
+              isInRange: true,
+              dayName: getDayNameForDate(s.date)
+            })">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="flex-grow-1">
+                <strong class="small">{{ s.date | date:'EEEE, d MMM' }}</strong>
+                <!-- Show all slots for this date -->
+                <div *ngFor="let slot of s.slots" class="small text-muted">
+                  <i class="ri-time-line me-1"></i>{{ slot.horaInicio }} – {{ slot.horaFin }}
+                  <span class="text-muted">({{ calculateDuration(slot.horaInicio, slot.horaFin) | number:'1.1-1' }}h)</span>
+                </div>
+                <div class="mt-1 d-flex gap-1">
+                  <span *ngIf="s.isOverridden"        class="badge bg-warning text-dark"><i class="ri-edit-fill"></i> Fecha</span>
+                  <span *ngIf="s.isWeekdayOverridden" class="badge bg-info text-dark"><i class="ri-repeat-fill"></i> Semana</span>
+                </div>
+              </div>
+              <div class="btn-group btn-group-sm ms-2">
+                <button type="button" class="btn btn-outline-danger"
+                        (click)="$event.stopPropagation(); clearDateSlots(s.date)" title="Excluir">
+                  <i class="ri-close-circle-line"></i>
+                </button>
+                <button type="button" class="btn btn-outline-primary"
+                        (click)="$event.stopPropagation(); startMoveSession(s.date)" title="Mover">
+                  <i class="ri-arrow-right-line"></i>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

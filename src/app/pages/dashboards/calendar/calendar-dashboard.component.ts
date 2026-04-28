@@ -10,6 +10,7 @@ import multiMonthPlugin from '@fullcalendar/multimonth'
 import esLocale from '@fullcalendar/core/locales/es';
 import { CookieService } from 'ngx-cookie-service';
 import Swal from 'sweetalert2';
+import { take } from 'rxjs';
 
 import { ToastService } from '../admin/toast-service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
@@ -23,8 +24,8 @@ import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
 import { Reserva } from 'src/app/core/models/reserva.model';
 import { BookingOneTimeModalComponent } from '../../modals/modal-booking-one-time/modal-booking-one-time.component';
-import { take } from 'rxjs';
-// import { BookingOneTimeModalComponent } from '../../booking-one-time/modal/modal.component';
+import { BookingRecurrentModalComponent } from '../../modals/modal-booking-recurrent/modal-booking-recurrent.component';
+import { BookingDetailModalComponent } from '../../modals/booking-detail-modal/booking-detail-modal.component';
 
 @Component({
     selector: 'app-calendar-dashboard',
@@ -64,8 +65,7 @@ export class CalendarDashboardComponent implements OnInit {
     private campoDeportivoService: CamposDeportivoService,
     private complejoService: ComplejosService,
     private reservasService: ReservaService,
-    private authService: AuthenticationService,
-    private cookieService: CookieService,
+    private authService: AuthenticationService
   ) { 
     this.canActivate = this.authService.hasPermission('Reservas');
   }
@@ -230,8 +230,7 @@ export class CalendarDashboardComponent implements OnInit {
               horaFin: endTime
             }
           };
-        }).filter((event: any) => event !== null);
-        
+        }).filter((event: any) => event !== null);        
         allEvents = [...allEvents, ...eventosPuntuales];
       }
 
@@ -352,18 +351,12 @@ export class CalendarDashboardComponent implements OnInit {
     }
   }
 
-  /**
-   * Format time from HH:mm:ss to HH:mm
-   */
   private formatTime(time: string): string {
     if (!time) return '';
     const parts = time.split(':');
     return `${parts[0]}:${parts[1]}`;
   }
 
-  /**
-   * Update upcoming events list (next 10 events sorted by date)
-   */
   private updateUpcomingEvents() {
     const now = new Date();
     this.upcomingEvents = [...this.calendarEvents]
@@ -372,87 +365,85 @@ export class CalendarDashboardComponent implements OnInit {
       .slice(0, 10);
   }
 
-  /**
-   * Generate individual events from recurring reservations
-   */
   private generateRecurringEvents(reservasRecurrentes: any[]): any[] {
     const events: any[] = [];
-    
     reservasRecurrentes.forEach((reserva: any) => {
-      const reservaRecurrente = reserva.reservaRecurrenteDto;
-      const fechaInicio = new Date(reservaRecurrente?.fechaInicio);
-      const fechaFin = new Date(reservaRecurrente?.fechaFin);
-      
-      let diasSemanaStr = reservaRecurrente?.diasSemana || '';
-      let diasArray: string[] = [];
-      
-      if (diasSemanaStr) {
-        diasArray = diasSemanaStr.split(',').map((dia:any) => dia.trim().toUpperCase());
-      }
-      
-      const dayMap: any = {
-        'DOMINGO': 0, 'LUNES': 1, 'MARTES': 2, 'MIERCOLES': 3, 'MIÉRCOLES': 3,
-        'JUEVES': 4, 'VIERNES': 5, 'SABADO': 6, 'SÁBADO': 6
-      };
-      
-      const daysToGenerate = diasArray.map((dia: string) => dayMap[dia]).filter(day => day !== undefined);
-      
-      let horaEntrada = '08:00:00';
-      let horaSalida = '09:00:00';
-      
-      if (reservaRecurrente?.tableroDto?.horario) {
-        const horario = reservaRecurrente.tableroDto.horario;
-        const firstTimeSlot = horario.find((slot: any) => slot && slot.length >= 2);
-        if (firstTimeSlot && firstTimeSlot[1]) {
-          const [start, end] = firstTimeSlot[1].split('-');
-          horaEntrada = start;
-          horaSalida = end;
-        }
-      }
-      
-      if (!horaEntrada || !horaSalida) {
+      const reservaRecurrente = reserva.reservaRecurrenteDto;      
+      if (!reservaRecurrente?.tableroDto?.horario) {
+        return;
+      }      
+      const horario3D = reservaRecurrente.tableroDto.horario;
+      if (!Array.isArray(horario3D) || horario3D.length === 0) {
         return;
       }
-
-      const startTime = this.formatTime(horaEntrada);
-      const endTime = this.formatTime(horaSalida);
+      const fechaInicioStr = reservaRecurrente.fechaInicio;
+      const fechaFinStr = reservaRecurrente.fechaFin;
+      const [startYear, startMonth, startDay] = fechaInicioStr.split('-').map(Number);
+      const [endYear, endMonth, endDay] = fechaFinStr.split('-').map(Number);
+      const fechaInicio = new Date(Date.UTC(startYear, startMonth - 1, startDay));
+      const fechaFin = new Date(Date.UTC(endYear, endMonth - 1, endDay, 23, 59, 59, 999));
       const campoNombre = reserva.campoDeportivoDto?.nombre || 'Campo';
       const complejoNombre = reserva.campoDeportivoDto?.complejoDto?.nombre || 'Complejo';
-      
-      let currentDate = new Date(fechaInicio);
-      while (currentDate <= fechaFin) {
-        if (daysToGenerate.length === 0 || daysToGenerate.includes(currentDate.getDay())) {
-          const dateStr = currentDate.toISOString().split('T')[0];
-          
-          events.push({
-            id: `recurrente-${reserva.uuid}-${dateStr}`,
-            title: `${startTime}-${endTime} | ${campoNombre} (R)`,
-            start: `${dateStr}T${horaEntrada}`,
-            end: `${dateStr}T${horaSalida}`,
-            backgroundColor: '#3b82f6',
-            borderColor: '#2563eb',
-            textColor: '#fff',
-            extendedProps: {
-              type: 'reserva-recurrente',
-              row: reserva,
-              description: reserva.contribuyenteDto?.nombre || 'Cliente',
-              complejo: complejoNombre,
-              campo: campoNombre,
-              horaInicio: startTime,
-              horaFin: endTime
-            }
+      const contribuyenteNombre = reserva.contribuyenteDto?.nombreCompleto || 
+                                reserva.contribuyenteDto?.nombre || 'Cliente';
+      for (let monthIndex = 0; monthIndex < horario3D.length; monthIndex++) {
+        const monthMatrix = horario3D[monthIndex] as any[];
+        let targetYear = startYear;
+        let targetMonth = startMonth - 1 + monthIndex;
+        while (targetMonth >= 12) {
+          targetMonth -= 12;
+          targetYear++;
+        }
+        while (targetMonth < 0) {
+          targetMonth += 12;
+          targetYear--;
+        }
+        const lastDayOfMonth = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
+        for (let dayIndex = 0; dayIndex < monthMatrix.length && dayIndex < lastDayOfMonth; dayIndex++) {
+          const daySlots = monthMatrix[dayIndex];
+          if (!Array.isArray(daySlots)) {
+            continue;
+          }
+          const validSlots = daySlots.filter((slot: string) => 
+            slot && typeof slot === 'string' && slot !== '' && slot.includes('-')
+          );
+          if (validSlots.length === 0) {
+            continue;
+          }
+          const eventDate = new Date(Date.UTC(targetYear, targetMonth, dayIndex + 1));
+          if (eventDate < fechaInicio || eventDate > fechaFin) {
+            continue;
+          }
+          validSlots.forEach((slot: string) => {
+            const [horaInicio, horaFin] = slot.split('-');
+            const startTime = this.formatTime(horaInicio);
+            const endTime = this.formatTime(horaFin);
+            const dateStr = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-${String(dayIndex + 1).padStart(2, '0')}`;
+            events.push({
+              id: `recurrente-${reserva.uuid}-${dateStr}-${slot.replace(/:/g, '')}`,
+              title: `${startTime}-${endTime} | ${campoNombre}`,
+              start: `${dateStr}T${horaInicio}`,
+              end: `${dateStr}T${horaFin}`,
+              backgroundColor: '#3b82f6',
+              borderColor: '#2563eb',
+              textColor: '#fff',
+              extendedProps: {
+                type: 'reserva-recurrente',
+                row: reserva,
+                description: contribuyenteNombre,
+                complejo: complejoNombre,
+                campo: campoNombre,
+                horaInicio: startTime,
+                horaFin: endTime
+              }
+            });
           });
         }
-        currentDate.setDate(currentDate.getDate() + 1);
       }
     });
-    
     return events;
   }
 
-  /**
-   * Calendar configuration
-   */
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, listPlugin, interactionPlugin, timeGridPlugin, multiMonthPlugin],
     headerToolbar: {
@@ -506,10 +497,12 @@ export class CalendarDashboardComponent implements OnInit {
     this.currentEvents = events;
     this.updateUpcomingEvents();
   }
+  
   handleEventClick(clickInfo: EventClickArg) {
     const eventType = clickInfo.event.extendedProps['type'];
     const row: Reserva = clickInfo.event.extendedProps['row'];
-    
+    const clickedDate = clickInfo.event.start ?? undefined;
+
     if (eventType === 'excepcion') {
       const tipoExcepcion = clickInfo.event.extendedProps['tipoExcepcion'];
       const motivo = clickInfo.event.extendedProps['motivo'];
@@ -517,7 +510,6 @@ export class CalendarDashboardComponent implements OnInit {
       const complejo = clickInfo.event.extendedProps['complejo'];
       const horaInicio = clickInfo.event.extendedProps['horaInicio'];
       const horaFin = clickInfo.event.extendedProps['horaFin'];
-      
       Swal.fire({
         title: tipoExcepcion || 'Excepción',
         html: `
@@ -538,17 +530,24 @@ export class CalendarDashboardComponent implements OnInit {
         confirmButtonText: 'Cerrar'
       });
     } else {
-      if(row.tipoReserva === 'puntual'){
-        this.opemModalReservationPuntual(row)
-      }else{
-        this.opemModalReservationRecurrente(row)
-      }
+      this.openQuickView(
+        row,
+        clickedDate,
+        clickInfo.event.extendedProps['horaInicio'],
+        clickInfo.event.extendedProps['horaFin']
+      );
+      // if(row.tipoReserva === 'puntual'){
+      //   this.opemModalReservationPuntual(row)
+      // }else{
+      //   this.openModalReservationRecurrente(row, clickedDate);
+      // }
     }
   }
   handleUpcomingEventClick(event: any) {
     const eventType = event.extendedProps?.type;
     const row: Reserva = event.extendedProps?.row;
-    
+    const clickedDate: Date = event.start;
+
     if (eventType === 'excepcion') {
       const tipoExcepcion = event.extendedProps?.tipoExcepcion;
       const motivo = event.extendedProps?.motivo;
@@ -557,7 +556,6 @@ export class CalendarDashboardComponent implements OnInit {
       const horaInicio = event.extendedProps?.horaInicio;
       const horaFin = event.extendedProps?.horaFin;
       const eventDate = new Date(event.start);
-      
       Swal.fire({
         title: tipoExcepcion || 'Excepción',
         html: `
@@ -578,16 +576,36 @@ export class CalendarDashboardComponent implements OnInit {
         confirmButtonText: 'Cerrar'
       });
     } else {
-      if(row?.tipoReserva === 'puntual'){
-        this.opemModalReservationPuntual(row)
-      }else{
-        this.opemModalReservationRecurrente(row)
-      }
+      // if(row?.tipoReserva === 'puntual'){
+      //   this.opemModalReservationPuntual(row)
+      // }else{
+      //   this.openModalReservationRecurrente(row, clickedDate);
+      // }
+      this.openQuickView(
+        row,
+        clickedDate,
+        event.extendedProps?.horaInicio,
+        event.extendedProps?.horaFin
+      );
     }
   }
-  /**
-   * calendar preference
-   */
+  
+  private openQuickView(row: Reserva, clickedDate?: Date, horaInicio?: string, horaFin?: string): void {
+    const modalRef = this.modalService.open(BookingDetailModalComponent, {
+      backdrop: true,
+      size: 'md',
+      centered: true
+    });
+    modalRef.componentInstance.reserva = row;
+    modalRef.componentInstance.clickedDate = clickedDate;
+    modalRef.componentInstance.horaInicio = horaInicio;
+    modalRef.componentInstance.horaFin = horaFin;
+    modalRef.componentInstance.canActivate = this.canActivate;
+    modalRef.componentInstance.emitList.subscribe(() => {
+      this._fetchData();
+    });
+  }
+
   private saveCalendarViewPreference(view: string): void {
     try {
       const userId = this.authService.currentUser()?.uuid || 'anonymous';
@@ -629,22 +647,10 @@ export class CalendarDashboardComponent implements OnInit {
   opemModalReservationPuntual(row: Reserva){
     const modalRef = this.modalService.open(BookingOneTimeModalComponent, {
         backdrop: 'static',
-        size:''
+        size: 'lg',
+        windowClass: 'booking-modal'
     });
-    modalRef.componentInstance.row = {...row.reservaPuntualDto, reservaDto:row};
-    modalRef.componentInstance.accion = 'show';
-    modalRef.componentInstance.canActivate = this.canActivate; 
-    modalRef.componentInstance.emitList.subscribe(() => {
-      this._fetchData();
-    });
-  }
-  
-  opemModalReservationRecurrente(row: Reserva){
-    const modalRef = this.modalService.open(BookingOneTimeModalComponent, {
-        backdrop: 'static',
-        size:''
-    });
-    modalRef.componentInstance.row = {...row.reservaRecurrenteDto, reservaDto:row};
+    modalRef.componentInstance.row = {...row.reservaPuntualDto, reservaDto: row};
     modalRef.componentInstance.accion = 'show';
     modalRef.componentInstance.canActivate = this.canActivate; 
     modalRef.componentInstance.emitList.subscribe(() => {
@@ -652,6 +658,22 @@ export class CalendarDashboardComponent implements OnInit {
     });
   }
 
+  openModalReservationRecurrente(row: Reserva, clickedDate?: Date) {
+    const modalRef = this.modalService.open(BookingRecurrentModalComponent, {
+      backdrop: 'static',
+      size: 'lg'
+    });
+    modalRef.componentInstance.row = {
+      ...row.reservaRecurrenteDto,
+      reservaDto: row
+    };
+    modalRef.componentInstance.accion = 'show';
+    modalRef.componentInstance.canActivate = this.canActivate;
+    modalRef.componentInstance.highlightedDate = clickedDate; 
+    modalRef.componentInstance.emitList.subscribe(() => {
+      this._fetchData();
+    });
+  }
   
   changeDirection() {
     this.calendarOptions.direction = this.direction;

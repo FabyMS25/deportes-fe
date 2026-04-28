@@ -1,48 +1,56 @@
-import { Component, Input, Output, EventEmitter, OnInit, CUSTOM_ELEMENTS_SCHEMA, ChangeDetectorRef, TemplateRef, ViewChild, AfterViewInit } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NgbActiveModal, NgbCollapseModule, NgbModal, NgbNavModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  OnInit,
+  TemplateRef,
+  ViewChild,
+  AfterViewInit,
+  CUSTOM_ELEMENTS_SCHEMA
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+  FormsModule
+} from '@angular/forms';
+import { NgbModal, NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 
-import { CommonModule, CurrencyPipe } from '@angular/common';
-import { Organizacion } from 'src/app/core/models/organizacion.model';
-import { EstudianteEscuela } from 'src/app/core/models/EstudianteEscuela.model';
-import { Reserva } from 'src/app/core/models/reserva.model';
-import { Tarifa } from 'src/app/core/models/tarifa.model';
-import { EstadoReserva, EstadoValidacion } from 'src/app/core/constants/Estados';
-import { ReservaPeriodo } from 'src/app/core/models/reservaPeriodo.model';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
-import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
-import { ReservaService } from 'src/app/core/services/api/reserva.service';
+import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
+import { ClasificadorRuatService } from 'src/app/core/services/api/clasificadorRuat.service';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
-import { Router } from '@angular/router';
 import { ReservaPeriodoService } from 'src/app/core/services/api/reserva-periodo.service';
+import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { EstudianteEscuelaService } from 'src/app/core/services/api/estudianteEscuela.service';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
-import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
+
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
-import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
-import { ReservaRecurrente } from 'src/app/core/models/reservaRecurrente.model';
-import { Contribuyente } from 'src/app/core/models/contribuyente.model';
-import { TipoOrganizacion } from 'src/app/core/constants/Features';
+import { Reserva } from 'src/app/core/models/reserva.model';
+import { ReservaPeriodo } from 'src/app/core/models/reservaPeriodo.model';
 import { Pago } from 'src/app/core/models/pago.model';
-import { PagoService } from 'src/app/core/services/api/pago.service';
-import { TicketComponent } from '../../modules/reports/ticket/ticket.component';
-import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
-import { ClasificadorRuatService } from 'src/app/core/services/api/clasificadorRuat.service';
 import { ClasificadorRuat } from 'src/app/core/models/clasificadorRuat.model';
+import { Organizacion } from 'src/app/core/models/organizacion.model';
+import { EstudianteEscuela } from 'src/app/core/models/EstudianteEscuela.model';
+
+import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
+import { TipoOrganizacion } from 'src/app/core/constants/Features';
+import { EstadoReserva, EstadoValidacion, EstadoPago } from 'src/app/core/constants/Estados';
+
+import { TicketComponent } from '../../modules/reports/ticket/ticket.component';
 
 @Component({
   selector: 'app-booking-periodo-modal',
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
     ReactiveFormsModule,
     NgbNavModule,
-    NgbCollapseModule,
-    NgbTypeaheadModule,
-    CurrencyPipe,
+    FormsModule,
     TicketComponent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -50,46 +58,52 @@ import { ClasificadorRuat } from 'src/app/core/models/clasificadorRuat.model';
   styleUrl: './modal-booking-school.component.scss'
 })
 export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
-  breadCrumbItems!: Array<{}>;
-  currentTime!: string;
-
   @Input() accion!: string;
   @Input() row!: ReservaPeriodo;
   @Input() canActivate!: any[];
+  @Input() estudiantes: EstudianteEscuela[] = [];
+
   @Output() emitList = new EventEmitter();
   @Output() reservaGenerada = new EventEmitter<Reserva>();
 
-  userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
+  @ViewChild('ticketModal') ticketModal!: TemplateRef<any>;
+  @ViewChild('annularModal') annularModal!: TemplateRef<any>;
+
   isLoading = false;
-  isRuatAuthenticated = false;
+
   systemConfigList: { [key: string]: ConfiguracionSistema } = {};
-  reservationsList: Reserva[] = [];
-  complejosList: ComplejoDeportivo[] = [];
-  camposDeportivosList: CampoDeportivo[] = [];
   organizationsList: Organizacion[] = [];
-  estudiantesList: EstudianteEscuela[] = [];
-  mensualidadesEstudiante: ReservaPeriodo[] = [];
-  
-  reservaForm!: FormGroup;
-  validationForm!: FormGroup;
-  submitted = false;
-  validationSubmitted = false;
-  
   filteredEscuelas: Organizacion[] = [];
   availableReservasRecurrentes: Reserva[] = [];
-  
-  clasificador!:ClasificadorRuat;
+  filteredReservasRecurrentes: Reserva[] = [];
+  studentPeriodsRegistrations: ReservaPeriodo[] = [];
+  availablePeriodos: { mes: number; año: number; label: string }[] = [];
+
   selectedEstudiante?: EstudianteEscuela;
   selectedEscuela?: Organizacion;
   selectedReservaRecurrente?: Reserva;
+  selectedMensualidadExistente?: ReservaPeriodo;
   selectedMonth?: number;
   selectedYear?: number;
 
-  motivo: string = '';
-  observation: string = '';
-  validationObservation: string = '';
-  validationStatus: string = 'APROBADA';
+  reservationForm!: FormGroup;
+  validationForm!: FormGroup;
+  validationSubmitted = false;
 
+  clasificador!: ClasificadorRuat;
+  userData!: any;
+
+  motivo = '';
+  observation = '';
+
+  activeTab = 1;
+  createTab = 1;
+
+  historialFilter: 'todas' | 'pagadas' | 'pendientes' = 'todas';
+  reservaBaseFilter: 'todas' | 'en_curso' | 'pagadas' | 'pendientes' | 'activas' = 'en_curso';
+  hideCoveredReservations = false;
+
+  years: number[] = [];
   months = [
     { value: 1, name: 'Enero' },
     { value: 2, name: 'Febrero' },
@@ -105,74 +119,129 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
     { value: 12, name: 'Diciembre' }
   ];
 
-  years: number[] = [];
-
-  @ViewChild('validationModel') validationModel!: TemplateRef<any>;
-  @ViewChild('ticketModal') ticketModal!: TemplateRef<any>;
-  @ViewChild('annularModal') annularModal!: TemplateRef<any>;
+  EstadoReserva = EstadoReserva;
+  EstadoPago = EstadoPago;
 
   constructor(
-    public activeModal: NgbActiveModal,
-    private fb: FormBuilder,
-    private router: Router,
-    private cdRef: ChangeDetectorRef,
     private modalService: NgbModal,
-    private authenticationService: AuthenticationService,
-    private complejoService: ComplejosService,
-    private campoService: CamposDeportivoService,
-    private reservaService: ReservaService,
+    private formBuilder: FormBuilder,
+    private authService: AuthenticationService,
+    private systemConfigsService: ConfiguracionSistemaService,
     private ruatService: RuatRequestsService,
+    private reservaService: ReservaService,
     private reservaPeriodoService: ReservaPeriodoService,
     private estudianteService: EstudianteEscuelaService,
     private organizationService: OrganizacionService,
-    private pagoService: PagoService,
-    private ClasificadorService: ClasificadorRuatService
+    private clasificadorService: ClasificadorRuatService
   ) {}
 
   ngOnInit(): void {
-    this.breadCrumbItems = [
-      { label: 'Complejo' },
-      { label: 'Reserva Período', active: true }
-    ];
-    this.currentTime = new Date().toLocaleTimeString(); 
-    this.systemConfigList = this.authenticationService.getAllConfigs();
-    
+    this.userData = this.authService.currentUser();
+    if (this.authService.tokenUser() !== 'CONTRIBUYENTE_SESSION') {
+      this.userData = this.userData.designacion.personaDto;
+    }
+
+    this.getConfigsSystem();
+    this.getClasificador();
+    this.getOrganizations();
+
+    if (!this.estudiantes?.length) {
+      this.getEstudiantes();
+    }
+
     this.initializeForm();
     this.initializeYears();
-    this.getClasificador();
-    this.getEstudiantes();
-    this.getOrganizations();
-    
-    if (this.accion === 'validarModal') {
-      this.initValidationForm();
-    } else if (this.accion === 'edit') {
-      this.initEditForm();
-    } else if (this.accion === 'show') {
+
+    if (this.accion === 'show' && this.row?.reservaDto) {
       this.loadReservaData();
+      this.activeTab = 1;
     }
   }
 
   ngAfterViewInit(): void {
-    setTimeout(() => {      
+    setTimeout(() => {
       if (!this.accion) return;
+
       switch (this.accion) {
-        case 'validarModal':
-          this.openValidationModal(this.validationModel);
-          break;
         case 'annularModal':
           if (this.annularModal) {
             this.openDeleteModal(this.annularModal);
           }
           break;
-        case 'ticketModal': 
+        case 'ticketModal':
           this.openTicketModal(this.ticketModal);
           break;
       }
     });
   }
 
+  /* =========================
+     GETTERS / UI HELPERS
+  ========================= */
+
+  get reservaActual(): Reserva | undefined {
+    return this.row?.reservaDto;
+  }
+
+  get escuelaActual(): Organizacion | undefined {
+    return this.row?.reservaDto?.organizacionDto;
+  }
+
+  get estudianteActual(): EstudianteEscuela | undefined {
+    return this.row?.reservaDto?.estudianteEscuelaDto;
+  }
+
+  get pagosActuales(): Pago[] {
+    return this.row?.reservaDto?.pagosDtoList || [];
+  }
+
+  get tienePagos(): boolean {
+    return this.pagosActuales.length > 0;
+  }
+
+  get hasHistorial(): boolean {
+    return this.studentPeriodsRegistrations.length > 0;
+  }
+
+  get validationFormControls() {
+    return this.validationForm.controls;
+  }
+
+  get form() {
+    return this.reservationForm.controls;
+  }
+
+  get mensualidadesFiltradas(): ReservaPeriodo[] {
+    let items = [...this.studentPeriodsRegistrations];
+
+    if (this.selectedEscuela?.uuid) {
+      items = items.filter(m => m.reservaDto?.organizacionDto?.uuid === this.selectedEscuela?.uuid);
+    }
+
+    if (this.historialFilter === 'pagadas') {
+      items = items.filter(
+        m =>
+          m.reservaDto?.estadoReserva === EstadoReserva.PAGADA ||
+          m.reservaDto?.estadoReserva === EstadoReserva.COMPLETADA
+      );
+    }
+
+    if (this.historialFilter === 'pendientes') {
+      items = items.filter(m => m.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE);
+    }
+
+    return items.sort((a, b) => {
+      if (a.año !== b.año) return b.año - a.año;
+      return b.mes - a.mes;
+    });
+  }
+
+  /* =========================
+     INIT
+  ========================= */
+
   private initializeForm(): void {
-    this.reservaForm = this.fb.group({
+    this.reservationForm = this.formBuilder.group({
       estudiante: ['', Validators.required],
       escuela: ['', Validators.required],
       reservaRecurrente: ['', Validators.required],
@@ -180,54 +249,19 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
       año: ['', Validators.required],
       observaciones: ['']
     });
+
+    // this.validationForm = this.formBuilder.group({
+    //   validationStatus: [''],
+    //   validationObservation: ['']
+    // });
+
     const currentDate = new Date();
-    this.reservaForm.patchValue({
-      mes: currentDate.getMonth() + 1,
-      año: currentDate.getFullYear()
-    });
-    this.selectedMonth = currentDate.getMonth() + 1;
-    this.selectedYear = currentDate.getFullYear();
-  }
+    const mes = currentDate.getMonth() + 1;
+    const año = currentDate.getFullYear();
 
-  private initEditForm(): void {
-    if (!this.row?.reservaDto) return;
-    
-    this.reservaForm = this.fb.group({
-      estudiante: [{value: this.row.reservaDto.estudianteEscuelaDto?.uuid || '', disabled: true}, Validators.required],
-      escuela: [{value: this.row.reservaDto.organizacionDto?.uuid || '', disabled: true}, Validators.required],
-      reservaRecurrente: [{value: this.row.reservaDto.uuid || '', disabled: true}, Validators.required],
-      mes: [this.row.mes, Validators.required],
-      año: [this.row.año, Validators.required],
-      observaciones: ['']
-    });
-
-    this.selectedMonth = this.row.mes;
-    this.selectedYear = this.row.año;
-    this.selectedEstudiante = this.row.reservaDto.estudianteEscuelaDto;
-    this.selectedEscuela = this.row.reservaDto.organizacionDto;
-    this.selectedReservaRecurrente = this.row.reservaDto;
-  }
-
-  private initValidationForm(): void {
-    this.validationForm = this.fb.group({
-      validationStatus: [EstadoValidacion.APROBADA, Validators.required],
-      validationObservation: ['']
-    });
-    
-    this.validationForm.get('validationStatus')?.valueChanges.subscribe(status => {
-      this.updateObservationValidation(status);
-    });
-  }
-
-  private updateObservationValidation(status: string): void {
-    const observationControl = this.validationForm.get('validationObservation');
-    if (status === EstadoValidacion.RECHAZADA) {
-      observationControl?.setValidators([Validators.required]);
-      observationControl?.updateValueAndValidity();
-    } else {
-      observationControl?.clearValidators();
-      observationControl?.updateValueAndValidity();
-    }
+    this.reservationForm.patchValue({ mes, año });
+    this.selectedMonth = mes;
+    this.selectedYear = año;
   }
 
   private initializeYears(): void {
@@ -239,7 +273,7 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
 
   private loadReservaData(): void {
     if (!this.row?.reservaDto) return;
-    
+
     this.selectedEstudiante = this.row.reservaDto.estudianteEscuelaDto;
     this.selectedEscuela = this.row.reservaDto.organizacionDto;
     this.selectedReservaRecurrente = this.row.reservaDto;
@@ -247,10 +281,25 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
     this.selectedYear = this.row.año;
   }
 
+  /* =========================
+     TABS
+  ========================= */
+
+  setActiveTab(tab: number): void {
+    this.activeTab = tab;
+  }
+
+  setCreateTab(tab: number): void {
+    this.createTab = tab;
+  }
+
+  /* =========================
+     CREATE FLOW
+  ========================= */
+
   onEstudianteChange(event: Event): void {
-    const target = event.target as HTMLSelectElement;
-    const estudianteUuid = target.value;
-    const estudiante = this.estudiantesList.find(e => e.uuid === estudianteUuid);    
+    const estudianteUuid = (event.target as HTMLSelectElement).value;
+    const estudiante = this.estudiantes.find(e => e.uuid === estudianteUuid);
     if (estudiante) {
       this.onEstudianteSelected(estudiante);
     }
@@ -258,25 +307,32 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
 
   onEstudianteSelected(estudiante: EstudianteEscuela): void {
     this.selectedEstudiante = estudiante;
-    this.reservaForm.patchValue({ estudiante: estudiante.uuid });
-    this.filteredEscuelas = this.organizationsList.filter(org => 
-      org.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL && 
-      org.activo
+    this.reservationForm.patchValue({ estudiante: estudiante.uuid });
+
+    this.filteredEscuelas = this.organizationsList.filter(
+      org => org.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL && org.activo
     );
-    this.loadMensualidadesEstudiante();
+
+    this.loadPeriodsByStudent();
+
     this.selectedEscuela = undefined;
     this.selectedReservaRecurrente = undefined;
+    this.selectedMensualidadExistente = undefined;
     this.availableReservasRecurrentes = [];
-    this.reservaForm.patchValue({ 
+    this.filteredReservasRecurrentes = [];
+    this.availablePeriodos = [];
+
+    this.reservationForm.patchValue({
       escuela: '',
-      reservaRecurrente: '' 
+      reservaRecurrente: ''
     });
+
+    this.createTab = 1;
   }
 
   onEscuelaChange(event: Event): void {
-    const target = event.target as HTMLSelectElement;
-    const escuelaUuid = target.value;
-    const escuela = this.filteredEscuelas.find(e => e.uuid === escuelaUuid);    
+    const escuelaUuid = (event.target as HTMLSelectElement).value;
+    const escuela = this.filteredEscuelas.find(e => e.uuid === escuelaUuid);
     if (escuela) {
       this.onEscuelaSelected(escuela);
     }
@@ -284,191 +340,331 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
 
   onEscuelaSelected(escuela: Organizacion): void {
     this.selectedEscuela = escuela;
-    this.reservaForm.patchValue({ escuela: escuela.uuid });
-    this.loadReservasRecurrentesFromEscuela(escuela);
+    this.reservationForm.patchValue({ escuela: escuela.uuid });
+
+    this.loadReservationsFromSchool(escuela);
+
     this.selectedReservaRecurrente = undefined;
-    this.reservaForm.patchValue({ reservaRecurrente: '' });
+    this.selectedMensualidadExistente = undefined;
+    this.availablePeriodos = [];
+
+    this.reservationForm.patchValue({ reservaRecurrente: '' });
+
+    this.resolveMensualidadExistente();
   }
 
   onReservaRecurrenteChange(event: Event): void {
-    const target = event.target as HTMLSelectElement;
-    const reservaUuid = target.value;
-    const reserva = this.availableReservasRecurrentes.find(r => r.uuid === reservaUuid);
-    
+    const reservaUuid = (event.target as HTMLSelectElement).value;
+    const reserva = this.filteredReservasRecurrentes.find(r => r.uuid === reservaUuid);
+
     if (reserva) {
-      this.onReservaRecurrenteSelected(reserva);
+      this.selectReservaRecurrente(reserva);
     }
   }
 
-  onReservaRecurrenteSelected(reserva: Reserva): void {
-    this.selectedReservaRecurrente = reserva;
-    this.reservaForm.patchValue({ reservaRecurrente: reserva.uuid });
+  onPeriodoChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    if (!value) return;
+
+    const [yearStr, monthStr] = value.split('-');
+    this.selectedYear = Number(yearStr);
+    this.selectedMonth = Number(monthStr);
+
+    this.reservationForm.patchValue({
+      año: this.selectedYear,
+      mes: this.selectedMonth
+    });
+
+    this.onMonthYearChange();
   }
 
   onMonthChange(event: Event): void {
-    const target = event.target as HTMLSelectElement;
-    this.selectedMonth = parseInt(target.value);
-    this.reservaForm.patchValue({ mes: this.selectedMonth });
+    this.selectedMonth = parseInt((event.target as HTMLSelectElement).value, 10);
+    this.reservationForm.patchValue({ mes: this.selectedMonth });
     this.onMonthYearChange();
   }
 
   onYearChange(event: Event): void {
-    const target = event.target as HTMLSelectElement;
-    this.selectedYear = parseInt(target.value);
-    this.reservaForm.patchValue({ año: this.selectedYear });
+    this.selectedYear = parseInt((event.target as HTMLSelectElement).value, 10);
+    this.reservationForm.patchValue({ año: this.selectedYear });
     this.onMonthYearChange();
   }
 
   onMonthYearChange(): void {
-    this.selectedMonth = this.reservaForm.get('mes')?.value;
-    this.selectedYear = this.reservaForm.get('año')?.value;
-    if (this.selectedEscuela) {
-      this.filterReservasBySelectedMonth();
-    }    
-    this.checkExistingMensualidad();
+    this.selectedMonth = this.reservationForm.get('mes')?.value;
+    this.selectedYear = this.reservationForm.get('año')?.value;
+    this.resolveMensualidadExistente();
   }
 
-  onSubmit(): void {
-    if (this.reservaForm.invalid) {
-        Swal.fire({
-            title: 'Formulario Incompleto',
-            text: 'Por favor complete todos los campos requeridos',
-            icon: 'warning',
-            confirmButtonText: 'Entendido'
-        });
-        return;
+  private loadReservationsFromSchool(escuela: Organizacion): void {
+    const allReservas = escuela.reservasDtoList || [];
+
+    this.availableReservasRecurrentes = allReservas.filter(
+      reserva =>
+        reserva.tipoReserva === 'recurrente' &&
+        reserva.estadoValidacion === EstadoValidacion.APROBADA &&
+        reserva.reservaRecurrenteDto?.activo === true &&
+        !!reserva.reservaRecurrenteDto?.fechaInicio &&
+        !!reserva.reservaRecurrenteDto?.fechaFin
+    );
+
+    this.applyReservaBaseFilters();
+
+    this.selectedReservaRecurrente = undefined;
+    this.reservationForm.patchValue({ reservaRecurrente: '' });
+
+    this.autoSelectBestReservaBase();
+  }
+
+  applyReservaBaseFilters(): void {
+    let list = [...this.availableReservasRecurrentes];
+
+    switch (this.reservaBaseFilter) {
+      case 'en_curso':
+        list = list.filter(r =>
+          this.isDateWithinReserva(this.getReferenceDateForReservationFilter(), r)
+        );
+        break;
+      case 'pagadas':
+        list = list.filter(
+          r =>
+            r.estadoReserva === EstadoReserva.PAGADA ||
+            r.estadoReserva === EstadoReserva.COMPLETADA
+        );
+        break;
+      case 'pendientes':
+        list = list.filter(r => r.estadoReserva === EstadoReserva.PENDIENTE);
+        break;
+      case 'activas':
+        list = list.filter(
+          r =>
+            r.estadoReserva !== EstadoReserva.CANCELADA &&
+            r.estadoReserva !== EstadoReserva.NO_SHOW
+        );
+        break;
+      default:
+        break;
+    }
+
+    if (this.hideCoveredReservations) {
+      list = list.filter(r => !this.isReservaFullyCoveredForStudent(r));
+    }
+
+    this.filteredReservasRecurrentes = list;
+  }
+
+  private getReferenceDateForReservationFilter(): Date {
+    if (this.selectedYear && this.selectedMonth) {
+      return new Date(this.selectedYear, this.selectedMonth - 1, 1);
+    }
+    return new Date();
+  }
+
+  private autoSelectBestReservaBase(): void {
+    if (!this.filteredReservasRecurrentes.length) return;
+
+    const referenceDate = this.getReferenceDateForReservationFilter();
+    const matchingReserva = this.filteredReservasRecurrentes.find(r =>
+      this.isDateWithinReserva(referenceDate, r)
+    );
+
+    if (matchingReserva) {
+      this.selectReservaRecurrente(matchingReserva);
+      return;
+    }
+
+    this.selectReservaRecurrente(this.filteredReservasRecurrentes[0]);
+  }
+
+  private selectReservaRecurrente(reserva: Reserva): void {
+    this.selectedReservaRecurrente = reserva;
+    this.reservationForm.patchValue({ reservaRecurrente: reserva.uuid });
+    this.generateAvailablePeriods();
+    this.ensureSelectedPeriodoIsValid();
+    this.resolveMensualidadExistente();
+  }
+
+  private generateAvailablePeriods(): void {
+    this.availablePeriodos = [];
+    if (!this.selectedReservaRecurrente?.reservaRecurrenteDto) return;
+
+    const inicio = new Date(this.selectedReservaRecurrente.reservaRecurrenteDto.fechaInicio);
+    const fin = new Date(this.selectedReservaRecurrente.reservaRecurrenteDto.fechaFin);
+
+    let current = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+    const end = new Date(fin.getFullYear(), fin.getMonth(), 1);
+
+    while (current <= end) {
+      const mes = current.getMonth() + 1;
+      const año = current.getFullYear();
+
+      this.availablePeriodos.push({
+        mes,
+        año,
+        label: `${this.getMonthName(mes)} ${año}`
+      });
+
+      current.setMonth(current.getMonth() + 1);
+    }
+  }
+
+  private ensureSelectedPeriodoIsValid(): void {
+    if (!this.availablePeriodos.length) {
+      this.selectedMonth = undefined;
+      this.selectedYear = undefined;
+      this.reservationForm.patchValue({ mes: '', año: '' });
+      return;
+    }
+
+    const isValid = this.availablePeriodos.some(
+      p => p.mes === this.selectedMonth && p.año === this.selectedYear
+    );
+
+    if (!isValid) {
+      const first = this.availablePeriodos[0];
+      this.selectedMonth = first.mes;
+      this.selectedYear = first.año;
+      this.reservationForm.patchValue({
+        mes: first.mes,
+        año: first.año
+      });
+    }
+  }
+
+  private resolveMensualidadExistente(): void {
+    this.selectedMensualidadExistente = this.getExistingMensualidad() || undefined;
+  }
+
+  private getExistingMensualidad(): ReservaPeriodo | null {
+    if (!this.selectedEstudiante || !this.selectedEscuela || !this.selectedMonth || !this.selectedYear) {
+      return null;
+    }
+
+    return (
+      this.studentPeriodsRegistrations.find(
+        m =>
+          m.mes === this.selectedMonth &&
+          m.año === this.selectedYear &&
+          m.reservaDto?.estudianteEscuelaDto?.uuid === this.selectedEstudiante?.uuid &&
+          m.reservaDto?.organizacionDto?.uuid === this.selectedEscuela?.uuid
+      ) || null
+    );
+  }
+
+  private hasExistingMensualidad(): boolean {
+    return !!this.getExistingMensualidad();
+  }
+
+  viewMensualidadExistente(): void {
+    if (!this.selectedMensualidadExistente) return;
+
+    this.row = this.selectedMensualidadExistente;
+    this.accion = 'show';
+    this.activeTab = 1;
+    this.loadReservaData();
+  }
+
+  async onSubmit(): Promise<void> {
+    if (this.reservationForm.invalid) {
+      Swal.fire({
+        title: 'Formulario incompleto',
+        text: 'Por favor complete todos los campos requeridos.',
+        icon: 'warning',
+        confirmButtonText: 'Entendido'
+      });
+      return;
     }
 
     if (!this.selectedEstudiante || !this.selectedEscuela || !this.selectedReservaRecurrente) {
-        Swal.fire({
-            title: 'Error',
-            text: 'Seleccione estudiante, escuela y reserva recurrente',
-            icon: 'error',
-            confirmButtonText: 'Entendido'
-        });
-        return;
+      Swal.fire({
+        title: 'Datos incompletos',
+        text: 'Seleccione estudiante, escuela y reserva recurrente base.',
+        icon: 'error',
+        confirmButtonText: 'Entendido'
+      });
+      return;
     }
-    this.isLoading = true;
-    const reservaData = this.prepareReservaPeriodoData();
-    this.registerReservaPeriodoInRuat(reservaData);
+
+    if (this.hasExistingMensualidad()) {
+      Swal.fire({
+        title: 'Mensualidad existente',
+        text: `Ya existe una mensualidad para ${this.getMonthName(this.selectedMonth!)} ${this.selectedYear}.`,
+        icon: 'info',
+        confirmButtonText: 'Entendido'
+      });
+      return;
+    }
+
+    try {
+      this.isLoading = true;
+
+      const reservaData = this.prepareReservaPeriodoData();
+      const numeroTasa = await this.createTasaInRuat(reservaData);
+
+      reservaData.numeroTasa = numeroTasa;
+
+      const reservaGuardada = await this.saveReservaPeriodo(reservaData);
+
+      this.isLoading = false;
+      this.notify('Mensualidad registrada correctamente.', 'success');
+      this.emitList.emit();
+      this.reservaGenerada.emit(reservaGuardada);
+      this.onCloseModal();
+    } catch (error: any) {
+      this.isLoading = false;
+      this.handleError('Error', error?.message || 'No se pudo registrar la mensualidad.');
+    }
   }
 
-  saveData(): void {
-    this.submitted = true;
-    if (this.reservaForm.valid) {
-      this.isLoading = true;
-      
-      const updatedData:any = {
-        ...this.row,
-        mes: this.reservaForm.value.mes,
-        año: this.reservaForm.value.año,
-        reservaDto: {
-          ...this.row.reservaDto,
-          observaciones: this.reservaForm.value.observaciones
-        }
-      };
-      
-      this.updateReservaPeriodo(updatedData);
-    } else {
-      this.notify('Formulario Inválido! Por favor complete todos los campos requeridos.', 'error');
-    }
-  }
+  /* =========================
+     VALIDATE / SHOW ACTIONS
+  ========================= */
 
   validateReservation(): void {
     this.validationSubmitted = true;
-    this.updateObservationValidation(this.validationForm.value.validationStatus);
-    
-    if (this.validationForm.valid) {
-      this.isLoading = true;
-      
-      const validationData = this.validationForm.value;
-      const isApproved = validationData.validationStatus === EstadoValidacion.APROBADA;
-      const reservaUuid = this.row.reservaDto?.uuid;
 
-      if (!reservaUuid) {
-        this.isLoading = false;
-        this.notify('Error: No se pudo identificar la reserva', 'error');
-        return;
-      }
-
-      if (isApproved) {
-        this.approveReserva(reservaUuid, validationData.validationObservation);
-      } else {
-        this.rejectReserva(reservaUuid, validationData.validationObservation);
-      }
-    } else {
-      this.notify('Por favor complete todos los campos de validación', 'error');
-    }
-  }
-
-  annularData(formValues: any): void {
-    if (!formValues || !this.row.reservaDto) {
-      this.notify('No se pudo obtener los datos de la reserva', 'error');
+    if (!this.validationForm.valid) {
+      this.notify('Por favor complete todos los campos de validación.', 'error');
       return;
     }
-    
-    const codigoAlcaldia =this.systemConfigList[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI';
-    const codigoUsuario = this.systemConfigList[ClaveConfiguracion.CODIGO_USUARIO_RUAT]?.valorTexto || '';
-    const requestData = {
-      numeroTasa: this.row.reservaDto.numeroTasa,
-      motivo: formValues.motivo,
-      observacion: formValues.observation
-    };
 
     this.isLoading = true;
 
-    this.ruatService.cancelTasa(codigoAlcaldia, codigoUsuario, requestData).subscribe({
-      next: (resp: any) => {
-        this.isLoading = false;
+    const validationData = this.validationForm.value;
+    const isApproved = validationData.validationStatus === EstadoValidacion.APROBADA;
+    const reservaUuid = this.row.reservaDto?.uuid;
 
-        if (resp['status'] === 'OK') {
-          const text = resp.payload['mensajeConfirmacion'];
-          const updatedReserva: any = {
-            ...this.row.reservaDto,
-            estadoReserva: EstadoReserva.CANCELADA
-          };
-          
-          this.reservaService.update(updatedReserva).subscribe({
-            next: () => {
-              Swal.fire({
-                title: 'Anulado!',
-                text: text,
-                icon: 'success',
-                confirmButtonColor: '#299cdb',
-                timer: 5000,
-                timerProgressBar: true,
-              });
-              this.emitList.emit();
-              this.modalService.dismissAll('close click');
-            },
-            error: (error) => {
-              this.notify('Reserva anulada en RUAT pero error al actualizar localmente', 'warning');
-            }
-          });
-        } else {
-          this.notify(resp.payload || 'Error al anular en RUAT', 'error');
-        }
-      },
-      error: (error) => {
-        this.isLoading = false;
-        console.error('Error:', error);
-        this.notify('Error al realizar la anulación en RUAT', 'error');
-      },
-    });
+    if (!reservaUuid) {
+      this.isLoading = false;
+      this.notify('No se pudo identificar la reserva.', 'error');
+      return;
+    }
+
+    if (isApproved) {
+      this.approveReserva(reservaUuid);
+    } else {
+      this.rejectReserva(reservaUuid, validationData.validationObservation);
+    }
   }
 
-  // Modal Methods
-  openValidationModal(content: any): void {
-    this.initValidationForm();
-    const modalRef = this.modalService.open(content, { 
-      centered: true, 
-      size: 'md',
-      backdrop: 'static'
-    });
-    
-    modalRef.dismissed.subscribe((reason) => {
-      this.onCloseModal();
-    });
+  canValidateReservation(): boolean {
+    const estadoValidacion = this.row?.reservaDto?.estadoValidacion;
+    const estadoReserva = this.row?.reservaDto?.estadoReserva;
+
+    return (
+      estadoValidacion === EstadoValidacion.PENDIENTE &&
+      estadoReserva === EstadoReserva.SOLICITADA &&
+      this.canActivate?.includes('VALIDAR')
+    );
+  }
+
+  canCancelReservation(): boolean {
+    const estado = this.row?.reservaDto?.estadoReserva;
+
+    return (
+      (estado === EstadoReserva.SOLICITADA || estado === EstadoReserva.PENDIENTE) &&
+      this.canActivate?.includes('ANULAR')
+    );
   }
 
   openDeleteModal(content: any): void {
@@ -482,145 +678,66 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
     this.modalService.open(content, { centered: true, size: 'md' });
   }
 
-  onCancel(): void {
-    this.activeModal.dismiss('cancel');
-  }
-
-  onCloseModal(): void {
-    this.accion = '';    
-    if (this.reservaForm) {
-      this.reservaForm.enable();
-      this.reservaForm.reset();
-    }
-    if (this.validationForm) {
-      this.validationForm.enable();
-      this.validationForm.reset();
-    }
-    this.modalService.dismissAll();
-    this.activeModal.dismiss();
-  }
-
-  // Helper Methods
-  private approveReserva(reservaUuid: any, observaciones: string = ''): void {
-    const aprobadoPor = this.authenticationService.currentUser()?.nombreCompleto || 'Sistema';
-    
-    this.reservaService.aprobarReserva(reservaUuid, aprobadoPor).subscribe({
-      next: async (data: any) => {
-        try {
-          this.isLoading = false;
-          await this.registerReservationInRuat(data.payload);
-          this.openTicketModal(this.ticketModal);
-          this.notify('Mensualidad aprobada exitosamente y registrada en RUAT', 'success');
-          this.emitList.emit();
-        } catch (error) {
-          this.isLoading = false;
-          console.error('Error in approval process:', error);
-          this.notify('Reserva aprobada pero error en proceso adicional: ' + error, 'warning');
-        }
-      },
-      error: (error) => {
-        this.isLoading = false;
-        console.error('Error approving reservation:', error);
-        this.notify('Error al aprobar la reserva: ' + (error.error?.message || error.message), 'error');
-      }
-    });
-  }
-
-  private rejectReserva(reservaUuid: any, motivoRechazo: string = ''): void {
-    const aprobadoPor = this.authenticationService.currentUser()?.nombreCompleto || 'Sistema';
-    
-    this.reservaService.rechazarReserva(reservaUuid, motivoRechazo, aprobadoPor).subscribe({
-      next: async (data: any) => {
-        try {
-          this.isLoading = false;
-          this.openTicketModal(this.ticketModal);
-          this.notify('Mensualidad rechazada exitosamente', 'success');
-          this.emitList.emit();
-        } catch (error) {
-          this.isLoading = false;
-          console.error('Error in rejection process:', error);
-          this.notify('Reserva rechazada pero error en proceso adicional', 'warning');
-        }
-      },
-      error: (error) => {
-        this.isLoading = false;
-        console.error('Error rejecting reservation:', error);
-        this.notify('Error al rechazar la reserva: ' + (error.error?.message || error.message), 'error');
-      }
-    });
-  }
-
-  private loadReservasRecurrentesFromEscuela(escuela: Organizacion): void {
-    if (!escuela.reservasDtoList || escuela.reservasDtoList.length === 0) {
-      this.availableReservasRecurrentes = [];
+  annularData(formValues: any): void {
+    if (!formValues || !this.row?.reservaDto) {
+      this.notify('No se pudo obtener los datos de la mensualidad.', 'error');
       return;
     }
 
-    this.availableReservasRecurrentes = escuela.reservasDtoList.filter(reserva => 
-      reserva.tipoReserva === 'recurrente' &&
-      reserva.estadoValidacion === EstadoValidacion.APROBADA &&
-      reserva.reservaRecurrenteDto?.activo === true
-    );
+    const codigoAlcaldia =
+      this.systemConfigList[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI';
+    const codigoUsuario =
+      this.systemConfigList[ClaveConfiguracion.CODIGO_USUARIO_RUAT]?.valorTexto || '';
 
-    this.filterReservasBySelectedMonth();
-  }
+    const requestData = {
+      numeroTasa: this.row.reservaDto.numeroTasa,
+      motivo: formValues.motivo,
+      observacion: formValues.observation
+    };
 
-  private filterReservasBySelectedMonth(): void {
-    if (!this.selectedMonth || !this.selectedYear) return;
-    
-    this.availableReservasRecurrentes = this.availableReservasRecurrentes.filter(reserva => 
-      this.isReservaInSelectedMonth(reserva)
-    );
-  }
+    this.isLoading = true;
 
-  private isReservaInSelectedMonth(reserva: Reserva): boolean {
-    if (!this.selectedMonth || !this.selectedYear || !reserva.reservaRecurrenteDto) return false;
-    const recurrente = reserva.reservaRecurrenteDto;
-    const reservaStart = new Date(recurrente.fechaInicio);
-    const reservaEnd = new Date(recurrente.fechaFin);
-    const selectedDateStart = new Date(this.selectedYear, this.selectedMonth - 1, 1);
-    const selectedDateEnd = new Date(this.selectedYear, this.selectedMonth, 0);
-    return reservaStart <= selectedDateEnd && reservaEnd >= selectedDateStart;
-  }
+    this.ruatService.cancelTasa(codigoAlcaldia, codigoUsuario, requestData).subscribe({
+      next: (resp: any) => {
+        if (resp.status === 'OK') {
+          const updatedReserva = {
+            ...this.row.reservaDto,
+            estadoReserva: EstadoReserva.CANCELADA
+          } as Reserva;
 
-  private checkExistingMensualidad(): void {
-    if (!this.selectedEstudiante || !this.selectedMonth || !this.selectedYear) return;
-    const existingMensualidad = this.mensualidadesEstudiante.find(m => 
-      m.mes === this.selectedMonth && m.año === this.selectedYear
-    );
-    if (existingMensualidad) {
-      Swal.fire({
-        title: 'Mensualidad Existente',
-        text: `El estudiante ya tiene una mensualidad registrada para ${this.getMonthName(this.selectedMonth)} ${this.selectedYear}`,
-        icon: 'warning',
-        confirmButtonText: 'Entendido'
-      });
-    }
-  }
-
-  private loadMensualidadesEstudiante(): void {
-    if (!this.selectedEstudiante?.uuid) return;
-    this.reservaPeriodoService.getMensualidadesByEstudiante(this.selectedEstudiante.uuid).subscribe({
-      next: (response: any) => {
-        if (response.status === 'OK' && response.payload && response.payload.content) {
-          this.mensualidadesEstudiante = response.payload.content;
+          this.reservaService.update(updatedReserva).subscribe({
+            next: () => {
+              this.isLoading = false;
+              this.notify(
+                resp.payload?.mensajeConfirmacion || 'Mensualidad anulada correctamente.',
+                'success'
+              );
+              this.emitList.emit();
+              this.onCloseModal();
+            },
+            error: () => {
+              this.isLoading = false;
+              this.notify(
+                'Mensualidad anulada en RUAT, pero hubo un error al actualizar localmente.',
+                'warning'
+              );
+            }
+          });
         } else {
-          this.mensualidadesEstudiante = [];
+          this.isLoading = false;
+          this.notify(resp.payload || 'Error al anular en RUAT.', 'error');
         }
       },
-      error: (error) => {
-        console.error('Error loading monthly payments:', error);
-        this.mensualidadesEstudiante = [];
+      error: () => {
+        this.isLoading = false;
+        this.notify('Error al realizar la anulación en RUAT.', 'error');
       }
     });
   }
-  
-  get form() {
-    return this.reservaForm.controls;
-  }
-  get validationFormControls() {
-    return this.validationForm.controls;
-  }
+
+  /* =========================
+     FORMATTING
+  ========================= */
 
   getMonthName(month: number): string {
     return this.months.find(m => m.value === month)?.name || '';
@@ -633,13 +750,13 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
   getReservaDisplayInfo(reserva: Reserva): string {
     const recurrente = reserva.reservaRecurrenteDto;
     if (!recurrente) return 'Reserva sin información';
+
     const campo = reserva.campoDeportivoDto?.nombre || 'Campo no especificado';
     const dias = recurrente.diasSemana || 'Días no especificados';
-    const horario = recurrente.duracionSesionHoras ? `${recurrente.duracionSesionHoras}h` : 'Horario no especificado';
     const fechaInicio = new Date(recurrente.fechaInicio).toLocaleDateString();
     const fechaFin = new Date(recurrente.fechaFin).toLocaleDateString();
 
-    return `${campo} - ${dias} - ${horario} (${fechaInicio} a ${fechaFin})`;
+    return `${campo} - ${dias} (${fechaInicio} a ${fechaFin})`;
   }
 
   getStatusBadgeClass(estado: string | undefined): string {
@@ -651,30 +768,12 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
       case EstadoReserva.PAGADA:
         return 'bg-primary-subtle text-primary';
       case EstadoReserva.EN_CURSO:
-        return 'bg-success-subtle text-success';
       case EstadoReserva.COMPLETADA:
         return 'bg-success-subtle text-success';
       case EstadoReserva.CANCELADA:
         return 'bg-danger-subtle text-danger';
-      // case EstadoReserva.RECHAZADA:
-      //   return 'bg-danger-subtle text-danger';
-      case EstadoReserva.EXPIRADA:
-        return 'bg-dark-subtle text-dark';
       case EstadoReserva.NO_SHOW:
         return 'bg-dark-subtle text-dark';
-      default:
-        return 'bg-secondary-subtle text-secondary';
-    }
-  }
-
-  getValidationBadgeClass(estado: string): string {
-    switch (estado) {
-      case 'PENDIENTE':
-        return 'bg-warning-subtle text-warning';
-      case 'APROBADA':
-        return 'bg-success-subtle text-success';
-      case 'RECHAZADA':
-        return 'bg-danger-subtle text-danger';
       default:
         return 'bg-secondary-subtle text-secondary';
     }
@@ -692,8 +791,6 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
       case EstadoReserva.COMPLETADA:
         return 'alert-success';
       case EstadoReserva.CANCELADA:
-      // case EstadoReserva.RECHAZADA:
-      case EstadoReserva.EXPIRADA:
       case EstadoReserva.NO_SHOW:
         return 'alert-danger';
       default:
@@ -701,166 +798,404 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
     }
   }
 
-  getStatusDescription(estado: any): string {
-    const descriptions: { [key: string]: string } = {
+  getStatusDescription(estado: string | undefined): string {
+    const descriptions: Record<string, string> = {
       [EstadoReserva.SOLICITADA]: 'Esperando validación administrativa',
       [EstadoReserva.PENDIENTE]: 'Mensualidad aprobada, pendiente de pago',
-      [EstadoReserva.PAGADA]: 'Pago confirmado, mensualidad activa',
+      [EstadoReserva.PAGADA]: 'Pago confirmado',
       [EstadoReserva.EN_CURSO]: 'Mensualidad en curso',
-      [EstadoReserva.COMPLETADA]: 'Mensualidad finalizada exitosamente',
+      [EstadoReserva.COMPLETADA]: 'Mensualidad completada',
       [EstadoReserva.CANCELADA]: 'Mensualidad cancelada',
-      // [EstadoReserva.RECHAZADA]: 'Mensualidad rechazada por validación',
-      [EstadoReserva.EXPIRADA]: 'Tiempo de pago expirado',
-      [EstadoReserva.NO_SHOW]: 'Estudiante no se presentó'
+      [EstadoReserva.NO_SHOW]: 'Sin uso registrado'
     };
-    return descriptions[estado] || 'Estado desconocido';
+
+    return descriptions[estado || ''] || 'Estado desconocido';
+  }
+
+  getValidationBadgeClass(estado: string): string {
+    switch (estado) {
+      case 'PENDIENTE':
+        return 'bg-warning-subtle text-warning';
+      case 'APROBADA':
+        return 'bg-success-subtle text-success';
+      case 'RECHAZADA':
+        return 'bg-danger-subtle text-danger';
+      default:
+        return 'bg-secondary-subtle text-secondary';
+    }
   }
 
   getValidationDescription(estado: string): string {
     const descriptions: { [key: string]: string } = {
-      'PENDIENTE': 'Esperando validación administrativa',
-      'APROBADA': 'Mensualidad validada y aprobada',
-      'RECHAZADA': 'Mensualidad rechazada por validación'
+      PENDIENTE: 'Esperando validación administrativa',
+      APROBADA: 'Mensualidad validada y aprobada',
+      RECHAZADA: 'Mensualidad rechazada por validación'
     };
+
     return descriptions[estado] || 'Estado de validación desconocido';
   }
 
-  canValidateReservation(): boolean {
-    const estadoValidacion = this.row?.reservaDto?.estadoValidacion;
-    const estadoReserva = this.row?.reservaDto?.estadoReserva;
-    return (estadoValidacion === 'PENDIENTE' && 
-            estadoReserva === EstadoReserva.PENDIENTE && 
-            this.canActivate.includes('VALIDAR'));
-  }
+  /* =========================
+     SERVICES / REQUESTS
+  ========================= */
 
-  canEditReservation(): boolean {
-    return this.row?.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE && 
-           this.canActivate.includes('ACTUALIZAR');
-  }
+  private loadPeriodsByStudent(): void {
+    if (!this.selectedEstudiante?.uuid) return;
 
-  canCancelReservation(): boolean {
-    const estado = this.row?.reservaDto?.estadoReserva;
-    return (estado === EstadoReserva.SOLICITADA || estado === EstadoReserva.PENDIENTE) && 
-           this.canActivate.includes('ANULAR');
+    this.reservaPeriodoService.getByEstudiante(this.selectedEstudiante.uuid).subscribe({
+      next: (response: any) => {
+        if (response?.status === 'OK') {
+          this.studentPeriodsRegistrations = Array.isArray(response.payload)
+            ? response.payload
+            : (response.payload?.content || []);
+        } else {
+          this.studentPeriodsRegistrations = [];
+        }
+
+        this.resolveMensualidadExistente();
+      },
+      error: () => {
+        this.studentPeriodsRegistrations = [];
+        this.selectedMensualidadExistente = undefined;
+      }
+    });
   }
 
   private prepareReservaPeriodoData(): any {
-    const formValue = this.reservaForm.value;
-    
-    const reservaPayload = {
-        fechaCreacion: new Date().toISOString(),
-        fechaReserva: new Date().toISOString(),
-        estadoValidacion: EstadoValidacion.APROBADA,
-        estadoReserva: EstadoReserva.PENDIENTE,
-        tipoReserva: 'periodo',
-        montoTotal: this.getTotalAmount(),
-        clasificadorRuatId: this.clasificador.codigo,
-        observaciones: formValue.observaciones || `Mensualidad para ${this.selectedEstudiante?.nombreCompleto} - ${this.selectedEscuela?.nombre}`,
-        campoDeportivoDto: { 
-            uuid: this.selectedReservaRecurrente?.campoDeportivoDto?.uuid 
-        },
-        contribuyenteDto: { 
-            uuid: this.selectedEstudiante?.contribuyenteDto?.uuid 
-        },
-        estudianteEscuelaDto: {
-            uuid: this.selectedEstudiante?.uuid
-        },
-        organizacionDto: {
-            uuid: this.selectedEscuela?.uuid
-        },
-        tarifaDto: null,
-        
-        reservaPeriodoDto: {
-            mes: formValue.mes,
-            año: formValue.año,
-            matricula: this.selectedEstudiante?.matricula,
-            disciplina: this.selectedEscuela?.disciplina,
-            entrenador: this.selectedEscuela?.entrenador
-        }
-    };
+    const formValue = this.reservationForm.value;
 
-    return reservaPayload;
+    return {
+      fechaCreacion: new Date().toISOString(),
+      fechaReserva: new Date().toISOString(),
+      estadoValidacion: EstadoValidacion.APROBADA,
+      estadoReserva: EstadoReserva.PENDIENTE,
+      tipoReserva: 'periodo',
+      montoTotal: this.getTotalAmount(),
+      clasificadorRuatId: this.clasificador?.codigo,
+      observaciones:
+        formValue.observaciones ||
+        `Mensualidad para ${this.selectedEstudiante?.nombreCompleto} - ${this.selectedEscuela?.nombre}`,
+
+      esReservaGratuita: false,
+      motivoGratuidad: null,
+
+      campoDeportivoDto: {
+        uuid: this.selectedReservaRecurrente?.campoDeportivoDto?.uuid
+      },
+      contribuyenteDto: {
+        uuid: this.selectedEstudiante?.contribuyenteDto?.uuid
+      },
+      estudianteEscuelaDto: {
+        uuid: this.selectedEstudiante?.uuid
+      },
+      organizacionDto: {
+        uuid: this.selectedEscuela?.uuid
+      },
+
+      reservaPeriodoDto: {
+        mes: formValue.mes,
+        año: formValue.año,
+        matricula: this.selectedEstudiante?.matricula,
+        disciplina: this.selectedEscuela?.disciplina,
+        entrenador: this.selectedEscuela?.entrenador
+      }
+    };
   }
 
-  private registerReservaPeriodoInRuat(reservaData: any): void {
-    const contribuyente = this.selectedEstudiante?.contribuyenteDto;
-    
-    if (!contribuyente?.codigoContribuyente) {
-        this.handleError('Datos incompletos', 'Falta el código de contribuyente para registrar en RUAT');
-        return;
-    }
+  private createTasaInRuat(reservaData: any): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const contribuyente = this.selectedEstudiante?.contribuyenteDto;
 
-    const ruatData = {
-        codigoAlcaldia:this.systemConfigList[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI',
-        codigoUsuario:this.systemConfigList[ClaveConfiguracion.CODIGO_USUARIO_RUAT]?.valorTexto || '',
+      if (!contribuyente?.codigoContribuyente) {
+        reject(new Error('Falta el código de contribuyente para registrar en RUAT.'));
+        return;
+      }
+
+      if (!reservaData?.clasificadorRuatId) {
+        reject(new Error('No se encontró el clasificador RUAT para la mensualidad.'));
+        return;
+      }
+
+      const codigoAlcaldia =
+        this.systemConfigList[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || '';
+      const codigoUsuario =
+        this.systemConfigList[ClaveConfiguracion.CODIGO_USUARIO_RUAT]?.valorTexto || '';
+      const servicioMunicipal =
+        this.systemConfigList[ClaveConfiguracion.SERVICIO_MUNICIPAL_RUAT]?.valorTexto || '';
+
+      if (!codigoAlcaldia) {
+        reject(new Error('Falta la configuración CODIGO_ALCALDIA_RUAT.'));
+        return;
+      }
+
+      if (!codigoUsuario) {
+        reject(new Error('Falta la configuración CODIGO_USUARIO_RUAT.'));
+        return;
+      }
+
+      if (!servicioMunicipal) {
+        reject(new Error('Falta la configuración SERVICIO_MUNICIPAL_RUAT.'));
+        return;
+      }
+
+      const ruatData = {
+        codigoAlcaldia,
+        codigoUsuario,
         codigoContribuyente: contribuyente.codigoContribuyente,
-        servicioMunicipal: this.systemConfigList[ClaveConfiguracion.SERVICIO_MUNICIPAL_RUAT]?.valorTexto || '2174',
-        datosConcepto: [{
+        servicioMunicipal,
+        datosConcepto: [
+          {
             numero: '1',
             codigoClasificador: reservaData.clasificadorRuatId,
             tipoArancel: 'DI',
-            monto: reservaData.montoTotal.toFixed(2)
-        }],
+            monto: Number(reservaData.montoTotal || 0)
+          }
+        ],
         observacion: reservaData.observaciones || 'Mensualidad Escuela Municipal'
-    };
+      };
 
-    this.ruatService.createTasa(
-       this.systemConfigList[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI',
-      this.systemConfigList[ClaveConfiguracion.CODIGO_USUARIO_RUAT]?.valorTexto || '',
-        this.systemConfigList[ClaveConfiguracion.SERVICIO_MUNICIPAL_RUAT]?.valorTexto || '2174',
+      this.ruatService.createTasa(
+        codigoAlcaldia,
+        codigoUsuario,
+        servicioMunicipal,
         ruatData,
         contribuyente.codigoContribuyente
-    ).subscribe({
+      ).subscribe({
         next: (response: any) => {
-            if (response.status === 'OK' && response.payload.continuarFlujo) {
-                reservaData.numeroTasa = response.payload.numeroTasa;
-                this.saveReservaPeriodo(reservaData);
-            } else {
-                this.handleError('Error en RUAT', response.payload?.mensaje || 'No se pudo registrar la tasa');
-            }
+          if (response?.status !== 'OK') {
+            reject(
+              new Error(
+                response?.payload?.mensaje ||
+                response?.mensaje ||
+                response?.payload ||
+                'No se pudo registrar la tasa en RUAT.'
+              )
+            );
+            return;
+          }
+
+          if (!response?.payload?.continuarFlujo || !response?.payload?.numeroTasa) {
+            reject(
+              new Error(
+                response?.payload?.mensaje ||
+                'RUAT no devolvió un número de tasa válido.'
+              )
+            );
+            return;
+          }
+
+          resolve(response.payload.numeroTasa);
         },
         error: (error) => {
-            this.isLoading = false;
-            this.handleError('Error de conexión con RUAT', error.error?.mensaje || error.message);
+          reject(
+            new Error(
+              error?.error?.payload ||
+              error?.error?.mensaje ||
+              error?.message ||
+              'Error de conexión con RUAT.'
+            )
+          );
         }
+      });
     });
   }
 
-  private saveReservaPeriodo(reservaData: any): void {
-    this.reservaService.create(reservaData).subscribe({
+  private saveReservaPeriodo(reservaData: any): Promise<Reserva> {
+    return new Promise((resolve, reject) => {
+      this.reservaService.create(reservaData).subscribe({
         next: (response: any) => {
-            this.isLoading = false;
-            if (response.status === 'OK') {
-                Swal.fire({
-                    title: '¡Éxito!',
-                    text: 'Mensualidad registrada correctamente',
-                    icon: 'success',
-                    confirmButtonText: 'Aceptar'
-                });
-                this.reservaGenerada.emit(response.payload);
-                this.activeModal.close('success');
-            } else {
-                throw new Error(response.message || 'Error al crear reserva');
-            }
+          if (response?.status === 'OK') {
+            resolve(response.payload);
+          } else {
+            reject(new Error(response?.message || response?.payload || 'No se pudo registrar la mensualidad.'));
+          }
         },
         error: (error) => {
-            this.isLoading = false;
-            let errorMessage = 'No se pudo registrar la mensualidad. Por favor, intente nuevamente.';
-            
-            if (error.error && error.error.message) {
-                errorMessage = error.error.message;
-            } else if (error.message) {
-                errorMessage = error.message;
-            }
-            
-            Swal.fire({
-                title: 'Error',
-                text: errorMessage,
-                icon: 'error',
-                confirmButtonText: 'Entendido'
-            });
+          reject(
+            new Error(
+              error?.error?.message ||
+              error?.error?.payload ||
+              error?.message ||
+              'No se pudo registrar la mensualidad.'
+            )
+          );
         }
+      });
     });
+  }
+
+  private approveReserva(reservaUuid: string): void {
+    const aprobadoPor = this.authService.currentUser()?.nombreCompleto || 'Sistema';
+
+    this.reservaService.aprobarReserva(reservaUuid, aprobadoPor).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.notify('Mensualidad aprobada exitosamente.', 'success');
+        this.emitList.emit();
+        this.openTicketModal(this.ticketModal);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this.notify(
+          'Error al aprobar la mensualidad: ' + (error.error?.message || error.message),
+          'error'
+        );
+      }
+    });
+  }
+
+  private rejectReserva(reservaUuid: string, motivoRechazo: string): void {
+    const aprobadoPor = this.authService.currentUser()?.nombreCompleto || 'Sistema';
+
+    this.reservaService.rechazarReserva(reservaUuid, motivoRechazo, aprobadoPor).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.notify('Mensualidad rechazada exitosamente.', 'success');
+        this.emitList.emit();
+        this.onCloseModal();
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this.notify(
+          'Error al rechazar la mensualidad: ' + (error.error?.message || error.message),
+          'error'
+        );
+      }
+    });
+  }
+
+  private isDateWithinReserva(date: Date, reserva: Reserva): boolean {
+    const recurrente = reserva.reservaRecurrenteDto;
+    if (!recurrente?.fechaInicio || !recurrente?.fechaFin) return false;
+
+    const inicio = new Date(recurrente.fechaInicio);
+    const fin = new Date(recurrente.fechaFin);
+
+    inicio.setHours(0, 0, 0, 0);
+    fin.setHours(23, 59, 59, 999);
+
+    return date >= inicio && date <= fin;
+  }
+
+  private isReservaFullyCoveredForStudent(reserva: Reserva): boolean {
+    if (!this.selectedEscuela || !this.selectedEstudiante || !this.studentPeriodsRegistrations.length) {
+      return false;
+    }
+
+    const recurrente = reserva.reservaRecurrenteDto;
+    if (!recurrente?.fechaInicio || !recurrente?.fechaFin) {
+      return false;
+    }
+
+    const paidSet = new Set(
+      this.studentPeriodsRegistrations
+        .filter(
+          m =>
+            m.reservaDto?.estudianteEscuelaDto?.uuid === this.selectedEstudiante?.uuid &&
+            m.reservaDto?.organizacionDto?.uuid === this.selectedEscuela?.uuid &&
+            (m.reservaDto?.estadoReserva === EstadoReserva.PAGADA ||
+              m.reservaDto?.estadoReserva === EstadoReserva.COMPLETADA)
+        )
+        .map(m => `${m.año}-${String(m.mes).padStart(2, '0')}`)
+    );
+
+    let current = new Date(recurrente.fechaInicio);
+    current = new Date(current.getFullYear(), current.getMonth(), 1);
+
+    const endDate = new Date(recurrente.fechaFin);
+    const end = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+
+    while (current <= end) {
+      const key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+      if (!paidSet.has(key)) {
+        return false;
+      }
+      current.setMonth(current.getMonth() + 1);
+    }
+
+    return true;
+  }
+
+  private getConfigsSystem(): void {
+    this.systemConfigsService.getAll().subscribe({
+      next: (data: any) => {
+        if (data?.status === 'OK' && Array.isArray(data.payload)) {
+          this.systemConfigList = data.payload.reduce(
+            (acc: { [key: string]: ConfiguracionSistema }, item: ConfiguracionSistema) => {
+              acc[item.clave] = item;
+              return acc;
+            },
+            {}
+          );
+        }
+      }
+    });
+  }
+  private getClasificador(): void {
+    this.clasificadorService.getAll().subscribe({
+      next: (response: any) => {
+        if (response.status === 'OK') {
+          const list = response.payload;
+          this.clasificador = list.find(
+            (item: ClasificadorRuat) =>
+              item.nombre === 'RESERVA CAMPOS DEPORTIVOS POR PERSONA'
+          );
+        }
+      }
+    });
+  }
+
+  private getOrganizations(): void {
+    this.organizationService.getAll().subscribe({
+      next: (response: any) => {
+        this.organizationsList =
+          response.status === 'OK' ? response.payload?.content || [] : [];
+      },
+      error: () => {
+        this.organizationsList = [];
+      }
+    });
+  }
+
+  private getEstudiantes(): void {
+    this.estudianteService.getAll().subscribe({
+      next: (response: any) => {
+        this.estudiantes = response.status === 'OK' ? response.payload || [] : [];
+      },
+      error: () => {
+        this.estudiantes = [];
+      }
+    });
+  }
+
+  canEditReservation(): boolean {
+    return (
+      this.row?.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE &&
+      this.canActivate?.includes('ACTUALIZAR')
+    );
+  }
+
+  saveData(): void {
+    if (this.reservationForm.valid) {
+      this.isLoading = true;
+
+      const updatedData: any = {
+        ...this.row,
+        mes: this.reservationForm.value.mes,
+        año: this.reservationForm.value.año,
+        reservaDto: {
+          ...this.row.reservaDto,
+          observaciones: this.reservationForm.value.observaciones
+        }
+      };
+
+      this.updateReservaPeriodo(updatedData);
+    } else {
+      this.notify(
+        'Formulario Inválido! Por favor complete todos los campos requeridos.',
+        'error'
+      );
+    }
   }
 
   private updateReservaPeriodo(data: ReservaPeriodo): void {
@@ -875,77 +1210,29 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
           throw new Error(response.message || 'Error al actualizar mensualidad');
         }
       },
-      error: (error) => {
+      error: () => {
         this.isLoading = false;
-        console.error('Error updating periodo reservation:', error);
         this.notify('Error al actualizar la mensualidad', 'error');
       }
     });
   }
 
-  private registerReservationInRuat(reservaData: Reserva): void {
-    const codigoAlcaldia =this.systemConfigList[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI';
-    const codigoUsuario = this.systemConfigList[ClaveConfiguracion.CODIGO_USUARIO_RUAT]?.valorTexto || '';
-    const servicioMunicipal = this.systemConfigList[ClaveConfiguracion.SERVICIO_MUNICIPAL_RUAT]?.valorTexto || '2174';
-    
-    const ruatData = {
-      codigoAlcaldia: codigoAlcaldia,
-      codigoUsuario: codigoUsuario,
-      codigoContribuyente: reservaData.contribuyenteDto.codigoContribuyente,
-      servicioMunicipal: servicioMunicipal,
-      datosConcepto: [{
-        numero: '1',
-        codigoClasificador: this.clasificador.codigo || reservaData.clasificadorRuatId,
-        tipoArancel: "DI",
-        monto: reservaData.montoTotal
-      }],
-      observacion: 'Mensualidad Escuela Municipal'
-    };
-    
-    const code = reservaData.contribuyenteDto.codigoContribuyente || '';
-    
-    this.ruatService.createTasa(codigoAlcaldia, codigoUsuario, servicioMunicipal, ruatData, code)
-    .subscribe({
-      next: (response: any) => {
-        if (response.status === 'OK' && response.payload.continuarFlujo) {
-          reservaData.numeroTasa = response.payload.numeroTasa;
-          this.updateReserva(reservaData);
-        } else {
-          this.handleError('Error en RUAT', response.payload?.mensaje || 'No se pudo registrar la tasa');
-        }
-      },
-      error: (error) => {
-        this.handleError('Error de conexión con RUAT', error.error?.mensaje || error.message);
-      }
-    });
-  }
+  /* =========================
+     MODAL / NOTIFICATIONS
+  ========================= */
 
-  private updateReserva(data: Reserva): Promise<Reserva> {
-    return new Promise((resolve, reject) => {
-      this.reservaService.update(data).subscribe({
-        next: (resp: any) => {
-          if (resp['status'] === 'OK') {
-            resolve(resp.payload);
-          } else {
-            reject(resp.payload);
-          }
-        },
-        error: (error) => {
-          console.error("Error updating reserva:", error);
-          reject(error);
-        }
-      });
-    });
-  }
-
-  private handleError(title: string, message: string): void {
-      this.isLoading = false;
-      Swal.fire({
-          title: title,
-          text: message,
-          icon: 'error',
-          confirmButtonText: 'Entendido'
-      });
+  public onCloseModal(): void {
+    this.activeTab = 1;
+    this.createTab = 1;
+    if (this.reservationForm) {
+      this.reservationForm.enable();
+      this.reservationForm.reset();
+    }
+    // if (this.validationForm) {
+    //   this.validationForm.enable();
+    //   this.validationForm.reset();
+    // }
+    this.modalService.dismissAll();
   }
 
   private notify(message: string, type: any): void {
@@ -958,70 +1245,13 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
     });
   }
 
-  /* API REQUESTS */
-  private getClasificador(): void {
-    this.ClasificadorService.getAll().subscribe({
-      next: (response: any) => {
-        if (response.status === 'OK') {
-          const list = response.payload
-          this.clasificador = list.find((item:ClasificadorRuat)=>
-            item.nombre==='RESERVA CAMPOS DEPORTIVOS POR PERSONA'
-          )
-        }
-      },
-      error: (error) => {
-        console.error('Error loading organizations:', error);
-        this.organizationsList = [];
-        Swal.fire({
-          title: 'Error',
-          text: 'No se pudieron cargar las organizaciones. Por favor, intente nuevamente.',
-          icon: 'error',
-          confirmButtonText: 'Entendido'
-        });
-      }
-    });
-  }
-  private getOrganizations(): void {
-    this.organizationService.getAll().subscribe({
-      next: (response: any) => {
-        if (response.status === 'OK') {
-          this.organizationsList = response.payload.content || [];
-        } else {
-          this.organizationsList = [];
-        }
-      },
-      error: (error) => {
-        console.error('Error loading organizations:', error);
-        this.organizationsList = [];
-        Swal.fire({
-          title: 'Error',
-          text: 'No se pudieron cargar las organizaciones. Por favor, intente nuevamente.',
-          icon: 'error',
-          confirmButtonText: 'Entendido'
-        });
-      }
-    });
-  }
-
-  private getEstudiantes(): void {
-    this.estudianteService.getAll().subscribe({
-      next: (response: any) => {
-        if (response.status === 'OK') {
-          this.estudiantesList = response.payload;
-        } else {
-          this.estudiantesList = [];
-        }
-      },
-      error: (error) => {
-        console.error('Error loading students:', error);
-        this.estudiantesList = [];
-        Swal.fire({
-          title: 'Error',
-          text: 'No se pudieron cargar los estudiantes. Por favor, intente nuevamente.',
-          icon: 'error',
-          confirmButtonText: 'Entendido'
-        });
-      }
+  private handleError(title: string, message: string): void {
+    this.isLoading = false;
+    Swal.fire({
+      title,
+      text: message,
+      icon: 'error',
+      confirmButtonText: 'Entendido'
     });
   }
 }

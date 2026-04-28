@@ -8,20 +8,17 @@ import { trigger, transition, animate } from '@angular/animations';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { BookingType } from 'src/app/core/constants/Features';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
-
 interface CampoWithTariff {
   campo: CampoDeportivo;
   tarifasActivas: Tarifa[];
   isExpanded?: boolean;
 }
-
 interface TarifaPermission {
   canBook: boolean;
   canRequest: boolean;
   message: string;
   actionType: 'book' | 'request' | 'none';
 }
-
 @Component({
   selector: 'app-campo-selection',
   standalone: true,

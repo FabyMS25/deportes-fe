@@ -5,7 +5,7 @@ export interface ReservaRecurrente {
   estado?: boolean;
   fechaCreacion?: Date;
 
-  tipoRecurrencia:string; //menusal / semanal .. 
+  tipoRecurrencia:string;
   fechaInicio: Date;
   fechaFin: Date;
   diasSemana:string;

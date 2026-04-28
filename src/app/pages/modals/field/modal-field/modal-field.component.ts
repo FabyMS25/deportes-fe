@@ -197,12 +197,10 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
         !schedule2.horaApertura || !schedule2.horaCierre) {
       return false;
     }
-    
     const start1 = new Date(`1970-01-01T${schedule1.horaApertura}:00`);
     const end1 = new Date(`1970-01-01T${schedule1.horaCierre}:00`);
     const start2 = new Date(`1970-01-01T${schedule2.horaApertura}:00`);
     const end2 = new Date(`1970-01-01T${schedule2.horaCierre}:00`);
-    
     return start1 < end2 && start2 < end1;
   }
   createHorarioFijoFormGroup(horario: any = {}): FormGroup {

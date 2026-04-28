@@ -113,9 +113,6 @@ export class ReservationConflictService {
     );
   }
 
-  /**
-   * Check if a recurrent reservation conflicts with the given time range
-   */
   private checkRecurrentConflict(
     timeRange: TimeRange,
     recurrent: ReservaRecurrente
@@ -131,21 +128,57 @@ export class ReservationConflictService {
       return false;
     }
     if (recurrent.tableroDto?.horario) {
-      const dayIndex = targetDate.getDay();
-      const daySchedule = recurrent.tableroDto.horario[dayIndex];
-      if (daySchedule && Array.isArray(daySchedule)) {
-        return daySchedule.some(timeSlot => {
-          if (typeof timeSlot === 'string' && timeSlot.includes('-')) {
-            const [start, end] = timeSlot.split('-').map(t => t.trim());
-            return this.timesOverlap(
-              timeRange.startTime,
-              timeRange.endTime,
-              start,
-              end
-            );
+      const horario = recurrent.tableroDto.horario;
+      const is3DFormat = Array.isArray(horario) && 
+                        horario.length > 0 && 
+                        Array.isArray(horario[0]) && 
+                        horario[0].length > 0 && 
+                        Array.isArray(horario[0][0]);
+      if (is3DFormat) {
+        const targetMonth = targetDate.getMonth();
+        const targetDay = targetDate.getDate() - 1;
+        const targetYear = targetDate.getFullYear();
+        const startYear = startDate.getFullYear();
+        const startMonth = startDate.getMonth();
+        const monthIndex = (targetYear - startYear) * 12 + (targetMonth - startMonth);
+        if (monthIndex >= 0 && monthIndex < horario.length) {
+          const monthMatrix = horario[monthIndex] as any[];
+          if (monthMatrix && targetDay >= 0 && targetDay < monthMatrix.length) {
+            const daySlots = monthMatrix[targetDay];
+            if (Array.isArray(daySlots)) {
+              return daySlots.some((timeSlot: string) => {
+                if (typeof timeSlot === 'string' && timeSlot.includes('-')) {
+                  const [start, end] = timeSlot.split('-').map((t: string) => t.trim());
+                  return this.timesOverlap(
+                    timeRange.startTime,
+                    timeRange.endTime,
+                    start,
+                    end
+                  );
+                }
+                return false;
+              });
+            }
           }
-          return false;
-        });
+        }
+        return false;
+      } else {
+        const dayIndex = this.getLegacyHorarioDayIndex(dayName);
+        const daySchedule = horario[dayIndex] as any[];
+        if (daySchedule && Array.isArray(daySchedule)) {
+          return daySchedule.some((timeSlot: string) => {
+            if (typeof timeSlot === 'string' && timeSlot.includes('-')) {
+              const [start, end] = timeSlot.split('-').map((t: string) => t.trim());
+              return this.timesOverlap(
+                timeRange.startTime,
+                timeRange.endTime,
+                start,
+                end
+              );
+            }
+            return false;
+          });
+        }
       }
     }
     return false;
@@ -361,6 +394,20 @@ export class ReservationConflictService {
   private getDayName(date: Date): string {
     const days = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     return days[date.getDay()];
+  }
+
+  private getLegacyHorarioDayIndex(dayName: string): number {
+    const indexes: Record<string, number> = {
+      lunes: 0,
+      martes: 1,
+      miercoles: 2,
+      jueves: 3,
+      viernes: 4,
+      sabado: 5,
+      domingo: 6
+    };
+
+    return indexes[dayName] ?? -1;
   }
 
   /**

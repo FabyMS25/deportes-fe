@@ -83,7 +83,7 @@
             <div *ngIf="!isFieldInvalid('numeroReserva')" class="form-text">
               <small>
                 <i class="ri-information-line me-1"></i>
-                {{ canEditReservationNumber ? 'Editable - Formato: 0010/25' : 'Auto-generado por el sistema' }}
+                Auto-generado por el sistema
               </small>
             </div>            
             <div *ngIf="isFieldInvalid('numeroReserva')" class="invalid-feedback d-block">
@@ -99,18 +99,11 @@
         </div>
         <hr class="my-2">
         <div class="mb-2">
-          <div class="row g-3 mb-2">
-            <h6 class="col fw-bold">
+          <div class="row g-2 mb-1">
+            <h6 class="fw-bold">
               <i class="ri-calendar-2-line text-primary me-2"></i>
               {{ bookingType === 'puntual' ? 'Fecha y Horario' : 'Programación Recurrente' }}
             </h6>            
-            <div class="col" *ngIf="bookingType === 'puntual' && duration > 0">
-              <div class="alert alert-info alert-sm py-2 mb-0">
-                <i class="ri-timer-line me-2"></i>
-                <strong>Duración:</strong> 
-                <span class="fw-bold ms-1">{{ formatDuration(duration) }}</span>
-              </div>
-            </div>
           </div>
           <div *ngIf="bookingType === 'puntual'">
             <div class="row g-2">
@@ -119,23 +112,23 @@
                   <i class="ri-calendar-event-line me-1"></i>
                   Fecha <span class="text-danger">*</span>
                 </label>
-                <input 
+                <ng-container *ngIf="!shouldDisableScheduleFields; else fechaUsoReadOnly">
+                <input
                   type="date" 
                   class="form-control form-control-sm" 
                   formControlName="fechaUso"
                   [min]="minDate"
                   [max]="maxDate"
                   [class.is-invalid]="isFieldInvalid('fechaUso')"
-                  [disabled]="shouldDisableScheduleFields"
                   [class.bg-light]="shouldDisableScheduleFields">
+                </ng-container>
+                <ng-template #fechaUsoReadOnly>
+                  <div class="form-control form-control-sm bg-light text-muted">
+                    {{ getScheduleDisplayValue('fechaUso') }}
+                  </div>
+                </ng-template>
                 <div *ngIf="getFieldError('fechaUso')" class="invalid-feedback">
                   {{ getFieldError('fechaUso') }}
-                </div>
-                <div *ngIf="shouldDisableScheduleFields" class="form-text">
-                  <small class="text-muted">
-                    <i class="ri-information-line me-1"></i>
-                    Fecha previamente seleccionada
-                  </small>
                 </div>
               </div>
               <div class="col-6 col-md-3">
@@ -143,21 +136,21 @@
                   <i class="ri-time-line me-1"></i>
                   Hora Inicio <span class="text-danger">*</span>
                 </label>
-                <input 
+                <ng-container *ngIf="!shouldDisableScheduleFields; else horaInicioReadOnly">
+                <input
                   type="time" 
                   class="form-control form-control-sm" 
                   formControlName="horaInicio"
                   [class.is-invalid]="isFieldInvalid('horaInicio')"
-                  [disabled]="shouldDisableScheduleFields"
                   [class.bg-light]="shouldDisableScheduleFields">
+                </ng-container>
+                <ng-template #horaInicioReadOnly>
+                  <div class="form-control form-control-sm bg-light text-muted">
+                    {{ getScheduleDisplayValue('horaInicio') }}
+                  </div>
+                </ng-template>
                 <div *ngIf="getFieldError('horaInicio')" class="invalid-feedback">
                   {{ getFieldError('horaInicio') }}
-                </div>
-                <div *ngIf="shouldDisableScheduleFields" class="form-text">
-                  <small class="text-muted">
-                    <i class="ri-information-line me-1"></i>
-                    Hora previamente seleccionada
-                  </small>
                 </div>
               </div>
               <div class="col-6 col-md-3">
@@ -165,28 +158,31 @@
                   <i class="ri-time-line me-1"></i>
                   Hora Fin <span class="text-danger">*</span>
                 </label>
-                <input 
+                <ng-container *ngIf="!shouldDisableScheduleFields; else horaFinReadOnly">
+                <input
                   type="time" 
                   class="form-control form-control-sm" 
                   formControlName="horaFin"
                   [class.is-invalid]="isFieldInvalid('horaFin')"
-                  [disabled]="shouldDisableScheduleFields"
                   [class.bg-light]="shouldDisableScheduleFields">
+                </ng-container>
+                <ng-template #horaFinReadOnly>
+                  <div class="form-control form-control-sm bg-light text-muted">
+                    {{ getScheduleDisplayValue('horaFin') }}
+                  </div>
+                </ng-template>
                 <div *ngIf="getFieldError('horaFin')" class="invalid-feedback">
                   {{ getFieldError('horaFin') }}
                 </div>
-                <div *ngIf="shouldDisableScheduleFields" class="form-text">
-                  <small class="text-muted">
-                    <i class="ri-information-line me-1"></i>
-                    Hora previamente seleccionada
-                  </small>
-                </div>
               </div>
-              <div class="col-6 col-md-3">
+              <div class="col-6 col-md-3" *ngIf="shouldShowCantidadPersonasField">
                 <label class="form-label mb-0 fw-semibold">
                   <i class="ri-group-line me-1"></i>
-                  Personas <span class="text-danger" *ngIf="selectedTariff.tipoCobro === 'por_persona'">*</span>
+                  Personas
+                  <span class="text-danger" *ngIf="requiresCantidadPersonas">*</span>
+                  <small class="text-muted fw-normal" *ngIf="!requiresCantidadPersonas">(opcional)</small>
                 </label>
+                <ng-container *ngIf="!isCantidadPersonasLocked; else cantidadPersonasReadOnly">
                 <input 
                   type="number" 
                   class="form-control form-control-sm" 
@@ -195,16 +191,15 @@
                   min="1" 
                   [max]="dataField.capacidadPersonas || 100"
                   placeholder="Ej: 10"
-                  [disabled]="shouldDisableScheduleFields && selectedTariff.tipoCobro === 'por_persona'"
-                  [class.bg-light]="shouldDisableScheduleFields && selectedTariff.tipoCobro === 'por_persona'">
+                  [class.bg-light]="isCantidadPersonasLocked">
+                </ng-container>
+                <ng-template #cantidadPersonasReadOnly>
+                  <div class="form-control form-control-sm bg-light text-muted">
+                    {{ getScheduleDisplayValue('cantidadPersonas') }}
+                  </div>
+                </ng-template>
                 <div *ngIf="getFieldError('cantidadPersonas')" class="invalid-feedback">
                   {{ getFieldError('cantidadPersonas') }}
-                </div>
-                <div *ngIf="shouldDisableScheduleFields && selectedTariff.tipoCobro === 'por_persona'" class="form-text">
-                  <small class="text-muted">
-                    <i class="ri-information-line me-1"></i>
-                    Cantidad previamente definida
-                  </small>
                 </div>
               </div>
             </div>
@@ -216,13 +211,9 @@
                 <i class="ri-calendar-event-line me-1"></i>
                 Fecha Inicio <span class="text-danger">*</span>
               </label>
-              <input 
-                type="date" 
-                class="form-control form-control-sm" 
-                formControlName="fechaInicio"
-                [class.is-invalid]="isFieldInvalid('fechaInicio')"
-                [disabled]="shouldDisableScheduleFields"
-                [class.bg-light]="shouldDisableScheduleFields">
+              <div class="form-control form-control-sm bg-light text-muted">
+                {{ getScheduleDisplayValue('fechaInicio') }}
+              </div>
               <div *ngIf="getFieldError('fechaInicio')" class="invalid-feedback">
                 {{ getFieldError('fechaInicio') }}
               </div>
@@ -232,13 +223,9 @@
                 <i class="ri-calendar-event-line me-1"></i>
                 Fecha Fin <span class="text-danger">*</span>
               </label>
-              <input 
-                type="date" 
-                class="form-control form-control-sm" 
-                formControlName="fechaFin"
-                [class.is-invalid]="isFieldInvalid('fechaFin')"
-                [disabled]="shouldDisableScheduleFields"
-                [class.bg-light]="shouldDisableScheduleFields">
+              <div class="form-control form-control-sm bg-light text-muted">
+                {{ getScheduleDisplayValue('fechaFin') }}
+              </div>
               <div *ngIf="getFieldError('fechaFin')" class="invalid-feedback">
                 {{ getFieldError('fechaFin') }}
               </div>
@@ -266,11 +253,14 @@
               </div>
             </div> -->
 
-            <div class="col-md-3">
+            <div class="col-md-3" *ngIf="shouldShowCantidadPersonasField">
               <label class="form-label mb-0 fw-semibold">
                 <i class="ri-group-line me-1"></i>
-                Personas <span class="text-danger" *ngIf="selectedTariff.tipoCobro === 'por_persona'">*</span>
+                Personas
+                <span class="text-danger" *ngIf="requiresCantidadPersonas">*</span>
+                <small class="text-muted fw-normal" *ngIf="!requiresCantidadPersonas">(opcional)</small>
               </label>
+              <ng-container *ngIf="!isCantidadPersonasLocked; else recurrentCantidadPersonasReadOnly">
               <input 
                 type="number" 
                 class="form-control form-control-sm" 
@@ -279,33 +269,15 @@
                 min="1" 
                 [max]="dataField.capacidadPersonas || 100"
                 placeholder="Ej: 10"
-                [disabled]="shouldDisableScheduleFields && selectedTariff.tipoCobro === 'por_persona'"
-                [class.bg-light]="shouldDisableScheduleFields && selectedTariff.tipoCobro === 'por_persona'">
+                [class.bg-light]="isCantidadPersonasLocked">
+              </ng-container>
+              <ng-template #recurrentCantidadPersonasReadOnly>
+                <div class="form-control form-control-sm bg-light text-muted">
+                  {{ getScheduleDisplayValue('cantidadPersonas') }}
+                </div>
+              </ng-template>
               <div *ngIf="getFieldError('cantidadPersonas')" class="invalid-feedback">
                 {{ getFieldError('cantidadPersonas') }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Resumen de Sesiones -->
-          <div *ngIf="reservationForm.get('fechaInicio')?.value && reservationForm.get('fechaFin')?.value && reservationForm.get('tipoRecurrencia')?.value" 
-              class="alert alert-info mt-3 py-2">
-            <div class="row align-items-center">
-              <div class="col">
-                <div class="d-flex align-items-center">
-                  <i class="ri-calendar-check-line me-2"></i>
-                  <div>
-                    <strong class="d-block">Resumen de Programación</strong>
-                    <small class="text-muted">
-                      {{ getRecurrenceSummary() }}
-                    </small>
-                  </div>
-                </div>
-              </div>
-              <div class="col-auto">
-                <span class="badge bg-primary fs-6">
-                  {{ calculateTotalSessions() }} sesiones
-                </span>
               </div>
             </div>
           </div>
@@ -324,11 +296,14 @@
                   <td width="50%">
                     <strong>Tarifa Base</strong>
                     <small class="d-block text-muted">{{ getTariffDescription() }} - {{ getTarifaCategories() }}</small>
+                    <small class="d-block text-primary">{{ getBaseRateDisplay() }}</small>
                   </td>
                   <td width="25%" class="text-center">
+                    <small class="d-block text-muted">{{ getBaseQuantityLabel() }}</small>
                     <span class="fw-semibold">{{ getBaseQuantity() }}</span>
                   </td>
                   <td width="25%" class="text-end">
+                    <small class="d-block text-muted">Subtotal base</small>
                     <span class="fw-semibold">{{ getBasePrice() | currency:'BOB':'symbol-narrow':'1.2-2' }}</span>
                   </td>
                 </tr>
@@ -661,7 +636,7 @@
             [disabled]="isSubmitting "><!-- || reservationForm.invalid -->
             <span *ngIf="!isSubmitting">
               <i class="ri-check-double-line me-2"></i>
-              Confirmar Reserva
+              {{ getSubmitActionLabel() }}
             </span>
             <span *ngIf="isSubmitting">
               <span class="spinner-border spinner-border-sm me-2"></span>

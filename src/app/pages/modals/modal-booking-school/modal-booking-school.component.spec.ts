@@ -4,7 +4,7 @@ import { BookingPeriodoModalComponent } from './modal-booking-school.component';
 
 describe('BookingPeriodoModalComponent', () => {
   let component: BookingPeriodoModalComponent;
-  let fixture: ComponentFixture<BookingPeriodoModalComponent>;
+  let fixture: ComponentFixture<BookingPeriodoModalComponendt>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({

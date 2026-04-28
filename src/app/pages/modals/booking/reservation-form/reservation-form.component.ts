@@ -23,11 +23,15 @@ import { BookingType, TipoOrganizacion } from 'src/app/core/constants/Features';
 import { EstadoReserva, EstadoValidacion } from 'src/app/core/constants/Estados';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
+import { AuthenticationService } from 'src/app/core/services/auth.service';
 
 interface PuntualSchedule {
   date: Date;
   start: string;
   end: string;
+  cantidadPersonas?: number;
+  calculatedPrice?: number;
+  priceDetails?: string[];
 }
 
 @Component({
@@ -101,7 +105,8 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     private reservaService: ReservaService,
     private ruatService: RuatRequestsService,
     private contribuyenteService: ContribuyentesService,
-    private organizationService: OrganizacionService
+    private organizationService: OrganizacionService,
+    private authenticationService: AuthenticationService
   ) {}
 
   get enableSolicitudOrganizationReservation(): boolean {
@@ -170,17 +175,11 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   get shouldDisableScheduleFields(): boolean {
     if (!this.selectedTariff) return false;  
     return this.selectedTariff.tipoCobro === 'por_hora' || 
-          this.selectedTariff.tipoCobro === 'por_persona';
+          this.selectedTariff.tipoCobro === 'por_persona' ||
+          this.selectedTariff.tipoCobro === 'por_evento';
   }
 
   ngOnInit(): void {
-    // console.log("CONFIGURACIONES O REGLAS DEL SISTEMA SEGUN USURAIO: ",this.systemConfigs)
-    // console.log(this.bookingType, this.actionType);
-    // console.log("COMPLEJO ", this.dataComplejo);
-    // console.log("CAMPO ", this.dataField);
-    // console.log("TARIFA ", this.selectedTariff);
-    // console.log("horario o horarios ", this.selectedSchedule, this.recurrentSchedule);
-    // console.log("RESERVAS HECHAS EN CAMPO ", this.reservationsList);
     this.initializeUserContext();
     this.generateReservationNumber();
     this.initializeForm();
@@ -292,6 +291,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       this.safeFormatDate(this.recurrentSchedule.fechaInicio, 'yyyy-MM-dd') : '';
     const recurrentFechaFin = this.recurrentSchedule?.fechaFin ? 
       this.safeFormatDate(this.recurrentSchedule.fechaFin, 'yyyy-MM-dd') : '';    
+    const initialCantidadPersonas = this.selectedSchedule?.cantidadPersonas || this.recurrentSchedule?.cantidadPersonas || null;
     this.calculateValidationRequirement();
     const initialEstadoValidacion = this.requiresValidation ? 
       EstadoValidacion.PENDIENTE : EstadoValidacion.APROBADA;    
@@ -304,7 +304,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       estadoValidacion: [{ value: initialEstadoValidacion, disabled: true }],
       estadoReserva: [{ value: initialEstadoReserva, disabled: true }],
       numeroReserva: [
-        { value: this.numeroReserva, disabled: (this.userRole === 'Contribuyente' || this.userRole === 'Representante') },
+        { value: this.numeroReserva, disabled: true },
         [Validators.required, this.reservationNumberFormatValidator()]
       ],
       contribuyenteDto: [this.selectedContribuyente || null, [Validators.required]],
@@ -321,7 +321,13 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         { value: initialHoraFin, disabled: this.shouldDisableScheduleFields }
       ],
       duracionHoras: [{ value: initialDuracion, disabled: true }],
-      cantidadPersonas: [null, [Validators.min(1), Validators.max(this.dataField?.capacidadPersonas || 100)]],
+      cantidadPersonas: [
+        {
+          value: initialCantidadPersonas,
+          disabled: this.hasScheduleLockedCantidadPersonas()
+        },
+        [Validators.min(1), Validators.max(this.dataField?.capacidadPersonas || 100)]
+      ],
       tipoRecurrencia: [{ value: this.recurrentSchedule?.tipoRecurrencia || '', disabled: true }],
       fechaInicio: [{ value: recurrentFechaInicio, disabled: true }],
       fechaFin: [{ value: recurrentFechaFin, disabled: true }],
@@ -369,17 +375,12 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       next: (response: any) => {
         this.numeroReserva = response.payload;        
         if (this.reservationForm) {
-          const numeroReservaDisabled = this.userRole === 'Contribuyente' || this.userRole === 'Representante';
           this.reservationForm.patchValue({ 
             numeroReserva: this.numeroReserva 
           });
           const numeroReservaControl = this.reservationForm.get('numeroReserva');
           if (numeroReservaControl) {
-            if (numeroReservaDisabled) {
-              numeroReservaControl.disable();
-            } else {
-              numeroReservaControl.enable();
-            }
+            numeroReservaControl.disable();
           }
         }
       },
@@ -578,7 +579,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     ).subscribe(() => {
       this.updateDuration();
     });
-    if (this.userRole !== 'Contribuyente') {
+    if (this.canEditReservationNumber) {
       this.reservationForm.get('numeroReserva')?.valueChanges.pipe(
         debounceTime(500),
         distinctUntilChanged(),
@@ -608,7 +609,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   private safeFormatDate(date: any, formatStr: string): string {
     if (!date) return '';
     try {
-      const parsedDate = typeof date === 'string' ? new Date(date) : date;
+      const parsedDate = typeof date === 'string' ? this.parseLocalDate(date) : date;
       return isValid(parsedDate) ? format(parsedDate, formatStr) : '';
     } catch (error) {
       console.error('Error formatting date:', error);
@@ -619,12 +620,21 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   private safeParseDate(dateString: string): Date | null {
     if (!dateString) return null;
     try {
-      const date = new Date(dateString);
+      const date = this.parseLocalDate(dateString);
       return isValid(date) ? date : null;
     } catch (error) {
       console.error('Error parsing date:', error);
       return null;
     }
+  }
+
+  private parseLocalDate(dateValue: string): Date {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+      const [year, month, day] = dateValue.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+
+    return new Date(dateValue);
   }
 
   private safeCalculateMonthsDuration(startDate: any, endDate: any): number {
@@ -772,6 +782,18 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       }
       return;
     }  
+    const scheduleCalculation = this.getScheduleCalculation();
+    if (scheduleCalculation) {
+      this.calculatedPrice = scheduleCalculation.total;
+      this.priceDetails = scheduleCalculation.details;
+      this.reservationForm.patchValue({
+        montoTotal: this.calculatedPrice,
+        esReservaGratuita: false,
+        motivoGratuidad: ''
+      }, { emitEvent: false });
+      return;
+    }
+
     const montoBase = this.selectedTariff.precioBase || 0;
     let total = 0;
     let detalles: string[] = [];
@@ -798,8 +820,8 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         detalles.push(`Mensualidad × ${meses} mes(es): Bs. ${montoBase.toFixed(2)}`);
         break;      
       case 'por_sesion':
-        total = montoBase * (this.recurrentSchedule?.cantidadSesiones || 1);
-        detalles.push(`${this.recurrentSchedule?.cantidadSesiones} sesión(es) × Bs. ${montoBase.toFixed(2)}`);
+        total = montoBase * this.getRecurrentSessionCount();
+        detalles.push(`${this.getRecurrentSessionCount()} sesión(es) × Bs. ${montoBase.toFixed(2)}`);
         break;      
       case 'por_club':
         total = montoBase;
@@ -849,6 +871,49 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
   }
 
+  private getScheduleCalculation(): { total: number; details: string[] } | null {
+    const source = this.bookingType === 'puntual' ? this.selectedSchedule : this.recurrentSchedule;
+    const total = Number(source?.calculatedPrice);
+
+    if (!source || Number.isNaN(total)) {
+      return null;
+    }
+
+    return {
+      total,
+      details: Array.isArray(source.priceDetails) ? [...source.priceDetails] : []
+    };
+  }
+
+  get requiresCantidadPersonas(): boolean {
+    return this.selectedTariff?.tipoCobro === 'por_persona';
+  }
+
+  get shouldShowCantidadPersonasField(): boolean {
+    const cantidadPersonas = this.reservationForm?.getRawValue()?.cantidadPersonas;
+    return this.requiresCantidadPersonas || !!cantidadPersonas || !this.getScheduleCalculation();
+  }
+
+  get isCantidadPersonasLocked(): boolean {
+    return this.hasScheduleLockedCantidadPersonas();
+  }
+
+  private hasScheduleLockedCantidadPersonas(): boolean {
+    return !!(this.selectedSchedule?.cantidadPersonas || this.recurrentSchedule?.cantidadPersonas);
+  }
+
+  getScheduleDisplayValue(fieldName: string): string {
+    const value = this.reservationForm?.getRawValue()?.[fieldName];
+    if (!value) return '-';
+
+    if (fieldName === 'fechaUso' || fieldName === 'fechaInicio' || fieldName === 'fechaFin') {
+      const parsedDate = this.safeParseDate(value);
+      return parsedDate ? this.formatDate(parsedDate) : value;
+    }
+
+    return String(value);
+  }
+
   private calculateConceptoAmount(concepto: any, baseAmount: number, formValue: any): number {
     switch (concepto.tipo) {
       case 'porcentaje':
@@ -863,14 +928,40 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
   }
 
-  private calculateTotalHoursForRecurrentSessions(): number {
-    if (this.bookingType !== 'recurrente' || !this.recurrentSchedule) {
-      return 1;
-    }
-    let totalHours = 0;
+private calculateTotalHoursForRecurrentSessions(): number {
+  if (this.bookingType !== 'recurrente' || !this.recurrentSchedule) {
+    return 1;
+  }
+  
+  let totalHours = 0;
+  const tablero = this.recurrentSchedule.tablero;
+  
+  // Detect format
+  const isNewFormat = Array.isArray(tablero) && 
+                      tablero.length > 0 && 
+                      Array.isArray(tablero[0]) && 
+                      tablero[0].length > 0 && 
+                      Array.isArray(tablero[0][0]);
+  
+  if (isNewFormat) {
+    // New 31×5 format
+    (tablero as string[][][]).forEach(monthMatrix => {
+      monthMatrix.forEach(daySlots => {
+        daySlots.forEach(slot => {
+          if (!slot) return;
+          const [start, end] = slot.split('-');
+          if (start && end) {
+            totalHours += this.calculateDurationFromTimes(start, end);
+          }
+        });
+      });
+    });
+  } else {
+    // Old 7×3 format
     const start = new Date(this.recurrentSchedule.fechaInicio);
     const end = new Date(this.recurrentSchedule.fechaFin);
-    const selectedDays = this.recurrentSchedule.diasSeleccionados || [];  
+    const selectedDays = this.recurrentSchedule.diasSeleccionados || [];
+    
     selectedDays.forEach((dia: any) => {
       if (dia.selected) {
         const dayOccurrences = this.countDayOccurrencesInRange(dia.dia, start, end);
@@ -879,9 +970,11 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
           totalHours += duration * dayOccurrences;
         });
       }
-    });  
-    return totalHours;
+    });
   }
+  
+  return totalHours;
+}
 
   private countDayOccurrencesInRange(dayName: string, start: Date, end: Date): number {
     const dayMap: {[key: string]: number} = {
@@ -905,61 +998,118 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     return count;
   }
 
-  private calculateTotalOverlappingHoursFromTablero(conceptoDesde: string, conceptoHasta: string): number {
-    if (!this.recurrentSchedule?.tablero || !this.recurrentSchedule.fechaInicio || !this.recurrentSchedule.fechaFin) {
-      return 0;
-    }
-    let totalOverlappingHours = 0;
-    const tablero = this.recurrentSchedule.tablero;
-    const start = new Date(this.recurrentSchedule.fechaInicio);
-    const end = new Date(this.recurrentSchedule.fechaFin);
-    const dayMap: {[key: number]: string} = {
-      0: 'lunes',
-      1: 'martes', 
-      2: 'miercoles',
-      3: 'jueves',
-      4: 'viernes',
-      5: 'sabado',
-      6: 'domingo'
-    };
-    tablero.forEach((horariosDelDia: string[], dayIndex: number) => {
-      if (horariosDelDia && horariosDelDia.length > 0) {
-        const dayName = dayMap[dayIndex];
-        const dayOccurrences = this.countDayOccurrencesInRange(dayName, start, end);  
-        horariosDelDia.forEach((horarioStr: string) => {
-          const [sessionStart, sessionEnd] = horarioStr.split('-');        
-          if (sessionStart && sessionEnd) {
-            const sessionOverlap = this.calculateOverlappingDuration(
-              sessionStart, 
-              sessionEnd, 
-              conceptoDesde, 
-              conceptoHasta
-            );          
-            totalOverlappingHours += sessionOverlap * dayOccurrences;
-          }
-        });
-      }
-    });
-    return totalOverlappingHours;
+private calculateTotalOverlappingHoursFromTablero(
+  conceptoDesde: string,
+  conceptoHasta: string
+): number {
+  if (
+    !this.recurrentSchedule?.tablero ||
+    !this.recurrentSchedule.fechaInicio ||
+    !this.recurrentSchedule.fechaFin
+  ) {
+    return 0;
   }
 
-  private getDurationForConcepto(concepto: any, formValue: any): number {
-    if (this.bookingType === 'puntual') {
-      const horaInicio = formValue.horaInicio;
-      const horaFin = formValue.horaFin;
-      const duracionTotal = formValue.duracionHoras || 1;
-      if (concepto.desde && concepto.hasta && horaInicio && horaFin) {
-        return this.calculateOverlappingDuration(horaInicio, horaFin, concepto.desde, concepto.hasta);
-      }    
-      return duracionTotal;
-    } else if (this.bookingType === 'recurrente' && this.recurrentSchedule) {
-      if (concepto.desde && concepto.hasta) {
-        return this.calculateTotalOverlappingHoursFromTablero(concepto.desde, concepto.hasta);
-      }
-      return this.calculateTotalHoursForRecurrentSessions();
-    }  
-    return 1;
+  const tablero = this.recurrentSchedule.tablero;
+  const start = new Date(this.recurrentSchedule.fechaInicio);
+  const end = new Date(this.recurrentSchedule.fechaFin);
+
+  let totalOverlappingHours = 0;
+
+  // Detect format
+  // New format → tablero is string[][][] (monthIndex × 31 × 5)
+  // Old format → tablero is string[][] (7 × 3, day-of-week indexed)
+  const isNewFormat = Array.isArray(tablero) && 
+                      tablero.length > 0 && 
+                      Array.isArray(tablero[0]) && 
+                      tablero[0].length > 0 && 
+                      Array.isArray(tablero[0][0]);
+
+  if (isNewFormat) {
+    // New 31×5 per-month format
+    (tablero as string[][][]).forEach((monthMatrix, monthIndex) => {
+      const monthDate = new Date(
+        start.getFullYear(),
+        start.getMonth() + monthIndex,
+        1
+      );
+
+      monthMatrix.forEach((daySlots, dayIndex) => {
+        const dayOfMonth = dayIndex + 1;
+        const date = new Date(
+          monthDate.getFullYear(),
+          monthDate.getMonth(),
+          dayOfMonth
+        );
+
+        if (date < start || date > end) return;
+
+        daySlots.forEach(slot => {
+          if (!slot) return;
+          const [sessionStart, sessionEnd] = slot.split('-');
+          if (sessionStart && sessionEnd) {
+            const overlap = this.calculateOverlappingDuration(
+              sessionStart,
+              sessionEnd,
+              conceptoDesde,
+              conceptoHasta
+            );
+            totalOverlappingHours += overlap;
+          }
+        });
+      });
+    });
+  } else {
+    // Old 7×3 format
+    const dayMap: { [key: number]: string } = {
+      0: 'lunes', 1: 'martes', 2: 'miercoles',
+      3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'
+    };
+
+    (tablero as string[][]).forEach((horariosDelDia, dayIndex) => {
+      if (!horariosDelDia?.length) return;
+
+      const dayName = dayMap[dayIndex];
+      if (!dayName) return;
+
+      const dayOccurrences = this.countDayOccurrencesInRange(dayName, start, end);
+
+      horariosDelDia.forEach(horarioStr => {
+        if (!horarioStr) return;
+        const [sessionStart, sessionEnd] = horarioStr.split('-');
+        if (sessionStart && sessionEnd) {
+          const sessionOverlap = this.calculateOverlappingDuration(
+            sessionStart,
+            sessionEnd,
+            conceptoDesde,
+            conceptoHasta
+          );
+          totalOverlappingHours += sessionOverlap * dayOccurrences;
+        }
+      });
+    });
   }
+
+  return totalOverlappingHours;
+}
+
+private getDurationForConcepto(concepto: any, formValue: any): number {
+  if (this.bookingType === 'puntual') {
+    const horaInicio = formValue.horaInicio;
+    const horaFin = formValue.horaFin;
+    const duracionTotal = formValue.duracionHoras || 1;
+    if (concepto.desde && concepto.hasta && horaInicio && horaFin) {
+      return this.calculateOverlappingDuration(horaInicio, horaFin, concepto.desde, concepto.hasta);
+    }    
+    return duracionTotal;
+  } else if (this.bookingType === 'recurrente' && this.recurrentSchedule) {
+    if (concepto.desde && concepto.hasta) {
+      return this.calculateTotalOverlappingHoursFromTablero(concepto.desde, concepto.hasta);
+    }
+    return this.calculateTotalHoursForRecurrentSessions();
+  }  
+  return 1;
+}
 
   private calculateOverlappingDuration(startTime: string, endTime: string, conceptStart: string, conceptEnd: string): number {
     try {
@@ -985,7 +1135,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   
   getBasePrice(): number {
     if (!this.selectedTariff) return 0;
-    
+
     const formValue = this.reservationForm?.getRawValue();
     const montoBase = this.selectedTariff.precioBase || 0;
     
@@ -1001,7 +1151,13 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         );
         return montoBase * meses;
       case 'por_sesion':
-        return montoBase * (this.recurrentSchedule?.cantidadSesiones || 1);
+        return montoBase * this.getRecurrentSessionCount();
+      case 'por_club':
+        const mesesClub = this.safeCalculateMonthsDuration(
+          this.recurrentSchedule?.fechaInicio,
+          this.recurrentSchedule?.fechaFin
+        );
+        return montoBase * mesesClub;
       default:
         return montoBase;
     }
@@ -1013,6 +1169,25 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
 
   getBaseQuantity(): string {
     if (!this.selectedTariff) return '-';    
+    if (this.getScheduleCalculation()) {
+      switch (this.selectedTariff.tipoCobro) {
+        case 'por_hora':
+          return `${this.duration || 1} hora(s)`;
+        case 'por_persona':
+          return `${this.reservationForm?.getRawValue()?.cantidadPersonas || 1} persona(s)`;
+        case 'por_sesion':
+          return `${this.getRecurrentSessionCount()} sesión(es)`;
+        case 'mensualidad':
+          return `${this.safeCalculateMonthsDuration(this.recurrentSchedule?.fechaInicio, this.recurrentSchedule?.fechaFin)} mes(es)`;
+        case 'por_club':
+          return `${this.safeCalculateMonthsDuration(this.recurrentSchedule?.fechaInicio, this.recurrentSchedule?.fechaFin)} mes(es)`;
+        case 'por_evento':
+          return '1 evento';
+        default:
+          return 'Calculado';
+      }
+    }
+
     const formValue = this.reservationForm?.getRawValue();
     switch (this.selectedTariff.tipoCobro) {
       case 'por_hora':
@@ -1026,12 +1201,57 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         );
         return `${meses} mes(es)`;
       case 'por_sesion':
-        return `${this.recurrentSchedule?.cantidadSesiones || 1} sesión(es)`;
+        return `${this.getRecurrentSessionCount()} sesión(es)`;
       case 'por_evento':
-      case 'por_club':
         return '1 evento';
+      case 'por_club':
+        return `${this.safeCalculateMonthsDuration(this.recurrentSchedule?.fechaInicio, this.recurrentSchedule?.fechaFin)} mes(es)`;
       default:
         return '1';
+    }
+  }
+
+  getBaseRateDisplay(): string {
+    if (!this.selectedTariff) return '';
+
+    const base = this.selectedTariff.precioBase || 0;
+    const formattedBase = new CurrencyPipe('en-US').transform(base, 'BOB', 'symbol-narrow', '1.2-2');
+
+    switch (this.selectedTariff.tipoCobro) {
+      case 'por_hora':
+        return `${formattedBase} por hora`;
+      case 'por_persona':
+        return `${formattedBase} por persona`;
+      case 'por_sesion':
+        return `${formattedBase} por sesión`;
+      case 'mensualidad':
+        return `${formattedBase} por mes`;
+      case 'por_club':
+        return `${formattedBase} por mes/club`;
+      case 'por_evento':
+        return `${formattedBase} por evento`;
+      default:
+        return `${formattedBase}`;
+    }
+  }
+
+  getBaseQuantityLabel(): string {
+    if (!this.selectedTariff) return 'Cantidad';
+
+    switch (this.selectedTariff.tipoCobro) {
+      case 'por_hora':
+        return 'Duración en horas';
+      case 'por_persona':
+        return 'Personas';
+      case 'por_sesion':
+        return 'Total sesiones';
+      case 'mensualidad':
+      case 'por_club':
+        return 'Meses';
+      case 'por_evento':
+        return 'Evento';
+      default:
+        return 'Cantidad';
     }
   }
 
@@ -1121,25 +1341,56 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   private confirmReservation(): void {
     const currencyPipe = new CurrencyPipe('en-US');
     const formattedTotal = currencyPipe.transform(this.calculatedPrice, 'BOB', 'symbol-narrow', '1.2-2');
+    const isRequest = this.requiresValidation;
+    const actionLabel = isRequest ? 'Solicitar' : 'Reservar';
+    const reservationKind = this.bookingType === 'recurrente' ? 'Reserva recurrente' : 'Reserva puntual';
+    const statusLabel = isRequest ? 'Pendiente de aprobación' : 'Aprobación automática';
+    const statusClass = isRequest ? 'text-warning' : 'text-success';
+    const statusIcon = isRequest ? 'ri-time-line' : 'ri-checkbox-circle-line';
+    const introText = isRequest
+      ? 'La reserva será enviada para revisión administrativa.'
+      : 'La reserva será registrada y se generará la tasa municipal.';
     Swal.fire({
-      title: `Confirmar ${this.actionType==='book'? 'Reserva': 'Solicitud'}`,
+      title: `${actionLabel} reserva`,
       html: `
         <div class="text-start">
+          <p class="mb-3">${introText}</p>
           <p>¿Está seguro de que desea confirmar esta reserva?</p>
           <div class="border rounded p-3 bg-light">
-            <strong>Detalles:</strong><br>
-            • ${this.dataComplejo?.nombre} - ${this.dataField?.nombre}<br>
-            • ${this.bookingType === 'recurrente' ? 'Reserva Recurrente' : 'Reserva Puntual'}<br>
-            • Total: ${formattedTotal}<br>
-            • Contribuyente: ${this.selectedContribuyente?.nombreCompleto}<br>
-            • Estado: ${this.requiresValidation ? 'Requiere Aprobación' : 'Aprobada Automáticamente'}
-          </div>
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <strong class="d-block">${this.dataComplejo?.nombre || ''}</strong>
+                <span class="text-muted">${this.dataField?.nombre || ''}</span>
+              </div>
+              <span class="badge bg-primary bg-opacity-10 text-primary">${reservationKind}</span>
+            </div>
+            <div class="small border-top pt-2 mt-2">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted">Horario</span>
+                <strong class="text-end">${this.getConfirmationScheduleSummary()}</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted">Contribuyente</span>
+                <strong class="text-end">${this.selectedContribuyente?.nombreCompleto || 'No definido'}</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted">Total</span>
+                <strong>${formattedTotal}</strong>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="text-muted">Estado</span>
+                <strong class="${statusClass}">
+                  <i class="${statusIcon} me-1"></i>${statusLabel}
+                </strong>
+              </div>
+            </div>
+        </div>
         </div>
       `,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Sí, '+ this.actionType==='book'? 'Reservar': 'Solicitar',
       cancelButtonText: 'Revisar',
+      confirmButtonText: actionLabel,
       confirmButtonColor: '#198754',
       cancelButtonColor: '#6c757d'
     }).then((result) => {
@@ -1149,83 +1400,114 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     });
   }
 
-  private processReservation(): void {
+  getSubmitActionLabel(): string {
+    return this.requiresValidation ? 'Solicitar Reserva' : 'Reservar';
+  }
+
+  private getConfirmationScheduleSummary(): string {
+    const formValue = this.reservationForm?.getRawValue();
+
+    if (this.bookingType === 'recurrente') {
+      const start = formValue?.fechaInicio ? this.getScheduleDisplayValue('fechaInicio') : '-';
+      const end = formValue?.fechaFin ? this.getScheduleDisplayValue('fechaFin') : '-';
+      const sessions = this.calculateTotalSessions();
+      return `${start} - ${end} (${sessions} sesiones)`;
+    }
+
+    const date = formValue?.fechaUso ? this.getScheduleDisplayValue('fechaUso') : '-';
+    const start = formValue?.horaInicio || '-';
+    const end = formValue?.horaFin || '-';
+    return `${date}, ${start}-${end}`;
+  }
+
+  private async processReservation(): Promise<void> {
     this.isSubmitting = true;
     const reservaData = this.prepareReservationData();
     const isFreeReservation = reservaData.esReservaGratuita;
     if (isFreeReservation) {
       this.saveReservation(reservaData);
     } else if (!this.requiresValidation) {
+      const ruatAvailability = await this.authenticationService.ensureRuatAuthenticated();
+      if (!ruatAvailability.available) {
+        this.isSubmitting = false;
+        this.showRuatUnavailableMessage(ruatAvailability.message);
+        return;
+      }
       this.registerReservationInRuat(reservaData);
     } else {
       this.saveReservation(reservaData);
     }
   }
 
-  private prepareReservationData(): Reserva {
-    const formValue = this.reservationForm.getRawValue(); 
-    let estadoValidacion: EstadoValidacion;
-    let estadoReserva: EstadoReserva;    
-    const isFreeReservation = this.isFreeReservation && this.showFreeReservationOption;
-    if (isFreeReservation || !this.requiresValidation || this.userRole === 'Admin' || this.userRole === 'Encargado') {
-      estadoValidacion = EstadoValidacion.APROBADA;
-      estadoReserva = EstadoReserva.PENDIENTE;
-    } else {
-      estadoValidacion = EstadoValidacion.PENDIENTE;
-      estadoReserva = EstadoReserva.SOLICITADA;
-    }
-    const reserva: Reserva = {
-      esReservaGratuita: isFreeReservation,
-      motivoGratuidad: isFreeReservation ? this.freeReservationReason : undefined,
-      fechaCreacion: new Date(),
-      fechaActualizacion: new Date(),
-      tipoReserva: this.bookingType,
-      fechaReserva: new Date(),
-      numeroReserva: formValue.numeroReserva,
-      estadoValidacion: estadoValidacion,
-      estadoReserva: estadoReserva,
-      montoTotal: isFreeReservation ? 0 : this.calculatedPrice,
-      clasificadorRuatId: this.selectedTariff.clasificadorRuatDto?.uuid || '',
-      contribuyenteDto: formValue.contribuyenteDto,
-      campoDeportivoDto: this.dataField,
-      tarifaDto: this.selectedTariff,
-    };    
-    if (formValue.esParaOrganizacion && formValue.organizacionDto) {
-      reserva.organizacionDto = formValue.organizacionDto;
-    }
-    if (this.bookingType === 'puntual') {
-      const fechaUso = this.safeParseDate(formValue.fechaUso);
-      reserva.reservaPuntualDto = {
-        fechaUso: fechaUso || new Date(),
-        horaInicio: formValue.horaInicio + ':00',
-        horaFin: formValue.horaFin + ':00',
-        duracionHoras: formValue.duracionHoras,
-        cantidadPersonas: formValue.cantidadPersonas,
-        categoria: this.getTarifaCategories(),
-        superficie: this.dataField?.superficieDto?.descripcion || '',
-        observaciones: formValue.observaciones
-      };
-    } else if (this.bookingType === 'recurrente' && this.recurrentSchedule) {
-      reserva.reservaRecurrenteDto = {
-        tipoRecurrencia: this.recurrentSchedule.tipoRecurrencia,
-        fechaInicio: this.recurrentSchedule.fechaInicio,
-        fechaFin: this.recurrentSchedule.fechaFin,
-        diasSemana: this.recurrentSchedule.diasSemana,
-        cantidadSesiones: this.recurrentSchedule.cantidadSesiones,
-        duracionSesionHoras: this.recurrentSchedule.duracionSesionHoras,
-        cantidadPersonas: formValue.cantidadPersonas,
-        tarifaMensual: isFreeReservation ? 0 : (this.calculatedPrice / this.safeCalculateMonthsDuration(this.recurrentSchedule.fechaInicio, this.recurrentSchedule.fechaFin)),
-        activo: true,
-        categoria: this.getTarifaCategories(),
-        superficie: this.dataField?.superficieDto?.descripcion || '',
-        observaciones: formValue.observaciones,
-        tableroDto: {
-          horario: this.recurrentSchedule.tablero
-        }
-      };
-    }
-    return reserva;
+private prepareReservationData(): Reserva {
+  const formValue = this.reservationForm.getRawValue(); 
+  let estadoValidacion: EstadoValidacion;
+  let estadoReserva: EstadoReserva;    
+  const isFreeReservation = this.isFreeReservation && this.showFreeReservationOption;
+  
+  if (isFreeReservation || !this.requiresValidation || this.userRole === 'Admin' || this.userRole === 'Encargado') {
+    estadoValidacion = EstadoValidacion.APROBADA;
+    estadoReserva = EstadoReserva.PENDIENTE;
+  } else {
+    estadoValidacion = EstadoValidacion.PENDIENTE;
+    estadoReserva = EstadoReserva.SOLICITADA;
   }
+  
+  const reserva: Reserva = {
+    esReservaGratuita: isFreeReservation,
+    motivoGratuidad: isFreeReservation ? this.freeReservationReason : undefined,
+    fechaCreacion: new Date(),
+    fechaActualizacion: new Date(),
+    tipoReserva: this.bookingType,
+    fechaReserva: new Date(),
+    numeroReserva: formValue.numeroReserva,
+    estadoValidacion: estadoValidacion,
+    estadoReserva: estadoReserva,
+    montoTotal: isFreeReservation ? 0 : this.calculatedPrice,
+    clasificadorRuatId: this.selectedTariff.clasificadorRuatDto?.uuid || '',
+    contribuyenteDto: formValue.contribuyenteDto,
+    campoDeportivoDto: this.dataField,
+    tarifaDto: this.selectedTariff,
+  };    
+  
+  if (formValue.esParaOrganizacion && formValue.organizacionDto) {
+    reserva.organizacionDto = formValue.organizacionDto;
+  }
+  
+  if (this.bookingType === 'puntual') {
+    const fechaUso = this.safeParseDate(formValue.fechaUso);
+    reserva.reservaPuntualDto = {
+      fechaUso: fechaUso || new Date(),
+      horaInicio: formValue.horaInicio + ':00',
+      horaFin: formValue.horaFin + ':00',
+      duracionHoras: formValue.duracionHoras,
+      cantidadPersonas: formValue.cantidadPersonas,
+      categoria: this.getTarifaCategories(),
+      superficie: this.dataField?.superficieDto?.descripcion || '',
+      observaciones: formValue.observaciones
+    };
+  } else if (this.bookingType === 'recurrente' && this.recurrentSchedule) {
+    // IMPORTANT: The tablero is already in the correct format from the schedule component
+    reserva.reservaRecurrenteDto = {
+      tipoRecurrencia: this.recurrentSchedule.tipoRecurrencia || '',
+      fechaInicio: this.recurrentSchedule.fechaInicio,
+      fechaFin: this.recurrentSchedule.fechaFin,
+      diasSemana: this.recurrentSchedule.diasSemana,
+      cantidadSesiones: this.getRecurrentSessionCount(),
+      duracionSesionHoras: this.recurrentSchedule.duracionSesionHoras,
+      cantidadPersonas: formValue.cantidadPersonas,
+      tarifaMensual: isFreeReservation ? 0 : (this.calculatedPrice / this.safeCalculateMonthsDuration(this.recurrentSchedule.fechaInicio, this.recurrentSchedule.fechaFin)),
+      activo: true,
+      categoria: this.getTarifaCategories(),
+      superficie: this.dataField?.superficieDto?.descripcion || '',
+      observaciones: formValue.observaciones,
+      tableroDto: {
+        horario: this.recurrentSchedule.tablero  // This should be the 31×5 per month matrix
+      }
+    };
+  }
+  return reserva;
+}
 
   private registerReservationInRuat(reservaData: Reserva): void {
     if (!reservaData.contribuyenteDto?.codigoContribuyente) {
@@ -1268,8 +1550,19 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.isSubmitting = false;
-        this.handleError('Error de conexión con RUAT', error.error?.mensaje || error.message);
+        this.authenticationService.ensureRuatAuthenticated(true);
+        this.showRuatUnavailableMessage(error.error?.mensaje || error.message);
       }
+    });
+  }
+
+  private showRuatUnavailableMessage(message?: string): void {
+    Swal.fire({
+      title: 'RUAT no disponible',
+      text: message || 'No se pudo conectar con RUAT. La reserva con pago no puede continuar hasta recuperar la conexion.',
+      icon: 'warning',
+      confirmButtonText: 'Entendido',
+      confirmButtonColor: '#f7b84b'
     });
   }
 
@@ -1684,7 +1977,7 @@ getPaidReservationDescription(): string {
   }
 
   get canEditReservationNumber(): boolean {
-    return this.userRole !== 'Contribuyente';
+    return false;
   }
 
   getTarifaCategories(): string {
@@ -1717,8 +2010,9 @@ getPaidReservationDescription(): string {
     const duracion = this.reservationForm.get('duracionSesionHoras')?.value;
     if (!tipoRecurrencia || !fechaInicio || !fechaFin) return '';
     let summary = '';
-    const startDate = new Date(fechaInicio);
-    const endDate = new Date(fechaFin);    
+    const startDate = this.safeParseDate(fechaInicio);
+    const endDate = this.safeParseDate(fechaFin);
+    if (!startDate || !endDate) return '';
     switch (tipoRecurrencia) {
       case 'diaria':
         summary = `Diariamente del ${this.formatDate(startDate)} al ${this.formatDate(endDate)}`;
@@ -1738,13 +2032,18 @@ getPaidReservationDescription(): string {
   }
 
   calculateTotalSessions(): number {
+    if (this.bookingType === 'recurrente' && this.recurrentSchedule?.cantidadSesiones) {
+      return this.getRecurrentSessionCount();
+    }
+
     const tipoRecurrencia = this.reservationForm.get('tipoRecurrencia')?.value;
     const fechaInicio = this.reservationForm.get('fechaInicio')?.value;
     const fechaFin = this.reservationForm.get('fechaFin')?.value;
     const diasSemana = this.reservationForm.get('diasSemana')?.value;
     if (!tipoRecurrencia || !fechaInicio || !fechaFin) return 0;
-    const start = new Date(fechaInicio);
-    const end = new Date(fechaFin);
+    const start = this.safeParseDate(fechaInicio);
+    const end = this.safeParseDate(fechaFin);
+    if (!start || !end) return 0;
     let sessions = 0;
     switch (tipoRecurrencia) {
       case 'diaria':
@@ -1753,12 +2052,11 @@ getPaidReservationDescription(): string {
         break;      
       case 'semanal':
         if (!diasSemana || diasSemana.length === 0) return 0;        
-        const diasArray = Array.isArray(diasSemana) ? diasSemana : [diasSemana];
-        const dayMap = { 'LUN': 1, 'MAR': 2, 'MIE': 3, 'JUE': 4, 'VIE': 5, 'SAB': 6, 'DOM': 0 };        
+        const diasArray = this.normalizeDiasSemana(diasSemana);
         let current = new Date(start);
         while (current <= end) {
           const dayOfWeek = current.getDay();
-          const dayName = this.getDayName(dayOfWeek);
+          const dayName = this.getDiaSemanaKey(dayOfWeek);
           if (diasArray.includes(dayName)) {
             sessions++;
           }
@@ -1776,13 +2074,76 @@ getPaidReservationDescription(): string {
     return sessions;
   }
 
-  getDiasSemanaNames(diasSemana: string[]): string {
-    if (!diasSemana || diasSemana.length === 0) return '';    
+  private getRecurrentSessionCount(): number {
+    if (this.selectedTariff?.tipoCobro === 'por_sesion') {
+      const billableHours = this.selectedTariff.desde && this.selectedTariff.hasta
+        ? this.calculateTotalOverlappingHoursFromTablero(this.selectedTariff.desde, this.selectedTariff.hasta)
+        : this.calculateTotalHoursForRecurrentSessions();
+
+      if (billableHours > 0) return billableHours;
+    }
+
+    const fromSchedule = Number(this.recurrentSchedule?.cantidadSesiones || 0);
+    if (fromSchedule > 0) return fromSchedule;
+
+    const fromForm = Number(this.reservationForm?.get('cantidadSesiones')?.value || 0);
+    return fromForm > 0 ? fromForm : 1;
+  }
+
+  getDiasSemanaNames(diasSemana: string[] | string | any[]): string {
+    const dias = this.normalizeDiasSemana(diasSemana);
+    if (dias.length === 0) return '';
     const dayNames: { [key: string]: string } = {
-      'LUN': 'Lunes', 'MAR': 'Martes', 'MIE': 'Miércoles', 
-      'JUE': 'Jueves', 'VIE': 'Viernes', 'SAB': 'Sábado', 'DOM': 'Domingo'
-    };    
-    return diasSemana.map(dia => dayNames[dia]).join(', ');
+      lunes: 'Lunes',
+      martes: 'Martes',
+      miercoles: 'Miércoles',
+      jueves: 'Jueves',
+      viernes: 'Viernes',
+      sabado: 'Sábado',
+      domingo: 'Domingo'
+    };
+    return dias.map(dia => dayNames[dia] || dia).join(', ');
+  }
+
+  private normalizeDiasSemana(diasSemana: string[] | string | any[]): string[] {
+    if (!diasSemana) return [];
+
+    const values = Array.isArray(diasSemana)
+      ? diasSemana
+      : String(diasSemana).split(',');
+
+    const aliases: { [key: string]: string } = {
+      lun: 'lunes',
+      lunes: 'lunes',
+      mar: 'martes',
+      martes: 'martes',
+      mie: 'miercoles',
+      mié: 'miercoles',
+      miercoles: 'miercoles',
+      miércoles: 'miercoles',
+      jue: 'jueves',
+      jueves: 'jueves',
+      vie: 'viernes',
+      viernes: 'viernes',
+      sab: 'sabado',
+      sáb: 'sabado',
+      sabado: 'sabado',
+      sábado: 'sabado',
+      dom: 'domingo',
+      domingo: 'domingo'
+    };
+
+    return values
+      .map((value: any) => typeof value === 'string' ? value : value?.dia)
+      .filter(Boolean)
+      .map((value: string) => value.trim().toLowerCase())
+      .map((value: string) => aliases[value] || value)
+      .filter((value: string, index: number, array: string[]) => array.indexOf(value) === index);
+  }
+
+  private getDiaSemanaKey(dayNumber: number): string {
+    const days = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    return days[dayNumber];
   }
 
   getDayName(dayNumber: number): string {
@@ -1823,3 +2184,4 @@ getPaidReservationDescription(): string {
     return this.reservationForm ? this.reservationForm.hasError('anticipationRequired') : false;
   }
 }
+

@@ -6,14 +6,15 @@ export enum EstadoReserva {
   EN_CURSO = 'EN_CURSO',           // Currently active during scheduled time -> updated by system after start time
   COMPLETADA = 'COMPLETADA',       // Successfully completed --> updated by system after end time in puntual and after last date end in recurrent
   CANCELADA = 'CANCELADA',         // Cancelled reservation when paymet not completed so first check if is paid and then check timing -> updated by user/admin or system if not paid in time or in the deadline time and when esReservaGratuita is true then not cancelled automatically but only with user
-  EXPIRADA = 'EXPIRADA',           // Didn't complete payment in time stipulated  -> updated by system after payment deadline
+  EXPIRADA = 'EXPIRADA',           // Didn't complete payment in time stipulated  -> updated by system after payment deadline // Payment deadline passed after approval (post-RUAT)
   NO_SHOW = 'NO_SHOW'              // User didn't show up for reservation -> updated by user
 }
 // Estados de Validación (estadoValidacion)
 export enum EstadoValidacion {
-  PENDIENTE = 'PENDIENTE',         // Esperando aprobación
-  APROBADA = 'APROBADA',           // Aprobada por encargado/admin or automatic if complejo is open to automatic reservations
-  RECHAZADA = 'RECHAZADA',         // when is Solicitada and needs aproval but is Rejected by admin/manager but then is changed to CANCELADA so not more rechazada estado needed 
+  PENDIENTE  = 'PENDIENTE',   // Awaiting admin action
+  APROBADA   = 'APROBADA',    // Approved → triggers RUAT registration
+  RECHAZADA  = 'RECHAZADA',   // Rejected → triggers CANCELADA on reserva
+  VENCIDA    = 'VENCIDA',     // Admin never acted before the reservation date passed
 }
 // Estados de Pago (estadoPago)
 export enum EstadoPago {
@@ -96,7 +97,7 @@ export const StatusUtils = {
       // EstadoValidacion
       'APROBADA': 'success',
       'RECHAZADA': 'danger',
-      //'REVISION': 'info',    
+      'VENCIDA': 'secondary',  
       // EstadoPago
       'PAGADO': 'success',
       'PARCIAL': 'info',

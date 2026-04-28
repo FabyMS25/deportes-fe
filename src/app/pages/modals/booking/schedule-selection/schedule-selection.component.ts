@@ -92,7 +92,14 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   @Input() reservationsList: Reserva[] = []; 
   @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
   @Input() userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
-  @Output() horarioSelected = new EventEmitter<{ date: Date; start: string; end: string }>();
+  @Output() horarioSelected = new EventEmitter<{
+    date: Date;
+    start: string;
+    end: string;
+    cantidadPersonas?: number;
+    calculatedPrice: number;
+    priceDetails: string[];
+  }>();
   currentWeekStart: Date = new Date();
   currentWeekEnd: Date = new Date();
   blocks: { [key: string]: BlockDefinition } = {};
@@ -101,6 +108,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   applicableTariffs: Tarifa[] = [];
   hasMultipleApplicableTariffs = false;
   tariffBoundaryTime: string | null = null;
+  cantidadPersonas?: number | null = null;
 
   get anticipationHours(): number | undefined{
     if (!this.dataTariff) {
@@ -121,14 +129,18 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       case 'por_evento':
         return (this.systemConfigs[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico ?? 0) + `días`;
       case 'mensualidad': case 'por_sesion': case 'por_club':
-        return (this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico ?? 0) + `días`;
+        return (this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico ?? 0) + `horas`;
       default:
         return (this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico ?? 0) + `horas`;
     }
   }  
   get maxDuration(): number {
+    if (this.dataTariff?.tipoCobro === 'por_evento') {
       const maxHours = this.systemConfigs[ClaveConfiguracion.DURACION_MAXIMA_EVENTOS]?.valorNumerico;
       return (maxHours !== undefined && maxHours !== null ? maxHours : 24);
+    }
+
+    return 24;
   }
   get minDuration(): number {
     const minDuration = this.systemConfigs[ClaveConfiguracion.DURACION_MINIMA_RESERVA]?.valorNumerico;
@@ -149,6 +161,14 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     } else {
       return `${hours} horas`;
     }
+  }
+
+  get requiresCantidadPersonas(): boolean {
+    return this.dataTariff?.tipoCobro === 'por_persona';
+  }
+
+  get isEventTariff(): boolean {
+    return this.dataTariff?.tipoCobro === 'por_evento';
   }
 
   weekDays: WeekDay[] = [];
@@ -398,7 +418,10 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     this.horarioSelected.emit({ 
       date: this.fechaReserva, 
       start: startTime, 
-      end: endTime 
+      end: endTime,
+      cantidadPersonas: this.cantidadPersonas || undefined,
+      calculatedPrice: this.calculatedTariff,
+      priceDetails: [...this.tariffDetails]
     });
   }
   isFormValid(): boolean {
@@ -417,6 +440,32 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     this.showValidationAlert = originalShowAlert;
     return isValid;
   }
+
+  getCurrentValidationErrors(): string[] {
+    if (this.startTimeInput.hours === 0 && this.startTimeInput.minutes === 0 &&
+        this.endTimeInput.hours === 0 && this.endTimeInput.minutes === 0) {
+      return [];
+    }
+
+    const originalErrors = [...this.validationErrors];
+    const originalShowAlert = this.showValidationAlert;
+    const isValid = this.validateTimeSelection();
+    const currentErrors = isValid ? [] : [...this.validationErrors];
+    this.validationErrors = originalErrors;
+    this.showValidationAlert = originalShowAlert;
+
+    return currentErrors;
+  }
+
+  getConfirmDisabledReason(): string | null {
+    if (this.isCheckingAvailability) {
+      return 'Verificando disponibilidad...';
+    }
+
+    const currentErrors = this.getCurrentValidationErrors();
+    return currentErrors.length ? currentErrors[0] : null;
+  }
+
   validateTimeSelection(): boolean {
     this.validationErrors = [];    
     const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
@@ -435,7 +484,13 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       return false;
     } 
     if (duration > this.maxDuration * 60) {
-      this.validationErrors.push(`La duración máxima es de ${this.maxDurationDisplay}`);
+      const maxMessage = this.isEventTariff
+        ? `Los eventos pueden durar como máximo ${this.maxDurationDisplay}. Ajuste la hora de fin para continuar.`
+        : `La duración máxima es de ${this.maxDurationDisplay}`;
+      this.validationErrors.push(maxMessage);
+      return false;
+    }
+    if (!this.validateCantidadPersonas()) {
       return false;
     }
     const startTime = this.timeInputToString(this.startTimeInput);
@@ -655,8 +710,9 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       this.showValidationAlert = true;
       this.clearSelectedSlots();
       return;
-    }  
+    }
     this.updateTimeInputsFromSlots();
+    this.calculateTariff();
   }
   private areSlotsConsecutive(slots: TimeSlot[]): boolean {
     if (slots.length <= 1) return true;
@@ -835,24 +891,19 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   }
   private updateSlotsFromTimeInputs(): void {
     this.clearSelectedSlots();  
-    
     const startTime = this.timeInputToString(this.startTimeInput);
     const endTime = this.timeInputToString(this.endTimeInput);
-    
     if (!this.isTimeWithinAnyOperatingPeriod(startTime, endTime)) {
       return;
     }
-    
     const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
     const allSlots = [
       ...daySlots.morningSlots,
       ...daySlots.afternoonSlots,
       ...daySlots.nightSlots
-    ];
-    
+    ];    
     const startMinutes = this.timeToMinutes(startTime);
     const endMinutes = this.timeToMinutes(endTime);
-    
     allSlots.forEach(slot => {
       const slotStart = this.timeToMinutes(slot.startTime);
       const slotEnd = this.timeToMinutes(slot.endTime);
@@ -893,6 +944,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     this.selectedSlots.sort((a, b) => 
       this.timeToMinutes(a.startTime) - this.timeToMinutes(b.startTime)
     );
+    this.calculateTariff(); 
   }
 
   async confirmSelection(): Promise<void> {
@@ -1106,7 +1158,15 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       }
       const isWithinTariffTime = this.isTimeWithinTariff(slotStart, slotEnd);
       const applicableTariff = this.findApplicableTariffForTime(slotStart);
-      const tariffConflict = applicableTariff && applicableTariff.uuid !== this.dataTariff.uuid;
+
+      const PUNCTUAL_TYPES = ['por_hora', 'por_persona', 'por_evento'];
+      const tariffConflict = !!(
+        applicableTariff &&
+        applicableTariff.uuid !== this.dataTariff.uuid &&
+        this.dataTariff.desde &&
+        this.dataTariff.hasta &&
+        PUNCTUAL_TYPES.includes(applicableTariff.tipoCobro)
+      );
       let isAvailable = !isPast && !isReserved && isWithinTariffTime && !tariffConflict;
       if (isPartiallyReserved && !isPast && isWithinTariffTime && !tariffConflict) {
         isAvailable = true;
@@ -1159,14 +1219,24 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   }
   private findApplicableTariffForTime(time: string): Tarifa | undefined {
     if (!this.dataField?.tarifasDtoList) return undefined;
+    
+    // If selected tariff has no time range, it applies everywhere — no conflict possible
+    if (!this.dataTariff?.desde || !this.dataTariff?.hasta) {
+      return this.dataTariff;
+    }
+
+    const PUNCTUAL_TYPES = ['por_hora', 'por_persona', 'por_evento'];
     const timeMinutes = this.timeToMinutes(time);
-    const applicable = this.dataField.tarifasDtoList.filter(tarifa => 
-      tarifa.activo && 
-      tarifa.desde && 
+
+    const applicable = this.dataField.tarifasDtoList.filter(tarifa =>
+      tarifa.activo &&
+      tarifa.desde &&
       tarifa.hasta &&
-      timeMinutes >= this.timeToMinutes(tarifa.desde) && 
+      PUNCTUAL_TYPES.includes(tarifa.tipoCobro) &&  // Only punctual tariff types
+      timeMinutes >= this.timeToMinutes(tarifa.desde) &&
       timeMinutes < this.timeToMinutes(tarifa.hasta)
     );
+
     const selectedTariffApplicable = applicable.find(t => t.uuid === this.dataTariff.uuid);
     return selectedTariffApplicable || applicable[0];
   }
@@ -1177,19 +1247,26 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       this.tariffBoundaryTime = null;
       return;
     }
-    const activeTariffs = this.dataField.tarifasDtoList.filter(tarifa => 
-      tarifa.activo && tarifa.tipoCobro !== 'por_evento'
+
+    const PUNCTUAL_TYPES = ['por_hora', 'por_persona', 'por_evento'];
+
+    // Only compare against other punctual tariffs that have time ranges
+    const activePunctualTariffs = this.dataField.tarifasDtoList.filter(tarifa =>
+      tarifa.activo &&
+      tarifa.desde &&
+      tarifa.hasta &&
+      PUNCTUAL_TYPES.includes(tarifa.tipoCobro)
     );
-    this.applicableTariffs = activeTariffs.filter(tarifa => 
-      tarifa.uuid !== this.dataTariff.uuid && 
+
+    this.applicableTariffs = activePunctualTariffs.filter(tarifa =>
+      tarifa.uuid !== this.dataTariff.uuid &&
       this.tariffsOverlap(this.dataTariff, tarifa)
     );
+
     this.hasMultipleApplicableTariffs = this.applicableTariffs.length > 0;
-    if (this.hasMultipleApplicableTariffs) {
-      this.tariffBoundaryTime = this.findTariffBoundaryTime();
-    } else {
-      this.tariffBoundaryTime = null;
-    }
+    this.tariffBoundaryTime = this.hasMultipleApplicableTariffs
+      ? this.findTariffBoundaryTime()
+      : null;
   }
   private tariffsOverlap(tariff1: Tarifa, tariff2: Tarifa): boolean {
     if (!tariff1.desde || !tariff1.hasta || !tariff2.desde || !tariff2.hasta) {
@@ -1289,82 +1366,131 @@ calculateTariff(): void {
   this.calculatedTariff = 0;
   this.tariffDetails = [];
   if (!this.dataTariff) return;
-
+  
+  const montoBase = this.dataTariff.precioBase || 0;
   const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
   const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
-  const durationInHours= (endMinutes - startMinutes) / 60;
-  
+  const durationInHours = Math.max(0, (endMinutes - startMinutes) / 60);
+  let total = 0;
+
   switch (this.dataTariff.tipoCobro) {
     case 'por_hora':
-      const baseAmount = this.dataTariff.precioBase * durationInHours;
-      this.calculatedTariff = baseAmount;
-      this.tariffDetails.push(`Tarifa base: Bs. ${this.dataTariff.precioBase} × ${durationInHours.toFixed(1)}h = Bs. ${baseAmount.toFixed(2)}`);
-      this.calculateAdditionalConcepts(durationInHours);
-      break;
+      if (durationInHours <= 0) return;
+
+      total = montoBase * durationInHours;
+      this.tariffDetails.push(
+        `${durationInHours.toFixed(1)} hora(s) × Bs. ${montoBase.toFixed(2)} = Bs. ${total.toFixed(2)}`
+      );
+      break;      
     case 'por_persona':
-      this.calculatedTariff = this.dataTariff.precioBase;
-      this.tariffDetails.push(`Tarifa base por persona: Bs. ${this.dataTariff.precioBase}`);
-      this.tariffDetails.push('* Número de personas se definirá en el siguiente formulario');
-      this.calculateAdditionalConcepts(1);
+      const personas = this.cantidadPersonas || 1;
+      total = montoBase * personas;
+      this.tariffDetails.push(
+        `${personas} persona(s) × Bs. ${montoBase.toFixed(2)} = Bs. ${total.toFixed(2)}`
+      );
       break;
+
     case 'por_evento':
-      this.calculatedTariff = this.dataTariff.precioBase;
-      this.tariffDetails.push(`Tarifa por evento: Bs. ${this.dataTariff.precioBase}`);
-      this.calculateAdditionalConcepts(1);
+      total = montoBase;
+      this.tariffDetails.push(`Tarifa por evento: Bs. ${montoBase.toFixed(2)}`);
       break;
+
     case 'mensualidad':
+      total = montoBase;
+      this.tariffDetails.push(`Mensualidad base: Bs. ${montoBase.toFixed(2)}`);
       break;
+
     case 'por_sesion':
+      total = montoBase;
+      this.tariffDetails.push(`Tarifa por sesión: Bs. ${montoBase.toFixed(2)}`);
       break;
+
     case 'por_club':
+      total = montoBase;
+      this.tariffDetails.push(`Tarifa club/organización: Bs. ${montoBase.toFixed(2)}`);
       break;
+
     default:
-      console.warn('Tipo de cobro no reconocido:', this.dataTariff.tipoCobro);
+      total = montoBase;
+      this.tariffDetails.push(`Tarifa base: Bs. ${montoBase.toFixed(2)}`);
+      break;
+  }
+  const conceptosActivos = this.dataTariff.conceptosDtos?.filter((c: any) => c.activo) || [];
+
+  for (const concepto of conceptosActivos) {
+    const baseForConcepto = total;
+    const conceptoMonto = this.calculateScheduleConceptoAmount(concepto, baseForConcepto, durationInHours);
+    total += conceptoMonto;
+
+    if (conceptoMonto > 0) {
+      this.tariffDetails.push(this.getScheduleConceptoDetail(concepto, conceptoMonto, baseForConcepto, durationInHours));
+    }
+  }
+
+  this.calculatedTariff = total;
+}
+private calculateScheduleConceptoAmount(
+  concepto: any,
+  baseAmount: number,
+  durationInHours: number
+): number {
+  const valor = Number(concepto.valor || 0);
+  switch (concepto.tipo) {
+    case 'porcentaje':
+      return baseAmount * (valor / 100);
+    case 'fijo':
+      return valor;
+    case 'por_hora':
+      return valor * this.getDurationForScheduleConcepto(concepto, durationInHours);
+    default:
+      return 0;
   }
 }
-private calculateAdditionalConcepts(baseHours: number): void {
-  if (!this.dataTariff.conceptosDtos || this.dataTariff.conceptosDtos.length === 0) {
-    return;
+private getDurationForScheduleConcepto(concepto: any, durationInHours: number): number {
+  if (!concepto.desde || !concepto.hasta) {
+    return durationInHours;
   }
-  let conceptTotal = 0;
-  this.dataTariff.conceptosDtos.forEach(concepto => {
-    if (!concepto.activo) return;
-    let conceptAmount = 0;
-    let conceptDetail = '';    
-    if (concepto.tipo === 'por_hora') {
-      const applicableHours = this.getApplicableHoursForConcept(concepto);
-      conceptAmount = (concepto.valor || 0) * applicableHours;
-      conceptDetail = `${concepto.concepto}: $${concepto.valor} × ${applicableHours.toFixed(1)}h = $${conceptAmount.toFixed(2)}`;
-    } else if (concepto.tipo === 'porcentaje') {
-      conceptAmount = (this.calculatedTariff * (concepto.valor || 0)) / 100;
-      conceptDetail = `${concepto.concepto}: ${concepto.valor}% = $${conceptAmount.toFixed(2)}`;
-    } else if (concepto.tipo === 'monto_fijo') {
-      conceptAmount = concepto.valor || 0;
-      conceptDetail = `${concepto.concepto}: $${conceptAmount.toFixed(2)}`;
-    }
-    if (conceptAmount > 0) {
-      this.calculatedTariff += conceptAmount;
-      conceptTotal += conceptAmount;
-      this.tariffDetails.push(conceptDetail);
-    }
-  });
-  if (conceptTotal > 0) {
-    this.tariffDetails.push(`Total conceptos adicionales: $${conceptTotal.toFixed(2)}`);
-  }
-}
-private getApplicableHoursForConcept(concepto: any): number {
-  if (!concepto.desde || !concepto.hasta) return 0;
-  const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
-  const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
-  const conceptStart = this.timeToMinutes(concepto.desde);
-  const conceptEnd = this.timeToMinutes(concepto.hasta);
-  const overlapStart = Math.max(startMinutes, conceptStart);
-  const overlapEnd = Math.min(endMinutes, conceptEnd);
-  
-  const overlapHours = Math.max(0, overlapEnd - overlapStart) / 60;
-  return overlapHours;
+  const selectionStart = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
+  const selectionEnd = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
+  const conceptoStart = this.timeToMinutes(concepto.desde);
+  const conceptoEnd = this.timeToMinutes(concepto.hasta);
+  const overlapStart = Math.max(selectionStart, conceptoStart);
+  const overlapEnd = Math.min(selectionEnd, conceptoEnd);
+  if (overlapEnd <= overlapStart) return 0;
+  return (overlapEnd - overlapStart) / 60;
 }
 
+private getScheduleConceptoDetail(
+  concepto: any,
+  amount: number,
+  baseAmount: number,
+  durationInHours: number
+): string {
+  const name = concepto.concepto || 'Concepto adicional';
+  const valor = Number(concepto.valor || 0);
+
+  switch (concepto.tipo) {
+    case 'por_hora': {
+      const conceptHours = this.getDurationForScheduleConcepto(concepto, durationInHours);
+      const range = this.getConceptoTimeRangeDisplay(concepto);
+      return `${name}${range}: ${conceptHours.toFixed(1)}h × Bs. ${valor.toFixed(2)} = Bs. ${amount.toFixed(2)}`;
+    }
+    case 'porcentaje':
+      return `${name}: ${valor.toFixed(2)}% de Bs. ${baseAmount.toFixed(2)} = Bs. ${amount.toFixed(2)}`;
+    case 'fijo':
+      return `${name}: monto fijo = Bs. ${amount.toFixed(2)}`;
+    default:
+      return `${name}: Bs. ${amount.toFixed(2)}`;
+  }
+}
+
+private getConceptoTimeRangeDisplay(concepto: any): string {
+  if (!concepto.desde || !concepto.hasta) {
+    return '';
+  }
+
+  return ` (${String(concepto.desde).slice(0, 5)}-${String(concepto.hasta).slice(0, 5)})`;
+}
 
   setSelectedDay(date: Date): void {
     this.clearSelectedSlots();
@@ -1403,6 +1529,42 @@ private getApplicableHoursForConcept(concepto: any): number {
   private getDayName(date: Date): string {
     const days = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     return days[date.getDay()];
+  }
+
+  onCantidadPersonasChange(): void {
+    this.calculateTariff();
+    if (!this.validateCantidadPersonas()) {
+      this.showValidationAlert = true;
+    } else {
+      this.showValidationAlert = this.validationErrors.length > 0;
+    }
+  }
+
+  private validateCantidadPersonas(): boolean {
+    this.validationErrors = this.validationErrors.filter(error =>
+      !error.includes('cantidad de personas') && !error.includes('capacidad máxima')
+    );
+
+    if (!this.cantidadPersonas) {
+      if (this.requiresCantidadPersonas) {
+        this.validationErrors.push('Debe ingresar la cantidad de personas para esta tarifa');
+        return false;
+      }
+      return true;
+    }
+
+    if (this.cantidadPersonas < 1) {
+      this.validationErrors.push('La cantidad de personas debe ser mayor a 0');
+      return false;
+    }
+
+    const maxPersonas = this.dataField?.capacidadPersonas;
+    if (maxPersonas && this.cantidadPersonas > maxPersonas) {
+      this.validationErrors.push(`La cantidad de personas supera la capacidad máxima: ${maxPersonas}`);
+      return false;
+    }
+
+    return true;
   }
   private getFullDayName(date: Date): string {
     const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];

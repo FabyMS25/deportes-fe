@@ -31,7 +31,7 @@ interface RecurrentSchedule {
   fechaInicio: Date;
   fechaFin: Date;
   diasSeleccionados: any[];
-  tablero: string[][];
+  tablero: string[][][];
   cantidadSesiones: number;
   duracionSesionHoras: number;
 }
@@ -104,10 +104,10 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     switch (this.bookingState.tarifa.tipoCobro) {
       case 'por_evento':
         return this.systemConfigList['DIAS_ANTICIPACION_EVENTOS']?.valorNumerico ? 
-               this.systemConfigList['DIAS_ANTICIPACION_EVENTOS'].valorNumerico +' horas' : undefined;
+               this.systemConfigList['DIAS_ANTICIPACION_EVENTOS'].valorNumerico +' días' : undefined;
       case 'mensualidad': case 'por_sesion': case 'por_club':
         return this.systemConfigList['HORAS_ANTICIPACION_RECURRENTES']?.valorNumerico ? 
-               this.systemConfigList['HORAS_ANTICIPACION_RECURRENTES'].valorNumerico +' días' : undefined;
+               this.systemConfigList['HORAS_ANTICIPACION_RECURRENTES'].valorNumerico +' horas' : undefined;
       default:
         return this.systemConfigList['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico+' horas';
     }
@@ -118,6 +118,21 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   }
   get maxReservationsPerDayUser(): number | undefined {
     return this.systemConfigList['MAXIMO_RESERVAS_POR_DIA_USUARIO']?.valorNumerico;
+  }
+
+  get minReservationDurationDisplay(): string | undefined {
+    const value = this.systemConfigList[ClaveConfiguracion.DURACION_MINIMA_RESERVA]?.valorNumerico;
+    return value ? `${value} hora(s)` : undefined;
+  }
+
+  get maxEventDurationDisplay(): string | undefined {
+    const value = this.systemConfigList[ClaveConfiguracion.DURACION_MAXIMA_EVENTOS]?.valorNumerico;
+    return value ? `${value} hora(s)` : undefined;
+  }
+
+  get paymentValidationDisplay(): string | undefined {
+    const value = this.systemConfigList[ClaveConfiguracion.HORAS_VALIDACION_PAGO]?.valorNumerico;
+    return value ? `${value} hora(s)` : undefined;
   }
 
   constructor(

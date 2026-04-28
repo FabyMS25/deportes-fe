@@ -112,10 +112,11 @@ export class DashboardComponent implements OnInit {
 
   processReservations(filter: string): any[] {
     const now = new Date();
+
     const filteredReservations = this.reservationsList.filter(
-      reservation => reservation.estadoReserva === EstadoReserva.PAGADA
+      reservation => this.isRevenueReservation(reservation)
     );
-    
+
     let startDate: Date;
     let endDate: Date;
 
@@ -159,10 +160,10 @@ export class DashboardComponent implements OnInit {
 
     const groupedByComplex: Record<string, any> = filteredReservations.reduce((acc, reservation) => {
       const reservationDate = new Date(reservation.fechaReserva);
-      
+
       if (reservationDate >= startDate && reservationDate <= endDate) {
         const complexId = reservation.campoDeportivoDto?.complejoDto?.uuid;
-        
+
         if (complexId) {
           if (!acc[complexId]) {
             acc[complexId] = {
@@ -171,10 +172,12 @@ export class DashboardComponent implements OnInit {
               totalIncome: 0
             };
           }
-          acc[complexId].totalIncome += reservation.montoTotal;
+
+          acc[complexId].totalIncome += reservation.montoTotal || 0;
           acc[complexId].total += 1;
         }
       }
+
       return acc;
     }, {} as Record<string, any>);
 
@@ -182,7 +185,13 @@ export class DashboardComponent implements OnInit {
     result.sort((a, b) => b.totalIncome - a.totalIncome);
     return result;
   }
-
+  private isRevenueReservation(reserva: Reserva): boolean {
+    return [
+      EstadoReserva.PAGADA,
+      EstadoReserva.COMPLETADA,
+      EstadoReserva.EN_CURSO
+    ].includes(reserva.estadoReserva);
+  }
   /**
    * Reservations Analytics Chart
    */
@@ -225,7 +234,6 @@ export class DashboardComponent implements OnInit {
       default:
         temp = this.reservationsList;
     }
-
     this.initChart(value, temp);
   }
 
@@ -238,60 +246,65 @@ export class DashboardComponent implements OnInit {
       return reservaDate >= startDate && reservaDate <= endDate;
     });
   }
-
-  private processMonthlyData(reservas: Reserva[], labels: string[]) {
-    const monthlyData = {
-      pagadas: new Array(12).fill(0),
-      completadas: new Array(12).fill(0),
-      enCurso: new Array(12).fill(0),
-      confirmadas: new Array(12).fill(0),
-      pendientes: new Array(12).fill(0),
-      canceladas: new Array(12).fill(0),
-      rechazadas: new Array(12).fill(0),
-      expiradas: new Array(12).fill(0),
-      noShow: new Array(12).fill(0),
-      ingresos: new Array(12).fill(0),
-    };
+private processMonthlyData(reservas: Reserva[], labels: string[]) {
+  const monthlyData = {
+    pagadas: new Array(12).fill(0),
+    completadas: new Array(12).fill(0),
+    enCurso: new Array(12).fill(0),
+    confirmadas: new Array(12).fill(0),
+    pendientes: new Array(12).fill(0),
+    canceladas: new Array(12).fill(0),
+    rechazadas: new Array(12).fill(0),
+    expiradas: new Array(12).fill(0),
+    noShow: new Array(12).fill(0),
+    ingresos: new Array(12).fill(0),
+  };
 
     const monthNameToIndex: { [key: string]: number } = {
       'Ene': 0, 'Feb': 1, 'Mar': 2, 'Abr': 3, 'May': 4, 'Jun': 5,
       'Jul': 6, 'Ago': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dic': 11
     };
+  reservas.forEach((reserva: Reserva) => {
+    const month = new Date(reserva.fechaReserva).getMonth();
 
-    reservas.forEach((reserva: Reserva) => {
-      const month = new Date(reserva.fechaReserva).getMonth();
-      switch (reserva.estadoReserva) {
-        case EstadoReserva.PAGADA:
-          monthlyData.pagadas[month]++;
-          monthlyData.ingresos[month] += reserva.montoTotal;
-          break;
-        case EstadoReserva.COMPLETADA:
-          monthlyData.completadas[month]++;
-          monthlyData.ingresos[month] += reserva.montoTotal;
-          break;
-        case EstadoReserva.EN_CURSO:
-          monthlyData.enCurso[month]++;
-          break;
-        case EstadoReserva.SOLICITADA:
-          monthlyData.confirmadas[month]++;
-          break;
-        case EstadoReserva.PENDIENTE:
-          monthlyData.pendientes[month]++;
-          break;
-        case EstadoReserva.CANCELADA:
-          monthlyData.canceladas[month]++;
-          break;
-        // case EstadoReserva.RECHAZADA:
-        //   monthlyData.rechazadas[month]++;
-        //   break;
-        case EstadoReserva.EXPIRADA:
-          monthlyData.expiradas[month]++;
-          break;
-        case EstadoReserva.NO_SHOW:
-          monthlyData.noShow[month]++;
-          break;
-      }
-    });
+    switch (reserva.estadoReserva) {
+      case EstadoReserva.PAGADA:
+        monthlyData.pagadas[month]++;
+        monthlyData.ingresos[month] += reserva.montoTotal || 0;
+        break;
+
+      case EstadoReserva.COMPLETADA:
+        monthlyData.completadas[month]++;
+        monthlyData.ingresos[month] += reserva.montoTotal || 0;
+        break;
+
+      case EstadoReserva.EN_CURSO:
+        monthlyData.enCurso[month]++;
+        monthlyData.ingresos[month] += reserva.montoTotal || 0;
+        break;
+
+      case EstadoReserva.SOLICITADA:
+        monthlyData.confirmadas[month]++;
+        break;
+
+      case EstadoReserva.PENDIENTE:
+        monthlyData.pendientes[month]++;
+        break;
+
+      case EstadoReserva.CANCELADA:
+        monthlyData.canceladas[month]++;
+        break;
+
+      case EstadoReserva.EXPIRADA:
+        monthlyData.expiradas[month]++;
+        break;
+
+      case EstadoReserva.NO_SHOW:
+        monthlyData.noShow[month]++;
+        break;
+    }
+  });
+
 
     const alignedData = {
       pagadas: [] as number[],
@@ -332,8 +345,10 @@ export class DashboardComponent implements OnInit {
         alignedData.ingresos.push(0);
       }
     });
-    this.totalReservations = alignedData.pagadas.reduce((acc, curr) => acc + curr, 0) +
-                            alignedData.completadas.reduce((acc, curr) => acc + curr, 0);
+    this.totalReservations =
+      alignedData.pagadas.reduce((acc, curr) => acc + curr, 0) +
+      alignedData.completadas.reduce((acc, curr) => acc + curr, 0) +
+      alignedData.enCurso.reduce((acc, curr) => acc + curr, 0);
     this.totalIncome = alignedData.ingresos.reduce((acc, curr) => acc + curr, 0);
     this.totalCancellations = alignedData.canceladas.reduce((acc, curr) => acc + curr, 0) +
                              alignedData.expiradas.reduce((acc, curr) => acc + curr, 0);
@@ -391,7 +406,9 @@ export class DashboardComponent implements OnInit {
         {
           name: "Reservas Exitosas",
           type: "area",
-          data: monthlyData.pagadas.map((val, idx) => val + monthlyData.completadas[idx]),
+          data: monthlyData.pagadas.map(
+            (val, idx) => val + monthlyData.completadas[idx] + monthlyData.enCurso[idx]
+          ),
         },
         {
           name: "Ingresos (Bs)",

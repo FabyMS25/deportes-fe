@@ -24,7 +24,6 @@ export interface Tarifa {
   observaciones?:string;
   // typeRegister:String; // puntual , recurente 
   tipoCobro: ReservationType;// 'por_hora' | 'por_persona' | 'por_evento' | 'por_sesion' | 'mensualidad' | 'por_club'
-
   // Para mensualidades
   frecuencia?: PeriodicidadMensual;
   sesionesIncluidas?: number; // [1,2,3,4,5,6,7] para lunes a domingo
