@@ -62,6 +62,13 @@
           </button>
 
           <button
+            *ngIf="canMarkNoShow()"
+            class="btn btn-soft-warning btn-sm"
+            (click)="openNoShowModal()">
+            <i class="ri-user-unfollow-line me-1"></i>No Show
+          </button>
+
+          <button
             *ngIf="canActivate.includes('VALIDAR') && row.reservaDto?.estadoValidacion === 'PENDIENTE'"
             class="btn btn-soft-success btn-sm"
             (click)="openValidationModal(validationModal)">
@@ -239,7 +246,7 @@
               <div class="card-header bg-light py-2 px-3">
                 <h6 class="mb-0 d-flex align-items-center gap-2 flex-wrap">
                   <span><i class="ri-football-line me-2"></i>Campo Deportivo</span>
-                  <span class="badge bg-info-subtle text-info">{{ campoDeportivo.estadoActual }}</span>
+                  <span class="badge" [ngClass]="getStatusBadgeClass(campoDeportivo.estadoActual)">{{ campoDeportivo.estadoActual }}</span>
                 </h6>
               </div>
 
@@ -782,6 +789,90 @@
         </span>
     </button>
     </div>
+    </div>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="accion === 'noShowModal'">
+  <div class="modal-content">
+    <div class="modal-header border-bottom py-2 px-3">
+      <h5 class="modal-title mb-0">Registrar No Show</h5>
+      <button type="button" class="btn-close" (click)="onCloseModal()" aria-label="Close"></button>
+    </div>
+    <div class="modal-body py-3 px-3" [class.disabled]="showLoading">
+      <div class="card border mb-2">
+        <div class="card-header bg-light py-2 px-3">
+          <h6 class="mb-0">
+            <i class="ri-information-line me-2"></i>Informacion de la Reserva Recurrente
+          </h6>
+        </div>
+        <div class="card-body py-2 px-3">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <small class="text-muted d-block">Reserva</small>
+              <div class="fw-semibold">{{ row.reservaDto?.numeroReserva || 'N/A' }}</div>
+            </div>
+            <div class="col-md-4">
+              <small class="text-muted d-block">Estado actual</small>
+              <span class="badge" [ngClass]="getStatusBadgeClass(row.reservaDto?.estadoReserva)">
+                {{ row.reservaDto?.estadoReserva || 'N/A' }}
+              </span>
+            </div>
+            <div class="col-md-4">
+              <small class="text-muted d-block">Periodo</small>
+              <div class="fw-semibold">{{ row.fechaInicio | date:'dd/MM/yyyy' }} - {{ row.fechaFin | date:'dd/MM/yyyy' }}</div>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted d-block">Campo deportivo</small>
+              <div class="fw-semibold">{{ row.reservaDto?.campoDeportivoDto?.nombre || 'N/A' }}</div>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted d-block">Contribuyente</small>
+              <div class="fw-semibold">{{ row.reservaDto?.contribuyenteDto?.nombreCompleto || row.reservaDto?.contribuyenteDto?.nombre || 'N/A' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <form #noShowForm="ngForm" (ngSubmit)="markNoShowData(noShowForm.value)">
+        <div class="alert alert-warning alert-borderless py-2 mb-2">
+          <strong>Importante:</strong> este registro cambia el estado a NO_SHOW. No anula la tasa en RUAT, no cancela la reserva y no genera reembolso.
+        </div>
+        <div class="mb-2">
+          <label for="noShowObservation" class="form-label">Observacion *</label>
+          <textarea
+            id="noShowObservation"
+            class="form-control"
+            name="observation"
+            [(ngModel)]="observation"
+            required
+            minlength="10"
+            rows="3"
+            placeholder="Describa brevemente por que se registra la inasistencia"
+            #noShowObservationCtrl="ngModel"
+            [class.is-invalid]="noShowObservationCtrl.invalid && noShowObservationCtrl.touched">
+          </textarea>
+          <div *ngIf="noShowObservationCtrl.invalid && noShowObservationCtrl.touched" class="invalid-feedback">
+            <div *ngIf="noShowObservationCtrl.errors?.['required']">La observacion es requerida.</div>
+            <div *ngIf="noShowObservationCtrl.errors?.['minlength']">Minimo 10 caracteres.</div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer border-top py-2 px-3">
+      <button type="button" class="btn btn-light" (click)="onCloseModal()" [disabled]="showLoading">
+        <i class="ri-close-line me-1"></i>Cancelar
+      </button>
+      <button type="button" class="btn btn-warning"
+        [disabled]="noShowForm.invalid || showLoading"
+        (click)="markNoShowData(noShowForm.value)">
+        <span *ngIf="!showLoading">
+          <i class="ri-user-unfollow-line me-1"></i>Registrar No Show
+        </span>
+        <span *ngIf="showLoading">
+          <span class="spinner-border spinner-border-sm me-2"></span>Registrando...
+        </span>
+      </button>
     </div>
   </div>
 </ng-container>

@@ -41,6 +41,18 @@
   }
 }
 
+.schedule-selection-panel,
+.schedule-tariff-summary {
+  background: var(--vz-tertiary-bg, var(--bs-tertiary-bg, #f8f9fa));
+  color: var(--vz-body-color, var(--bs-body-color, #212529));
+}
+
+.schedule-duration-tile {
+  background: var(--vz-card-bg, var(--bs-card-bg, #fff));
+  border-color: var(--vz-border-color, var(--bs-border-color, #dee2e6)) !important;
+  color: var(--vz-body-color, var(--bs-body-color, #212529));
+}
+
 
 .partial-selection .slot-inner {
   background: linear-gradient(90deg, 

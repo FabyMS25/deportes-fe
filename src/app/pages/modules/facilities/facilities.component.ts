@@ -13,7 +13,7 @@ import { Districts } from 'src/app/core/constants/Places';
 import { ModalImportComponent } from 'src/app/shared/modal-import/modal-import.component';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { TipoEstructura } from 'src/app/core/constants/Features';
-import { EstadoActual } from 'src/app/core/constants/Estados';
+import { EstadoActual, StatusUtils } from 'src/app/core/constants/Estados';
 import { LeafletComponent } from 'src/app/shared/map/leaflet.component';
 import { ModalFacilitiesComponent } from '../../modals/modal-facility/modal-facility.component';
 
@@ -329,16 +329,7 @@ export class FacilitiesComponent {
   }
 
   getBadgeClass(estado: string): string {
-    switch (estado) {
-      case EstadoActual.ACTIVO:
-        return 'success';
-      case EstadoActual.MANTENIMIENTO:
-        return 'warning';
-      case EstadoActual.CERRADO:
-        return 'danger';
-      default:
-        return 'secondary';
-    }
+    return StatusUtils.getStatusColor(estado);
   }
   private notify(message: any, type: any): void {
     let timerInterval: any;

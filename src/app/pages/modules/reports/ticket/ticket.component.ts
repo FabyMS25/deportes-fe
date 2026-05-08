@@ -138,7 +138,9 @@ export class TicketComponent implements OnChanges {
     }
     const filename = `ticket_${this.reservationData.numeroReserva || this.reservationData.uuid}.pdf`;
     let observable;
-    if (this.reservationData.tipoReserva === 'puntual' && this.reservationData.uuid) {
+    if (this.reservationData.tipoReserva === 'periodo') {
+      observable = this.reportsService.getTicketByPeriodo(this.reservationData.uuid);
+    } else if (this.reservationData.tipoReserva === 'puntual' && this.reservationData.uuid) {
       switch (this.reservationData.tarifaDto?.tipoCobro) {
         case 'por_evento':
           observable = this.reportsService.getTicketReservaEvento(this.reservationData.uuid);
@@ -211,7 +213,7 @@ export class TicketComponent implements OnChanges {
       reserva_number: reserva.numeroReserva,
       tasa_number: reserva.numeroTasa,
       estado_reserva: reserva.estadoReserva,
-      tipo_reserva: reserva.tipoReserva === 'puntual' ? 'Puntual' : 'Recurrente',
+      tipo_reserva: this.getTipoReservaText(reserva.tipoReserva),
       observaciones: this.getObservaciones(reserva),
       requiere_aprobacion: campoDeportivo?.requiereAprobacion ? 'Sí' : 'No',
       is_puntual: reserva.tipoReserva === 'puntual',
@@ -250,11 +252,12 @@ export class TicketComponent implements OnChanges {
   }
 
   private generateTicketUrl(reserva: any): string {
+    console.log('Generando URL para ticket con reserva:', reserva);
     const baseUrl = environment.backendUrl;
     let endpoint = '';
-    if(reserva.tipoReserva = 'periodo'){
+    if (reserva.tipoReserva === 'periodo') {
       endpoint = '/reporte/ticket-mensual';
-    }else if (reserva.tipoReserva === 'puntual') {
+    } else if (reserva.tipoReserva === 'puntual') {
       switch (reserva.tarifaDto?.tipoCobro) {
         case 'por_evento':
           endpoint = '/reporte/ticket-reser-ev';
@@ -293,6 +296,16 @@ export class TicketComponent implements OnChanges {
         duracion_horas: puntual?.duracionHoras,
         cantidad_personas: puntual?.cantidadPersonas
       };
+    } else if (reserva.tipoReserva === 'periodo') {
+      const periodo = reserva.reservaPeriodoDto;
+      return {
+        fecha_inicio: this.formatDate(new Date(periodo?.fechaInicio)),
+        fecha_fin: this.formatDate(new Date(periodo?.fechaFin)),
+        dias_semana: this.formatDiasSemana(periodo?.diasSemana),
+        duracion_sesion: periodo?.duracionSesionHoras,
+        cantidad_sesiones: periodo?.cantidadSesiones,
+        cantidad_personas: periodo?.cantidadPersonas
+      };
     } else {
       const recurrente = reserva.reservaRecurrenteDto;
       return {
@@ -308,6 +321,8 @@ export class TicketComponent implements OnChanges {
   private getSuperficie(reserva: any): string {
     if (reserva.tipoReserva === 'puntual') {
       return reserva.reservaPuntualDto?.superficie || 'N/A';
+    } else if (reserva.tipoReserva === 'periodo') {
+      return reserva.reservaPeriodoDto?.superficie || 'N/A';
     } else {
       return reserva.reservaRecurrenteDto?.superficie || 'N/A';
     }
@@ -315,6 +330,8 @@ export class TicketComponent implements OnChanges {
   private getCategoria(reserva: any): string {
     if (reserva.tipoReserva === 'puntual') {
       return reserva.reservaPuntualDto?.categoria || 'N/A';
+    } else if (reserva.tipoReserva === 'periodo') {
+      return reserva.reservaPeriodoDto?.categoria || 'N/A';
     } else {
       return reserva.reservaRecurrenteDto?.categoria || 'N/A';
     }
@@ -322,6 +339,9 @@ export class TicketComponent implements OnChanges {
   private getDuracionTotal(reserva: any): string {
     if (reserva.tipoReserva === 'puntual') {
       return `${reserva.reservaPuntualDto?.duracionHoras || 0} horas`;
+    } else if (reserva.tipoReserva === 'periodo') {
+      const periodo = reserva.reservaPeriodoDto;
+      return `${periodo?.cantidadSesiones || 0} sesiones de ${periodo?.duracionSesionHoras || 0} horas cada una`;
     } else {
       const recurrente = reserva.reservaRecurrenteDto;
       return `${recurrente?.cantidadSesiones || 0} sesiones de ${recurrente?.duracionSesionHoras || 0} horas cada una`;
@@ -330,9 +350,20 @@ export class TicketComponent implements OnChanges {
   private getObservaciones(reserva: any): string {
     if (reserva.tipoReserva === 'puntual') {
       return reserva.reservaPuntualDto?.observaciones || 'Ninguna';
+    } else if (reserva.tipoReserva === 'periodo') {
+      return reserva.reservaPeriodoDto?.observaciones || 'Ninguna';
     } else {
       return reserva.reservaRecurrenteDto?.observaciones || 'Ninguna';
     }
+  }
+
+  private getTipoReservaText(tipoReserva: string): string {
+    const mapping: { [key: string]: string } = {
+      puntual: 'Puntual',
+      recurrente: 'Recurrente',
+      periodo: 'Periodo'
+    };
+    return mapping[tipoReserva] || tipoReserva;
   }
 
   private formatDate(date: Date): string {
@@ -369,7 +400,7 @@ export class TicketComponent implements OnChanges {
   }
   getReservationTypeText(): string {
     if (!this.reservationData) return '';    
-    const tipoReserva = this.reservationData.tipoReserva === 'puntual' ? 'Puntual' : 'Recurrente';
+    const tipoReserva = this.getTipoReservaText(this.reservationData.tipoReserva);
     const tipoCobro = this.reservationData.tarifaDto?.tipoCobro || 'No especificado';
     return `${tipoReserva} - ${this.formatTipoCobro(tipoCobro)}`;
   }

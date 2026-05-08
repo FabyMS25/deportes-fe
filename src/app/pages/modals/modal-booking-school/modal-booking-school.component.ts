@@ -39,7 +39,7 @@ import { EstudianteEscuela } from 'src/app/core/models/EstudianteEscuela.model';
 
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { TipoOrganizacion } from 'src/app/core/constants/Features';
-import { EstadoReserva, EstadoValidacion, EstadoPago } from 'src/app/core/constants/Estados';
+import { EstadoReserva, EstadoValidacion, EstadoPago, StatusUtils } from 'src/app/core/constants/Estados';
 
 import { TicketComponent } from '../../modules/reports/ticket/ticket.component';
 
@@ -760,42 +760,11 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
   }
 
   getStatusBadgeClass(estado: string | undefined): string {
-    switch (estado) {
-      case EstadoReserva.SOLICITADA:
-        return 'bg-warning-subtle text-warning';
-      case EstadoReserva.PENDIENTE:
-        return 'bg-info-subtle text-info';
-      case EstadoReserva.PAGADA:
-        return 'bg-primary-subtle text-primary';
-      case EstadoReserva.EN_CURSO:
-      case EstadoReserva.COMPLETADA:
-        return 'bg-success-subtle text-success';
-      case EstadoReserva.CANCELADA:
-        return 'bg-danger-subtle text-danger';
-      case EstadoReserva.NO_SHOW:
-        return 'bg-dark-subtle text-dark';
-      default:
-        return 'bg-secondary-subtle text-secondary';
-    }
+    return StatusUtils.getStatusBadgeClass(estado || '');
   }
 
   getStatusAlertClass(estado: string | undefined): string {
-    switch (estado) {
-      case EstadoReserva.SOLICITADA:
-        return 'alert-warning';
-      case EstadoReserva.PENDIENTE:
-        return 'alert-info';
-      case EstadoReserva.PAGADA:
-        return 'alert-primary';
-      case EstadoReserva.EN_CURSO:
-      case EstadoReserva.COMPLETADA:
-        return 'alert-success';
-      case EstadoReserva.CANCELADA:
-      case EstadoReserva.NO_SHOW:
-        return 'alert-danger';
-      default:
-        return 'alert-secondary';
-    }
+    return StatusUtils.getStatusAlertClass(estado || '');
   }
 
   getStatusDescription(estado: string | undefined): string {
@@ -813,16 +782,7 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
   }
 
   getValidationBadgeClass(estado: string): string {
-    switch (estado) {
-      case 'PENDIENTE':
-        return 'bg-warning-subtle text-warning';
-      case 'APROBADA':
-        return 'bg-success-subtle text-success';
-      case 'RECHAZADA':
-        return 'bg-danger-subtle text-danger';
-      default:
-        return 'bg-secondary-subtle text-secondary';
-    }
+    return StatusUtils.getStatusBadgeClass(estado);
   }
 
   getValidationDescription(estado: string): string {

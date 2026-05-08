@@ -332,9 +332,10 @@
                 </option>
               </select>
             </div>
-
-            <div class="border rounded bg-light px-3 py-2 mt-2"
+            <div class="mb-2"
                  *ngIf="selectedEstudiante?.contribuyenteDto as contribuyente">
+              <label class="form-label mb-0">Tutor: </label>
+            <div class="border rounded bg-light px-3 py-2">
               <div class="row g-2">
                 <div class="col-md-6">
                   <small class="text-muted d-block">Nombre</small>
@@ -352,6 +353,8 @@
                 </div>
               </div>
             </div>
+            </div>
+
           </div>
         </div>
 

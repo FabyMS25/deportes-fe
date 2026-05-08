@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Output, EventEmitter, OnInit } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { EstadoActual } from 'src/app/core/constants/Estados';
+import { EstadoActual, StatusUtils } from 'src/app/core/constants/Estados';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
@@ -126,6 +126,26 @@ export class ComplejoSelectionComponent implements OnInit {
   hasActiveFields(complejo: ComplejoDeportivo): boolean {
     return this.getCamposCount(complejo) > 0;
   }
+
+  getStatusRibbonClass(status: string): string {
+    return StatusUtils.getStatusRibbonClass(status?.toUpperCase() || '');
+  }
+
+  getStatusIcon(status: string): string {
+    switch (status?.toUpperCase()) {
+      case EstadoActual.ACTIVO:
+        return 'ri-checkbox-circle-fill';
+      case EstadoActual.MANTENIMIENTO:
+        return 'ri-tools-fill';
+      case EstadoActual.CERRADO:
+        return 'ri-close-circle-fill';
+      case EstadoActual.EVENTO_MUNICIPAL:
+        return 'ri-calendar-event-fill';
+      default:
+        return 'ri-question-line';
+    }
+  }
+
   hasEncargados(complejo: ComplejoDeportivo): EncargadoComplejo | undefined {
     const today = new Date();
     const todayNormalized = new Date(today.getFullYear(), today.getMonth(), today.getDate());

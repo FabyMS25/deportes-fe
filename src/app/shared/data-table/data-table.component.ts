@@ -117,7 +117,12 @@ export class DataTableComponent implements OnChanges {
       ...(this.actions.edit && this.canShow('Editar',data)? [{ tooltip: 'Editar', icon: 'ri-pencil-fill', handler: () => this.editItem(data), buttonClass: 'text-primary edit-item-btn' }] : []),
       ...((this.actions.close && this.canShow(this.actions.close,data,)) ? [{ tooltip: this.actions.close, icon: 'ri-close-circle-line', handler: () => this.closeItem(data), buttonClass: 'text-danger remove-item-btn' }] : []),
       ...((this.actions.check && this.canShow(this.actions.check,data,)) ? [{ tooltip: this.actions.check, icon: 'ri-checkbox-circle-line', handler: () => this.checkItem(data), buttonClass: 'text-success' }] : []),
-      ...(this.actions.process ? [{ tooltip: this.actions.process, icon: ' ri-auction-line', handler: () => this.processItem(data), buttonClass: 'text-warning' }] : []),
+      ...((this.actions.process && this.canShow(this.actions.process, data)) ? [{
+        tooltip: this.actions.process,
+        icon: this.actions.process === 'No Show' ? 'ri-user-unfollow-line' : 'ri-auction-line',
+        handler: () => this.processItem(data),
+        buttonClass: 'text-warning'
+      }] : []),
       ...(this.actions.notify ? [{ tooltip: 'Notificar', icon: 'ri-mail-send-fill', handler: () => this.notifyItem(data), buttonClass: 'text-success' }] : []),
       ...(this.actions.telf ? [{ tooltip: 'Telefono', icon: 'ri-phone-line', handler: () => this.sentMessage(data), buttonClass: 'text-success' }] : []),
     ];  
@@ -130,6 +135,11 @@ export class DataTableComponent implements OnChanges {
         return data.reservaDto && data.reservaDto.estadoValidacion ===statusData.EstadoValidacion.PENDIENTE;
       case 'Anular':
         return data.reservaDto && (data.reservaDto.estadoReserva ===statusData.EstadoReserva.PENDIENTE);
+      case 'No Show':
+        return data.reservaDto && (
+          data.reservaDto.estadoReserva === statusData.EstadoReserva.PAGADA ||
+          data.reservaDto.estadoReserva === statusData.EstadoReserva.EN_CURSO
+        );
       case 'Bloquear':
         return data.estadoUsuario === statusData.EstadoUsuario.ACTIVO;
       case 'Desbloquear':
@@ -211,6 +221,11 @@ export class DataTableComponent implements OnChanges {
       return customMappings[value];
     }
     return statusData.StatusUtils.getStatusColor(value);
+  }
+
+  getBadgeClass(value: any): string {
+    const color = this.getBadgeStatus(value);
+    return `bg-${color}-subtle text-${color}`;
   }
   //#endregion
 

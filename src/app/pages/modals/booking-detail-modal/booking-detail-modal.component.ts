@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { EstadoReserva } from 'src/app/core/constants/Estados';
+import { EstadoReserva, StatusUtils } from 'src/app/core/constants/Estados';
 import { Reserva } from 'src/app/core/models/reserva.model';
 import { BookingRecurrentModalComponent } from '../modal-booking-recurrent/modal-booking-recurrent.component';
 import { BookingOneTimeModalComponent } from '../modal-booking-one-time/modal-booking-one-time.component';
@@ -61,31 +61,11 @@ export class BookingDetailModalComponent {
   }
 
   getStatusBadgeClass(estado: string | undefined): string {
-    switch (estado) {
-      case EstadoReserva.SOLICITADA: return 'bg-warning-subtle text-warning';
-      case EstadoReserva.PENDIENTE: return 'bg-info-subtle text-info';
-      case EstadoReserva.PAGADA: return 'bg-primary-subtle text-primary';
-      case EstadoReserva.EN_CURSO: return 'bg-success-subtle text-success';
-      case EstadoReserva.COMPLETADA: return 'bg-success-subtle text-success';
-      case EstadoReserva.CANCELADA: return 'bg-danger-subtle text-danger';
-      case EstadoReserva.EXPIRADA: return 'bg-dark-subtle text-dark';
-      case EstadoReserva.NO_SHOW: return 'bg-dark-subtle text-dark';
-      default: return 'bg-secondary-subtle text-secondary';
-    }
+    return StatusUtils.getStatusBadgeClass(estado || '');
   }
 
   getStatusAlertClass(estado: string | undefined): string {
-    switch (estado) {
-      case EstadoReserva.SOLICITADA: return 'alert-warning';
-      case EstadoReserva.PENDIENTE: return 'alert-info';
-      case EstadoReserva.PAGADA: return 'alert-primary';
-      case EstadoReserva.EN_CURSO:
-      case EstadoReserva.COMPLETADA: return 'alert-success';
-      case EstadoReserva.CANCELADA:
-      case EstadoReserva.EXPIRADA:
-      case EstadoReserva.NO_SHOW: return 'alert-danger';
-      default: return 'alert-secondary';
-    }
+    return StatusUtils.getStatusAlertClass(estado || '');
   }
 
   openFullDetail(): void {

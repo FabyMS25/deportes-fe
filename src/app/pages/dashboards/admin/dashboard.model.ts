@@ -1,5 +1,5 @@
 // Chart data
-export interface ChartType {
+export interface ChartType { 
     chart?: any;
     plotOptions?: any;
     colors?: any;

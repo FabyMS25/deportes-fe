@@ -49,7 +49,7 @@
                       <td>
                         <ng-container *ngIf="getPropertyValue(data, column.prop) as value; else emptyValue">
                             @if (column.tag) {
-                                <span class="badge" [ngClass]="['bg-'+getBadgeStatus(value)+'-subtle','text-'+getBadgeStatus(value)]">
+                                <span class="badge" [ngClass]="getBadgeClass(value)">
                                     {{ value }}
                                 </span>
                             } @else if (column.date) {
@@ -62,7 +62,7 @@
                                 @if (column.avatar && data.avatar) {
                                     <img [src]="'assets/icons/users/'+data.avatar" alt="" class="avatar-xs rounded-circle">
                                 }
-                                <a (click)="showItem(data)">{{value}}</a>
+                                <a class="table-cell-link" (click)="showItem(data)">{{value}}</a>
                             }
                         </ng-container>
                         <ng-template #emptyValue>
@@ -135,8 +135,7 @@
                             <div class="text-muted small mb-1">{{column.name}}</div>
                             <ng-container *ngIf="getPropertyValue(data, column.prop) as value; else emptyValue">
                                 @if (column.tag) {
-                                    <span class="badge" 
-                                      [ngClass]="['bg-' + getBadgeStatus(value) + '-subtle', 'text-' + getBadgeStatus(value)]">
+                                    <span class="badge" [ngClass]="getBadgeClass(value)">
                                         {{ value }}
                                     </span>
                                 } @else if (column.date) {

@@ -16,7 +16,7 @@ import { ToastService } from '../admin/toast-service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
-import { EstadoReserva } from 'src/app/core/constants/Estados';
+import { EstadoReserva, StatusUtils } from 'src/app/core/constants/Estados';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
@@ -34,6 +34,15 @@ import { BookingDetailModalComponent } from '../../modals/booking-detail-modal/b
 })
 
 export class CalendarDashboardComponent implements OnInit {
+  private readonly visibleReservationStates: EstadoReserva[] = [
+    EstadoReserva.SOLICITADA,
+    EstadoReserva.PENDIENTE,
+    EstadoReserva.PAGADA,
+    EstadoReserva.EN_CURSO,
+    EstadoReserva.COMPLETADA,
+    EstadoReserva.NO_SHOW
+  ];
+
   breadCrumbItems!: Array<{}>;
   canActivate:string[];
 
@@ -176,10 +185,8 @@ export class CalendarDashboardComponent implements OnInit {
       let allEvents: any[] = [];
 
       if (reservasPuntuales?.status === 'OK') {
-        let reservasPuntualesData = reservasPuntuales.payload.filter((item:Reserva)=>
-          item.estadoReserva === EstadoReserva.PAGADA || 
-          item.estadoReserva === EstadoReserva.PENDIENTE || item.estadoReserva===EstadoReserva.SOLICITADA ||
-          item.estadoReserva === EstadoReserva.COMPLETADA || item.estadoReserva===EstadoReserva.EN_CURSO
+        let reservasPuntualesData = reservasPuntuales.payload.filter((item: Reserva) =>
+          this.visibleReservationStates.includes(item.estadoReserva)
         );
         
         if (this.employee) {
@@ -211,14 +218,15 @@ export class CalendarDashboardComponent implements OnInit {
           const endTime = this.formatTime(horaSalida);
           const campoNombre = evt.campoDeportivoDto?.nombre || 'Campo';
           const complejoNombre = evt.campoDeportivoDto?.complejoDto?.nombre || 'Complejo';
+          const statusColor = this.getStatusThemeColor(evt.estadoReserva);
 
           return {
             id: `puntual-${evt.uuid}`,
             title: `${startTime}-${endTime} | ${complejoNombre} -${campoNombre}`,
             start: `${fechaBase.split('T')[0]}T${horaEntrada}`,
             end: `${fechaBase.split('T')[0]}T${horaSalida}`,
-            backgroundColor: '#10b981',
-            borderColor: '#059669',
+            backgroundColor: statusColor,
+            borderColor: statusColor,
             textColor: '#fff',
             extendedProps: {
               type: 'reserva-puntual',
@@ -235,10 +243,8 @@ export class CalendarDashboardComponent implements OnInit {
       }
 
       if (reservasRecurrentes?.status === 'OK') {
-        let reservasRecurrentesData = reservasRecurrentes.payload.filter((item:Reserva)=>
-          item.estadoReserva === EstadoReserva.PAGADA || 
-          item.estadoReserva === EstadoReserva.PENDIENTE || item.estadoReserva===EstadoReserva.SOLICITADA ||
-          item.estadoReserva === EstadoReserva.COMPLETADA || item.estadoReserva===EstadoReserva.EN_CURSO
+        let reservasRecurrentesData = reservasRecurrentes.payload.filter((item: Reserva) =>
+          this.visibleReservationStates.includes(item.estadoReserva)
         );
         
         if (this.employee) {
@@ -386,6 +392,7 @@ export class CalendarDashboardComponent implements OnInit {
       const complejoNombre = reserva.campoDeportivoDto?.complejoDto?.nombre || 'Complejo';
       const contribuyenteNombre = reserva.contribuyenteDto?.nombreCompleto || 
                                 reserva.contribuyenteDto?.nombre || 'Cliente';
+      const statusColor = this.getStatusThemeColor(reserva.estadoReserva);
       for (let monthIndex = 0; monthIndex < horario3D.length; monthIndex++) {
         const monthMatrix = horario3D[monthIndex] as any[];
         let targetYear = startYear;
@@ -424,8 +431,8 @@ export class CalendarDashboardComponent implements OnInit {
               title: `${startTime}-${endTime} | ${campoNombre}`,
               start: `${dateStr}T${horaInicio}`,
               end: `${dateStr}T${horaFin}`,
-              backgroundColor: '#3b82f6',
-              borderColor: '#2563eb',
+              backgroundColor: statusColor,
+              borderColor: statusColor,
               textColor: '#fff',
               extendedProps: {
                 type: 'reserva-recurrente',
@@ -442,6 +449,12 @@ export class CalendarDashboardComponent implements OnInit {
       }
     });
     return events;
+  }
+
+  private getStatusThemeColor(status: string): string {
+    const colorName = StatusUtils.getStatusColor(status);
+    const cssValue = getComputedStyle(document.documentElement).getPropertyValue(`--vz-${colorName}`);
+    return cssValue ? cssValue.trim() : colorName;
   }
 
   calendarOptions: CalendarOptions = {

@@ -14,7 +14,7 @@ import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
-import { EstadoActual, EstadoUsuario } from 'src/app/core/constants/Estados';
+import { EstadoActual, EstadoUsuario, StatusUtils } from 'src/app/core/constants/Estados';
 import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
@@ -814,32 +814,20 @@ export class MapDashboardComponent implements OnInit {
         return `Bs. ${minPrice.toFixed(2)} - ${maxPrice.toFixed(2)}`;
     }
     private getEstadoBadge(estado: string): string {
-        switch (estado) {
-            case EstadoActual.ACTIVO:
-                return '<span class="badge bg-success">Activo</span>';
-            case EstadoActual.MANTENIMIENTO:
-                return '<span class="badge bg-warning">Mantenimiento</span>';
-            case EstadoActual.CERRADO:
-                return '<span class="badge bg-danger">Cerrado</span>';
-            case EstadoActual.EVENTO_MUNICIPAL:
-                return '<span class="badge bg-danger">Reservado para Evento Municipal</span>';
-            default:
-                return '<span class="badge bg-secondary">N/A</span>';
-        }
+        const badge = this.getEstadoBadgeText(estado);
+        return `<span class="badge ${badge.class}">${badge.text}</span>`;
     }
     private getEstadoBadgeText(estado: string): { text: string, class: string } {
-        switch (estado) {
-            case EstadoActual.ACTIVO:
-                return { text: 'Activo', class: 'bg-success' };
-            case EstadoActual.MANTENIMIENTO:
-                return { text: 'Mantenimiento', class: 'bg-warning' };
-            case EstadoActual.CERRADO:
-                return { text: 'Cerrado', class: 'bg-danger' };
-            case EstadoActual.EVENTO_MUNICIPAL:
-                return { text: 'Reservado para Evento Municipal', class: 'bg-danger' };
-            default:
-                return { text: 'N/A', class: 'bg-secondary' };
-        }
+        const labels: Record<string, string> = {
+            [EstadoActual.ACTIVO]: 'Activo',
+            [EstadoActual.MANTENIMIENTO]: 'Mantenimiento',
+            [EstadoActual.CERRADO]: 'Cerrado',
+            [EstadoActual.EVENTO_MUNICIPAL]: 'Reservado para Evento Municipal'
+        };
+        return {
+            text: labels[estado] || 'N/A',
+            class: StatusUtils.getStatusBgClass(estado)
+        };
     }
     private highlightMatch(text: string, query: string): string {
         if (!text || !query) return text || '';        

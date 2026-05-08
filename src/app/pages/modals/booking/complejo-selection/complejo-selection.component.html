@@ -43,19 +43,8 @@
           (keydown.enter)="selectComplejo(complejo)"
           (keydown.space)="selectComplejo(complejo)">        
         <div class="card-body p-4 pb-0">
-          <div class="ribbon ribbon-shape trending-ribbon" 
-              [ngClass]="{
-                'ribbon-success': complejo.estadoActual.toLowerCase() === 'activo',
-                'ribbon-warning': complejo.estadoActual.toLowerCase() === 'mantenimiento',
-                'ribbon-danger': complejo.estadoActual.toLowerCase() === 'cerrado',
-                'ribbon-secondary': !['activo', 'mantenimiento', 'cerrado'].includes(complejo.estadoActual)
-              }">            
-            <ng-container [ngSwitch]="complejo.estadoActual.toLowerCase()">
-              <i *ngSwitchCase="'activo'" class="ri-checkbox-circle-fill text-white align-bottom"></i>
-              <i *ngSwitchCase="'mantenimiento'" class="ri-tools-fill text-white align-bottom"></i>
-              <i *ngSwitchCase="'cerrado'" class="ri-close-circle-fill text-white align-bottom"></i>
-              <i *ngSwitchDefault class="ri-question-line text-white align-bottom"></i>
-            </ng-container>            
+          <div class="ribbon ribbon-shape trending-ribbon" [ngClass]="getStatusRibbonClass(complejo.estadoActual)">            
+            <i [class]="getStatusIcon(complejo.estadoActual) + ' text-white align-bottom'"></i>
             <span class="trending-ribbon-text">{{complejo.estadoActual}}</span>
           </div>
           <!-- <div class="avatar-lg mx-auto mb-3">
@@ -160,19 +149,8 @@
           (keydown.enter)="selectComplejo(complejo)"
           (keydown.space)="selectComplejo(complejo)">        
       <div class="card-body">
-        <div class="ribbon ribbon-shape trending-ribbon" 
-              [ngClass]="{
-                'ribbon-success': complejo.estadoActual.toLowerCase() === 'activo',
-                'ribbon-warning': complejo.estadoActual.toLowerCase() === 'mantenimiento',
-                'ribbon-danger': complejo.estadoActual.toLowerCase() === 'cerrado',
-                'ribbon-secondary': !['activo', 'mantenimiento', 'cerrado'].includes(complejo.estadoActual)
-              }">            
-            <ng-container [ngSwitch]="complejo.estadoActual.toLowerCase()">
-              <i *ngSwitchCase="'activo'" class="ri-checkbox-circle-fill text-white align-bottom"></i>
-              <i *ngSwitchCase="'mantenimiento'" class="ri-tools-fill text-white align-bottom"></i>
-              <i *ngSwitchCase="'cerrado'" class="ri-close-circle-fill text-white align-bottom"></i>
-              <i *ngSwitchDefault class="ri-question-line text-white align-bottom"></i>
-            </ng-container>            
+        <div class="ribbon ribbon-shape trending-ribbon" [ngClass]="getStatusRibbonClass(complejo.estadoActual)">            
+            <i [class]="getStatusIcon(complejo.estadoActual) + ' text-white align-bottom'"></i>
             <span class="trending-ribbon-text">{{complejo.estadoActual}}</span>
         </div>
         <div class="row align-items-center">

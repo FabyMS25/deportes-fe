@@ -170,12 +170,14 @@
                     validate: canActivate.includes('VALIDAR'),
                     consult: canActivate.includes('ACTUALIZAR'),
                     records: true,
+                    process: canActivate.includes('ACTUALIZAR') ? 'No Show' : '',
                     close: canActivate.includes('ANULAR')?'Anular':'',}"
                 (showItemEmitter)="openModal($event,'show','lg')"
                 (editItemEmitter)="openModal($event,'edit','lg')"
                 (consultItemEmitter)="consultModal($event,consultModel,'md')"
                 (validateItemEmitter)="openModal($event,'validarModal','')"
                 (closeItemEmitter)="openModal($event,'annularModal','')"
+                (processItemEmitter)="openModal($event,'noShowModal','')"
                 (recordsEmitter)="showTicket($event)"
                 [multiCheck]="canActivate.includes('CREAR')"
                 (selectedItemEmitter)="getSelectedItems($event)" 

@@ -22,6 +22,109 @@
 </div>
 
 <div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header border-0 align-items-center d-flex">
+                <div class="flex-grow-1">
+                    <h4 class="card-title mb-1">Gestión Actual: Ingresos y Reservas</h4>
+                    <p class="text-muted mb-0">Periodo {{ gestionRangeLabel }}</p>
+                </div>
+            </div>
+            <div class="card-header p-0 border-0 bg-light-subtle">
+                <div class="row g-0 text-center">
+                    <div class="col-6 col-md-4 col-xl-2">
+                        <div class="p-3 border border-dashed border-start-0">
+                            <h5 class="mb-1">
+                                <span [countUp]="gestionTotalReservations" class="counter-value" [options]="option"></span>
+                            </h5>
+                            <p class="text-muted mb-0 fs-11">Total Reservas</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-xl-2">
+                        <div class="p-3 border border-dashed border-start-0">
+                            <h5 class="mb-1 text-success">
+                                <span [countUp]="gestionSuccessfulReservations" class="counter-value" [options]="option"></span>
+                            </h5>
+                            <p class="text-muted mb-0 fs-11">Exitosas</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-xl-2">
+                        <div class="p-3 border border-dashed border-start-0">
+                            <h5 class="mb-1 text-warning">
+                                <span [countUp]="gestionPendingReservations" class="counter-value" [options]="option"></span>
+                            </h5>
+                            <p class="text-muted mb-0 fs-11">Pendientes</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-xl-2">
+                        <div class="p-3 border border-dashed border-start-0">
+                            <h5 class="mb-1 text-danger">
+                                <span [countUp]="gestionFailedReservations" class="counter-value" [options]="option"></span>
+                            </h5>
+                            <p class="text-muted mb-0 fs-11">No Concretadas</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-xl-2">
+                        <div class="p-3 border border-dashed border-start-0">
+                            <h5 class="mb-1">
+                                Bs. <span [countUp]="gestionTotalIncome" class="counter-value" [options]="option"></span>
+                            </h5>
+                            <p class="text-muted mb-0 fs-11">Ingresos</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-xl-2">
+                        <div class="p-3 border border-dashed border-start-0 border-end-0">
+                            <h5 class="mb-1 text-success">
+                                <span [countUp]="gestionSuccessRate" class="counter-value" [options]="option"></span>%
+                            </h5>
+                            <p class="text-muted mb-0 fs-11">Tasa Éxito</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-xl-8">
+                        <apx-chart *ngIf="reservationsList.length>0 && gestionActualChart"
+                            dir="ltr"
+                            class="apex-charts"
+                            [series]="gestionActualChart.series"
+                            [chart]="gestionActualChart.chart"
+                            [xaxis]="gestionActualChart.xaxis"
+                            [stroke]="gestionActualChart.stroke"
+                            [dataLabels]="gestionActualChart.dataLabels"
+                            [yaxis]="gestionActualChart.yaxis"
+                            [labels]="gestionActualChart.labels"
+                            [legend]="gestionActualChart.legend"
+                            [colors]="gestionActualChart.colors"
+                            [fill]="gestionActualChart.fill"
+                            [plotOptions]="gestionActualChart.plotOptions"
+                            [tooltip]="gestionActualChart.tooltip"
+                            [grid]="gestionActualChart.grid">
+                        </apx-chart>
+                    </div>
+                    <div class="col-xl-4">
+                        <apx-chart *ngIf="reservationsList.length>0 && gestionEstadosChart"
+                            dir="ltr"
+                            class="apex-charts"
+                            [series]="gestionEstadosChart.series"
+                            [chart]="gestionEstadosChart.chart"
+                            [labels]="gestionEstadosChart.labels"
+                            [legend]="gestionEstadosChart.legend"
+                            [colors]="gestionEstadosChart.colors"
+                            [dataLabels]="gestionEstadosChart.dataLabels"
+                            [plotOptions]="gestionEstadosChart.plotOptions"
+                            [tooltip]="gestionEstadosChart.tooltip"
+                            [responsive]="gestionEstadosChart.responsive">
+                        </apx-chart>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
     <div class="col-xl-8">
         <div class="card">
             <div class="card-header border-0 align-items-center d-flex">
@@ -61,7 +164,7 @@
                     </div>
                     <div class="col-6 col-sm-4 col-lg-2">
                         <div class="p-3 border border-dashed border-start-0">
-                            <h5 class="mb-1 text-info">
+                            <h5 class="mb-1 text-warning">
                                 <span [countUp]="totalNoShow" class="counter-value" [options]="option"></span>
                             </h5>
                             <p class="text-muted mb-0 fs-11">No Show</p>

@@ -13,7 +13,7 @@ import { CategoriasService } from 'src/app/core/services/api/categorias.service'
 import { ModalScheduleComponent } from '../../modals/field/modal-schedule/modal-schedule.component';
 import { ModalTarifaComponent } from '../../modals/field/modal-tarifa/modal-tarifa.component';
 import { ModalImportComponent } from '../../modals/field/modal-import/modal-import.component';
-import { EstadoActual } from 'src/app/core/constants/Estados';
+import { EstadoActual, StatusUtils } from 'src/app/core/constants/Estados';
 import { HorarioExcepcion } from 'src/app/core/models/horarioExcepcion.model';
 import { TarifaConcepto } from 'src/app/core/models/tarifaConcepto.model';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
@@ -386,17 +386,6 @@ export class FieldsComponent {
   }
 
   getBadgeClass(estado: string): string {
-    switch (estado) {
-      case EstadoActual.ACTIVO:
-        return 'success';
-      case EstadoActual.MANTENIMIENTO:
-        return 'warning';
-      case EstadoActual.CERRADO:
-        return 'danger';
-      case EstadoActual.EVENTO_MUNICIPAL:
-        return 'info';
-      default:
-        return 'secondary';
-    }
+    return StatusUtils.getStatusColor(estado);
   }
 }

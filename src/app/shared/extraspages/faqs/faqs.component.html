@@ -61,6 +61,108 @@
       </ul>     
     </div> -->
 
+    <div class="row g-3 mb-4">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+              <div>
+                <h5 class="mb-1 fw-semibold">
+                  <i class="ri-route-line text-primary me-2"></i>
+                  Flujo de reservas
+                </h5>
+                <p class="text-muted mb-0">
+                  Revise qué pasos seguirá según el tipo de reserva que desea registrar.
+                </p>
+              </div>
+              <span class="badge bg-primary-subtle text-primary px-3 py-2">
+                Puntuales · Recurrentes · Mensualidades
+              </span>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-lg-4">
+                <div class="flow-card h-100">
+                  <div class="flow-card__header">
+                    <i class="ri-calendar-event-line"></i>
+                    <div>
+                      <h6 class="mb-0">Reservas puntuales</h6>
+                      <small>Por hora, por persona o por evento</small>
+                    </div>
+                  </div>
+                  <ol class="flow-steps">
+                    <li>Seleccione el complejo y el campo deportivo.</li>
+                    <li>Elija una tarifa disponible.</li>
+                    <li>Seleccione fecha, hora de inicio y hora de fin.</li>
+                    <li>Ingrese personas si la tarifa es por persona.</li>
+                    <li>Revise disponibilidad, conflictos, anticipación y duración máxima.</li>
+                    <li>Confirme el costo y genere la reserva o solicitud.</li>
+                  </ol>
+                  <div class="flow-note">
+                    <strong>Importante:</strong> en eventos se controla la duración máxima configurada; si se excede, el sistema explica el motivo antes de continuar.
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-lg-4">
+                <div class="flow-card h-100">
+                  <div class="flow-card__header flow-card__header--success">
+                    <i class="ri-repeat-line"></i>
+                    <div>
+                      <h6 class="mb-0">Reservas recurrentes</h6>
+                      <small>Entrenamientos o uso programado</small>
+                    </div>
+                  </div>
+                  <ol class="flow-steps">
+                    <li>Seleccione complejo, campo y tarifa recurrente.</li>
+                    <li>Defina fecha de inicio y fecha de fin.</li>
+                    <li>Seleccione días de la semana y franjas horarias.</li>
+                    <li>Personalice fechas si necesita cambiar, excluir o mover sesiones.</li>
+                    <li>Revise la lista de sesiones programadas.</li>
+                    <li>Confirme el total de sesiones, conceptos y costo final.</li>
+                  </ol>
+                  <div class="flow-note flow-note--success">
+                    <strong>Tip:</strong> los colores del calendario diferencian patrón global, fecha personalizada, día personalizado, exclusiones y conflictos.
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-lg-4">
+                <div class="flow-card h-100">
+                  <div class="flow-card__header flow-card__header--warning">
+                    <i class="ri-bank-card-line"></i>
+                    <div>
+                      <h6 class="mb-0">Reservas por periodo</h6>
+                      <small>Pagos de mensualidades</small>
+                    </div>
+                  </div>
+                  <ol class="flow-steps">
+                    <li>Seleccione el periodo o mes de pago.</li>
+                    <li>Busque o seleccione el estudiante/participante.</li>
+                    <li>Revise la escuela, organización o actividad relacionada.</li>
+                    <li>Verifique si ya existe mensualidad para ese periodo.</li>
+                    <li>Genere la mensualidad y el pago correspondiente.</li>
+                    <li>Registre o actualice el estado del pago.</li>
+                  </ol>
+                  <div class="flow-note flow-note--warning">
+                    <strong>Uso principal:</strong> este flujo no reserva una hora puntual; registra y controla pagos mensuales por periodo.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="permission-summary mt-3">
+              <div>
+                <i class="ri-shield-user-line text-primary me-1"></i>
+                <strong>Permisos:</strong>
+                Administradores y encargados pueden registrar reservas directas. Contribuyentes o representantes pueden terminar en solicitud si el campo requiere aprobación o si la funcionalidad directa no está habilitada.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="row justify-content-evenly mb-4">
       @for (category of faqCategory; track $index) {
       <div class="col-lg-4">

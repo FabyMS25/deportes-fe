@@ -115,8 +115,7 @@ export class BookingOneTimeComponent implements OnInit {
       { name: 'Motivo Gratuidad', prop: 'reservaDto.motivoGratuidad', visible: false },
 
       { name: 'Organización', prop: 'reservaDto.organizacionDto.nombre', visible: false },
-      { name: 'Estudiante', prop: 'reservaDto.estudianteEscuelaDto.nombreCompleto', visible: false },
-
+      
       { name: 'Estado Validación', prop: 'reservaDto.estadoValidacion', tag: true, visible: this.canActivate.includes('VALIDAR') },
       { name: 'Estado Reserva', prop: 'reservaDto.estadoReserva', tag: true, visible: true },
       { name: 'Estado Pago', prop: 'reservaDto.pagosDtoList[0].estadoPago', tag: true, visible: true },

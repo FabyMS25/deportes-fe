@@ -85,36 +85,57 @@ export const StatusUtils = {
   getStatusColor(status: string): string {
     const colorMap: { [key: string]: string } = {
       // EstadoReserva
-      'SOLICITADA': 'info',
-      'PENDIENTE': 'warning',
-      'PAGADA': 'success',
-      'EN_CURSO': 'primary',
-      'COMPLETADA': 'success',
-      'CANCELADA': 'danger',
-      'EXPIRADA': 'warning',
-      'NO_SHOW': 'warning',
-      'BORRADOR': 'secondary',      
+      SOLICITADA: 'warning',
+      PENDIENTE: 'warning',
+      PAGADA: 'success',
+      EN_CURSO: 'primary',
+      COMPLETADA: 'success',
+      CANCELADA: 'danger',
+      EXPIRADA: 'secondary',
+      NO_SHOW: 'danger',
+      BORRADOR: 'secondary',
+
       // EstadoValidacion
-      'APROBADA': 'success',
-      'RECHAZADA': 'danger',
-      'VENCIDA': 'secondary',  
+      APROBADA: 'success',
+      RECHAZADA: 'danger',
+      VENCIDA: 'secondary',
+
       // EstadoPago
-      'PAGADO': 'success',
-      'PARCIAL': 'info',
-      'REEMBOLSADO': 'secondary',
-      'FALLIDO': 'danger',      
+      PAGADO: 'success',
+      PARCIAL: 'warning',
+      REEMBOLSADO: 'info',
+      FALLIDO: 'danger',
+
       // EstadoUsuario
-      'ACTIVO': 'success',
-      'INACTIVO': 'secondary',
-      'PENDIENTE_VERIFICACION': 'warning',
-      'SANCIONADO': 'danger',
-      'BLOQUEADO': 'danger',      
-      // EstadoActual
-      'MANTENIMIENTO': 'warning',
-      'CERRADO': 'danger',
-      'EVENTO_MUNICIPAL': 'info'
+      ACTIVO: 'success',
+      INACTIVO: 'secondary',
+      PENDIENTE_VERIFICACION: 'warning',
+      SANCIONADO: 'danger',
+      BLOQUEADO: 'danger',
+
+      // EstadoActual / EstadoRUAT
+      MANTENIMIENTO: 'warning',
+      CERRADO: 'danger',
+      EVENTO_MUNICIPAL: 'info',
+      BAJA: 'secondary'
     };
-    
-    return colorMap[status] || 'info';
+
+    return colorMap[status] || 'secondary';
+  },
+  getStatusTextClass(status: string): string {
+    return `text-${this.getStatusColor(status)}`;
+  },
+  getStatusBgClass(status: string): string {
+    return `bg-${this.getStatusColor(status)}`;
+  },
+  getStatusBadgeClass(status: string): string {
+    const color = this.getStatusColor(status);
+    return `bg-${color}-subtle text-${color}`;
+  },
+  getStatusAlertClass(status: string): string {
+    return `alert-${this.getStatusColor(status)}`;
+  },
+  getStatusRibbonClass(status: string): string {
+    return `ribbon-${this.getStatusColor(status)}`;
   }
 };

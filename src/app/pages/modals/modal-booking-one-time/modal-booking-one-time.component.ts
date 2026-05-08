@@ -28,7 +28,7 @@ import { Reserva } from 'src/app/core/models/reserva.model';
 import { Pago } from 'src/app/core/models/pago.model';
 import { TicketComponent } from '../../modules/reports/ticket/ticket.component';
 import { CityAcronym } from 'src/app/core/constants/Places';
-import { EstadoReserva, EstadoValidacion, EstadoPago } from 'src/app/core/constants/Estados';
+import { EstadoReserva, EstadoValidacion, EstadoPago, StatusUtils } from 'src/app/core/constants/Estados';
 import { BookingDetailModalComponent } from '../booking-detail-modal/booking-detail-modal.component';
 
 @Component({
@@ -496,6 +496,53 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
     }
   }
 
+  openNoShowModal(): void {
+    this.accion = 'noShowModal';
+    this.motivo = '';
+    this.observation = '';
+  }
+
+  canMarkNoShow(): boolean {
+    const estado = this.row?.reservaDto?.estadoReserva;
+    return this.canActivate?.includes('ACTUALIZAR') &&
+      (estado === EstadoReserva.PAGADA || estado === EstadoReserva.EN_CURSO);
+  }
+
+  markNoShowData(formValues: any): void {
+    if (!this.row?.reservaDto) {
+      this.notify('No se pudo obtener los datos de la reserva', 'error');
+      return;
+    }
+
+    if (!this.canMarkNoShow()) {
+      this.notify('Solo se puede marcar No Show en reservas PAGADAS o EN_CURSO.', 'warning');
+      return;
+    }
+
+    const updatedReserva: ReservaPuntual = {
+      ...this.row,
+      reservaDto: {
+        ...this.row.reservaDto,
+        estadoReserva: EstadoReserva.NO_SHOW,
+        fechaActualizacion: new Date(),
+        motivoRechazo: formValues?.observation || 'No Show registrado por administracion'
+      }
+    };
+
+    this.showLoading = true;
+    this.updateReservaPuntual(updatedReserva)
+      .then(() => {
+        this.showLoading = false;
+        this.notify('Reserva marcada como No Show exitosamente.', 'success');
+        this.emitList.emit();
+        this.onCloseModal();
+      })
+      .catch((error) => {
+        this.showLoading = false;
+        this.notify(error?.message || 'No se pudo marcar la reserva como No Show.', 'error');
+      });
+  }
+
   confirmUsage() {
     Swal.fire({
       title: 'Confirmar Uso',
@@ -820,52 +867,15 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   }
 
   getStatusBadgeClass(estado: string | undefined): string {
-    switch (estado) {
-      case EstadoReserva.SOLICITADA:
-        return 'bg-secundary-subtle text-secondary';
-      case EstadoReserva.PENDIENTE:
-        return 'bg-info-subtle text-info';
-      case EstadoReserva.PAGADA:
-        return 'bg-primary-subtle text-primary';
-      case EstadoReserva.EN_CURSO:
-      case EstadoReserva.COMPLETADA:
-        return 'bg-success-subtle text-success';
-      case EstadoReserva.CANCELADA:
-        return 'bg-danger-subtle text-danger';
-      case EstadoReserva.EXPIRADA:
-        return 'bg-warning-subtle text-warning';
-      case EstadoReserva.NO_SHOW:
-        return 'bg-dark-subtle text-dark';
-      default:
-        return 'bg-secondary-subtle text-secondary';
-    }
+    return StatusUtils.getStatusBadgeClass(estado || '');
   }
 
   getStatusAlertClass(estado: string | undefined): string {
-    switch (estado) {
-      case EstadoReserva.SOLICITADA: return 'alert-warning';
-      case EstadoReserva.PENDIENTE: return 'alert-info';
-      case EstadoReserva.PAGADA: return 'alert-primary';
-      case EstadoReserva.EN_CURSO:
-      case EstadoReserva.COMPLETADA: return 'alert-success';
-      case EstadoReserva.CANCELADA:
-      case EstadoReserva.EXPIRADA:
-      case EstadoReserva.NO_SHOW: return 'alert-danger';
-      default: return 'alert-secondary';
-    }
+    return StatusUtils.getStatusAlertClass(estado || '');
   }
 
   getValidationBadgeClass(estado: string): string {
-    switch (estado) {
-      case 'PENDIENTE':
-        return 'bg-secondary-subtle text-secondary';
-      case 'APROBADA':
-        return 'bg-success-subtle text-success';
-      case 'RECHAZADA':
-        return 'bg-danger-subtle text-danger';
-      default:
-        return 'bg-dark-subtle text-dark';
-    }
+    return StatusUtils.getStatusBadgeClass(estado);
   }
 
   getStatusDescription(estado: any): string {

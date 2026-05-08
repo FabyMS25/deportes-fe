@@ -4,7 +4,7 @@ import { ChartType } from './dashboard.model';
 import { Reserva } from 'src/app/core/models/reserva.model';
 import Swal from 'sweetalert2';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
-import { EstadoReserva, EstadoValidacion } from 'src/app/core/constants/Estados';
+import { EstadoReserva, EstadoValidacion, StatusUtils } from 'src/app/core/constants/Estados';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { take } from 'rxjs';
@@ -16,6 +16,21 @@ import { take } from 'rxjs';
 })
 
 export class DashboardComponent implements OnInit {
+  readonly EstadoReserva = EstadoReserva;
+
+  private readonly successfulReservationStates: EstadoReserva[] = [
+    EstadoReserva.PAGADA,
+    EstadoReserva.COMPLETADA,
+    EstadoReserva.EN_CURSO
+  ];
+
+  private readonly revenueReservationStates: EstadoReserva[] = [
+    EstadoReserva.PAGADA,
+    EstadoReserva.COMPLETADA,
+    EstadoReserva.EN_CURSO,
+    EstadoReserva.NO_SHOW
+  ];
+
   userData: any;
   loading: boolean = true;
 
@@ -47,6 +62,7 @@ export class DashboardComponent implements OnInit {
       await this.getReservations();
       this.setRevenueValue('all');
       this.filteredReservations = this.processReservations('Year');
+      this._GestionActualCharts();
       this._StackedColumnChart();
     } catch (error) {
       console.error('Error during initialization:', error);
@@ -186,11 +202,11 @@ export class DashboardComponent implements OnInit {
     return result;
   }
   private isRevenueReservation(reserva: Reserva): boolean {
-    return [
-      EstadoReserva.PAGADA,
-      EstadoReserva.COMPLETADA,
-      EstadoReserva.EN_CURSO
-    ].includes(reserva.estadoReserva);
+    return this.revenueReservationStates.includes(reserva.estadoReserva);
+  }
+
+  private isSuccessfulReservation(reserva: Reserva): boolean {
+    return this.successfulReservationStates.includes(reserva.estadoReserva);
   }
   /**
    * Reservations Analytics Chart
@@ -204,6 +220,15 @@ export class DashboardComponent implements OnInit {
   totalRejected: number = 0;
   totalCompleted: number = 0;
   totalNoShow: number = 0;
+  gestionActualChart: any;
+  gestionEstadosChart: any;
+  gestionRangeLabel: string = '';
+  gestionTotalReservations: number = 0;
+  gestionSuccessfulReservations: number = 0;
+  gestionTotalIncome: number = 0;
+  gestionPendingReservations: number = 0;
+  gestionFailedReservations: number = 0;
+  gestionSuccessRate: number = 0;
 
   setRevenueValue(value: string) {
     const currentDate = new Date();
@@ -301,6 +326,7 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
 
       case EstadoReserva.NO_SHOW:
         monthlyData.noShow[month]++;
+        monthlyData.ingresos[month] += reserva.montoTotal || 0;
         break;
     }
   });
@@ -392,12 +418,18 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
       default:
         labels = monthNames;
     }
-
+ 
     return labels;
   }
 
   private initChart(value: string, list: any[]) {
-    const colors = this.getChartColorsArray('["--vz-success","--vz-primary","--vz-danger","--vz-warning","--vz-info"]');
+    const colors = [
+      this.getStatusThemeColor(EstadoReserva.COMPLETADA),
+      this.getThemeColor('primary'),
+      this.getStatusThemeColor(EstadoReserva.CANCELADA),
+      this.getStatusThemeColor(EstadoReserva.PENDIENTE),
+      this.getStatusThemeColor(EstadoReserva.NO_SHOW)
+    ];
     const labels = this.getLabels(value);
     const monthlyData = this.processMonthlyData(list, labels);
 
@@ -531,6 +563,303 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
     };
   }
 
+  private _GestionActualCharts(): void {
+    const gestionReservas = this.getGestionActualReservations();
+    const monthLabels = this.getGestionActualLabels();
+    const monthlyData = this.processGestionMonthlyData(gestionReservas, monthLabels);
+    const statusData = this.processGestionStatusData(gestionReservas);
+    const revenueReservations = gestionReservas.filter(reserva => this.isRevenueReservation(reserva));
+    const successfulReservations = gestionReservas.filter(reserva => this.isSuccessfulReservation(reserva));
+    const processedReservations = gestionReservas.filter(reserva =>
+      [
+        EstadoReserva.PAGADA,
+        EstadoReserva.COMPLETADA,
+        EstadoReserva.EN_CURSO,
+        EstadoReserva.CANCELADA,
+        EstadoReserva.EXPIRADA,
+        EstadoReserva.NO_SHOW
+      ].includes(reserva.estadoReserva)
+    );
+
+    this.gestionRangeLabel = this.getGestionRangeLabel();
+    this.gestionTotalReservations = gestionReservas.length;
+    this.gestionSuccessfulReservations = successfulReservations.length;
+    this.gestionTotalIncome = revenueReservations.reduce((sum, reserva) => sum + (reserva.montoTotal || 0), 0);
+    this.gestionPendingReservations = gestionReservas.filter(reserva =>
+      [EstadoReserva.SOLICITADA, EstadoReserva.PENDIENTE].includes(reserva.estadoReserva)
+    ).length;
+    this.gestionFailedReservations = gestionReservas.filter(reserva =>
+      [EstadoReserva.CANCELADA, EstadoReserva.EXPIRADA, EstadoReserva.NO_SHOW].includes(reserva.estadoReserva)
+    ).length;
+    this.gestionSuccessRate = processedReservations.length > 0
+      ? (successfulReservations.length / processedReservations.length) * 100
+      : 0;
+
+    this.gestionActualChart = {
+      series: [
+        {
+          name: "Total Reservas",
+          type: "column",
+          data: monthlyData.totalReservas
+        },
+        {
+          name: "Reservas Exitosas",
+          type: "line",
+          data: monthlyData.reservasExitosas
+        },
+        {
+          name: "Ingresos (Bs)",
+          type: "area",
+          data: monthlyData.ingresos
+        }
+      ],
+      chart: {
+        height: 380,
+        type: "line",
+        toolbar: { show: true }
+      },
+      stroke: {
+        width: [0, 3, 2],
+        curve: "smooth"
+      },
+      plotOptions: {
+        bar: {
+          columnWidth: "35%",
+          borderRadius: 4
+        }
+      },
+      fill: {
+        opacity: [0.9, 1, 0.25],
+        type: ["solid", "solid", "gradient"],
+        gradient: {
+          shadeIntensity: 1,
+          opacityFrom: 0.35,
+          opacityTo: 0.05,
+          stops: [0, 90, 100]
+        }
+      },
+      colors: this.getChartColorsArray('["--vz-primary","--vz-success","--vz-info"]'),
+      labels: monthLabels,
+      xaxis: {
+        categories: monthLabels,
+        axisTicks: { show: false },
+        axisBorder: { show: true }
+      },
+      yaxis: [
+        {
+          seriesName: "Total Reservas",
+          title: { text: "Reservas" },
+          labels: {
+            formatter: function(val: number) {
+              return Math.floor(val).toString();
+            }
+          }
+        },
+        {
+          seriesName: "Reservas Exitosas",
+          show: false,
+          labels: {
+            formatter: function(val: number) {
+              return Math.floor(val).toString();
+            }
+          }
+        },
+        {
+          seriesName: "Ingresos (Bs)",
+          opposite: true,
+          title: { text: "Ingresos (Bs)" },
+          labels: {
+            formatter: function(val: number) {
+              return "Bs " + val.toFixed(0);
+            }
+          }
+        }
+      ],
+      dataLabels: { enabled: false },
+      legend: {
+        position: "top",
+        horizontalAlign: "center"
+      },
+      grid: {
+        borderColor: "#f1f1f1"
+      },
+      tooltip: {
+        shared: true,
+        intersect: false,
+        y: {
+          formatter: function(val: number, opts: any) {
+            if (opts.seriesIndex === 2) {
+              return "Bs " + val.toFixed(2);
+            }
+            return Math.floor(val) + " reservas";
+          }
+        }
+      }
+    };
+
+    this.gestionEstadosChart = {
+      series: statusData.series,
+      chart: {
+        height: 380,
+        type: "donut"
+      },
+      labels: statusData.labels,
+      colors: statusData.colors,
+      legend: {
+        position: "bottom"
+      },
+      dataLabels: {
+        enabled: true,
+        formatter: function(_val: number, opts: any) {
+          return opts.w.config.series[opts.seriesIndex];
+        }
+      },
+      plotOptions: {
+        pie: {
+          donut: {
+            size: "68%",
+            labels: {
+              show: true,
+              total: {
+                show: true,
+                label: "Reservas",
+                formatter: function(w: any) {
+                  return w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0).toString();
+                }
+              }
+            }
+          }
+        }
+      },
+      tooltip: {
+        y: {
+          formatter: function(val: number) {
+            return val + " reservas";
+          }
+        }
+      },
+      responsive: [{
+        breakpoint: 480,
+        options: {
+          chart: { height: 320 },
+          legend: { position: "bottom" }
+        }
+      }]
+    };
+  }
+
+  private getGestionActualReservations(): Reserva[] {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), 0, 1);
+    const endDate = new Date(now);
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    return this.reservationsList.filter(reserva => {
+      const reservaDate = new Date(reserva.fechaReserva);
+      return reservaDate >= startDate && reservaDate <= endDate;
+    });
+  }
+
+  private getGestionActualLabels(): string[] {
+    const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const currentMonth = new Date().getMonth();
+    return monthNames.slice(0, currentMonth + 1);
+  }
+
+  private processGestionMonthlyData(reservas: Reserva[], labels: string[]) {
+    const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const totalReservas = new Array(labels.length).fill(0);
+    const reservasExitosas = new Array(labels.length).fill(0);
+    const ingresos = new Array(labels.length).fill(0);
+
+    reservas.forEach((reserva: Reserva) => {
+      const reservaDate = new Date(reserva.fechaReserva);
+      const labelIndex = labels.indexOf(monthNames[reservaDate.getMonth()]);
+
+      if (labelIndex === -1) {
+        return;
+      }
+
+      totalReservas[labelIndex]++;
+
+      if (this.isSuccessfulReservation(reserva)) {
+        reservasExitosas[labelIndex]++;
+      }
+
+      if (this.isRevenueReservation(reserva)) {
+        ingresos[labelIndex] += reserva.montoTotal || 0;
+      }
+    });
+
+    return {
+      totalReservas,
+      reservasExitosas,
+      ingresos
+    };
+  }
+
+  private processGestionStatusData(reservas: Reserva[]) {
+    const statusLabels: Record<string, string> = {
+      [EstadoReserva.SOLICITADA]: "Solicitadas",
+      [EstadoReserva.PENDIENTE]: "Pendientes",
+      [EstadoReserva.PAGADA]: "Pagadas",
+      [EstadoReserva.EN_CURSO]: "En Curso",
+      [EstadoReserva.COMPLETADA]: "Completadas",
+      [EstadoReserva.CANCELADA]: "Canceladas",
+      [EstadoReserva.EXPIRADA]: "Expiradas",
+      [EstadoReserva.NO_SHOW]: "No Show"
+    };
+    const statusOrder = [
+      EstadoReserva.SOLICITADA,
+      EstadoReserva.PENDIENTE,
+      EstadoReserva.PAGADA,
+      EstadoReserva.EN_CURSO,
+      EstadoReserva.COMPLETADA,
+      EstadoReserva.CANCELADA,
+      EstadoReserva.EXPIRADA,
+      EstadoReserva.NO_SHOW
+    ];
+    const statusCounts = statusOrder.reduce((acc, estado) => {
+      acc[estado] = 0;
+      return acc;
+    }, {} as Record<string, number>);
+
+    reservas.forEach((reserva: Reserva) => {
+      if (statusCounts[reserva.estadoReserva] !== undefined) {
+        statusCounts[reserva.estadoReserva]++;
+      }
+    });
+
+    const activeStatuses = statusOrder.filter(estado => statusCounts[estado] > 0);
+
+    return {
+      labels: activeStatuses.length > 0 ? activeStatuses.map(estado => statusLabels[estado]) : ["Sin datos"],
+      series: activeStatuses.length > 0 ? activeStatuses.map(estado => statusCounts[estado]) : [0],
+      colors: activeStatuses.length > 0 ? activeStatuses.map(estado => this.getStatusThemeColor(estado)) : [this.getThemeColor('secondary')]
+    };
+  }
+
+  private getGestionRangeLabel(): string {
+    const now = new Date();
+    const currentDay = now.getDate().toString().padStart(2, '0');
+    const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0');
+    return `01/01/${now.getFullYear()} - ${currentDay}/${currentMonth}/${now.getFullYear()}`;
+  }
+
+  private getStatusThemeColor(status: EstadoReserva | string): string {
+    return this.getThemeColor(StatusUtils.getStatusColor(status));
+  }
+
+  getStatusTextClass(status: EstadoReserva | string): string {
+    return StatusUtils.getStatusTextClass(status);
+  }
+
+  private getThemeColor(colorName: string): string {
+    const cssValue = getComputedStyle(document.documentElement).getPropertyValue(`--vz-${colorName}`);
+    return cssValue ? cssValue.replace(" ", "") : colorName;
+  }
+
   private getChartColorsArray(colors: any) {
     colors = JSON.parse(colors);
     return colors.map(function (value: any) {
@@ -561,34 +890,31 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
   StackedColumnChart: any;
 
   private _StackedColumnChart() {
-    const colors = this.getChartColorsArray('["--vz-success", "--vz-warning", "--vz-danger", "--vz-info"]');
+    const colors = [
+      this.getStatusThemeColor(EstadoReserva.COMPLETADA),
+      this.getStatusThemeColor(EstadoReserva.PENDIENTE),
+      this.getStatusThemeColor(EstadoReserva.CANCELADA)
+    ];
     const labels = this.getLabels('6M');
     const topComplexes = this.processReservations('6M').slice(0, 4);
     const successfulSeries = {
-      name: "Exitosas (Pagadas/Completadas)",
+      name: "Exitosas (Pagadas/Completadas/En Curso)",
       data: topComplexes.map(complex => 
-        this.getComplexStatusData(complex.complexName, labels, ['PAGADA', 'COMPLETADA'])
+        this.getComplexStatusData(complex.complexName, labels, this.successfulReservationStates)
       )
     };
 
     const pendingSeries = {
-      name: "Pendientes/Confirmadas",
+      name: "Pendientes/Solicitadas",
       data: topComplexes.map(complex => 
-        this.getComplexStatusData(complex.complexName, labels, ['PENDIENTE', 'CONFIRMADA'])
+        this.getComplexStatusData(complex.complexName, labels, [EstadoReserva.PENDIENTE, EstadoReserva.SOLICITADA])
       )
     };
 
     const cancelledSeries = {
-      name: "Canceladas/Expiradas",
+      name: "Canceladas/Expiradas/No Show",
       data: topComplexes.map(complex => 
-        this.getComplexStatusData(complex.complexName, labels, ['CANCELADA', 'EXPIRADA', 'NO_SHOW'])
-      )
-    };
-
-    const rejectedSeries = {
-      name: "Rechazadas",
-      data: topComplexes.map(complex => 
-        this.getComplexStatusData(complex.complexName, labels, ['RECHAZADA'])
+        this.getComplexStatusData(complex.complexName, labels, [EstadoReserva.CANCELADA, EstadoReserva.EXPIRADA, EstadoReserva.NO_SHOW])
       )
     };
 
@@ -596,8 +922,7 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
       series: topComplexes.length > 0 ? [
         successfulSeries,
         pendingSeries,
-        cancelledSeries,
-        rejectedSeries
+        cancelledSeries
       ] : [
         { name: "Sin datos", data: [] }
       ],
@@ -669,7 +994,7 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
     };
   }
 
-  private getComplexStatusData(complexName: string, labels: string[], statuses: string[]): number {
+  private getComplexStatusData(complexName: string, labels: string[], statuses: EstadoReserva[]): number {
     const currentDate = new Date();
     const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 5, 1);
     const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);

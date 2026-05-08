@@ -1629,7 +1629,7 @@ private getConceptoTimeRangeDisplay(concepto: any): string {
 
   getSlotClasses(slot: TimeSlot): string {
     if (slot.isSelected) return 'border-primary bg-primary text-white';
-    if (!slot.isAvailable) return 'border-secondary bg-light text-muted';
+    if (!slot.isAvailable) return 'border-secondary bg-body-tertiary text-muted';
     if (slot.isReserved) return 'border-danger bg-danger-subtle text-danger';
     if (!slot.isWithinTariffTime || slot.tariffConflict) return 'border-warning bg-warning-subtle text-warning';
     return 'border-success bg-success-subtle text-success cursor-pointer hover-effect';
