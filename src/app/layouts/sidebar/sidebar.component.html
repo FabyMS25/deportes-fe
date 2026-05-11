@@ -3,7 +3,7 @@
   <!-- LOGO -->
   <div class="navbar-brand-box">
     <!-- Dark Logo-->
-    <a routerLink="/" class="logo logo-dark">
+    <a routerLink="/" class="logo logo-dark" (click)="SidebarHide()">
       <span class="logo-sm">
         <img src="assets/icons/logos/logo-sm.png" alt="" height="30">
       </span>
@@ -12,7 +12,7 @@
       </span>
     </a>
     <!-- Light Logo-->
-    <a routerLink="/" class="logo logo-light">
+    <a routerLink="/" class="logo logo-light" (click)="SidebarHide()">
       <span class="logo-sm">
         <img src="assets/icons/logos/logo-sm.png" alt="" height="30">
       </span>
@@ -141,7 +141,7 @@
               </ul>
             </div>
             }@else {
-            <a [routerLink]="item.ruta" routerLinkActive="active" class="side-nav-link-ref nav-link menu-link">
+            <a [routerLink]="item.ruta" routerLinkActive="active" class="side-nav-link-ref nav-link menu-link" (click)="updateActive($event)">
               @if(item.icono){<i class="bx {{ item.icono }} icon nav-icon" class=""></i>}
               <span class=""> {{ item.nombreMenu | translate }} </span>
               @if(item.badge){<span class="badge {{item.badge.variant}} float-end">

@@ -60,7 +60,7 @@ import { TicketComponent } from '../../modules/reports/ticket/ticket.component';
 export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
   @Input() accion!: string;
   @Input() row!: ReservaPeriodo;
-  @Input() canActivate!: any[];
+  @Input() canActivate: any[] = [];
   @Input() estudiantes: EstudianteEscuela[] = [];
 
   @Output() emitList = new EventEmitter();
@@ -85,6 +85,17 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
   selectedMensualidadExistente?: ReservaPeriodo;
   selectedMonth?: number;
   selectedYear?: number;
+  viewingExistingFromCreate = false;
+  private createStateBeforeDetail?: {
+    row?: ReservaPeriodo;
+    selectedEstudiante?: EstudianteEscuela;
+    selectedEscuela?: Organizacion;
+    selectedReservaRecurrente?: Reserva;
+    selectedMonth?: number;
+    selectedYear?: number;
+    activeTab: number;
+    createTab: number;
+  };
 
   reservationForm!: FormGroup;
   validationForm!: FormGroup;
@@ -161,7 +172,6 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     setTimeout(() => {
       if (!this.accion) return;
-
       switch (this.accion) {
         case 'annularModal':
           if (this.annularModal) {
@@ -178,35 +188,21 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
   /* =========================
      GETTERS / UI HELPERS
   ========================= */
-
   get reservaActual(): Reserva | undefined {
     return this.row?.reservaDto;
   }
-
   get escuelaActual(): Organizacion | undefined {
     return this.row?.reservaDto?.organizacionDto;
   }
-
   get estudianteActual(): EstudianteEscuela | undefined {
     return this.row?.reservaDto?.estudianteEscuelaDto;
   }
-
   get pagosActuales(): Pago[] {
     return this.row?.reservaDto?.pagosDtoList || [];
   }
-
-  get tienePagos(): boolean {
-    return this.pagosActuales.length > 0;
-  }
-
-  get hasHistorial(): boolean {
-    return this.studentPeriodsRegistrations.length > 0;
-  }
-
   get validationFormControls() {
     return this.validationForm.controls;
   }
-
   get form() {
     return this.reservationForm.controls;
   }
@@ -558,10 +554,42 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
   viewMensualidadExistente(): void {
     if (!this.selectedMensualidadExistente) return;
 
+    this.viewingExistingFromCreate = this.accion === '';
+    if (this.viewingExistingFromCreate) {
+      this.createStateBeforeDetail = {
+        row: this.row,
+        selectedEstudiante: this.selectedEstudiante,
+        selectedEscuela: this.selectedEscuela,
+        selectedReservaRecurrente: this.selectedReservaRecurrente,
+        selectedMonth: this.selectedMonth,
+        selectedYear: this.selectedYear,
+        activeTab: this.activeTab,
+        createTab: this.createTab
+      };
+    }
+
     this.row = this.selectedMensualidadExistente;
     this.accion = 'show';
     this.activeTab = 1;
     this.loadReservaData();
+  }
+
+  backToCreateFromDetail(): void {
+    if (!this.viewingExistingFromCreate) return;
+
+    const previousState = this.createStateBeforeDetail;
+    this.accion = '';
+    this.row = previousState?.row as ReservaPeriodo;
+    this.selectedEstudiante = previousState?.selectedEstudiante;
+    this.selectedEscuela = previousState?.selectedEscuela;
+    this.selectedReservaRecurrente = previousState?.selectedReservaRecurrente;
+    this.selectedMonth = previousState?.selectedMonth;
+    this.selectedYear = previousState?.selectedYear;
+    this.activeTab = previousState?.activeTab || 1;
+    this.createTab = previousState?.createTab || 1;
+    this.viewingExistingFromCreate = false;
+    this.createStateBeforeDetail = undefined;
+    this.resolveMensualidadExistente();
   }
 
   async onSubmit(): Promise<void> {
@@ -671,7 +699,6 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
     this.accion = 'annularModal';
     this.motivo = '';
     this.observation = '';
-    this.modalService.open(content, { centered: true, size: 'md' });
   }
 
   openTicketModal(content: any): void {
@@ -1182,6 +1209,8 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
   ========================= */
 
   public onCloseModal(): void {
+    this.viewingExistingFromCreate = false;
+    this.createStateBeforeDetail = undefined;
     this.activeTab = 1;
     this.createTab = 1;
     if (this.reservationForm) {

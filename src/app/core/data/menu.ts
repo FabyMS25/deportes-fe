@@ -1,4 +1,43 @@
 import { MenuItem } from "../models/menu.model";
+
+/*
+ * Base registry of every DEPORTESAPP permission currently defined in the
+ * permissions service. Keep this commented: MENU_BASE below is the active
+ * fallback used for contribuyente sessions.
+ *
+ * DASHBOARDS
+ * - Calendario | VER | /inicio/employee
+ * - Mapa | VER, RESERVAR | /inicio/taxpayer
+ * - Dashboard de Admin | VER | /inicio
+ *
+ * DIRECT MODULES
+ * - Contribuyentes | VER, CREAR, ACTUALIZAR, EXPORTAR, BLOQUEAR | /taxpayers
+ * - Organizaciones | VER, CREAR, ACTUALIZAR, ELIMINAR | /organizations
+ *
+ * RESERVAS
+ * - Reservas Puntuales | VER, CREAR, ACTUALIZAR, ANULAR, VALIDAR, GENERAR TICKET, CAMBIAR-HORARIO
+ *   Routes: /reservations/one-time, /reservations/details, /reservations/ticket
+ * - Reservas Recurrentes | VER, CREAR, ACTUALIZAR, ANULAR, VALIDAR, GENERAR TICKET
+ *   Routes: /reservations/recurrent, /reservations/details
+ * - Escuelas Municipales | VER, CREAR, ACTUALIZAR, ANULAR | /reservations/schools
+ *
+ * REPORTES
+ * - Reporte de Ingresos | GENERAR | /reports/payments
+ * - Reporte de Reservas Puntuales | GENERAR | /reports/list/puntual
+ * - Reporte de Reservas Recurrentes | GENERAR | /reports/list/recurrente
+ * - Reporte de Mensualidades | GENERAR | /reports/list/mensual
+ *
+ * CONFIGURACIONES
+ * - Campos Deportivos | VER, CREAR, ACTUALIZAR, ELIMINAR | /settings/fields
+ *
+ * ADMINISTRACION
+ * - Complejos Deportivos | VER, CREAR, ACTUALIZAR, ELIMINAR | /admin/facilities
+ * - Encargados | VER, CREAR, ACTUALIZAR, ELIMINAR | /admin/employees
+ * - Categorias | VER, CREAR, ACTUALIZAR, ELIMINAR | /admin/categories
+ * - Superficies | VER, CREAR, ACTUALIZAR, ELIMINAR | /admin/area
+ * - Clasificadores Ruat | VER, CREAR, ACTUALIZAR, ANULAR | /admin/classifiers
+ * - Configuraciones de Sistema | VER, CREAR, ACTUALIZAR, ANULAR | /admin/config
+ */
 export const MENU_BASE: MenuItem[] = [
   /* SECTION OF THE MENU THAT CAN BE ACCESED BY ADMIN OR ENCARGADOS OR CONTRIBUYENTES (the uncomenteds menus are for contribuyente the others can be used for admins or encargados) */
   // {"uuid":"91b69bcd-6273-479c-88a3-9c3bd796584c","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Dashboard de Admin","accion":"VER","ruta":"/inicio","orden":0,"icono":"ri-dashboard-2-line","estado":false,"permisoHijoListDto":[],"subNivel":false},

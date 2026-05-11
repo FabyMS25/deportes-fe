@@ -14,6 +14,7 @@ import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { NgbCollapseModule, NgbNavModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateModule } from '@ngx-translate/core';
 import { Reserva } from 'src/app/core/models/reserva.model';
 import { ReservaPuntual } from 'src/app/core/models/reservaPuntual.model';
 import { ReservaRecurrente } from 'src/app/core/models/reservaRecurrente.model';
@@ -44,7 +45,8 @@ interface PuntualSchedule {
     NgbTypeaheadModule,
     FormsModule,
     ReactiveFormsModule,
-    CurrencyPipe
+    CurrencyPipe,
+    TranslateModule
   ],
   templateUrl: './reservation-form.component.html',
   styleUrls: ['./reservation-form.component.scss']

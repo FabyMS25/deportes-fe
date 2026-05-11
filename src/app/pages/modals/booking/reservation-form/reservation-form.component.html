@@ -1,9 +1,9 @@
 <div class="reservation-form-wrapper">
   <div *ngIf="!reservationForm" class="text-center">
     <div class="spinner-border text-primary mb-2" role="status">
-      <span class="visually-hidden">Cargando...</span>
+      <span class="visually-hidden">{{ 'Cargando...' | translate }}</span>
     </div>
-    <p class="text-muted">Preparando formulario de reserva...</p>
+    <p class="text-muted">{{ 'Preparando formulario de reserva...' | translate }}</p>
   </div>
 
   <form *ngIf="reservationForm" [formGroup]="reservationForm" (ngSubmit)="onSubmit()" novalidate>
@@ -11,10 +11,10 @@
       <div class="d-flex align-items-start">
         <i class="ri-error-warning-fill me-3 mt-1"></i>
         <div class="flex-grow-1">
-          <h6 class="alert-heading mb-2">Formulario Incompleto</h6>
-          <p class="mb-0">Por favor revise y complete todos los campos requeridos correctamente.</p>
+          <h6 class="alert-heading mb-2">{{ 'Formulario Incompleto' | translate }}</h6>
+          <p class="mb-0">{{ 'Por favor revise y complete todos los campos requeridos correctamente.' | translate }}</p>
           <small class="d-block mt-2 text-danger" *ngIf="getFormError()">
-            <strong>Error:</strong> {{ getFormError() }}
+            <strong>{{ 'Error:' | translate }}</strong> {{ getFormError() }}
           </small>
         </div>
       </div>
@@ -39,18 +39,18 @@
               </span>
               <span class="badge bg-info bg-opacity-10 text-info">
                 <i class="ri-star-line me-1"></i>
-                Categoría {{ dataField.categoria }}
+                {{ 'Categoría' | translate }} {{ dataField.categoria }}
               </span>
               <span class="badge bg-success bg-opacity-10 text-success" *ngIf="dataField.capacidadPersonas">
                 <i class="ri-group-line me-1"></i>
-                Cap. {{ dataField.capacidadPersonas }} personas
+                {{ 'Cap.' | translate }} {{ dataField.capacidadPersonas }} {{ 'personas' | translate }}
               </span>
             </div>
           </div>
           <div class="col-md-4">
             <label class="form-label fw-semibold mb-2">
               <i class="ri-hashtag text-primary me-1"></i>
-              Número de Reserva
+              {{ 'Número de Reserva' | translate }}
             </label>
             <div class="input-group input-group-sm">
               <span class="input-group-text bg-light">
@@ -71,7 +71,8 @@
                   type="button"
                   (click)="validateCustomReservationNumber()"
                   [disabled]="isSubmitting"
-                  title="Validar número personalizado">
+                  [title]="'Validar número personalizado' | translate"
+                  [attr.aria-label]="'Validar número personalizado' | translate">
                   <i class="ri-check-line"></i>
                 </button>
               </div>
@@ -83,7 +84,7 @@
             <div *ngIf="!isFieldInvalid('numeroReserva')" class="form-text">
               <small>
                 <i class="ri-information-line me-1"></i>
-                Auto-generado por el sistema
+                {{ 'Auto-generado por el sistema' | translate }}
               </small>
             </div>            
             <div *ngIf="isFieldInvalid('numeroReserva')" class="invalid-feedback d-block">
@@ -92,7 +93,7 @@
             <div *ngIf="isSubmitting" class="mt-1">
               <small class="text-muted">
                 <span class="spinner-border spinner-border-sm me-1"></span>
-                Generando número...
+                {{ 'Generando número...' | translate }}
               </small>
             </div>
           </div>
@@ -102,7 +103,7 @@
           <div class="row g-2 mb-1">
             <h6 class="fw-bold">
               <i class="ri-calendar-2-line text-primary me-2"></i>
-              {{ bookingType === 'puntual' ? 'Fecha y Horario' : 'Programación Recurrente' }}
+              {{ (bookingType === 'puntual' ? 'Fecha y Horario' : 'Programación Recurrente') | translate }}
             </h6>            
           </div>
           <div *ngIf="bookingType === 'puntual'">
@@ -110,7 +111,7 @@
               <div class="col-6 col-md-3">
                 <label class="form-label mb-0 fw-semibold">
                   <i class="ri-calendar-event-line me-1"></i>
-                  Fecha <span class="text-danger">*</span>
+                  {{ 'Fecha' | translate }} <span class="text-danger">*</span>
                 </label>
                 <ng-container *ngIf="!shouldDisableScheduleFields; else fechaUsoReadOnly">
                 <input
@@ -134,7 +135,7 @@
               <div class="col-6 col-md-3">
                 <label class="form-label mb-0 fw-semibold">
                   <i class="ri-time-line me-1"></i>
-                  Hora Inicio <span class="text-danger">*</span>
+                  {{ 'Hora Inicio' | translate }} <span class="text-danger">*</span>
                 </label>
                 <ng-container *ngIf="!shouldDisableScheduleFields; else horaInicioReadOnly">
                 <input
@@ -156,7 +157,7 @@
               <div class="col-6 col-md-3">
                 <label class="form-label mb-0 fw-semibold">
                   <i class="ri-time-line me-1"></i>
-                  Hora Fin <span class="text-danger">*</span>
+                  {{ 'Hora Fin' | translate }} <span class="text-danger">*</span>
                 </label>
                 <ng-container *ngIf="!shouldDisableScheduleFields; else horaFinReadOnly">
                 <input
@@ -178,9 +179,9 @@
               <div class="col-6 col-md-3" *ngIf="shouldShowCantidadPersonasField">
                 <label class="form-label mb-0 fw-semibold">
                   <i class="ri-group-line me-1"></i>
-                  Personas
+                  {{ 'Personas' | translate }}
                   <span class="text-danger" *ngIf="requiresCantidadPersonas">*</span>
-                  <small class="text-muted fw-normal" *ngIf="!requiresCantidadPersonas">(opcional)</small>
+                  <small class="text-muted fw-normal" *ngIf="!requiresCantidadPersonas">({{ 'opcional' | translate }})</small>
                 </label>
                 <ng-container *ngIf="!isCantidadPersonasLocked; else cantidadPersonasReadOnly">
                 <input 
@@ -209,7 +210,7 @@
             <div class="col-6 col-md-3">
               <label class="form-label mb-0 fw-semibold">
                 <i class="ri-calendar-event-line me-1"></i>
-                Fecha Inicio <span class="text-danger">*</span>
+                {{ 'Fecha Inicio' | translate }} <span class="text-danger">*</span>
               </label>
               <div class="form-control form-control-sm bg-light text-muted">
                 {{ getScheduleDisplayValue('fechaInicio') }}
@@ -221,7 +222,7 @@
             <div class="col-6 col-md-3">
               <label class="form-label mb-0 fw-semibold">
                 <i class="ri-calendar-event-line me-1"></i>
-                Fecha Fin <span class="text-danger">*</span>
+                {{ 'Fecha Fin' | translate }} <span class="text-danger">*</span>
               </label>
               <div class="form-control form-control-sm bg-light text-muted">
                 {{ getScheduleDisplayValue('fechaFin') }}
@@ -256,9 +257,9 @@
             <div class="col-md-3" *ngIf="shouldShowCantidadPersonasField">
               <label class="form-label mb-0 fw-semibold">
                 <i class="ri-group-line me-1"></i>
-                Personas
+                {{ 'Personas' | translate }}
                 <span class="text-danger" *ngIf="requiresCantidadPersonas">*</span>
-                <small class="text-muted fw-normal" *ngIf="!requiresCantidadPersonas">(opcional)</small>
+                <small class="text-muted fw-normal" *ngIf="!requiresCantidadPersonas">({{ 'opcional' | translate }})</small>
               </label>
               <ng-container *ngIf="!isCantidadPersonasLocked; else recurrentCantidadPersonasReadOnly">
               <input 
@@ -287,14 +288,14 @@
         <div class="mb-2">
           <h6 class="fw-bold">
             <i class="ri-calculator-line text-primary me-2"></i>
-            Cálculo de Pago
+            {{ 'Cálculo de Pago' | translate }}
           </h6>
           <div class="table-responsive">
             <table class="table table-sm table-borderless mb-2">
               <tbody>
                 <tr class="border-bottom">
                   <td width="50%">
-                    <strong>Tarifa Base</strong>
+                    <strong>{{ 'Tarifa Base' | translate }}</strong>
                     <small class="d-block text-muted">{{ getTariffDescription() }} - {{ getTarifaCategories() }}</small>
                     <small class="d-block text-primary">{{ getBaseRateDisplay() }}</small>
                   </td>
@@ -303,7 +304,7 @@
                     <span class="fw-semibold">{{ getBaseQuantity() }}</span>
                   </td>
                   <td width="25%" class="text-end">
-                    <small class="d-block text-muted">Subtotal base</small>
+                    <small class="d-block text-muted">{{ 'Subtotal base' | translate }}</small>
                     <span class="fw-semibold">{{ getBasePrice() | currency:'BOB':'symbol-narrow':'1.2-2' }}</span>
                   </td>
                 </tr>
@@ -335,8 +336,8 @@
 
                 <tr class="border-top">
                   <td colspan="2" class="pt-3">
-                    <h5 class="mb-0">TOTAL</h5>
-                    <small class="text-muted">Incluye tasa municipal</small>
+                    <h5 class="mb-0">{{ 'TOTAL' | translate }}</h5>
+                    <small class="text-muted">{{ 'Incluye tasa municipal' | translate }}</small>
                   </td>
                   <td class="text-end pt-3">
                     <h4 class="mb-0 text-success fw-bold">
@@ -354,7 +355,7 @@
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h6 class="fw-bold">
               <i class="ri-user-line text-primary me-2"></i>
-              Solicitante
+              {{ 'Solicitante' | translate }}
             </h6>
             <div *ngIf="canSelectOrganization" class="form-check form-switch">
               <input 
@@ -365,7 +366,7 @@
                 style="cursor: pointer;">
               <label class="form-check-label small fw-semibold" for="esParaOrganizacion" style="cursor: pointer;">
                 <i class="ri-team-line me-1"></i>
-                Para Organización
+                {{ 'Para Organización' | translate }}
               </label>
             </div>
           </div>
@@ -392,7 +393,7 @@
                   <i class="ri-user-search-line fs-2 text-muted mb-2 d-block"></i>
                   <button type="button" class="btn btn-sm btn-primary" (click)="onContribuyenteSearch()">
                     <i class="ri-search-line me-1"></i>
-                    Buscar Contribuyente
+                    {{ 'Buscar Contribuyente' | translate }}
                   </button>
                 </div>
 
@@ -404,7 +405,7 @@
                     <input 
                       type="text" 
                       class="form-control" 
-                      placeholder="Buscar..."
+                      [placeholder]="'Buscar...' | translate"
                       (input)="searchContribuyente($event)"
                       #searchInput
                       autocomplete="off">
@@ -466,7 +467,7 @@
                 <i class="ri-building-line fs-2 text-muted mb-2 d-block"></i>
                 <button type="button" class="btn btn-sm btn-outline-primary" (click)="onOrganizationSearch()">
                   <i class="ri-search-line me-1"></i>
-                  Buscar Organización
+                    {{ 'Buscar Organización' | translate }}
                 </button>
               </div>
 
@@ -478,7 +479,7 @@
                   <input 
                     type="text" 
                     class="form-control" 
-                    placeholder="Buscar organización..."
+                    [placeholder]="'Buscar organización...' | translate"
                     (input)="searchOrganization($event)">
                   <button type="button" class="btn btn-outline-secondary" (click)="clearOrganizationSearch()">
                     <i class="ri-close-line"></i>
@@ -559,7 +560,7 @@
                         id="freeReservationToggle">
                       <label class="form-check-label small fw-semibold" for="freeReservationToggle">
                         <i class="ri-gift-line me-1"></i>
-                        Utilizar beneficio de deportista elite (reserva gratuita)
+                        {{ 'Utilizar beneficio de deportista elite (reserva gratuita)' | translate }}
                       </label>
                     </div>
                   </div>
@@ -573,19 +574,19 @@
         <div class="mb-2">
           <label class="form-label fw-semibold">
             <i class="ri-message-3-line me-1"></i>
-            Observaciones <span class="text-danger">*</span>
+            {{ 'Observaciones' | translate }} <span class="text-danger">*</span>
           </label>
           <textarea 
             class="form-control form-control-sm" 
             rows="3"
             formControlName="observaciones"
             [class.is-invalid]="isFieldInvalid('observaciones')"
-            placeholder="Describa el propósito de la reserva, eventos especiales o requerimientos específicos..."></textarea>
+            [placeholder]="'Describa el propósito de la reserva, eventos especiales o requerimientos específicos...' | translate"></textarea>
           <div *ngIf="getFieldError('observaciones')" class="invalid-feedback">
             {{ getFieldError('observaciones') }}
           </div>
           <div class="d-flex justify-content-between mt-1">
-            <small class="text-muted">Mínimo 10, máximo 500 caracteres</small>
+            <small class="text-muted">{{ 'Mínimo 10, máximo 500 caracteres' | translate }}</small>
             <small class="text-muted">
               {{ reservationForm.get('observaciones')?.value?.length || 0 }} / 500
             </small>
@@ -603,8 +604,7 @@
               [class.is-invalid]="isFieldInvalid('aceptaTerminos')">
             <label class="form-check-label small" for="terminos" style="cursor: pointer;">
               <i class="ri-shield-check-line text-primary me-1"></i>
-              Acepto los <a href="#" class="text-primary fw-semibold">términos y condiciones</a> y autorizo 
-              al GAMQ a generar la tasa municipal correspondiente. 
+              {{ 'Acepto los' | translate }} <a href="#" class="text-primary fw-semibold">{{ 'términos y condiciones' | translate }}</a> {{ 'y autorizo al GAMQ a generar la tasa municipal correspondiente.' | translate }}
               <span class="text-danger fw-bold">*</span>
             </label>
             <div *ngIf="getFieldError('aceptaTerminos')" class="invalid-feedback d-block">
@@ -617,11 +617,11 @@
           <div class="d-flex">
             <i class="ri-information-line fs-5 me-2"></i>
             <div class="small">
-              <strong class="d-block mb-1">Información Importante:</strong>
+              <strong class="d-block mb-1">{{ 'Información Importante:' | translate }}</strong>
               <ul class="mb-0 ps-3">
-                <li>Al confirmar se generará la tasa municipal automáticamente</li>
-                <li>Tendrá <strong>{{ validHours }} horas</strong> para realizar el pago</li>
-                <li *ngIf="anticipationTimeDisplay">Las reservas requieren <strong>{{ anticipationTimeDisplay }}</strong> de anticipación mínima</li>
+                <li>{{ 'Al confirmar se generará la tasa municipal automáticamente' | translate }}</li>
+                <li>{{ 'Tendrá' | translate }} <strong>{{ validHours }} {{ 'horas' | translate }}</strong> {{ 'para realizar el pago' | translate }}</li>
+                <li *ngIf="anticipationTimeDisplay">{{ 'Las reservas requieren' | translate }} <strong>{{ anticipationTimeDisplay }}</strong> {{ 'de anticipación mínima' | translate }}</li>
               </ul>
             </div>
           </div>
@@ -640,7 +640,7 @@
             </span>
             <span *ngIf="isSubmitting">
               <span class="spinner-border spinner-border-sm me-2"></span>
-              Procesando...
+              {{ 'Procesando...' | translate }}
             </span>
           </button>
         </div>

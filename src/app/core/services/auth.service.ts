@@ -462,6 +462,12 @@ export class AuthenticationService {
       return 'Encargado';
     }
   }
+  getDashboardRoute(): string {
+    const role = this.getUserRole();
+    if (role === 'Contribuyente') return '/inicio/taxpayer';
+    if (role === 'Encargado') return '/inicio/employee';
+    return '/inicio';
+  }
   getUserFullName(): string {
     if (!this.currentUserSubject) return '';    
     if (this.storageService.getToken() === 'CONTRIBUYENTE_SESSION') {

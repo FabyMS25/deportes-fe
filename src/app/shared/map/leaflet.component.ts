@@ -7,6 +7,7 @@ import * as L from 'leaflet';
 
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subscriber } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-leaflet',
@@ -49,6 +50,7 @@ export class LeafletComponent implements OnInit, OnDestroy {
   constructor(
     private http: HttpClient,
     private activeModal: NgbActiveModal,
+    private translate: TranslateService,
   ) {
     this.provider = new OpenStreetMapProvider();
   }
@@ -100,7 +102,7 @@ export class LeafletComponent implements OnInit, OnDestroy {
       retainZoomLevel: false,
       animateZoom: true,
       keepResult: false,
-      searchLabel: 'Buscar dirección o complejo deportivo...'
+      searchLabel: this.t('Buscar dirección o complejo deportivo...')
     });
 
     this.marcadores.addTo(this.mapa);
@@ -182,7 +184,7 @@ export class LeafletComponent implements OnInit, OnDestroy {
       },
       (error:any) => {
         this.isLoadingLocation = false;
-        this.errorMessage = 'No se pudo obtener la ubicación actual. Verifica los permisos del navegador.';
+        this.errorMessage = this.t('No se pudo obtener la ubicación actual. Verifica los permisos del navegador.');
       }
     );
   }
@@ -293,7 +295,7 @@ export class LeafletComponent implements OnInit, OnDestroy {
 
   public guardarUbicacion() {
     if (!this.direccion || this.direccion.trim() === '') {
-      this.errorMessage = 'Por favor, selecciona una ubicación válida en el mapa.';
+      this.errorMessage = this.t('Por favor, selecciona una ubicación válida en el mapa.');
       return;
     }
 
@@ -329,5 +331,9 @@ export class LeafletComponent implements OnInit, OnDestroy {
     this.marcadores.addLayer(marcador);
     this.marcadorActual = marcador;
     this.moverMarcador(marcador, this.mapa);
+  }
+
+  private t(key: string): string {
+    return this.translate.instant(key);
   }
 }

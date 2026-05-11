@@ -4,7 +4,7 @@
             <div class="d-flex">
                 <!-- LOGO -->
                 <div class="navbar-brand-box horizontal-logo">
-                    <a href="/" class="logo logo-dark">
+                    <a routerLink="/" class="logo logo-dark">
                         <span class="logo-sm">
                             <img src="assets/icons/logos/logo-sm.png " alt="" height="22">
                         </span>
@@ -13,7 +13,7 @@
                         </span>
                     </a>
 
-                    <a href="/" class="logo logo-light">
+                    <a routerLink="/" class="logo logo-light">
                         <span class="logo-sm">
                             <img src="assets/icons/logos/logo-sm.png" alt="" height="22">
                         </span>
@@ -34,7 +34,7 @@
                 <!-- App Search-->
                 <form class="app-search d-none d-md-block">
                     <div class="position-relative">
-                        <input type="text" class="form-control" placeholder="Buscar..." autocomplete="off" 
+                        <input type="text" class="form-control" [placeholder]="'Buscar...' | translate" autocomplete="off" 
                         id="search-options" value="" (keyup)="Search()">
                         <span class="mdi mdi-magnify search-widget-icon"></span>
                         <span class="mdi mdi-close-circle search-widget-icon search-widget-icon-close d-none" 
@@ -49,10 +49,10 @@
 
                             <div class="dropdown-item bg-transparent text-wrap">
                                 <a href="/reservations" class="btn btn-soft-secondary btn-sm rounded-pill me-1">
-                                    Reservas<i class="mdi mdi-magnify ms-1"></i>
+                                    {{ 'Reservas' | translate }}<i class="mdi mdi-magnify ms-1"></i>
                                 </a>
                                 <a href="/inicio/taxpayer" class="btn btn-soft-secondary btn-sm rounded-pill">
-                                    Complejos
+                                    {{ 'Complejos' | translate }}
                                     <i class="mdi mdi-magnify ms-1"></i>
                                 </a>
                             </div>
@@ -71,7 +71,7 @@
                         </ngx-simplebar>
 
                         <div class="text-center pt-3 pb-1">
-                            <a href="/pages/faqs" class="btn btn-primary btn-sm">Preguntas Frecuentes <i class="ri-arrow-right-line ms-1"></i></a>
+                            <a href="/pages/faqs" class="btn btn-primary btn-sm">{{ 'Preguntas Frecuentes' | translate }} <i class="ri-arrow-right-line ms-1"></i></a>
                         </div>
                     </div>
                 </form>
@@ -87,7 +87,7 @@
                         <form class="p-3">
                             <div class="form-group m-0">
                                 <div class="input-group">
-                                    <input type="text" class="form-control" placeholder="Buscar ..." aria-label="Recipient's username">
+                                    <input type="text" class="form-control" [placeholder]="'Buscar...' | translate" [attr.aria-label]="'Buscar' | translate">
                                     <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i></button>
                                 </div>
                             </div>
@@ -139,10 +139,10 @@
                             <div class="p-3">
                                 <div class="row align-items-center">
                                     <div class="col">
-                                        <h6 class="m-0 fs-16 fw-semibold text-white"> Notificaciones </h6>
+                                        <h6 class="m-0 fs-16 fw-semibold text-white">{{ 'Notificaciones' | translate }}</h6>
                                     </div>
                                     <div class="col-auto dropdown-tabs">
-                                        <span class="badge bg-light text-body fs-13"> {{allnotifications?.length}} Nuevos</span>
+                                        <span class="badge bg-light text-body fs-13"> {{allnotifications?.length}} {{ 'Nuevos' | translate }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -151,7 +151,7 @@
                                 <ul ngbNav #nav="ngbNav" [activeId]="1" class="nav nav-tabs dropdown-tabs nav-tabs-custom" id="notificationItemsTab">
                                     <li [ngbNavItem]="1">
                                         <a ngbNavLink>
-                                            Todo ({{allnotifications?.length}})
+                                        {{ 'Todo' | translate }} ({{allnotifications?.length}})
                                         </a>
                                         <ng-template ngbNavContent>
                                             <div class="tab-pane fade show active py-2 ps-2" id="all-noti-tab" role="tabpanel">
@@ -203,7 +203,7 @@
                                                             </div>
                                                             <div class="text-center pb-5 mt-2">
                                                                 <h6 class="fs-18 fw-semibold lh-base">                                                                   
-                                                                    Hey! No tienes ninguna notificacón
+                                                                    {{ 'No tienes ninguna notificación' | translate }}
                                                                 </h6>
                                                             </div>
                                                         </div>
@@ -211,7 +211,7 @@
                                                         @if(allnotifications?.length > 0){
                                                         <div class="my-3 text-center">
                                                             <button type="button" class="btn btn-soft-success waves-effect waves-light">
-                                                                Ver todas las notificaciones <i class="ri-arrow-right-line align-middle"></i></button>
+                                                                {{ 'Ver todas las notificaciones' | translate }} <i class="ri-arrow-right-line align-middle"></i></button>
                                                         </div>
                                                         }
                                                     </div>
@@ -223,7 +223,7 @@
                                     </li>
                                     <li [ngbNavItem]="2">
                                         <a ngbNavLink>
-                                            Importante
+                                        {{ 'Importante' | translate }}
                                         </a>
                                         <ng-template ngbNavContent>
                                             <div class="tab-pane p-4" id="alerts-tab" role="tabpanel" aria-labelledby="alerts-tab">
@@ -232,7 +232,7 @@
                                                 </div>
                                                 <div class="text-center pb-5 mt-2">
                                                     <h6 class="fs-18 fw-semibold lh-base">
-                                                        Hey! No tienes ninguna notificacón
+                                                        {{ 'No tienes ninguna notificación' | translate }}
                                                     </h6>
                                                 </div>
                                             </div>
@@ -252,8 +252,8 @@
 
                         <div class="notification-actions" id="notification-actions">
                             <div class=" d-flex text-muted justify-content-center">
-                                <div id="select-content" class="text-body fw-semibold px-1">{{checkedValGet.length}}</div> Resultado seleccionados
-                                <button type="button" class="btn btn-link link-danger p-0 ms-3" data-bs-toggle="modal" (click)="openModal(removenotification)" data-bs-target="#removeNotificationModal">Quitar</button>
+                                <div id="select-content" class="text-body fw-semibold px-1">{{checkedValGet.length}}</div> {{ 'Resultados seleccionados' | translate }}
+                                <button type="button" class="btn btn-link link-danger p-0 ms-3" data-bs-toggle="modal" (click)="openModal(removenotification)" data-bs-target="#removeNotificationModal">{{ 'Quitar' | translate }}</button>
                             </div>
                         </div>
                     </div>
@@ -267,9 +267,9 @@
                             {{ this.userFullName }}
                             </span>
                             <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">
-                            <span class="text-muted">{{ this.userRole }}</span>
+                            <span class="text-muted">{{ this.userRole | translate }}</span>
                             <span *ngIf="this.userRole==='Contribuyente'" class="badge {{ getStatusBadgeClass() }} ms-1 fs-11">
-                                {{ this.userData.estadoUsuario}}
+                                {{ this.userData.estadoUsuario | translate }}
                             </span>
                             </span>
                         </span>
@@ -277,23 +277,23 @@
                     </button>
                     <div class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
                         <!-- item-->
-                        <h6 class="dropdown-header">Bienvenido {{ getUserName() }}!</h6>
+                        <h6 class="dropdown-header">{{ 'Bienvenido' | translate }} {{ getUserName() }}!</h6>
                         <a class="dropdown-item" routerLink="/profile/profile">
                         <i class="mdi mdi-account-circle text-muted fs-16 align-middle me-1"></i> 
-                        <span class="align-middle">Perfil</span>
+                        <span class="align-middle">{{ 'Perfil' | translate }}</span>
                         </a>
                         <a class="dropdown-item" routerLink="/pages/faqs">
                         <i class="mdi mdi-lifebuoy text-muted fs-16 align-middle me-1"></i> 
-                        <span class="align-middle">Ayuda</span>
+                        <span class="align-middle">{{ 'Ayuda' | translate }}</span>
                         </a>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" routerLink="/profile/profile-setting">
                         <i class="mdi mdi-cog-outline text-muted fs-16 align-middle me-1"></i> 
-                        <span class="align-middle">Configuraciones</span>
+                        <span class="align-middle">{{ 'Configuraciones' | translate }}</span>
                         </a>
                         <a class="dropdown-item" href="javascript: void(0);" (click)="logout()">
                         <i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> 
-                        <span class="align-middle" data-key="t-logout">Salir</span>
+                        <span class="align-middle" data-key="t-logout">{{ 'Salir' | translate }}</span>
                         </a>
                     </div>
                 </div>
@@ -312,13 +312,13 @@
             <div class="mt-2 text-center">
                 <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop" colors="primary:#f7b84b,secondary:#f06548" style="width:100px;height:100px"></lord-icon>
                 <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
-                    <h4>Estas seguro ?</h4>
-                    <p class="text-muted mx-4 mb-0">Estas seguro de quitar esta notificación ?</p>
+                    <h4>{{ '¿Está seguro?' | translate }}</h4>
+                    <p class="text-muted mx-4 mb-0">{{ '¿Está seguro de quitar esta notificación?' | translate }}</p>
                 </div>
             </div>
             <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
-                <button type="button" class="btn w-sm btn-light" data-bs-dismiss="modal" (click)="modal.dismiss('Cross click')">Cancelar</button>
-                <button type="button" class="btn w-sm btn-danger" id="delete-notification" (click)="notificationDelete()">Si, eliminar!</button>
+                <button type="button" class="btn w-sm btn-light" data-bs-dismiss="modal" (click)="modal.dismiss('Cross click')">{{ 'Cancelar' | translate }}</button>
+                <button type="button" class="btn w-sm btn-danger" id="delete-notification" (click)="notificationDelete()">{{ 'Sí, eliminar' | translate }}</button>
             </div>
         </div>
     </div>

@@ -5,10 +5,11 @@ import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import {read, utils} from 'xlsx';
 import Swal from 'sweetalert2';
 import { SharedModule } from 'src/app/shared/shared.module';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 @Component({
   selector: 'app-categorias-import',
   standalone: true,
-  imports: [FormsModule, CommonModule, NgbModule, SharedModule],
+  imports: [FormsModule, CommonModule, NgbModule, SharedModule, TranslateModule],
   templateUrl: './modal-import.component.html',
   styleUrl: './modal-import.component.scss'
 })
@@ -28,7 +29,8 @@ export class ModalImportComponent {
   temporaryList: any[] = [];
   
   constructor(
-      private activeModal: NgbActiveModal) {}
+      private activeModal: NgbActiveModal,
+      private translate: TranslateService) {}
 
   closeModal() {
       this.activeModal.close();
@@ -62,7 +64,7 @@ export class ModalImportComponent {
             this.temporaryList = [...this.xlsxData];
             if (this.xlsxData.length <= 0) {
                 this.loading = false;
-                Swal.fire({ text: 'El archivo no tiene datos para importar', confirmButtonColor: '#299cdb' });
+                Swal.fire({ text: this.t('El archivo no tiene datos para importar'), confirmButtonColor: '#299cdb' });
             }
         };
     }
@@ -75,14 +77,14 @@ export class ModalImportComponent {
       try {
         record = this.mapRowFn ? this.mapRowFn(row, this.lookupData) : row;
       } catch (err) {
-        const missing = (err as any)?.missingFields?.join(', ') || 'Faltan datos de referencia';
+        const missing = (err as any)?.missingFields?.join(', ') || this.t('Faltan datos de referencia');
         const result = await Swal.fire({
           icon: 'warning',
-          title: `Fila ${i + 1} - Datos no encontrados`,
-          text: `No se encontraron: ${missing}`,
+          title: this.t('Fila {{row}} - Datos no encontrados', { row: i + 1 }),
+          text: this.t('No se encontraron: {{missing}}', { missing }),
           showCancelButton: true,
-          confirmButtonText: 'Omitir y continuar',
-          cancelButtonText: 'Cancelar',
+          confirmButtonText: this.t('Omitir y continuar'),
+          cancelButtonText: this.t('Cancelar'),
           confirmButtonColor: '#299cdb',
           cancelButtonColor: '#d33'
         });
@@ -92,9 +94,9 @@ export class ModalImportComponent {
       if (this.checkExistsFn?.(record)) {
         await Swal.fire({
           icon: 'info',
-          title: `Fila ${i + 1}`,
+          title: this.t('Fila {{row}}', { row: i + 1 }),
           timer: 2000,
-          text: `El registro ya existe.`,
+          text: this.t('El registro ya existe.'),
           confirmButtonColor: '#299cdb'
         });
         continue;
@@ -105,7 +107,7 @@ export class ModalImportComponent {
           toast: true,
           position: 'top-end',
           icon: 'success',
-          title: `Fila ${i + 1} creada exitosamente`,
+          title: this.t('Fila {{row}} creada exitosamente', { row: i + 1 }),
           showConfirmButton: false,
           timer: 2000,
           timerProgressBar: true,
@@ -115,11 +117,11 @@ export class ModalImportComponent {
       } catch (error) {
         const retryResult = await Swal.fire({
           icon: 'error',
-          title: `Error al crear fila ${i + 1}`,
-          text: `No se pudo crear el registro. ¿Desea omitir esta fila y continuar?`,
+          title: this.t('Error al crear fila {{row}}', { row: i + 1 }),
+          text: this.t('No se pudo crear el registro. ¿Desea omitir esta fila y continuar?'),
           showCancelButton: true,
-          confirmButtonText: 'Omitir y continuar',
-          cancelButtonText: 'Cancelar',
+          confirmButtonText: this.t('Omitir y continuar'),
+          cancelButtonText: this.t('Cancelar'),
           confirmButtonColor: '#299cdb',
           cancelButtonColor: '#d33'
         });
@@ -156,6 +158,10 @@ export class ModalImportComponent {
       }
       return converted;
     });
+  }
+
+  private t(key: string, params?: Record<string, any>): string {
+    return this.translate.instant(key, params);
   }
 
   // public async createRegisterfromXlsx(xlsxData: any) {

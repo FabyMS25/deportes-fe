@@ -140,6 +140,7 @@ export class SidebarComponent implements OnInit {
       this.removeActivation(items);
     }
     this.activateParentDropdown(event.target);
+    this.closeMobileMenu();
   }
 
   initActiveMenu() {
@@ -202,6 +203,11 @@ export class SidebarComponent implements OnInit {
    * @param content modal content
    */
   SidebarHide() {
+    this.closeMobileMenu();
+  }
+
+  private closeMobileMenu() {
     document.body.classList.remove('vertical-sidebar-enable');
+    document.querySelector('.hamburger-icon')?.classList.remove('open');
   }
 }

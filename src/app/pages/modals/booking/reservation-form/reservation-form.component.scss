@@ -1,0 +1,65 @@
+.reservation-form-wrapper {
+  min-width: 0;
+}
+
+.reservation-form-wrapper .card-body {
+  padding: 1rem;
+}
+
+.reservation-form-wrapper .badge,
+.reservation-form-wrapper .form-text,
+.reservation-form-wrapper small,
+.reservation-form-wrapper .fw-medium {
+  overflow-wrap: anywhere;
+}
+
+.reservation-form-wrapper .table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.reservation-form-wrapper .table {
+  min-width: 520px;
+}
+
+.reservation-form-wrapper textarea {
+  resize: vertical;
+}
+
+.reservation-form-wrapper .list-group {
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 575.98px) {
+  .reservation-form-wrapper .card-body,
+  .reservation-form-wrapper .card-footer {
+    padding: 0.875rem;
+  }
+
+  .reservation-form-wrapper h6 {
+    line-height: 1.35;
+  }
+
+  .reservation-form-wrapper .row.g-3 {
+    --bs-gutter-y: 0.75rem;
+  }
+
+  .reservation-form-wrapper .input-group,
+  .reservation-form-wrapper .btn,
+  .reservation-form-wrapper .form-control,
+  .reservation-form-wrapper .form-select {
+    min-height: 38px;
+  }
+
+  .reservation-form-wrapper .card-footer .d-flex {
+    align-items: stretch !important;
+  }
+
+  .reservation-form-wrapper .card-footer .btn {
+    width: 100%;
+  }
+
+  .reservation-form-wrapper .form-check-label {
+    line-height: 1.35;
+  }
+}

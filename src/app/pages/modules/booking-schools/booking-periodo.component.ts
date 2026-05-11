@@ -275,6 +275,7 @@ export class BookingPeriodoComponent implements OnInit {
     });
 
     modalRef.componentInstance.accion = '';
+    modalRef.componentInstance.canActivate = this.canActivate;
     modalRef.componentInstance.estudiantes = this.estudiantesList;
     modalRef.componentInstance.defaultPeriodo = this.filters.periodoFiltro || this.currentPeriodo;
     modalRef.componentInstance.reservaGenerada.subscribe((reserva: Reserva) => {

@@ -2,3 +2,35 @@
   position: sticky;
   top: 0;
 }
+
+.wizard-container,
+.booking-sidebar {
+  min-width: 0;
+}
+
+.booking-sidebar {
+  margin-top: 1rem;
+}
+
+.summary-item,
+.contact-item {
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 992px) {
+  .booking-sidebar {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .sticky-side-div .sticky-top {
+    position: static;
+    top: auto;
+    z-index: auto;
+  }
+
+  .booking-sidebar .card {
+    margin-bottom: 0.75rem;
+  }
+}

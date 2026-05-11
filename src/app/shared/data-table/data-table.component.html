@@ -18,7 +18,7 @@
                             [attr.aria-sort]="getSortDirection(column.prop)"
                             [class.sorted-asc]="currentSortColumn === column.prop && isSortAscending"
                             [class.sorted-desc]="currentSortColumn === column.prop && !isSortAscending">
-                            {{column.name}}
+                            {{ column.name | translate }}
                             <span class="sort-indicator" aria-hidden="true">
                                 <i class="ri-arrow-up-line" *ngIf="currentSortColumn === column.prop && isSortAscending"></i>
                                 <i class="ri-arrow-down-line" *ngIf="currentSortColumn === column.prop && !isSortAscending"></i>
@@ -27,7 +27,7 @@
                       }
                     }
                     @if (actions) {
-                        <th >Acciones</th>
+                        <th>{{ 'Acciones' | translate }}</th>
                     }
                 </tr>
             </thead>
@@ -50,7 +50,7 @@
                         <ng-container *ngIf="getPropertyValue(data, column.prop) as value; else emptyValue">
                             @if (column.tag) {
                                 <span class="badge" [ngClass]="getBadgeClass(value)">
-                                    {{ value }}
+                                    {{ value | translate }}
                                 </span>
                             } @else if (column.date) {
                                 <ngb-highlight [result]="(value | date:'longDate') || value" [term]="searchTerm"></ngb-highlight>
@@ -70,13 +70,13 @@
                                 <i class="ri-car-fill vehicle-icon"></i>
                             }@else if(column.prop===''){
                                 <span *ngIf="data.esMovil" class="badge bg-success-subtle text-success">
-                                    {{'Movil'}}
+                                    {{ 'Movil' | translate }}
                                 </span>
                                 <span *ngIf="data.esOficial" class="badge bg-primary-subtle text-primary">
-                                    {{'Oficial'}}
+                                    {{ 'Oficial' | translate }}
                                 </span>
                                 <span *ngIf="data.esUnidadIndustrial" class="badge bg-warning-subtle text-warning">
-                                    {{'Industrial'}}
+                                    {{ 'Industrial' | translate }}
                                 </span>
                             }@else{
                                 <span class="text-muted">...</span>
@@ -121,7 +121,7 @@
                           (change)="onCheckboxChange($event, data)">
                         <label class="form-check-label text-muted small" 
                           [for]="'check_' + (data.uuid || $index)">
-                          Seleccionar
+                          {{ 'Seleccionar' | translate }}
                         </label>
                     </div>
                 </div>
@@ -132,11 +132,11 @@
                     @for (column of itemsList; track $index) {
                       @if (column.visible && (column.primary || isMobileColumn(column))) {
                         <div class="mb-2">
-                            <div class="text-muted small mb-1">{{column.name}}</div>
+                            <div class="text-muted small mb-1">{{ column.name | translate }}</div>
                             <ng-container *ngIf="getPropertyValue(data, column.prop) as value; else emptyValue">
                                 @if (column.tag) {
                                     <span class="badge" [ngClass]="getBadgeClass(value)">
-                                        {{ value }}
+                                        {{ value | translate }}
                                     </span>
                                 } @else if (column.date) {
                                     <div class="fw-medium">{{ value | date:'dd/MM/yyyy' }}</div>
@@ -145,7 +145,7 @@
                                 } @else if (column.image) {
                                     <img [src]="value" 
                                       class="avatar-md rounded" 
-                                      [alt]="column.name"
+                                      [alt]="column.name | translate"
                                       style="object-fit: cover;">
                                 } @else if (column.avatar && data.avatar) {
                                     <div class="d-flex align-items-center gap-2">
@@ -159,7 +159,7 @@
                                 }
                             </ng-container>
                             <ng-template #emptyValue>
-                                <div class="text-muted fst-italic">Sin datos</div>
+                                <div class="text-muted fst-italic">{{ 'Sin datos' | translate }}</div>
                             </ng-template>
                         </div>
                       }
@@ -174,11 +174,11 @@
                           <button type="button"
                             class="btn btn-sm px-2"
                             [class]="action.buttonClass || 'btn-soft-secondary'"
-                            [ngbTooltip]="action.tooltip" 
+                            [ngbTooltip]="action.tooltip | translate" 
                             placement="top"
                             (click)="action.handler(data)">
                             <i [class]="action.icon"></i>
-                            <span class="d-none d-md-inline ms-1">{{action.tooltip}}</span>
+                            <span class="d-none d-md-inline ms-1">{{ action.tooltip | translate }}</span>
                           </button>
                         }
                     </div>
@@ -192,7 +192,7 @@
     <!-- Loading Spinner -->
     <div id="elmLoader" *ngIf="loading">
     <div class="spinner-border text-primary avatar-sm" role="status">
-        <span class="visually-hidden">Cargando...</span>
+        <span class="visually-hidden">{{ 'Cargando...' | translate }}</span>
     </div>
     </div>  
     <!-- No Results Found -->
@@ -201,8 +201,8 @@
         <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop" 
         colors="primary:#405189,secondary:#0ab39c" style="width:75px;height:75px">
         </lord-icon>
-        <h5 class="mt-2">Lo Sentimos! No Se encontró ningún Dato </h5>
-        <p class="text-muted">No encontramos datos para mostrar</p>
+        <h5 class="mt-2">{{ 'No se encontró ningún dato' | translate }}</h5>
+        <p class="text-muted">{{ 'No encontramos datos para mostrar' | translate }}</p>
     </div>
     </div>
     <!-- Pagination -->
@@ -221,8 +221,8 @@
         <div class="col col-xxl-5 d-none d-sm-table" *ngIf="getTotalElements() > 0">
             <div class="dataTables_info mb-2" id="tickets-table_info" role="status" aria-live="polite">
                 <span style="color:slategray">
-                    {{this.content.length}} Registros, de un total de {{ getTotalElements() }}
-                    <span *ngIf="serverSidePagination">(Paginación del servidor)</span>
+                    {{ this.content.length }} {{ 'Registros, de un total de' | translate }} {{ getTotalElements() }}
+                    <span *ngIf="serverSidePagination">({{ 'Paginación del servidor' | translate }})</span>
                 </span>
             </div>            
         </div> 

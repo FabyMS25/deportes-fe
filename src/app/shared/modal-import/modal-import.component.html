@@ -1,18 +1,18 @@
 <div class="modal-header">
-    <h5 class="modal-title" ngbAutofocus>Importar Datos</h5>
+    <h5 class="modal-title" ngbAutofocus>{{ 'Importar Datos' | translate }}</h5>
     <button
         [disabled]="loading"
         type="button"
         class="btn-close"
-        aria-label="Close"
+        [attr.aria-label]="'Cerrar' | translate"
         (click)="closeModal()">
     </button>
 </div>
 <div class="modal-body">
     <div class="alert-primary mb-3">
         <blockquote class="blockquote custom-blockquote blockquote-primary rounded mb-0">
-            <strong class="text-primary"> Nota: </strong>
-            <p class="text-body mb-2">Solo se guardarán los registros que no existan, los registros que ya existan no se tomaran en cuenta.</p>
+            <strong class="text-primary">{{ 'Nota:' | translate }} </strong>
+            <p class="text-body mb-2">{{ 'Solo se guardarán los registros que no existan, los registros que ya existan no se tomarán en cuenta.' | translate }}</p>
             <!-- <footer class="blockquote-footer mt-0"> <cite title="Source Title"></cite></footer> -->
         </blockquote>
     </div>
@@ -20,7 +20,7 @@
         <div class="col-12 col-lg-6 mb-3">
             <input
                 class="form-control shadow-none rounded-3"
-                placeholder="Cargar datos desde Excel"
+                [placeholder]="'Cargar datos desde Excel' | translate"
                 type="file"
                 (change)="loadDatafromExcel($event)"
                 [multiple]="false"
@@ -32,7 +32,7 @@
                 <input
                     type="text"
                     class="form-control rounded-3 border-0 shadow-none"
-                    placeholder="Buscar ..."
+                    [placeholder]="'Buscar...' | translate"
                     (keyup)="search($event)">
             </div>
         </div>
@@ -57,13 +57,13 @@
             class="spinner-border spinner-border-sm"
             aria-hidden="true">
         </span>
-        {{loading ? 'Importando...':'Importar'}}
+        {{ (loading ? 'Importando...' : 'Importar') | translate }}
     </button>
     <button
         [disabled]="loading"
         type="button"
         class="btn btn-outline-secondary rounded-3"
         (click)="closeModal()">
-        Cancelar
+        {{ 'Cancelar' | translate }}
     </button>
 </div>

@@ -4,7 +4,8 @@ import {
   CanActivateChild,
   ActivatedRouteSnapshot,
   RouterStateSnapshot,
-  Router
+  Router,
+  UrlTree
 } from "@angular/router";
 
 import { AuthenticationService } from "../services/auth.service";
@@ -19,15 +20,18 @@ export class AuthGuard implements CanActivate, CanActivateChild {
   canActivate(
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
-  ): boolean {
+  ): boolean | UrlTree {
     const currentUser = this.authenticationService.currentUser();
     if (!currentUser) {
       this.authenticationService.logout();
       return false;
     }
+    if (state.url === "/" || state.url === "") {
+      return this.router.parseUrl(this.authenticationService.getDashboardRoute());
+    }
     const hasPermission = this.checkPermissions(route, state);
     if (!hasPermission) {
-      this.router.navigate(['/']);
+      return this.router.parseUrl(this.authenticationService.getDashboardRoute());
     }
     return hasPermission;
   }
@@ -35,7 +39,7 @@ export class AuthGuard implements CanActivate, CanActivateChild {
   canActivateChild(
     childRoute: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
-  ): boolean {
+  ): boolean | UrlTree {
     return this.canActivate(childRoute, state);
   }
 

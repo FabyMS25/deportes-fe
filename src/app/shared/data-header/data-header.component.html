@@ -1,6 +1,6 @@
     <div class="card rounded-2 mb-2">
         <div class="card-header d-flex flex-wrap align-items-center">
-            <h5 class="card-title flex-grow-1">{{'Lista de '+title|translate }}</h5>
+            <h5 class="card-title flex-grow-1">{{ 'Lista de' | translate }} {{ title | translate }}</h5>
             <div class="d-flex gap-1 flex-wrap">
                 <button *ngIf="newShow" (click)="openPopup()"
                     class="btn btn-soft-secondary add-btn" data-bs-placement="top"
