@@ -790,9 +790,23 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
     return total;
   }
   getTotalWeeklyHours(): number {
-    const totalSessions = this.getTotalWeeklySessions();
-    const duration = this.row?.duracionSesionHoras || 0;
-    return totalSessions * duration;
+    return this.getScheduledDates().reduce((total, item) => {
+      return total + item.slots.reduce((slotTotal, slot) => slotTotal + this.getSlotDurationHours(slot), 0);
+    }, 0);
+  }
+
+  private getSlotDurationHours(slot: string): number {
+    const [start, end] = slot.split('-');
+    if (!start || !end) return 0;
+
+    const startMinutes = this.timeToMinutes(start);
+    const endMinutes = this.timeToMinutes(end);
+    return Math.max(0, endMinutes - startMinutes) / 60;
+  }
+
+  private timeToMinutes(time: string): number {
+    const [hours = '0', minutes = '0'] = time.split(':');
+    return (parseInt(hours, 10) * 60) + parseInt(minutes, 10);
   }
 
   getCantidadMeses(): number | null {
@@ -800,9 +814,13 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
     const inicio = this.normalizeDate(this.row.fechaInicio);
     const fin = this.normalizeDate(this.row.fechaFin);
     if (fin < inicio) return 0;
-    const startMonth = inicio.getFullYear() * 12 + inicio.getMonth();
-    const endMonth = fin.getFullYear() * 12 + fin.getMonth();
-    return (endMonth - startMonth) + 1;
+    return this.calculateBillingMonths(inicio, fin);
+  }
+
+  getCantidadMesesLabel(): string {
+    const meses = this.getCantidadMeses();
+    if (meses === null) return 'N/A';
+    return `${meses} ${meses === 1 ? 'mes' : 'meses'}`;
   }
   
   private normalizeDate(date: string | Date): Date {
@@ -813,6 +831,26 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
       }
     }
     const d = new Date(date);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  private calculateBillingMonths(start: Date, end: Date): number {
+    let count = 1;
+    let cycleEnd = this.addMonthsSafe(start, count);
+    while (end > cycleEnd) {
+      count++;
+      cycleEnd = this.addMonthsSafe(start, count);
+    }
+    return count;
+  }
+
+  private addMonthsSafe(date: Date, months: number): Date {
+    const d = new Date(date);
+    const originalDay = d.getDate();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + months);
+    const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(originalDay, lastDay));
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   }
 
@@ -845,9 +883,9 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
 
   getDiasSemanaLabels(diasString: string): string {
     if (!diasString) return 'N/A';
-    const diasArray = diasString.split(',');
+    const diasArray = diasString.split(',').map(dia => dia.trim()).filter(Boolean);
     return diasArray.map(dia => {
-      const option = this.diasSemanaOptions.find(d => d.value === dia);
+      const option = this.diasSemanaOptions.find(d => d.value === dia.toUpperCase());
       return option ? option.label : dia;
     }).join(', ');
   }

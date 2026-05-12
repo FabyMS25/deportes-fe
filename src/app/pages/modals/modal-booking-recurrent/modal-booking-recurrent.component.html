@@ -355,13 +355,13 @@
                   <div class="col-md-4">
                     <small class="text-muted d-block">Días Programados</small>
                     <div class="fw-semibold">
-                      {{ row.diasSemana ? row.diasSemana.split(',').length : 0 }} días
+                      {{ getDiasSemanaLabels(row.diasSemana) }}
                     </div>
                   </div>
 
                   <div class="col-md-4" *ngIf="row.reservaDto?.tarifaDto?.tipoCobro === 'mensualidad'">
                     <small class="text-muted d-block">Cantidad de Meses</small>
-                    <div class="fw-semibold">{{ getCantidadMeses() ?? 'N/A' }}</div>
+                    <div class="fw-semibold">{{ getCantidadMesesLabel() }}</div>
                   </div>
 
                   <div class="col-md-4" *ngIf="row.reservaDto?.tarifaDto?.tipoCobro === 'mensualidad'">
@@ -377,8 +377,8 @@
                   </div>
 
                   <div class="col-md-4" *ngIf="row.reservaDto?.tarifaDto?.tipoCobro === 'por_sesion'">
-                    <small class="text-muted d-block">Cantidad de Sesiones</small>
-                    <div class="fw-semibold">{{ row.cantidadSesiones || 'N/A' }}</div>
+                    <small class="text-muted d-block">Horas Cobrables</small>
+                    <div class="fw-semibold">{{ getTotalWeeklyHours() || 'N/A' }}</div>
                   </div>
                 </div>
               </div>
@@ -919,8 +919,8 @@
               <div class="fw-semibold">{{ formatFrecuenciaMensual(row.reservaDto?.tarifaDto?.frecuencia) }}</div>
             </div>
             <div class="col-md-4" *ngIf="row.reservaDto?.tarifaDto?.tipoCobro === 'por_sesion'">
-              <small class="text-muted d-block">Sesiones</small>
-              <div class="fw-semibold">{{ row.cantidadSesiones || 'N/A' }}</div>
+              <small class="text-muted d-block">Horas cobrables</small>
+              <div class="fw-semibold">{{ getTotalWeeklyHours() || 'N/A' }}</div>
             </div>
           </div>
         </div>

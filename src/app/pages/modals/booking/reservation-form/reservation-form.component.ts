@@ -644,8 +644,8 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       const start = this.safeParseDate(startDate);
       const end = this.safeParseDate(endDate);
       if (!start || !end) return 1;
-      const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
-      return Math.max(1, months);
+      if (end < start) return 1;
+      return this.calculateBillingMonths(start, end);
     } catch (error) {
       console.error('Error calculating months duration:', error);
       return 1;
@@ -1178,7 +1178,7 @@ private getDurationForConcepto(concepto: any, formValue: any): number {
         case 'por_persona':
           return `${this.reservationForm?.getRawValue()?.cantidadPersonas || 1} persona(s)`;
         case 'por_sesion':
-          return `${this.getRecurrentSessionCount()} sesión(es)`;
+          return `${this.getRecurrentSessionCount()} hora(s)`;
         case 'mensualidad':
           return `${this.safeCalculateMonthsDuration(this.recurrentSchedule?.fechaInicio, this.recurrentSchedule?.fechaFin)} mes(es)`;
         case 'por_club':
@@ -1203,7 +1203,7 @@ private getDurationForConcepto(concepto: any, formValue: any): number {
         );
         return `${meses} mes(es)`;
       case 'por_sesion':
-        return `${this.getRecurrentSessionCount()} sesión(es)`;
+        return `${this.getRecurrentSessionCount()} hora(s)`;
       case 'por_evento':
         return '1 evento';
       case 'por_club':
@@ -1225,7 +1225,7 @@ private getDurationForConcepto(concepto: any, formValue: any): number {
       case 'por_persona':
         return `${formattedBase} por persona`;
       case 'por_sesion':
-        return `${formattedBase} por sesión`;
+        return `${formattedBase} por hora cobrable`;
       case 'mensualidad':
         return `${formattedBase} por mes`;
       case 'por_club':
@@ -1246,7 +1246,7 @@ private getDurationForConcepto(concepto: any, formValue: any): number {
       case 'por_persona':
         return 'Personas';
       case 'por_sesion':
-        return 'Total sesiones';
+        return 'Horas cobrables';
       case 'mensualidad':
       case 'por_club':
         return 'Meses';
@@ -1318,14 +1318,34 @@ private getDurationForConcepto(concepto: any, formValue: any): number {
 
   calculateMonthsDuration(startDate: Date, endDate: Date): number {
     try {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
-      return Math.max(1, months);
+      const start = this.parseLocalDate(startDate as any);
+      const end = this.parseLocalDate(endDate as any);
+      if (end < start) return 1;
+      return this.calculateBillingMonths(start, end);
     } catch (error) {
       console.error('Error calculating months duration:', error);
       return 1;
     }
+  }
+
+  private calculateBillingMonths(start: Date, end: Date): number {
+    let count = 1;
+    let cycleEnd = this.addMonthsSafe(start, count);
+    while (end > cycleEnd) {
+      count++;
+      cycleEnd = this.addMonthsSafe(start, count);
+    }
+    return count;
+  }
+
+  private addMonthsSafe(date: Date, months: number): Date {
+    const d = new Date(date);
+    const originalDay = d.getDate();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + months);
+    const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(originalDay, lastDay));
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   }
 
   onSubmit(): void {
@@ -1500,7 +1520,7 @@ private prepareReservationData(): Reserva {
       cantidadSesiones: this.getRecurrentSessionCount(),
       duracionSesionHoras: this.recurrentSchedule.duracionSesionHoras,
       cantidadPersonas: formValue.cantidadPersonas,
-      tarifaMensual: isFreeReservation ? 0 : (this.calculatedPrice / this.safeCalculateMonthsDuration(this.recurrentSchedule.fechaInicio, this.recurrentSchedule.fechaFin)),
+      tarifaMensual: this.getRecurrentBaseTariffAmount(isFreeReservation),
       activo: true,
       categoria: this.getTarifaCategories(),
       superficie: this.dataField?.superficieDto?.descripcion || '',
@@ -1512,6 +1532,11 @@ private prepareReservationData(): Reserva {
   }
   return reserva;
 }
+
+  private getRecurrentBaseTariffAmount(isFreeReservation: boolean): number {
+    if (isFreeReservation) return 0;
+    return Number(this.selectedTariff?.precioBase || 0);
+  }
 
   private registerReservationInRuat(reservaData: Reserva): void {
     if (!reservaData.contribuyenteDto?.codigoContribuyente) {

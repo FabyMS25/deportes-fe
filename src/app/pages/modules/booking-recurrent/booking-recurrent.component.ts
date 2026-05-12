@@ -480,16 +480,44 @@ export class BookingRecurrentComponent implements OnInit {
     fechaFin?: Date | string
   ): number | '-' {
     if (!fechaInicio || !fechaFin) return '-';
-    const start = new Date(fechaInicio);
-    const end = new Date(fechaFin);
+    const start = this.parseLocalDate(fechaInicio);
+    const end = this.parseLocalDate(fechaFin);
     if (isNaN(start.getTime()) || isNaN(end.getTime())) return '-';
-    let months =
-      (end.getFullYear() - start.getFullYear()) * 12 +
-      (end.getMonth() - start.getMonth());
-    if (end.getDate() >= start.getDate()) {
-      months += 1;
+    if (end < start) return 0;
+    return this.calculateBillingMonths(start, end);
+  }
+
+  private parseLocalDate(dateValue: Date | string): Date {
+    if (dateValue instanceof Date) {
+      return new Date(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate());
     }
-    return months > 0 ? months : 1;
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+      const [year, month, day] = dateValue.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+
+    return new Date(dateValue);
+  }
+
+  private calculateBillingMonths(start: Date, end: Date): number {
+    let count = 1;
+    let cycleEnd = this.addMonthsSafe(start, count);
+    while (end > cycleEnd) {
+      count++;
+      cycleEnd = this.addMonthsSafe(start, count);
+    }
+    return count;
+  }
+
+  private addMonthsSafe(date: Date, months: number): Date {
+    const d = new Date(date);
+    const originalDay = d.getDate();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + months);
+    const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(originalDay, lastDay));
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   }
   /* BUSINESS LOGIC */
   private async checkAndUpdateReservationsStatuses(

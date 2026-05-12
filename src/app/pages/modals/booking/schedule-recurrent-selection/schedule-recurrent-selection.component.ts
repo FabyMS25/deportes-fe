@@ -676,7 +676,7 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
       case 'por_sesion': {
         const h = this.calculateHoursWithinTariffRange();
         this.calculatedTariff = this.dataTariff.precioBase * h;
-        this.tariffDetails.push(`Por sesión: Bs. ${this.dataTariff.precioBase} × ${h.toFixed(1)}h = Bs. ${this.calculatedTariff.toFixed(2)}`);
+        this.tariffDetails.push(`Horas cobrables: Bs. ${this.dataTariff.precioBase} × ${h.toFixed(1)}h = Bs. ${this.calculatedTariff.toFixed(2)}`);
         break;
       }
       case 'por_hora': {
