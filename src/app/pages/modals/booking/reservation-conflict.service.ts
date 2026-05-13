@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { EstadoReserva } from 'src/app/core/constants/Estados';
+import { EstadoReserva, EstadoValidacion } from 'src/app/core/constants/Estados';
 import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { Reserva } from 'src/app/core/models/reserva.model';
 import { ReservaPuntual } from 'src/app/core/models/reservaPuntual.model';
@@ -23,10 +23,11 @@ export interface TimeRange {
 })
 export class ReservationConflictService {
   private readonly BLOCKING_STATES: EstadoReserva[] = [
-    EstadoReserva.PENDIENTE,
     EstadoReserva.SOLICITADA,
+    EstadoReserva.PENDIENTE,
     EstadoReserva.PAGADA,
-    EstadoReserva.EN_CURSO
+    EstadoReserva.EN_CURSO,
+    EstadoReserva.COMPLETADA
   ];
 
   constructor() {}
@@ -38,10 +39,10 @@ export class ReservationConflictService {
     excludeReservaId?: string
   ): ConflictResult {
     const conflicts: Reserva[] = [];
-    const campoReservations = existingReservations.filter(r => 
+    const campoReservations = existingReservations.filter(r =>
       r.campoDeportivoDto?.uuid === campoDeportivoId &&
       r.uuid !== excludeReservaId &&
-      this.BLOCKING_STATES.includes(r.estadoReserva as EstadoReserva)
+      this.isBlockingReservation(r)
     );
     for (const reserva of campoReservations) {
       if (reserva.reservaPuntualDto) {
@@ -101,7 +102,7 @@ export class ReservationConflictService {
     puntual: ReservaPuntual
   ): boolean {
     const targetDate = this.formatDate(timeRange.date);
-    const reservaDate = this.formatDate(new Date(puntual.fechaUso));
+    const reservaDate = this.formatDate(this.parseLocalDate(puntual.fechaUso));
     if (targetDate !== reservaDate) {
       return false;
     }
@@ -117,14 +118,15 @@ export class ReservationConflictService {
     timeRange: TimeRange,
     recurrent: ReservaRecurrente
   ): boolean {
-    const targetDate = timeRange.date;
-    const startDate = new Date(recurrent.fechaInicio);
-    const endDate = new Date(recurrent.fechaFin);
+    const targetDate = this.stripTime(timeRange.date);
+    const startDate = this.stripTime(this.parseLocalDate(recurrent.fechaInicio));
+    const endDate = this.stripTime(this.parseLocalDate(recurrent.fechaFin));
     if (targetDate < startDate || targetDate > endDate) {
       return false;
     }
     const dayName = this.getDayName(targetDate);
-    if (!recurrent.diasSemana || !recurrent.diasSemana.includes(dayName)) {
+    const recurrentDays = this.normalizeDiasSemana(recurrent.diasSemana);
+    if (!recurrentDays.includes(dayName)) {
       return false;
     }
     if (recurrent.tableroDto?.horario) {
@@ -146,17 +148,13 @@ export class ReservationConflictService {
           if (monthMatrix && targetDay >= 0 && targetDay < monthMatrix.length) {
             const daySlots = monthMatrix[targetDay];
             if (Array.isArray(daySlots)) {
-              return daySlots.some((timeSlot: string) => {
-                if (typeof timeSlot === 'string' && timeSlot.includes('-')) {
-                  const [start, end] = timeSlot.split('-').map((t: string) => t.trim());
+              return this.parseHorarioSlots(daySlots).some(({ start, end }) => {
                   return this.timesOverlap(
                     timeRange.startTime,
                     timeRange.endTime,
                     start,
                     end
                   );
-                }
-                return false;
               });
             }
           }
@@ -166,17 +164,13 @@ export class ReservationConflictService {
         const dayIndex = this.getLegacyHorarioDayIndex(dayName);
         const daySchedule = horario[dayIndex] as any[];
         if (daySchedule && Array.isArray(daySchedule)) {
-          return daySchedule.some((timeSlot: string) => {
-            if (typeof timeSlot === 'string' && timeSlot.includes('-')) {
-              const [start, end] = timeSlot.split('-').map((t: string) => t.trim());
+          return this.parseHorarioSlots(daySchedule).some(({ start, end }) => {
               return this.timesOverlap(
                 timeRange.startTime,
                 timeRange.endTime,
                 start,
                 end
               );
-            }
-            return false;
           });
         }
       }
@@ -289,9 +283,9 @@ export class ReservationConflictService {
       stats.totalDays++;
       const dayConflicts = existingReservations.filter(r => {
         if (r.campoDeportivoDto?.uuid !== campoDeportivoId) return false;
-        if (!this.BLOCKING_STATES.includes(r.estadoReserva as EstadoReserva)) return false;
+        if (!this.isBlockingReservation(r)) return false;
         if (r.reservaPuntualDto) {
-          const reservaDate = this.formatDate(new Date(r.reservaPuntualDto.fechaUso));
+          const reservaDate = this.formatDate(this.parseLocalDate(r.reservaPuntualDto.fechaUso));
           const currentDateStr = this.formatDate(currentDate);
           return reservaDate === currentDateStr;
         }
@@ -357,6 +351,8 @@ export class ReservationConflictService {
         return 'Reserva pagada y confirmada';
       case EstadoReserva.EN_CURSO:
         return 'Reserva actualmente en uso';
+      case EstadoReserva.COMPLETADA:
+        return 'Reserva completada en este horario';
       default:
         return 'Horario ocupado';
     }
@@ -385,7 +381,11 @@ export class ReservationConflictService {
    * Utility: Format date to YYYY-MM-DD
    */
   private formatDate(date: Date): string {
-    return date.toISOString().split('T')[0];
+    const localDate = this.stripTime(date);
+    const year = localDate.getFullYear();
+    const month = String(localDate.getMonth() + 1).padStart(2, '0');
+    const day = String(localDate.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   /**
@@ -431,7 +431,7 @@ export class ReservationConflictService {
    * Check if a reservation state is blocking
    */
   isBlockingState(estado: EstadoReserva): boolean {
-    return this.BLOCKING_STATES.includes(estado);
+    return this.BLOCKING_STATES.includes(String(estado).toUpperCase() as EstadoReserva);
   }
 
   /**
@@ -439,5 +439,82 @@ export class ReservationConflictService {
    */
   getBlockingStates(): EstadoReserva[] {
     return [...this.BLOCKING_STATES];
+  }
+
+  isBlockingReservation(reserva: Reserva): boolean {
+    const estadoReserva = String(reserva.estadoReserva || '').toUpperCase() as EstadoReserva;
+    const estadoValidacion = String(reserva.estadoValidacion || '').toUpperCase() as EstadoValidacion;
+    if ([EstadoValidacion.RECHAZADA, EstadoValidacion.VENCIDA].includes(estadoValidacion)) {
+      return false;
+    }
+    return this.isBlockingState(estadoReserva);
+  }
+
+  private stripTime(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }
+
+  private normalizeDiasSemana(diasSemana?: string | string[]): string[] {
+    if (!diasSemana) {
+      return [];
+    }
+    const values = Array.isArray(diasSemana) ? diasSemana : String(diasSemana).split(',');
+    const aliases: Record<string, string> = {
+      lun: 'lunes',
+      lunes: 'lunes',
+      mar: 'martes',
+      martes: 'martes',
+      mie: 'miercoles',
+      'mié': 'miercoles',
+      miercoles: 'miercoles',
+      'miércoles': 'miercoles',
+      jue: 'jueves',
+      jueves: 'jueves',
+      vie: 'viernes',
+      viernes: 'viernes',
+      sab: 'sabado',
+      'sáb': 'sabado',
+      sabado: 'sabado',
+      'sábado': 'sabado',
+      dom: 'domingo',
+      domingo: 'domingo'
+    };
+
+    return values
+      .map(value => String(value).trim().toLowerCase())
+      .filter(Boolean)
+      .map(value => aliases[value] || value)
+      .filter((value, index, array) => array.indexOf(value) === index);
+  }
+
+  private parseHorarioSlots(daySlots: any[]): { start: string; end: string }[] {
+    return daySlots
+      .filter((timeSlot: any) => typeof timeSlot === 'string' && timeSlot.includes('-'))
+      .flatMap((timeSlot: string) => timeSlot.split(','))
+      .map((timeSlot: string) => {
+        const [start, end] = timeSlot.split('-').map((t: string) => this.normalizeTime(t.trim()));
+        return { start, end };
+      })
+      .filter(slot => !!slot.start && !!slot.end);
+  }
+
+  private parseLocalDate(date: Date | string): Date {
+    if (date instanceof Date) {
+      return new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate()
+      );
+    }
+    const raw = String(date).split('T')[0];
+    const [year, month, day] = raw.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  private normalizeTime(time: string): string {
+    if (!time) {
+      return time;
+    }
+    return time.length === 5 ? `${time}:00` : time;
   }
 }

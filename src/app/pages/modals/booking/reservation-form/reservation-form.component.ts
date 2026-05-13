@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 import { FormGroup, FormBuilder, Validators, AbstractControl, ValidationErrors, ValidatorFn, ReactiveFormsModule, FormsModule, FormControl } from '@angular/forms';
-import { format, addHours, differenceInHours, startOfDay, isBefore, isSameDay, parseISO, addDays, isAfter, isValid } from 'date-fns';
+import { format, startOfDay, isBefore, addDays, isValid } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import Swal from 'sweetalert2';
@@ -16,8 +16,6 @@ import { CommonModule, CurrencyPipe } from '@angular/common';
 import { NgbCollapseModule, NgbNavModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { Reserva } from 'src/app/core/models/reserva.model';
-import { ReservaPuntual } from 'src/app/core/models/reservaPuntual.model';
-import { ReservaRecurrente } from 'src/app/core/models/reservaRecurrente.model';
 import { Organizacion } from 'src/app/core/models/organizacion.model';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
 import { BookingType, TipoOrganizacion } from 'src/app/core/constants/Features';
@@ -25,7 +23,7 @@ import { EstadoReserva, EstadoValidacion, StatusUtils } from 'src/app/core/const
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-
+import { ReservationConflictService, TimeRange } from '../reservation-conflict.service';
 interface PuntualSchedule {
   date: Date;
   start: string;
@@ -34,7 +32,6 @@ interface PuntualSchedule {
   calculatedPrice?: number;
   priceDetails?: string[];
 }
-
 @Component({
   selector: 'app-reservation-form',
   standalone: true,
@@ -108,7 +105,8 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     private ruatService: RuatRequestsService,
     private contribuyenteService: ContribuyentesService,
     private organizationService: OrganizacionService,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private conflictService: ReservationConflictService
   ) {}
 
   get enableSolicitudOrganizationReservation(): boolean {
@@ -336,7 +334,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       diasSemana: [{ value: this.recurrentSchedule?.diasSemana || '', disabled: true }],
       cantidadSesiones: [{ value: this.recurrentSchedule?.cantidadSesiones || 0, disabled: true }],
       duracionSesionHoras: [{ value: this.recurrentSchedule?.duracionSesionHoras || 0, disabled: true }],
-      montoTotal: [{ value: 0, disabled: true }, [Validators.required, Validators.min(0.01)]],
+      montoTotal: [{ value: 0, disabled: true }, [Validators.required, Validators.min(0)]],
       categoria: [{ value: this.getTarifaCategories(), disabled: true }],
       superficie: [{ value: this.dataField?.superficieDto?.descripcion || '', disabled: true }],
       observaciones: [
@@ -352,10 +350,10 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         this.entityValidator.bind(this),
         this.tariffSpecificValidator.bind(this),
         this.timeRangeValidator(),
-        this.anticipationValidator()
+        this.anticipationValidator(),
+        this.selectedScheduleValidator()
       ]
-    });
-    
+    });    
     this.formInitialized = true;
     this.setupConditionalValidators();
     this.calculatePrice();
@@ -405,22 +403,15 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   private reservationNumberFormatValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const value = control.value;
-      
       if (!value) {
         return null;
       }
-      
-      // Updated regex to match both formats
-      // P-0010/25 or R-0010/25
       const formatRegex = /^[PR]-\d{4}\/\d{2}$/;
-      
       if (!formatRegex.test(value)) {
         return { 
           invalidFormat: 'El formato debe ser: P-0010/25 para puntuales o R-0010/25 para recurrentes' 
         };
-      }
-      
-      // Optional: Validate that prefix matches booking type
+      }      
       const prefix = value.charAt(0);
       if (prefix !== 'P' && this.bookingType === 'puntual') {
         return { invalidPrefix: 'Las reservas puntuales deben comenzar con P-' };
@@ -428,17 +419,14 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       if (prefix !== 'R' && this.bookingType === 'recurrente') {
         return { invalidPrefix: 'Las reservas recurrentes deben comenzar con R-' };
       }
-      
       return null;
     };
   }
   validateCustomReservationNumber(): void {
     const customNumber = this.reservationForm?.get('numeroReserva')?.value;
-    
     if (!customNumber) {
       return;
     }
-    
     const formatRegex = /^[PR]-\d{4}\/\d{2}$/;
     if (!formatRegex.test(customNumber)) {
       Swal.fire({
@@ -449,7 +437,6 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       });
       return;
     }
-
     this.reservaService.validateNumeroReserva(customNumber).subscribe({
       next: (response: any) => {
         if (response.valid) {
@@ -630,15 +617,6 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
   }
 
-  private parseLocalDate(dateValue: string): Date {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-      const [year, month, day] = dateValue.split('-').map(Number);
-      return new Date(year, month - 1, day);
-    }
-
-    return new Date(dateValue);
-  }
-
   private safeCalculateMonthsDuration(startDate: any, endDate: any): number {
     try {
       const start = this.safeParseDate(startDate);
@@ -651,7 +629,17 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       return 1;
     }
   }
-
+  private selectedScheduleValidator(): ValidatorFn {
+    return (): ValidationErrors | null => {
+      if (this.bookingType === 'puntual' && !this.selectedSchedule) {
+        return { selectedScheduleRequired: 'Debe seleccionar fecha y horario' };
+      }
+      if (this.bookingType === 'recurrente' && !this.recurrentSchedule) {
+        return { recurrentScheduleRequired: 'Debe completar la programación recurrente' };
+      }
+      return null;
+    };
+  }
   private reservationValidator(control: AbstractControl): ValidationErrors | null {
     const errors: ValidationErrors = {};
     const form = control as FormGroup;
@@ -934,17 +922,13 @@ private calculateTotalHoursForRecurrentSessions(): number {
   if (this.bookingType !== 'recurrente' || !this.recurrentSchedule) {
     return 1;
   }
-  
   let totalHours = 0;
   const tablero = this.recurrentSchedule.tablero;
-  
-  // Detect format
   const isNewFormat = Array.isArray(tablero) && 
                       tablero.length > 0 && 
                       Array.isArray(tablero[0]) && 
                       tablero[0].length > 0 && 
                       Array.isArray(tablero[0][0]);
-  
   if (isNewFormat) {
     // New 31×5 format
     (tablero as string[][][]).forEach(monthMatrix => {
@@ -1134,13 +1118,15 @@ private getDurationForConcepto(concepto: any, formValue: any): number {
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + (minutes || 0);
   }
-  
   getBasePrice(): number {
-    if (!this.selectedTariff) return 0;
+    const scheduleCalculation = this.getScheduleCalculation();
+    if (scheduleCalculation) {
+      return scheduleCalculation.total;
+    }
 
+    if (!this.selectedTariff) return 0;
     const formValue = this.reservationForm?.getRawValue();
     const montoBase = this.selectedTariff.precioBase || 0;
-    
     switch (this.selectedTariff.tipoCobro) {
       case 'por_hora':
         return montoBase * (formValue?.duracionHoras || 1);
@@ -1446,6 +1432,18 @@ private getDurationForConcepto(concepto: any, formValue: any): number {
 
   private async processReservation(): Promise<void> {
     this.isSubmitting = true;
+    const conflictMessage = this.getScheduleConflictMessage();
+    if (conflictMessage) {
+      this.isSubmitting = false;
+      Swal.fire({
+        title: 'Horario no disponible',
+        text: conflictMessage,
+        icon: 'error',
+        confirmButtonText: 'Revisar horario'
+      });
+      return;
+    }
+
     const reservaData = this.prepareReservationData();
     const isFreeReservation = reservaData.esReservaGratuita;
     if (isFreeReservation) {
@@ -1461,6 +1459,105 @@ private getDurationForConcepto(concepto: any, formValue: any): number {
     } else {
       this.saveReservation(reservaData);
     }
+  }
+
+  private getScheduleConflictMessage(): string | null {
+    if (!this.dataField?.uuid) {
+      return null;
+    }
+
+    const ranges = this.getSelectedTimeRanges();
+    for (const range of ranges) {
+      const conflict = this.conflictService.checkConflict(
+        this.dataField.uuid,
+        range,
+        this.reservationsList
+      );
+
+      if (conflict.hasConflict) {
+        const date = range.date.toLocaleDateString('es-ES');
+        return `${conflict.reason || 'El horario seleccionado ya está reservado'} (${date} ${range.startTime.slice(0, 5)}-${range.endTime.slice(0, 5)}).`;
+      }
+    }
+
+    return null;
+  }
+
+  private getSelectedTimeRanges(): TimeRange[] {
+    if (this.bookingType === 'puntual') {
+      const formValue = this.reservationForm.getRawValue();
+      const date = this.safeParseDate(formValue.fechaUso);
+      if (!date || !formValue.horaInicio || !formValue.horaFin) {
+        return [];
+      }
+
+      return [{
+        date,
+        startTime: this.normalizeTimeForConflict(formValue.horaInicio),
+        endTime: this.normalizeTimeForConflict(formValue.horaFin)
+      }];
+    }
+
+    if (this.bookingType === 'recurrente' && this.recurrentSchedule?.tablero) {
+      return this.getRecurrentTimeRanges();
+    }
+
+    return [];
+  }
+
+  private getRecurrentTimeRanges(): TimeRange[] {
+    const ranges: TimeRange[] = [];
+    const start = this.normalizeDate(this.recurrentSchedule.fechaInicio);
+    const end = this.normalizeDate(this.recurrentSchedule.fechaFin);
+    const current = new Date(start);
+
+    while (current <= end) {
+      const monthIndex = (current.getFullYear() - start.getFullYear()) * 12 + (current.getMonth() - start.getMonth());
+      const dayIndex = current.getDate() - 1;
+      const daySlots = this.recurrentSchedule.tablero?.[monthIndex]?.[dayIndex] || [];
+
+      this.parseScheduleSlots(daySlots).forEach(slot => {
+        ranges.push({
+          date: new Date(current),
+          startTime: slot.start,
+          endTime: slot.end
+        });
+      });
+
+      current.setDate(current.getDate() + 1);
+    }
+
+    return ranges;
+  }
+
+  private parseScheduleSlots(daySlots: any[]): { start: string; end: string }[] {
+    if (!Array.isArray(daySlots)) {
+      return [];
+    }
+
+    return daySlots
+      .filter((slot: any) => typeof slot === 'string' && slot.includes('-'))
+      .flatMap((slot: string) => slot.split(','))
+      .map((slot: string) => {
+        const [start, end] = slot.split('-').map(value => this.normalizeTimeForConflict(value.trim()));
+        return { start, end };
+      })
+      .filter(slot => !!slot.start && !!slot.end);
+  }
+
+  private normalizeDate(value: Date | string): Date {
+    if (value instanceof Date) {
+      return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+    }
+
+    const parsed = /^\d{4}-\d{2}-\d{2}$/.test(value)
+      ? new Date(`${value}T00:00:00`)
+      : new Date(value);
+    return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+  }
+
+  private normalizeTimeForConflict(time: string): string {
+    return time.length === 5 ? `${time}:00` : time;
   }
 
 private prepareReservationData(): Reserva {
@@ -2327,6 +2424,18 @@ getPaidReservationDescription(): string {
     if (hrs === 0) return `${mins} min`;
     if (mins === 0) return `${hrs} ${hrs === 1 ? 'hora' : 'horas'}`;
     return `${hrs}h ${mins}m`;
+  }
+  private parseLocalDate(date: Date | string): Date {
+    if (date instanceof Date) {
+      return new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate()
+      );
+    }
+    const raw = String(date).split('T')[0];
+    const [year, month, day] = raw.split('-').map(Number);
+    return new Date(year, month - 1, day);
   }
 
   get f() { 

@@ -461,7 +461,8 @@
         </div>
         <div class="card-footer">
           <div class="d-flex justify-content-end">
-            <button type="button" class="btn btn-primary" [disabled]="!canConfirm" (click)="confirmar()">
+            <button type="button" class="btn btn-primary" 
+              [disabled]="!canConfirm || reservationConflicts.length > 0"(click)="confirmar()">
               <i class="ri-check-line me-1"></i>Confirmar Horarios
             </button>
           </div>

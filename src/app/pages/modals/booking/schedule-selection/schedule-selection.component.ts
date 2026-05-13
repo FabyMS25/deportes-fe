@@ -144,7 +144,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   }
   get minDuration(): number {
     const minDuration = this.systemConfigs[ClaveConfiguracion.DURACION_MINIMA_RESERVA]?.valorNumerico;
-    return minDuration ? minDuration : 1;
+    return (minDuration !== null && minDuration !== undefined && minDuration > 0) ? minDuration : 1;
   }
   get maxDurationDisplay(): string {
     const hours = this.maxDuration;
@@ -219,24 +219,27 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       this.clearSelectedSlots();
       this.generateWeekDays();
       this.checkMultipleTariffs();
+      this.cdr.markForCheck();
     }    
     if (changes['dataTariff'] && !changes['dataTariff'].firstChange) {
       this.timeSlotsCache.clear();
       this.clearSelectedSlots();
       this.generateWeekDays();
       this.checkMultipleTariffs();
+      this.cdr.markForCheck();
     }
     if (changes['reservationsList'] && !changes['reservationsList'].firstChange) {
       this.timeSlotsCache.clear();
       this.generateWeekDays();
       this.revalidateSelection();
+      this.cdr.markForCheck();
     }
     if (changes['systemConfigs'] && !changes['systemConfigs'].firstChange) {
       this.timeSlotsCache.clear();
       this.generateWeekDays();
+      this.cdr.markForCheck();
     }
   }
-
   private initializeBlocks(): void {
     if (!this.dataField) return;
     const allSchedules = this.dataField.horariosFijosDtoList || [];
@@ -543,12 +546,12 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       date: this.fechaReserva,
       startTime: startTime,
       endTime: endTime
-    };    
+    };
     const conflictResult = this.conflictService.checkConflict(
       this.dataField.uuid!,
       timeRange,
       this.reservationsList
-    );    
+    );
     if (conflictResult.hasConflict) {
       this.validationErrors.push(conflictResult.reason || 'El horario seleccionado tiene conflictos con reservas existentes');
       return false;
@@ -610,21 +613,39 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       return `${hours} h ${minutes} min`;
     }
   }
+  canSelectSlot(slot: TimeSlot): boolean {
+    if (slot.isPast) return false;
+    if (!slot.isWithinTariffTime || slot.tariffConflict) return false;
+    if (slot.isReserved && !slot.isPartiallyReserved) return false;
+    if (slot.isPartiallyReserved) {
+      return !!slot.availableStartTime && !!slot.availableEndTime;
+    }
+    return slot.isAvailable;
+  }
+  // canSelectSlot(slot: TimeSlot): boolean {
+  //   return (
+  //     slot.isAvailable &&
+  //     !slot.isReserved &&
+  //     !slot.isPast &&
+  //     slot.isWithinTariffTime &&
+  //     !slot.tariffConflict &&
+  //     !slot.isPartiallyReserved
+  //   );
+  // }
   toggleSlotSelection(slot: TimeSlot): void {
-    if (slot.isPartiallyReserved && !slot.isSelected) {
-      this.validationErrors = [];
-      this.showValidationAlert = false;
-      if (slot.availableStartTime && slot.availableEndTime) {
-        const [startHours, startMinutes] = slot.availableStartTime.split(':').map(Number);
-        const [endHours, endMinutes] = slot.availableEndTime.split(':').map(Number);
-        this.startTimeInput = { hours: startHours, minutes: startMinutes };
-        this.endTimeInput = { hours: endHours, minutes: endMinutes };      
-        this.updateSlotsFromTimeInputs();
-        this.calculateTariff();
-      }
+    if (!this.canSelectSlot(slot)) {
+      this.validationErrors = [
+        slot.conflictReason || 'Este horario ya está reservado o no está disponible.'
+      ];
+      this.showValidationAlert = true;
       return;
-    }  
-    if (!slot.isAvailable || slot.isReserved || !slot.isWithinTariffTime || slot.tariffConflict) {
+    }
+    if (
+      !slot.isAvailable ||
+      (slot.isReserved && !slot.isPartiallyReserved) ||
+      !slot.isWithinTariffTime ||
+      slot.tariffConflict
+    ) {
       if (slot.conflictReason) {
         this.validationErrors = [slot.conflictReason];
         this.showValidationAlert = true;
@@ -1014,7 +1035,8 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     }
   }
   getTimeSlotsForDay(date: Date): DaySlots {
-    const dateKey = `${date.toISOString().split('T')[0]}-${this.minDuration*60}-${this.dataTariff?.uuid || 'no-tariff'}`;
+    const step = Math.max(1, this.minDuration) * 60; // Ensure step is never 0
+    const dateKey = `${this.toLocalDateString(date)}-${step}-${this.dataTariff?.uuid || 'no-tariff'}`;
     if (this.timeSlotsCache.has(dateKey)) {
       return this.timeSlotsCache.get(dateKey)!;
     }    
@@ -1033,13 +1055,22 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       daySchedule: daySchedule,
       exceptions: exceptions
     };
+    // Day is closed only if explicitly closed AND no exceptions
     if (!daySchedule?.abierto && (!exceptions || exceptions.length === 0)) {
       return result;
     }
+    
     const operatingPeriods = this.getOperatingPeriodsForDay(date);
     if (operatingPeriods.length === 0) {
+      // No operating periods - day is closed
       return result;
     }
+    
+    // Ensure we have valid inputs before generating slots
+    if (!this.dataField || !this.dataTariff) {
+      return result;
+    }
+    
     operatingPeriods.forEach(period => {
       let horaApertura = period.start;
       let horaCierre = period.end;
@@ -1074,6 +1105,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     });
     return result;
   }
+
   private generateTimeSlots(date: Date, startTime: string, endTime: string): TimeSlot[] {
     const slots: TimeSlot[] = [];
     const now = new Date();    
@@ -1083,36 +1115,56 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     }  
     const startMinutes = this.timeToMinutes(startTime);
     const endMinutes = this.timeToMinutes(endTime);
+    const targetDateStr = this.toLocalDateString(date);
+
     const dayReservations = this.reservationsList.filter(r => {
       if (r.campoDeportivoDto?.uuid !== this.dataField.uuid) return false;
-      if (!this.conflictService.isBlockingState(r.estadoReserva as any)) return false;
-      
+      if (!this.conflictService.isBlockingReservation(r)) return false;
+
       if (r.reservaPuntualDto) {
-        const reservaDate = new Date(r.reservaPuntualDto.fechaUso);
-        const reservaDateStr = reservaDate.toISOString().split('T')[0];
-        const targetDateStr = date.toISOString().split('T')[0];
-        return reservaDateStr === targetDateStr;
+        return this.toLocalDateString(this.parseLocalDate(r.reservaPuntualDto.fechaUso)) === targetDateStr;
       }
+
+      if (r.reservaRecurrenteDto) {
+        const start = this.toLocalDateString(this.parseLocalDate(r.reservaRecurrenteDto.fechaInicio));
+        const end = this.toLocalDateString(this.parseLocalDate(r.reservaRecurrenteDto.fechaFin));
+        return targetDateStr >= start && targetDateStr <= end;
+      }
+
       return false;
     });
-    const occupiedRanges: { start: number; end: number; reservation: Reserva }[] = [];  
+    const occupiedRanges: { start: number; end: number; reservation: Reserva }[] = [];
     dayReservations.forEach(reserva => {
       if (reserva.reservaPuntualDto) {
-        const reservaStart = this.timeToMinutes(reserva.reservaPuntualDto.horaInicio);
-        const reservaEnd = this.timeToMinutes(reserva.reservaPuntualDto.horaFin);      
         occupiedRanges.push({
-          start: reservaStart,
-          end: reservaEnd,
+          start: this.timeToMinutes(reserva.reservaPuntualDto.horaInicio),
+          end: this.timeToMinutes(reserva.reservaPuntualDto.horaFin),
           reservation: reserva
+        });
+
+        return;
+      }
+
+      if (reserva.reservaRecurrenteDto) {
+        const ranges = this.getRecurrentRangesForDate(reserva, date);
+
+        ranges.forEach(range => {
+          occupiedRanges.push({
+            start: this.timeToMinutes(range.start),
+            end: this.timeToMinutes(range.end),
+            reservation: reserva
+          });
         });
       }
     });
     occupiedRanges.sort((a, b) => a.start - b.start);
-    for (let minutes = startMinutes; minutes < endMinutes; minutes += this.minDuration * 60) {
+    const stepMinutes = Math.max(1, this.minDuration) * 60;
+    
+    for (let minutes = startMinutes; minutes < endMinutes; minutes += stepMinutes) {
       const slotStart = this.minutesToTime(minutes);
-      const slotEnd = this.minutesToTime(Math.min(minutes + this.minDuration * 60, endMinutes));
+      const slotEnd = this.minutesToTime(Math.min(minutes + stepMinutes, endMinutes));
       const slotStartMinutes = minutes;
-      const slotEndMinutes = Math.min(minutes + this.minDuration * 60, endMinutes);    
+      const slotEndMinutes = Math.min(minutes + stepMinutes, endMinutes);    
       const slotDateTime = this.combineDateAndTime(date, slotStart);
       const isPast = slotDateTime < minReservationTime;
       let isReserved = false;
@@ -1126,20 +1178,29 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         const overlapStart = Math.max(slotStartMinutes, range.start);
         const overlapEnd = Math.min(slotEndMinutes, range.end);
         if (overlapStart < overlapEnd) {
-          isReserved = true;
+
           conflictingReservation = range.reservation;
-          if (overlapStart === slotStartMinutes && overlapEnd === slotEndMinutes) {
+          const fullyCovered =
+            range.start <= slotStartMinutes &&
+            range.end >= slotEndMinutes;
+          if (fullyCovered) {
+            isReserved = true;
             isPartiallyReserved = false;
           } else {
+            isReserved = false;
             isPartiallyReserved = true;
             reservedStart = overlapStart;
             reservedEnd = overlapEnd;
-            if (overlapStart > slotStartMinutes) {
-              availableEnd = overlapStart;
-            } else if (overlapEnd < slotEndMinutes) {
-              availableStart = overlapEnd;
+            if (range.start > slotStartMinutes) {
+              availableStart = slotStartMinutes;
+              availableEnd = range.start;
+            }
+            else if (range.end < slotEndMinutes) {
+              availableStart = range.end;
+              availableEnd = slotEndMinutes;
             }
           }
+
           break;
         }
       }    
@@ -1167,21 +1228,35 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
         this.dataTariff.hasta &&
         PUNCTUAL_TYPES.includes(applicableTariff.tipoCobro)
       );
-      let isAvailable = !isPast && !isReserved && isWithinTariffTime && !tariffConflict;
+      const hasFullConflictFromService =
+        !conflictingReservation &&
+        !!conflictResult?.hasConflict;
+      if (hasFullConflictFromService) {
+        isReserved = true;
+        isPartiallyReserved = false;
+        conflictingReservation = conflictResult?.conflictingReservations?.[0];
+      }
+      let isAvailable =
+        !isPast &&
+        !isReserved &&
+        isWithinTariffTime &&
+        !tariffConflict;
+
       if (isPartiallyReserved && !isPast && isWithinTariffTime && !tariffConflict) {
         isAvailable = true;
-      }    
+      }
       const slot: TimeSlot = {
         time: `${slotStart.slice(0, 5)} - ${slotEnd.slice(0, 5)}`,
         startTime: slotStart,
         endTime: slotEnd,
-        isAvailable: isAvailable,
+        isAvailable,
         isReserved: isReserved && !isPartiallyReserved,
-        isPartiallyReserved: isPartiallyReserved,
+        isPartiallyReserved,
+        reservation: conflictingReservation || conflictResult?.conflictingReservations?.[0],
+        conflictReason: conflictResult?.reason || (isReserved ? 'Reservado' : undefined),
+
         isPast: isPast,
         isSelected: false,
-        reservation: conflictingReservation || conflictResult?.conflictingReservations[0],
-        conflictReason: conflictResult?.reason,
         blockType: 'operating',
         isWithinTariffTime: isWithinTariffTime,
         applicableTariff: applicableTariff,
@@ -1201,6 +1276,60 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     }  
     return slots;
   }
+  private toLocalDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+private getRecurrentRangesForDate(
+  reserva: Reserva,
+  date: Date
+): Array<{ start: string; end: string }> {
+  const recurrente = reserva.reservaRecurrenteDto;
+  const tablero = recurrente?.tableroDto?.horario;
+
+  if (!recurrente || !tablero) return [];
+
+  const targetDate = new Date(date);
+  targetDate.setHours(0, 0, 0, 0);
+
+  const startDate = new Date(recurrente.fechaInicio);
+  startDate.setHours(0, 0, 0, 0);
+
+  const endDate = new Date(recurrente.fechaFin);
+  endDate.setHours(0, 0, 0, 0);
+
+  if (targetDate < startDate || targetDate > endDate) return [];
+
+  const dayIndex = Math.floor(
+    (targetDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  const dailyRows = tablero.flat(2) as unknown[];
+
+  const dayRow = dailyRows[dayIndex];
+
+  const rawRanges: string[] = Array.isArray(dayRow)
+    ? dayRow.filter((v): v is string => typeof v === 'string' && v.trim() !== '')
+    : typeof dayRow === 'string' && dayRow.trim() !== ''
+      ? [dayRow]
+      : [];
+
+  return rawRanges
+    .flatMap(value => value.split(','))
+    .map(value => value.trim())
+    .filter(value => value.includes('-'))
+    .map(value => {
+      const [start, end] = value.split('-').map(v => {
+        const clean = v.trim();
+        return clean.length === 5 ? `${clean}:00` : clean;
+      });
+
+      return { start, end };
+    });
+}
   private combineDateAndTime(date: Date, time: string): Date {
     const [hours, minutes] = time.split(':').map(Number);
     const result = new Date(date);
@@ -1290,46 +1419,81 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     return this.minutesToTime(earliestOverlap);
   }
   private getOperatingPeriodsForDay(date: Date): OperatingPeriod[] {
-    const allSchedules = this.dataField.horariosFijosDtoList || [];
+    const allSchedules = this.dataField?.horariosFijosDtoList || [];
+    
+    if (!allSchedules || allSchedules.length === 0) {
+      return [];
+    }
+    
     const dayOfWeek = date.getDay();
     const dayNames = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     const currentDayName = dayNames[dayOfWeek];
+    
+    // Find schedules that apply to this day
     const applicableSchedules = allSchedules.filter(schedule => {
-      if (!schedule.abierto || !schedule.horaApertura || !schedule.horaCierre) return false;
-      if (schedule.dia === currentDayName) return true;
-      if (schedule.dia === 'lunes_viernes' && dayOfWeek >= 1 && dayOfWeek <= 5) return true;
-      if (schedule.dia === 'sabado' && dayOfWeek === 6) return true;
-      if (schedule.dia === 'domingo' && dayOfWeek === 0) return true;
+      // Must be open
+      if (!schedule.abierto || !schedule.horaApertura || !schedule.horaCierre) {
+        return false;
+      }
+      
+      // Check exact day match first
+      if (schedule.dia === currentDayName) {
+        return true;
+      }
+      
+      // Then check range patterns
+      if (schedule.dia === 'lunes_viernes' && dayOfWeek >= 1 && dayOfWeek <= 5) {
+        return true;
+      }
+      
+      if (schedule.dia === 'sabado' && dayOfWeek === 6) {
+        return true;
+      }
+      
+      if (schedule.dia === 'domingo' && dayOfWeek === 0) {
+        return true;
+      }
+      
       return false;
     });
+    
+    // Convert to periods and merge overlapping ones
     const periods: OperatingPeriod[] = applicableSchedules
       .map(schedule => ({ 
         start: schedule.horaApertura!, 
         end: schedule.horaCierre! 
       }))
       .sort((a, b) => this.timeToMinutes(a.start) - this.timeToMinutes(b.start));
+    
+    // Merge overlapping/adjacent periods
     const mergedPeriods: OperatingPeriod[] = [];
     let currentPeriod: OperatingPeriod | null = null;
+    
     for (const period of periods) {
       if (!currentPeriod) {
         currentPeriod = { ...period };
       } else {
         const currentEnd = this.timeToMinutes(currentPeriod.end);
         const nextStart = this.timeToMinutes(period.start);
+        
+        // If periods overlap or are adjacent, merge them
         if (nextStart <= currentEnd) {
           const nextEnd = this.timeToMinutes(period.end);
           if (nextEnd > currentEnd) {
             currentPeriod.end = period.end;
           }
         } else {
+          // Gap between periods, save current and start new
           mergedPeriods.push(currentPeriod);
           currentPeriod = { ...period };
         }
       }
     }
+    
     if (currentPeriod) {
       mergedPeriods.push(currentPeriod);
     }
+    
     return mergedPeriods;
   }
   private getHorarioForDate(date: Date): HorarioFijo | undefined {
@@ -1352,10 +1516,18 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     }    
     return undefined;
   }
+
   private getExceptionsForDate(date: Date): HorarioExcepcion[] | undefined {
-    if (!this.dataField?.horariosExcepcionesDtoList) return undefined;    
-    const dateStr = date.toISOString().split('T')[0];
-    return this.dataField.horariosExcepcionesDtoList.filter(exc => exc.fecha === dateStr);
+    if (!this.dataField?.horariosExcepcionesDtoList) {
+      return undefined;
+    }
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    return this.dataField.horariosExcepcionesDtoList.filter(
+      exc => exc.fecha === dateStr
+    );
   }
 
 
@@ -1626,11 +1798,11 @@ private getConceptoTimeRangeDisplay(concepto: any): string {
     const daySlots = this.getTimeSlotsForDay(this.fechaReserva);
     return daySlots.daySchedule?.abierto === true;
   }
-
   getSlotClasses(slot: TimeSlot): string {
     if (slot.isSelected) return 'border-primary bg-primary text-white';
-    if (!slot.isAvailable) return 'border-secondary bg-body-tertiary text-muted';
+    if (slot.isPartiallyReserved) return 'border-danger bg-danger bg-opacity-10 text-danger cursor-pointer hover-effect';
     if (slot.isReserved) return 'border-danger bg-danger-subtle text-danger';
+    if (!slot.isAvailable) return 'border-secondary bg-body-tertiary text-muted';
     if (!slot.isWithinTariffTime || slot.tariffConflict) return 'border-warning bg-warning-subtle text-warning';
     return 'border-success bg-success-subtle text-success cursor-pointer hover-effect';
   }
@@ -1690,6 +1862,19 @@ private getConceptoTimeRangeDisplay(concepto: any): string {
       'por_club': 'Por Club'
     };
     return tipoCobroMap[this.dataTariff.tipoCobro] || this.dataTariff.tipoCobro;
+  }
+  
+  private parseLocalDate(date: Date | string): Date {
+    if (date instanceof Date) {
+      return new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate()
+      );
+    }
+    const raw = String(date).split('T')[0];
+    const [year, month, day] = raw.split('-').map(Number);
+    return new Date(year, month - 1, day);
   }
 
 }

@@ -17,9 +17,10 @@ import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { BookingType } from 'src/app/core/constants/Features';
 import { ScheduleStateService } from './schedule-state.service';
-import { EstadoActual, EstadoReserva } from 'src/app/core/constants/Estados';
+import { EstadoActual } from 'src/app/core/constants/Estados';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
+import { ReservationConflictService } from './reservation-conflict.service';
 
 interface PuntualSchedule {
   date: Date;
@@ -143,6 +144,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     private router: Router,
     private cdRef: ChangeDetectorRef,
     private scheduleState: ScheduleStateService,
+    private conflictService: ReservationConflictService,
   ) {
     this.userRole = this.authenticationService.getUserRole()
   }
@@ -339,11 +341,8 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (response: any) => {
             if (response?.status === 'OK') {
-              this.reservationsList = response.payload.filter((reserva:Reserva)=> 
-                reserva.estadoReserva===EstadoReserva.PENDIENTE || 
-                reserva.estadoReserva===EstadoReserva.EN_CURSO || 
-                reserva.estadoReserva===EstadoReserva.PAGADA || 
-                reserva.estadoReserva===EstadoReserva.SOLICITADA
+              this.reservationsList = response.payload.filter((reserva: Reserva) =>
+                this.conflictService.isBlockingReservation(reserva)
               );
               resolve();
             } else {
