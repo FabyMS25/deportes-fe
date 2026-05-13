@@ -10,6 +10,7 @@ import { Tarifa } from 'src/app/core/models/tarifa.model';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
+import { ReservationConflictService } from '../reservation-conflict.service';
 
 interface TimeSlot {
   horaInicio: string;
@@ -107,7 +108,10 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     }
   }
 
-  constructor(private authenticationService: AuthenticationService) {}
+  constructor(
+    private authenticationService: AuthenticationService,
+    private conflictService: ReservationConflictService
+  ) {}
 
   ngOnInit(): void {
     this.systemConfigList = Object.keys(this.systemConfigs).length
@@ -891,241 +895,34 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     if (!this.reservationsList?.length) return false;
     const slots = this.getSlotsForDate(date);
     if (!slots.length) return false;
-    const dayName = this.getDayName(date.getDay());
-    return slots.some(slot => this.hasTimeConflictWithExistingReservations(date, dayName, slot));
+    return slots.some(slot => this.getConflictForSlot(date, slot).hasConflict);
   }
 
-  private isHorario3D(horario: any): boolean {
-    return Array.isArray(horario) && horario.length > 0 && Array.isArray(horario[0]) && Array.isArray(horario[0][0]);
-  }
-
-  private getSlotsFromHorario(horario: any, date: Date, reservaStart: Date): string[] {
-    if (!horario || !Array.isArray(horario)) return [];
-    if (this.isHorario3D(horario)) {
-      const mi = (date.getFullYear() - reservaStart.getFullYear()) * 12 + (date.getMonth() - reservaStart.getMonth());
-      if (mi < 0 || mi >= horario.length) return [];
-      const row = horario[mi]?.[date.getDate() - 1];
-      return Array.isArray(row) ? row.filter((s: any) => s && typeof s === 'string' && s !== '') : [];
-    }
-    const row = horario[date.getDay()];
-    return Array.isArray(row) ? row.filter((s: any) => s && typeof s === 'string' && s !== '') : [];
-  }
-
-  private getSlotsFromHorarioByDayName(horario: any, dayName: string): string[] {
-    if (!horario || !Array.isArray(horario) || this.isHorario3D(horario)) return [];
-    const idx = this.getTableroIndex(dayName);
-    const row = horario[idx];
-    return Array.isArray(row) ? row.filter((s: any) => s && typeof s === 'string' && s !== '') : [];
-  }
-
-  private hasSlotConflict(slots: string[], target: TimeSlot): boolean {
-    return slots.some(s => {
-      if (!s?.includes('-')) return false;
-      const [a, b] = s.split('-');
-      return this.hasTimeConflict(target.horaInicio, target.horaFin, a, b);
-    });
-  }
-
-
-private hasTimeConflictWithExistingReservations(
-  date: Date,
-  dayName: string,
-  slot: TimeSlot
-): boolean {
-
-  for (const reserva of this.reservationsList) {
-
-    if (reserva.campoDeportivoDto?.uuid !== this.dataField.uuid) {
-      continue;
-    }
-
-    if (!this.isBlockingReservation(reserva)) {
-      continue;
-    }
-
-    // ─────────────────────────────────────────────
-    // PUNTUAL RESERVATIONS
-    // ─────────────────────────────────────────────
-    if (reserva.reservaPuntualDto) {
-      const puntual = reserva.reservaPuntualDto;
-      if (
-        this.sameDate(date, puntual.fechaUso) &&
-        this.hasTimeConflict(
-          slot.horaInicio,
-          slot.horaFin,
-          puntual.horaInicio,
-          puntual.horaFin
-        )
-      ) {
-        return true;
-      }
-    }
-    if (
-      reserva.tipoReserva === 'recurrente' &&
-      reserva.reservaRecurrenteDto
-    ) {
-
-      const rec = reserva.reservaRecurrenteDto;
-
-      const rS = this.normalizeDate(rec.fechaInicio);
-      const rE = this.normalizeDate(rec.fechaFin);
-      const current = this.normalizeDate(date);
-
-      if (current >= rS && current <= rE) {
-
-        const rDays =
-          rec.diasSemana?.toLowerCase().split(',') || [];
-
-        if (rDays.includes(dayName.toLowerCase())) {
-
-          const horario = rec.tableroDto?.horario;
-
-          if (horario) {
-
-            let existingSlots =
-              this.getSlotsFromHorario(
-                horario,
-                current,
-                rS
-              );
-
-            if (
-              !existingSlots.length &&
-              !this.isHorario3D(horario)
-            ) {
-              existingSlots =
-                this.getSlotsFromHorarioByDayName(
-                  horario,
-                  dayName
-                );
-            }
-
-            if (
-              this.hasSlotConflict(
-                existingSlots,
-                slot
-              )
-            ) {
-              return true;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return false;
-}
-  private readonly BLOCKING_ESTADOS_RESERVA = ['SOLICITADA','PENDIENTE','PAGADA','EN_CURSO','COMPLETADA'];
-  private isBlockingReservation(reserva: Reserva): boolean {
-    const estadoReserva = String(reserva.estadoReserva || '').toUpperCase();
-    const estadoValidacion = String(reserva.estadoValidacion || '').toUpperCase();
-    if (estadoValidacion === 'RECHAZADA' || estadoValidacion === 'VENCIDA') {
-      return false;
-    }
-    return this.BLOCKING_ESTADOS_RESERVA.includes(estadoReserva);
-  }
-
-  private normalizeDate(date: Date | string): Date {
-
-    if (date instanceof Date) {
-      return new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate()
-      );
-    }
-
-    const raw = String(date).split('T')[0];
-    const [year, month, day] = raw.split('-').map(Number);
-
-    return new Date(year, month - 1, day);
-  }
-
-  private sameDate(a: Date | string, b: Date | string): boolean {
-    const d1 = this.normalizeDate(a);
-    const d2 = this.normalizeDate(b);
-    return (
-      d1.getFullYear() === d2.getFullYear() &&
-      d1.getMonth() === d2.getMonth() &&
-      d1.getDate() === d2.getDate()
+  private getConflictForSlot(date: Date, slot: TimeSlot) {
+    return this.conflictService.checkConflict(
+      this.dataField.uuid!,
+      {
+        date,
+        startTime: this.normalizeTime(slot.horaInicio),
+        endTime: this.normalizeTime(slot.horaFin)
+      },
+      this.reservationsList
     );
-}
+  }
 
-  private getConflictReason(date: Date, dayName: string, slot: TimeSlot): string | null {
-    for (const reserva of this.reservationsList) {
-      if (reserva.campoDeportivoDto?.uuid !== this.dataField.uuid) {
-        continue;
-      }
-      if (!this.isBlockingReservation(reserva)) {
-        continue;
-      }
-      if (reserva.reservaPuntualDto) {
-        const puntual = reserva.reservaPuntualDto;
-        const isSameDate = this.sameDate(date, puntual.fechaUso);
-        const hasConflict = this.hasTimeConflict(
-          slot.horaInicio,
-          slot.horaFin,
-          puntual.horaInicio,
-          puntual.horaFin
-        );
-        if (isSameDate && hasConflict) {
-          return `Reserva puntual #${reserva.numeroReserva || reserva.uuid}`;
-        }
-      }
-      if (
-        reserva.tipoReserva === 'recurrente' &&
-        reserva.reservaRecurrenteDto
-      ) {
-        const rec = reserva.reservaRecurrenteDto;
-        const rS = this.normalizeDate(rec.fechaInicio);
-        const rE = this.normalizeDate(rec.fechaFin);
-        const current = this.normalizeDate(date);
-        if (current >= rS && current <= rE) {
-          const rDays =
-            rec.diasSemana
-              ?.toLowerCase()
-              .split(',')
-              .map(d => d.trim()) || [];
-          if (rDays.includes(dayName.toLowerCase())) {
-            const horario = rec.tableroDto?.horario;
-            if (horario) {
-              let existingSlots =
-                this.getSlotsFromHorario(
-                  horario,
-                  current,
-                  rS
-                );
-              if (
-                !existingSlots.length &&
-                !this.isHorario3D(horario)
-              ) {
-                existingSlots =
-                  this.getSlotsFromHorarioByDayName(
-                    horario,
-                    dayName
-                  );
-              }
-              if (
-                this.hasSlotConflict(
-                  existingSlots,
-                  slot
-                )
-              ) {
-                return `Reserva recurrente #${reserva.numeroReserva}`;
-              }
-            }
-          }
-        }
-      }
-    }
-    return null;
+  private getConflictReason(date: Date, slot: TimeSlot): string | null {
+    const conflict = this.getConflictForSlot(date, slot);
+    if (!conflict.hasConflict) return null;
+    const reserva = conflict.conflictingReservations[0];
+    if (!reserva) return conflict.reason || 'Horario ocupado';
+    const typeLabel = reserva.reservaRecurrenteDto ? 'Reserva recurrente' : 'Reserva puntual';
+    return `${typeLabel} #${reserva.numeroReserva || reserva.uuid || ''}`.trim();
   }
 
   private getDayConflicts(date: Date): ReservationConflict {
     const dayName = this.getDayName(date.getDay());
     const conflictingSlots = this.getSlotsForDate(date)
-      .map(slot => ({ slot, conflictWith: this.getConflictReason(date, dayName, slot) }))
+      .map(slot => ({ slot, conflictWith: this.getConflictReason(date, slot) }))
       .filter(c => c.conflictWith !== null) as any[];
     return { date: new Date(date), dayName, conflictingSlots };
   }
@@ -1195,11 +992,6 @@ private hasTimeConflictWithExistingReservations(
   }
 
   // ─── UTILITIES ─────────────────────────────────────────────────────────────
-  private getTableroIndex(diaName: string): number {
-    const m: { [k: string]: number } = { lunes: 0, martes: 1, miercoles: 2, jueves: 3, viernes: 4, sabado: 5, domingo: 6 };
-    return m[diaName] ?? -1;
-  }
-
   private getDayName(dayOfWeek: number): string {
     return ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'][dayOfWeek];
   }
@@ -1227,9 +1019,8 @@ private timeToMinutes(time: string): number {
     return `${String(newH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
 
-  private hasTimeConflict(s1: string, e1: string, s2: string, e2: string): boolean {
-    const t = (x: string) => { const [h, m] = x.split(':').map(Number); return h * 60 + m; };
-    return t(s1) < t(e2) && t(s2) < t(e1);
+  private normalizeTime(time: string): string {
+    return time?.length === 5 ? `${time}:00` : time;
   }
 
   getDayTimes(dayName: string): string {

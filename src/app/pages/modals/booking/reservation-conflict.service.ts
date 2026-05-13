@@ -131,49 +131,32 @@ export class ReservationConflictService {
     }
     if (recurrent.tableroDto?.horario) {
       const horario = recurrent.tableroDto.horario;
-      const is3DFormat = Array.isArray(horario) && 
-                        horario.length > 0 && 
-                        Array.isArray(horario[0]) && 
-                        horario[0].length > 0 && 
-                        Array.isArray(horario[0][0]);
-      if (is3DFormat) {
-        const targetMonth = targetDate.getMonth();
-        const targetDay = targetDate.getDate() - 1;
-        const targetYear = targetDate.getFullYear();
-        const startYear = startDate.getFullYear();
-        const startMonth = startDate.getMonth();
-        const monthIndex = (targetYear - startYear) * 12 + (targetMonth - startMonth);
-        if (monthIndex >= 0 && monthIndex < horario.length) {
-          const monthMatrix = horario[monthIndex] as any[];
-          if (monthMatrix && targetDay >= 0 && targetDay < monthMatrix.length) {
-            const daySlots = monthMatrix[targetDay];
-            if (Array.isArray(daySlots)) {
-              return this.parseHorarioSlots(daySlots).some(({ start, end }) => {
-                  return this.timesOverlap(
-                    timeRange.startTime,
-                    timeRange.endTime,
-                    start,
-                    end
-                  );
-              });
-            }
+      if (!this.isValidTablero(horario)) {
+        return false;
+      }
+      const targetMonth = targetDate.getMonth();
+      const targetDay = targetDate.getDate() - 1;
+      const targetYear = targetDate.getFullYear();
+      const startYear = startDate.getFullYear();
+      const startMonth = startDate.getMonth();
+      const monthIndex = (targetYear - startYear) * 12 + (targetMonth - startMonth);
+      if (monthIndex >= 0 && monthIndex < horario.length) {
+        const monthMatrix = horario[monthIndex] as any[];
+        if (monthMatrix && targetDay >= 0 && targetDay < monthMatrix.length) {
+          const daySlots = monthMatrix[targetDay];
+          if (Array.isArray(daySlots)) {
+            return this.parseHorarioSlots(daySlots).some(({ start, end }) => {
+                return this.timesOverlap(
+                  timeRange.startTime,
+                  timeRange.endTime,
+                  start,
+                  end
+                );
+            });
           }
         }
-        return false;
-      } else {
-        const dayIndex = this.getLegacyHorarioDayIndex(dayName);
-        const daySchedule = horario[dayIndex] as any[];
-        if (daySchedule && Array.isArray(daySchedule)) {
-          return this.parseHorarioSlots(daySchedule).some(({ start, end }) => {
-              return this.timesOverlap(
-                timeRange.startTime,
-                timeRange.endTime,
-                start,
-                end
-              );
-          });
-        }
       }
+      return false;
     }
     return false;
   }
@@ -396,20 +379,6 @@ export class ReservationConflictService {
     return days[date.getDay()];
   }
 
-  private getLegacyHorarioDayIndex(dayName: string): number {
-    const indexes: Record<string, number> = {
-      lunes: 0,
-      martes: 1,
-      miercoles: 2,
-      jueves: 3,
-      viernes: 4,
-      sabado: 5,
-      domingo: 6
-    };
-
-    return indexes[dayName] ?? -1;
-  }
-
   /**
    * Utility: Combine date and time
    */
@@ -496,6 +465,14 @@ export class ReservationConflictService {
         return { start, end };
       })
       .filter(slot => !!slot.start && !!slot.end);
+  }
+
+  isValidTablero(horario: any): boolean {
+    return Array.isArray(horario) &&
+      horario.length > 0 &&
+      Array.isArray(horario[0]) &&
+      horario[0].length > 0 &&
+      Array.isArray(horario[0][0]);
   }
 
   private parseLocalDate(date: Date | string): Date {

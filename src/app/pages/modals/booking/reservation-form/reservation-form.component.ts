@@ -924,65 +924,24 @@ private calculateTotalHoursForRecurrentSessions(): number {
   }
   let totalHours = 0;
   const tablero = this.recurrentSchedule.tablero;
-  const isNewFormat = Array.isArray(tablero) && 
-                      tablero.length > 0 && 
-                      Array.isArray(tablero[0]) && 
-                      tablero[0].length > 0 && 
-                      Array.isArray(tablero[0][0]);
-  if (isNewFormat) {
-    // New 31×5 format
-    (tablero as string[][][]).forEach(monthMatrix => {
-      monthMatrix.forEach(daySlots => {
-        daySlots.forEach(slot => {
-          if (!slot) return;
-          const [start, end] = slot.split('-');
-          if (start && end) {
-            totalHours += this.calculateDurationFromTimes(start, end);
-          }
-        });
+  if (!this.conflictService.isValidTablero(tablero)) {
+    return 0;
+  }
+
+  (tablero as string[][][]).forEach(monthMatrix => {
+    monthMatrix.forEach(daySlots => {
+      daySlots.forEach(slot => {
+        if (!slot) return;
+        const [start, end] = slot.split('-');
+        if (start && end) {
+          totalHours += this.calculateDurationFromTimes(start, end);
+        }
       });
     });
-  } else {
-    // Old 7×3 format
-    const start = new Date(this.recurrentSchedule.fechaInicio);
-    const end = new Date(this.recurrentSchedule.fechaFin);
-    const selectedDays = this.recurrentSchedule.diasSeleccionados || [];
-    
-    selectedDays.forEach((dia: any) => {
-      if (dia.selected) {
-        const dayOccurrences = this.countDayOccurrencesInRange(dia.dia, start, end);
-        dia.horarios.forEach((slot: any) => {
-          const duration = this.calculateDurationFromTimes(slot.horaInicio, slot.horaFin);
-          totalHours += duration * dayOccurrences;
-        });
-      }
-    });
-  }
+  });
   
   return totalHours;
 }
-
-  private countDayOccurrencesInRange(dayName: string, start: Date, end: Date): number {
-    const dayMap: {[key: string]: number} = {
-      'domingo': 0,
-      'lunes': 1,
-      'martes': 2,
-      'miercoles': 3,
-      'jueves': 4,
-      'viernes': 5,
-      'sabado': 6
-    };  
-    const targetDay = dayMap[dayName];
-    let count = 0;
-    const current = new Date(start);
-    while (current <= end) {
-      if (current.getDay() === targetDay) {
-        count++;
-      }
-      current.setDate(current.getDate() + 1);
-    }  
-    return count;
-  }
 
 private calculateTotalOverlappingHoursFromTablero(
   conceptoDesde: string,
@@ -997,84 +956,47 @@ private calculateTotalOverlappingHoursFromTablero(
   }
 
   const tablero = this.recurrentSchedule.tablero;
-  const start = new Date(this.recurrentSchedule.fechaInicio);
-  const end = new Date(this.recurrentSchedule.fechaFin);
+  const start = this.parseLocalDate(this.recurrentSchedule.fechaInicio);
+  const end = this.parseLocalDate(this.recurrentSchedule.fechaFin);
 
   let totalOverlappingHours = 0;
 
-  // Detect format
-  // New format → tablero is string[][][] (monthIndex × 31 × 5)
-  // Old format → tablero is string[][] (7 × 3, day-of-week indexed)
-  const isNewFormat = Array.isArray(tablero) && 
-                      tablero.length > 0 && 
-                      Array.isArray(tablero[0]) && 
-                      tablero[0].length > 0 && 
-                      Array.isArray(tablero[0][0]);
+  if (!this.conflictService.isValidTablero(tablero)) {
+    return 0;
+  }
 
-  if (isNewFormat) {
-    // New 31×5 per-month format
-    (tablero as string[][][]).forEach((monthMatrix, monthIndex) => {
-      const monthDate = new Date(
-        start.getFullYear(),
-        start.getMonth() + monthIndex,
-        1
+  (tablero as string[][][]).forEach((monthMatrix, monthIndex) => {
+    const monthDate = new Date(
+      start.getFullYear(),
+      start.getMonth() + monthIndex,
+      1
+    );
+
+    monthMatrix.forEach((daySlots, dayIndex) => {
+      const dayOfMonth = dayIndex + 1;
+      const date = new Date(
+        monthDate.getFullYear(),
+        monthDate.getMonth(),
+        dayOfMonth
       );
 
-      monthMatrix.forEach((daySlots, dayIndex) => {
-        const dayOfMonth = dayIndex + 1;
-        const date = new Date(
-          monthDate.getFullYear(),
-          monthDate.getMonth(),
-          dayOfMonth
-        );
+      if (date < start || date > end) return;
 
-        if (date < start || date > end) return;
-
-        daySlots.forEach(slot => {
-          if (!slot) return;
-          const [sessionStart, sessionEnd] = slot.split('-');
-          if (sessionStart && sessionEnd) {
-            const overlap = this.calculateOverlappingDuration(
-              sessionStart,
-              sessionEnd,
-              conceptoDesde,
-              conceptoHasta
-            );
-            totalOverlappingHours += overlap;
-          }
-        });
-      });
-    });
-  } else {
-    // Old 7×3 format
-    const dayMap: { [key: number]: string } = {
-      0: 'lunes', 1: 'martes', 2: 'miercoles',
-      3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'
-    };
-
-    (tablero as string[][]).forEach((horariosDelDia, dayIndex) => {
-      if (!horariosDelDia?.length) return;
-
-      const dayName = dayMap[dayIndex];
-      if (!dayName) return;
-
-      const dayOccurrences = this.countDayOccurrencesInRange(dayName, start, end);
-
-      horariosDelDia.forEach(horarioStr => {
-        if (!horarioStr) return;
-        const [sessionStart, sessionEnd] = horarioStr.split('-');
+      daySlots.forEach(slot => {
+        if (!slot) return;
+        const [sessionStart, sessionEnd] = slot.split('-');
         if (sessionStart && sessionEnd) {
-          const sessionOverlap = this.calculateOverlappingDuration(
+          const overlap = this.calculateOverlappingDuration(
             sessionStart,
             sessionEnd,
             conceptoDesde,
             conceptoHasta
           );
-          totalOverlappingHours += sessionOverlap * dayOccurrences;
+          totalOverlappingHours += overlap;
         }
       });
     });
-  }
+  });
 
   return totalOverlappingHours;
 }
@@ -1507,8 +1429,8 @@ private getDurationForConcepto(concepto: any, formValue: any): number {
 
   private getRecurrentTimeRanges(): TimeRange[] {
     const ranges: TimeRange[] = [];
-    const start = this.normalizeDate(this.recurrentSchedule.fechaInicio);
-    const end = this.normalizeDate(this.recurrentSchedule.fechaFin);
+    const start = this.parseLocalDate(this.recurrentSchedule.fechaInicio);
+    const end = this.parseLocalDate(this.recurrentSchedule.fechaFin);
     const current = new Date(start);
 
     while (current <= end) {
@@ -1543,17 +1465,6 @@ private getDurationForConcepto(concepto: any, formValue: any): number {
         return { start, end };
       })
       .filter(slot => !!slot.start && !!slot.end);
-  }
-
-  private normalizeDate(value: Date | string): Date {
-    if (value instanceof Date) {
-      return new Date(value.getFullYear(), value.getMonth(), value.getDate());
-    }
-
-    const parsed = /^\d{4}-\d{2}-\d{2}$/.test(value)
-      ? new Date(`${value}T00:00:00`)
-      : new Date(value);
-    return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
   }
 
   private normalizeTimeForConflict(time: string): string {

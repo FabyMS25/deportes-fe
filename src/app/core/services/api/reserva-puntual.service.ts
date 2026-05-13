@@ -88,21 +88,21 @@ export class ReservaPuntualService {
   }
 
   getByFechaUso(fechaUso: Date): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/fecha-uso/${fechaUso.toISOString().split('T')[0]}`);
+    return this.http.get<any[]>(`${this.apiUrl}/fecha-uso/${this.formatDateLocal(fechaUso)}`);
   }
 
   getByCampoYFecha(uuidCampo: string, fechaUso: Date): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/campo/${uuidCampo}/fecha/${fechaUso.toISOString().split('T')[0]}`);
+    return this.http.get<any[]>(`${this.apiUrl}/campo/${uuidCampo}/fecha/${this.formatDateLocal(fechaUso)}`);
   }
 
   getActivasByCampoYFecha(uuidCampo: string, fechaUso: Date): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/activas/campo/${uuidCampo}/fecha/${fechaUso.toISOString().split('T')[0]}`);
+    return this.http.get<any[]>(`${this.apiUrl}/activas/campo/${uuidCampo}/fecha/${this.formatDateLocal(fechaUso)}`);
   }
 
   verificarConflictos(uuidCampo: string, fechaUso: Date, horaInicio: string, horaFin: string, excludeReservaUuid?: string): Observable<boolean> {
     let params = new HttpParams()
       .set('campoUuid', uuidCampo)
-      .set('fechaUso', fechaUso.toISOString().split('T')[0])
+      .set('fechaUso', this.formatDateLocal(fechaUso))
       .set('horaInicio', horaInicio)
       .set('horaFin', horaFin);
     

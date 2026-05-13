@@ -69,7 +69,14 @@ export class ReservaRecurrenteService {
   }
 
   getActivasEnFecha(fecha: Date): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/activas/fecha/${fecha.toISOString().split('T')[0]}`);
+    return this.http.get<any[]>(`${this.apiUrl}/activas/fecha/${this.formatDateLocal(fecha)}`);
+  }
+
+  private formatDateLocal(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   activar(uuid: string): Observable<any> {
