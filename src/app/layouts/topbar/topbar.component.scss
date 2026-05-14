@@ -1,0 +1,78 @@
+.notification-item {
+  white-space: normal;
+
+  &.notification-unread {
+    background-color: rgba(var(--vz-primary-rgb), 0.06);
+  }
+}
+
+.notification-content {
+  min-width: 0;
+  color: inherit;
+}
+
+.notification-message {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.notification-tools {
+  position: relative;
+  z-index: 2;
+}
+
+.notification-toast {
+  position: fixed;
+  top: 76px;
+  right: 18px;
+  z-index: 1080;
+  width: min(340px, calc(100vw - 32px));
+  padding: 14px;
+  border: 1px solid var(--vz-border-color);
+  border-left: 4px solid var(--vz-info);
+  border-radius: 8px;
+  background: var(--vz-body-bg);
+}
+
+.notification-toast-icon {
+  display: inline-flex;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-toast-body {
+  min-width: 0;
+  color: inherit;
+}
+
+.notification-toast-message {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.notification-toast .btn-close {
+  flex-shrink: 0;
+}
+
+.notification-toast-success {
+  border-left-color: var(--vz-success);
+}
+
+.notification-toast-warning {
+  border-left-color: var(--vz-warning);
+}
+
+.notification-toast-danger {
+  border-left-color: var(--vz-danger);
+}
+
+.notification-toast-info {
+  border-left-color: var(--vz-info);
+}

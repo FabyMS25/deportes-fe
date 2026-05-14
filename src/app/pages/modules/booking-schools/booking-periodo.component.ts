@@ -286,23 +286,22 @@ export class BookingPeriodoComponent implements OnInit {
   private async procesarReservaGenerada(reserva: Reserva): Promise<void> {
     try {
       this.loading = true;
-      const response: any = await this.reservaService.create(reserva).toPromise();
 
-      if (response.status === 'OK') {
-        Swal.fire({
-          title: '¡Mensualidad Generada!',
-          text: 'La mensualidad se ha generado exitosamente.',
-          icon: 'success',
-          confirmButtonText: 'Aceptar'
-        });
+      if (reserva?.uuid) {
         await this.getPeriodReservations();
-      } else {
-        throw new Error(response.message || 'Error al guardar la reserva');
+        return;
       }
-    } catch {
+
+      const response: any = await this.reservaService.create(reserva).toPromise();
+      if (response.status !== 'OK') {
+        throw new Error(response.message || response.payload || 'Error al guardar la reserva');
+      }
+
+      await this.getPeriodReservations();
+    } catch (error: any) {
       Swal.fire({
         title: 'Error',
-        text: 'No se pudo generar la mensualidad. Por favor, intente nuevamente.',
+        text: error?.message || 'No se pudo generar la mensualidad. Por favor, intente nuevamente.',
         icon: 'error',
         confirmButtonText: 'Entendido'
       });

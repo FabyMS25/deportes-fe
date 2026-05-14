@@ -1,15 +1,17 @@
-import { Component, OnInit, EventEmitter, Output, Inject, ViewChild, TemplateRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, EventEmitter, Output, Inject, ViewChild, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
 import { CookieService } from 'ngx-cookie-service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { forkJoin, Subscription } from 'rxjs';
 import { LanguageService } from '../../core/services/language.service';
 
 import { EventService } from '../../core/services/event.service';
 import { AuthenticationService } from '../../core/services/auth.service';
 import { TokenStorageService } from '../../core/services/token-storage.service';
-import { EstadoUsuario } from 'src/app/core/constants/Estados';
+import { NotificacionService } from '../../core/services/api/notificacion.service';
+import { Notificacion, PrioridadNotificacion } from '../../core/models/notificacion.model';
 
 @Component({
   selector: 'app-topbar',
@@ -17,7 +19,7 @@ import { EstadoUsuario } from 'src/app/core/constants/Estados';
   styleUrls: ['./topbar.component.scss']
 })
 
-export class TopbarComponent implements OnInit {
+export class TopbarComponent implements OnInit, OnDestroy {
   menuItems: any[] = [];
   userData: any;
   avatar = "default-profile1.png";
@@ -28,7 +30,12 @@ export class TopbarComponent implements OnInit {
   element: any;
   mode: string | undefined;
   @Output() mobileMenuButtonClicked = new EventEmitter();
-  allnotifications: any;
+  allnotifications: Notificacion[] = [];
+  unreadNotificationCount = 0;
+  usuarioUuid = '';
+  notificationToast: Notificacion | null = null;
+  private notificationToastTimeout?: ReturnType<typeof setTimeout>;
+  private notificationSubscriptions = new Subscription();
   flagvalue: any;
   valueset: any;
   countryName: any;
@@ -51,7 +58,8 @@ export class TopbarComponent implements OnInit {
     public translate: TranslateService, 
     private authService: AuthenticationService, 
     private router: Router, 
-    private storage: TokenStorageService
+    private storage: TokenStorageService,
+    private notificacionService: NotificacionService
   ) { }
 
   ngOnInit(): void {
@@ -60,6 +68,8 @@ export class TopbarComponent implements OnInit {
     this.avatar = this.authService.getAvatar();
     this.userRole = this.authService.getUserRole();
     this.userFullName = this.authService.getUserFullName();
+    this.usuarioUuid = this.resolveUsuarioUuid();
+    this.startNotifications();
 
     this.element = document.documentElement;
     this.cookieValue = this._cookiesService.get('lang');
@@ -72,13 +82,21 @@ export class TopbarComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.notificationSubscriptions.unsubscribe();
+    this.notificacionService.disconnect();
+    if (this.notificationToastTimeout) {
+      clearTimeout(this.notificationToastTimeout);
+    }
+  }
+
   getUserName(): string {
     if (!this.userData) return '';
     return this.userData.username || this.userData.userName || '';
   }
 
   getStatusBadgeClass(): string {
-    const status = this.userData.estadoUsuario.toLowerCase();
+    const status = this.userData?.estadoUsuario?.toLowerCase();
     switch (status) {
       case 'activo':
         return 'bg-success';
@@ -222,61 +240,145 @@ export class TopbarComponent implements OnInit {
     searchInputReponsive.value = "";
   }
 
-  checkedValGet: any[] = [];
-  onCheckboxChange(event: any, id: any) {
-    this.notifyId = id;
-    var result;
-    if (id == '1') {
-      var checkedVal: any[] = [];
-      for (var i = 0; i < this.allnotifications.length; i++) {
-        if (this.allnotifications[i].state == true) {
-          result = this.allnotifications[i].id;
-          checkedVal.push(result);
-        }
-      }
-      this.checkedValGet = checkedVal;
-    } else {
-      var checkedVal: any[] = [];
-      for (var i = 0; i < this.messages.length; i++) {
-        if (this.messages[i].state == true) {
-          result = this.messages[i].id;
-          checkedVal.push(result);
-        }
-      }
-      this.checkedValGet = checkedVal;
-    }
-    checkedVal.length > 0 ? (document.getElementById("notification-actions") as HTMLElement).style.display = 'block' : (document.getElementById("notification-actions") as HTMLElement).style.display = 'none';
+  checkedValGet: string[] = [];
+
+  onCheckboxChange(event: Event, uuid: string): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.checkedValGet = checked
+      ? Array.from(new Set([...this.checkedValGet, uuid]))
+      : this.checkedValGet.filter(item => item !== uuid);
   }
 
-  notificationDelete() {
-    if (this.notifyId == '1') {
-      for (var i = 0; i < this.checkedValGet.length; i++) {
-        for (var j = 0; j < this.allnotifications.length; j++) {
-          if (this.allnotifications[j].id == this.checkedValGet[i]) {
-            this.allnotifications.splice(j, 1);
-          }
-        }
-      }
-    } else {
-      for (var i = 0; i < this.checkedValGet.length; i++) {
-        for (var j = 0; j < this.messages.length; j++) {
-          if (this.messages[j].id == this.checkedValGet[i]) {
-            this.messages.splice(j, 1);
-          }
-        }
-      }
-    }
-    this.calculatenotification();
-    this.modalService.dismissAll();
+  onNotificationClick(notification: Notificacion, event?: Event): void {
+    event?.preventDefault();
+    this.markAsRead(notification);
+    const targetUrl = this.getNotificationTargetUrl(notification);
+    if (!targetUrl) return;
   }
 
-  calculatenotification() {
-    this.totalNotify = 0;
-    this.checkedValGet = [];
+  markAsRead(notification: Notificacion): void {
+    if (notification.estadoLectura === 'LEIDA') return;
+    this.notificacionService.markAsRead(notification.uuid).subscribe();
+  }
 
-    this.checkedValGet.length > 0 ? (document.getElementById("notification-actions") as HTMLElement).style.display = 'block' : (document.getElementById("notification-actions") as HTMLElement).style.display = 'none';
-    if (this.totalNotify == 0) {
-      document.querySelector('.empty-notification-elem')?.classList.remove('d-none');
+  markAllNotificationsAsRead(): void {
+    if (!this.usuarioUuid || this.unreadNotificationCount === 0) return;
+    this.notificacionService.markAllAsRead(this.usuarioUuid).subscribe();
+  }
+
+  deleteNotification(notification: Notificacion, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.notificacionService.delete(notification.uuid).subscribe(() => {
+      this.checkedValGet = this.checkedValGet.filter(uuid => uuid !== notification.uuid);
+    });
+  }
+
+  notificationDelete(): void {
+    if (this.checkedValGet.length === 0) {
+      this.modalService.dismissAll();
+      return;
     }
+
+    forkJoin(this.checkedValGet.map(uuid => this.notificacionService.delete(uuid))).subscribe(() => {
+      this.checkedValGet = [];
+      this.modalService.dismissAll();
+    });
+  }
+
+  refreshNotifications(): void {
+    if (!this.usuarioUuid) return;
+    this.notificacionService.loadLatest(this.usuarioUuid).subscribe();
+    this.notificacionService.refreshCounter(this.usuarioUuid).subscribe();
+  }
+
+  getPriorityClass(priority: PrioridadNotificacion): string {
+    switch (priority) {
+      case 'SUCCESS':
+        return 'success';
+      case 'WARNING':
+        return 'warning';
+      case 'ERROR':
+        return 'danger';
+      case 'INFO':
+      default:
+        return 'info';
+    }
+  }
+
+  getPriorityIcon(priority: PrioridadNotificacion): string {
+    switch (priority) {
+      case 'SUCCESS':
+        return 'bx-check-circle';
+      case 'WARNING':
+        return 'bx-error';
+      case 'ERROR':
+        return 'bx-x-circle';
+      case 'INFO':
+      default:
+        return 'bx-info-circle';
+    }
+  }
+
+  getReadStateLabel(notification: Notificacion): string {
+    return notification.estadoLectura === 'LEIDA' ? 'Leída' : 'No leída';
+  }
+
+  dismissNotificationToast(): void {
+    this.notificationToast = null;
+    if (this.notificationToastTimeout) {
+      clearTimeout(this.notificationToastTimeout);
+    }
+  }
+
+  get importantNotifications(): Notificacion[] {
+    return this.allnotifications.filter(item => item.prioridad === 'WARNING' || item.prioridad === 'ERROR');
+  }
+
+  private startNotifications(): void {
+    if (!this.usuarioUuid) return;
+
+    this.notificationSubscriptions.add(
+      this.notificacionService.notifications$.subscribe(notifications => {
+        this.allnotifications = notifications;
+        this.checkedValGet = this.checkedValGet.filter(uuid => notifications.some(item => item.uuid === uuid));
+      })
+    );
+    this.notificationSubscriptions.add(
+      this.notificacionService.unreadCount$.subscribe(count => this.unreadNotificationCount = count)
+    );
+    this.notificationSubscriptions.add(
+      this.notificacionService.incomingNotification$.subscribe(notification => this.showIncomingNotification(notification))
+    );
+
+    this.notificacionService.initialize(this.usuarioUuid);
+  }
+
+  private showIncomingNotification(notification: Notificacion): void {
+    this.notificationToast = notification;
+    if (this.notificationToastTimeout) {
+      clearTimeout(this.notificationToastTimeout);
+    }
+    this.notificationToastTimeout = setTimeout(() => this.notificationToast = null, 7000);
+  }
+
+  private getNotificationTargetUrl(notification: Notificacion): string {
+    const rawUrl = (notification.accionUrl || '').trim();
+
+    if (!rawUrl || rawUrl === '/' || rawUrl === '#') {
+      return this.authService.getDashboardRoute();
+    }
+
+    if (/^https?:\/\//i.test(rawUrl)) {
+      return this.authService.getDashboardRoute();
+    }
+
+    return rawUrl.startsWith('/') ? rawUrl : `/${rawUrl}`;
+  }
+
+  private resolveUsuarioUuid(): string {
+    const user = this.userData;
+    if (!user) return '';
+    return user.uuid || user.usuarioUuid || user.userUuid || user.designacion?.usuarioDto?.uuid || '';
   }
 }

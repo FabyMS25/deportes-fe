@@ -87,7 +87,7 @@ export class CalendarDashboardComponent implements OnInit {
     const currentUser = this.authService.currentUser();
     this.employee = this.authService.staff();
     if (this.authService.tokenUser() === 'CONTRIBUYENTE_SESSION') {
-      this.contribuyente = currentUser ? JSON.parse(currentUser) : null;
+      this.contribuyente = this.parseCurrentUser(currentUser);
     }
     this.authService.loginEvent$
     .pipe(take(1))
@@ -112,6 +112,16 @@ export class CalendarDashboardComponent implements OnInit {
     }
     this.selectedComplejoUuid = this.employee && this.employee.complejoDto?.uuid ? this.employee.complejoDto.uuid : 'all';
     this._fetchData();
+  }
+
+  private parseCurrentUser(currentUser: any): any {
+    if (!currentUser || typeof currentUser !== 'string') return currentUser;
+
+    try {
+      return JSON.parse(currentUser);
+    } catch {
+      return null;
+    }
   }
 
   private showConsolidatedSystemStatus(event: any): void {

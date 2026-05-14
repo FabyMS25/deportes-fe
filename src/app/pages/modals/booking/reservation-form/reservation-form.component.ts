@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ViewChild, E
 import { FormGroup, FormBuilder, Validators, AbstractControl, ValidationErrors, ValidatorFn, ReactiveFormsModule, FormsModule, FormControl } from '@angular/forms';
 import { format, startOfDay, isBefore, addDays, isValid } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+import { forkJoin, of, Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import Swal from 'sweetalert2';
 
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
@@ -10,12 +10,14 @@ import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
+import { ReservaTarifaDetalleService } from 'src/app/core/services/api/reserva-tarifa-detalle.service';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { NgbCollapseModule, NgbNavModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { Reserva } from 'src/app/core/models/reserva.model';
+import { ReservaTarifaDetalle } from 'src/app/core/models/reservaTarifaDetalle.model';
 import { Organizacion } from 'src/app/core/models/organizacion.model';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
 import { BookingType, TipoOrganizacion } from 'src/app/core/constants/Features';
@@ -103,6 +105,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private reservaService: ReservaService,
+    private reservaTarifaDetalleService: ReservaTarifaDetalleService,
     private ruatService: RuatRequestsService,
     private contribuyenteService: ContribuyentesService,
     private organizationService: OrganizacionService,
@@ -903,14 +906,23 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   }
 
   private calculateConceptoAmount(concepto: any, baseAmount: number, formValue: any): number {
+    const valor = Number(concepto.valor || 0);
+
     switch (concepto.tipo) {
       case 'porcentaje':
-        return baseAmount * (concepto.valor / 100);      
+        return baseAmount * (valor / 100);      
       case 'fijo':
-        return concepto.valor || 0;      
+      case 'monto_fijo':
+        return valor;      
       case 'por_hora':
+      case 'por_sesion':
         const horas = this.getDurationForConcepto(concepto, formValue);
-        return (concepto.valor || 0) * horas;      
+        return valor * horas;
+      case 'mensualidad':
+        return valor * this.safeCalculateMonthsDuration(
+          this.recurrentSchedule?.fechaInicio,
+          this.recurrentSchedule?.fechaFin
+        );
       default:
         return 0;
     }
@@ -1498,6 +1510,7 @@ private prepareReservationData(): Reserva {
     contribuyenteDto: formValue.contribuyenteDto,
     campoDeportivoDto: this.dataField,
     tarifaDto: this.selectedTariff,
+    tarifaDetallesDtoList: this.buildReservaTarifaDetalles(isFreeReservation),
   };    
   
   if (formValue.esParaOrganizacion && formValue.organizacionDto) {
@@ -1512,6 +1525,7 @@ private prepareReservationData(): Reserva {
       horaFin: formValue.horaFin + ':00',
       duracionHoras: formValue.duracionHoras,
       cantidadPersonas: formValue.cantidadPersonas,
+      precioBaseAplicado: this.getAppliedBasePrice(isFreeReservation),
       categoria: this.getTarifaCategories(),
       superficie: this.dataField?.superficieDto?.descripcion || '',
       observaciones: formValue.observaciones
@@ -1526,7 +1540,7 @@ private prepareReservationData(): Reserva {
       cantidadSesiones: this.getRecurrentSessionCount(),
       duracionSesionHoras: this.recurrentSchedule.duracionSesionHoras,
       cantidadPersonas: formValue.cantidadPersonas,
-      tarifaMensual: this.getRecurrentBaseTariffAmount(isFreeReservation),
+      precioBaseAplicado: this.getAppliedBasePrice(isFreeReservation),
       activo: true,
       categoria: this.getTarifaCategories(),
       superficie: this.dataField?.superficieDto?.descripcion || '',
@@ -1539,9 +1553,136 @@ private prepareReservationData(): Reserva {
   return reserva;
 }
 
-  private getRecurrentBaseTariffAmount(isFreeReservation: boolean): number {
+  private getAppliedBasePrice(isFreeReservation: boolean): number {
     if (isFreeReservation) return 0;
     return Number(this.selectedTariff?.precioBase || 0);
+  }
+
+  private buildReservaTarifaDetalles(isFreeReservation: boolean): ReservaTarifaDetalle[] {
+    if (!this.selectedTariff) return [];
+
+    const formValue = this.reservationForm.getRawValue();
+    const baseQuantity = this.getBaseQuantityValue(formValue);
+    const baseUnitPrice = Number(this.selectedTariff.precioBase || 0);
+    const calculatedBaseSubtotal = Number((baseQuantity * baseUnitPrice).toFixed(2));
+    const baseSubtotal = isFreeReservation ? 0 : calculatedBaseSubtotal;
+    const detalles: ReservaTarifaDetalle[] = [{
+      tipoLinea: 'BASE',
+      nombreConcepto: this.selectedTariff.descripcion || this.selectedTariff.tipoCobro || 'Tarifa base',
+      tipoCobro: this.selectedTariff.tipoCobro,
+      tipoCalculo: this.selectedTariff.tipoCobro,
+      cantidad: baseQuantity,
+      precioUnitario: isFreeReservation ? 0 : baseUnitPrice,
+      subtotal: baseSubtotal,
+      reglaAplicada: isFreeReservation ? `GRATUIDAD_${this.freeReservationReason || 'SIN_MOTIVO'}` : this.getBaseQuantityLabel(),
+      datosSnapshot: this.buildTarifaDetalleSnapshot({
+        tipo: 'BASE',
+        cantidadTexto: this.getBaseQuantity(),
+        precioUnitarioOriginal: baseUnitPrice,
+        subtotalOriginal: calculatedBaseSubtotal,
+        esReservaGratuita: isFreeReservation,
+        motivoGratuidad: isFreeReservation ? this.freeReservationReason : undefined
+      }),
+      tarifaDto: this.selectedTariff
+    }];
+
+    let runningSubtotal = calculatedBaseSubtotal;
+    const conceptosActivos = this.selectedTariff.conceptosDtos?.filter((concepto: any) => concepto.activo) || [];
+    conceptosActivos.forEach((concepto: any) => {
+      const cantidad = this.getConceptoQuantityValue(concepto, formValue);
+      const calculatedSubtotal = Number(this.calculateConceptoAmount(concepto, runningSubtotal, formValue).toFixed(2));
+      const subtotal = isFreeReservation ? 0 : calculatedSubtotal;
+      if (calculatedSubtotal <= 0) return;
+
+      detalles.push({
+        tipoLinea: 'CONCEPTO',
+        nombreConcepto: concepto.concepto,
+        tipoCobro: this.selectedTariff.tipoCobro,
+        tipoCalculo: concepto.tipo,
+        cantidad,
+        precioUnitario: isFreeReservation ? 0 : Number(concepto.valor || 0),
+        subtotal,
+        reglaAplicada: isFreeReservation ? `GRATUIDAD_${this.freeReservationReason || 'SIN_MOTIVO'}` : this.getConceptoRule(concepto),
+        datosSnapshot: this.buildTarifaDetalleSnapshot({
+          tipo: 'CONCEPTO',
+          conceptoUuid: concepto.uuid,
+          desde: concepto.desde,
+          hasta: concepto.hasta,
+          precioUnitarioOriginal: Number(concepto.valor || 0),
+          subtotalOriginal: calculatedSubtotal,
+          esReservaGratuita: isFreeReservation,
+          motivoGratuidad: isFreeReservation ? this.freeReservationReason : undefined
+        }),
+        tarifaDto: this.selectedTariff,
+        tarifaConceptoDto: concepto
+      });
+
+      runningSubtotal += calculatedSubtotal;
+    });
+
+    return detalles;
+  }
+
+  private getBaseQuantityValue(formValue: any): number {
+    if (!this.selectedTariff) return 1;
+
+    switch (this.selectedTariff.tipoCobro) {
+      case 'por_hora':
+        return this.bookingType === 'recurrente'
+          ? this.getRecurrentBillableHours()
+          : Number(formValue?.duracionHoras || this.duration || 1);
+      case 'por_persona':
+        return Number(formValue?.cantidadPersonas || 1);
+      case 'mensualidad':
+      case 'por_club':
+        return this.safeCalculateMonthsDuration(this.recurrentSchedule?.fechaInicio, this.recurrentSchedule?.fechaFin);
+      case 'por_sesion':
+        return this.bookingType === 'recurrente' ? this.getRecurrentBillableHours() : 1;
+      case 'por_evento':
+      default:
+        return 1;
+    }
+  }
+
+  private getRecurrentBillableHours(): number {
+    if (this.selectedTariff?.desde && this.selectedTariff?.hasta) {
+      return this.calculateTotalOverlappingHoursFromTablero(this.selectedTariff.desde, this.selectedTariff.hasta);
+    }
+
+    return this.calculateTotalHoursForRecurrentSessions();
+  }
+
+  private getConceptoQuantityValue(concepto: any, formValue: any): number {
+    switch (concepto.tipo) {
+      case 'porcentaje':
+        return Number(concepto.valor || 0);
+      case 'por_hora':
+      case 'por_sesion':
+        return this.getDurationForConcepto(concepto, formValue);
+      case 'mensualidad':
+        return this.safeCalculateMonthsDuration(this.recurrentSchedule?.fechaInicio, this.recurrentSchedule?.fechaFin);
+      case 'fijo':
+      case 'monto_fijo':
+      default:
+        return 1;
+    }
+  }
+
+  private getConceptoRule(concepto: any): string {
+    if (concepto.tipo === 'por_hora' && concepto.desde && concepto.hasta) {
+      return `${concepto.desde.slice(0, 5)}-${concepto.hasta.slice(0, 5)}`;
+    }
+    return concepto.tipo || 'CONCEPTO';
+  }
+
+  private buildTarifaDetalleSnapshot(extra: Record<string, any>): string {
+    return JSON.stringify({
+      ...extra,
+      tipoReserva: this.bookingType,
+      tarifaUuid: this.selectedTariff?.uuid,
+      precioBase: this.selectedTariff?.precioBase,
+      tipoCobro: this.selectedTariff?.tipoCobro
+    });
   }
 
   private registerReservationInRuat(reservaData: Reserva): void {
@@ -1725,15 +1866,37 @@ private prepareReservationData(): Reserva {
   }
 
   private saveReservation(reservaData: Reserva): void {
-    this.reservaService.create(reservaData).subscribe({
+    const tarifaDetalles = reservaData.tarifaDetallesDtoList || [];
+    const reservaPayload: Reserva = { ...reservaData };
+    delete (reservaPayload as any).tarifaDetallesDtoList;
+
+    this.reservaService.create(reservaPayload).subscribe({
       next: (response: any) => {
-        this.isSubmitting = false;
-        this.submitted = false;
         if (response.status === 'OK') {
           const savedReserva = response.payload || response;
-          this.showSuccessMessage(savedReserva);
-          this.reservationCompleted.emit(savedReserva);
+          if (savedReserva.tarifaDetallesDtoList?.length) {
+            this.isSubmitting = false;
+            this.submitted = false;
+            this.showSuccessMessage(savedReserva);
+            this.reservationCompleted.emit(savedReserva);
+            return;
+          }
+
+          this.saveReservaTarifaDetalles(savedReserva, tarifaDetalles).subscribe({
+            next: (savedDetalleResponses) => {
+              savedReserva.tarifaDetallesDtoList = this.extractSavedTarifaDetalles(savedDetalleResponses, tarifaDetalles, savedReserva);
+              this.isSubmitting = false;
+              this.submitted = false;
+              this.showSuccessMessage(savedReserva);
+              this.reservationCompleted.emit(savedReserva);
+            },
+            error: (error) => {
+              this.isSubmitting = false;
+              this.handleError('Reserva creada, pero no se guardó el detalle de tarifa', error);
+            }
+          });
         } else {
+          this.isSubmitting = false;
           this.handleError('Error al guardar la reserva', response.message);
         }
       },
@@ -1742,6 +1905,40 @@ private prepareReservationData(): Reserva {
         this.handleError('Error al guardar la reserva', error);
       }
     });
+  }
+
+  private saveReservaTarifaDetalles(reserva: Reserva, detalles: ReservaTarifaDetalle[]) {
+    if (!reserva?.uuid || detalles.length === 0) {
+      return of([]);
+    }
+
+    const detalleRequests = detalles.map(detalle => this.reservaTarifaDetalleService.create({
+      ...detalle,
+      reservaDto: { uuid: reserva.uuid } as Reserva,
+      tarifaDto: detalle.tarifaDto?.uuid ? { uuid: detalle.tarifaDto.uuid } as any : detalle.tarifaDto,
+      tarifaConceptoDto: detalle.tarifaConceptoDto?.uuid ? { uuid: detalle.tarifaConceptoDto.uuid } as any : detalle.tarifaConceptoDto
+    }));
+
+    return forkJoin(detalleRequests);
+  }
+
+  private extractSavedTarifaDetalles(
+    responses: any[],
+    originalDetalles: ReservaTarifaDetalle[],
+    reserva: Reserva
+  ): ReservaTarifaDetalle[] {
+    const savedDetalles = (responses || [])
+      .map(response => response?.payload || response)
+      .filter(detalle => !!detalle);
+
+    if (savedDetalles.length > 0) {
+      return savedDetalles;
+    }
+
+    return originalDetalles.map(detalle => ({
+      ...detalle,
+      reservaDto: { uuid: reserva.uuid } as Reserva
+    }));
   }
 
   private showSuccessMessage(reserva: Reserva): void {

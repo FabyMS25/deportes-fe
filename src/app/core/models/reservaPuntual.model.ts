@@ -10,9 +10,11 @@ export interface ReservaPuntual {
   horaFin:string; // "HH:mm:ss"
   duracionHoras?:number;
   cantidadPersonas?:number;
+  precioBaseAplicado?: number;
   categoria: string;
   superficie: string;
   observaciones?: string;
+  periodo?: string;
   
   reservaDto?: Reserva;
 }

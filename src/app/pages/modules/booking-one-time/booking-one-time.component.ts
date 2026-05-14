@@ -108,6 +108,7 @@ export class BookingOneTimeComponent implements OnInit {
       { name: 'Hora Fin', prop: 'horaFin', visible: false },
       { name: 'Duración', prop: 'duracionHoras', visible: false },
       { name: 'Cant. Personas', prop: 'cantidadPersonas', visible: false },
+      { name: 'Precio Base Aplicado', prop: 'precioBaseAplicado', visible: false },
       { name: 'Monto Total', prop: 'reservaDto.montoTotal', visible: true },
       { name: 'Tasa', prop: 'reservaDto.numeroTasa', visible: true },
 
@@ -300,6 +301,7 @@ export class BookingOneTimeComponent implements OnInit {
         horaFin: item.horaFin || '-',
         duracion: item.duracionHoras ? `${item.duracionHoras} hrs` : '-',
         cantidadPersonas: item.cantidadPersonas || '-',
+        precioBaseAplicado: item.precioBaseAplicado || '-',
         tipoReserva: item.reservaDto?.tipoReserva || '-',
         tipoCobro: item.reservaDto?.tarifaDto?.tipoCobro || '-',
         numeroReserva: item.reservaDto?.numeroReserva || '-',
@@ -339,7 +341,7 @@ export class BookingOneTimeComponent implements OnInit {
       noDownload: false,
       headers: [
         "Complejo", "Campo Deportivo", "Superficie","Categoría",        
-        "Fecha Uso", "Hora Inicio", "Hora Fin", "Duración", "Cant. Personas",                
+        "Fecha Uso", "Hora Inicio", "Hora Fin", "Duración", "Cant. Personas", "Precio Base Aplicado",
         "Tipo Reserva", "Tipo Cobro", 
         "Número Reserva", "Número Tasa", "Monto Total",
         "Clasificador RUAT",

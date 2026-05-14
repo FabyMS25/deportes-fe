@@ -118,7 +118,7 @@ export class BookingRecurrentComponent implements OnInit {
       { name: 'Sesiones', prop: 'cantidadSesiones', visible: false },
       { name: 'Duración Sesión', prop: 'duracionSesionHoras', visible: false },
       { name: 'Personas', prop: 'cantidadPersonas', visible: false },
-      { name: 'Tarifa Mensual', prop: 'tarifaMensual', visible: false },
+      { name: 'Precio Base Aplicado', prop: 'precioBaseAplicado', visible: false },
       { name: 'Monto Total', prop: 'reservaDto.montoTotal', visible: true },
       { name: 'Tasa', prop: 'reservaDto.numeroTasa', visible: true },
 
@@ -381,7 +381,7 @@ export class BookingRecurrentComponent implements OnInit {
         cantidadSesiones: item.cantidadSesiones || '-',
         duracionSesion: item.duracionSesionHoras ? `${item.duracionSesionHoras} hrs` : '-',
         cantidadPersonas: item.cantidadPersonas || '-',
-        tarifaMensual: item.tarifaMensual || '-',
+        precioBaseAplicado: item.precioBaseAplicado || '-',
         tablero: item.tableroDto?.horario ? JSON.stringify(item.tableroDto.horario) : '-',
 
         tasa: item.reservaDto?.numeroTasa || '-',

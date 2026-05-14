@@ -22,6 +22,8 @@ import '@angular/localize/init'
  * BROWSER POLYFILLS
  */
 
+(globalThis as any).global = globalThis;
+
 /**
  * By default, zone.js will patch all possible macroTask and DomEvents
  * user can disable parts of macroTask/DomEvents patch by setting following flags
@@ -56,3 +58,11 @@ import 'intersection-observer';
 /***************************************************************************************************
  * APPLICATION IMPORTS
  */
+(window as any).global = window;
+
+import { Buffer } from 'buffer';
+(window as any).Buffer = Buffer;
+
+(window as any).process = {
+  env: {}
+};

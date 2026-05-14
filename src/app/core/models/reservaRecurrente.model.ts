@@ -12,7 +12,8 @@ export interface ReservaRecurrente {
   duracionSesionHoras:number;
   cantidadPersonas?:number;
   cantidadSesiones:number;
-  tarifaMensual?:number;
+  precioBaseAplicado?: number;
+  // tarifaMensual?:number;
   activo:Boolean;
   categoria?: string; //saved concatenado to show later like categoria1, categoria 2
   superficie?: string; //saved to show later

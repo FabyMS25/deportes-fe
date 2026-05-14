@@ -8,6 +8,7 @@ import { ReservaAuditoria } from "./reservaAuditoria.model";
 import { ReservaPeriodo } from "./reservaPeriodo.model";
 import { ReservaPuntual } from "./reservaPuntual.model";
 import { ReservaRecurrente } from "./reservaRecurrente.model";
+import { ReservaTarifaDetalle } from "./reservaTarifaDetalle.model";
 import { Tarifa } from "./tarifa.model";
 import { Pago } from "./pago.model";
 export interface Reserva{
@@ -43,4 +44,5 @@ export interface Reserva{
 
   pagosDtoList?:Pago[];
   auditoriasDtoList?: ReservaAuditoria[];
+  tarifaDetallesDtoList?: ReservaTarifaDetalle[];
 }
