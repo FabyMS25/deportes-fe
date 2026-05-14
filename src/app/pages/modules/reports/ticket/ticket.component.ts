@@ -9,11 +9,12 @@ import Swal from 'sweetalert2';
 import emailjs from 'emailjs-com';
 
 import { ReportsService } from 'src/app/core/services/api/reportes.service';
-import { GlobalComponent } from 'src/app/global-component';
 import { Reserva } from 'src/app/core/models/reserva.model';
 import { environment } from 'src/environments/environment';
 import { BookingType } from 'src/app/core/constants/Features';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
+import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
+import { obtenerLabelTipoCobro } from 'src/app/core/constants/TipoCobro';
 
 @Component({
   selector: 'app-ticket',
@@ -202,6 +203,7 @@ export class TicketComponent implements OnChanges {
     const organizacion = reserva.organizacionDto;
     const ticketUrl = this.generateTicketUrl(reserva);
     const scheduleInfo = this.getScheduleInformation(reserva);
+    const adminDeportes = this.getAdminDeportesConfig();
 
     return {
       subject: `Ticket de Reserva - ${campoDeportivo?.nombre}`,
@@ -240,9 +242,9 @@ export class TicketComponent implements OnChanges {
       monto_total: `Bs. ${reserva.montoTotal}`,
       duracion_total: this.getDuracionTotal(reserva),
 
-      phone_contact: GlobalComponent.admin_deportes.phone,
-      email_contact: GlobalComponent.admin_deportes.email,
-      address_contact: GlobalComponent.admin_deportes.address,
+      phone_contact: adminDeportes.phone,
+      email_contact: adminDeportes.email,
+      address_contact: adminDeportes.address,
 
       ticket_url: ticketUrl,
       ticket_download_text: 'Descargar Ticket PDF',
@@ -251,8 +253,25 @@ export class TicketComponent implements OnChanges {
     };
   }
 
+  private getAdminDeportesConfig(): { phone: string; email: string; address: string } {
+    const valorJson = this.authService.getAllConfigs()[ClaveConfiguracion.ADMIN_DEPORTES]?.valorJson;
+    if (!valorJson) {
+      return { phone: '', email: '', address: '' };
+    }
+
+    try {
+      const parsed = JSON.parse(valorJson);
+      return {
+        phone: typeof parsed?.phone === 'string' ? parsed.phone : '',
+        email: typeof parsed?.email === 'string' ? parsed.email : '',
+        address: typeof parsed?.address === 'string' ? parsed.address : ''
+      };
+    } catch {
+      return { phone: '', email: '', address: '' };
+    }
+  }
+
   private generateTicketUrl(reserva: any): string {
-    console.log('Generando URL para ticket con reserva:', reserva);
     const baseUrl = environment.backendUrl;
     let endpoint = '';
     if (reserva.tipoReserva === 'periodo') {
@@ -388,15 +407,7 @@ export class TicketComponent implements OnChanges {
     return diasSemana.split(',').map(dia => diasMap[dia.trim()] || dia.trim()).join(', ');
   }
   formatTipoCobro(tipoCobro: string): string {
-    const mapping: { [key: string]: string } = {
-      'por_hora': 'Por Hora',
-      'por_persona': 'Por Persona',
-      'por_evento': 'Por Evento',
-      'por_sesion': 'Por Sesión',
-      'mensualidad': 'Mensualidad',
-      'por_club': 'Por Club'
-    };    
-    return mapping[tipoCobro] || tipoCobro;
+    return obtenerLabelTipoCobro(tipoCobro, '');
   }
   getReservationTypeText(): string {
     if (!this.reservationData) return '';    

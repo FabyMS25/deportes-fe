@@ -18,6 +18,7 @@ import { TicketComponent } from '../../modules/reports/ticket/ticket.component';
 import { CityAcronym } from 'src/app/core/constants/Places';
 import { EstadoReserva, EstadoValidacion, EstadoPago, StatusUtils } from 'src/app/core/constants/Estados';
 import { BookingDetailModalComponent } from '../booking-detail-modal/booking-detail-modal.component';
+import { obtenerLabelTipoCobro } from 'src/app/core/constants/TipoCobro';
 @Component({
   selector: 'app-booking-recurrent-modal',
   standalone: true,
@@ -620,16 +621,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
 
 
   formatTipoCobro(tipo?: string): string {
-    const map: Record<string, string> = {
-      por_hora: 'Por Hora',
-      por_persona: 'Por Persona',
-      por_evento: 'Por Evento',
-      por_sesion: 'Por Sesión',
-      mensualidad: 'Mensualidad',
-      por_club: 'Por Club',
-      periodo: 'Periodo'
-    };
-    return tipo ? (map[tipo] || tipo) : 'N/A';
+    return obtenerLabelTipoCobro(tipo, 'N/A');
   }
 
   formatTipoOrganizacion(tipo?: string): string {

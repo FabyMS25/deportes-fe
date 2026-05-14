@@ -13,6 +13,8 @@ import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.m
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { Reserva } from 'src/app/core/models/reserva.model';
+import { obtenerLabelTipoCobro } from 'src/app/core/constants/TipoCobro';
+import { obtenerValorConfiguracionConUnidad } from 'src/app/core/utils/configuracion-sistema.util';
 
 interface TimeSlot {
   time: string;
@@ -87,6 +89,8 @@ interface OperatingPeriod {
   styleUrls: ['./schedule-selection.component.scss']
 })
 export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy {
+  readonly ClaveConfiguracion = ClaveConfiguracion;
+
   @Input() dataField!: CampoDeportivo;
   @Input() dataTariff!: Tarifa;
   @Input() reservationsList: Reserva[] = []; 
@@ -127,13 +131,22 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   get anticipationTimeDisplay(): string {
     switch (this.dataTariff.tipoCobro) {
       case 'por_evento':
-        return (this.systemConfigs[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico ?? 0) + `días`;
+        return this.getConfigValueDisplay(ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS) ?? '';
       case 'mensualidad': case 'por_sesion': case 'por_club':
-        return (this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico ?? 0) + `horas`;
+        return this.getConfigValueDisplay(ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES) ?? '';
       default:
-        return (this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico ?? 0) + `horas`;
+        return this.getConfigValueDisplay(ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES) ?? '';
     }
   }  
+
+  get paymentValidationDisplay(): string | undefined {
+    return this.getConfigValueDisplay(ClaveConfiguracion.HORAS_VALIDACION_PAGO);
+  }
+
+  private getConfigValueDisplay(clave: ClaveConfiguracion): string | undefined {
+    return obtenerValorConfiguracionConUnidad(this.systemConfigs, clave);
+  }
+
   get maxDuration(): number {
     if (this.dataTariff?.tipoCobro === 'por_evento') {
       const maxHours = this.systemConfigs[ClaveConfiguracion.DURACION_MAXIMA_EVENTOS]?.valorNumerico;
@@ -1852,16 +1865,7 @@ private getConceptoTimeRangeDisplay(concepto: any): string {
     return periodDisplays.join(', ');
   }
   getTipoCobroDisplay(): string {
-    if (!this.dataTariff?.tipoCobro) return '';  
-    const tipoCobroMap: { [key: string]: string } = {
-      'por_hora': 'Por Hora',
-      'por_persona': 'Por Persona',
-      'por_evento': 'Por Evento',
-      'mensualidad': 'Mensualidad',
-      'por_sesion': 'Por Sesión',
-      'por_club': 'Por Club'
-    };
-    return tipoCobroMap[this.dataTariff.tipoCobro] || this.dataTariff.tipoCobro;
+    return obtenerLabelTipoCobro(this.dataTariff?.tipoCobro, '');
   }
   
   private parseLocalDate(date: Date | string): Date {

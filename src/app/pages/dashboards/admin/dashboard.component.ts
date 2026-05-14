@@ -1015,7 +1015,6 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
       this.loading = true;
       const allReservations = await this.getAllPages(0, []);
       this.reservationsList = allReservations;
-      console.log('Total reservas cargadas:', this.reservationsList.length);
     } catch (error) {
       Swal.fire({
         text: 'Error al obtener las reservas',

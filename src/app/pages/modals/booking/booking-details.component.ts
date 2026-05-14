@@ -12,7 +12,6 @@ import { Reserva } from 'src/app/core/models/reserva.model';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
-import { GlobalComponent } from 'src/app/global-component';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { BookingType } from 'src/app/core/constants/Features';
@@ -21,6 +20,9 @@ import { EstadoActual } from 'src/app/core/constants/Estados';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { ReservationConflictService } from './reservation-conflict.service';
+import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
+import { obtenerDescripcionTipoCobro } from 'src/app/core/constants/TipoCobro';
+import { obtenerValorConfiguracionConUnidad } from 'src/app/core/utils/configuracion-sistema.util';
 
 interface PuntualSchedule {
   date: Date;
@@ -55,6 +57,14 @@ interface BookingState {
   reservaCreada?: Reserva;
   ticketData?: any;
 }
+interface AdminDeportesInfo {
+  role?: string;
+  avatar?: string;
+  name?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+}
 @Component({
   selector: 'app-booking-details',
   templateUrl: './booking-details.component.html',
@@ -65,7 +75,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   currentTime!: string;
   currentWeekStart: Date = new Date();
   currentWeekEnd: Date = new Date();  
-  globalAdmin = GlobalComponent.admin_deportes;
+  globalAdmin?: AdminDeportesInfo;
 
   userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
   isLoading = false;
@@ -74,6 +84,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   complejosList: ComplejoDeportivo[] = [];
 
   readonly BookingStep = BookingStep;
+  readonly ClaveConfiguracion = ClaveConfiguracion;
   bookingStep: BookingStep = BookingStep.COMPLEJO_SELECTION;
   bookingType!: BookingType;
   bookingState: BookingState = {};
@@ -100,25 +111,16 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
       return undefined;
     }
     if (!this.bookingState.tarifa) {
-      return this.systemConfigList['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico +' horas';
+      return this.getConfigValueDisplay(ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES);
     }
     switch (this.bookingState.tarifa.tipoCobro) {
       case 'por_evento':
-        return this.systemConfigList['DIAS_ANTICIPACION_EVENTOS']?.valorNumerico ? 
-               this.systemConfigList['DIAS_ANTICIPACION_EVENTOS'].valorNumerico +' días' : undefined;
+        return this.getConfigValueDisplay(ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS);
       case 'mensualidad': case 'por_sesion': case 'por_club':
-        return this.systemConfigList['HORAS_ANTICIPACION_RECURRENTES']?.valorNumerico ? 
-               this.systemConfigList['HORAS_ANTICIPACION_RECURRENTES'].valorNumerico +' horas' : undefined;
+        return this.getConfigValueDisplay(ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES);
       default:
-        return this.systemConfigList['HORAS_ANTICIPACION_RESERVAS_PUNTUALES']?.valorNumerico+' horas';
+        return this.getConfigValueDisplay(ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES);
     }
-  }
-
-  get maxActiveReservationsPerUser(): number | undefined {
-    return this.systemConfigList['MAXIMO_RESERVAS_ACTIVAS_POR_USUARIO']?.valorNumerico ;
-  }
-  get maxReservationsPerDayUser(): number | undefined {
-    return this.systemConfigList['MAXIMO_RESERVAS_POR_DIA_USUARIO']?.valorNumerico;
   }
 
   get minReservationDurationDisplay(): string | undefined {
@@ -132,8 +134,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   }
 
   get paymentValidationDisplay(): string | undefined {
-    const value = this.systemConfigList[ClaveConfiguracion.HORAS_VALIDACION_PAGO]?.valorNumerico;
-    return value ? `${value} hora(s)` : undefined;
+    return this.getConfigValueDisplay(ClaveConfiguracion.HORAS_VALIDACION_PAGO);
   }
 
   constructor(
@@ -145,6 +146,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     private cdRef: ChangeDetectorRef,
     private scheduleState: ScheduleStateService,
     private conflictService: ReservationConflictService,
+    private configuracionSistemaService: ConfiguracionSistemaService,
   ) {
     this.userRole = this.authenticationService.getUserRole()
   }
@@ -156,6 +158,8 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     ];
     this.currentTime = new Date().toLocaleTimeString(); 
     this.systemConfigList = this.authenticationService.getAllConfigs();
+    this.globalAdmin = this.getAdminDeportesConfig();
+    this.loadAdminDeportesConfigIfMissing();
     const currentUser = this.authenticationService.currentUser()   
     if (this.userRole === 'Contribuyente') {
         this.bookingState.contribuyente = currentUser;        
@@ -330,6 +334,59 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     });
   }
 
+  private getConfigValueDisplay(clave: ClaveConfiguracion): string | undefined {
+    return obtenerValorConfiguracionConUnidad(this.systemConfigList, clave);
+  }
+
+  private loadAdminDeportesConfigIfMissing(): void {
+    if (this.globalAdmin) {
+      return;
+    }
+
+    this.configuracionSistemaService.getByClave(ClaveConfiguracion.ADMIN_DEPORTES)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
+          const config = response?.payload;
+          if (!config?.activo) {
+            return;
+          }
+
+          this.systemConfigList[ClaveConfiguracion.ADMIN_DEPORTES] = config;
+          this.globalAdmin = this.getAdminDeportesConfig();
+          this.cdRef.detectChanges();
+        },
+        error: () => {
+          this.globalAdmin = undefined;
+        }
+      });
+  }
+
+  private getAdminDeportesConfig(): AdminDeportesInfo | undefined {
+    const valorJson = this.systemConfigList[ClaveConfiguracion.ADMIN_DEPORTES]?.valorJson;
+    if (!valorJson) {
+      return undefined;
+    }
+
+    try {
+      const parsed = JSON.parse(valorJson);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return undefined;
+      }
+
+      return {
+        role: typeof parsed.role === 'string' ? parsed.role : undefined,
+        avatar: typeof parsed.avatar === 'string' ? parsed.avatar : undefined,
+        name: typeof parsed.name === 'string' ? parsed.name : undefined,
+        phone: typeof parsed.phone === 'string' ? parsed.phone : undefined,
+        email: typeof parsed.email === 'string' ? parsed.email : undefined,
+        address: typeof parsed.address === 'string' ? parsed.address : undefined
+      };
+    } catch {
+      return undefined;
+    }
+  }
+
   /* API REQUESTS */
   private async loadReservationsByField(fieldUuid: string): Promise<void> {
     if (!fieldUuid) {
@@ -462,16 +519,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   }
 
   getTariffDescription(tarifa: Tarifa): string {
-    const descriptions = {
-      'por_hora': 'por hora',
-      'por_persona': 'por persona',
-      'por_evento': 'por evento',
-      'mensualidad': 'por mes',
-      'por_sesion': 'por sesión',
-      'por_club': 'por mes',
-      'periodo' : 'periodo de Escuela'
-    };
-    return descriptions[tarifa.tipoCobro] || 'Tarifa';
+    return obtenerDescripcionTipoCobro(tarifa.tipoCobro);
   }
 
   next(): void {

@@ -16,7 +16,7 @@ import { CategoriaCampo, TipoExcepcion } from 'src/app/core/constants/Features';
 import { ClasificadorRuat } from 'src/app/core/models/clasificadorRuat.model';
 import { ClasificadorRuatService } from 'src/app/core/services/api/clasificadorRuat.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
-import { frecuencia, TipoCobro, tiposConcepto } from 'src/app/core/constants/TipoCobro';
+import { frecuencia, obtenerLabelTipoCobro, TipoCobro, tiposConcepto } from 'src/app/core/constants/TipoCobro';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
 import { EstadoActual } from 'src/app/core/constants/Estados';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -540,14 +540,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   }
 
   getTipoCobro(tipo: string): string {
-    const tipoMap: Record<string, string> = {
-      'por_hora': 'Por hora',
-      'por_persona': 'Por persona',
-      'por_evento': 'Por evento',
-      'mensualidad': 'Mensualidad',
-      'por_club': 'Por club'
-    };
-    return tipo ? tipoMap[tipo] || tipo : 'No especificado';
+    return obtenerLabelTipoCobro(tipo);
   }
 
   saveData() {

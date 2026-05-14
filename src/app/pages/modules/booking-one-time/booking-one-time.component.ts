@@ -5,7 +5,6 @@ import { NgbModal, NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
 import { ngxCsv } from 'ngx-csv';
 import Swal from 'sweetalert2';
 
-import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { PagoService } from 'src/app/core/services/api/pago.service';
@@ -22,6 +21,7 @@ import { Reserva } from 'src/app/core/models/reserva.model';
 import { Pago } from 'src/app/core/models/pago.model';
 import { TicketComponent } from '../reports/ticket/ticket.component';
 import { BookingOneTimeModalComponent } from '../../modals/modal-booking-one-time/modal-booking-one-time.component';
+import { AuthenticationService } from 'src/app/core/services/auth.service';
 
 @Component({
   selector: 'app-booking-one-time',

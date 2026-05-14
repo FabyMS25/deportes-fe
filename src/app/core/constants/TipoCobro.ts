@@ -2,7 +2,7 @@ export const TipoCobro = [
   {
     id: "1",
     value: "por_hora",
-    label: "Por Horas",
+    label: "Por Hora",
   },
   {
     id: "2",
@@ -22,7 +22,7 @@ export const TipoCobro = [
   {
     id: "5",
     value: "por_sesion",
-    label: "Por Sesion",
+    label: "Por Sesión",
   },
   {
     id: "6",
@@ -30,6 +30,30 @@ export const TipoCobro = [
     label: "Mensualidad",
   }
 ];
+
+export const TipoCobroLabels: Record<string, string> = {
+  ...Object.fromEntries(TipoCobro.map(tipo => [tipo.value, tipo.label])),
+  periodo: 'Periodo'
+};
+
+export const TipoCobroDescriptions: Record<string, string> = {
+  por_hora: 'por hora',
+  por_persona: 'por persona',
+  por_evento: 'por evento',
+  mensualidad: 'por mes',
+  por_sesion: 'por sesión',
+  por_club: 'por mes',
+  periodo: 'periodo de Escuela'
+};
+
+export function obtenerLabelTipoCobro(tipo?: string, fallback = 'No especificado'): string {
+  return tipo ? (TipoCobroLabels[tipo] || tipo) : fallback;
+}
+
+export function obtenerDescripcionTipoCobro(tipo?: string, fallback = 'Tarifa'): string {
+  return tipo ? (TipoCobroDescriptions[tipo] || fallback) : fallback;
+}
+
 // En constants/TipoCobro.ts
 export const frecuencia = [
   { 

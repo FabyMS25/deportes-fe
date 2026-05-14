@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, Output, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormControl, UntypedFormBuilder, UntypedFormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
 import { CategoriaConfiguracion , AplicaAConfiguracion,UnidadMedida, 
-  ClaveConfiguracion, TipoValorConfiguracion,EstadoControlConfiguracion } from 'src/app/core/constants/Configurations';
+  ClaveConfiguracion, TipoValorConfiguracion, obtenerLabelConfiguracion } from 'src/app/core/constants/Configurations';
 
 
 @Component({
@@ -40,6 +40,7 @@ export class SystemConfigurationModalComponent implements OnInit {
 
   mostrarUnidadMedida = false;
   mostrarReferenciaUuid = false;
+  tipoValorActual = TipoValorConfiguracion.TEXTO;
 
   constructor(
     private modalService: NgbModal,
@@ -98,8 +99,38 @@ export class SystemConfigurationModalComponent implements OnInit {
 
   onTipoValorChange(): void {
     const tipoValor = this.contentForm.get('tipoValor')?.value;
-    this.mostrarUnidadMedida = tipoValor === 'NUMERICO';
+    this.tipoValorActual = tipoValor;
+    this.mostrarUnidadMedida = tipoValor === TipoValorConfiguracion.NUMERICO;
+    this.applyValueValidators(tipoValor);
     this.resetValorFields();
+  }
+
+  private applyValueValidators(tipoValor: string): void {
+    const valorTexto = this.contentForm.get('valorTexto');
+    const valorNumerico = this.contentForm.get('valorNumerico');
+    const valorJson = this.contentForm.get('valorJson');
+    const valoresPosibles = this.contentForm.get('valoresPosibles');
+
+    valorTexto?.clearValidators();
+    valorNumerico?.clearValidators();
+    valorJson?.clearValidators();
+    valoresPosibles?.clearValidators();
+
+    if (tipoValor === TipoValorConfiguracion.TEXTO) {
+      valorTexto?.setValidators([Validators.required]);
+      valoresPosibles?.setValidators([this.optionalJsonArrayValidator]);
+    }
+    if (tipoValor === TipoValorConfiguracion.NUMERICO) {
+      valorNumerico?.setValidators([Validators.required]);
+    }
+    if (tipoValor === TipoValorConfiguracion.JSON) {
+      valorJson?.setValidators([Validators.required, this.jsonObjectOrArrayValidator]);
+    }
+
+    valorTexto?.updateValueAndValidity();
+    valorNumerico?.updateValueAndValidity();
+    valorJson?.updateValueAndValidity();
+    valoresPosibles?.updateValueAndValidity();
   }
 
   onAplicaAChange(): void {
@@ -116,7 +147,8 @@ export class SystemConfigurationModalComponent implements OnInit {
       valorTexto: '',
       valorNumerico: null,
       valorBoolean: false,
-      valorJson: ''
+      valorJson: '',
+      valoresPosibles: ''
     });
   }
 
@@ -130,12 +162,12 @@ export class SystemConfigurationModalComponent implements OnInit {
   private formDataSet() {
     if (this.accion !== '' && this.row) {
       let tipoValor = 'TEXTO';
-      if (this.row.valorNumerico !== null && this.row.valorNumerico !== undefined) {
+      if (this.row.valorJson) {
+        tipoValor = 'JSON';
+      } else if (this.row.valorNumerico !== null && this.row.valorNumerico !== undefined) {
         tipoValor = 'NUMERICO';
       } else if (this.row.valorBoolean !== null && this.row.valorBoolean !== undefined) {
         tipoValor = 'BOOLEANO';
-      } else if (this.row.valorJson) {
-        tipoValor = 'JSON';
       }
 
       this.contentForm.patchValue({
@@ -160,7 +192,9 @@ export class SystemConfigurationModalComponent implements OnInit {
         referenciaUuid: this.row.referenciaUuid || ''
       });
 
-      this.onTipoValorChange();
+      this.tipoValorActual = tipoValor as TipoValorConfiguracion;
+      this.mostrarUnidadMedida = tipoValor === TipoValorConfiguracion.NUMERICO;
+      this.applyValueValidators(tipoValor);
       this.onAplicaAChange();
 
       if (this.accion === 'show') {
@@ -169,62 +203,83 @@ export class SystemConfigurationModalComponent implements OnInit {
     }
   }
 
-  // Métodos de ayuda para mostrar labels en el template
   getCategoriaLabel(categoria: string): string {
-    const labels: { [key: string]: string } = {
-      'PAYMENT': 'Pagos',
-      'ANTICIPATION': 'Anticipación',
-      'DURATION': 'Duración',
-      'SLA': 'SLA',
-      'TIMEOUT': 'Timeouts',
-      'RECURRENT': 'Recurrentes',
-      'RUAT': 'RUAT',
-      'LIMITS': 'Límites',
-      'NOTIFICATION': 'Notificaciones',
-      'FINANCIAL': 'Financiero',
-      'SANCTIONS': 'Sanciones',
-      'FEATURES': 'Funcionalidades'
-    };
-    return labels[categoria] || categoria;
+    return obtenerLabelConfiguracion(categoria, 'categoria');
   }
 
   getAmbitoAplicacionLabel(ambito: string): string {
-    const labels: { [key: string]: string } = {
-      'global': 'Global',
-      'campo_deportivo': 'Campo Deportivo',
-      'complejo': 'Complejo',
-      'tarifa': 'Tarifa',
-      'usuario': 'Usuario',
-      'organizacion': 'Organización'
-    };
-    return labels[ambito] || ambito;
+    return obtenerLabelConfiguracion(ambito, 'aplicaA');
   }
 
   getUnidadMedidaLabel(unidad: string): string {
-    const labels: { [key: string]: string } = {
-      'horas': 'Horas',
-      'dias': 'Días',
-      'minutos': 'Minutos',
-      'segundos': 'Segundos',
-      'meses': 'Meses',
-      'bolivianos': 'Bolivianos',
-      'porcentaje': 'Porcentaje',
-      'cantidad': 'Cantidad',
-      'personas': 'Personas',
-      'dia_mes': 'Día del Mes',
-      'intentos': 'Intentos'
-    };
-    return labels[unidad] || unidad;
+    return obtenerLabelConfiguracion(unidad, 'unidadMedida');
   }
 
   getTipoValorLabel(tipo: string): string {
-    const labels: { [key: string]: string } = {
-      'NUMERICO': 'Numérico',
-      'TEXTO': 'Texto',
-      'BOOLEANO': 'Boolean',
-      'JSON': 'JSON'
-    };
-    return labels[tipo] || tipo;
+    return obtenerLabelConfiguracion(tipo, 'tipoValor');
+  }
+
+  get isTextoConfig(): boolean {
+    return this.tipoValorActual === TipoValorConfiguracion.TEXTO;
+  }
+
+  get isNumericoConfig(): boolean {
+    return this.tipoValorActual === TipoValorConfiguracion.NUMERICO;
+  }
+
+  get isBooleanConfig(): boolean {
+    return this.tipoValorActual === TipoValorConfiguracion.BOOLEANO;
+  }
+
+  get isJsonConfig(): boolean {
+    return this.tipoValorActual === TipoValorConfiguracion.JSON;
+  }
+
+  formatJsonField(controlName: 'valorJson' | 'valoresPosibles'): void {
+    const control = this.contentForm.get(controlName);
+    const value = control?.value?.trim();
+    if (!value) return;
+
+    try {
+      control?.setValue(JSON.stringify(JSON.parse(value), null, 2));
+    } catch {
+      control?.markAsTouched();
+      control?.updateValueAndValidity();
+      this.notify('El JSON no tiene un formato válido', 'warning');
+    }
+  }
+
+  displayJson(value: string | undefined): string {
+    if (!value) return '';
+    try {
+      return JSON.stringify(JSON.parse(value), null, 2);
+    } catch {
+      return value;
+    }
+  }
+
+  private jsonObjectOrArrayValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value?.trim();
+    if (!value) return null;
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed === null || typeof parsed !== 'object') {
+        return { jsonStructure: true };
+      }
+      return null;
+    } catch {
+      return { jsonInvalid: true };
+    }
+  }
+
+  private optionalJsonArrayValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value?.trim();
+    if (!value) return null;
+    try {
+      return Array.isArray(JSON.parse(value)) ? null : { jsonArray: true };
+    } catch {
+      return { jsonInvalid: true };
+    }
   }
 
   /**
@@ -237,21 +292,23 @@ export class SystemConfigurationModalComponent implements OnInit {
       this.showLoading = true;
       const formData = this.contentForm.value;
       const claveFinal = formData.clave === 'CUSTOM' ? formData.claveCustom : formData.clave;
+      const tipoValor = formData.tipoValor;
 
       let datos: ConfiguracionSistema = {
         clave: claveFinal,
         categoria: formData.categoria,
         nombre: formData.nombre.trim(),
         descripcion: formData.descripcion?.trim() || undefined,
-        // tipoValor: formData.tipoValor,
-        valorTexto: formData.valorTexto?.trim() || undefined,
-        valorNumerico: formData.valorNumerico !== null ? Number(formData.valorNumerico) : undefined,
-        valorBoolean: formData.valorBoolean !== null ? Boolean(formData.valorBoolean) : undefined,
-        valorJson: formData.valorJson?.trim() || undefined,
-        unidadMedida: formData.unidadMedida?.trim() || undefined,
-        valorMinimo: formData.valorMinimo !== null ? Number(formData.valorMinimo) : undefined,
-        valorMaximo: formData.valorMaximo !== null ? Number(formData.valorMaximo) : undefined,
-        valoresPosibles: formData.valoresPosibles?.trim() || undefined,
+        valorTexto: tipoValor === TipoValorConfiguracion.TEXTO ? formData.valorTexto?.trim() || undefined : undefined,
+        valorNumerico: tipoValor === TipoValorConfiguracion.NUMERICO && formData.valorNumerico !== null ? Number(formData.valorNumerico) : undefined,
+        valorBoolean: tipoValor === TipoValorConfiguracion.BOOLEANO ? Boolean(formData.valorBoolean) : undefined,
+        valorJson: tipoValor === TipoValorConfiguracion.JSON ? JSON.stringify(JSON.parse(formData.valorJson)) : undefined,
+        unidadMedida: tipoValor === TipoValorConfiguracion.NUMERICO ? formData.unidadMedida?.trim() || undefined : undefined,
+        valorMinimo: tipoValor === TipoValorConfiguracion.NUMERICO && formData.valorMinimo !== null ? Number(formData.valorMinimo) : undefined,
+        valorMaximo: tipoValor === TipoValorConfiguracion.NUMERICO && formData.valorMaximo !== null ? Number(formData.valorMaximo) : undefined,
+        valoresPosibles: tipoValor === TipoValorConfiguracion.TEXTO && formData.valoresPosibles?.trim()
+          ? JSON.stringify(JSON.parse(formData.valoresPosibles))
+          : undefined,
         modificablePorUsuario: formData.modificablePorUsuario,
         requiereAprobacion: formData.requiereAprobacion,
         activo: formData.activo,

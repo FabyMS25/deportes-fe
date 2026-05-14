@@ -8,7 +8,7 @@ import { catchError, forkJoin, Observable, of, switchMap, tap, map } from 'rxjs'
 
 import { TarifaService } from 'src/app/core/services/api/tarifa.service';
 import { Categoria } from 'src/app/core/models/categoria.model';
-import { TipoCobro, frecuencia, tiposConcepto } from 'src/app/core/constants/TipoCobro';
+import { TipoCobro, frecuencia, obtenerLabelTipoCobro, tiposConcepto } from 'src/app/core/constants/TipoCobro';
 import { ClasificadorRuat } from 'src/app/core/models/clasificadorRuat.model';
 import { ClasificadorRuatService } from 'src/app/core/services/api/clasificadorRuat.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
@@ -432,14 +432,7 @@ export class ModalTarifaComponent implements OnInit {
   }
 
   getTipoCobro(tipo: string): string {
-    const tipoMap: Record<string, string> = {
-      'por_hora': 'Por hora',
-      'por_persona': 'Por persona',
-      'por_evento': 'Por evento',
-      'mensualidad': 'Mensualidad',
-      'por_club': 'Por club'
-    };
-    return tipo ? tipoMap[tipo] || tipo : 'No especificado';
+    return obtenerLabelTipoCobro(tipo);
   }
 
   formatDate(date: string | Date | null): string {

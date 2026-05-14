@@ -240,18 +240,39 @@
                 </div>
 
                 <div class="col-lg-12" *ngIf="form['tipoValor'].value === 'JSON'">
-                    <label for="valorJson-field" class="form-label mb-0">
-                        <i class="ri-braces-line me-2"></i>Valor JSON
-                    </label>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label for="valorJson-field" class="form-label mb-0">
+                            <i class="ri-braces-line me-2"></i>Valor JSON <span class="text-danger">*</span>
+                        </label>
+                        <div class="hstack gap-2" *ngIf="accion !== 'show'">
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    (click)="formatJsonField('valorJson')">
+                                <i class="ri-align-left me-1"></i>Formatear
+                            </button>
+                        </div>
+                    </div>
                     <textarea class="form-control" 
                               id="valorJson-field" 
                               formControlName="valorJson"
-                              placeholder='{"key": "value", "array": [1, 2, 3]}'
-                              rows="4"
+                              placeholder='{"campoTexto":"valor","campoNumerico":1,"campoBooleano":true}'
+                              rows="7"
+                              [ngClass]="{ 'is-invalid': (submitted || form['valorJson'].touched) && form['valorJson'].errors }"
                               [readonly]="accion === 'show'"></textarea>
+                    <div *ngIf="(submitted || form['valorJson'].touched) && form['valorJson'].errors" class="invalid-feedback">
+                        <div *ngIf="form['valorJson'].errors['required']">
+                            <i class="ri-error-warning-line me-1"></i>El valor JSON es requerido
+                        </div>
+                        <div *ngIf="form['valorJson'].errors['jsonInvalid']">
+                            <i class="ri-error-warning-line me-1"></i>JSON inválido. Use comillas dobles, llaves para objetos y dos puntos entre clave y valor
+                        </div>
+                        <div *ngIf="form['valorJson'].errors['jsonStructure']">
+                            <i class="ri-error-warning-line me-1"></i>El JSON debe ser un objeto o un arreglo
+                        </div>
+                    </div>
                     <small class="form-text text-muted">
                         <i class="ri-information-line me-1"></i>
-                        Formato JSON válido requerido
+                        Para datos como ADMIN_DEPORTES use un objeto con campos como role, phone, email y address.
                     </small>
                 </div>
 
@@ -352,7 +373,16 @@
                               formControlName="valoresPosibles"
                               placeholder='["valor1", "valor2", "valor3"]'
                               rows="2"
+                              [ngClass]="{ 'is-invalid': (submitted || form['valoresPosibles'].touched) && form['valoresPosibles'].errors }"
                               [readonly]="accion === 'show'"></textarea>
+                    <div *ngIf="(submitted || form['valoresPosibles'].touched) && form['valoresPosibles'].errors" class="invalid-feedback">
+                        <div *ngIf="form['valoresPosibles'].errors['jsonInvalid']">
+                            <i class="ri-error-warning-line me-1"></i>JSON inválido
+                        </div>
+                        <div *ngIf="form['valoresPosibles'].errors['jsonArray']">
+                            <i class="ri-error-warning-line me-1"></i>Debe ser un arreglo JSON, por ejemplo ["A", "B"]
+                        </div>
+                    </div>
                     <small class="form-text text-muted" *ngIf="accion !== 'show'">
                         <i class="ri-information-line me-1"></i>
                         Array JSON de valores permitidos (opcional)
@@ -440,18 +470,18 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-sm-6" *ngIf="row.valorTexto">
+            <div class="col-sm-6" *ngIf="isTextoConfig && row.valorTexto">
                 <small class="text-muted d-block">Valor Texto:</small>
                 <div class="fw-medium">{{ row.valorTexto }}</div>
             </div>
-            <div class="col-sm-6" *ngIf="row.valorNumerico !== null">
+            <div class="col-sm-6" *ngIf="isNumericoConfig && row.valorNumerico !== null && row.valorNumerico !== undefined">
                 <small class="text-muted d-block">Valor Numérico:</small>
                 <div class="fw-medium">
                     {{ row.valorNumerico }} 
                     <span *ngIf="row.unidadMedida" class="text-muted">({{ getUnidadMedidaLabel(row.unidadMedida) }})</span>
                 </div>
             </div>
-            <div class="col-sm-6" *ngIf="row.valorBoolean !== null">
+            <div class="col-sm-6" *ngIf="isBooleanConfig && row.valorBoolean !== null && row.valorBoolean !== undefined">
                 <small class="text-muted d-block">Valor Boolean:</small>
                 <div class="fw-medium">
                     <span class="badge" [ngClass]="row.valorBoolean ? 'bg-success' : 'bg-secondary'">
@@ -459,24 +489,24 @@
                     </span>
                 </div>
             </div>
-            <div class="col-12" *ngIf="row.valorJson">
+            <div class="col-12" *ngIf="isJsonConfig && row.valorJson">
                 <small class="text-muted d-block">Valor JSON:</small>
                 <div class="fw-medium">
-                    <pre class="bg-light p-2 rounded border">{{ row.valorJson | json }}</pre>
+                    <pre class="bg-light p-2 rounded border">{{ displayJson(row.valorJson) }}</pre>
                 </div>
             </div>
-            <div class="col-sm-6" *ngIf="row.valorMinimo !== null">
+            <div class="col-sm-6" *ngIf="isNumericoConfig && row.valorMinimo !== null && row.valorMinimo !== undefined">
                 <small class="text-muted d-block">Valor Mínimo:</small>
                 <div class="fw-medium">{{ row.valorMinimo }}</div>
             </div>
-            <div class="col-sm-6" *ngIf="row.valorMaximo !== null">
+            <div class="col-sm-6" *ngIf="isNumericoConfig && row.valorMaximo !== null && row.valorMaximo !== undefined">
                 <small class="text-muted d-block">Valor Máximo:</small>
                 <div class="fw-medium">{{ row.valorMaximo }}</div>
             </div>
-            <div class="col-12" *ngIf="row.valoresPosibles">
+            <div class="col-12" *ngIf="isTextoConfig && row.valoresPosibles">
                 <small class="text-muted d-block">Valores Posibles:</small>
                 <div class="fw-medium">
-                    <pre class="bg-light p-2 rounded border">{{ row.valoresPosibles | json }}</pre>
+                    <pre class="bg-light p-2 rounded border">{{ displayJson(row.valoresPosibles) }}</pre>
                 </div>
             </div>
         </div>
