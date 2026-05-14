@@ -736,7 +736,7 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
             next: () => {
               this.isLoading = false;
               this.notify(
-                resp.payload?.mensajeConfirmacion || 'Mensualidad anulada correctamente.',
+                this.ruatService.getResponseMessage(resp, 'Mensualidad anulada correctamente.'),
                 'success'
               );
               this.emitList.emit();
@@ -752,12 +752,12 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
           });
         } else {
           this.isLoading = false;
-          this.notify(resp.payload || 'Error al anular en RUAT.', 'error');
+          this.notify(this.ruatService.getResponseMessage(resp, 'Error al anular en RUAT.'), 'error');
         }
       },
-      error: () => {
+      error: (error) => {
         this.isLoading = false;
-        this.notify('Error al realizar la anulación en RUAT.', 'error');
+        this.notify(this.ruatService.getResponseMessage(error, 'Error al realizar la anulación en RUAT.'), 'error');
       }
     });
   }
@@ -952,34 +952,28 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
           if (response?.status !== 'OK') {
             reject(
               new Error(
-                response?.payload?.mensaje ||
-                response?.mensaje ||
-                response?.payload ||
-                'No se pudo registrar la tasa en RUAT.'
+                this.ruatService.getResponseMessage(response, 'No se pudo registrar la tasa en RUAT.')
               )
             );
             return;
           }
 
-          if (!response?.payload?.continuarFlujo || !response?.payload?.numeroTasa) {
+          const ruatData = this.ruatService.getResponseData(response);
+          if (!this.ruatService.canContinue(response) || !ruatData?.numeroTasa) {
             reject(
               new Error(
-                response?.payload?.mensaje ||
-                'RUAT no devolvió un número de tasa válido.'
+                this.ruatService.getResponseMessage(response, 'RUAT no devolvió un número de tasa válido.')
               )
             );
             return;
           }
 
-          resolve(response.payload.numeroTasa);
+          resolve(ruatData.numeroTasa);
         },
         error: (error) => {
           reject(
             new Error(
-              error?.error?.payload ||
-              error?.error?.mensaje ||
-              error?.message ||
-              'Error de conexión con RUAT.'
+              this.ruatService.getResponseMessage(error, 'Error de conexión con RUAT.')
             )
           );
         }

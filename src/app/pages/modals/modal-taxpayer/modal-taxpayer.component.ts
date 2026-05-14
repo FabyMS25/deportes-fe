@@ -678,8 +678,8 @@ export class ModalTaxpayerComponent implements OnInit {
       } else {
         if (!datos.verificadoRuat) {
           const ruatResponse = await this.registerContribuyenteInRuat(datos);
-          if (ruatResponse?.continuarFlujo) {
-            datos.codigoContribuyente = ruatResponse.codigoContribuyente;
+          if (this.ruatService.canContinue(ruatResponse)) {
+            datos.codigoContribuyente = this.ruatService.getResponseData(ruatResponse).codigoContribuyente;
             datos.verificadoRuat = true;
             datos.estadoRuat = EstadoRuat.ACTIVO;
             datos.fechaVerificacionRuat = new Date().toISOString();
@@ -707,7 +707,7 @@ export class ModalTaxpayerComponent implements OnInit {
         }
       }
     } catch (error) {
-      this.notify('Error al procesar la solicitud: ' + error, 'error');
+      this.notify(this.getContribuyenteErrorMessage(error, this.editForm?.getRawValue()), 'error');
     } finally {
       this.submitted = false;
     }
@@ -755,11 +755,11 @@ export class ModalTaxpayerComponent implements OnInit {
     };
     this.notify('Registrando contribuyente en RUAT...', 'info');
     const ruatResp = await this.registerContribuyente(codigoAlcaldia, codigoUsuario, ruatData);
-    if (ruatResp?.continuarFlujo) {
+    if (this.ruatService.canContinue(ruatResp)) {
       this.notify('Contribuyente registrado exitosamente en RUAT', 'success');
       return ruatResp;
     }
-    throw new Error(ruatResp?.mensaje || 'Error desconocido en RUAT');
+    throw new Error(this.ruatService.getResponseMessage(ruatResp, 'Error desconocido en RUAT'));
   }
 
   async searchInRuat(): Promise<void> {
@@ -772,12 +772,12 @@ export class ModalTaxpayerComponent implements OnInit {
       const codigoAlcaldia =
         this.systemConfigList.find((c) => c.clave === ClaveConfiguracion.CODIGO_ALCALDIA_RUAT)?.valorTexto || '';
       const ruatResp = await this.searchContribuyenteInRuat(codigoAlcaldia, this.searchRuatForm.value);
-      if (ruatResp?.continuarFlujo) {
+      if (this.ruatService.canContinue(ruatResp)) {
         this.ruatDataFound = ruatResp;
         this.fillFormFromRuat(ruatResp);
         this.notify('Datos encontrados en RUAT', 'success');
       } else {
-        this.notify(ruatResp?.mensaje || 'No se encontraron datos en RUAT. Puede continuar con registro manual', 'info');
+        this.notify(this.ruatService.getResponseMessage(ruatResp, 'No se encontraron datos en RUAT. Puede continuar con registro manual'), 'info');
         this.fillFormManually();
       }
     } catch {
@@ -790,9 +790,10 @@ export class ModalTaxpayerComponent implements OnInit {
   }
 
   private fillFormFromRuat(ruatData: any): void {
-    const client = ruatData.contribuyente;
+    const datos = this.ruatService.getResponseData(ruatData);
+    const client = datos.contribuyente;
     this.editForm.patchValue({
-      codigoContribuyente: ruatData.codigoContribuyente,
+      codigoContribuyente: datos.codigoContribuyente,
       estadoRuat: EstadoRuat.ACTIVO,
       verificadoRuat: true,
       fechaVerificacionRuat: new Date().toISOString().split('T')[0],
@@ -846,13 +847,14 @@ export class ModalTaxpayerComponent implements OnInit {
       const codigoUsuario =
         this.systemConfigList.find((c) => c.clave === ClaveConfiguracion.CODIGO_USUARIO_RUAT)?.valorTexto || '';
       const ruatResp = await this.registerContribuyente(codigoAlcaldia, codigoUsuario, ruatData);
-      if (ruatResp?.continuarFlujo) {
+      if (this.ruatService.canContinue(ruatResp)) {
+        const datos = this.ruatService.getResponseData(ruatResp);
         const nuevoEstado =
           formData.estadoUsuario === EstadoUsuario.PENDIENTE_VERIFICACION
             ? EstadoUsuario.ACTIVO
             : formData.estadoUsuario;
         this.editForm.patchValue({
-          codigoContribuyente: ruatResp.codigoContribuyente,
+          codigoContribuyente: datos.codigoContribuyente,
           verificadoRuat: true,
           estadoRuat: EstadoRuat.ACTIVO,
           fechaVerificacionRuat: new Date().toISOString().split('T')[0],
@@ -860,7 +862,7 @@ export class ModalTaxpayerComponent implements OnInit {
         });
         await this.updateData(this.editForm.getRawValue(), 'Verificación RUAT exitosa');
       } else {
-        this.notify(ruatResp?.mensaje || 'No se pudo verificar en RUAT', 'error');
+        this.notify(this.ruatService.getResponseMessage(ruatResp, 'No se pudo verificar en RUAT'), 'error');
       }
     } catch {
       this.notify('Error al verificar en RUAT', 'error');
@@ -1081,12 +1083,14 @@ export class ModalTaxpayerComponent implements OnInit {
       this.contribuyentesService.save(datos).subscribe({
         next: (data: any) => {
           this.submitted = false;
-          data['status'] === 'OK' ? resolve(data.payload) : (this.notify(data.payload, 'error'), resolve(null));
+          data['status'] === 'OK'
+            ? resolve(data.payload)
+            : (this.notify(this.getContribuyenteErrorMessage(data, datos), 'error'), resolve(null));
         },
         error: (err) => {
           this.submitted = false;
-          this.notify('No se pudo guardar los datos! ' + err, 'error');
-          reject(err);
+          this.notify(this.getContribuyenteErrorMessage(err, datos), 'error');
+          resolve(null);
         },
       });
     });
@@ -1104,8 +1108,8 @@ export class ModalTaxpayerComponent implements OnInit {
         },
         error: (err) => {
           this.submitted = false;
-          this.notify('No se pudo actualizar los datos! ' + err, 'error');
-          reject(err);
+          this.notify(this.getContribuyenteErrorMessage(err, datos), 'error');
+          resolve(null);
         },
       });
     });
@@ -1133,7 +1137,7 @@ export class ModalTaxpayerComponent implements OnInit {
       this.ruatService
         .getContribuyentePorCi(codigoAlcaldia, data.numeroDocumento, data.tipoDocumento, data.expedido)
         .subscribe({
-          next: (resp: any) => resolve(resp['status'] === 'OK' ? resp.payload : null),
+          next: (resp: any) => resolve(resp?.payload ?? null),
           error: (err) => reject(err),
         });
     });
@@ -1144,7 +1148,7 @@ export class ModalTaxpayerComponent implements OnInit {
       this.ruatService.registerContribuyente(codigoAlcaldia, codigoUsuario, data).subscribe({
         next: (resp: any) => {
           if (resp['status'] === 'OK') resolve(resp.payload);
-          else { this.notify(resp.payload, 'error'); resolve(null); }
+          else { this.notify(this.ruatService.getResponseMessage(resp, 'No se pudo registrar en RUAT'), 'error'); resolve(null); }
         },
         error: (err) => reject(err),
       });
@@ -1233,6 +1237,75 @@ export class ModalTaxpayerComponent implements OnInit {
 
   private getInvalidFields(): string[] {
     return Object.keys(this.editForm.controls).filter((k) => this.editForm.get(k)?.invalid);
+  }
+
+  private getContribuyenteErrorMessage(error: any, datos?: any): string {
+    const rawPayload = this.extractApiPayload(error);
+    const rawMessage = typeof rawPayload === 'string'
+      ? rawPayload
+      : rawPayload?.mensaje || rawPayload?.message || error?.message || '';
+    const normalized = String(rawMessage).toLowerCase();
+
+    if (
+      error?.status === 422 ||
+      error?.error?.status === 'UNPROCESSABLE_ENTITY' ||
+      error?.status === 'UNPROCESSABLE_ENTITY' ||
+      normalized.includes('constraintviolationexception') ||
+      normalized.includes('constraint') ||
+      normalized.includes('duplicate') ||
+      normalized.includes('unique') ||
+      normalized.includes('could not execute statement')
+    ) {
+      const existingMessage = this.getExistingContribuyenteMessage(datos);
+      return existingMessage || 'Ya existe un contribuyente registrado con esos datos. Revise el documento, NIT, correo o usuario antes de guardar.';
+    }
+
+    return rawMessage || 'No se pudo guardar los datos del contribuyente. Intente nuevamente.';
+  }
+
+  private extractApiPayload(error: any): any {
+    const payload = error?.payload ?? error?.error?.payload ?? error?.error ?? error;
+    if (typeof payload !== 'string') {
+      return payload;
+    }
+
+    try {
+      return JSON.parse(payload);
+    } catch {
+      return payload;
+    }
+  }
+
+  private getExistingContribuyenteMessage(datos?: any): string | null {
+    if (!datos || !Array.isArray(this.clientsList)) return null;
+
+    const currentUuid = datos.uuid;
+    const existing = this.clientsList.find((client) => {
+      if (client.uuid && client.uuid === currentUuid) return false;
+      return (
+        (!!datos.numeroDocumento && client.numeroDocumento === datos.numeroDocumento) ||
+        (!!datos.email && client.email?.toLowerCase() === String(datos.email).toLowerCase()) ||
+        (!!datos.userName && client.userName?.toLowerCase() === String(datos.userName).toLowerCase()) ||
+        (!!datos.nroNit && client.nroNit === datos.nroNit)
+      );
+    });
+
+    if (!existing) return null;
+
+    if (datos.numeroDocumento && existing.numeroDocumento === datos.numeroDocumento) {
+      return `Ya existe un contribuyente registrado con el documento ${datos.numeroDocumento}.`;
+    }
+    if (datos.email && existing.email?.toLowerCase() === String(datos.email).toLowerCase()) {
+      return `Ya existe un contribuyente registrado con el correo ${datos.email}.`;
+    }
+    if (datos.userName && existing.userName?.toLowerCase() === String(datos.userName).toLowerCase()) {
+      return `Ya existe un contribuyente registrado con el usuario ${datos.userName}.`;
+    }
+    if (datos.nroNit && existing.nroNit === datos.nroNit) {
+      return `Ya existe un contribuyente registrado con el NIT ${datos.nroNit}.`;
+    }
+
+    return null;
   }
 
   private getFieldDisplayName(fieldName: string): string {

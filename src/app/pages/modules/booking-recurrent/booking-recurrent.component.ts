@@ -791,10 +791,10 @@ export class BookingRecurrentComponent implements OnInit {
           errorCode: 'INVALID_RESPONSE'
         };
       }
-      if (String(resp.payload?.continuarFlujo).toLowerCase() !== 'true') {
+      if (!this.ruatService.canContinue(resp)) {
         return {
           item,
-          text: resp.payload?.mensaje || resp.payload?.observacion || 'No se puede continuar con el flujo',
+          text: this.ruatService.getResponseMessage(resp, 'No se puede continuar con el flujo'),
           type: 'warning',
           hasPayment: false,
           consultationSuccessful: true,
@@ -803,12 +803,12 @@ export class BookingRecurrentComponent implements OnInit {
         };
       }
 
-      const pagoTasa = resp.payload?.pagoTasa;
+      const pagoTasa = this.ruatService.getResponseData(resp)?.pagoTasa;
 
       if (!pagoTasa) {
         return {
           item,
-          text: resp.payload?.mensaje || resp.payload?.observacion || 'No se encontraron datos de pago',
+          text: this.ruatService.getResponseMessage(resp, 'No se encontraron datos de pago'),
           type: 'info',
           hasPayment: false,
           consultationSuccessful: true,
@@ -817,7 +817,7 @@ export class BookingRecurrentComponent implements OnInit {
         };
       }
 
-      const text = resp.payload?.mensaje || resp.payload?.observacion || 'La tasa se encuentra pagada';
+      const text = this.ruatService.getResponseMessage(resp, 'La tasa se encuentra pagada');
 
       try {
         const fechaPagoLocal = this.parseRuatPaymentDate(pagoTasa.fechaPago);

@@ -162,8 +162,8 @@ export class SignupCheckComponent {
       next: (resp: any) => {
         if (resp['status'] === 'OK') {
           const response = resp.payload;
-          if (response.continuarFlujo) {
-            this.ruatData = response;
+          if (this.ruatService.canContinue(response)) {
+            this.ruatData = this.ruatService.getResponseData(response);
             this.searchUser(data.numeroDocumento)
               .then((exist) => {
                 if (exist) {
@@ -178,11 +178,11 @@ export class SignupCheckComponent {
                 console.error('Error in searchUsers:', error);
               });
           } else {
-            this.notify(response.mensaje + " Puede proceder con su registro", 'success');
+            this.notify(this.ruatService.getResponseMessage(response, 'No se encontraron datos en RUAT') + " Puede proceder con su registro", 'success');
             this.router.navigate(['/auth/signup'], { queryParams: { userExist: false } });          
           }
         } else {      
-          this.notify("El contribuyente no se encuentra registrado en el Gobierno Municipal. Puede proceder con su registro", 'success');
+          this.notify(this.ruatService.getResponseMessage(resp, "El contribuyente no se encuentra registrado en el Gobierno Municipal.") + " Puede proceder con su registro", 'success');
           this.router.navigate(['/auth/signup'], { queryParams: { userExist: false } }); 
         }
       },

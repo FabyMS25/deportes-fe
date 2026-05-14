@@ -1721,10 +1721,10 @@ private prepareReservationData(): Reserva {
     this.ruatService.createTasa(codigoAlcaldia,codigoUsuario,servicioMunicipal,ruatData, reservaData.contribuyenteDto.codigoContribuyente)
     .subscribe({
       next: (response: any) => {
-        const ruatPayload = this.getRuatResponsePayload(response);
         if (response.status === 'OK' ) {
-          if(ruatPayload?.continuarFlujo){
-            reservaData.numeroTasa = ruatPayload.numeroTasa;
+          const ruatData = this.ruatService.getResponseData(response);
+          if(this.ruatService.canContinue(response) && ruatData?.numeroTasa){
+            reservaData.numeroTasa = ruatData.numeroTasa;
             this.saveReservation(reservaData);
           } else {
             this.isSubmitting = false;
@@ -1789,27 +1789,11 @@ private prepareReservationData(): Reserva {
   }
 
   private getRuatResponsePayload(response: any): any {
-    const payload = response?.payload ?? response?.error?.payload ?? response?.error ?? response;
-    if (typeof payload !== 'string') {
-      return payload;
-    }
-
-    try {
-      return JSON.parse(payload);
-    } catch {
-      return { mensaje: payload };
-    }
+    return this.ruatService.getResponsePayload(response);
   }
 
   private getRuatErrorMessage(response: any, fallback: string): string {
-    const payload = this.getRuatResponsePayload(response);
-    const message =
-      payload?.mensaje ||
-      payload?.observacion ||
-      response?.mensaje ||
-      response?.message ||
-      response?.error?.mensaje ||
-      fallback;
+    const message = this.ruatService.getResponseMessage(response, fallback);
 
     return this.getFriendlyRuatMessage(message);
   }

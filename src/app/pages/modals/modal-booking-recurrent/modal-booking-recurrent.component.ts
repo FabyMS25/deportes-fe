@@ -416,16 +416,17 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
           next: async (response: any) => {
             try {
               if (response?.status !== 'OK') {
-                reject(new Error(response?.payload?.mensaje || response?.mensaje || response?.payload || 'No se pudo registrar la tasa en RUAT'));
+                reject(new Error(this.ruatService.getResponseMessage(response, 'No se pudo registrar la tasa en RUAT')));
                 return;
               }
 
-              if (!response?.payload?.continuarFlujo || !response?.payload?.numeroTasa) {
-                reject(new Error(response?.payload?.mensaje || 'RUAT no devolvió un número de tasa válido'));
+              const ruatData = this.ruatService.getResponseData(response);
+              if (!this.ruatService.canContinue(response) || !ruatData?.numeroTasa) {
+                reject(new Error(this.ruatService.getResponseMessage(response, 'RUAT no devolvió un número de tasa válido')));
                 return;
               }
 
-              reservaData.numeroTasa = response.payload.numeroTasa;
+              reservaData.numeroTasa = ruatData.numeroTasa;
               const updatedReserva = await this.updateReserva(reservaData);
               resolve(updatedReserva);
             } catch (err) {
@@ -433,7 +434,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
             }
           },
           error: (error) => {
-            reject(new Error(error?.error?.mensaje || error?.error?.payload || error?.message || 'Error de conexión con RUAT'));
+            reject(new Error(this.ruatService.getResponseMessage(error, 'Error de conexión con RUAT')));
           }
         });
     });
@@ -516,7 +517,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
     this.ruatService.cancelTasa(codigoAlcaldia, codigoUsuario, requestData).subscribe({
       next: (resp: any) => {
         if (resp['status'] === 'OK') {
-          const text = resp.payload['mensajeConfirmacion'];
+          const text = this.ruatService.getResponseMessage(resp, 'Tasa anulada correctamente.');
           const updatedReserva: Reserva = {
             ...reserva,
             estadoReserva: EstadoReserva.CANCELADA,
@@ -543,12 +544,12 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
           });
         } else {
           this.showLoading = false;
-          this.notify(resp.payload || 'Error al anular en RUAT', 'error');
+          this.notify(this.ruatService.getResponseMessage(resp, 'Error al anular en RUAT'), 'error');
         }
       },
       error: (error) => {
         this.showLoading = false;
-        this.notify('Error al realizar la anulación en RUAT', 'error');
+        this.notify(this.ruatService.getResponseMessage(error, 'Error al realizar la anulación en RUAT'), 'error');
       },
     });
   }

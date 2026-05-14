@@ -203,15 +203,15 @@ private async registerContribuyente(data: any): Promise<any> {
       next: (resp: any) => {
         if (resp['status'] === 'OK') {
           const response = resp.payload;
-          if (response.continuarFlujo) {
-            this.userData.codigoContribuyente = response.codigoContribuyente;
+          if (this.ruatService.canContinue(response)) {
+            this.userData.codigoContribuyente = this.ruatService.getResponseData(response).codigoContribuyente;
             resolve(response); 
           } else {
-            this.notify(response.mensaje, 'error');
+            this.notify(this.ruatService.getResponseMessage(response, 'No se pudo registrar en RUAT'), 'error');
             resolve(null); 
           }
         } else {
-          this.notify(resp.payload, 'error');
+          this.notify(this.ruatService.getResponseMessage(resp, 'No se pudo registrar en RUAT'), 'error');
           resolve(null); 
         }
       },
@@ -224,11 +224,11 @@ private async registerContribuyente(data: any): Promise<any> {
             // Retry the registration after reauthentication
             this.ruatService.registerContribuyente(codigoAlcaldia, codigoUsuario, data).subscribe({
               next: (retryResp: any) => {
-                if (retryResp['status'] === 'OK' && retryResp.payload.continuarFlujo) {
-                  this.userData.codigoContribuyente = retryResp.payload.codigoContribuyente;
+                if (retryResp['status'] === 'OK' && this.ruatService.canContinue(retryResp)) {
+                  this.userData.codigoContribuyente = this.ruatService.getResponseData(retryResp).codigoContribuyente;
                   resolve(retryResp.payload);
                 } else {
-                  this.notify('Error en reintento de registro RUAT', 'error');
+                  this.notify(this.ruatService.getResponseMessage(retryResp, 'Error en reintento de registro RUAT'), 'error');
                   resolve(null);
                 }
               },

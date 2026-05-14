@@ -26,6 +26,34 @@ export class RuatRequestsService {
     return !!this.getToken();
   }
 
+  getResponsePayload(response: any): any {
+    const payload = response?.payload ?? response?.error?.payload ?? response?.error ?? response;
+    if (typeof payload !== 'string') {
+      return payload;
+    }
+
+    try {
+      return JSON.parse(payload);
+    } catch {
+      return { mensaje: payload };
+    }
+  }
+
+  getResponseData(response: any): any {
+    const payload = this.getResponsePayload(response);
+    return payload?.datos ?? payload ?? {};
+  }
+
+  canContinue(response: any): boolean {
+    const payload = this.getResponsePayload(response);
+    return payload?.continuarFlujo === true || String(payload?.continuarFlujo).toLowerCase() === 'true';
+  }
+
+  getResponseMessage(response: any, fallback: string = 'Respuesta inesperada de RUAT'): string {
+    const payload = this.getResponsePayload(response);
+    return payload?.mensaje || response?.mensaje || response?.message || fallback;
+  }
+
   authenticate(usuario: string, clave: string): Observable<any> {
     const requestData = {
       'usuario': usuario,

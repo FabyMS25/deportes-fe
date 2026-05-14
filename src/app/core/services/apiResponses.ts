@@ -4,7 +4,7 @@ export function handleResponse<T>(response: { status: string; payload: any }): T
   if (response.status === 'OK') {
     return response.payload as T;
   } else {
-    throw new Error(response.payload?.message || 'Respuesta inesperada del servidor');
+    throw new Error(response.payload?.mensaje || response.payload?.message || 'Respuesta inesperada del servidor');
   }
 }
 
@@ -12,8 +12,12 @@ export function handleError(operation = 'operación') {
   return (error: any) => {
     let message = `Error en ${operation}`;
 
-    if (error?.error?.message) {
+    if (error?.error?.payload?.mensaje) {
+      message = error.error.payload.mensaje;
+    } else if (error?.error?.message) {
       message = error.error.message;
+    } else if (error?.error?.mensaje) {
+      message = error.error.mensaje;
     } else if (error?.message) {
       message = error.message;
     } else if (typeof error === 'string') {
