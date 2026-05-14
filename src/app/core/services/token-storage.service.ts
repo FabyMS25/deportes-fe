@@ -126,17 +126,6 @@ export class TokenStorageService {
   public hasStaffAssignments(): boolean {
     return !!this.getStaff();
   }
-
-  // private read(key: string): any {
-  //   const fromSession = sessionStorage.getItem(key);
-  //   if (fromSession) return this.parse(fromSession);
-  //   const fromLocal = localStorage.getItem(key);
-  //   if (fromLocal) return this.parse(fromLocal);
-  //   return null;
-  // }
-  // private parse(value: string): any {
-  //   try { return JSON.parse(value); } catch { return value; }
-  // }
   private read(key: string): any {
     return this.getFrom(sessionStorage, key) ??
           this.getFrom(localStorage, key);

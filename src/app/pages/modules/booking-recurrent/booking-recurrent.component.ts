@@ -76,15 +76,9 @@ export class BookingRecurrentComponent implements OnInit {
   }
   get HorasValidacionPago(): number | undefined {
     return this.systemConfigList[ClaveConfiguracion.HORAS_VALIDACION_PAGO]?.valorNumerico;
-  }  
-  get HorasSlaAprobacion(): number | undefined {
-    return this.systemConfigList[ClaveConfiguracion.HORAS_SLA_APROBACION]?.valorNumerico;
   }
   get MinutosGraciaNoShow(): number | undefined {
     return this.systemConfigList[ClaveConfiguracion.MINUTOS_GRACIA_NO_SHOW]?.valorNumerico;
-  }
-  get MinutosTimeoutGatewayPago(): number | undefined {
-    return this.systemConfigList[ClaveConfiguracion.MINUTOS_TIMEOUT_GATEWAY_PAGO]?.valorNumerico;
   }
 
   constructor(

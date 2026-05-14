@@ -1,9 +1,9 @@
-
 {
   "compileOnSave": false,
   "compilerOptions": {
     "allowSyntheticDefaultImports": true, 
     "baseUrl": "./",
+    "rootDir": "./src",
     "outDir": "./dist/out-tsc",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -13,8 +13,9 @@
     "noFallthroughCasesInSwitch": true,
     "sourceMap": true,
     "declaration": false,
-    "downlevelIteration": true,
     "experimentalDecorators": true,
+    "emitDecoratorMetadata": true ,
+    "ignoreDeprecations": "5.0",
     "moduleResolution": "node",
     "importHelpers": true,
     "target": "ES2022",

@@ -24,6 +24,7 @@ import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.m
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ReservationConflictService, TimeRange } from '../reservation-conflict.service';
+import { obtenerDescripcionTipoCobro } from 'src/app/core/constants/TipoCobro';
 interface PuntualSchedule {
   date: Date;
   start: string;
@@ -126,9 +127,6 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   }
   get enableRecurrentBooking(): boolean | undefined{
     return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
-  }
-  get ruatIntentosReintento(): number | undefined{
-    return this.systemConfigs[ClaveConfiguracion.MAXIMO_INTENTOS_REINTENTO_RESERVAS]?.valorNumerico;
   }
   get validHours(): number {
     return this.systemConfigs[ClaveConfiguracion.HORAS_VALIDACION_PAGO]?.valorNumerico || 4;
@@ -2162,16 +2160,7 @@ getPaidReservationDescription(): string {
   }
 
   getTariffDescription(): string {
-    const units = {
-      'por_hora': 'por hora',
-      'por_persona': 'por persona',
-      'por_evento': 'por evento',
-      'mensualidad': 'por mes',
-      'por_sesion': 'por sesión',
-      'por_club': 'por mes',
-      'periodo' : 'periodo de Escuela'
-    };
-    return units[this.selectedTariff.tipoCobro] || '';
+    return obtenerDescripcionTipoCobro(this.selectedTariff.tipoCobro, '');
   }
   
   getRecurrenceSummary(): string {

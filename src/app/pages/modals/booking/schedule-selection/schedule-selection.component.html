@@ -564,8 +564,8 @@
               <li *ngIf="this.dataTariff.tipoCobro === 'por_evento'" class="mb-1">
                 Para eventos, la duración máxima permitida es <strong>{{ maxDurationDisplay }}</strong>.
               </li>              
-              <li class="mb-1" *ngIf="systemConfigs['HORAS_VALIDACION_PAGO']?.valorNumerico">
-                Después de crear la reserva, tendrá <strong>{{ systemConfigs['HORAS_VALIDACION_PAGO'].valorNumerico }} horas</strong> para realizar el pago.
+              <li class="mb-1" *ngIf="paymentValidationDisplay">
+                Después de crear la reserva, tendrá <strong>{{ paymentValidationDisplay }}</strong> para realizar el pago.
               </li>
               <li *ngIf="dataField.requiereAprobacion && dataField.maxDuracionAutoAprobacion">
                 Reservas mayores a <strong>{{ dataField.maxDuracionAutoAprobacion }} minutos</strong> requieren aprobación administrativa.

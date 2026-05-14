@@ -8,6 +8,7 @@ import { trigger, transition, animate } from '@angular/animations';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { BookingType } from 'src/app/core/constants/Features';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
+import { obtenerLabelTipoCobro } from 'src/app/core/constants/TipoCobro';
 interface CampoWithTariff {
   campo: CampoDeportivo;
   tarifasActivas: Tarifa[];
@@ -342,14 +343,7 @@ export class CampoSelectionComponent implements OnInit {
   }
 
   getTipoCobro(tipo: string): string {
-    const tipoMap: Record<string, string> = {
-      'por_hora': 'Por hora',
-      'por_persona': 'Por persona',
-      'por_evento': 'Por evento',
-      'mensualidad': 'Mensualidad',
-      'por_club': 'Por club'
-    };
-    return tipo ? tipoMap[tipo] || tipo : 'No especificado';
+    return obtenerLabelTipoCobro(tipo);
   }
 
   public getAvailableDisciplines(campo: CampoDeportivo): string[] {        

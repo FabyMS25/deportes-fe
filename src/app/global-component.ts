@@ -25,14 +25,6 @@ export const GlobalComponent = {
         email: 'gamqtdi@gmail.com',
         address: 'Mercado Martín Cárdenas, Planta Baja, Quillacollo'
     },
-    admin_deportes:{
-        role:'Aministrador',
-        avatar:'default-profile1.png',
-        name:'Pedro Luis Sevilla Calderón',
-        phone:'60367407',
-        email: 'gamqtdi@gmail.com',
-        address: 'Mercado Martín Cárdenas, Planta Baja, Quillacollo'
-    },
 
     /* RUAT CREDENTIALS PRODUCTION */
     // apiRuatUrl: "https://aplicaciones.ruat.gob.bo",

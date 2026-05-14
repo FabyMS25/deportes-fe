@@ -229,11 +229,11 @@
         <div class="card-body p-2">
           <ngx-slick-carousel [config]="config" #slickModal="slick-carousel">
             <div class="alert alert-warning small py-2 mb-0" 
-                 *ngIf="bookingStep === BookingStep.RESERVATION_FORM && this.systemConfigList['HORAS_VALIDACION_PAGO']?.valorNumerico" 
+                 *ngIf="bookingStep === BookingStep.RESERVATION_FORM && paymentValidationDisplay" 
                  ngxSlickItem>
               <i class="ri-alarm-warning-line me-1"></i>
               <strong>{{ 'Recuerde:' | translate }}</strong> {{ 'Debe realizar el pago dentro de las próximas' | translate }}
-              <strong>{{ this.systemConfigList['HORAS_VALIDACION_PAGO'].valorNumerico }}</strong> {{ 'hora(s) para confirmar su reserva.' | translate }}
+              <strong>{{ paymentValidationDisplay }}</strong> {{ 'para confirmar su reserva.' | translate }}
             </div>            
             <div class="alert alert-info small py-2 mb-0" 
                  *ngIf="bookingStep >= BookingStep.HORARIO_SELECTION && bookingState.campo?.requiereAprobacion" 
@@ -401,13 +401,19 @@
         <div class="card-body p-2">
           <div class="contact-item mb-2" *ngIf="globalAdmin">
             <div class="d-flex align-items-center">
-              <img [src]="'assets/icons/users/' + globalAdmin.avatar" 
+              <img *ngIf="globalAdmin.avatar; else adminAvatarPlaceholder"
+                   [src]="'assets/icons/users/' + globalAdmin.avatar" 
                    [alt]="'Admin' | translate" 
                    class="avatar-xs rounded-circle">
+              <ng-template #adminAvatarPlaceholder>
+                <div class="avatar-xs rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center">
+                  <i class="ri-user-star-line"></i>
+                </div>
+              </ng-template>
               <div class="ms-2 flex-grow-1">
                 <div class="fw-medium small">{{ globalAdmin.name }}</div>
                 <p class="text-muted mb-0 small">{{ globalAdmin.role }}</p>
-                <a [href]="'tel:' + globalAdmin.phone" class="text-primary small">
+                <a *ngIf="globalAdmin.phone" [href]="'tel:' + globalAdmin.phone" class="text-primary small">
                   <i class="ri-phone-line me-1"></i>{{ globalAdmin.phone }}
                 </a>
               </div>
