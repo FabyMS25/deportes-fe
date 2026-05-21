@@ -2,11 +2,11 @@ export const environment = {
   production: true,
   subscriberId: "66acdd37aa4218d126588112",
   applicationIdentifier: "uo-XSwSEFlyM",
-
-  apiLoginUrl: '/api',
+  
+  apiLoginUrl: '/auth-api', 
   backendUrl: '/api',
   backendRuat: '/api',
-  assetsUrl: '',   
+  assetsUrl: '/gamq-deportes', 
 
   // apiLoginUrl: 'http://181.177.143.185:8080/api',
   // backendUrl: "http://181.177.143.187:8085/api",
