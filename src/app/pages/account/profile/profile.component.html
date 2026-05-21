@@ -15,7 +15,7 @@
             <div class="p-2">
                 <h3 class="text-white mb-1">
                     <span *ngIf="userRole === 'Contribuyente'">
-                        {{userContribuyente.nombre}}
+                        {{getFullName(userContribuyente)}}
                     </span>
                     <span *ngIf="userRole === 'Encargado' || userRole === 'Admin'">
                         {{userData.designacion.personaDto.fullName || userData.designacion.personaDto.nombre + ' ' + userData.designacion.personaDto.apPaterno + ' ' + userData.designacion.personaDto.apMaterno}}
@@ -111,8 +111,8 @@
                                                                                     <!-- Contribuyente Data -->
                                                                                     <ng-container *ngIf="userRole === 'Contribuyente'">
                                                                                         <tr>
-                                                                                            <th class="ps-0" scope="row">Nombre :</th>
-                                                                                            <td class="text-muted">{{userContribuyente.nombre}}</td>
+                                                                                            <th class="ps-0" scope="row">Nombre completo :</th>
+                                                                                            <td class="text-muted">{{getFullName(userContribuyente)}}</td>
                                                                                         </tr>
                                                                                         <tr>
                                                                                             <th class="ps-0" scope="row">Tipo :</th>
@@ -120,7 +120,19 @@
                                                                                         </tr>
                                                                                         <tr>
                                                                                             <th class="ps-0" scope="row">Documento :</th>
-                                                                                            <td class="text-muted">{{userContribuyente.tipoDocumento}}: {{userContribuyente.numeroDocumento}} {{userContribuyente.expedido ? '- ' + getCityDescription(userContribuyente.expedido, 'acronym') : ''}}</td>
+                                                                                            <td class="text-muted">{{getDocumentTypeText(userContribuyente.tipoDocumento)}}: {{userContribuyente.numeroDocumento}} {{userContribuyente.expedido ? '- ' + getCityDescription(userContribuyente.expedido) : ''}}</td>
+                                                                                        </tr>
+                                                                                        <tr>
+                                                                                            <th class="ps-0" scope="row">Género :</th>
+                                                                                            <td class="text-muted">{{getGenderText(userContribuyente.genero)}}</td>
+                                                                                        </tr>
+                                                                                        <tr>
+                                                                                            <th class="ps-0" scope="row">Estado Civil :</th>
+                                                                                            <td class="text-muted">{{getCivilStatusText(userContribuyente.estadoCivil)}}</td>
+                                                                                        </tr>
+                                                                                        <tr>
+                                                                                            <th class="ps-0" scope="row">Fecha Nacimiento :</th>
+                                                                                            <td class="text-muted">{{userContribuyente.fechaNacimiento ? (userContribuyente.fechaNacimiento | date:'longDate') : 'No registrada'}}</td>
                                                                                         </tr>
                                                                                         <tr>
                                                                                             <th class="ps-0" scope="row">NIT :</th>
@@ -142,6 +154,10 @@
                                                                                             <th class="ps-0" scope="row">Estado RUAT :</th>
                                                                                             <td class="text-muted">{{userContribuyente.estadoRuat}}</td>
                                                                                         </tr>
+                                                                                        <tr>
+                                                                                            <th class="ps-0" scope="row">Código RUAT :</th>
+                                                                                            <td class="text-muted">{{userContribuyente.codigoContribuyente || 'No registrado'}}</td>
+                                                                                        </tr>
                                                                                     </ng-container>
 
                                                                                     <!-- Encargado/Admin Data -->
@@ -153,11 +169,11 @@
                                                                                         </tr>
                                                                                         <tr>
                                                                                             <th class="ps-0" scope="row">Género :</th>
-                                                                                            <td class="text-muted">{{user.sexo === 'F' ? 'Femenino' : 'Masculino'}}</td>
+                                                                                            <td class="text-muted">{{getGenderText(user.sexo)}}</td>
                                                                                         </tr>
                                                                                         <tr>
                                                                                             <th class="ps-0" scope="row">Nro. Carnet :</th>
-                                                                                            <td class="text-muted">{{user.nroCarnet}} - {{ user.ciExpedito ? user.ciExpedito : getCityDescription(user.ciExpedito, 'acronym') }}</td>
+                                                                                            <td class="text-muted">{{user.nroCarnet}} {{ user.ciExpedido ? '- ' + getCityDescription(user.ciExpedido, 'acronym') : '' }}</td>
                                                                                         </tr>
                                                                                         <tr>
                                                                                             <th class="ps-0" scope="row">Nro. Nit :</th>
@@ -174,6 +190,10 @@
                                                                                         <tr>
                                                                                             <th class="ps-0" scope="row">Dirección :</th>
                                                                                             <td class="text-muted">{{user.direccion}}</td>
+                                                                                        </tr>
+                                                                                        <tr>
+                                                                                            <th class="ps-0" scope="row">Estado Civil :</th>
+                                                                                            <td class="text-muted">{{user.estadoCivil}}</td>
                                                                                         </tr>
                                                                                     </ng-container>
                                                                                     }
@@ -249,10 +269,6 @@
                                                                                         <td class="text-muted">{{user.prefijo}} {{user.profesion}}</td>
                                                                                     </tr>
                                                                                     <tr>
-                                                                                        <th class="ps-0" scope="row">Estado Civil :</th>
-                                                                                        <td class="text-muted">{{user.estadoCivil}}</td>
-                                                                                    </tr>
-                                                                                    <tr>
                                                                                         <th class="ps-0" scope="row">Fecha de Ingreso :</th>
                                                                                         <td class="text-muted">
                                                                                             {{(user.fechaIngreso | date :'longDate')}}
@@ -281,9 +297,9 @@
                     </li>
                 </ul>
                 <div class="flex-shrink-0">
-                    <a routerLink="/profile/profile-setting" class="btn btn-secondary">
+                    <button type="button" class="btn btn-secondary" (click)="goToSettings()">
                         <i class="ri-edit-box-line align-bottom"></i> Configuraciones
-                    </a>
+                    </button>
                 </div>
             </div>
             <!-- Tab panes -->

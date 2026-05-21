@@ -92,8 +92,7 @@
                                             <label for="genero" class="form-label">Género:</label>
                                             <select class="form-control" formControlName="genero" id="genero"
                                                 [ngClass]="{'is-invalid': form['genero'].touched && form['genero'].invalid}">
-                                                <option value="M">Masculino</option>
-                                                <option value="F">Femenino</option>
+                                                <option *ngFor="let item of getGenderOptions()" [value]="item.id">{{ item.description }}</option>
                                             </select>
                                             <div class="invalid-feedback" *ngIf="form['genero'].touched && form['genero'].invalid">
                                                 El género es requerido.

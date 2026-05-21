@@ -3,11 +3,16 @@ export const environment = {
   subscriberId: "66acdd37aa4218d126588112",
   applicationIdentifier: "uo-XSwSEFlyM",
 
-  apiLoginUrl: 'http://181.177.143.185:8080/api',
-  backendUrl: "http://181.177.143.187:8085/api",
-  backendRuat:'http://181.177.143.187:8085/api',  
-  
-  assetsUrl: "http://181.177.143.187:4205",
+  apiLoginUrl: '/api',
+  backendUrl: '/api',
+  backendRuat: '/api',
+  assetsUrl: '',   
+
+  // apiLoginUrl: 'http://181.177.143.185:8080/api',
+  // backendUrl: "http://181.177.143.187:8085/api",
+  // backendRuat:'http://181.177.143.187:8085/api',  
+  // assetsUrl: "http://181.177.143.187:4205",
+
   EmailJS:{
     idService:'service_auth',
     idTemplate:'template_6htavso',

@@ -1,6 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import {DecimalPipe} from '@angular/common';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Router } from '@angular/router';
 
 import {CityAcronym}  from 'src/app/core/constants/Places';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
@@ -8,6 +9,7 @@ import { UserService } from 'src/app/core/services/api-users/users.service';
 import { PassResetComponent } from '../password-reset/pass-reset.component';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
+import { UserCivilStatus, UserDocType } from 'src/app/core/constants/UserData';
 
 @Component({
   selector: 'app-profile',
@@ -27,7 +29,8 @@ export class ProfileComponent {
 
   constructor(
     private authService:AuthenticationService, 
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -52,6 +55,10 @@ export class ProfileComponent {
     modalRef.componentInstance.userData = this.userContribuyente || this.userData;
   }
 
+  public goToSettings(): void {
+    this.router.navigate(['/profile/profile-setting']);
+  }
+
   getAcronymCity(city: string): string {
     let acronym = '';
     CityAcronym.forEach(element => {
@@ -74,6 +81,29 @@ export class ProfileComponent {
       }
     }
     return expedido;
+  }
+
+  getFullName(user: any): string {
+    return user?.nombreCompleto ||
+      [user?.nombre, user?.primerApellido || user?.apPaterno, user?.segundoApellido || user?.apMaterno]
+        .filter(Boolean)
+        .join(' ') ||
+      'No registrado';
+  }
+
+  getGenderText(value?: string): string {
+    const normalized = String(value || '').trim().toUpperCase();
+    if (normalized === 'F' || normalized === 'FEMENINO') return 'Femenino';
+    if (normalized === 'M' || normalized === 'MASCULINO') return 'Masculino';
+    return 'No especificado';
+  }
+
+  getCivilStatusText(value?: string): string {
+    return UserCivilStatus.find(status => status.type === value || status.description === value)?.description || value || 'No registrado';
+  }
+
+  getDocumentTypeText(value?: string): string {
+    return UserDocType.find(type => type.type === value || type.description === value)?.description || value || 'Documento';
   }
    
 }

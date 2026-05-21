@@ -51,6 +51,10 @@ export class AuthGuard implements CanActivate, CanActivateChild {
       return true;
     }
 
+    if (state.url.startsWith("/profile/")) {
+      return true;
+    }
+
     let currentRoute: ActivatedRouteSnapshot | null = route;
     while (currentRoute.firstChild) {
       currentRoute = currentRoute.firstChild;

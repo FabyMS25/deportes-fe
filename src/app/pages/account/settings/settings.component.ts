@@ -13,6 +13,8 @@ import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.
 import { de } from 'date-fns/locale';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
+import { UserGender } from 'src/app/core/constants/UserData';
+import { Person } from 'src/app/core/models/user/person.model';
 
 @Component({
   selector: 'app-settings',
@@ -33,7 +35,7 @@ export class SettingsComponent implements OnInit {
     uuid: ['', [Validators.required]],
     nombre: ['', [Validators.required]],
     primerApellido: ['', [Validators.required]],
-    segundoApellido: ['', [Validators.required]],
+    segundoApellido: [''],
     genero: ['M', [Validators.required]],
     numeroDocumento: ['', [Validators.required]],
     expedido: ['', [Validators.required]],
@@ -53,6 +55,7 @@ export class SettingsComponent implements OnInit {
     private modalService: NgbModal,
     private formBuilder: FormBuilder,
     private authService: AuthenticationService,
+    private storageService: TokenStorageService,
     private employeeService: UserService,
     private userService: ContribuyentesService
   ) { }
@@ -147,6 +150,7 @@ export class SettingsComponent implements OnInit {
         // const expedidoAcronym = this.getAcronymFromId(expedidoValue);
         
         const persona: Contribuyente = {
+          ...this.userContribuyente,
           uuid: this.personaForm.value.uuid,
           nombre: this.personaForm.value.nombre,
           primerApellido: this.personaForm.value.primerApellido,
@@ -157,25 +161,16 @@ export class SettingsComponent implements OnInit {
           telefono: this.personaForm.value.telefono,
           email: this.personaForm.value.email,
           direccion: this.personaForm.value.direccion,
-
-          estadoRuat: this.userContribuyente.estadoRuat,
-          verificadoRuat: this.userContribuyente.verificadoRuat,
-          esDeportistaElite: this.userContribuyente.esDeportistaElite,
-          estaSancionado: this.userContribuyente.estaSancionado,
-
-          fechaNacimiento: this.userContribuyente.fechaNacimiento,
-          estadoUsuario: this.userContribuyente.estadoUsuario,
-          codigoContribuyente: this.userContribuyente.codigoContribuyente,
-          estadoCivil: this.userContribuyente.estadoCivil,
-          tipoDocumento: this.userContribuyente.tipoDocumento,
-          nroNit: this.userContribuyente.nroNit,
-          tipoContribuyente: this.userContribuyente.tipoContribuyente,
-          userName: this.userContribuyente.userName,
-          password: this.userContribuyente.password,
+          nombreCompleto: [
+            this.personaForm.value.nombre,
+            this.personaForm.value.primerApellido,
+            this.personaForm.value.segundoApellido
+          ].filter(Boolean).join(' '),
         }
 
         try {
           await this.updateUser(persona);
+          this.userContribuyente = persona;
           this.notify('success', 'Sus datos fueron actualizados con éxito');
         } catch (error) {
           this.notify('error', 'No se pudo actualizar sus datos');
@@ -186,8 +181,8 @@ export class SettingsComponent implements OnInit {
       }
     } else {
       if (this.contactoForm.valid) {
-        const persona: any = { 
-          uuid: this.userData.uuid,
+        const persona: Person = {
+          ...this.userData,
           nroCelular: this.contactoForm.value.telefono,
           correoElectronico: this.contactoForm.value.email,
           direccion: this.contactoForm.value.direccion
@@ -239,12 +234,26 @@ export class SettingsComponent implements OnInit {
   private updatePersona(persona: any) {
     this.employeeService.updatePersona(persona).subscribe({
       next: (data) => {
+        this.syncStoredPersona(data || persona);
         this.notify('success', 'Registro actualizado con exito');
       },
       error: (error) => {
         this.notify('error', 'No se puedo actualizar el Registro');
       }
     });
+  }
+
+  private syncStoredPersona(persona: Person) {
+    this.userData = {
+      ...this.userData,
+      ...persona
+    };
+
+    const currentUser = this.authService.currentUser();
+    if (currentUser?.designacion?.personaDto) {
+      currentUser.designacion.personaDto = this.userData;
+      this.storageService.saveUserData(currentUser);
+    }
   }
 
   private updateUser(persona: any): Promise<boolean> {
@@ -305,7 +314,10 @@ export class SettingsComponent implements OnInit {
   // Helper method to get display name
   getDisplayName(): String {
     if (this.userRole === 'Contribuyente') {
-      return this.userContribuyente.nombre;
+      return this.userContribuyente?.nombreCompleto ||
+        [this.userContribuyente?.nombre, this.userContribuyente?.primerApellido, this.userContribuyente?.segundoApellido]
+          .filter(Boolean)
+          .join(' ');
     } else {
       return this.userData?.fullName || this.userData?.nombre + ' ' + this.userData?.apPaterno + ' ' + this.userData?.apMaterno;
     }
@@ -318,5 +330,9 @@ export class SettingsComponent implements OnInit {
     } else {
       return this.userData?.correoElectronico || this.userData?.email;
     }
+  }
+
+  getGenderOptions() {
+    return UserGender;
   }
 }

@@ -217,7 +217,7 @@ export class ModalTaxpayerComponent implements OnInit {
         apellidoEsposo: [''],
         estadoCivil: [''],
         fechaNacimiento: ['', [Validators.required]],
-        genero: [''],
+        genero: ['', [Validators.required]],
 
         tipoDocumento: ['CI', [Validators.required]],
         numeroDocumento: numeroDocumentoControl,
@@ -1360,11 +1360,19 @@ export class ModalTaxpayerComponent implements OnInit {
   }
 
   getUserGender(description: string): string {
-    return this.userSex.find((i) => i.description === description)?.id ?? '';
+    const value = String(description || '').trim().toUpperCase();
+    if (value === 'F' || value === 'FEMENINO') return 'F';
+    if (value === 'M' || value === 'MASCULINO') return 'M';
+    return this.userSex.find((i) => i.description.toUpperCase() === value)?.id ?? '';
   }
 
   getGenderText(genero: string | undefined): string {
-    return genero === 'F' ? 'FEMENINO' : genero === 'M' ? 'MASCULINO' : 'No especificado';
+    const value = String(genero || '').trim().toUpperCase();
+    return value === 'F' || value === 'FEMENINO'
+      ? 'FEMENINO'
+      : value === 'M' || value === 'MASCULINO'
+        ? 'MASCULINO'
+        : 'No especificado';
   }
 
   getTipoContribuyenteText(tipo: string): string {

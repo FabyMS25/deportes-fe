@@ -83,7 +83,7 @@ export class SignupComponent implements OnInit {
       // apellidoEsposo: ['', [Validators.maxLength(100)]],
       estadoCivil: [''],
       fechaNacimiento: ['', [Validators.required]],
-      genero: [''],
+      genero: ['', [Validators.required]],
       
       telefono: ['', [Validators.required, Validators.maxLength(20)]],
       email: ['', [Validators.required, Validators.email, Validators.maxLength(255)],
@@ -129,7 +129,7 @@ export class SignupComponent implements OnInit {
         fechaNacimiento: fechaNacimientoValue,
         tipoDocumento: UserDocType.find(d => d.description === client.tipoDocumento)?.type,
         expedido: CityAcronym.find(d => d.value === client.expedido)?.id,
-        genero: UserGender.find(d => d.description === client.genero)?.id,
+        genero: this.getGenderCode(client.genero),
         estadoCivil: UserCivilStatus.find(d => d.description === client.estadoCivil)?.type,
       });
       this.SignupForm.get('nombre')?.disable();
@@ -193,6 +193,13 @@ export class SignupComponent implements OnInit {
 
   generateCode(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
+  }
+
+  private getGenderCode(value: string): string {
+    const gender = String(value || '').trim().toUpperCase();
+    if (gender === 'F' || gender === 'FEMENINO') return 'F';
+    if (gender === 'M' || gender === 'MASCULINO') return 'M';
+    return UserGender.find(d => d.description.toUpperCase() === gender)?.id || '';
   }
   markAllFieldsAsTouched() {
     Object.keys(this.SignupForm.controls).forEach(key => {

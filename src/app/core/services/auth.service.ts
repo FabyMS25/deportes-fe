@@ -501,7 +501,10 @@ export class AuthenticationService {
     }
     if (role !== undefined) {
       avatar = role.avatarF;
-      if (user?.designacion && user.designacion.personaDto.sexo === 'M') {
+      const gender = token === 'CONTRIBUYENTE_SESSION'
+        ? (user as any)?.genero
+        : user?.designacion?.personaDto?.sexo;
+      if (String(gender || '').toUpperCase() === 'M') {
         avatar = role.avatarM;
       }
     }  
