@@ -27,7 +27,8 @@
               "inlineStyleLanguage": "scss",
               "assets": [
                 "src/favicon.ico",
-                "src/assets"
+                "src/assets",
+                "src/manifest.webmanifest"
               ],
               "styles": [
                 "node_modules/@ng-select/ng-select/themes/default.theme.css",
@@ -89,6 +90,8 @@
             },
             "configurations": {
               "production": {
+                "serviceWorker": true,
+                "ngswConfigPath": "src/ngsw-config.json",
                 "budgets": [
                   {
                     "type": "initial",
