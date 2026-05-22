@@ -1,6 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA, LOCALE_ID, NgModule, isDevMode } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-
+import { ServiceWorkerModule } from '@angular/service-worker';
 // search module
 import { NgPipesModule } from 'ngx-pipes';
 
@@ -60,9 +60,11 @@ export function createTranslateLoader(http: HttpClient): any {
       maxAge: 25, 
       logOnly: environment.production,
     }),
-    EffectsModule.forRoot([
-    ]),
-    // NotificationCenterModule
+    EffectsModule.forRoot([]),
+    ServiceWorkerModule.register('ngsw-worker.js', {
+      enabled: environment.production,
+      registrationStrategy: 'registerWhenStable:30000'
+    }),
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   providers: [
