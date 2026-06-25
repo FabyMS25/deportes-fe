@@ -28,6 +28,7 @@ export class TokenStorageService {
       sessionStorage.removeItem(STORAGE_KEYS.RUAT_TOKEN_CREATED_AT);
     }
     if (rememberMe) {
+      localStorage.setItem(STORAGE_KEYS.REMEMBER_ME, 'true');
       localStorage.setItem(STORAGE_KEYS.CONFIGS, JSON.stringify(data.configs));
       localStorage.setItem(STORAGE_KEYS.MENU, 
         typeof data.menu === 'string' ? data.menu : JSON.stringify(data.menu));
@@ -37,8 +38,8 @@ export class TokenStorageService {
         localStorage.setItem(STORAGE_KEYS.STAFF, 
           typeof data.staff === 'string' ? data.staff : JSON.stringify(data.staff));
       }
-      localStorage.setItem(STORAGE_KEYS.REMEMBER_ME, 'true');
     } else {
+      localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
       localStorage.removeItem(STORAGE_KEYS.CONFIGS);
       localStorage.removeItem(STORAGE_KEYS.MENU);
       localStorage.removeItem(STORAGE_KEYS.USER);
@@ -58,10 +59,10 @@ export class TokenStorageService {
 
   signOut(): void {
     sessionStorage.clear();
-    if(!this.isRememberMe()){
+    if (!this.isRememberMe()) {
+      localStorage.removeItem(STORAGE_KEYS.MENU);
       localStorage.removeItem(STORAGE_KEYS.USER);
       localStorage.removeItem(STORAGE_KEYS.STAFF);
-      localStorage.removeItem(STORAGE_KEYS.MENU);
       localStorage.removeItem(STORAGE_KEYS.CONFIGS);
     }
     localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);

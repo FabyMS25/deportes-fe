@@ -4,6 +4,7 @@ import {  catchError, map, Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { LoginResponse } from '../../models/user/login-response.model';
 import { handleError } from '../apiResponses';
+import { Person } from '../../models/user/person.model';
 
 const usersUrl = `${environment.apiLoginUrl}`;
 
@@ -13,7 +14,7 @@ export class UserService {
 
     constructor(private http: HttpClient ) {}
   
-    loginByUsername(username: String, password: String): Observable<any> {
+    loginByUsername(username: string, password: string): Observable<LoginResponse> {
       return this.http.post<LoginResponse>(`${usersUrl}/auth/signin`, {username, password}).pipe(
         map((res) => res),
         catchError(handleError(`loguear usuario`))
@@ -40,7 +41,7 @@ export class UserService {
         return this.http.post<any>(`${usersUrl}/user/change-password`, {uuidUsuario, newPassword});
     }
 
-    updatePersona(persona:any): Observable<any> {
-        return this.http.put<any>(`${usersUrl}/persona`, persona);
+    updatePersona(persona: Person): Observable<Person> {
+        return this.http.put<Person>(`${usersUrl}/persona`, persona);
     }
 }

@@ -21,8 +21,8 @@ export class PaginationService {
         return alldata.slice(startItem, endItem);
     }
 
-    onSort(column: string, items: any[], isAscending: boolean = true): any[] {
-      return [...items].sort((a, b) => {
+    onSort(column: string, dataList: any[], isAscending: boolean = true): any[] {
+      return [...dataList].sort((a, b) => {
         const valueA = this.getNestedProperty(a, column);
         const valueB = this.getNestedProperty(b, column);
         if (valueA == null && valueB == null) return 0;

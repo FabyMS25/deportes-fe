@@ -31,94 +31,94 @@
             </div>
             <ul class="navbar-nav" id="navbar-nav">
                 @for(item of getSubMenu(menuItems); track $index){
-                @if(item.isTitle){
-                <li class="menu-title"><span data-key="t-menu">{{ item.nombreMenu | translate }}</span></li>
-                }@else {
-                <li class="nav-item">
-                    @if(!item.permisoPadreDto){
-                    @if(hasItems(item)){
-                    <a href="javascript:void(0);" class="is-parent nav-link menu-link" 
-                        [ngClass]="{'has-arrow': !item.badge, 'has-dropdown': item.badge}" 
-                        data-bs-toggle="collapse" aria-expanded="false" (click)="toggleItem($event)">
-                        <i class="{{ item.icono }} icon nav-icon" class=""></i>
-                        <span class=""> {{ item.nombreMenu | translate }}</span>
-                        @if(item.badge){<span class="badge badge-pill {{item.badge.variant}}">{{item.badge.text
-                            | translate}}</span>}
-                    </a>
+                    @if(item.isTitle){
+                    <li class="menu-title"><span data-key="t-menu">{{ item.nombreMenu | translate }}</span></li>
+                    }@else {
+                    <li class="nav-item">
+                        @if(!item.permisoPadreDto){
+                        @if(hasItems(item)){
+                        <a href="javascript:void(0);" class="is-parent nav-link menu-link" 
+                            [ngClass]="{'has-arrow': !item.badge, 'has-dropdown': item.badge}" 
+                            data-bs-toggle="collapse" aria-expanded="false" (click)="toggleItem($event)">
+                            <i class="{{ item.icono }} icon nav-icon" class=""></i>
+                            <span class=""> {{ item.nombreMenu | translate }}</span>
+                            @if(item.badge){<span class="badge badge-pill {{item.badge.variant}}">{{item.badge.text
+                                | translate}}</span>}
+                        </a>
 
-                    <div class="collapse menu-dropdown" [ngClass]="{'mega-dropdown-menu':item.nombreMenu === 'MENUITEMS.BASEUI.TEXT'}" id="sidebarDashboards">
-                        <div [ngClass]="{'row':item.nombreMenu == 'MENUITEMS.BASEUI.TEXT'}">
-                            @for(subitem of getSubMenu(item.permisoHijoListDto); track $index){
-                            <div [ngClass]="{'col-lg-4': item.nombreMenu == 'MENUITEMS.BASEUI.TEXT'}">
-                                <ul class="nav nav-sm flex-column" aria-expanded="false">
-                                    <li class="nav-item">
-                                        @if(hasItems(subitem)){
-                                        <a class="nav-link" href="javascript:void(0);" 
-                                            [attr.data-parent]="subitem.permisoPadreDto" data-bs-toggle="collapse" 
-                                            aria-expanded="false" (click)="toggleSubItem($event)">
-                                            @if(subitem.icono){<i class="bx {{ subitem.icono }} icon nav-icon" class=""></i>}{{ subitem.nombreMenu | translate}}
-                                        </a>
+                        <div class="collapse menu-dropdown" [ngClass]="{'mega-dropdown-menu':item.nombreMenu === 'MENUITEMS.BASEUI.TEXT'}" id="sidebarDashboards">
+                            <div [ngClass]="{'row':item.nombreMenu == 'MENUITEMS.BASEUI.TEXT'}">
+                                @for(subitem of getSubMenu(item.permisoHijoListDto); track $index){
+                                <div [ngClass]="{'col-lg-4': item.nombreMenu == 'MENUITEMS.BASEUI.TEXT'}">
+                                    <ul class="nav nav-sm flex-column" aria-expanded="false">
+                                        <li class="nav-item">
+                                            @if(hasItems(subitem)){
+                                            <a class="nav-link" href="javascript:void(0);" 
+                                                [attr.data-parent]="subitem.permisoPadreDto" data-bs-toggle="collapse" 
+                                                aria-expanded="false" (click)="toggleSubItem($event)">
+                                                @if(subitem.icono){<i class="bx {{ subitem.icono }} icon nav-icon" class=""></i>}{{ subitem.nombreMenu | translate}}
+                                            </a>
 
-                                        <div class="collapse menu-dropdown">
-                                            <ul class="nav nav-sm flex-column" aria-expanded="false">
-                                                @for(subSubitem of getSubMenu(subitem.permisoHijoListDto); track $index){
-                                                <li class="nav-item">
-                                                    @if(subSubitem.permisoHijoListDto){
-                                                    <a [attr.data-parent]="subSubitem.permisoPadreDto" 
-                                                        [routerLink]="subSubitem.ruta" data-bs-toggle="collapse" 
-                                                        aria-expanded="false" class="nav-link" (click)="updateActive($event)">
-                                                        {{ subSubitem.nombreMenu | translate }}
-                                                    </a>
-                                                    <div class="collapse menu-dropdown">
-                                                        <ul class="nav nav-sm flex-column" aria-expanded="false">
-                                                            @for(subChilditem of getSubMenu(subSubitem.permisoHijoListDto); track $index){
-                                                            <li class="nav-item">
-                                                                <a [attr.data-parent]="subSubitem.permisoPadreDto" 
-                                                                    [routerLink]="subChilditem.ruta" class="nav-link" 
-                                                                    (click)="updateActive($event)">
-                                                                    {{ subChilditem.nombreMenu | translate }}
-                                                                </a>
-                                                            </li>
-                                                            }
-                                                        </ul>
-                                                    </div>
-                                                    }@else{
-                                                    <a [attr.data-parent]="subSubitem.permisoPadreDto" 
-                                                        [routerLink]="subSubitem.ruta" class="nav-link" 
-                                                        (click)="updateActive($event)">
-                                                        {{ subSubitem.nombreMenu | translate }}
-                                                    </a>
+                                            <div class="collapse menu-dropdown">
+                                                <ul class="nav nav-sm flex-column" aria-expanded="false">
+                                                    @for(subSubitem of getSubMenu(subitem.permisoHijoListDto); track $index){
+                                                    <li class="nav-item">
+                                                        @if(subSubitem.permisoHijoListDto){
+                                                        <a [attr.data-parent]="subSubitem.permisoPadreDto" 
+                                                            [routerLink]="subSubitem.ruta" data-bs-toggle="collapse" 
+                                                            aria-expanded="false" class="nav-link" (click)="updateActive($event)">
+                                                            {{ subSubitem.nombreMenu | translate }}
+                                                        </a>
+                                                        <div class="collapse menu-dropdown">
+                                                            <ul class="nav nav-sm flex-column" aria-expanded="false">
+                                                                @for(subChilditem of getSubMenu(subSubitem.permisoHijoListDto); track $index){
+                                                                <li class="nav-item">
+                                                                    <a [attr.data-parent]="subSubitem.permisoPadreDto" 
+                                                                        [routerLink]="subChilditem.ruta" class="nav-link" 
+                                                                        (click)="updateActive($event)">
+                                                                        {{ subChilditem.nombreMenu | translate }}
+                                                                    </a>
+                                                                </li>
+                                                                }
+                                                            </ul>
+                                                        </div>
+                                                        }@else{
+                                                        <a [attr.data-parent]="subSubitem.permisoPadreDto" 
+                                                            [routerLink]="subSubitem.ruta" class="nav-link" 
+                                                            (click)="updateActive($event)">
+                                                            {{ subSubitem.nombreMenu | translate }}
+                                                        </a>
+                                                        }
+
+                                                    </li>
                                                     }
-
-                                                </li>
-                                                }
-                                            </ul>
-                                        </div>
-                                        }@else {
-                                        <a [routerLink]="subitem.ruta" class="nav-link" [attr.data-parent]="subitem.parentId" (click)="updateActive($event)">
-                                            @if(subitem.icon){<i class="bx {{ subitem.icon }} icon nav-icon" class=""></i>}{{ subitem.nombreMenu | translate}}
-                                        </a>
-                                        }
-                                    </li>
-                                </ul>
+                                                </ul>
+                                            </div>
+                                            }@else {
+                                            <a [routerLink]="subitem.ruta" class="nav-link" [attr.data-parent]="subitem.parentId" (click)="updateActive($event)">
+                                                @if(subitem.icon){<i class="bx {{ subitem.icon }} icon nav-icon" class=""></i>}{{ subitem.nombreMenu | translate}}
+                                            </a>
+                                            }
+                                        </li>
+                                    </ul>
 
 
+                                </div>
+                                }
                             </div>
-                            }
-                        </div>
 
-                    </div>
-                    }@else{
-                    <a [routerLink]="item.ruta" class="side-nav-link-ref nav-link menu-link 123">
-                        @if(item.icono){<i class="bx {{ item.icono }} icon nav-icon" class=""></i>}
-                        <span class=""> {{ item.nombreMenu | translate }}</span>
-                        @if(item.badge){<span class="badge {{item.badge.variant}} float-end">{{item.badge.text |
-                            translate}}</span>}
-                    </a>
+                        </div>
+                        }@else{
+                        <a [routerLink]="item.ruta" class="side-nav-link-ref nav-link menu-link 123">
+                            @if(item.icono){<i class="bx {{ item.icono }} icon nav-icon" class=""></i>}
+                            <span class=""> {{ item.nombreMenu | translate }}</span>
+                            @if(item.badge){<span class="badge {{item.badge.variant}} float-end">{{item.badge.text |
+                                translate}}</span>}
+                        </a>
+                        }
+                        }
+                    </li>
                     }
-                    }
-                </li>
-                }
                 }
             </ul>
         </div>

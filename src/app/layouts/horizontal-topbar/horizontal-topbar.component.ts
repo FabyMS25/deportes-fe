@@ -19,7 +19,7 @@ export class HorizontalTopbarComponent implements OnInit {
 
   constructor(private router: Router, public translate: TranslateService,
     private storage: TokenStorageService) {
-    translate.setDefaultLang('en');
+    translate.setDefaultLang('es');
   }
 
   ngOnInit(): void {
@@ -51,12 +51,10 @@ export class HorizontalTopbarComponent implements OnInit {
     });
   }
 
-  // remove active items of two-column-menu
-  activateParentDropdown(item: any) { // navbar-nav menu add active
+  activateParentDropdown(item: any) {
     item.classList.add("active");
     let parentCollapseDiv = item.closest(".collapse.menu-dropdown");
-    if (parentCollapseDiv) {      
-      // to set aria expand true remaining
+    if (parentCollapseDiv) {
       parentCollapseDiv.classList.add("show");
       parentCollapseDiv.parentElement.children[0].classList.add("active");
       parentCollapseDiv.parentElement.children[0].setAttribute("aria-expanded", "true");
@@ -104,16 +102,13 @@ export class HorizontalTopbarComponent implements OnInit {
   };
 
   toggleItem(event: any) {
-    let isCurrentMenuId = event.target.closest('a.nav-link');    
-    
+    let isCurrentMenuId = event.target.closest('a.nav-link');
     let isMenu = isCurrentMenuId.nextElementSibling as any;
     let dropDowns = Array.from(document.querySelectorAll('#navbar-nav .show'));
     dropDowns.forEach((node: any) => {
       node.classList.remove('show');
     });
-
     (isMenu) ? isMenu.classList.add('show') : null;
-
     const ul = document.getElementById("navbar-nav");
     if(ul){
       const iconItems = Array.from(ul.getElementsByTagName("a"));
@@ -127,7 +122,6 @@ export class HorizontalTopbarComponent implements OnInit {
       this.activateParentDropdown(isCurrentMenuId);
     }
   }
-
 
   /**
    * Returns true or false if given menu item has child or not

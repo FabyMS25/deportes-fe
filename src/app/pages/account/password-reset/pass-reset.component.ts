@@ -1,10 +1,9 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import {DecimalPipe} from '@angular/common';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, FormGroup, UntypedFormBuilder, ValidationErrors, Validators} from '@angular/forms';
 import Swal from 'sweetalert2';
 
-import {CityAcronym}  from 'src/app/core/constants/Places';
 // import { MustMatch } from 'src/app/account/auth/pass-create/must-match';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { UserService } from 'src/app/core/services/api-users/users.service';
@@ -12,6 +11,12 @@ import { TokenStorageService } from 'src/app/core/services/token-storage.service
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { MustMatch } from 'src/app/public/account/auth/pass-create/must-match';
+
+interface PasswordUserContext {
+  uuid?: string;
+  username?: string;
+  password?: string;
+}
 
 @Component({
   selector: 'app-pass-reset',
@@ -22,7 +27,7 @@ import { MustMatch } from 'src/app/public/account/auth/pass-create/must-match';
 
 export class PassResetComponent {
   @Input() userRole!: any;
-  @Input() userData!: any;
+  @Input() userData!: PasswordUserContext;
 
   submitted: boolean = false;
   passwordForm!: FormGroup;
@@ -71,7 +76,13 @@ export class PassResetComponent {
             resolve(null);
           }
         } else {
-          const valid = await this.loginEmpleado(this.userData.username, control.value);
+          const username = this.getUsername();
+          if (!username) {
+            resolve({ invalidPassword: true });
+            return;
+          }
+
+          const valid = await this.loginEmpleado(username, control.value);
           if (!valid) {
             resolve({ invalidPassword: true });
           } else {
@@ -140,7 +151,13 @@ export class PassResetComponent {
   }
 
   private updateEmployeePassword(password: string): void {
-    this.employeeService.changePassword(this.userData.uuid, password).subscribe(
+    const uuidUsuario = this.getUserUuid();
+    if (!uuidUsuario) {
+      this.notify('error', 'No se pudo identificar el usuario');
+      return;
+    }
+
+    this.employeeService.changePassword(uuidUsuario, password).subscribe(
       (response) => {
         this.notify('success', 'La contraseña fue actualizada exitosamente');
         this.initForm();
@@ -156,10 +173,9 @@ export class PassResetComponent {
    * API Requests
    */
   async loginEmpleado(username: string, password: string): Promise<any> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this.employeeService.loginByUsername(username, password).subscribe({
         next: (data) => {
-          this.storageService.saveToken(data.token);
           resolve(data);
         },
         error: (error) => {
@@ -213,5 +229,23 @@ export class PassResetComponent {
   public onCloseModal() {
     this.passwordForm.reset();
     this.modalService.dismissAll();
+  }
+
+  private getUsername(): string {
+    return (
+      this.userData?.username ||
+      this.authService.currentUser()?.username ||
+      this.storageService.getUser()?.username ||
+      ''
+    ).trim();
+  }
+
+  private getUserUuid(): string {
+    return (
+      this.userData?.uuid ||
+      this.authService.currentUser()?.uuid ||
+      this.storageService.getUser()?.uuid ||
+      ''
+    ).trim();
   }
 }

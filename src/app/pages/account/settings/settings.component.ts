@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { TokenStorageService } from '../../../core/services/token-storage.service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { CityAcronym } from 'src/app/core/constants/Places';
+import { CityAcronym, getCityAcronym } from 'src/app/core/constants/Places';
 import { UserService } from 'src/app/core/services/api-users/users.service';
 import Swal from 'sweetalert2';
 import { AbstractControl, AsyncValidatorFn, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
@@ -118,7 +118,9 @@ export class SettingsComponent implements OnInit {
       backdrop: 'static',
     });
     modalRef.componentInstance.userRole = this.userRole;
-    modalRef.componentInstance.userData = this.userContribuyente || this.userData;
+    modalRef.componentInstance.userData = this.userRole === 'Contribuyente'
+      ? this.userContribuyente
+      : this.authService.currentUser();
   }
 
   getAcronymCity(city: string): string {
@@ -181,11 +183,14 @@ export class SettingsComponent implements OnInit {
       }
     } else {
       if (this.contactoForm.valid) {
+        const ciExpedito = getCityAcronym(this.userData?.ciExpedito);
         const persona: Person = {
           ...this.userData,
+          ciExpedito,
           nroCelular: this.contactoForm.value.telefono,
           correoElectronico: this.contactoForm.value.email,
-          direccion: this.contactoForm.value.direccion
+          direccion: this.contactoForm.value.direccion,
+          fullCarnet: this.buildFullCarnet(this.userData?.nroCarnet, ciExpedito)
         };
         this.updatePersona(persona);
       } else {
@@ -231,7 +236,7 @@ export class SettingsComponent implements OnInit {
   }
 
   /* API Services */
-  private updatePersona(persona: any) {
+  private updatePersona(persona: Person) {
     this.employeeService.updatePersona(persona).subscribe({
       next: (data) => {
         this.syncStoredPersona(data || persona);
@@ -244,9 +249,12 @@ export class SettingsComponent implements OnInit {
   }
 
   private syncStoredPersona(persona: Person) {
+    const ciExpedito = getCityAcronym(persona.ciExpedito);
     this.userData = {
       ...this.userData,
-      ...persona
+      ...persona,
+      ciExpedito,
+      fullCarnet: this.buildFullCarnet(persona.nroCarnet || this.userData?.nroCarnet, ciExpedito)
     };
 
     const currentUser = this.authService.currentUser();
@@ -334,5 +342,9 @@ export class SettingsComponent implements OnInit {
 
   getGenderOptions() {
     return UserGender;
+  }
+
+  private buildFullCarnet(nroCarnet: string | undefined, ciExpedito: string): string {
+    return [nroCarnet, ciExpedito].filter(Boolean).join(' ');
   }
 }

@@ -6,12 +6,7 @@ export const environment = {
   apiLoginUrl: '/auth-api', 
   backendUrl: '/api',
   backendRuat: '/api',
-  assetsUrl: '/gamq-deportes', 
-
-  // apiLoginUrl: 'http://181.177.143.185:8080/api',
-  // backendUrl: "http://181.177.143.187:8085/api",
-  // backendRuat:'http://181.177.143.187:8085/api',  
-  // assetsUrl: "http://181.177.143.187:4205",
+  assetsUrl: '', 
 
   EmailJS:{
     idService:'service_auth',

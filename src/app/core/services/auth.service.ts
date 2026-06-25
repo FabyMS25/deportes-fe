@@ -464,7 +464,6 @@ export class AuthenticationService {
   }
   getDashboardRoute(): string {
     const role = this.getUserRole();
-    console.log('Determining dashboard route for role:', role);
     if (role === 'Contribuyente') return '/inicio/taxpayer';
     if (role === 'Encargado') return '/inicio/employee';
     return '/inicio';
@@ -510,7 +509,6 @@ export class AuthenticationService {
     }  
     return avatar
   }
-
 
   private sortMenuItemsRecursive(menuItems: MenuItem[]): MenuItem[] {
     return menuItems.map(item => {

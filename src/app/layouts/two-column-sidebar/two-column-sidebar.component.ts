@@ -170,7 +170,7 @@ export class TwoColumnSidebarComponent implements OnInit {
           item.nextElementSibling.classList.remove("show");
         }
         if (item.parentElement) {
-          item.parentElement.closest(".isCollapsed")?.classList.remove("show");
+          item.parentElement.closest(".collapsed")?.classList.remove("show");
         }
         item.setAttribute("aria-expanded", false);
       }

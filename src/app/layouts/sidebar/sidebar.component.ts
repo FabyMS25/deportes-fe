@@ -33,7 +33,6 @@ export class SidebarComponent implements OnInit {
     this.userData = this.authService.currentUser();
     this.avatar=this.authService.getAvatar();
     this.menuItems =this.storage.getMenu();
-    
     this.router.events.subscribe((event) => {
       if (document.documentElement.getAttribute('data-layout') != "twocolumn") {
         if (event instanceof NavigationEnd) {

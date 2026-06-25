@@ -1,5 +1,6 @@
 {
-    "recommendations": [
-        "codeium.codeium-enterprise-updater"
-    ]
+  "recommendations": [
+    "codeium.codeium-enterprise-updater",
+    "Webnative.webnative"
+  ]
 }

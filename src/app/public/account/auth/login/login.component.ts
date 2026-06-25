@@ -30,7 +30,11 @@ export class LoginComponent implements OnInit {
     private formBuilder: UntypedFormBuilder,
     private authService: AuthenticationService,
     private storageService: TokenStorageService,
-  ) {}
+  ) {
+    if (this.authService.currentUser()) {
+      this.router.navigate(['/']);
+    }
+  }
 
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
@@ -54,8 +58,8 @@ export class LoginComponent implements OnInit {
       this.loginForm.markAllAsTouched();
       return;
     }
-    this.isCheckingConnection = true;
     const { username, password, rememberMe } = this.loginForm.value;
+    this.isCheckingConnection = true;
     const result = await this.authService.login(username, password, rememberMe);
     this.isCheckingConnection = false;
     if (!result.success) {
@@ -72,7 +76,7 @@ export class LoginComponent implements OnInit {
         text:'Algunas funciones estarán limitadas'
       });
     }
-    this.router.navigate([result.redirect!],);
+    this.router.navigate([result.redirect!]);
   }
 
   get form() {

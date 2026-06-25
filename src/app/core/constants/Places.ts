@@ -11,6 +11,21 @@ export const CityAcronym = [
     // { "id":"9", "acronym": "PN",  "description": "PANDO" }
 ] 
 
+export function getCityAcronym(expedido: string | number | null | undefined): string {
+    if (expedido === null || expedido === undefined) {
+        return '';
+    }
+
+    const normalizedValue = String(expedido).trim().toUpperCase();
+    const city = CityAcronym.find(item =>
+        item.acronym === normalizedValue ||
+        item.value === normalizedValue ||
+        String(item.id) === normalizedValue
+    );
+
+    return city?.acronym ?? normalizedValue;
+}
+
 export const Districts =
 [
     {value:'Distrito 1', label:'(Tacata)', area:'Ámbito urbano', comprende: 'las zonas de Sapenco y Tacata.'},
