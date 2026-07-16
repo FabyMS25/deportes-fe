@@ -2,7 +2,6 @@ import { EstadoReserva, EstadoValidacion } from "../constants/Estados";
 import { BookingType } from "../constants/Features";
 import { CampoDeportivo } from "./campoDeportivo.model";
 import { Contribuyente } from "./contribuyente.model";
-import { EstudianteEscuela } from "./EstudianteEscuela.model";
 import { Organizacion } from "./organizacion.model";
 import { ReservaAuditoria } from "./reservaAuditoria.model";
 import { ReservaPeriodo } from "./reservaPeriodo.model";
@@ -16,6 +15,10 @@ export interface Reserva{
   estado?:boolean;
   fechaCreacion:Date;
   fechaActualizacion?:Date;
+  fechaLimitePago?: Date;
+  cancelacionAutomatica?: boolean;
+  motivoCancelacionAutomatica?: string;
+  autorizadoPor?: string;
 
   clasificadorRuatId:string;
   tipoReserva:BookingType; //puntual / recurente / periodo 
@@ -37,10 +40,9 @@ export interface Reserva{
   campoDeportivoDto:CampoDeportivo;
   contribuyenteDto:Contribuyente;
   organizacionDto?:Organizacion;
-  estudianteEscuelaDto?: EstudianteEscuela;
   reservaPuntualDto?:ReservaPuntual;
   reservaRecurrenteDto?:ReservaRecurrente;  
-  reservaPeriodoDto?: ReservaPeriodo;
+  reservasPeriodoDtoList?: ReservaPeriodo[];
 
   pagosDtoList?:Pago[];
   auditoriasDtoList?: ReservaAuditoria[];

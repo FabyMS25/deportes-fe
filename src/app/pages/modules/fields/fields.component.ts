@@ -323,9 +323,7 @@ export class FieldsComponent {
   private getSuperficies() {
     this.superficieService.getAll().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.superficiesList = data.payload;
-        }
+        this.superficiesList = data;
       }
     });
   }

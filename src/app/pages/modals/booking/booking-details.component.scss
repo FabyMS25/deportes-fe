@@ -17,6 +17,24 @@
   overflow-wrap: anywhere;
 }
 
+.discipline-badges {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.discipline-badge {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+  line-height: 1.2;
+}
+
+.booking-info-alert {
+  color: #495057;
+  overflow-wrap: anywhere;
+}
+
 @media (min-width: 992px) {
   .booking-sidebar {
     margin-top: 0;

@@ -459,8 +459,8 @@
                   <div class="row" [class.opacity-50]="!isDayOpen()">
                     <div class="col-12">
                       <div class="d-flex justify-content-between small text-muted">
-                        <span><i class="ri-timer-line me-1"></i>Mínimo: {{ minDurationDisplay }}</span>
-                        <span><i class="ri-timer-line me-1"></i>Máximo: {{ maxDurationDisplay }}</span>
+                        <span *ngIf="minDurationDisplay"><i class="ri-timer-line me-1"></i>Mínimo: {{ minDurationDisplay }}</span>
+                        <span *ngIf="maxDurationDisplay"><i class="ri-timer-line me-1"></i>Máximo: {{ maxDurationDisplay }}</span>
                       </div>
                     </div>
                   </div>
@@ -561,9 +561,9 @@
               <li class="mb-1" *ngIf="anticipationTimeDisplay">
                 Las reservas deben realizarse con <strong>{{ anticipationTimeDisplay }}</strong> de anticipación mínima.
               </li>
-              <li *ngIf="this.dataTariff.tipoCobro === 'por_evento'" class="mb-1">
-                Para eventos, la duración máxima permitida es <strong>{{ maxDurationDisplay }}</strong>.
-              </li>              
+              <li *ngIf="maxDurationDisplay" class="mb-1">
+                La duración máxima permitida es <strong>{{ maxDurationDisplay }}</strong>.
+              </li>
               <li class="mb-1" *ngIf="paymentValidationDisplay">
                 Después de crear la reserva, tendrá <strong>{{ paymentValidationDisplay }}</strong> para realizar el pago.
               </li>

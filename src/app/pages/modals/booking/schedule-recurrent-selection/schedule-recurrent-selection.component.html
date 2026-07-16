@@ -366,11 +366,11 @@
 
           <div class="mb-2">
             <h6 class="mb-1">Período</h6>
-            <div class="d-flex align-items-center gap-2">
+            <div class="period-summary d-flex align-items-center gap-2">
               <i class="ri-calendar-line text-primary"></i>
-              <small>{{ fechaInicio | date:'dd/MM/yyyy' }}</small>
+              <small class="period-date">{{ fechaInicio | date:'dd/MM/yyyy' }}</small>
               <small class="text-muted">hasta</small>
-              <small>{{ fechaFin | date:'dd/MM/yyyy' }}</small>
+              <small class="period-date">{{ fechaFin | date:'dd/MM/yyyy' }}</small>
             </div>
           </div>
 
@@ -403,8 +403,8 @@
           <hr>
 
           <div class="mb-2">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h6 class="mb-0">{{ dataTariff.descripcion }}</h6>
+            <div class="tariff-summary-header d-flex justify-content-between align-items-start gap-2 mb-2">
+              <h6 class="tariff-summary-title mb-0">{{ dataTariff.descripcion }}</h6>
               <button type="button" class="btn btn-sm btn-outline-secondary"
                       (click)="showTariffBreakdown = !showTariffBreakdown"
                       [disabled]="calculatedTariff === 0">

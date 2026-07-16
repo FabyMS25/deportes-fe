@@ -92,7 +92,7 @@ export class ConfiguracionSistemaService {
     return new Observable(observer => {
       this.getByClave(clave).subscribe({
         next: (response) => {
-          const valor = response.payload?.valorNumerico || valorPorDefecto;
+          const valor = response.payload?.valorNumerico ?? valorPorDefecto;
           observer.next(valor);
           observer.complete();
         },
@@ -108,7 +108,9 @@ export class ConfiguracionSistemaService {
     return new Observable(observer => {
       this.getByClave(clave).subscribe({
         next: (response) => {
-          const valor = response.payload?.valorBoolean !== null ? response.payload?.valorBoolean : valorPorDefecto;
+          const valor = typeof response.payload?.valorBoolean === 'boolean'
+            ? response.payload.valorBoolean
+            : valorPorDefecto;
           observer.next(valor);
           observer.complete();
         },

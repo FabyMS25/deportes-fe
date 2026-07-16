@@ -14,7 +14,10 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { Reserva } from 'src/app/core/models/reserva.model';
 import { obtenerLabelTipoCobro } from 'src/app/core/constants/TipoCobro';
-import { obtenerValorConfiguracionConUnidad } from 'src/app/core/utils/configuracion-sistema.util';
+import {
+  obtenerValidacionPagoConUnidad,
+  obtenerValorConfiguracionConUnidad
+} from 'src/app/core/utils/configuracion-sistema.util';
 
 interface TimeSlot {
   time: string;
@@ -115,20 +118,26 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   cantidadPersonas?: number | null = null;
 
   get anticipationHours(): number | undefined{
+    if (this.isInternalUser) {
+      return undefined;
+    }
     if (!this.dataTariff) {
-      return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
+      return this.getActiveNumericConfig(ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES);
     }
     switch (this.dataTariff.tipoCobro) {
       case 'por_evento':
-        const diasEventos = this.systemConfigs[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico;
+        const diasEventos = this.getActiveNumericConfig(ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS);
         return diasEventos? diasEventos* 24:undefined;
       case 'mensualidad': case 'por_sesion': case 'por_club':
-        return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico;
+        return this.getActiveNumericConfig(ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES);
       default:
-        return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
+        return this.getActiveNumericConfig(ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES);
     }
-  }  
+  } 
   get anticipationTimeDisplay(): string {
+    if (this.isInternalUser) {
+      return '';
+    }
     switch (this.dataTariff.tipoCobro) {
       case 'por_evento':
         return this.getConfigValueDisplay(ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS) ?? '';
@@ -140,35 +149,55 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   }  
 
   get paymentValidationDisplay(): string | undefined {
-    return this.getConfigValueDisplay(ClaveConfiguracion.HORAS_VALIDACION_PAGO);
+    return obtenerValidacionPagoConUnidad(
+      this.systemConfigs,
+      'puntual',
+      this.dataTariff?.tipoCobro
+    );
   }
 
   private getConfigValueDisplay(clave: ClaveConfiguracion): string | undefined {
     return obtenerValorConfiguracionConUnidad(this.systemConfigs, clave);
   }
 
-  get maxDuration(): number {
+  private get isInternalUser(): boolean {
+    return this.userRole === 'Admin' || this.userRole === 'Encargado';
+  }
+
+  private getActiveNumericConfig(clave: ClaveConfiguracion): number | undefined {
+    const config = this.systemConfigs[clave];
+    const value = Number(config?.valorNumerico);
+    return config?.activo === true && Number.isFinite(value) && value > 0
+      ? value
+      : undefined;
+  }
+
+  get maxDuration(): number | undefined {
     if (this.dataTariff?.tipoCobro === 'por_evento') {
-      const maxHours = this.systemConfigs[ClaveConfiguracion.DURACION_MAXIMA_EVENTOS]?.valorNumerico;
-      return (maxHours !== undefined && maxHours !== null ? maxHours : 24);
+      return this.getActiveNumericConfig(ClaveConfiguracion.DURACION_MAXIMA_EVENTOS);
     }
 
-    return 24;
+    return this.getActiveNumericConfig(ClaveConfiguracion.DURACION_MAXIMA_PUNTUALES);
   }
-  get minDuration(): number {
-    const minDuration = this.systemConfigs[ClaveConfiguracion.DURACION_MINIMA_RESERVA]?.valorNumerico;
-    return (minDuration !== null && minDuration !== undefined && minDuration > 0) ? minDuration : 1;
+  get minDuration(): number | undefined {
+    return this.getActiveNumericConfig(ClaveConfiguracion.DURACION_MINIMA_RESERVA);
   }
-  get maxDurationDisplay(): string {
+  get maxDurationDisplay(): string | undefined {
     const hours = this.maxDuration;
+    if (hours === undefined) {
+      return undefined;
+    }
     if (hours === 1) {
       return '1 hora';
     } else {
       return `${hours} horas`;
     }
   }
-  get minDurationDisplay(): string {
+  get minDurationDisplay(): string | undefined {
     const hours = this.minDuration;
+    if (hours === undefined) {
+      return undefined;
+    }
     if (hours === 1) {
       return '1 hora';
     } else {
@@ -396,7 +425,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   private autoAdjustEndTime(): void {
     const startMinutes = this.startTimeInput.hours * 60 + this.startTimeInput.minutes;
     const endMinutes = this.endTimeInput.hours * 60 + this.endTimeInput.minutes;
-    const minDurationMinutes = this.minDuration * 60;
+    const minDurationMinutes = (this.minDuration ?? 1) * 60;
     if (endMinutes <= startMinutes) {
       const newEndMinutes = startMinutes + minDurationMinutes;
       this.endTimeInput = {
@@ -495,11 +524,11 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       return false;
     }     
     const duration = endMinutes - startMinutes;
-    if (duration < this.minDuration * 60) {
+    if (this.minDuration !== undefined && duration < this.minDuration * 60) {
       this.validationErrors.push(`La duración mínima es de ${this.minDurationDisplay}`);
       return false;
     } 
-    if (duration > this.maxDuration * 60) {
+    if (this.maxDuration !== undefined && duration > this.maxDuration * 60) {
       const maxMessage = this.isEventTariff
         ? `Los eventos pueden durar como máximo ${this.maxDurationDisplay}. Ajuste la hora de fin para continuar.`
         : `La duración máxima es de ${this.maxDurationDisplay}`;
@@ -1048,7 +1077,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     }
   }
   getTimeSlotsForDay(date: Date): DaySlots {
-    const step = Math.max(1, this.minDuration) * 60; // Ensure step is never 0
+    const step = Math.max(1, this.minDuration ?? 1) * 60; // Ensure step is never 0
     const dateKey = `${this.toLocalDateString(date)}-${step}-${this.dataTariff?.uuid || 'no-tariff'}`;
     if (this.timeSlotsCache.has(dateKey)) {
       return this.timeSlotsCache.get(dateKey)!;
@@ -1171,7 +1200,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       }
     });
     occupiedRanges.sort((a, b) => a.start - b.start);
-    const stepMinutes = Math.max(1, this.minDuration) * 60;
+    const stepMinutes = Math.max(1, this.minDuration ?? 1) * 60;
     
     for (let minutes = startMinutes; minutes < endMinutes; minutes += stepMinutes) {
       const slotStart = this.minutesToTime(minutes);

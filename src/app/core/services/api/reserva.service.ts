@@ -4,6 +4,21 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Reserva } from '../../models/reserva.model';
 import { BookingType } from '../../constants/Features';
+import { ApiResponse, PageResponse } from '../apiResponses';
+
+export interface ReservaFilters {
+  tab?: number;
+  searchTerm?: string; // to search on nombre of Contribuyente, nombre of Organization, nombre Campo deportivo, nro tasa, nro de reserva, motivo de rechazo , motivo de gratuitidad como ESCUELA_MUNICIPAL , 
+  typeReserva?:string;//periodo|puntual|recurrente
+  estadoReserva?: string;
+  estadoValidacion?: string;
+  esReservaGratuita?:boolean;
+  organization?: string;//  escuelaFiltro?: string;
+  periodoFiltro?:  {
+    mesFiltro?: number;
+    anioFiltro?: number;
+  }
+}
 
 @Injectable({
   providedIn: 'root'
@@ -13,12 +28,32 @@ export class ReservaService {
 
   constructor(private http: HttpClient) { }
 
-  getAll(page: number = 0, size: number = 20): Observable<any> {
+  getAll(
+    page: number = 0,
+    size: number = 20,
+    filters?: ReservaFilters
+  ): Observable<ApiResponse<PageResponse<Reserva>>> {
     let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString());
-    
-    return this.http.get<Reserva[]>(`${this.apiUrl}`, { params });
+      .set('page', String(page))
+      .set('size', String(size));
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value === null || value === undefined || value === '') {
+          return;
+        }
+        if (key === 'periodoFiltro' && typeof value === 'object') {
+          if (value.mesFiltro !== null && value.mesFiltro !== undefined) {
+            params = params.set('mesFiltro', value.mesFiltro);
+          }
+          if (value.anioFiltro !== null && value.anioFiltro !== undefined) {
+            params = params.set('anioFiltro', value.anioFiltro);
+          }
+        } else {
+          params = params.set(key, String(value));
+        }
+      });
+    }
+    return this.http.get<ApiResponse<PageResponse<Reserva>>>(this.apiUrl, { params });
   }
 
   getByUuid(uuid: string): Observable<Reserva> {

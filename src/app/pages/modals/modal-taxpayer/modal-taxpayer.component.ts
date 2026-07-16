@@ -24,11 +24,11 @@ import { Observable } from 'rxjs';
 
 import { CityAcronym } from 'src/app/core/constants/Places';
 import { UserStatus, UserCivilStatus, UserDocType, UserGender } from 'src/app/core/constants/UserData';
+import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
 import { EstadoUsuario, EstadoRuat } from 'src/app/core/constants/Estados';
 import { environment } from 'src/environments/environment';
-import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
@@ -110,8 +110,8 @@ export class ModalTaxpayerComponent implements OnInit {
   constructor(
     private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
+    private authService: AuthenticationService,
     private ruatService: RuatRequestsService,
-    private systemConfigsService: ConfiguracionSistemaService,
     private contribuyentesService: ContribuyentesService,
     private organizationService: OrganizacionService,
     private estudianteEscuelaService: EstudianteEscuelaService
@@ -734,10 +734,6 @@ export class ModalTaxpayerComponent implements OnInit {
   // ─── RUAT Integration ─────────────────────────────────────────────────────
 
   private async registerContribuyenteInRuat(datos: Contribuyente): Promise<any> {
-    const codigoAlcaldia =
-      this.systemConfigList.find((c) => c.clave === ClaveConfiguracion.CODIGO_ALCALDIA_RUAT)?.valorTexto || '';
-    const codigoUsuario =
-      this.systemConfigList.find((c) => c.clave === ClaveConfiguracion.CODIGO_USUARIO_RUAT)?.valorTexto || '';
     const ruatData = {
       tipoDocumento: datos.tipoDocumento,
       numeroDocumento: datos.numeroDocumento,
@@ -754,7 +750,7 @@ export class ModalTaxpayerComponent implements OnInit {
       nroNit: datos.nroNit,
     };
     this.notify('Registrando contribuyente en RUAT...', 'info');
-    const ruatResp = await this.registerContribuyente(codigoAlcaldia, codigoUsuario, ruatData);
+    const ruatResp = await this.registerContribuyente(ruatData);
     if (this.ruatService.canContinue(ruatResp)) {
       this.notify('Contribuyente registrado exitosamente en RUAT', 'success');
       return ruatResp;
@@ -769,9 +765,7 @@ export class ModalTaxpayerComponent implements OnInit {
     }
     this.searchingRuat = true;
     try {
-      const codigoAlcaldia =
-        this.systemConfigList.find((c) => c.clave === ClaveConfiguracion.CODIGO_ALCALDIA_RUAT)?.valorTexto || '';
-      const ruatResp = await this.searchContribuyenteInRuat(codigoAlcaldia, this.searchRuatForm.value);
+      const ruatResp = await this.searchContribuyenteInRuat(this.searchRuatForm.value);
       if (this.ruatService.canContinue(ruatResp)) {
         this.ruatDataFound = ruatResp;
         this.fillFormFromRuat(ruatResp);
@@ -842,11 +836,7 @@ export class ModalTaxpayerComponent implements OnInit {
     const formData = this.editForm.getRawValue();
     const ruatData = { ...formData, fechaNacimiento: formData.fechaNacimiento ? this.formatDateForRuat(formData.fechaNacimiento) : '' };
     try {
-      const codigoAlcaldia =
-        this.systemConfigList.find((c) => c.clave === ClaveConfiguracion.CODIGO_ALCALDIA_RUAT)?.valorTexto || '';
-      const codigoUsuario =
-        this.systemConfigList.find((c) => c.clave === ClaveConfiguracion.CODIGO_USUARIO_RUAT)?.valorTexto || '';
-      const ruatResp = await this.registerContribuyente(codigoAlcaldia, codigoUsuario, ruatData);
+      const ruatResp = await this.registerContribuyente(ruatData);
       if (this.ruatService.canContinue(ruatResp)) {
         const datos = this.ruatService.getResponseData(ruatResp);
         const nuevoEstado =
@@ -1073,9 +1063,7 @@ export class ModalTaxpayerComponent implements OnInit {
   }
 
   private getConfigsSystem(): void {
-    this.systemConfigsService.getAll().subscribe({
-      next: (data: any) => { if (data['status'] === 'OK') this.systemConfigList = data.payload; },
-    });
+    this.systemConfigList = Object.values(this.authService.getAllConfigs() || {});
   }
 
   private addData(datos: Contribuyente): Promise<any> {
@@ -1132,10 +1120,10 @@ export class ModalTaxpayerComponent implements OnInit {
     });
   }
 
-  private searchContribuyenteInRuat(codigoAlcaldia: string, data: any): Promise<any> {
+  private searchContribuyenteInRuat(data: any): Promise<any> {
     return new Promise((resolve, reject) => {
       this.ruatService
-        .getContribuyentePorCi(codigoAlcaldia, data.numeroDocumento, data.tipoDocumento, data.expedido)
+        .getContribuyentePorCi(data.numeroDocumento, data.tipoDocumento, data.expedido)
         .subscribe({
           next: (resp: any) => resolve(resp?.payload ?? null),
           error: (err) => reject(err),
@@ -1143,9 +1131,9 @@ export class ModalTaxpayerComponent implements OnInit {
     });
   }
 
-  private registerContribuyente(codigoAlcaldia: string, codigoUsuario: string, data: any): Promise<any> {
+  private registerContribuyente(data: any): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.ruatService.registerContribuyente(codigoAlcaldia, codigoUsuario, data).subscribe({
+      this.ruatService.registerContribuyente(data).subscribe({
         next: (resp: any) => {
           if (resp['status'] === 'OK') resolve(resp.payload);
           else { this.notify(this.ruatService.getResponseMessage(resp, 'No se pudo registrar en RUAT'), 'error'); resolve(null); }

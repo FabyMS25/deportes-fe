@@ -1,4 +1,5 @@
 import { Reserva } from "./reserva.model";
+import { EstudianteEscuela } from "./EstudianteEscuela.model";
 
 export interface ReservaPeriodo {
   uuid?: string;
@@ -14,7 +15,6 @@ export interface ReservaPeriodo {
   disciplina?: string;
   entrenador?: string;
   
-  fechaPago?: Date;
-  
+  estudianteEscuelaDto: EstudianteEscuela;
   reservaDto?: Reserva;
 }

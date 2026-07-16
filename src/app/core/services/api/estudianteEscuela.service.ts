@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { EstudianteEscuela } from '../../models/EstudianteEscuela.model';
+import { ApiResponse } from '../apiResponses';
 
 @Injectable({
   providedIn: 'root'
@@ -14,65 +15,44 @@ export class EstudianteEscuelaService {
   constructor(private http: HttpClient) { }
 
   // Basic CRUD Operations
-  getAll(): Observable<EstudianteEscuela[]> {
-    return this.http.get<EstudianteEscuela[]>(`${this.apiUrl}`);
+  getAll(): Observable<ApiResponse<EstudianteEscuela[]>> {
+    return this.http.get<ApiResponse<EstudianteEscuela[]>>(this.apiUrl);
   }
 
-  getByUuid(uuid: string): Observable<EstudianteEscuela> {
-    return this.http.get<EstudianteEscuela>(`${this.apiUrl}/${uuid}`);
+  getByUuid(uuid: string): Observable<ApiResponse<EstudianteEscuela>> {
+    return this.http.get<ApiResponse<EstudianteEscuela>>(`${this.apiUrl}/${uuid}`);
   }
 
-  getByMatricula(matricula: string): Observable<EstudianteEscuela> {
-    return this.http.get<EstudianteEscuela>(`${this.apiUrl}/matricula/${matricula}`);
+  getByMatricula(matricula: string): Observable<ApiResponse<EstudianteEscuela>> {
+    return this.http.get<ApiResponse<EstudianteEscuela>>(`${this.apiUrl}/matricula/${matricula}`);
   }
 
-  save(data: EstudianteEscuela): Observable<EstudianteEscuela> {
-    return this.http.post<EstudianteEscuela>(`${this.apiUrl}`, data);
+  save(data: EstudianteEscuela): Observable<ApiResponse<EstudianteEscuela>> {
+    return this.http.post<ApiResponse<EstudianteEscuela>>(this.apiUrl, data);
   }
 
-  update(data: EstudianteEscuela): Observable<EstudianteEscuela> {
-    return this.http.put<EstudianteEscuela>(`${this.apiUrl}`, data);
+  update(data: EstudianteEscuela): Observable<ApiResponse<EstudianteEscuela>> {
+    return this.http.put<ApiResponse<EstudianteEscuela>>(this.apiUrl, data);
   }
 
-  delete(uuid: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${uuid}`);
+  delete(uuid: string): Observable<ApiResponse<EstudianteEscuela>> {
+    return this.http.delete<ApiResponse<EstudianteEscuela>>(`${this.apiUrl}/${uuid}`);
   }
 
   // Business Operations
-  getByContribuyente(contribuyenteUuid: string): Observable<EstudianteEscuela[]> {
-    return this.http.get<EstudianteEscuela[]>(`${this.apiUrl}/contribuyente/${contribuyenteUuid}`);
+  getByContribuyente(contribuyenteUuid: string): Observable<ApiResponse<EstudianteEscuela[]>> {
+    return this.http.get<ApiResponse<EstudianteEscuela[]>>(`${this.apiUrl}/contribuyente/${contribuyenteUuid}`);
   }
 
-  getByEscuela(codigoEscuela: string): Observable<EstudianteEscuela[]> {
-    return this.http.get<EstudianteEscuela[]>(`${this.apiUrl}/escuela/${codigoEscuela}`);
+  getActivos(): Observable<ApiResponse<EstudianteEscuela[]>> {
+    return this.http.get<ApiResponse<EstudianteEscuela[]>>(`${this.apiUrl}/activos`);
   }
 
-  getActivos(): Observable<EstudianteEscuela[]> {
-    return this.http.get<EstudianteEscuela[]>(`${this.apiUrl}/activos`);
+  darDeBaja(uuid: string): Observable<ApiResponse<EstudianteEscuela>> {
+    return this.http.put<ApiResponse<EstudianteEscuela>>(`${this.apiUrl}/${uuid}/baja`, null);
   }
 
-  getInactivos(): Observable<EstudianteEscuela[]> {
-    return this.http.get<EstudianteEscuela[]>(`${this.apiUrl}/inactivos`);
-  }
-
-  inactivarEstudiante(uuid: string): Observable<EstudianteEscuela> {
-    return this.http.patch<EstudianteEscuela>(`${this.apiUrl}/${uuid}/inactivar`, {});
-  }
-
-  activarEstudiante(uuid: string): Observable<EstudianteEscuela> {
-    return this.http.patch<EstudianteEscuela>(`${this.apiUrl}/${uuid}/activar`, {});
-  }
-
-  generarMatricula(codigoEscuela: string): Observable<{ matricula: string }> {
-    return this.http.get<{ matricula: string }>(`${this.apiUrl}/generar-matricula/${codigoEscuela}`);
-  }
-
-  // Payment related operations
-  getMensualidadesByEstudiante(estudianteUuid: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/${estudianteUuid}/mensualidades`);
-  }
-
-  getMensualidadesPendientes(estudianteUuid: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/${estudianteUuid}/mensualidades-pendientes`);
+  reactivar(uuid: string): Observable<ApiResponse<EstudianteEscuela>> {
+    return this.http.put<ApiResponse<EstudianteEscuela>>(`${this.apiUrl}/${uuid}/reactivar`, null);
   }
 }

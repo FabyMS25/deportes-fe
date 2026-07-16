@@ -22,7 +22,11 @@ import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { ReservationConflictService } from './reservation-conflict.service';
 import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
 import { obtenerDescripcionTipoCobro } from 'src/app/core/constants/TipoCobro';
-import { obtenerValorConfiguracionConUnidad } from 'src/app/core/utils/configuracion-sistema.util';
+import {
+  obtenerHorasValidacionPago,
+  obtenerValidacionPagoConUnidad,
+  obtenerValorConfiguracionConUnidad
+} from 'src/app/core/utils/configuracion-sistema.util';
 
 interface PuntualSchedule {
   date: Date;
@@ -78,6 +82,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   globalAdmin?: AdminDeportesInfo;
 
   userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
+  canActivate: string[] = [];
   isLoading = false;
   isRuatAuthenticated = false;
   reservationsList: Reserva[] = [];
@@ -97,17 +102,27 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   slidesConfig = {infinite: true, slidesToShow: 4, slidesToScroll: 1, autoplay: true};
 
   systemConfigList: { [key: string]: ConfiguracionSistema } = {};
-  get enableRecurrentBooking(): boolean | undefined{
-    return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? true;
+  get enableRecurrentBooking(): boolean {
+    return this.isInternalUser || this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean === true;
+  }
+  get enableSolicitudRecurrentBooking(): boolean {
+    return this.isInternalUser || this.systemConfigList[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_RECURRENTES]?.valorBoolean === true;
   }
   get enableOrganizationReservation(): boolean {
-    return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_ORGANIZACIONES]?.valorBoolean ?? true;
+    return this.isInternalUser || this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_ORGANIZACIONES]?.valorBoolean === true;
+  }
+  get enableSolicitudOrganizationReservation(): boolean {
+    return this.isInternalUser || this.systemConfigList[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_ORGANIZACIONES]?.valorBoolean === true;
   }
   get HorasValidacionPago(): number | undefined {
-    return this.systemConfigList[ClaveConfiguracion.HORAS_VALIDACION_PAGO]?.valorNumerico;
+    return obtenerHorasValidacionPago(
+      this.systemConfigList,
+      this.bookingType,
+      this.bookingState.tarifa?.tipoCobro
+    );
   }  
   get anticipationTime(): string | undefined {
-    if (this.userRole !== 'Contribuyente') {
+    if (this.isInternalUser) {
       return undefined;
     }
     if (!this.bookingState.tarifa) {
@@ -124,17 +139,48 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   }
 
   get minReservationDurationDisplay(): string | undefined {
-    const value = this.systemConfigList[ClaveConfiguracion.DURACION_MINIMA_RESERVA]?.valorNumerico;
+    const value = this.getActiveNumericConfig(ClaveConfiguracion.DURACION_MINIMA_RESERVA);
     return value ? `${value} hora(s)` : undefined;
   }
 
+  get maxReservationDurationDisplay(): string | undefined {
+    if (!this.bookingState.tarifa) {
+      return undefined;
+    }
+    if (this.bookingType === 'recurrente') {
+      const value = this.getActiveNumericConfig(ClaveConfiguracion.DURACION_MAXIMA_RECURRENTES);
+      return value ? `${value} día(s)` : undefined;
+    }
+    if (this.bookingState.tarifa.tipoCobro === 'por_evento') {
+      return this.maxEventDurationDisplay;
+    }
+    return this.maxPunctualDurationDisplay;
+  }
+
+  get shouldShowDurationRules(): boolean {
+    return !!this.minReservationDurationDisplay || !!this.maxReservationDurationDisplay;
+  }
+
+  get shouldShowAnticipationRule(): boolean {
+    return !this.isInternalUser && !!this.anticipationTime;
+  }
+
   get maxEventDurationDisplay(): string | undefined {
-    const value = this.systemConfigList[ClaveConfiguracion.DURACION_MAXIMA_EVENTOS]?.valorNumerico;
+    const value = this.getActiveNumericConfig(ClaveConfiguracion.DURACION_MAXIMA_EVENTOS);
+    return value ? `${value} hora(s)` : undefined;
+  }
+
+  get maxPunctualDurationDisplay(): string | undefined {
+    const value = this.getActiveNumericConfig(ClaveConfiguracion.DURACION_MAXIMA_PUNTUALES);
     return value ? `${value} hora(s)` : undefined;
   }
 
   get paymentValidationDisplay(): string | undefined {
-    return this.getConfigValueDisplay(ClaveConfiguracion.HORAS_VALIDACION_PAGO);
+    return obtenerValidacionPagoConUnidad(
+      this.systemConfigList,
+      this.bookingType,
+      this.bookingState.tarifa?.tipoCobro
+    );
   }
 
   constructor(
@@ -158,12 +204,13 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     ];
     this.currentTime = new Date().toLocaleTimeString(); 
     this.systemConfigList = this.authenticationService.getAllConfigs();
+    this.updatePermissionsForBookingType();
     this.globalAdmin = this.getAdminDeportesConfig();
     this.loadAdminDeportesConfigIfMissing();
     const currentUser = this.authenticationService.currentUser()   
     if (this.userRole === 'Contribuyente') {
         this.bookingState.contribuyente = currentUser;        
-        if (this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_ORGANIZACIONES]?.valorBoolean ?? false) {
+        if (this.enableOrganizationReservation || this.enableSolicitudOrganizationReservation) {
           this.userRole = !!this.bookingState.contribuyente?.organizacionesRepresentadas && 
                             this.bookingState.contribuyente?.organizacionesRepresentadas?.length 
                               ? 'Representante' : 'Contribuyente';
@@ -197,6 +244,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     } else if (navigationData.data) {
       this.bookingState.complejo = navigationData.data;      
       this.bookingType = navigationData.tipoReserva || 'puntual';
+      this.updatePermissionsForBookingType();
       this.bookingStep = BookingStep.CAMPO_SELECTION;
     } else if (navigationData.tipoReserva) {
       await this.loadComplejos();
@@ -206,8 +254,21 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
       this.bookingStep = BookingStep.COMPLEJO_SELECTION;
     }
   }
+
+  private get isInternalUser(): boolean {
+    return this.userRole === 'Admin' || this.userRole === 'Encargado';
+  }
+
+  get isRequestFlow(): boolean {
+    return this.bookingState.actionType === 'request';
+  }
+
+  get isDirectReservationFlow(): boolean {
+    return this.bookingState.actionType === 'book';
+  }
+
   private setBookingType(tipoReserva: 'puntual' | 'recurrente'): void {
-    if (tipoReserva === 'recurrente' && !this.enableRecurrentBooking) {
+    if (tipoReserva === 'recurrente' && !this.enableRecurrentBooking && !this.enableSolicitudRecurrentBooking) {
       this.showNotification(
         'Las reservas recurrentes no están habilitadas en este momento',
         'warning'
@@ -216,6 +277,12 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     } else {
       this.bookingType = tipoReserva;
     }
+    this.updatePermissionsForBookingType();
+  }
+
+  private updatePermissionsForBookingType(): void {
+    const title = this.bookingType === 'recurrente' ? 'Reservas Recurrentes' : 'Reservas Puntuales';
+    this.canActivate = this.authenticationService.hasPermission(title);
   }
 
   private canProceedToNextStep(): boolean {
@@ -317,6 +384,18 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
       tarifa.categoriasDtoList?.map((cat: any) => cat.categoriaDto.nombre) || [])
     )) as string[];  
   }
+
+  public getVisibleDisciplines(campo: CampoDeportivo): string[] {
+    return this.getAvailableDisciplines(campo).slice(0, 3);
+  }
+
+  public getHiddenDisciplinesCount(campo: CampoDeportivo): number {
+    return Math.max(this.getAvailableDisciplines(campo).length - this.getVisibleDisciplines(campo).length, 0);
+  }
+
+  public getDisciplinesTooltip(campo: CampoDeportivo): string {
+    return this.getAvailableDisciplines(campo).join(', ');
+  }
   getEncargadosActivos(): EncargadoComplejo[] {
     if (!this.bookingState.complejo?.encargadosDtoList?.length) {
       return [];
@@ -336,6 +415,14 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
 
   private getConfigValueDisplay(clave: ClaveConfiguracion): string | undefined {
     return obtenerValorConfiguracionConUnidad(this.systemConfigList, clave);
+  }
+
+  private getActiveNumericConfig(clave: ClaveConfiguracion): number | undefined {
+    const config = this.systemConfigList[clave];
+    const value = Number(config?.valorNumerico);
+    return config?.activo === true && Number.isFinite(value) && value > 0
+      ? value
+      : undefined;
   }
 
   private loadAdminDeportesConfigIfMissing(): void {
@@ -468,7 +555,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     const paymentDeadlineMessage = paymentHours > 1 
       ? `${paymentHours} horas` 
       : `${paymentHours} hora`;
-    const requiresApproval = this.bookingState.campo?.requiereAprobacion;
+    const requiresApproval = this.isRequestFlow;
     const title = requiresApproval 
       ? '¡Solicitud de Reserva Enviada!' 
       : '¡Reserva Creada Exitosamente!';

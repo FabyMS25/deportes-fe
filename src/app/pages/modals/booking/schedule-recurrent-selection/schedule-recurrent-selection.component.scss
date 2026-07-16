@@ -367,3 +367,34 @@
     background: #eef5ff;
   }
 }
+
+.tariff-summary-header {
+  min-width: 0;
+}
+
+.tariff-summary-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.tariff-summary-header .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.period-summary {
+  min-width: 0;
+  flex-wrap: wrap;
+  row-gap: 0.15rem;
+}
+
+.period-date {
+  white-space: nowrap;
+}
+
+@media (max-width: 575.98px) {
+  .tariff-summary-header {
+    flex-direction: column;
+  }
+}

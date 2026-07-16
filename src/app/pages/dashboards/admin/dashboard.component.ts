@@ -35,6 +35,7 @@ export class DashboardComponent implements OnInit {
   loading: boolean = true;
 
   analyticsChart!: any;
+  selectedRevenueRange: string = 'all';
   num: number = 0;
   option = {
     startVal: this.num,
@@ -53,14 +54,19 @@ export class DashboardComponent implements OnInit {
 
   async ngOnInit() {
     this.userData = this.authService.currentUser();
-    this.authService.loginEvent$
-    .pipe(take(1))
-    .subscribe(event => {
-      this.showConsolidatedSystemStatus(event);
-    });
+    const pendingLoginEvent = this.authService.consumeLoginEvent();
+    if (pendingLoginEvent) {
+      this.showConsolidatedSystemStatus(pendingLoginEvent);
+    } else {
+      this.authService.loginEvent$
+      .pipe(take(1))
+      .subscribe(event => {
+        this.showConsolidatedSystemStatus(event);
+      });
+    }
     try {
       await this.getReservations();
-      this.setRevenueValue('all');
+      this.setRevenueValue(this.selectedRevenueRange);
       this.filteredReservations = this.processReservations('Year');
       this._GestionActualCharts();
       this._StackedColumnChart();
@@ -87,33 +93,26 @@ export class DashboardComponent implements OnInit {
         welcomeTitle = '🎉 ¡Bienvenido!';
         welcomeMessage = 'Inicio de sesión exitoso.';
     }    
-    let statusMessage = '📊 Estado del Sistema:\n\n';
+    let statusMessage = 'Estado: ';
     if (configsLoaded > 0) {
-      statusMessage += '✅ Sistema Principal: CONECTADO\n';
-      statusMessage += `⚙️ Configuraciones: ${configsLoaded} cargadas\n`;
+      statusMessage += `Sistema conectado · Configuraciones: ${configsLoaded}\n`;
     } else {
-      statusMessage += '⚠️ Sistema Principal: CONEXIÓN LIMITADA\n';
-      statusMessage += `⚙️ Configuraciones: 0 cargadas\n`;
+      statusMessage += 'Sistema con conexión limitada · Configuraciones: 0\n';
     }
     if (finalRuatConnected) {
-      statusMessage += '✅ RUAT: CONECTADO\n';
-      statusMessage += '   → Todas las funciones disponibles';
+      statusMessage += 'RUAT: conectado · Todas las funciones disponibles.';
     } else {
-      statusMessage += '❌ RUAT: NO DISPONIBLE\n\n';
-      statusMessage += '   ⚠️ ADVERTENCIA IMPORTANTE:\n';
-      statusMessage += '   • No se puede conectar al sistema RUAT\n';
-      statusMessage += '   • Las reservas nuevas NO estarán disponibles\n';
-      statusMessage += '   • Solo podrá consultar reservas existentes\n';
-      statusMessage += '   • La verificación de contribuyentes estará limitada\n\n';
-      statusMessage += '   💡 Recomendación:\n';
-      statusMessage += '   • Si necesita realizar reservas, cierre sesión y vuelva a intentar más tarde\n';
-      statusMessage += '   • Contacte al administrador si el problema persiste';
+      statusMessage += 'RUAT: no disponible.\n';
+      statusMessage += 'Bloqueado: aprobar reservas con cobro, crear/anular tasas y consultar pagos RUAT.\n';
+      statusMessage += 'Disponible: revisar reservas y datos ya registrados.\n';
+      statusMessage += 'Si continúa, contacte al administrador o al ingeniero de sistemas.';
     }
-    const fullMessage = `${welcomeMessage}\n\n${statusMessage}`;
+    const fullMessage = `${welcomeMessage}\n${statusMessage}`;
     this.toastService.show(fullMessage, {
       classname: finalRuatConnected ? 'bg-success text-light' : 'bg-warning text-dark',
       header: welcomeTitle,
-      delay: 15000
+      delay: finalRuatConnected ? 18000 : 30000,
+      replaceKey: 'system-status'
     });
   }
 
@@ -231,6 +230,7 @@ export class DashboardComponent implements OnInit {
   gestionSuccessRate: number = 0;
 
   setRevenueValue(value: string) {
+    this.selectedRevenueRange = value;
     const currentDate = new Date();
     let temp: Reserva[] = [];
     let startDate: Date;
@@ -252,7 +252,7 @@ export class DashboardComponent implements OnInit {
         break;
 
       case '1A':
-        startDate = new Date(currentDate.getFullYear() - 1, currentDate.getMonth(), 1);
+        startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 11, 1);
         temp = this.filterReservations(startDate, endDate);
         break;
 
@@ -273,6 +273,7 @@ export class DashboardComponent implements OnInit {
   }
 private processMonthlyData(reservas: Reserva[], labels: string[]) {
   const monthlyData = {
+    totalReservas: new Array(12).fill(0),
     pagadas: new Array(12).fill(0),
     completadas: new Array(12).fill(0),
     enCurso: new Array(12).fill(0),
@@ -291,6 +292,7 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
     };
   reservas.forEach((reserva: Reserva) => {
     const month = new Date(reserva.fechaReserva).getMonth();
+    monthlyData.totalReservas[month]++;
 
     switch (reserva.estadoReserva) {
       case EstadoReserva.PAGADA:
@@ -333,6 +335,7 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
 
 
     const alignedData = {
+      totalReservas: [] as number[],
       pagadas: [] as number[],
       completadas: [] as number[],
       enCurso: [] as number[],
@@ -348,6 +351,7 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
     labels.forEach((label) => {
       const monthIndex = monthNameToIndex[label];
       if (monthIndex !== undefined) {
+        alignedData.totalReservas.push(monthlyData.totalReservas[monthIndex]);
         alignedData.pagadas.push(monthlyData.pagadas[monthIndex]);
         alignedData.completadas.push(monthlyData.completadas[monthIndex]);
         alignedData.enCurso.push(monthlyData.enCurso[monthIndex]);
@@ -359,6 +363,7 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
         alignedData.noShow.push(monthlyData.noShow[monthIndex]);
         alignedData.ingresos.push(monthlyData.ingresos[monthIndex]);
       } else {
+        alignedData.totalReservas.push(0);
         alignedData.pagadas.push(0);
         alignedData.completadas.push(0);
         alignedData.enCurso.push(0);
@@ -371,7 +376,8 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
         alignedData.ingresos.push(0);
       }
     });
-    this.totalReservations =
+    this.totalReservations = alignedData.totalReservas.reduce((acc, curr) => acc + curr, 0);
+    const totalSuccessful =
       alignedData.pagadas.reduce((acc, curr) => acc + curr, 0) +
       alignedData.completadas.reduce((acc, curr) => acc + curr, 0) +
       alignedData.enCurso.reduce((acc, curr) => acc + curr, 0);
@@ -380,12 +386,12 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
                              alignedData.expiradas.reduce((acc, curr) => acc + curr, 0);
     this.totalPending = alignedData.pendientes.reduce((acc, curr) => acc + curr, 0);
     this.totalRejected = alignedData.rechazadas.reduce((acc, curr) => acc + curr, 0);
-    this.totalCompleted = alignedData.completadas.reduce((acc, curr) => acc + curr, 0);
+    this.totalCompleted = totalSuccessful;
     this.totalNoShow = alignedData.noShow.reduce((acc, curr) => acc + curr, 0);
     
-    const totalProcessed = this.totalReservations + this.totalCancellations + this.totalRejected + this.totalNoShow;
+    const totalProcessed = totalSuccessful + this.totalCancellations + this.totalRejected + this.totalNoShow;
     this.conversionRatio = totalProcessed > 0 
-      ? (this.totalReservations / totalProcessed) * 100 
+      ? (totalSuccessful / totalProcessed) * 100 
       : 0;
 
     return alignedData;
@@ -424,8 +430,9 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
 
   private initChart(value: string, list: any[]) {
     const colors = [
-      this.getStatusThemeColor(EstadoReserva.COMPLETADA),
       this.getThemeColor('primary'),
+      this.getStatusThemeColor(EstadoReserva.COMPLETADA),
+      this.getThemeColor('info'),
       this.getStatusThemeColor(EstadoReserva.CANCELADA),
       this.getStatusThemeColor(EstadoReserva.PENDIENTE),
       this.getStatusThemeColor(EstadoReserva.NO_SHOW)
@@ -436,15 +443,20 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
     this.analyticsChart = {
       series: [
         {
+          name: "Total Reservas",
+          type: "column",
+          data: monthlyData.totalReservas,
+        },
+        {
           name: "Reservas Exitosas",
-          type: "area",
+          type: "line",
           data: monthlyData.pagadas.map(
             (val, idx) => val + monthlyData.completadas[idx] + monthlyData.enCurso[idx]
           ),
         },
         {
           name: "Ingresos (Bs)",
-          type: "bar",
+          type: "area",
           data: monthlyData.ingresos,
         },
         {
@@ -469,15 +481,21 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
         axisBorder: { show: true },
       },
       yaxis: [
-        { 
-          title: { text: "Cantidad" },
+        {
+          seriesName: "Total Reservas",
+          title: { text: "Reservas" },
           labels: {
             formatter: function(val: number) {
               return Math.floor(val);
             }
           }
         },
+        {
+          seriesName: "Reservas Exitosas",
+          show: false
+        },
         { 
+          seriesName: "Ingresos (Bs)",
           opposite: true, 
           title: { text: "Ingresos (Bs)" },
           labels: {
@@ -495,14 +513,14 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
       },
       stroke: {
         curve: "straight",
-        dashArray: [0, 0, 8, 8, 8],
-        width: [2, 0, 2.2, 2, 2],
+        dashArray: [0, 0, 0, 8, 8, 8],
+        width: [0, 2.4, 2, 2.2, 2, 2],
       },
       fill: { 
-        opacity: [0.5, 0.9, 1, 1, 1],
+        opacity: [0.9, 1, 0.35, 1, 1, 1],
       },
       markers: {
-        size: [0, 0, 0, 0, 0],
+        size: [0, 0, 0, 0, 0, 0],
         strokeWidth: 2,
         hover: {
           size: 4,
@@ -553,7 +571,7 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
         intersect: false,
         y: {
           formatter: function(val: number, opts: any) {
-            if (opts.seriesIndex === 1) {
+            if (opts.seriesIndex === 2) {
               return "Bs " + val.toFixed(2);
             }
             return Math.floor(val) + " reservas";

@@ -9,7 +9,6 @@ import { UserDataService } from '../signup/user-data.service';
 
 import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
-import { GlobalComponent } from 'src/app/global-component';
 import { environment } from 'src/environments/environment';
 import { EstadoRuat, EstadoUsuario } from 'src/app/core/constants/Estados';
 
@@ -119,14 +118,10 @@ export class TwoStepComponent implements OnInit {
   private authRuat(): Promise<boolean> {
     return new Promise((resolve, reject) => {
       this.authenticationAttempted = true;
-      const usuario = GlobalComponent.RUAT_usuario;
-      const clave = GlobalComponent.RUAT_clave;
-      
-      this.ruatService.authenticate(usuario, clave).subscribe({
+      this.ruatService.authenticate().subscribe({
         next: (response) => {          
-          window.sessionStorage.setItem('ruat-token', response.token);
-          this.isAuthenticated = true;
-          resolve(true);
+          this.isAuthenticated = response?.status === 'OK' && response?.payload?.available === true;
+          this.isAuthenticated ? resolve(true) : reject(response);
         },
         error: (error) => {
           this.isAuthenticated = false;
@@ -195,11 +190,8 @@ export class TwoStepComponent implements OnInit {
   
   /* RUAT API Requests */
 private async registerContribuyente(data: any): Promise<any> {
-  const codigoAlcaldia = GlobalComponent.RUAT_codigoAlcaldia;
-  const codigoUsuario = GlobalComponent.RUAT_codigoUsuario;
-  
   return new Promise((resolve, reject) => {
-    this.ruatService.registerContribuyente(codigoAlcaldia, codigoUsuario, data).subscribe({    
+    this.ruatService.registerContribuyente(data).subscribe({    
       next: (resp: any) => {
         if (resp['status'] === 'OK') {
           const response = resp.payload;
@@ -222,7 +214,7 @@ private async registerContribuyente(data: any): Promise<any> {
             this.isAuthenticated = false;
             await this.authRuat();
             // Retry the registration after reauthentication
-            this.ruatService.registerContribuyente(codigoAlcaldia, codigoUsuario, data).subscribe({
+            this.ruatService.registerContribuyente(data).subscribe({
               next: (retryResp: any) => {
                 if (retryResp['status'] === 'OK' && this.ruatService.canContinue(retryResp)) {
                   this.userData.codigoContribuyente = this.ruatService.getResponseData(retryResp).codigoContribuyente;

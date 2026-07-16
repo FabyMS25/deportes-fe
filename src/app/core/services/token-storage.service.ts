@@ -17,16 +17,9 @@ export class TokenStorageService {
     user: any;
     staff?: any;
     token: string;
-    ruatToken?: string;
   }, rememberMe: boolean = false): void {
 
     sessionStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
-    sessionStorage.setItem(STORAGE_KEYS.RUAT_TOKEN, data.ruatToken ?? '');
-    if (data.ruatToken) {
-      sessionStorage.setItem(STORAGE_KEYS.RUAT_TOKEN_CREATED_AT, Date.now().toString());
-    } else {
-      sessionStorage.removeItem(STORAGE_KEYS.RUAT_TOKEN_CREATED_AT);
-    }
     if (rememberMe) {
       localStorage.setItem(STORAGE_KEYS.REMEMBER_ME, 'true');
       localStorage.setItem(STORAGE_KEYS.CONFIGS, JSON.stringify(data.configs));
@@ -81,30 +74,12 @@ export class TokenStorageService {
   public saveToken(token: string): void {
     sessionStorage.setItem(STORAGE_KEYS.TOKEN, token);
   }
-  public saveRuatToken(token: string): void {
-    sessionStorage.setItem(STORAGE_KEYS.RUAT_TOKEN, token);
-    sessionStorage.setItem(STORAGE_KEYS.RUAT_TOKEN_CREATED_AT, Date.now().toString());
-  }
-  public clearRuatToken(): void {
-    sessionStorage.removeItem(STORAGE_KEYS.RUAT_TOKEN);
-    sessionStorage.removeItem(STORAGE_KEYS.RUAT_TOKEN_CREATED_AT);
-  }
   
   /**
    * Getters
    */
   public getToken(): string | null {
     return sessionStorage.getItem(STORAGE_KEYS.TOKEN);
-  }
-  public getTokenRuat(): string | null {
-    return sessionStorage.getItem(STORAGE_KEYS.RUAT_TOKEN);
-  }
-  public isRuatTokenFresh(ttlMinutes: number = 55): boolean {
-    const token = this.getTokenRuat();
-    if (!token) return false;
-    const createdAt = Number(sessionStorage.getItem(STORAGE_KEYS.RUAT_TOKEN_CREATED_AT));
-    if (!createdAt) return false;
-    return Date.now() - createdAt < ttlMinutes * 60 * 1000;
   }
   public isRememberMe(): boolean {
     return localStorage.getItem(STORAGE_KEYS.REMEMBER_ME) === 'true';

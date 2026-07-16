@@ -9,9 +9,6 @@ import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.
 import { UserDataService } from '../signup/user-data.service';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
-import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
-import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
-import { GlobalComponent } from 'src/app/global-component';
 
 @Component({
   selector: 'app-signup-check',
@@ -23,25 +20,19 @@ export class SignupCheckComponent {
   SignupForm!: UntypedFormGroup;
   submitted = false;
   year: number = new Date().getFullYear();
-  systemConfigList: ConfiguracionSistema[] = [];
   
   identityTypes = UserDocType
   cityAcronym= CityAcronym
-
-  private isAuthenticated = false;
-  private authenticationAttempted = false;
 
   constructor(
     private router: Router,
     private formBuilder: UntypedFormBuilder,
     private ruatService: RuatRequestsService,
     private userDataService: UserDataService,
-    private contribuyentesService: ContribuyentesService,
-    private systemConfigsService: ConfiguracionSistemaService
+    private contribuyentesService: ContribuyentesService
   ) { }
 
   ngOnInit(): void {
-    this.getConfigsSystem();
      this.SignupForm = this.formBuilder.group({
       tipoDocumento:['', [Validators.required]],
       numeroDocumento:['', [Validators.required]],
@@ -111,54 +102,9 @@ export class SignupCheckComponent {
     });
   }
   /* API RUAT Services */
-  private getConfigsSystem() {
-    this.systemConfigsService.getAll().subscribe({
-      next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.systemConfigList = data.payload;
-          this.authRuat();
-        }
-      },
-      error: (error) => {
-        this.notify('Error loading system configuration', 'error');
-      }
-    });
-  }
-  private authRuat(): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-      this.authenticationAttempted = true;      
-      const usuario = GlobalComponent.RUAT_usuario;
-      const clave = GlobalComponent.RUAT_clave;      
-      this.ruatService.authenticate(usuario, clave).subscribe({
-        next: (response) => {          
-          window.sessionStorage.setItem('ruat-token', response.token);
-          this.isAuthenticated = true;
-          resolve(true);
-        },
-        error: (error) => {
-          this.isAuthenticated = false;
-          this.notify("Falla en la conexión con el RUAT, por favor intente más tarde", 'error');
-          reject(error);
-        }
-      });
-    });
-  }
-
   ruatData: any;
   async searchContribuyente(data: any) {
-    if (!this.isAuthenticated) {
-      try {
-        if (!this.authenticationAttempted) {
-          await this.authRuat();
-        } else {
-          await this.authRuat();
-        }
-      } catch (error) {
-        this.notify('No se pudo autenticar con el servicio RUAT', 'error');
-        return;
-      }
-    }
-    this.ruatService.getContribuyentePorCi('QUI', data.numeroDocumento, data.tipoDocumento, data.expedido).subscribe({    
+    this.ruatService.getContribuyentePorCi(data.numeroDocumento, data.tipoDocumento, data.expedido).subscribe({    
       next: (resp: any) => {
         if (resp['status'] === 'OK') {
           const response = resp.payload;
@@ -188,8 +134,7 @@ export class SignupCheckComponent {
       },
       error: (error: any) => {
         if (error.status === 401 || error.status === 403) {
-          this.isAuthenticated = false;
-          this.notify('La sesión ha expirado, por favor intente nuevamente', 'error');
+          this.notify('No se pudo consultar RUAT, por favor intente nuevamente', 'error');
         }
       }
     });

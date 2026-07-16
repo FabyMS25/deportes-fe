@@ -89,12 +89,18 @@ export class CalendarDashboardComponent implements OnInit {
     if (this.authService.tokenUser() === 'CONTRIBUYENTE_SESSION') {
       this.contribuyente = this.parseCurrentUser(currentUser);
     }
-    this.authService.loginEvent$
-    .pipe(take(1))
-    .subscribe(event => {
-      this.showConsolidatedSystemStatus(event);
-    });    
+    const pendingLoginEvent = this.authService.consumeLoginEvent();
+    if (pendingLoginEvent) {
+      this.showConsolidatedSystemStatus(pendingLoginEvent);
+    } else {
+      this.authService.loginEvent$
+      .pipe(take(1))
+      .subscribe(event => {
+        this.showConsolidatedSystemStatus(event);
+      });
+    }
     this.loadCalendarViewPreference();
+    this.applyResponsiveCalendarOptions();
     if(this.employee){
       this.complejosList = this.employee && this.employee.complejoDto ? [this.employee.complejoDto] : [];
     }else{
@@ -143,33 +149,26 @@ export class CalendarDashboardComponent implements OnInit {
         welcomeTitle = '🎉 ¡Bienvenido!';
         welcomeMessage = 'Inicio de sesión exitoso.';
     }    
-    let statusMessage = '📊 Estado del Sistema:\n\n';
+    let statusMessage = 'Estado: ';
     if (configsLoaded > 0) {
-      statusMessage += '✅ Sistema Principal: CONECTADO\n';
-      statusMessage += `⚙️ Configuraciones: ${configsLoaded} cargadas\n`;
+      statusMessage += `Sistema conectado · Configuraciones: ${configsLoaded}\n`;
     } else {
-      statusMessage += '⚠️ Sistema Principal: CONEXIÓN LIMITADA\n';
-      statusMessage += `⚙️ Configuraciones: 0 cargadas\n`;
+      statusMessage += 'Sistema con conexión limitada · Configuraciones: 0\n';
     }
     if (finalRuatConnected) {
-      statusMessage += '✅ RUAT: CONECTADO\n';
-      statusMessage += '   → Todas las funciones disponibles';
+      statusMessage += 'RUAT: conectado · Todas las funciones disponibles.';
     } else {
-      statusMessage += '❌ RUAT: NO DISPONIBLE\n\n';
-      statusMessage += '   ⚠️ ADVERTENCIA IMPORTANTE:\n';
-      statusMessage += '   • No se puede conectar al sistema RUAT\n';
-      statusMessage += '   • Las reservas nuevas NO estarán disponibles\n';
-      statusMessage += '   • Solo podrá consultar reservas existentes\n';
-      statusMessage += '   • La verificación de contribuyentes estará limitada\n\n';
-      statusMessage += '   💡 Recomendación:\n';
-      statusMessage += '   • Si necesita realizar reservas, cierre sesión y vuelva a intentar más tarde\n';
-      statusMessage += '   • Contacte al administrador si el problema persiste';
+      statusMessage += 'RUAT: no disponible.\n';
+      statusMessage += 'Bloqueado: aprobar reservas con cobro, crear/anular tasas y consultar pagos RUAT.\n';
+      statusMessage += 'Disponible: revisar reservas y datos ya registrados.\n';
+      statusMessage += 'Si continúa, contacte al administrador o al ingeniero de sistemas.';
     }
-    const fullMessage = `${welcomeMessage}\n\n${statusMessage}`;
+    const fullMessage = `${welcomeMessage}\n${statusMessage}`;
     this.toastService.show(fullMessage, {
       classname: finalRuatConnected ? 'bg-success text-light' : 'bg-warning text-dark',
       header: welcomeTitle,
-      delay: 15000
+      delay: finalRuatConnected ? 18000 : 30000,
+      replaceKey: 'system-status'
     });
   }
 
@@ -513,6 +512,7 @@ export class CalendarDashboardComponent implements OnInit {
     eventClick: this.handleEventClick.bind(this),
     eventsSet: this.handleEvents.bind(this),
     datesSet: this.handleViewChange.bind(this),
+    windowResize: this.handleCalendarResize.bind(this),
   };
   
   currentEvents: EventApi[] = [];
@@ -650,6 +650,40 @@ export class CalendarDashboardComponent implements OnInit {
       console.error('Error loading calendar view preference:', error);
     }
   }  
+
+  private handleCalendarResize(): void {
+    this.applyResponsiveCalendarOptions();
+  }
+
+  private applyResponsiveCalendarOptions(): void {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 576;
+    this.calendarOptions = {
+      ...this.calendarOptions,
+      initialView: isMobile ? 'dayGridMonth' : this.calendarOptions.initialView,
+      headerToolbar: isMobile
+        ? {
+            left: 'prev,next',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listWeek'
+          }
+        : {
+            right: 'multiMonthYear,dayGridMonth,timeGridWeek,timeGridDay,listWeek',
+            center: 'title',
+            left: 'prev,next today'
+          },
+      buttonText: {
+        today: 'Hoy',
+        month: 'Mes',
+        week: 'Semana',
+        day: 'Día',
+        list: 'Agenda',
+        year: 'Año'
+      },
+      dayMaxEvents: isMobile ? 2 : 3,
+      dayMaxEventRows: isMobile ? 2 : 3,
+      contentHeight: isMobile ? 'auto' : undefined
+    };
+  }
   private isValidView(view: string): boolean {
     const validViews = [
       'dayGridMonth', 

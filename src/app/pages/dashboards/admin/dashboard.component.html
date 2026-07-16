@@ -130,10 +130,10 @@
             <div class="card-header border-0 align-items-center d-flex">
                 <h4 class="card-title mb-0 flex-grow-1">Análisis de Reservas</h4>
                 <div class="d-flex gap-1">
-                  <button type="button" class="btn btn-soft-secondary btn-sm" (click)="setRevenueValue('all')">Todo</button>
-                  <button type="button" class="btn btn-soft-secondary btn-sm" (click)="setRevenueValue('1M')">1M</button>
-                  <button type="button" class="btn btn-soft-secondary btn-sm" (click)="setRevenueValue('6M')">6M</button>
-                  <button type="button" class="btn btn-soft-primary btn-sm" (click)="setRevenueValue('1A')">1A</button>
+                  <button type="button" class="btn btn-sm" [ngClass]="selectedRevenueRange === 'all' ? 'btn-soft-primary' : 'btn-soft-secondary'" (click)="setRevenueValue('all')">Todo</button>
+                  <button type="button" class="btn btn-sm" [ngClass]="selectedRevenueRange === '1M' ? 'btn-soft-primary' : 'btn-soft-secondary'" (click)="setRevenueValue('1M')">1M</button>
+                  <button type="button" class="btn btn-sm" [ngClass]="selectedRevenueRange === '6M' ? 'btn-soft-primary' : 'btn-soft-secondary'" (click)="setRevenueValue('6M')">6M</button>
+                  <button type="button" class="btn btn-sm" [ngClass]="selectedRevenueRange === '1A' ? 'btn-soft-primary' : 'btn-soft-secondary'" (click)="setRevenueValue('1A')">1A</button>
                 </div>
             </div>
             <div class="card-header p-0 border-0 bg-light-subtle">
@@ -143,7 +143,7 @@
                             <h5 class="mb-1">
                                 <span [countUp]="totalReservations" class="counter-value" [options]="option"></span>
                             </h5>
-                            <p class="text-muted mb-0 fs-11">Exitosas</p>
+                            <p class="text-muted mb-0 fs-11">Total Reservas</p>
                         </div>
                     </div>
                     <div class="col-6 col-sm-4 col-lg-2">

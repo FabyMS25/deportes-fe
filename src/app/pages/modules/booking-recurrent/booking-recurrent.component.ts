@@ -74,13 +74,6 @@ export class BookingRecurrentComponent implements OnInit {
   get enableRecurrentBooking(): boolean | undefined{
     return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
   }
-  get HorasValidacionPago(): number | undefined {
-    return this.systemConfigList[ClaveConfiguracion.HORAS_VALIDACION_PAGO]?.valorNumerico;
-  }
-  get MinutosGraciaNoShow(): number | undefined {
-    return this.systemConfigList[ClaveConfiguracion.MINUTOS_GRACIA_NO_SHOW]?.valorNumerico;
-  }
-
   constructor(
       private authService: AuthenticationService,      
       public paginationService: PaginationService,
@@ -121,6 +114,8 @@ export class BookingRecurrentComponent implements OnInit {
       { name: 'Precio Base Aplicado', prop: 'precioBaseAplicado', visible: false },
       { name: 'Monto Total', prop: 'reservaDto.montoTotal', visible: true },
       { name: 'Tasa', prop: 'reservaDto.numeroTasa', visible: true },
+      { name: 'Fecha Límite Pago', prop: 'reservaDto.fechaLimitePago', date: true, visible: false },
+      { name: 'Anulación Automática', prop: 'reservaDto.cancelacionAutomatica', visible: true, tag: true },
 
       { name: 'Gratuita', prop: 'reservaDto.esReservaGratuita', visible: true, tag: true },
       { name: 'Motivo Gratuidad', prop: 'reservaDto.motivoGratuidad', visible: false },
@@ -394,8 +389,8 @@ export class BookingRecurrentComponent implements OnInit {
         tipoOrganizacion: item.reservaDto?.organizacionDto?.tipoOrganizacion || '-',
         representanteOrganizacion: item.reservaDto?.organizacionDto?.representanteDto?.nombreCompleto || '-',
 
-        estudiante: item.reservaDto?.estudianteEscuelaDto?.nombreCompleto || '-',
-        matricula: item.reservaDto?.estudianteEscuelaDto?.matricula || '-',
+        estudiante: '-',
+        matricula: '-',
 
         tipoContribuyente: item.reservaDto?.contribuyenteDto?.tipoContribuyente || '-',
         contribuyente: contribuyenteNombre || '-',
@@ -703,9 +698,13 @@ export class BookingRecurrentComponent implements OnInit {
     if(reserva.reservaDto.esReservaGratuita){
       return false;
     }
-    const horasValidacion = this.HorasValidacionPago || 24;
-    const fechaCreacion = new Date(reserva.reservaDto.fechaCreacion);
-    const fechaExpiracion = new Date(fechaCreacion.getTime() + (horasValidacion * 60 * 60 * 1000));
+    if (reserva.reservaDto.cancelacionAutomatica === false) {
+      return false;
+    }
+    if (!reserva.reservaDto.fechaLimitePago) {
+      return false;
+    }
+    const fechaExpiracion = new Date(reserva.reservaDto.fechaLimitePago);
     const now = new Date();
     return now > fechaExpiracion;
   }
@@ -740,8 +739,7 @@ export class BookingRecurrentComponent implements OnInit {
           errorCode: 'NO_TASA'
         };
       }
-      const codigoAlcaldia = this.systemConfigList[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI';
-      const resp: any = await this.ruatService.consultaPagoTasa(codigoAlcaldia, nroTasa).toPromise();
+      const resp: any = await this.ruatService.consultaPagoTasa(nroTasa).toPromise();
       if (resp?.status !== 'OK') {
         if (this.isRuatConnectionError(resp?.payload)) {
           return {
@@ -783,7 +781,7 @@ export class BookingRecurrentComponent implements OnInit {
         }
         return {
           item,
-          text: 'RUAT devolvió una respuesta inválida. No se actualizó la reserva.',
+          text: this.ruatService.getOperationalErrorMessage(resp, 'RUAT devolvió una respuesta inválida. No se actualizó la reserva.'),
           type: 'warning',
           hasPayment: false,
           consultationSuccessful: false,
@@ -890,8 +888,6 @@ export class BookingRecurrentComponent implements OnInit {
     }
   }
   private async handleExpiredgReservation(reserva: ReservaRecurrente): Promise<ReservaRecurrente> {
-    const codigoAlcaldia = this.systemConfigList[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI';
-    const codigoUsuario = this.systemConfigList[ClaveConfiguracion.CODIGO_USUARIO_RUAT]?.valorTexto || '';
     if (reserva.reservaDto?.numeroTasa) {
       try {
         const requestData = {
@@ -899,11 +895,7 @@ export class BookingRecurrentComponent implements OnInit {
           motivo: "NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO",
           observacion: "ANULADO AUTOMATICO, VENCIDO PLAZO DE RESERVA"
         };
-        if (!this.ruatService.isTokenAvailable()) {
-          console.warn('RUAT token not available, skipping tasa cancellation');
-        } else {
-          await this.ruatService.cancelTasa(codigoAlcaldia, codigoUsuario, requestData).toPromise();
-        }
+        await this.ruatService.cancelTasa(requestData).toPromise();
       } catch (error) {
         console.warn('Failed to cancel tasa in RUAT for expired reservation:', error);
         return reserva;
@@ -1007,9 +999,7 @@ export class BookingRecurrentComponent implements OnInit {
   private getCategories() {
     this.categoriesService.getAll().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.categoryList = data.payload;
-        }
+        this.categoryList = data;
       },
       error: (error) => {
         this.handleError(error, 'Error al obtener las Categorías');

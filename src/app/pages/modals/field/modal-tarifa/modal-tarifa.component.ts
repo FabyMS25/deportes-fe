@@ -527,9 +527,7 @@ export class ModalTarifaComponent implements OnInit {
   private getCategorias() {
     this.categoriaService.getAll().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.categoriasList = data.payload;
-        }
+        this.categoriasList = data;
       },
       error: (error) => {
         this.notify('No se pudo recuperar las categorías', 'error');

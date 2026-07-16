@@ -1,10 +1,9 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 import { Contribuyente } from '../models/contribuyente.model';
-import { TokenStorageService } from './token-storage.service';
 
 const apiUrl = `${environment.backendUrl}/ruat`;
 
@@ -15,15 +14,10 @@ export class RuatRequestsService {
 
   constructor(
     private http: HttpClient,
-    private storageService: TokenStorageService,
   ) { }
 
-  private getToken(): string | null {
-    return sessionStorage.getItem('ruat-token') || window.sessionStorage.getItem('ruat-token');
-  }
-
   isTokenAvailable(): boolean {
-    return !!this.getToken();
+    return true;
   }
 
   getResponsePayload(response: any): any {
@@ -51,27 +45,52 @@ export class RuatRequestsService {
 
   getResponseMessage(response: any, fallback: string = 'Respuesta inesperada de RUAT'): string {
     const payload = this.getResponsePayload(response);
-    return payload?.mensaje || response?.mensaje || response?.message || fallback;
+    const data = payload?.datos ?? {};
+    return this.firstText(
+      payload?.mensaje,
+      data?.mensajeConfirmacion,
+      data?.observacion,
+      payload?.observacion,
+      response?.mensaje,
+      response?.message,
+      fallback
+    );
   }
 
-  authenticate(usuario: string, clave: string): Observable<any> {
-    const requestData = {
-      'usuario': usuario,
-      'clave': clave
-    };
-    return this.http.post<any>(`${apiUrl}/login`, requestData);
-  }
-
-  getContribuyentePorCi(codigoAlcaldia: string, numeroDocumento: string, tipoDocumento: string, expedido: string): Observable<any> {
-    const token = this.getToken();
-    if (!token) {
-      throw new Error('RUAT token not available');
+  getOperationalErrorMessage(
+    response: any,
+    fallback: string = 'RUAT devolvió una respuesta inválida.'
+  ): string {
+    const message = this.getResponseMessage(response, fallback);
+    const validation = this.getResponsePayload(response)?.detalle?.validacion;
+    if (validation?.campo) {
+      return `RUAT rechazó la solicitud: ${message}`;
     }
-    
+    return message;
+  }
+
+  private firstText(...values: any[]): string {
+    for (const value of values) {
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+      if (Array.isArray(value)) {
+        const nested = this.firstText(...value);
+        if (nested) {
+          return nested;
+        }
+      }
+    }
+    return '';
+  }
+
+  authenticate(): Observable<any> {
+    return this.http.post<any>(`${apiUrl}/login`, {});
+  }
+
+  getContribuyentePorCi(numeroDocumento: string, tipoDocumento: string, expedido: string): Observable<any> {
     const requestData = {
-      'token': token,
       'contribuyenteRequest': {
-        'codigoAlcaldia': codigoAlcaldia,
         'numeroDocumento': numeroDocumento,
         'tipoDocumento': tipoDocumento,
         'expedido': expedido
@@ -80,17 +99,9 @@ export class RuatRequestsService {
     return this.http.post<any>(`${apiUrl}/buscar`, requestData);
   }
 
-  registerContribuyente(codigoAlcaldia: string, codigoUsuario: string, data: Contribuyente): Observable<any> {
-    const token = this.getToken();
-    if (!token) {
-      throw new Error('RUAT token not available');
-    }
-    
+  registerContribuyente(data: Contribuyente): Observable<any> {
     const requestData = {
-      'token': token,
       'registro': {
-        codigoAlcaldia: codigoAlcaldia,
-        codigoUsuario: codigoUsuario,
         numeroDocumento: data.numeroDocumento,
         tipoDocumento: data.tipoDocumento,
         expedido: data.expedido,
@@ -108,18 +119,8 @@ export class RuatRequestsService {
     return this.http.post<any>(`${apiUrl}/registro`, requestData);
   }
 
-  getDeudasContribuyente(codigoAlcaldia: string, tipoConsulta: string, nroDocumento: string, tipoDocumento: string): Observable<any> {
-    const token = this.getToken();
-    if (!token) {
-      throw new Error('RUAT token not available');
-    }
-    
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-
+  getDeudasContribuyente(tipoConsulta: string, nroDocumento: string, tipoDocumento: string): Observable<any> {
     const requestData = {
-      'codigoAlcaldia': codigoAlcaldia,
       'tipoConsulta': tipoConsulta,
       'numeroDocumento': nroDocumento,
       'tipoDocumento': tipoDocumento
@@ -127,24 +128,14 @@ export class RuatRequestsService {
 
     return this.http.post<any>(
       `${apiUrl}/RuatServiciosWebTasasOI/tasasOI/consultaDeudaTasaContrib`,
-      requestData,
-      { headers }
+      requestData
     );
   }
 
-  createTasa(codigoAlcaldia: string, codigoUsuario: string, servicioMunicipal: string, data: any, codigoContribuyente: string): Observable<any> {    
-    const token = this.getToken();
-    if (!token) {
-      throw new Error('RUAT token not available');
-    }
-    
+  createTasa(data: any, codigoContribuyente: string): Observable<any> {
     const requestData = {
-      'token': token,
       'tasa': {
-        codigoAlcaldia: codigoAlcaldia,
-        codigoUsuario: codigoUsuario,
         codigoContribuyente: codigoContribuyente,
-        servicioMunicipal: servicioMunicipal,
         datosConcepto: data.datosConcepto,
         observacion: data.observacion
       }
@@ -152,19 +143,10 @@ export class RuatRequestsService {
     return this.http.post<any>(`${apiUrl}/creartasa`, requestData);
   }
 
-  cancelTasa(codigoAlcaldia: string, codigoUsuario: string, data: any): Observable<any> {   
-    const token = this.getToken();
-    if (!token) {
-      throw new Error('RUAT token not available');
-    }
-    
+  cancelTasa(data: any): Observable<any> {
     const requestData = {
-      'token': token,
       'anular': {
-        'codigoAlcaldia': codigoAlcaldia,
-        'codigoUsuario': codigoUsuario,
         'numeroTasa': data.numeroTasa,
-        'tipoTasa': 'TO',
         'motivoTasa': data.motivo,
         'observacion': data.observacion
       }
@@ -172,28 +154,18 @@ export class RuatRequestsService {
     return this.http.post<any>(`${apiUrl}/anulartasa`, requestData);
   }
   
-  consultaPagoTasa(codigoAlcaldia: string, nroTasa: string): Observable<any> {
-    const token = this.getToken();
-    if (!token) {
-      throw new Error('RUAT token not available');
-    }
-    
+  consultaPagoTasa(nroTasa: string): Observable<any> {
     const requestData = {
-      'token': token,
       'pago': {
-        'codigoAlcaldia': codigoAlcaldia,
-        'numeroTasa': nroTasa,
-        'tipoTasa': 'TO'
+        'numeroTasa': nroTasa
       }
     };
     return this.http.post<any>(`${apiUrl}/pago`, requestData);
   }
 
-  setToken(token: string): void {
-    this.storageService.saveRuatToken(token);
+  setToken(_token: string): void {
   }
 
   removeToken(): void {
-    this.storageService.clearRuatToken();
   }
 }

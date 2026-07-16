@@ -202,6 +202,7 @@
           [recurrentSchedule]="bookingState.recurrentSchedule"
           [reservationsList]="reservationsList"
           [userRole]="userRole"
+          [canActivate]="canActivate"
           [systemConfigs]="systemConfigList"
           (reservationCompleted)="onReservationCompleted($event)">
         </app-reservation-form>
@@ -229,57 +230,59 @@
         <div class="card-body p-2">
           <ngx-slick-carousel [config]="config" #slickModal="slick-carousel">
             <div class="alert alert-warning small py-2 mb-0" 
-                 *ngIf="bookingStep === BookingStep.RESERVATION_FORM && paymentValidationDisplay" 
+                 *ngIf="bookingStep === BookingStep.RESERVATION_FORM && isDirectReservationFlow && paymentValidationDisplay"
                  ngxSlickItem>
               <i class="ri-alarm-warning-line me-1"></i>
               <strong>{{ 'Recuerde:' | translate }}</strong> {{ 'Debe realizar el pago dentro de las próximas' | translate }}
               <strong>{{ paymentValidationDisplay }}</strong> {{ 'para confirmar su reserva.' | translate }}
             </div>            
             <div class="alert alert-info small py-2 mb-0" 
-                 *ngIf="bookingStep >= BookingStep.HORARIO_SELECTION && bookingState.campo?.requiereAprobacion" 
+                 *ngIf="bookingStep >= BookingStep.HORARIO_SELECTION && isRequestFlow"
                  ngxSlickItem>
               <i class="ri-time-line me-1"></i>
-              <strong>{{ 'Reserva sujeta a aprobación:' | translate }}</strong> {{ 'Su solicitud será revisada por el administrador del complejo. Recibirá una notificación una vez sea aprobada o rechazada.' | translate }}
+              <strong>{{ 'Solicitud de reserva:' | translate }}</strong> {{ 'Será revisada por el administrador del complejo antes de generar la tasa municipal.' | translate }}
             </div>
             <div class="alert alert-success small py-2 mb-0" 
-                 *ngIf="bookingStep >= BookingStep.HORARIO_SELECTION && !bookingState.campo?.requiereAprobacion" 
+                 *ngIf="bookingStep >= BookingStep.HORARIO_SELECTION && isDirectReservationFlow"
                  ngxSlickItem>
               <i class="ri-checkbox-circle-line me-1"></i>
-              <strong>{{ 'Aprobación automática:' | translate }}</strong> {{ 'Su reserva será confirmada inmediatamente después del pago, sin necesidad de revisión manual.' | translate }}
+              <strong>{{ 'Reserva directa:' | translate }}</strong> {{ 'Se generará la tasa municipal al confirmar la reserva.' | translate }}
             </div>
-            <div class="alert alert-warning small py-2 mb-0"
-                 *ngIf="bookingStep >= BookingStep.HORARIO_SELECTION && bookingState.tarifa?.tipoCobro === 'por_evento' && maxEventDurationDisplay"
-                 ngxSlickItem>
-              <i class="ri-timer-line me-1"></i>
-              <strong>{{ 'Evento:' | translate }}</strong> {{ 'Duración máxima permitida:' | translate }} <strong>{{ maxEventDurationDisplay }}</strong>.
-            </div>
-            <div class="alert alert-light border small py-2 mb-0"
-                 *ngIf="bookingStep >= BookingStep.HORARIO_SELECTION && minReservationDurationDisplay"
+            <div class="alert alert-light border small py-2 mb-0 booking-info-alert"
+                 *ngIf="bookingStep >= BookingStep.HORARIO_SELECTION && shouldShowDurationRules"
                  ngxSlickItem>
               <i class="ri-time-line me-1"></i>
-              <strong>{{ 'Duración mínima:' | translate }}</strong> {{ minReservationDurationDisplay }}.
+              <strong>{{ 'Duración:' | translate }}</strong>
+              <span *ngIf="minReservationDurationDisplay">{{ 'mín.' | translate }} {{ minReservationDurationDisplay }}</span>
+              <span *ngIf="minReservationDurationDisplay && maxReservationDurationDisplay"> · </span>
+              <span *ngIf="maxReservationDurationDisplay">{{ 'máx.' | translate }} {{ maxReservationDurationDisplay }}</span>
+            </div>
+            <div class="alert alert-primary small py-2 mb-0 booking-info-alert"
+                 *ngIf="bookingStep >= BookingStep.HORARIO_SELECTION && shouldShowAnticipationRule"
+                 ngxSlickItem>
+              <i class="ri-calendar-check-line me-1"></i>
+              <strong>{{ 'Anticipación:' | translate }}</strong>
+              {{ 'reserva con' | translate }} <strong>{{ anticipationTime }}</strong> {{ 'como mínimo.' | translate }}
             </div>
             <div class="alert alert-info small py-2 mb-0" 
-                 *ngIf="bookingStep > BookingStep.CAMPO_SELECTION && this.bookingType === 'recurrente'" 
+                 *ngIf="bookingStep > BookingStep.CAMPO_SELECTION && bookingType === 'recurrente'"
                  ngxSlickItem>
               <i class="ri-information-line me-1"></i>
               <strong>{{ 'Nota:' | translate }}</strong> {{ 'La reserva será válida para todos los días y horarios seleccionados durante el período indicado.' | translate }}
             </div>
             <div class="alert alert-info small py-2 mb-0" 
-                 *ngIf="bookingStep > BookingStep.CAMPO_SELECTION && this.bookingType === 'puntual'" 
+                 *ngIf="bookingStep > BookingStep.CAMPO_SELECTION && bookingType === 'puntual'"
                  ngxSlickItem>
               <i class="ri-lightbulb-line me-1"></i>
               <strong>{{ 'Consejo:' | translate }}</strong> {{ 'Los horarios en verde están disponibles para reservar. Seleccione el que más le convenga.' | translate }}
             </div>
-            <div class="alert alert-primary small py-2 mb-0" role="alert" ngxSlickItem>
+            <div class="alert alert-primary small py-2 mb-0 booking-info-alert" role="alert" ngxSlickItem
+                 *ngIf="paymentValidationDisplay">
               <div class="d-flex">
                 <i class="ri-information-line fs-14 mt-1"></i>
                 <div class="ms-2">
                   <h6 class="alert-heading mb-1 fs-14">{{ 'Requisitos' | translate }}</h6>
-                  <p class="mb-1 fs-13" *ngIf="anticipationTime">
-                    {{ 'Reserva con' | translate }} <strong>{{ anticipationTime }}</strong> {{ 'de anticipación mínima.' | translate }}
-                  </p>
-                  <small class="text-muted fs-12" *ngIf="paymentValidationDisplay">
+                  <small class="fs-12">
                     {{ 'Pago en' | translate }} <strong>{{ paymentValidationDisplay }}</strong> {{ 'para confirmar.' | translate }}
                   </small>
                 </div>
@@ -330,11 +333,16 @@
                     </span>
                     <small class="text-muted ms-1">{{ bookingState.campo.superficieDto.descripcion }}</small>
                   </div>
-                  <div class="d-flex flex-wrap gap-1" *ngIf="getAvailableDisciplines(bookingState.campo).length > 0">
-                  <span *ngFor="let cat of getAvailableDisciplines(bookingState.campo)" 
-                        class="badge bg-success-subtle text-success me-2">
-                    {{ cat }}
-                  </span>
+                  <div class="discipline-badges d-flex flex-wrap gap-1" *ngIf="getAvailableDisciplines(bookingState.campo).length > 0"
+                       [title]="getDisciplinesTooltip(bookingState.campo)">
+                    <span *ngFor="let cat of getVisibleDisciplines(bookingState.campo)"
+                          class="badge bg-success-subtle text-success discipline-badge">
+                      {{ cat }}
+                    </span>
+                    <span *ngIf="getHiddenDisciplinesCount(bookingState.campo) > 0"
+                          class="badge bg-light text-muted discipline-badge">
+                      +{{ getHiddenDisciplinesCount(bookingState.campo) }} {{ 'categorías' | translate }}
+                    </span>
                   </div>
                 </div>
               </div>

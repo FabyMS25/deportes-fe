@@ -304,10 +304,8 @@ export class FacilitiesComponent {
 
   private getCategories(){
     this.categoriasService.getAll().subscribe({
-        next: (data: any) => {
-          if (data['status'] === 'OK') {
-            this.categoryList = data.payload;
-          }
+        next: (data: any[]) => {
+          this.categoryList = data;
         }
       });
   }

@@ -495,25 +495,20 @@ export class ModalImportComponent {
 
   private searchSuperficie(descripcion: string): Observable<any> {
     return this.superficieService.getAll().pipe(
-      map((response: any) => {
-        if (response.status === 'OK') {
-          const superficie = response.payload.find((s: any) => s.descripcion === descripcion);
-          if (!superficie) {
-            throw new Error(`Superficie '${descripcion}' no encontrada`);
-          }
-          return superficie;
+      map((superficies: any[]) => {
+        const superficie = superficies.find((s: any) => s.descripcion === descripcion);
+        if (!superficie) {
+          throw new Error(`Superficie '${descripcion}' no encontrada`);
         }
-        throw new Error('Error al buscar superficie');
+        return superficie;
       })
     );
   }
 
   private loadCategories(): void {
     this.categoriesService.getAll().subscribe({
-      next: (response: any) => {
-        if (response.status === 'OK') {
-          this.categoryList = response.payload;
-        }
+      next: (response: any[]) => {
+        this.categoryList = response;
       },
     });
   }

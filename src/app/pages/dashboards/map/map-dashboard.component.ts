@@ -86,11 +86,16 @@ export class MapDashboardComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.authService.loginEvent$
-            .pipe(take(1))
-            .subscribe(event => {
-            this.showConsolidatedSystemStatus(event);
-        });
+        const pendingLoginEvent = this.authService.consumeLoginEvent();
+        if (pendingLoginEvent) {
+            this.showConsolidatedSystemStatus(pendingLoginEvent);
+        } else {
+            this.authService.loginEvent$
+                .pipe(take(1))
+                .subscribe(event => {
+                this.showConsolidatedSystemStatus(event);
+            });
+        }
         this.systemConfigList = this.authService.getAllConfigs()
         const currentUser = this.authService.currentUser();
         this.userRole = this.authService.getUserRole();
@@ -119,37 +124,41 @@ export class MapDashboardComponent implements OnInit {
         welcomeTitle = '👤 ¡Bienvenido Encargado!';
         welcomeMessage = 'Inicio de sesión exitoso.';
         break;
+      case 'welcome_contribuyente':
+        welcomeTitle = '¡Bienvenido!';
+        welcomeMessage = 'Inicio de sesión exitoso.';
+        break;
       default:
-        welcomeTitle = '🎉 ¡Bienvenido!';
+        welcomeTitle = '¡Bienvenido!';
         welcomeMessage = 'Inicio de sesión exitoso.';
     }    
-    let statusMessage = '📊 Estado del Sistema:\n\n';
+    const isContribuyente = event.message === 'welcome_contribuyente' || this.userRole === 'Contribuyente';
+    let statusMessage = 'Estado: ';
     if (configsLoaded > 0) {
-      statusMessage += '✅ Sistema Principal: CONECTADO\n';
-      statusMessage += `⚙️ Configuraciones: ${configsLoaded} cargadas\n`;
+      statusMessage += `Sistema conectado · Configuraciones: ${configsLoaded}\n`;
     } else {
-      statusMessage += '⚠️ Sistema Principal: CONEXIÓN LIMITADA\n';
-      statusMessage += `⚙️ Configuraciones: 0 cargadas\n`;
+      statusMessage += 'Sistema con conexión limitada · Configuraciones: 0\n';
     }
     if (finalRuatConnected) {
-      statusMessage += '✅ RUAT: CONECTADO\n';
-      statusMessage += '   → Todas las funciones disponibles';
+      statusMessage += 'RUAT: conectado · Todas las funciones disponibles.';
     } else {
-      statusMessage += '❌ RUAT: NO DISPONIBLE\n\n';
-      statusMessage += '   ⚠️ ADVERTENCIA IMPORTANTE:\n';
-      statusMessage += '   • No se puede conectar al sistema RUAT\n';
-      statusMessage += '   • Las reservas nuevas NO estarán disponibles\n';
-      statusMessage += '   • Solo podrá consultar reservas existentes\n';
-      statusMessage += '   • La verificación de contribuyentes estará limitada\n\n';
-      statusMessage += '   💡 Recomendación:\n';
-      statusMessage += '   • Si necesita realizar reservas, cierre sesión y vuelva a intentar más tarde\n';
-      statusMessage += '   • Contacte al administrador si el problema persiste';
+      statusMessage += 'RUAT: no disponible.\n';
+      if (isContribuyente) {
+        statusMessage += 'Puede revisar complejos y reservas existentes.\n';
+        statusMessage += 'No podrá crear reservas con cobro hasta que RUAT responda.\n';
+        statusMessage += 'Si continúa, contacte a soporte o administración.';
+      } else {
+        statusMessage += 'Bloqueado: crear/anular tasas y consultar pagos RUAT.\n';
+        statusMessage += 'Disponible: revisar reservas y datos ya registrados.\n';
+        statusMessage += 'Si continúa, contacte al administrador o al ingeniero de sistemas.';
+      }
     }
-    const fullMessage = `${welcomeMessage}\n\n${statusMessage}`;
+    const fullMessage = `${welcomeMessage}\n${statusMessage}`;
     this.toastService.show(fullMessage, {
       classname: finalRuatConnected ? 'bg-success text-light' : 'bg-warning text-dark',
       header: welcomeTitle,
-      delay: 15000
+      delay: finalRuatConnected ? 18000 : 26000,
+      replaceKey: 'system-status'
     });
   }
 
@@ -982,13 +991,11 @@ export class MapDashboardComponent implements OnInit {
     private getCategories() {
         this.categoriesService.getAll().subscribe({
             next: (data: any) => {
-                if (data['status'] === 'OK') {
-                    this.categoryList = data.payload;
-                }
+                this.categoryList = data;
             },
             error: (error) => {
                 Swal.fire({ 
-                    text: 'No se pudo recuperar las categorías', 
+                    text: error?.message || 'No se pudo recuperar las categorías', 
                     icon: 'error',
                     confirmButtonColor: '#299cdb' 
                 });
@@ -998,13 +1005,11 @@ export class MapDashboardComponent implements OnInit {
     private getSurfaces() {
         this.surfacesService.getAll().subscribe({
             next: (data: any) => {
-                if (data['status'] === 'OK') {
-                    this.surfaceList = data.payload;
-                }
+                this.surfaceList = data;
             },
             error: (error) => {
                 Swal.fire({ 
-                    text: 'No se pudo recuperar las superficies', 
+                    text: error?.message || 'No se pudo recuperar las superficies', 
                     icon: 'error',
                     confirmButtonColor: '#299cdb' 
                 });

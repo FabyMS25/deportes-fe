@@ -869,9 +869,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   private getSurfaces() {
     this.surfaceService.getAll().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.surfacesList = data.payload;
-        }
+        this.surfacesList = data;
       },
       error: (error) => {
         this.notify('No se pudo recuperar las superficies', 'error');
@@ -893,9 +891,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   private getCategorias() {
     this.categoriaService.getAll().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.categoriasList = data.payload;
-        }
+        this.categoriasList = data;
       },
       error: (error) => {
         this.notify('No se pudo recuperar las categorías', 'error');

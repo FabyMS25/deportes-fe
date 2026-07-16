@@ -2,6 +2,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { ReservaPeriodo } from '../../models/reservaPeriodo.model';
+import { ApiResponse, PageResponse } from '../apiResponses';
 
 export interface ReservaPeriodFilters {
   tab?: number;
@@ -25,7 +27,7 @@ export class ReservaPeriodoService {
     page: number = 0,
     size: number = 20,
     filters?: ReservaPeriodFilters
-  ): Observable<any> {
+  ): Observable<ApiResponse<PageResponse<ReservaPeriodo>>> {
     let params = new HttpParams()
       .set('page', String(page))
       .set('size', String(size));
@@ -37,46 +39,46 @@ export class ReservaPeriodoService {
         }
       });
     }
-
-    return this.http.get<any>(this.apiUrl, { params });
+    return this.http.get<ApiResponse<PageResponse<ReservaPeriodo>>>(this.apiUrl, { params });
   }
 
-  getAllWithoutPagination(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/all`);
+  getAllWithoutPagination(): Observable<ApiResponse<ReservaPeriodo[]>> {
+    return this.http.get<ApiResponse<ReservaPeriodo[]>>(`${this.apiUrl}/all`);
   }
 
-  getByUuid(uuid: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/${uuid}`);
+  getByUuid(uuid: string): Observable<ApiResponse<ReservaPeriodo>> {
+    return this.http.get<ApiResponse<ReservaPeriodo>>(`${this.apiUrl}/${uuid}`);
   }
 
-  getByReservaUuid(reservaUuid: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/reserva/${reservaUuid}`);
+  getByReservaUuid(reservaUuid: string): Observable<ApiResponse<ReservaPeriodo[]>> {
+    return this.http.get<ApiResponse<ReservaPeriodo[]>>(`${this.apiUrl}/reserva/${reservaUuid}`);
   }
 
-  getByPeriodo(periodo: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/periodo/${periodo}`);
+  getByPeriodo(periodo: string): Observable<ApiResponse<ReservaPeriodo[]>> {
+    return this.http.get<ApiResponse<ReservaPeriodo[]>>(`${this.apiUrl}/periodo/${periodo}`);
   }
 
-  getByContribuyente(contribuyenteUuid: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/contribuyente/${contribuyenteUuid}`);
+  getByContribuyente(contribuyenteUuid: string): Observable<ApiResponse<ReservaPeriodo[]>> {
+    return this.http.get<ApiResponse<ReservaPeriodo[]>>(`${this.apiUrl}/contribuyente/${contribuyenteUuid}`);
   }
 
-  getByOrganizacion(organizacionUuid: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/organizacion/${organizacionUuid}`);
-  }
-  getByEstudiante(estudianteUuid: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/estudiante/${estudianteUuid}`);
+  getByOrganizacion(organizacionUuid: string): Observable<ApiResponse<ReservaPeriodo[]>> {
+    return this.http.get<ApiResponse<ReservaPeriodo[]>>(`${this.apiUrl}/organizacion/${organizacionUuid}`);
   }
 
-  save(data: any): Observable<any> {
-    return this.http.post<any>(this.apiUrl, data);
+  getByEstudiante(estudianteUuid: string): Observable<ApiResponse<ReservaPeriodo[]>> {
+    return this.http.get<ApiResponse<ReservaPeriodo[]>>(`${this.apiUrl}/estudiante/${estudianteUuid}`);
   }
 
-  update(data: any): Observable<any> {
-    return this.http.put<any>(this.apiUrl, data);
+  save(data: ReservaPeriodo): Observable<ApiResponse<ReservaPeriodo>> {
+    return this.http.post<ApiResponse<ReservaPeriodo>>(this.apiUrl, data);
   }
 
-  delete(uuid: string): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/${uuid}`);
+  update(data: ReservaPeriodo): Observable<ApiResponse<ReservaPeriodo>> {
+    return this.http.put<ApiResponse<ReservaPeriodo>>(this.apiUrl, data);
+  }
+
+  delete(uuid: string): Observable<ApiResponse<ReservaPeriodo>> {
+    return this.http.delete<ApiResponse<ReservaPeriodo>>(`${this.apiUrl}/${uuid}`);
   }
 }

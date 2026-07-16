@@ -183,16 +183,14 @@ export class SurfacesComponent {
   loading: boolean = true;
   private getSurfaces(){
     this.superficiesService.getAll().subscribe({
-        next: (data: any) => {
+        next: (data: Superficie[]) => {
           this.loading = false;
-          if (data['status'] === 'OK') {
-            this.superficiesList = data.payload;
-            this.temp = this.superficiesList
-          }
+          this.superficiesList = data;
+          this.temp = this.superficiesList
         },
         error: (error) => {
           this.loading = false;
-          Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
+          Swal.fire({ text: error?.message || 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
         }
       });
   }
@@ -228,12 +226,10 @@ export class SurfacesComponent {
   deleteData() {
     let uuid = this.deleteId;
     this.superficiesService.delete(uuid).subscribe({
-      next: (data:any) => {
+      next: (message: string) => {
             this.submitted = false;
-            if(data['status'] === 'OK') {
-              this.notify(data.payload, 'info')
-              this.getSurfaces();
-            }
+            this.notify(message || 'Registro eliminado correctamente', 'info')
+            this.getSurfaces();
             this.closeModal();
        },
       error: err => {

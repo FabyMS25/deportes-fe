@@ -92,20 +92,43 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   showTariffBreakdown: boolean = false;
 
   get anticipationHours(): number | undefined {
+    if (this.isInternalUser) {
+      return undefined;
+    }
     if (!this.dataTariff) {
-      return this.systemConfigList[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
+      return this.getActiveNumericConfig(ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES);
     }
     switch (this.dataTariff.tipoCobro) {
       case 'por_evento':
-        const d = this.systemConfigList[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico;
+        const d = this.getActiveNumericConfig(ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS);
         return d ? d * 24 : undefined;
       case 'mensualidad':
       case 'por_sesion':
       case 'por_club':
-        return this.systemConfigList[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico;
+        return this.getActiveNumericConfig(ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES);
       default:
-        return this.systemConfigList[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
+        return this.getActiveNumericConfig(ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES);
     }
+  }
+
+  get maxRecurrentDurationDays(): number | undefined {
+    return this.getActiveNumericConfig(ClaveConfiguracion.DURACION_MAXIMA_RECURRENTES);
+  }
+
+  get minSessionDurationHours(): number | undefined {
+    return this.getActiveNumericConfig(ClaveConfiguracion.DURACION_MINIMA_RESERVA);
+  }
+
+  private getActiveNumericConfig(clave: ClaveConfiguracion): number | undefined {
+    const config = this.systemConfigList[clave];
+    const value = Number(config?.valorNumerico);
+    return config?.activo === true && Number.isFinite(value) && value > 0
+      ? value
+      : undefined;
+  }
+
+  private get isInternalUser(): boolean {
+    return this.userRole === 'Admin' || this.userRole === 'Encargado';
   }
 
   constructor(
@@ -207,6 +230,9 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     for (const s of slots) {
       if (!s.horaInicio || !s.horaFin) return 'Todos los horarios deben tener hora de inicio y fin';
       if (s.horaInicio >= s.horaFin) return 'La hora de fin debe ser mayor que la hora de inicio en cada horario';
+      if (this.minSessionDurationHours !== undefined && this.calculateDuration(s.horaInicio, s.horaFin) < this.minSessionDurationHours) {
+        return `La duración mínima de cada sesión es ${this.minSessionDurationHours} hora(s)`;
+      }
     }
     if (this.slotsHaveOverlap(slots)) return 'Los horarios no pueden superponerse';
     return null;
@@ -693,6 +719,7 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
       newEnd.setMonth(newEnd.getMonth() + 1);
       this.fechaFin = this.formatDateForInput(newEnd);
     }
+    this.applyMaxRecurrentDuration();
     this.dateSpecificSlots  = {};
     this.dayOfWeekOverrides = {};
     this.cancelDateEdit();
@@ -703,12 +730,7 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     const startDate = this.parseDateFromInput(this.fechaInicio);
     const endDate   = this.parseDateFromInput(this.fechaFin);
     if (endDate <= startDate) { this.errorMessage = 'La fecha de fin debe ser posterior al inicio'; return; }
-    const maxDate = new Date(startDate);
-    maxDate.setMonth(maxDate.getMonth() + 6);
-    if (endDate > maxDate) {
-      this.errorMessage = 'La reserva no puede exceder 6 meses';
-      this.fechaFin = this.formatDateForInput(maxDate);
-    } else { this.errorMessage = ''; }
+    this.applyMaxRecurrentDuration();
     this.dateSpecificSlots  = {};
     this.dayOfWeekOverrides = {};
     this.cancelDateEdit();
@@ -959,6 +981,16 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     if (this.parseDateFromInput(this.fechaFin) <= this.parseDateFromInput(this.fechaInicio)) {
       this.errorMessage = 'La fecha de fin debe ser posterior al inicio'; return false;
     }
+    const anticipationError = this.getAnticipationError();
+    if (anticipationError) {
+      this.errorMessage = anticipationError;
+      return false;
+    }
+    const maxDurationError = this.getMaxRecurrentDurationError();
+    if (maxDurationError) {
+      this.errorMessage = maxDurationError;
+      return false;
+    }
     const conflicts = this.checkAllConflicts();
     if (conflicts.length) {
       this.reservationConflicts = conflicts;
@@ -994,6 +1026,73 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   // ─── UTILITIES ─────────────────────────────────────────────────────────────
   private getDayName(dayOfWeek: number): string {
     return ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'][dayOfWeek];
+  }
+
+  private applyMaxRecurrentDuration(): void {
+    const maxDate = this.getMaxRecurrentEndDate();
+    if (!maxDate || !this.fechaFin) {
+      this.errorMessage = '';
+      return;
+    }
+
+    const endDate = this.parseDateFromInput(this.fechaFin);
+    if (endDate > maxDate) {
+      this.fechaFin = this.formatDateForInput(maxDate);
+      this.errorMessage = this.getMaxRecurrentDurationMessage();
+    } else {
+      this.errorMessage = '';
+    }
+  }
+
+  private getMaxRecurrentDurationError(): string | null {
+    const maxDate = this.getMaxRecurrentEndDate();
+    if (!maxDate || !this.fechaFin) {
+      return null;
+    }
+
+    return this.parseDateFromInput(this.fechaFin) > maxDate
+      ? this.getMaxRecurrentDurationMessage()
+      : null;
+  }
+
+  private getAnticipationError(): string | null {
+    const anticipationHours = this.anticipationHours;
+    if (!anticipationHours || !this.fechaInicio) {
+      return null;
+    }
+
+    const startDate = this.parseDateFromInput(this.fechaInicio);
+    const minDate = new Date(Date.now() + anticipationHours * 60 * 60 * 1000);
+    return startDate < minDate
+      ? `La reserva recurrente debe realizarse con al menos ${this.formatAnticipation(anticipationHours)} de anticipación`
+      : null;
+  }
+
+  private formatAnticipation(hours: number): string {
+    return hours % 24 === 0
+      ? `${hours / 24} día(s)`
+      : `${hours} hora(s)`;
+  }
+
+  private getMaxRecurrentEndDate(): Date | null {
+    if (!this.fechaInicio) {
+      return null;
+    }
+
+    const startDate = this.parseDateFromInput(this.fechaInicio);
+    const maxDays = this.maxRecurrentDurationDays;
+
+    if (!maxDays) {
+      return null;
+    }
+
+    const maxDate = new Date(startDate);
+    maxDate.setDate(maxDate.getDate() + maxDays);
+    return maxDate;
+  }
+
+  private getMaxRecurrentDurationMessage(): string {
+    return `La reserva recurrente no puede exceder ${this.maxRecurrentDurationDays} día(s)`;
   }
 
   private getMonthName(month: number): string {

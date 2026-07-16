@@ -9,8 +9,10 @@ import {ToastService} from './toast-service';
   @for(toast of toastService.toasts;track $index){
     <ngb-toast
       [class]="toast.classname"
+      [header]="toast.header"
       [autohide]="true"
       [delay]="toast.delay || 5000"
+      style="white-space: pre-line; line-height: 1.35;"
       (hidden)="toastService.remove(toast)"
     >
       <ng-template [ngIf]="isTemplate(toast)" [ngIfElse]="text">

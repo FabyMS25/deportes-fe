@@ -5,6 +5,9 @@ export class ToastService {
   toasts: any[] = [];
 
   show(textOrTpl: string | TemplateRef<any>, options: any = {}) {
+    if (options.replaceKey) {
+      this.toasts = this.toasts.filter(t => t.replaceKey !== options.replaceKey);
+    }
     this.toasts.push({ textOrTpl, ...options });
   }
 

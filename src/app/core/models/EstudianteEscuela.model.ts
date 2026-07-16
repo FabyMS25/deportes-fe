@@ -1,6 +1,6 @@
 import { Contribuyente } from "./contribuyente.model";
 import { Organizacion } from "./organizacion.model";
-import { Reserva } from "./reserva.model";
+import { ReservaPeriodo } from "./reservaPeriodo.model";
 
 export interface EstudianteEscuela {
   uuid?: string;
@@ -22,5 +22,5 @@ export interface EstudianteEscuela {
   contribuyenteDto: Contribuyente;
 
   // Monthly payments
-  mensualidadesDtoList?: Reserva[];
+  mensualidadesDtoList?: ReservaPeriodo[];
 }

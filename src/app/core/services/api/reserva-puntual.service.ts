@@ -40,10 +40,8 @@ export class ReservaPuntualService {
     return this.http.get<any>(`${this.apiUrl}`, { params });
   }
   
-  checkExpiredReservations(horasTimeout: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/verificar-expiradas`, null, {
-      params: new HttpParams().set('horasTimeout', horasTimeout.toString())
-    });
+  checkExpiredReservations(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/verificar-expiradas`, null);
   }
   
   validarCambioHorario(

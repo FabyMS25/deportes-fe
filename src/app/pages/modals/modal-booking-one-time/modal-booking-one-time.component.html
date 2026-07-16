@@ -33,9 +33,6 @@
             <span *ngIf="row.reservaDto?.esReservaGratuita" class="badge bg-success-subtle text-success">
               Gratuita
             </span>
-            <span *ngIf="row.reservaDto?.estudianteEscuelaDto" class="badge bg-primary-subtle text-primary">
-              Para estudiante
-            </span>
           </div>
         </div>
       </div>
@@ -150,6 +147,30 @@
               <div class="card-body py-2 px-3">
                 <small class="text-muted d-block">Estado de Pago</small>
                 <div class="fw-semibold">{{ getPaymentStatusText() }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-xl-3">
+            <div class="card border-0 bg-light h-100 mb-0">
+              <div class="card-body py-2 px-3">
+                <small class="text-muted d-block">Límite de pago</small>
+                <div class="fw-semibold">{{ row.reservaDto?.fechaLimitePago ? (row.reservaDto?.fechaLimitePago | date:'dd/MM/yyyy HH:mm') : 'N/A' }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-xl-3">
+            <div class="card border-0 bg-light h-100 mb-0">
+              <div class="card-body py-2 px-3">
+                <small class="text-muted d-block">Cancelación automática</small>
+                <div class="fw-semibold">{{ row.reservaDto?.cancelacionAutomatica === false ? 'No' : 'Sí' }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-xl-3" *ngIf="row.reservaDto?.cancelacionAutomatica === false">
+            <div class="card border-0 bg-light h-100 mb-0">
+              <div class="card-body py-2 px-3">
+                <small class="text-muted d-block">Autorizado por</small>
+                <div class="fw-semibold">{{ row.reservaDto?.autorizadoPor || 'N/A' }}</div>
               </div>
             </div>
           </div>
@@ -383,34 +404,6 @@
             </div>
           </div>
 
-          <div class="col-12" *ngIf="row.reservaDto?.estudianteEscuelaDto">
-            <div class="card border-primary mb-0">
-              <div class="card-header bg-primary-subtle py-2 px-3">
-                <h6 class="mb-0">
-                  <i class="ri-user-star-line me-2"></i>Estudiante / Escuela
-                </h6>
-              </div>
-
-              <div class="card-body py-2 px-3">
-                <div class="row g-2">
-                  <div class="col-md-4">
-                    <small class="text-muted d-block">Estudiante</small>
-                    <div class="fw-semibold">{{ row.reservaDto?.estudianteEscuelaDto?.nombreCompleto || 'N/A' }}</div>
-                  </div>
-
-                  <div class="col-md-4">
-                    <small class="text-muted d-block">Matrícula</small>
-                    <div class="fw-semibold">{{ row.reservaDto?.estudianteEscuelaDto?.matricula || 'N/A' }}</div>
-                  </div>
-
-                  <div class="col-md-4" *ngIf="row.reservaDto?.estudianteEscuelaDto?.telefono">
-                    <small class="text-muted d-block">Teléfono</small>
-                    <div class="fw-semibold">{{ row.reservaDto?.estudianteEscuelaDto?.telefono }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 

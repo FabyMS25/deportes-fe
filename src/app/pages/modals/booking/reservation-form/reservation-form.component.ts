@@ -27,6 +27,7 @@ import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ReservationConflictService, TimeRange } from '../reservation-conflict.service';
 import { obtenerDescripcionTipoCobro } from 'src/app/core/constants/TipoCobro';
+import { obtenerHorasValidacionPago } from 'src/app/core/utils/configuracion-sistema.util';
 interface PuntualSchedule {
   date: Date;
   start: string;
@@ -62,6 +63,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   @Input() contribuyente?: Contribuyente;
   @Input() reservationsList: Reserva[] = [];
   @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
+  @Input() canActivate: string[] = [];
   @Input() userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente'; 
   
   @Output() reservationCompleted = new EventEmitter<Reserva>();
@@ -114,10 +116,10 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   ) {}
 
   get enableSolicitudOrganizationReservation(): boolean {
-    return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_ORGANIZACIONES]?.valorBoolean ?? false;
+    return this.isInternalUser || this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_ORGANIZACIONES]?.valorBoolean === true;
   }
   get enableOrganizationReservation(): boolean {
-    return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_ORGANIZACIONES]?.valorBoolean ?? false;
+    return this.isInternalUser || this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_ORGANIZACIONES]?.valorBoolean === true;
   }
   get enableSolicitudEventsBooking(): boolean{
     return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_EVENTOS]?.valorBoolean ?? false;
@@ -126,52 +128,82 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_EVENTOS]?.valorBoolean ?? false;
   }
   get enableSolicitudRecurrentBooking(): boolean | undefined{
-    return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
+    return this.isInternalUser || this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_RECURRENTES]?.valorBoolean === true;
   }
   get enableRecurrentBooking(): boolean | undefined{
-    return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
+    return this.isInternalUser || this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean === true;
   }
   get validHours(): number {
-    return this.systemConfigs[ClaveConfiguracion.HORAS_VALIDACION_PAGO]?.valorNumerico || 4;
+    return obtenerHorasValidacionPago(
+      this.systemConfigs,
+      this.bookingType,
+      this.selectedTariff?.tipoCobro
+    );
+  }
+  get canEditAutomaticCancellation(): boolean {
+    return this.isInternalUser && this.bookingType === 'recurrente' && this.canActivate?.includes('CREAR-POSTPAGO');
+  }
+  get isAutomaticCancellationDisabled(): boolean {
+    return this.reservationForm?.get('cancelacionAutomatica')?.value === false;
+  }
+  get paymentDeadlineDisplay(): string {
+    const date = this.parseDateTimeLocal(this.reservationForm?.get('fechaLimitePago')?.value);
+    return date ? date.toLocaleString('es-BO', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }) : '';
   }
   get anticipationHours(): number | undefined{
+    if (this.isInternalUser) {
+      return undefined;
+    }
     if (!this.selectedTariff) {
-      return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
+      return this.getActiveNumericConfig(ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES);
     }
     switch (this.selectedTariff.tipoCobro) {
       case 'por_evento':
-        const diasEventos = this.systemConfigs[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico;
+        const diasEventos = this.getActiveNumericConfig(ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS);
         return diasEventos? diasEventos* 24:undefined;
       case 'mensualidad': 
       case 'por_sesion': 
       case 'por_club':
-        return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico;
+        return this.getActiveNumericConfig(ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES);
       default:
-        return this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
+        return this.getActiveNumericConfig(ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES);
     }
   }
   get anticipationTimeDisplay(): string {
+    if (this.isInternalUser) {
+      return '';
+    }
     if (!this.selectedTariff) {
-      const horasPuntuales = this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
-      const hours = horasPuntuales ?? '';
-      return `${hours} horas`;
+      const horasPuntuales = this.getActiveNumericConfig(ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES);
+      return horasPuntuales ? `${horasPuntuales} horas` : '';
     }    
     switch (this.selectedTariff.tipoCobro) {
       case 'por_evento':
-        const diasEventos = this.systemConfigs[ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS]?.valorNumerico;
-        const eventDays = diasEventos ?? '';
-        return `${eventDays} días`;
+        const diasEventos = this.getActiveNumericConfig(ClaveConfiguracion.DIAS_ANTICIPACION_EVENTOS);
+        return diasEventos ? `${diasEventos} días` : '';
       case 'mensualidad': 
       case 'por_sesion': 
       case 'por_club':
-        const diasRecurrentes = this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES]?.valorNumerico;
-        const recurrentDays = diasRecurrentes ?? '';
-        return `${recurrentDays} horas`;
+        const diasRecurrentes = this.getActiveNumericConfig(ClaveConfiguracion.HORAS_ANTICIPACION_RECURRENTES);
+        return diasRecurrentes ? `${diasRecurrentes} horas` : '';
       default:
-        const horasPuntuales = this.systemConfigs[ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES]?.valorNumerico;
-        const hours = horasPuntuales ?? '';
-        return `${hours} horas`;
+        const horasPuntuales = this.getActiveNumericConfig(ClaveConfiguracion.HORAS_ANTICIPACION_RESERVAS_PUNTUALES);
+        return horasPuntuales ? `${horasPuntuales} horas` : '';
     }
+  }
+
+  private getActiveNumericConfig(clave: ClaveConfiguracion): number | undefined {
+    const config = this.systemConfigs[clave];
+    const value = Number(config?.valorNumerico);
+    return config?.activo === true && Number.isFinite(value) && value > 0
+      ? value
+      : undefined;
   }
   get shouldDisableScheduleFields(): boolean {
     if (!this.selectedTariff) return false;  
@@ -223,16 +255,22 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   }
 
   private checkOrganizationToggleEligibility(): void {
-    if (this.userRole === 'Admin' || this.userRole === 'Encargado') {
+    const canUseOrganization = this.canClientUseOrganizationReservation();
+    if (this.isInternalUser) {
       this.showOrganizationToggle = true;
       this.organizationsList = this.selectedContribuyente?.organizacionesRepresentadas || []
-    } else if (this.userRole === 'Representante') {
+    } else if (this.userRole === 'Representante' && canUseOrganization) {
       this.showOrganizationToggle = true;
-    } else if (this.selectedContribuyente?.organizacionesRepresentadas?.length) {
+    } else if (this.selectedContribuyente?.organizacionesRepresentadas?.length && canUseOrganization) {
       this.organizationsList = this.selectedContribuyente.organizacionesRepresentadas
       this.showOrganizationToggle = true;
     } else {
       this.showOrganizationToggle = false;
+      this.selectedOrganization = undefined;
+      this.reservationForm?.patchValue({
+        esParaOrganizacion: false,
+        organizacionDto: null
+      }, { emitEvent: false });
     }
   }
 
@@ -336,6 +374,9 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       cantidadSesiones: [{ value: this.recurrentSchedule?.cantidadSesiones || 0, disabled: true }],
       duracionSesionHoras: [{ value: this.recurrentSchedule?.duracionSesionHoras || 0, disabled: true }],
       montoTotal: [{ value: 0, disabled: true }, [Validators.required, Validators.min(0)]],
+      fechaLimitePago: [{ value: this.formatDateTimeLocal(this.getDefaultPaymentDeadline()), disabled: true }],
+      cancelacionAutomatica: [true],
+      motivoCancelacionAutomatica: [{ value: '', disabled: true }],
       categoria: [{ value: this.getTarifaCategories(), disabled: true }],
       superficie: [{ value: this.dataField?.superficieDto?.descripcion || '', disabled: true }],
       observaciones: [
@@ -357,6 +398,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     });    
     this.formInitialized = true;
     this.setupConditionalValidators();
+    this.setupPaymentPolicyHandlers();
     this.calculatePrice();
   }
 
@@ -475,6 +517,15 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
     const formValue = this.reservationForm?.getRawValue();
     const selectedOrganization = formValue?.organizacionDto;    
+    const isOrganizationReservation = !!formValue?.esParaOrganizacion && !!selectedOrganization;
+    if (this.isInternalUser) {
+      this.requiresValidation = false;
+      return;
+    }
+    if (this.dataField.requiereAprobacion) {
+      this.requiresValidation = true;
+      return;
+    }
     if (this.isFreeReservation && this.showFreeReservationOption) {
       this.requiresValidation = false;
       return;
@@ -483,11 +534,15 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       this.requiresValidation = false;
       return;
     }      
-    if (this.userRole === 'Admin' || this.userRole === 'Encargado') {
-      this.requiresValidation = false;
+    if (isOrganizationReservation && !this.enableOrganizationReservation && this.enableSolicitudOrganizationReservation) {
+      this.requiresValidation = true;
+      return;
+    } else if(this.actionType==='request'){
+      this.requiresValidation = true;
       return;
     } else if(this.actionType==='book'){
       this.requiresValidation = false;
+      return;
     }      
     if (this.selectedContribuyente.puedeReservarGratis && this.dataField.accesoLibre) {
       this.requiresValidation = false;
@@ -585,6 +640,47 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
   }
 
+  private setupPaymentPolicyHandlers(): void {
+    if (!this.reservationForm) return;
+
+    this.reservationForm.get('fechaLimitePago')?.disable({ emitEvent: false });
+
+    if (!this.canEditAutomaticCancellation) {
+      this.reservationForm.patchValue({
+        fechaLimitePago: this.formatDateTimeLocal(this.getDefaultPaymentDeadline()),
+        cancelacionAutomatica: true,
+        motivoCancelacionAutomatica: ''
+      }, { emitEvent: false });
+      this.reservationForm.get('cancelacionAutomatica')?.disable({ emitEvent: false });
+      this.reservationForm.get('motivoCancelacionAutomatica')?.disable({ emitEvent: false });
+      this.reservationForm.get('motivoCancelacionAutomatica')?.clearValidators();
+      this.reservationForm.get('motivoCancelacionAutomatica')?.updateValueAndValidity({ emitEvent: false });
+      return;
+    }
+
+    this.reservationForm.get('cancelacionAutomatica')?.enable({ emitEvent: false });
+    this.reservationForm.get('cancelacionAutomatica')?.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((cancelacionAutomatica: boolean) => {
+      const motivoControl = this.reservationForm.get('motivoCancelacionAutomatica');
+      if (cancelacionAutomatica === false) {
+        this.reservationForm.patchValue({
+          fechaLimitePago: ''
+        }, { emitEvent: false });
+        motivoControl?.enable({ emitEvent: false });
+        motivoControl?.setValidators([Validators.required, Validators.minLength(10), Validators.maxLength(500)]);
+      } else {
+        this.reservationForm.patchValue({
+          fechaLimitePago: this.formatDateTimeLocal(this.getDefaultPaymentDeadline()),
+          motivoCancelacionAutomatica: ''
+        }, { emitEvent: false });
+        motivoControl?.disable({ emitEvent: false });
+        motivoControl?.clearValidators();
+      }
+      motivoControl?.updateValueAndValidity({ emitEvent: false });
+    });
+  }
+
   private updateDuration(): void {
     if (this.bookingType === 'puntual' && this.reservationForm) {
       const horaInicio = this.reservationForm.get('horaInicio')?.value;
@@ -652,10 +748,31 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         actual: cantidadPersonas
       };
     }    
-    if (this.bookingType === 'recurrente' && this.userRole === 'Contribuyente') {
-      errors['recurrentNotAllowed'] = 'Los contribuyentes no pueden hacer reservas recurrentes';
+    if (this.bookingType === 'recurrente' && !this.isInternalUser && !this.canClientUseRecurrentBooking()) {
+      errors['recurrentNotAllowed'] = 'Las reservas recurrentes no están habilitadas para contribuyentes';
     }
     return Object.keys(errors).length ? errors : null;
+  }
+
+  private get isInternalUser(): boolean {
+    return this.userRole === 'Admin' || this.userRole === 'Encargado';
+  }
+
+  private canClientUseRecurrentBooking(): boolean {
+    if (this.actionType === 'book') {
+      return this.enableRecurrentBooking === true;
+    }
+    if (this.actionType === 'request') {
+      return this.enableSolicitudRecurrentBooking === true;
+    }
+    return this.enableRecurrentBooking === true || this.enableSolicitudRecurrentBooking === true;
+  }
+
+  private canClientUseOrganizationReservation(): boolean {
+    if (this.dataField?.requiereAprobacion) {
+      return this.enableSolicitudOrganizationReservation === true;
+    }
+    return this.enableOrganizationReservation === true || this.enableSolicitudOrganizationReservation === true;
   }
 
   private entityValidator(control: AbstractControl): ValidationErrors | null {
@@ -669,6 +786,9 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
     if (esParaOrganizacion && !organizacionDto) {
       errors['organizacionRequired'] = 'Debe seleccionar una organización';
+    }
+    if (esParaOrganizacion && !this.isInternalUser && !this.canClientUseOrganizationReservation()) {
+      errors['organizacionNotAllowed'] = 'Las reservas para organizaciones no están habilitadas';
     }
     return Object.keys(errors).length ? errors : null;
   }
@@ -1486,6 +1606,12 @@ private prepareReservationData(): Reserva {
   let estadoValidacion: EstadoValidacion;
   let estadoReserva: EstadoReserva;    
   const isFreeReservation = this.isFreeReservation && this.showFreeReservationOption;
+  const cancelacionAutomatica = this.canEditAutomaticCancellation
+    ? formValue.cancelacionAutomatica !== false
+    : true;
+  const fechaLimitePago = cancelacionAutomatica
+    ? this.getDefaultPaymentDeadline()
+    : undefined;
   
   if (isFreeReservation || !this.requiresValidation || this.userRole === 'Admin' || this.userRole === 'Encargado') {
     estadoValidacion = EstadoValidacion.APROBADA;
@@ -1500,6 +1626,10 @@ private prepareReservationData(): Reserva {
     motivoGratuidad: isFreeReservation ? this.freeReservationReason : undefined,
     fechaCreacion: new Date(),
     fechaActualizacion: new Date(),
+    fechaLimitePago,
+    cancelacionAutomatica,
+    motivoCancelacionAutomatica: cancelacionAutomatica ? undefined : formValue.motivoCancelacionAutomatica,
+    autorizadoPor: cancelacionAutomatica ? undefined : this.getCurrentUserUuid(),
     tipoReserva: this.bookingType,
     fechaReserva: new Date(),
     numeroReserva: formValue.numeroReserva,
@@ -1697,10 +1827,7 @@ private prepareReservationData(): Reserva {
       return;
     }
     const ruatData = {
-      codigoAlcaldia: this.systemConfigs[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || 'QUI',
-      codigoUsuario: this.systemConfigs[ClaveConfiguracion.CODIGO_USUARIO_RUAT]?.valorTexto || '2174',
       codigoContribuyente: reservaData.contribuyenteDto.codigoContribuyente,
-      servicioMunicipal: this.systemConfigs[ClaveConfiguracion.SERVICIO_MUNICIPAL_RUAT]?.valorTexto || '2174',
       datosConcepto: [{
         numero: '1',
         codigoClasificador: this.selectedTariff.clasificadorRuatDto.codigo,
@@ -1715,10 +1842,7 @@ private prepareReservationData(): Reserva {
       this.handleError('Datos RUAT incompletos', ruatValidationErrors.join('\n'));
       return;
     }
-    const codigoAlcaldia = this.systemConfigs[ClaveConfiguracion.CODIGO_ALCALDIA_RUAT]?.valorTexto || '';
-    const codigoUsuario = this.systemConfigs[ClaveConfiguracion.CODIGO_USUARIO_RUAT]?.valorTexto || '';
-    const servicioMunicipal = this.systemConfigs[ClaveConfiguracion.SERVICIO_MUNICIPAL_RUAT]?.valorTexto || '';
-    this.ruatService.createTasa(codigoAlcaldia,codigoUsuario,servicioMunicipal,ruatData, reservaData.contribuyenteDto.codigoContribuyente)
+    this.ruatService.createTasa(ruatData, ruatData.codigoContribuyente)
     .subscribe({
       next: (response: any) => {
         if (response.status === 'OK' ) {
@@ -1747,17 +1871,8 @@ private prepareReservationData(): Reserva {
     const errors: string[] = [];
     const concepts = Array.isArray(ruatData?.datosConcepto) ? ruatData.datosConcepto : [];
 
-    if (!ruatData?.codigoAlcaldia) {
-      errors.push('Falta el código de alcaldía RUAT.');
-    }
-    if (!ruatData?.codigoUsuario) {
-      errors.push('Falta el código de usuario RUAT que registrará la tasa.');
-    }
     if (!ruatData?.codigoContribuyente) {
       errors.push('Falta el código de contribuyente RUAT.');
-    }
-    if (!ruatData?.servicioMunicipal) {
-      errors.push('Falta el servicio municipal RUAT.');
     }
     if (concepts.length === 0) {
       errors.push('La tasa debe tener al menos un concepto.');
@@ -1801,12 +1916,15 @@ private prepareReservationData(): Reserva {
   private getFriendlyRuatMessage(message: any): string {
     const rawMessage = typeof message === 'string' ? message : this.extractErrorText(message);
     const normalized = rawMessage.toLowerCase();
+    if (normalized.includes('valor enviado:')) {
+      return rawMessage;
+    }
 
     if (normalized.includes('token') || normalized.includes('autoriz')) {
       return 'La sesión de RUAT no está disponible o expiró. Vuelva a intentar para reautenticar el servicio.';
     }
     if (normalized.includes('codigoalcaldia') || normalized.includes('alcald')) {
-      return 'La configuración de alcaldía RUAT no es válida. Revise CODIGO_ALCALDIA_RUAT.';
+      return 'La configuración de alcaldía RUAT del servidor no es válida.';
     }
     if (normalized.includes('codigousuario') || normalized.includes('usuario')) {
       return 'El usuario RUAT configurado no es válido o no tiene el rol para registrar Tasas y Otros Ingresos.';
@@ -2257,6 +2375,7 @@ getPaidReservationDescription(): string {
       { name: 'fechaUso', message: this.getFieldError('fechaUso') },
       { name: 'horaInicio', message: this.getFieldError('horaInicio') },
       { name: 'horaFin', message: this.getFieldError('horaFin') },
+      { name: 'motivoCancelacionAutomatica', message: this.getFieldError('motivoCancelacionAutomatica') },
       { name: 'observaciones', message: this.getFieldError('observaciones') },
       { name: 'aceptaTerminos', message: this.getFieldError('aceptaTerminos') }
     ];
@@ -2291,6 +2410,7 @@ getPaidReservationDescription(): string {
     if (errors['capacityExceeded']) return `Capacidad máxima excedida: ${errors['capacityExceeded'].max} personas`;
     if (errors['contribuyenteRequired']) return errors['contribuyenteRequired'];
     if (errors['organizacionRequired']) return errors['organizacionRequired'];
+    if (errors['organizacionNotAllowed']) return errors['organizacionNotAllowed'];
     if (errors['cantidadPersonasRequired']) return errors['cantidadPersonasRequired'];
     if (errors['recurrentNotAllowed']) return errors['recurrentNotAllowed'];
 
@@ -2314,6 +2434,7 @@ getPaidReservationDescription(): string {
     if (errors['anticipationRequired']) return errors['anticipationRequired'];
     if (errors['capacityExceeded']) return `Capacidad máxima: ${errors['capacityExceeded'].max} personas`;
     if (errors['recurrentNotAllowed']) return errors['recurrentNotAllowed'];
+    if (errors['organizacionNotAllowed']) return errors['organizacionNotAllowed'];
     return 'Existen errores en el formulario';
   }
 
@@ -2506,6 +2627,31 @@ getPaidReservationDescription(): string {
     if (mins === 0) return `${hrs} ${hrs === 1 ? 'hora' : 'horas'}`;
     return `${hrs}h ${mins}m`;
   }
+
+  private getDefaultPaymentDeadline(): Date {
+    return new Date(Date.now() + this.validHours * 60 * 60 * 1000);
+  }
+
+  private formatDateTimeLocal(date: Date): string {
+    const pad = (value: number) => String(value).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
+  private parseDateTimeLocal(value: Date | string | null | undefined): Date | undefined {
+    if (!value) return undefined;
+    const date = value instanceof Date ? value : new Date(value);
+    return isNaN(date.getTime()) ? undefined : date;
+  }
+
+  private getCurrentUserUuid(): string | undefined {
+    const currentUser: any = this.authenticationService.currentUser();
+    return currentUser?.uuid
+      || currentUser?.usuarioUuid
+      || currentUser?.userUuid
+      || currentUser?.designacion?.usuarioDto?.uuid
+      || currentUser?.designacion?.uuid;
+  }
+
   private parseLocalDate(date: Date | string): Date {
     if (date instanceof Date) {
       return new Date(

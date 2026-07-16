@@ -592,6 +592,37 @@
             </small>
           </div>
         </div>
+        <div class="mb-2 border-top pt-2" *ngIf="!isFreeReservation">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div class="form-check form-switch mb-0">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                formControlName="cancelacionAutomatica"
+                id="cancelacionAutomatica">
+              <label class="form-check-label small text-muted" for="cancelacionAutomatica">
+                {{ 'Anulación automática por falta de pago' | translate }}
+              </label>
+            </div>
+            <small class="text-muted" *ngIf="!isAutomaticCancellationDisabled && paymentDeadlineDisplay">
+              {{ 'Vence aprox.:' | translate }} {{ paymentDeadlineDisplay }}
+            </small>
+          </div>
+          <div class="mt-2" *ngIf="isAutomaticCancellationDisabled">
+            <label class="form-label mb-0 small text-muted">
+              {{ 'Motivo para no anular automáticamente' | translate }} <span class="text-danger">*</span>
+            </label>
+            <textarea
+              class="form-control form-control-sm"
+              rows="2"
+              formControlName="motivoCancelacionAutomatica"
+              [class.is-invalid]="isFieldInvalid('motivoCancelacionAutomatica')"
+              [placeholder]="'Describa la autorización para no anular automáticamente...' | translate"></textarea>
+            <div *ngIf="getFieldError('motivoCancelacionAutomatica')" class="invalid-feedback d-block">
+              {{ getFieldError('motivoCancelacionAutomatica') }}
+            </div>
+          </div>
+        </div>
         <!-- Terms -->
         <div class="mb-2">
           <div class="form-check">
@@ -619,8 +650,10 @@
             <div class="small">
               <strong class="d-block mb-1">{{ 'Información Importante:' | translate }}</strong>
               <ul class="mb-0 ps-3">
-                <li>{{ 'Al confirmar se generará la tasa municipal automáticamente' | translate }}</li>
-                <li>{{ 'Tendrá' | translate }} <strong>{{ validHours }} {{ 'horas' | translate }}</strong> {{ 'para realizar el pago' | translate }}</li>
+                <li>{{ 'Al confirmar se generará la tasa municipal de la reserva' | translate }}</li>
+                <li *ngIf="!isAutomaticCancellationDisabled">{{ 'El pago debe realizarse dentro de' | translate }} <strong>{{ validHours }} {{ 'horas' | translate }}</strong> {{ 'para evitar la anulación automática' | translate }}</li>
+                <li *ngIf="isAutomaticCancellationDisabled">{{ 'La anulación automática por falta de pago quedará desactivada; el pago deberá tener seguimiento administrativo' | translate }}</li>
+                <li *ngIf="!isAutomaticCancellationDisabled && paymentDeadlineDisplay">{{ 'Vencimiento estimado del plazo:' | translate }} <strong>{{ paymentDeadlineDisplay }}</strong></li>
                 <li *ngIf="anticipationTimeDisplay">{{ 'Las reservas requieren' | translate }} <strong>{{ anticipationTimeDisplay }}</strong> {{ 'de anticipación mínima' | translate }}</li>
               </ul>
             </div>

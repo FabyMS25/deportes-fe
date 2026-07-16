@@ -21,30 +21,38 @@
               {{ accion === '' ? 'Registrar Mensualidad' : 'Detalle de Mensualidad' }}
             </h5>
 
-            <span *ngIf="accion === 'show'"
-                  class="badge"
-                  [ngClass]="getStatusBadgeClass(reservaActual?.estadoReserva)">
-              {{ reservaActual?.estadoReserva || 'N/A' }}
-            </span>
+            <ng-container *ngIf="accion === 'show' && row">
+              <span class="badge" [ngClass]="getStatusBadgeClass(row.estadoReserva)">
+                {{ row.estadoReserva || 'N/A' }}
+              </span>
+            </ng-container>
           </div>
 
-          <div class="text-muted small" *ngIf="accion === 'show'">
-            {{ escuelaActual?.nombre || 'Escuela no especificada' }}
+          <div class="text-muted small" *ngIf="accion === 'show' && row">
+            {{ row.organizacionDto?.nombre || 'Escuela no especificada' }}
           </div>
 
-          <div class="text-muted small" *ngIf="accion === 'show'">
-            Mensualidad N°: {{ reservaActual?.numeroReserva || 'N/A' }}
+          <div class="text-muted small" *ngIf="accion === 'show' && row">
+            Mensualidad N°: {{ row.numeroReserva || 'N/A' }}
           </div>
         </div>
       </div>
 
       <div class="d-flex align-items-start gap-2 flex-wrap justify-content-end" *ngIf="accion === 'show'">
-        <div class="text-end" *ngIf="reservaActual?.numeroTasa">
+        <div class="text-end" *ngIf="row.numeroTasa">
           <small class="text-muted d-block text-uppercase">Tasa</small>
-          <div class="fw-semibold">{{ reservaActual?.numeroTasa || 'N/A' }}</div>
+          <div class="fw-semibold">{{ row.numeroTasa || 'N/A' }}</div>
         </div>
 
         <div class="btn-group" role="group" *ngIf="canActivate.length">
+          <button *ngIf="canConsultPayment()"
+                  class="btn btn-soft-primary btn-sm"
+                  [disabled]="isConsultingRuat"
+                  (click)="consultPaymentInModal()">
+            <span *ngIf="isConsultingRuat" class="spinner-border spinner-border-sm me-1"></span>
+            <i *ngIf="!isConsultingRuat" class="ri-search-eye-line me-1"></i>Consultar RUAT
+          </button>
+
           <button class="btn btn-soft-info btn-sm" (click)="openTicketModal(ticketModal)">
             <i class="ri-file-list-3-line me-1"></i>Ticket
           </button>
@@ -69,13 +77,13 @@
   </div>
 
   <div class="modal-body py-2 px-3">
-    <ng-container *ngIf="accion === 'show'">
-      <div class="alert alert-borderless py-2 px-3 mb-2 d-flex align-items-start gap-2"
-           [ngClass]="getStatusAlertClass(reservaActual?.estadoReserva)">
+    <ng-container *ngIf="accion === 'show' && row">
+            <div class="alert alert-borderless py-2 px-3 mb-2 d-flex align-items-start gap-2"
+           [ngClass]="getStatusAlertClass(row.estadoReserva)">
         <i class="ri-information-line fs-5"></i>
         <div>
-          <div class="fw-semibold">Estado actual: {{ reservaActual?.estadoReserva || 'N/A' }}</div>
-          <small class="text-muted">{{ getStatusDescription(reservaActual?.estadoReserva) }}</small>
+          <div class="fw-semibold">Estado actual: {{ row.estadoReserva || 'N/A' }}</div>
+          <small class="text-muted">{{ getStatusDescription(row.estadoReserva) }}</small>
         </div>
       </div>
 
@@ -94,8 +102,8 @@
              (click)="setActiveTab(2)"
              style="cursor: pointer;">
             <i class="ri-money-dollar-circle-line me-1"></i>Pago y Observaciones
-            <span *ngIf="pagosActuales.length > 0" class="badge bg-info ms-1">
-              {{ pagosActuales.length }}
+            <span *ngIf="(row.pagosDtoList?.length || 0) > 0" class="badge bg-info ms-1">
+              {{ row.pagosDtoList?.length || 0 }}
             </span>
           </a>
         </li>
@@ -107,84 +115,38 @@
             <div class="card border mb-0">
               <div class="card-header bg-light py-2 px-3">
                 <h6 class="mb-0">
-                  <i class="ri-information-line me-2"></i>Información General de la Mensualidad
+                  <i class="ri-bill-line me-2"></i>Mensualidad y tasa
                 </h6>
               </div>
-
               <div class="card-body py-2 px-3">
                 <div class="row g-2">
                   <div class="col-md-4">
-                    <small class="text-muted d-block">Estudiante</small>
-                    <div class="fw-semibold">{{ estudianteActual?.nombreCompleto || 'N/A' }}</div>
+                    <small class="text-muted d-block">Nro. Mensualidad</small>
+                    <div class="fw-semibold">{{ row.numeroReserva || 'N/A' }}</div>
                   </div>
-
                   <div class="col-md-4">
-                    <small class="text-muted d-block">Matrícula</small>
-                    <div class="fw-semibold">
-                      {{ reservaActual?.reservaPeriodoDto?.matricula || estudianteActual?.matricula || 'N/A' }}
-                    </div>
+                    <small class="text-muted d-block">Nro. Tasa</small>
+                    <div class="fw-semibold">{{ row.numeroTasa || 'Sin tasa' }}</div>
                   </div>
-
-                  <div class="col-md-4" *ngIf="reservaActual?.contribuyenteDto as contribuyente">
-                    <small class="text-muted d-block">Responsable / Tutor</small>
-                    <div class="fw-semibold">{{ contribuyente?.nombreCompleto || 'N/A' }}</div>
-                  </div>
-
                   <div class="col-md-4">
-                    <small class="text-muted d-block">Escuela Municipal</small>
-                    <div class="fw-semibold">{{ escuelaActual?.nombre || 'N/A' }}</div>
+                    <small class="text-muted d-block">Monto total</small>
+                    <div class="fw-semibold">{{ row.montoTotal || 0 }} Bs.</div>
                   </div>
-
                   <div class="col-md-4">
-                    <small class="text-muted d-block">Período Cancelado</small>
-                    <div class="fw-semibold">{{ getMonthName(row.mes) }} {{ row['año'] }}</div>
+                    <small class="text-muted d-block">Monto por mensualidad</small>
+                    <div class="fw-semibold">{{ montoUnitarioActual | number:'1.2-2' }} Bs.</div>
                   </div>
-
                   <div class="col-md-4">
-                    <small class="text-muted d-block">Monto</small>
-                    <div class="fw-semibold">{{ reservaActual?.montoTotal || 0 }} Bs.</div>
+                    <small class="text-muted d-block">Estado mensualidad</small>
+                    <span class="badge" [ngClass]="getStatusBadgeClass(row.estadoReserva)">
+                      {{ row.estadoReserva || 'N/A' }}
+                    </span>
                   </div>
-
                   <div class="col-md-4">
-                    <small class="text-muted d-block">Estado</small>
-                    <div class="fw-semibold">{{ reservaActual?.estadoReserva || 'N/A' }}</div>
-                  </div>
-
-                  <div class="col-md-4" *ngIf="reservaActual?.numeroTasa">
-                    <small class="text-muted d-block">Tasa</small>
-                    <div class="fw-semibold">{{ reservaActual?.numeroTasa }}</div>
-                  </div>
-
-                  <div class="col-md-4" *ngIf="row.fechaPago">
-                    <small class="text-muted d-block">Fecha de Pago</small>
-                    <div class="fw-semibold">{{ row.fechaPago | date:'dd/MM/yyyy' }}</div>
-                  </div>
-
-                  <div class="col-md-4" *ngIf="reservaActual?.contribuyenteDto as contribuyente">
-                    <small class="text-muted d-block">Documento Responsable</small>
-                    <div class="fw-semibold">
-                      {{ contribuyente?.tipoDocumento || '' }} {{ contribuyente?.numeroDocumento || 'N/A' }}
-                    </div>
-                  </div>
-
-                  <div class="col-md-4" *ngIf="reservaActual?.contribuyenteDto as contribuyente">
-                    <small class="text-muted d-block">Teléfono Responsable</small>
-                    <div class="fw-semibold">{{ contribuyente?.telefono || 'N/A' }}</div>
-                  </div>
-
-                  <div class="col-md-4" *ngIf="estudianteActual?.telefono">
-                    <small class="text-muted d-block">Teléfono Estudiante</small>
-                    <div class="fw-semibold">{{ estudianteActual?.telefono }}</div>
-                  </div>
-
-                  <div class="col-md-4" *ngIf="estudianteActual?.email">
-                    <small class="text-muted d-block">Correo Estudiante</small>
-                    <div class="fw-semibold">{{ estudianteActual?.email }}</div>
-                  </div>
-
-                  <div class="col-md-4" *ngIf="reservaActual?.contribuyenteDto?.email">
-                    <small class="text-muted d-block">Correo Responsable</small>
-                    <div class="fw-semibold">{{ reservaActual?.contribuyenteDto?.email }}</div>
+                    <small class="text-muted d-block">Validación</small>
+                    <span class="badge" [ngClass]="getValidationBadgeClass(row.estadoValidacion)">
+                      {{ row.estadoValidacion || 'N/A' }}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -195,43 +157,118 @@
             <div class="card border mb-0">
               <div class="card-header bg-light py-2 px-3">
                 <h6 class="mb-0">
-                  <i class="ri-building-line me-2"></i>Informacion de la Escuela Municipal
+                  <i class="ri-building-line me-2"></i>Escuela y espacio deportivo
                 </h6>
               </div>
-
               <div class="card-body py-2 px-3">
                 <div class="row g-2">
                   <div class="col-md-4">
-                    <small class="text-muted d-block">Escuela</small>
-                    <div class="fw-semibold">{{ escuelaActual?.nombre || 'N/A' }}</div>
+                    <small class="text-muted d-block">Escuela Municipal</small>
+                    <div class="fw-semibold">{{ row.organizacionDto?.nombre || 'N/A' }}</div>
                   </div>
-
-                  <div class="col-md-4" *ngIf="escuelaActual?.disciplina">
+                  <div class="col-md-4">
                     <small class="text-muted d-block">Disciplina</small>
-                    <div class="fw-semibold">{{ escuelaActual?.disciplina }}</div>
+                    <div class="fw-semibold">{{ row.organizacionDto?.disciplina || 'N/A' }}</div>
                   </div>
-
-                  <div class="col-md-4" *ngIf="escuelaActual?.entrenador">
+                  <div class="col-md-4">
                     <small class="text-muted d-block">Entrenador</small>
-                    <div class="fw-semibold">{{ escuelaActual?.entrenador }}</div>
+                    <div class="fw-semibold">{{ row.organizacionDto?.entrenador || 'N/A' }}</div>
                   </div>
-
                   <div class="col-md-4">
                     <small class="text-muted d-block">Complejo</small>
-                    <div class="fw-semibold">{{ reservaActual?.campoDeportivoDto?.complejoDto?.nombre || 'N/A' }}</div>
+                    <div class="fw-semibold">{{ row.campoDeportivoDto.complejoDto.nombre || 'N/A' }}</div>
                   </div>
-
                   <div class="col-md-4">
                     <small class="text-muted d-block">Campo Deportivo</small>
-                    <div class="fw-semibold">{{ reservaActual?.campoDeportivoDto?.nombre || 'N/A' }}</div>
+                    <div class="fw-semibold">{{ row.campoDeportivoDto.nombre || 'N/A' }}</div>
                   </div>
-
                   <div class="col-md-4">
-                    <small class="text-muted d-block">Reserva Base</small>
-                    <div class="fw-semibold">{{ reservaActual?.numeroReserva || 'N/A' }}</div>
+                    <small class="text-muted d-block">Tipo reserva</small>
+                    <div class="fw-semibold">{{ row.tipoReserva || 'N/A' }}</div>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="card border mb-0">
+              <div class="card-header bg-light py-2 px-3">
+                <h6 class="mb-0">
+                  <i class="ri-user-received-line me-2"></i>Responsable de pago
+                </h6>
+              </div>
+              <div class="card-body py-2 px-3">
+                <div class="row g-2">
+                  <div class="col-md-4">
+                    <small class="text-muted d-block">Tutor / Contribuyente</small>
+                    <div class="fw-semibold">{{ row.contribuyenteDto.nombreCompleto || 'N/A' }}</div>
+                  </div>
+                  <div class="col-md-4">
+                    <small class="text-muted d-block">Documento</small>
+                    <div class="fw-semibold">{{ getDocumentoContribuyente(row.contribuyenteDto) }}</div>
+                  </div>
+                  <div class="col-md-4">
+                    <small class="text-muted d-block">Código contribuyente</small>
+                    <div class="fw-semibold">{{ row.contribuyenteDto.codigoContribuyente || 'N/A' }}</div>
+                  </div>
+                  <div class="col-md-4">
+                    <small class="text-muted d-block">Teléfono</small>
+                    <div class="fw-semibold">{{ row.contribuyenteDto.telefono || 'N/A' }}</div>
+                  </div>
+                  <div class="col-md-4">
+                    <small class="text-muted d-block">Correo</small>
+                    <div class="fw-semibold">{{ row.contribuyenteDto.email || 'N/A' }}</div>
+                  </div>
+                  <div class="col-md-4">
+                    <small class="text-muted d-block">Estado RUAT</small>
+                    <div class="fw-semibold">{{ row.contribuyenteDto.estadoRuat || 'N/A' }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="card border mb-0">
+              <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                  <i class="ri-group-line me-2"></i>Detalle por estudiante y período
+                </h6>
+                <span class="badge bg-primary">{{ getReservaDetalles().length || 0 }}</span>
+              </div>
+              <div class="table-responsive" *ngIf="getReservaDetalles().length; else noReservationDetails">
+                <table class="table table-sm align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="px-3">Estudiante</th>
+                      <th>Matrícula</th>
+                      <th>Período</th>
+                      <th>Disciplina</th>
+                      <th>Entrenador</th>
+                      <th>Teléfono</th>
+                      <th class="text-end pe-3">Monto ref.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let detalle of getReservaDetalles()">
+                      <td class="px-3">{{ detalle.estudianteEscuelaDto.nombreCompleto || 'N/A' }}</td>
+                      <td>{{ detalle.estudianteEscuelaDto.matricula || detalle.matricula || 'N/A' }}</td>
+                      <td>{{ formatPeriodoDetalle(detalle) }}</td>
+                      <td>{{ detalle.disciplina || row.organizacionDto?.disciplina || 'N/A' }}</td>
+                      <td>{{ detalle.entrenador || row.organizacionDto?.entrenador || 'N/A' }}</td>
+                      <td>{{ detalle.estudianteEscuelaDto.telefono || 'N/A' }}</td>
+                      <td class="text-end pe-3">{{ montoUnitarioActual | number:'1.2-2' }} Bs.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <ng-template #noReservationDetails>
+                <div class="alert alert-warning m-3 py-2">
+                  <i class="ri-error-warning-line me-1"></i>
+                  Esta mensualidad no tiene detalles de estudiante y período.
+                </div>
+              </ng-template>
             </div>
           </div>
         </div>
@@ -241,15 +278,50 @@
         <div class="card border mb-2">
           <div class="card-header bg-light py-2 px-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
             <h6 class="mb-0">
-              <i class="ri-money-dollar-circle-line me-2"></i>Información de Pago
+              <i class="ri-money-dollar-circle-line me-2"></i>Pago y consulta RUAT
             </h6>
-            <span *ngIf="pagosActuales.length > 0" class="badge bg-info">
-              {{ pagosActuales.length }} registro(s)
-            </span>
+            <div class="d-flex align-items-center gap-2">
+              <span *ngIf="(row.pagosDtoList?.length || 0) > 0" class="badge bg-info">
+                {{ row.pagosDtoList?.length || 0 }} registro(s)
+              </span>
+              <button *ngIf="canConsultPayment()"
+                      type="button"
+                      class="btn btn-soft-primary btn-sm"
+                      [disabled]="isConsultingRuat"
+                      (click)="consultPaymentInModal()">
+                <span *ngIf="isConsultingRuat" class="spinner-border spinner-border-sm me-1"></span>
+                <i *ngIf="!isConsultingRuat" class="ri-search-eye-line me-1"></i>
+                Consultar RUAT
+              </button>
+            </div>
           </div>
 
           <div class="card-body py-2 px-3">
-            <div *ngIf="pagosActuales.length > 0; else noPaymentsState">
+            <div *ngIf="consultationResult"
+                 class="alert py-2 px-3 d-flex align-items-start gap-2 mb-2"
+                 [ngClass]="{
+                   'alert-success': consultationResult.type === 'success',
+                   'alert-warning': consultationResult.type === 'warning',
+                   'alert-danger': consultationResult.type === 'error',
+                   'alert-info': consultationResult.type === 'info'
+                 }">
+              <i class="fs-5 mt-1 flex-shrink-0" [ngClass]="{
+                'ri-checkbox-circle-fill': consultationResult.type === 'success',
+                'ri-error-warning-fill': consultationResult.type === 'warning',
+                'ri-close-circle-fill': consultationResult.type === 'error',
+                'ri-information-fill': consultationResult.type === 'info'
+              }"></i>
+              <div>
+                <div class="small fw-semibold">{{ consultationResult.text }}</div>
+                <div *ngIf="consultationResult.pagoData" class="small mt-1">
+                  Folio {{ consultationResult.pagoData?.folio || 'N/A' }} ·
+                  {{ consultationResult.pagoData?.montoPago || consultationResult.pagoData?.montoPagado || 'N/A' }} Bs. ·
+                  {{ consultationResult.pagoData?.fechaPago || 'Fecha no informada' }}
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="(row.pagosDtoList?.length || 0) > 0; else noPaymentsState">
               <div class="table-responsive">
                 <table class="table table-sm align-middle mb-2">
                   <thead class="table-light">
@@ -261,7 +333,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr *ngFor="let pago of pagosActuales">
+                    <tr *ngFor="let pago of row.pagosDtoList">
                       <td>{{ pago.fechaPago | date:'dd/MM/yyyy' }}</td>
                       <td>{{ pago.montoPagado }} Bs.</td>
                       <td>{{ pago.formaPago || 'N/A' }}</td>
@@ -278,7 +350,7 @@
                 </table>
               </div>
 
-              <div class="row g-2" *ngFor="let pago of pagosActuales">
+              <div class="row g-2" *ngFor="let pago of row.pagosDtoList">
                 <div class="col-12" *ngIf="pago.entidadFinanciera || pago.folio || pago.observaciones">
                   <div class="border rounded bg-light px-3 py-2">
                     <div class="row g-2">
@@ -316,320 +388,134 @@
     <ng-container *ngIf="accion === ''">
       <form [formGroup]="reservationForm">
         <div class="card mb-2">
-          <div class="card-header bg-light py-2 px-3">
-            <h6 class="mb-0">1. Estudiante y Responsable</h6>
-          </div>
-
+          <div class="card-header bg-light py-2 px-3"><h6 class="mb-0">1. Escuela y reserva base</h6></div>
           <div class="card-body py-2 px-3">
-            <div class="mb-2">
-              <label class="form-label mb-1">Estudiante *</label>
-              <select class="form-select"
-                      formControlName="estudiante"
-                      (change)="onEstudianteChange($event)">
-                <option value="">Seleccione un estudiante</option>
-                <option *ngFor="let estudiante of estudiantes" [value]="estudiante.uuid">
-                  {{ estudiante.nombreCompleto }} - {{ estudiante.matricula }}
-                </option>
-              </select>
-            </div>
-            <div class="mb-2"
-                 *ngIf="selectedEstudiante?.contribuyenteDto as contribuyente">
-              <label class="form-label mb-0">Tutor: </label>
-            <div class="border rounded bg-light px-3 py-2">
-              <div class="row g-2">
-                <div class="col-md-6">
-                  <small class="text-muted d-block">Nombre</small>
-                  <div class="fw-semibold">{{ contribuyente?.nombreCompleto || 'N/A' }}</div>
-                </div>
-
-                <div class="col-md-3">
-                  <small class="text-muted d-block">Documento</small>
-                  <div class="fw-semibold">{{ contribuyente?.tipoDocumento || '' }} {{ contribuyente?.numeroDocumento || 'N/A' }}</div>
-                </div>
-
-                <div class="col-md-3">
-                  <small class="text-muted d-block">Teléfono</small>
-                  <div class="fw-semibold">{{ contribuyente?.telefono || 'N/A' }}</div>
-                </div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label mb-1">Escuela Municipal *</label>
+                <select class="form-select" formControlName="escuela" (change)="onEscuelaChange($event)">
+                  <option value="">Seleccione una escuela</option>
+                  <option *ngFor="let escuela of catalogs.schools" [value]="escuela.uuid">
+                    {{ escuela.nombre }} · {{ escuela.disciplina }} · {{ escuela.tarifaMensual || 0 }} Bs.
+                  </option>
+                </select>
               </div>
-            </div>
-            </div>
-
-          </div>
-        </div>
-
-        <ng-container *ngIf="selectedEstudiante">
-          <ul class="nav nav-tabs nav-tabs-custom mb-2">
-            <li class="nav-item">
-              <a class="nav-link"
-                 [class.active]="createTab === 1"
-                 (click)="setCreateTab(1)"
-                 style="cursor: pointer;">
-                <i class="ri-add-circle-line me-1"></i>Registro
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link"
-                 [class.active]="createTab === 2"
-                 (click)="setCreateTab(2)"
-                 style="cursor: pointer;">
-                <i class="ri-history-line me-1"></i>Historial
-                <span *ngIf="studentPeriodsRegistrations.length > 0" class="badge bg-info ms-1">
-                  {{ studentPeriodsRegistrations.length }}
-                </span>
-              </a>
-            </li>
-          </ul>
-
-          <div *ngIf="createTab === 1">
-            <div class="card mb-2">
-              <div class="card-header bg-light py-2 px-3">
-                <h6 class="mb-0">2. Escuela Municipal</h6>
-              </div>
-
-              <div class="card-body py-2 px-3">
-                <div class="mb-0">
-                  <label class="form-label mb-1">Escuela Municipal *</label>
-                  <select class="form-select"
-                          formControlName="escuela"
-                          (change)="onEscuelaChange($event)">
-                    <option value="">Seleccione una escuela</option>
-                    <option *ngFor="let escuela of filteredEscuelas" [value]="escuela.uuid">
-                      {{ escuela.nombre }} - {{ escuela.disciplina }} - {{ escuela.tarifaMensual }} Bs.
-                    </option>
-                  </select>
-                </div>
-
-                <div class="border rounded bg-light px-3 py-2 mt-2" *ngIf="selectedEscuela">
-                  <div class="row g-2">
-                    <div class="col-md-4">
-                      <small class="text-muted d-block">Escuela</small>
-                      <div class="fw-semibold">{{ selectedEscuela.nombre || 'N/A' }}</div>
-                    </div>
-
-                    <div class="col-md-4">
-                      <small class="text-muted d-block">Disciplina</small>
-                      <div class="fw-semibold">{{ selectedEscuela.disciplina || 'N/A' }}</div>
-                    </div>
-
-                    <div class="col-md-4">
-                      <small class="text-muted d-block">Mensualidad</small>
-                      <div class="fw-semibold">{{ selectedEscuela.tarifaMensual || 0 }} Bs.</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="card mb-2" *ngIf="selectedEscuela">
-              <div class="card-header bg-light py-2 px-3">
-                <h6 class="mb-0">3. Reserva Recurrente Base</h6>
-              </div>
-
-              <div class="card-body py-2 px-3">
-                <div class="row g-2 mb-2">
-                  <div class="col-md-6">
-                    <label class="form-label mb-1">Filtrar reservas base</label>
-                    <select class="form-select"
-                            [(ngModel)]="reservaBaseFilter"
-                            [ngModelOptions]="{standalone: true}"
-                            (ngModelChange)="applyReservaBaseFilters()">
-                      <option value="en_curso">Período seleccionado / vigente</option>
-                      <option value="activas">Activas</option>
-                      <option value="pendientes">Pendientes</option>
-                      <option value="pagadas">Pagadas / completadas</option>
-                      <option value="todas">Todas</option>
-                    </select>
-                  </div>
-
-                  <div class="col-md-6 d-flex align-items-end">
-                    <div class="form-check">
-                      <input class="form-check-input"
-                             type="checkbox"
-                             id="hideCoveredReservations"
-                             [(ngModel)]="hideCoveredReservations"
-                             [ngModelOptions]="{standalone: true}"
-                             (change)="applyReservaBaseFilters()">
-                      <label class="form-check-label" for="hideCoveredReservations">
-                        Ocultar reservas ya cubiertas
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                <label class="form-label mb-1">Reserva Recurrente de la Escuela *</label>
-                <select class="form-select"
-                        formControlName="reservaRecurrente"
-                        (change)="onReservaRecurrenteChange($event)">
-                  <option value="">Seleccione reserva recurrente</option>
-                  <option *ngFor="let reserva of filteredReservasRecurrentes" [value]="reserva.uuid">
+              <div class="col-md-6">
+                <label class="form-label mb-1">Reserva recurrente base *</label>
+                <select class="form-select" formControlName="reservaRecurrente"
+                        [disabled]="!selection.school" (change)="onReservaRecurrenteChange($event)">
+                  <option value="">Seleccione una reserva</option>
+                  <option *ngFor="let reserva of catalogs.filteredRecurrentReservations" [value]="reserva.uuid">
                     {{ getReservaDisplayInfo(reserva) }}
                   </option>
                 </select>
-
-                <div class="form-text" *ngIf="filteredReservasRecurrentes.length === 0">
-                  No hay reservas recurrentes disponibles con el filtro seleccionado.
-                </div>
               </div>
             </div>
-
-            <div class="card mb-2" *ngIf="selectedReservaRecurrente">
-              <div class="card-header bg-light py-2 px-3">
-                <h6 class="mb-0">4. Período Disponible</h6>
-              </div>
-
-              <div class="card-body py-2 px-3">
-                <label class="form-label mb-1">Período *</label>
-                <select class="form-select"
-                        [value]="selectedYear + '-' + selectedMonth"
-                        (change)="onPeriodoChange($event)">
-                  <option value="">Seleccione período</option>
-                  <option *ngFor="let periodo of availablePeriodos"
-                          [value]="periodo['año'] + '-' + periodo['mes']">
-                    {{ periodo.label }}
-                  </option>
-                </select>
-
-                <div class="form-text mt-2" *ngIf="selectedReservaRecurrente.reservaRecurrenteDto">
-                  Válido desde
-                  <strong>{{ selectedReservaRecurrente.reservaRecurrenteDto.fechaInicio | date:'dd/MM/yyyy' }}</strong>
-                  hasta
-                  <strong>{{ selectedReservaRecurrente.reservaRecurrenteDto.fechaFin | date:'dd/MM/yyyy' }}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div class="alert alert-warning mb-2" *ngIf="selectedMensualidadExistente">
-              <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-                <div>
-                  <div class="fw-semibold">Mensualidad ya registrada</div>
-                  <small>
-                    Ya existe una mensualidad para
-                    <strong>{{ getMonthName(selectedMensualidadExistente.mes) }} {{ selectedMensualidadExistente['año'] }}</strong>.
-                  </small>
-                  <div class="mt-2">
-                    <span class="badge"
-                          [ngClass]="getStatusBadgeClass(selectedMensualidadExistente.reservaDto?.estadoReserva)">
-                      {{ selectedMensualidadExistente.reservaDto?.estadoReserva }}
-                    </span>
-                    <span class="small text-muted ms-2">
-                      Mensualidad N°: {{ selectedMensualidadExistente.reservaDto?.numeroReserva || 'N/A' }}
-                    </span>
-                  </div>
-                </div>
-
-                <button type="button"
-                        class="btn btn-soft-info btn-sm"
-                        (click)="viewMensualidadExistente()">
-                  <i class="ri-eye-line me-1"></i>Ver detalle
-                </button>
-              </div>
-            </div>
-
-            <div class="card mb-2" *ngIf="selectedEscuela">
-              <div class="card-header bg-light py-2 px-3">
-                <h6 class="mb-0">5. Resumen de Registro</h6>
-              </div>
-
-              <div class="card-body py-2 px-3">
-                <div class="row g-2">
-                  <div class="col-md-3">
-                    <small class="text-muted d-block">Estudiante</small>
-                    <div class="fw-semibold">{{ selectedEstudiante.nombreCompleto || 'N/A' }}</div>
-                  </div>
-
-                  <div class="col-md-3">
-                    <small class="text-muted d-block">Escuela</small>
-                    <div class="fw-semibold">{{ selectedEscuela.nombre || 'N/A' }}</div>
-                  </div>
-
-                  <div class="col-md-3">
-                    <small class="text-muted d-block">Período</small>
-                    <div class="fw-semibold">{{ getMonthName(selectedMonth!) }} {{ selectedYear }}</div>
-                  </div>
-
-                  <div class="col-md-3">
-                    <small class="text-muted d-block">Monto Total</small>
-                    <div class="fw-semibold">{{ getTotalAmount() }} Bs.</div>
-                  </div>
-                </div>
-
-                <div class="mt-2">
-                  <small class="text-muted">
-                    La mensualidad corresponde al pago del estudiante para la escuela municipal seleccionada.
-                  </small>
-                </div>
-              </div>
-            </div>
-
-            <div class="mb-0">
-              <label class="form-label mb-1">Observaciones</label>
-              <textarea class="form-control"
-                        formControlName="observaciones"
-                        rows="3"
-                        placeholder="Observaciones adicionales..."></textarea>
+            <div class="form-text mt-2" *ngIf="selection.baseReservation?.reservaRecurrenteDto">
+              Los períodos disponibles están limitados del
+              <strong>{{ formatLocalDate(selection.baseReservation?.reservaRecurrenteDto?.fechaInicio) }}</strong> al
+              <strong>{{ formatLocalDate(selection.baseReservation?.reservaRecurrenteDto?.fechaFin) }}</strong>.
             </div>
           </div>
+        </div>
 
-          <div *ngIf="createTab === 2">
-            <div class="card mb-0">
-              <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h6 class="mb-0">Historial de mensualidades del estudiante</h6>
-                <select class="form-select form-select-sm"
-                        style="width: 220px;"
-                        [(ngModel)]="historialFilter"
-                        [ngModelOptions]="{standalone: true}">
-                  <option value="todas">Todas</option>
-                  <option value="pendientes">Solo pendientes</option>
-                  <option value="pagadas">Pagadas / completadas</option>
-                </select>
+        <div class="card mb-2" *ngIf="selection.school">
+          <div class="card-header bg-light py-2 px-3"><h6 class="mb-0">{{ payerSectionTitle }}</h6></div>
+          <div class="card-body py-2 px-3">
+            <select *ngIf="userRole !== 'Contribuyente'; else fixedContribuyente"
+                    class="form-select" formControlName="contribuyente" (change)="onContribuyenteChange($event)">
+              <option value="">Seleccione al contribuyente pagador</option>
+              <option *ngFor="let contribuyente of contribuyentesDisponibles" [value]="contribuyente.uuid">
+                {{ contribuyente.nombreCompleto }} · {{ contribuyente.numeroDocumento || contribuyente.codigoContribuyente }}
+              </option>
+            </select>
+            <ng-template #fixedContribuyente>
+              <div class="form-control bg-light">
+                {{ selection.payer?.nombreCompleto || userData?.nombreCompleto || 'Contribuyente actual' }}
+                · {{ selection.payer?.numeroDocumento || selection.payer?.codigoContribuyente || '' }}
               </div>
+            </ng-template>
+            <small class="text-muted">Esta persona será titular de la única tasa generada para todo el registro.</small>
+          </div>
+        </div>
 
-              <div class="card-body py-2 px-3">
-                <div *ngIf="!(studentPeriodsRegistrations.length > 0)" class="alert alert-info py-2 mb-0">
-                  <i class="ri-information-line me-1"></i>
-                  No hay mensualidades registradas para este estudiante.
-                </div>
-
-                <div class="table-responsive" *ngIf="studentPeriodsRegistrations.length > 0">
-                  <table class="table table-sm align-middle mb-0">
-                    <thead class="table-light">
-                      <tr>
-                        <th>Período</th>
-                        <th>Escuela</th>
-                        <th>Monto</th>
-                        <th>Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngFor="let mensualidad of mensualidadesFiltradas | slice:0:8">
-                        <td>{{ getMonthName(mensualidad.mes) }} {{ mensualidad['año'] }}</td>
-                        <td>{{ mensualidad.reservaDto?.organizacionDto?.nombre || 'N/A' }}</td>
-                        <td>{{ mensualidad.reservaDto?.montoTotal || 0 }} Bs.</td>
-                        <td>
-                          <span class="badge"
-                                [ngClass]="getStatusBadgeClass(mensualidad.reservaDto?.estadoReserva)">
-                            {{ mensualidad.reservaDto?.estadoReserva }}
-                          </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <small class="text-muted d-block mt-2" *ngIf="mensualidadesFiltradas.length > 8">
-                  Se muestran las 8 más recientes.
-                </small>
+        <div class="card mb-2" *ngIf="selection.baseReservation">
+          <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">3. Estudiantes</h6>
+            <span class="badge bg-primary">{{ selection.students.length }} seleccionado(s)</span>
+          </div>
+          <div class="card-body py-2 px-3">
+            <input class="form-control form-control-sm mb-2" type="search"
+                   [(ngModel)]="selection.studentSearch" [ngModelOptions]="{standalone: true}"
+                   placeholder="Buscar por nombre, matrícula o documento">
+            <div class="border rounded p-2" style="max-height: 210px; overflow-y: auto;">
+              <div class="form-check py-1" *ngFor="let estudiante of estudiantesFiltrados">
+                <input class="form-check-input" type="checkbox" [id]="'student-' + estudiante.uuid"
+                       [checked]="isEstudianteSelected(estudiante)"
+                       (change)="toggleEstudiante(estudiante, $event)">
+                <label class="form-check-label w-100" [for]="'student-' + estudiante.uuid">
+                  <span class="fw-semibold">{{ estudiante.nombreCompleto }}</span>
+                  <small class="text-muted ms-2">{{ estudiante.matricula }}</small>
+                </label>
               </div>
+              <div class="text-muted text-center py-2" *ngIf="!estudiantesFiltrados.length">No se encontraron estudiantes.</div>
             </div>
           </div>
-        </ng-container>
+        </div>
+
+        <div class="card mb-2" *ngIf="selection.students.length && catalogs.periods.length">
+          <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">4. Mensualidades por estudiante</h6>
+            <span class="badge bg-success">{{ selectedDetailsCount }} mensualidad(es)</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                  <tr><th class="px-3">Estudiante</th><th *ngFor="let periodo of catalogs.periods">{{ periodo.label }}</th><th></th></tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let estudiante of selection.students">
+                    <td class="px-3"><div class="fw-semibold">{{ estudiante.nombreCompleto }}</div><small class="text-muted">{{ estudiante.matricula }}</small></td>
+                    <td *ngFor="let periodo of catalogs.periods" class="text-center">
+                      <input class="form-check-input" type="checkbox"
+                             [checked]="isPeriodoSelected(estudiante, periodo)"
+                             [disabled]="isPeriodoRegistrado(estudiante, periodo)"
+                             [title]="isPeriodoRegistrado(estudiante, periodo) ? 'Mensualidad ya registrada' : periodo.label"
+                             (change)="togglePeriodo(estudiante, periodo, $event)">
+                    </td>
+                    <td class="text-nowrap pe-3">
+                      <button type="button" class="btn btn-link btn-sm p-0 me-2" (click)="selectAvailablePeriods(estudiante)">Todos</button>
+                      <button type="button" class="btn btn-link text-danger btn-sm p-0" (click)="clearStudentPeriods(estudiante)">Limpiar</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="px-3 py-2 border-top text-muted small">Las casillas deshabilitadas ya cuentan con una mensualidad registrada.</div>
+          </div>
+        </div>
+
+        <div class="card mb-2" *ngIf="selection.school">
+          <div class="card-header bg-light py-2 px-3"><h6 class="mb-0">5. Resumen</h6></div>
+          <div class="card-body py-2 px-3">
+            <div class="row g-2">
+              <div class="col-md-3"><small class="text-muted d-block">Escuela</small><strong>{{ selection.school.nombre }}</strong></div>
+              <div class="col-md-3"><small class="text-muted d-block">Estudiantes</small><strong>{{ selection.students.length }}</strong></div>
+              <div class="col-md-3"><small class="text-muted d-block">Mensualidades</small><strong>{{ selectedDetailsCount }}</strong></div>
+              <div class="col-md-3"><small class="text-muted d-block">Total de la tasa</small><strong>{{ getTotalAmount() }} Bs.</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <label class="form-label mb-1">Observaciones</label>
+        <textarea class="form-control" formControlName="observaciones" rows="2" placeholder="Observaciones adicionales..."></textarea>
       </form>
     </ng-container>
   </div>
 
   <div class="modal-footer py-2 px-3 border-top">
-    <button *ngIf="viewingExistingFromCreate"
+    <button *ngIf="detailReturn.active"
             type="button"
             class="btn btn-light"
             (click)="backToCreateFromDetail()">
@@ -643,24 +529,24 @@
     <button *ngIf="accion === ''"
             type="button"
             class="btn btn-primary"
-            [disabled]="reservationForm.invalid || isLoading || !!selectedMensualidadExistente"
+            [disabled]="reservationForm.invalid || isLoading || selectedDetailsCount === 0"
             (click)="onSubmit()">
       <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
-      {{ isLoading ? 'Registrando...' : 'Registrar Mensualidad' }}
+      {{ isLoading ? 'Registrando...' : 'Generar tasa por ' + selectedDetailsCount + ' mensualidad(es)' }}
     </button>
   </div>
 </div>
 
 <ng-template #ticketModal>
-  <app-ticket *ngIf="reservaActual"
-    [bookingType]="reservaActual.tipoReserva || 'periodo'"
-    [reservationData]="reservaActual"
+  <app-ticket *ngIf="row"
+    [bookingType]="row.tipoReserva"
+    [reservationData]="row"
     [autoLoad]="true"
     [showAsModal]="true">
   </app-ticket>
 </ng-template>
 
-<ng-container *ngIf="accion === 'annularModal'">
+<ng-template #annularModal>
   <div class="modal-content">
     <div class="modal-header">
       <button type="button" class="btn-close" (click)="onCloseModal()" aria-label="Close"></button>
@@ -677,7 +563,7 @@
         <div class="mt-2 fs-15 mx-4 mx-sm-5">
           <h4>Estas seguro de Eliminar el Registro ?</h4>
           <p class="text-muted mx-4 mb-0">
-            Esta acción no podrá ser revertida, la reserva "<strong>{{ reservaActual?.numeroReserva }}</strong>"
+            Esta acción no podrá ser revertida, la reserva "<strong>{{ row.numeroReserva }}</strong>"
             sera anulada en RUAT y en el sistema de reservas municipal.
           </p>
         </div>
@@ -752,4 +638,4 @@
       </div>
     </div>
   </div>
-</ng-container>
+</ng-template>

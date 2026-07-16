@@ -128,17 +128,18 @@ export class DataTableComponent implements OnChanges {
     ];  
   } 
   canShow(action:string,data: any): boolean {
+    const reserva = data?.reservaDto || data;
     switch(action){
       case 'Editar':
-        return data.reservaDto ? data.reservaDto.estadoReserva ===statusData.EstadoReserva.PENDIENTE : true
+        return reserva?.estadoReserva ? reserva.estadoReserva === statusData.EstadoReserva.PENDIENTE : true
       case 'validate':
-        return data.reservaDto && data.reservaDto.estadoValidacion ===statusData.EstadoValidacion.PENDIENTE;
+        return reserva?.estadoValidacion === statusData.EstadoValidacion.PENDIENTE;
       case 'Anular':
-        return data.reservaDto && (data.reservaDto.estadoReserva ===statusData.EstadoReserva.PENDIENTE);
+        return reserva?.estadoReserva === statusData.EstadoReserva.PENDIENTE;
       case 'No Show':
-        return data.reservaDto && (
-          data.reservaDto.estadoReserva === statusData.EstadoReserva.PAGADA ||
-          data.reservaDto.estadoReserva === statusData.EstadoReserva.EN_CURSO
+        return !!reserva && (
+          reserva.estadoReserva === statusData.EstadoReserva.PAGADA ||
+          reserva.estadoReserva === statusData.EstadoReserva.EN_CURSO
         );
       case 'Bloquear':
         return data.estadoUsuario === statusData.EstadoUsuario.ACTIVO;

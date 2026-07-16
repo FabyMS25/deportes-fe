@@ -8,11 +8,11 @@ import { TokenStorageService } from './token-storage.service';
 import { UserRol } from 'src/app/core/constants/UserData';
 import { EncargadoService } from './api/encargado.service';
 import { ContribuyentesService } from './api/contribuyentes.service';
-import { BehaviorSubject, firstValueFrom, of, Subject, timeout } from 'rxjs';
+import { firstValueFrom, of, Subject, timeout } from 'rxjs';
 import { UserService } from './api-users/users.service';
 import { ConfiguracionSistemaService } from './api/configuracionSistema.service';
 import { ConfiguracionSistema } from '../models/configuracionSistema.model';
-import { AplicaAConfiguracion, ClaveConfiguracion } from '../constants/Configurations';
+import { AplicaAConfiguracion, CategoriaConfiguracion } from '../constants/Configurations';
 import { RuatRequestsService } from './ruatRequest.service';
 import { LoginResponse } from '../models/user/login-response.model';
 import { GlobalComponent } from 'src/app/global-component';
@@ -44,10 +44,10 @@ export class AuthenticationService {
   userRole!: 'Contribuyente' | 'Admin' | 'Encargado';
   private currentUserSubject: any;
   private loginEventSubject = new Subject<LoginEvent>();
+  private pendingLoginEvent: LoginEvent | null = null;
   loginEvent$ = this.loginEventSubject.asObservable();
   private systemConfigList: { [key: string]: ConfiguracionSistema } = {};
   private readonly ruatLoginTimeoutMs = 8000;
-  private readonly ruatTokenTtlMinutes = 55;
   public systemStatus = {
     backend: false,
     configurations: false,
@@ -74,7 +74,14 @@ export class AuthenticationService {
 
   }
   emitLoginEvent(event: LoginEvent) {
+    this.pendingLoginEvent = event;
     this.loginEventSubject.next(event);
+  }
+
+  consumeLoginEvent(): LoginEvent | null {
+    const event = this.pendingLoginEvent;
+    this.pendingLoginEvent = null;
+    return event;
   }
 
   async login(username: string, password: string, rememberMe: boolean): Promise<LoginResult> {
@@ -124,8 +131,7 @@ export class AuthenticationService {
         configs: configResult.configs || {},
         user: staffResult,
         staff: permissionResult.assignations,
-        token: staffResult.token,
-        ruatToken: configResult.ruatToken || ''
+        token: staffResult.token
       }, rememberMe);
       this.emitLoginEvent({
         message: permissionResult.status ==='ADMIN' ? 'welcome_admin' : 'welcome_staff',
@@ -162,8 +168,7 @@ export class AuthenticationService {
       configs: configResult.configs || {},
       user: contribuyenteResult,
       staff: null,
-      token: 'CONTRIBUYENTE_SESSION',
-      ruatToken: configResult.ruatToken || ''
+      token: 'CONTRIBUYENTE_SESSION'
     }, rememberMe);
     this.emitLoginEvent({
       message: 'welcome_contribuyente',
@@ -250,7 +255,6 @@ export class AuthenticationService {
     configsStatus: boolean;
     configs?: { [key: string]: ConfiguracionSistema };
     ruatStatus: boolean;
-    ruatToken?: string;
     errorType?: 'BACKEND' | 'CORS' | 'INVALID_RESPONSE' | 'RUAT' | 'UNKNOWN';
     errorMessage?: string;
   }> {    
@@ -285,13 +289,14 @@ export class AuthenticationService {
       const configsMap: { [key: string]: ConfiguracionSistema } = {};
       for (const config of configResponse.payload) {
         if (!config.activo) continue;
+        if (config.categoria === CategoriaConfiguracion.RUAT) continue;
         if (!isContribuyente && config.aplicaA === AplicaAConfiguracion.USUARIO) continue;
         configsMap[config.clave] = config;
       }
       this.systemConfigList = configsMap;
       this.systemStatus.backend = true;
       this.systemStatus.configurations = true;
-      const ruatResult = await this.authRuat(configsMap);
+      const ruatResult = await this.checkRuatAvailability();
       this.systemStatus.ruat = ruatResult.success;
       if (!ruatResult.success) {
         this.systemStatus.message = 'RUAT authentication failed';
@@ -300,7 +305,6 @@ export class AuthenticationService {
         configsStatus: true,
         configs: configsMap,
         ruatStatus: ruatResult.success,
-        ruatToken: ruatResult.token,
         errorType: ruatResult.success ? undefined : 'RUAT',
         errorMessage: ruatResult.error
       };
@@ -324,50 +328,22 @@ export class AuthenticationService {
     }
   }
 
-  private async authRuat(
-    configsMap: { [key: string]: ConfiguracionSistema }
-  ): Promise<{ success: boolean; token?: string; error?: any }> {
-    if (this.storageService.isRuatTokenFresh(this.ruatTokenTtlMinutes)) {
-      return { success: true, token: this.storageService.getTokenRuat()?? undefined }
-    }
-    this.ruatService.removeToken();
-    const usuario = configsMap[ClaveConfiguracion.USUARIO_RUAT]?.valorTexto || '';
-    const clave = configsMap[ClaveConfiguracion.CLAVE_RUAT]?.valorTexto || '';
-    if (!usuario || !clave) {
-      return { success: false, error: 'Missing RUAT credentials' };
-    }
+  private async checkRuatAvailability(): Promise<{ success: boolean; error?: any }> {
     try {
       const response: any = await firstValueFrom(
-        this.ruatService.authenticate(usuario, clave).pipe(timeout(this.ruatLoginTimeoutMs))
+        this.ruatService.authenticate().pipe(timeout(this.ruatLoginTimeoutMs))
       );
-      if (response?.token) {
-        this.ruatService.setToken(response.token);
-        return { success: true, token: response.token };
-      }
-      return { success: false, error: 'Invalid RUAT token' };
+      return { success: response?.status === 'OK' && response?.payload?.available === true };
     } catch (error) {
       return { success: false, error };
     }
   }
 
   async ensureRuatAuthenticated(forceRefresh: boolean = false): Promise<RuatAvailabilityResult> {
-    if (!forceRefresh && this.storageService.isRuatTokenFresh(this.ruatTokenTtlMinutes)) {
+    if (!forceRefresh && this.systemStatus.ruat) {
       return { available: true };
     }
-
-    if (forceRefresh) {
-      this.ruatService.removeToken();
-    }
-
-    const configs = this.storageService.getConfigs();
-    if (!configs || Object.keys(configs).length === 0) {
-      return {
-        available: false,
-        message: 'No se pudo verificar RUAT porque no hay configuraciones cargadas. Cierre sesion e ingrese nuevamente.'
-      };
-    }
-
-    const ruatResult = await this.authRuat(configs);
+    const ruatResult = await this.checkRuatAvailability();
     this.systemStatus.ruat = ruatResult.success;
 
     if (ruatResult.success) {
@@ -376,7 +352,7 @@ export class AuthenticationService {
 
     return {
       available: false,
-      message: 'RUAT no esta disponible o la sesion RUAT expiro. Intente nuevamente en unos minutos.'
+      message: 'RUAT no está disponible. Vuelva a intentar en unos minutos.'
     };
   }
   
@@ -436,7 +412,7 @@ export class AuthenticationService {
   }
 
   isRuatAuthenticated(): boolean {
-    return this.storageService.isRuatTokenFresh(this.ruatTokenTtlMinutes);
+    return this.systemStatus.ruat;
   }
   getSystemConfig(clave: string): ConfiguracionSistema | undefined {
     return this.systemConfigList[clave];

@@ -341,13 +341,12 @@
 //   motivoGratuidad?: string; // 'ESCUELA_MUNICIPAL', 'ORGANIZACION', 'EVENTO_ESPECIAL'
 
 //   organizacionDto?:Organizacion;
-//   estudianteDto?: EstudianteEscuela;
 //   contribuyenteDto:Contribuyente;
 //   campoDeportivoDto:CampoDeportivo;
 //   tarifaDto: Tarifa;
 //   reservaPuntualDto?:ReservaPuntual;
 //   reservaRecurrenteDto?:ReservaRecurrente;  
-//   reservaPeriodoDto?: ReservaPeriodo;
+//   reservasPeriodoDtoList?: ReservaPeriodo[];
 
 //   pagosDtoList?:Pago[];
 //   auditoriasDtoList?:ReservaAuditoria;
@@ -404,7 +403,6 @@
 //   disciplina?: string;
 //   entrenador?: string;
   
-//   fechaPago?: Date;
   
 //   reservaDto?: Reserva;
 // }

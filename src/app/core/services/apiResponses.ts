@@ -1,62 +1,105 @@
-import { throwError } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 
-export function handleResponse<T>(response: { status: string; payload: any }): T {
-  if (response.status === 'OK') {
-    return response.payload as T;
-  } else {
-    throw new Error(response.payload?.mensaje || response.payload?.message || 'Respuesta inesperada del servidor');
+export interface ApiResponse<T> {
+  status: string;
+  payload: T;
+  message?: string;
+}
+
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
+type WrappedApiResponse = {
+  status: string;
+  payload: unknown;
+  message?: string;
+  mensaje?: string;
+};
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  pagination: {
+    page: number;
+    per_page: number;
+    total: number;
+    total_pages: number;
+  };
+}
+
+export function handleResponse<T>(response: unknown): T {
+  if (!isWrappedResponse(response)) {
+    return response as T;
   }
+
+  const status = String(response.status).toUpperCase();
+  if (status === 'OK' || status === 'SUCCESS') {
+    return response.payload as T;
+  }
+
+  throw new Error(extractMessage(response) || 'Respuesta inesperada del servidor');
+}
+
+export function emptyPaginatedResponse<T>(page = 1, perPage = 10): PaginatedResponse<T> {
+  return {
+    items: [],
+    pagination: {
+      page,
+      per_page: perPage,
+      total: 0,
+      total_pages: 0,
+    },
+  };
 }
 
 export function handleError(operation = 'operación') {
-  return (error: any) => {
-    let message = `Error en ${operation}`;
-
-    if (error?.error?.payload?.mensaje) {
-      message = error.error.payload.mensaje;
-    } else if (error?.error?.message) {
-      message = error.error.message;
-    } else if (error?.error?.mensaje) {
-      message = error.error.mensaje;
-    } else if (error?.message) {
-      message = error.message;
-    } else if (typeof error === 'string') {
-      message = error;
-    }
+  return (error: unknown): Observable<never> => {
+    const message = extractMessage(error) || `Error en ${operation}`;
     return throwError(() => new Error(message));
   };
 }
-// export function handleError(operation = 'operación') {
-//   return (error: any) => {
-//     return throwError(() => new Error(error?.message || `Error en ${operation}`));
-//   };
-// }
 
+function isWrappedResponse(response: unknown): response is WrappedApiResponse {
+  return !!response
+    && typeof response === 'object'
+    && 'status' in response
+    && 'payload' in response;
+}
 
-  // update(data: Vehicle): Observable<Vehicle> {
-  //   return this.http.put<{ status: string; payload: any }>(`${url}`, data).pipe(
-  //     map((response) => {
-  //       if (response.status === 'OK') {
-  //         return response.payload as Vehicle;
-  //       } else {
-  //         const msg = typeof response.payload === 'string' ? response.payload : JSON.stringify(response.payload);
-  //         throw new Error(`Error del servidor: ${msg}`);
-  //       }
-  //     }),
-  //     catchError((error) => {
-  //       let errorMessage = 'Error desconocido';
-        
-  //       if (error.error) {
-  //         if (typeof error.error === 'string') {
-  //           errorMessage = error.error;
-  //         } else if (typeof error.error === 'object') {
-  //           errorMessage = error.error.message || error.error.details || JSON.stringify(error.error);
-  //         }
-  //       } else if (error.message) {
-  //         errorMessage = error.message;
-  //       }
+function extractMessage(value: unknown): string {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
 
-  //       return throwError(() => new Error(errorMessage));
-  //     })
-  //   );
-  // }
+  if (typeof value !== 'object') {
+    return '';
+  }
+
+  const data = value as {
+    payload?: unknown;
+    error?: unknown;
+    message?: unknown;
+    mensaje?: unknown;
+    details?: unknown;
+  };
+
+  return firstText(
+    data.mensaje,
+    data.message,
+    data.details,
+    extractMessage(data.payload),
+    extractMessage(data.error)
+  );
+}
+
+function firstText(...values: unknown[]): string {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+  return '';
+}

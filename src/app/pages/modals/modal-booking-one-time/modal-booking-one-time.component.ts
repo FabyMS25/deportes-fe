@@ -17,7 +17,6 @@ import { NgbModal, NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
 import { ReservaPuntualService } from 'src/app/core/services/api/reserva-puntual.service';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
@@ -81,7 +80,6 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
     private modalService: NgbModal,
     private formBuilder: FormBuilder,
     private authService: AuthenticationService,
-    private systemConfigsService: ConfiguracionSistemaService,
     private ruatService: RuatRequestsService,
     private reservaPuntualService: ReservaPuntualService,
     private reservaService: ReservaService,
@@ -579,13 +577,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   }
 
   private getConfigsSystem() {
-    this.systemConfigsService.getAll().subscribe({
-      next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.systemConfigList = data.payload;
-        }
-      }
-    });
+    this.systemConfigList = Object.values(this.authService.getAllConfigs() || {});
   }
 
   private updateReservaPuntual(data: any): Promise<ReservaPuntual> {
@@ -657,20 +649,13 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
 
   private registerReservationInRuat(reservaData: Reserva): Promise<Reserva> {
     return new Promise((resolve, reject) => {
-      const codigoAlcaldia = this.systemConfigList.find(config => config.clave === 'CODIGO_ALCALDIA_RUAT')?.valorTexto || '';
-      const codigoUsuario = this.systemConfigList.find(config => config.clave === 'CODIGO_USUARIO_RUAT')?.valorTexto || '';
-      const servicioMunicipal = this.systemConfigList.find(config => config.clave === 'SERVICIO_MUNICIPAL_RUAT')?.valorTexto || '';
-
       const ruatData = {
-        codigoAlcaldia,
-        codigoUsuario: reservaData.contribuyenteDto.codigoContribuyente,
         codigoContribuyente: reservaData.contribuyenteDto.codigoContribuyente,
-        servicioMunicipal,
         datosConcepto: [{
           numero: '1',
           codigoClasificador: reservaData.tarifaDto.clasificadorRuatDto.codigo,
           tipoArancel: reservaData.tarifaDto.clasificadorRuatDto.tipoArancel || 'DI',
-          monto: reservaData.montoTotal
+          monto: Number(reservaData.montoTotal).toFixed(2)
         }],
         observacion:
           reservaData.reservaPuntualDto?.observaciones ||
@@ -678,9 +663,9 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
           'Reserva de Cancha Deportiva GAMQ'
       };
 
-      const code = reservaData.contribuyenteDto.codigoContribuyente || '';
+      const code = reservaData.contribuyenteDto.codigoContribuyente || ''; 
 
-      this.ruatService.createTasa(codigoAlcaldia, codigoUsuario, servicioMunicipal, ruatData, code)
+      this.ruatService.createTasa(ruatData, code)
         .subscribe({
           next: async (response: any) => {
             try {
@@ -774,9 +759,6 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
       return;
     }
 
-    const codigoAlcaldia = this.systemConfigList.find(config => config.clave === 'CODIGO_ALCALDIA_RUAT')?.valorTexto || '';
-    const codigoUsuario = this.systemConfigList.find(config => config.clave === 'CODIGO_USUARIO_RUAT')?.valorTexto || '';
-
     const requestData = {
       numeroTasa: reserva.numeroTasa,
       motivo: formValues.motivo,
@@ -784,7 +766,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
     };
 
     this.showLoading = true;
-    this.ruatService.cancelTasa(codigoAlcaldia, codigoUsuario, requestData).subscribe({
+    this.ruatService.cancelTasa(requestData).subscribe({
       next: (resp: any) => {
         if (resp['status'] === 'OK') {
           const text = this.ruatService.getResponseMessage(resp, 'Tasa anulada correctamente.');

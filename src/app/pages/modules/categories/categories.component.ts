@@ -273,16 +273,14 @@ export class CategoriesComponent {
   loading: boolean = true;
   private getCategories() {
     this.categoriesService.getAll().subscribe({
-      next: (data: any) => {
+      next: (data: Categoria[]) => {
         this.loading = false;
-        if (data['status'] === 'OK') {
-          this.categoryList = data.payload;
-          this.temp = this.categoryList;
-        }
+        this.categoryList = data;
+        this.temp = this.categoryList;
       },
       error: (error) => {
         this.loading = false;
-        Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
+        Swal.fire({ text: error?.message || 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
       }
     });
   }
@@ -317,11 +315,9 @@ export class CategoriesComponent {
   deleteData() {
     let uuid = this.deleteId;
     this.categoriesService.delete(uuid).subscribe({
-      next: (data: any) => {
+      next: (message: string) => {
         this.submitted = false;
-        if (data['status'] === 'OK') {
-          this.notify(data.payload, 'info')
-        }
+        this.notify(message || 'Registro eliminado correctamente', 'info')
         this.closeModal();
       },
       error: err => {
