@@ -510,6 +510,7 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
         type: "line",
         height: 370,
         toolbar: { show: true },
+        animations: { enabled: false },
       },
       stroke: {
         curve: "straight",
@@ -634,7 +635,8 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
       chart: {
         height: 380,
         type: "line",
-        toolbar: { show: true }
+        toolbar: { show: true },
+        animations: { enabled: false }
       },
       stroke: {
         width: [0, 3, 2],
@@ -719,7 +721,8 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
       series: statusData.series,
       chart: {
         height: 380,
-        type: "donut"
+        type: "donut",
+        animations: { enabled: false }
       },
       labels: statusData.labels,
       colors: statusData.colors,
@@ -948,6 +951,7 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
         type: "bar",
         height: 350,
         stacked: true,
+        animations: { enabled: false },
         toolbar: {
           show: true,
         },
@@ -1046,9 +1050,9 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
 
   private async getAllPages(page: number, accumulatedData: any[]): Promise<any[]> {
     const data: any = await this.reservasService.getAll(page, 20).toPromise();
-    if (data['status'] === 'OK') {
-      const newData = accumulatedData.concat(data.payload.content);
-      const pageInfo = data.payload;
+    if (data) {
+      const newData = accumulatedData.concat(data.content);
+      const pageInfo = data;
       if (!pageInfo.last) {
         return this.getAllPages(page + 1, newData);
       } else {

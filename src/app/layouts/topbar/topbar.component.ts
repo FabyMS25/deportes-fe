@@ -33,6 +33,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   allnotifications: Notificacion[] = [];
   unreadNotificationCount = 0;
   usuarioUuid = '';
+  canReceiveAdminNotifications = false;
   notificationToast: Notificacion | null = null;
   private notificationToastTimeout?: ReturnType<typeof setTimeout>;
   private notificationSubscriptions = new Subscription();
@@ -69,6 +70,9 @@ export class TopbarComponent implements OnInit, OnDestroy {
     this.userRole = this.authService.getUserRole();
     this.userFullName = this.authService.getUserFullName();
     this.usuarioUuid = this.resolveUsuarioUuid();
+    this.canReceiveAdminNotifications = this.authService
+      .hasPermission('Configuraciones de Sistema')
+      .includes('NOTIFICACIONES_ADMIN');
     this.startNotifications();
 
     this.element = document.documentElement;
@@ -254,6 +258,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
     this.markAsRead(notification);
     const targetUrl = this.getNotificationTargetUrl(notification);
     if (!targetUrl) return;
+    this.router.navigateByUrl(targetUrl);
   }
 
   markAsRead(notification: Notificacion): void {
@@ -288,6 +293,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   refreshNotifications(): void {
     if (!this.usuarioUuid) return;
+    if (this.canReceiveAdminNotifications) {
+      this.notificacionService.syncAdminNotifications(this.usuarioUuid).subscribe(() => {
+        this.notificacionService.loadLatest(this.usuarioUuid).subscribe();
+        this.notificacionService.refreshCounter(this.usuarioUuid).subscribe();
+      });
+      return;
+    }
     this.notificacionService.loadLatest(this.usuarioUuid).subscribe();
     this.notificacionService.refreshCounter(this.usuarioUuid).subscribe();
   }
@@ -351,6 +363,11 @@ export class TopbarComponent implements OnInit, OnDestroy {
       this.notificacionService.incomingNotification$.subscribe(notification => this.showIncomingNotification(notification))
     );
 
+    if (this.canReceiveAdminNotifications) {
+      this.notificacionService.syncAdminNotifications(this.usuarioUuid)
+        .subscribe(() => this.notificacionService.initialize(this.usuarioUuid));
+      return;
+    }
     this.notificacionService.initialize(this.usuarioUuid);
   }
 

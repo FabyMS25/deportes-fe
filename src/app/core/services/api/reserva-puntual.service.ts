@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { ReservaPuntual } from '../../models/reservaPuntual.model';
+import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 export interface ReservaPuntualFilters {
   tab?: number;
@@ -37,11 +38,11 @@ export class ReservaPuntualService {
         }
       });
     }
-    return this.http.get<any>(`${this.apiUrl}`, { params });
+    return apiGet<any>(this.http, this.apiUrl, 'obtener reservas puntuales', { params });
   }
   
   checkExpiredReservations(): Observable<any> {
-    return this.http.post(`${this.apiUrl}/verificar-expiradas`, null);
+    return apiPost<any>(this.http, `${this.apiUrl}/verificar-expiradas`, null, 'verificar reservas puntuales expiradas');
   }
   
   validarCambioHorario(
@@ -66,7 +67,7 @@ export class ReservaPuntualService {
       params = params.set('excludeReservaUuid', excludeReservaUuid);
     }
 
-    return this.http.get<any>(`${this.apiUrl}/conflictos`, { params });
+    return apiGet<any>(this.http, `${this.apiUrl}/conflictos`, 'validar cambio de horario puntual', { params });
   }
 
   private formatDateLocal(date: Date): string {
@@ -78,23 +79,23 @@ export class ReservaPuntualService {
 
 
   getByUuid(uuid: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/${uuid}`);
+    return apiGet<any>(this.http, `${this.apiUrl}/${uuid}`, `obtener reserva puntual (${uuid})`);
   }
 
   getByReservaUuid(reservaUuid: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/reserva/${reservaUuid}`);
+    return apiGet<any>(this.http, `${this.apiUrl}/reserva/${reservaUuid}`, `obtener reserva puntual por reserva (${reservaUuid})`);
   }
 
   getByFechaUso(fechaUso: Date): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/fecha-uso/${this.formatDateLocal(fechaUso)}`);
+    return apiGet<any[]>(this.http, `${this.apiUrl}/fecha-uso/${this.formatDateLocal(fechaUso)}`, 'obtener reservas puntuales por fecha de uso');
   }
 
   getByCampoYFecha(uuidCampo: string, fechaUso: Date): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/campo/${uuidCampo}/fecha/${this.formatDateLocal(fechaUso)}`);
+    return apiGet<any[]>(this.http, `${this.apiUrl}/campo/${uuidCampo}/fecha/${this.formatDateLocal(fechaUso)}`, `obtener reservas puntuales por campo (${uuidCampo})`);
   }
 
   getActivasByCampoYFecha(uuidCampo: string, fechaUso: Date): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/activas/campo/${uuidCampo}/fecha/${this.formatDateLocal(fechaUso)}`);
+    return apiGet<any[]>(this.http, `${this.apiUrl}/activas/campo/${uuidCampo}/fecha/${this.formatDateLocal(fechaUso)}`, `obtener reservas puntuales activas por campo (${uuidCampo})`);
   }
 
   verificarConflictos(uuidCampo: string, fechaUso: Date, horaInicio: string, horaFin: string, excludeReservaUuid?: string): Observable<boolean> {
@@ -108,23 +109,23 @@ export class ReservaPuntualService {
       params = params.set('excludeReservaUuid', excludeReservaUuid);
     }
     
-    return this.http.get<boolean>(`${this.apiUrl}/conflictos`, { params });
+    return apiGet<boolean>(this.http, `${this.apiUrl}/conflictos`, 'verificar conflictos de reserva puntual', { params });
   }
 
   create(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}`, data);
+    return apiPost<any>(this.http, this.apiUrl, data, 'crear reserva puntual');
   }
 
   update(data: any): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}`, data);
+    return apiPut<any>(this.http, this.apiUrl, data, 'actualizar reserva puntual');
   }
 
   registrarUsoReal(uuid: string, fechaUsoReal: Date): Observable<any> {
     let params = new HttpParams().set('fechaUsoReal', fechaUsoReal.toISOString());
-    return this.http.put<any>(`${this.apiUrl}/${uuid}/registrar-uso`, null, { params });
+    return apiPut<any>(this.http, `${this.apiUrl}/${uuid}/registrar-uso`, null, `registrar uso real (${uuid})`, { params });
   }
 
   delete(uuid: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${uuid}`);
+    return apiDelete<any>(this.http, `${this.apiUrl}/${uuid}`, `eliminar reserva puntual (${uuid})`);
   }
 }

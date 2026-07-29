@@ -957,11 +957,9 @@ export class MapDashboardComponent implements OnInit {
     private getComplexes() {
         this.complexService.getAll().subscribe({
             next: (data: any) => {
-                if (data['status'] === 'OK') {
-                    this.complexList = data.payload;
-                    this.temp = data.payload;
-                    this.setMarkers()
-                }
+                this.complexList = data;
+                this.temp = data;
+                this.setMarkers()
             },
             error: (error) => {
                 Swal.fire({ 
@@ -975,9 +973,7 @@ export class MapDashboardComponent implements OnInit {
     private getFields() {
         this.fieldService.getAll().subscribe({
             next: (data: any) => {
-                if (data['status'] === 'OK') {
-                    this.fieldList = data.payload;
-                }
+                this.fieldList = data;
             },
             error: (error) => {
                 Swal.fire({ 

@@ -481,14 +481,11 @@ export class ModalImportComponent {
   private searchComplejo(nombre: string): Observable<any> {
     return this.complejoService.getAll().pipe(
       map((response: any) => {
-        if (response.status === 'OK') {
-          const complejo = response.payload.find((c: any) => c.nombre === nombre);
-          if (!complejo) {
-            throw new Error(`Complejo '${nombre}' no encontrado`);
-          }
-          return complejo;
+        const complejo = response.find((c: any) => c.nombre === nombre);
+        if (!complejo) {
+          throw new Error(`Complejo '${nombre}' no encontrado`);
         }
-        throw new Error('Error al buscar complejo');
+        return complejo;
       })
     );
   }
@@ -514,10 +511,8 @@ export class ModalImportComponent {
   }
   private loadClasificadores(): void {
     this.clasificadorService.getAll().subscribe({
-      next: (response: any) => {
-        if (response.status === 'OK') {
-          this.clasificadoresList = response.payload;
-        }
+      next: (response: any[]) => {
+        this.clasificadoresList = response;
       },
     });
   }

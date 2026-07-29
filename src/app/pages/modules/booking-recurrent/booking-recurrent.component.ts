@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgbModal, NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
-import { ngxCsv } from 'ngx-csv';
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
@@ -22,6 +21,8 @@ import { Reserva } from 'src/app/core/models/reserva.model';
 import { Pago } from 'src/app/core/models/pago.model';
 import { TicketComponent } from '../reports/ticket/ticket.component';
 import { BookingRecurrentModalComponent } from '../../modals/modal-booking-recurrent/modal-booking-recurrent.component';
+import { CsvColumn } from 'src/app/shared/data-header/data-header.component';
+import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component';
 
 @Component({
   selector: 'app-booking-recurrent',
@@ -29,29 +30,64 @@ import { BookingRecurrentModalComponent } from '../../modals/modal-booking-recur
   styleUrls: ['./booking-recurrent.component.scss']
 })
 export class BookingRecurrentComponent implements OnInit {
-  title = 'Reservas Recurrentes';
-  breadCrumbItems!: Array<{}>;
-  itemsList: any[] = [];
+  breadCrumbItems: BreadCrumbItem[] =[];
   viewMode: 'table' | 'cards' = 'table';
+  canActivate: string[];
+  itemsList: any[] = [];
+  temp: any[] = [];
   serverSidePagination: boolean = true;
   currentPage: number = 1;
   pageSize: number = 5;
 
-  canActivate: string[];
+  loading: boolean = true;
+  reservasList: any;
+  categoryList: Categoria[] = [];
+  estadoReservaOptions = StatusUtils.getEstadoReservaOptions();
+  estadoValidacionOptions = StatusUtils.getEstadoValidacionOptions();
   userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
   userData!: any;
   contribuyente!: Contribuyente;
 
-  estadoReservaOptions = StatusUtils.getEstadoReservaOptions();
-  estadoValidacionOptions = StatusUtils.getEstadoValidacionOptions();
-
-  loading: boolean = true;
-  reservasList: any;
-  temp: any[] = [];
-  categoryList: Categoria[] = [];
   selectedItems: ReservaRecurrente[] = [];
-  dataSelected!: any;
-  consultResults: any[] = [];
+  readonly CSV_COLUMNS: CsvColumn<ReservaRecurrente>[] = [
+    { header: 'Número Reserva', value: i => i.reservaDto?.numeroReserva || '-' },
+    { header: 'Tipo Reserva', value: i => i.reservaDto?.tipoReserva || '-' },
+    { header: 'Fecha Creación', value: i => i.reservaDto?.fechaCreacion ? new Date(i.reservaDto.fechaCreacion).toLocaleDateString() : '-' },
+    { header: 'Estado Reserva', value: i => i.reservaDto?.estadoReserva || '-' },
+    { header: 'Estado Validación', value: i => i.reservaDto?.estadoValidacion || '-' },
+    { header: 'Activo', value: i => i.activo ? 'Sí' : 'No' },
+    { header: 'Complejo', value: i => i.reservaDto?.campoDeportivoDto?.complejoDto?.nombre || '-' },
+    { header: 'Campo Deportivo', value: i => i.reservaDto?.campoDeportivoDto?.nombre || '-' },
+    { header: 'Superficie', value: i => i.superficie || '-' },
+    { header: 'Categoría', value: i => i.categoria || '-' },
+    { header: 'Tipo Cobro', value: i => i.reservaDto?.tarifaDto?.tipoCobro || '-' },
+    { header: 'Cantidad Meses', value: i => i.reservaDto?.tarifaDto?.tipoCobro === 'mensualidad' ? this.calculateMonthsForExport(i.fechaInicio, i.fechaFin) : '-' },
+    { header: 'Frecuencia Mensual', value: i => i.reservaDto?.tarifaDto?.frecuencia || '-' },
+    { header: 'Sesiones Incluidas', value: i => i.reservaDto?.tarifaDto?.sesionesIncluidas || '-' },
+    { header: 'Fecha Inicio', value: i => i.fechaInicio ? new Date(i.fechaInicio).toLocaleDateString() : '-' },
+    { header: 'Fecha Fin', value: i => i.fechaFin ? new Date(i.fechaFin).toLocaleDateString() : '-' },
+    { header: 'Días Semana', value: i => i.diasSemana || '-' },
+    { header: 'Cant. Sesiones', value: i => i.cantidadSesiones || '-' },
+    { header: 'Duración Sesión', value: i => i.duracionSesionHoras ? `${i.duracionSesionHoras} hrs` : '-' },
+    { header: 'Cant. Personas', value: i => i.cantidadPersonas || '-' },
+    { header: 'Tarifa Mensual', value: i => i.precioBaseAplicado || '-' },
+    { header: 'Tablero', value: i => i.tableroDto?.horario ? JSON.stringify(i.tableroDto.horario) : '-' },
+    { header: 'Número Tasa', value: i => i.reservaDto?.numeroTasa || '-' },
+    { header: 'Monto Total', value: i => i.reservaDto?.montoTotal || '-' },
+    { header: 'Reserva Gratuita', value: i => i.reservaDto?.esReservaGratuita ? 'SI' : 'NO' },
+    { header: 'Motivo Gratuidad', value: i => i.reservaDto?.motivoGratuidad || '-' },
+    { header: 'Es Para Organización', value: i => i.reservaDto?.organizacionDto ? 'SI' : 'NO' },
+    { header: 'Nombre Organización', value: i => i.reservaDto?.organizacionDto?.nombre || '-' },
+    { header: 'Tipo Organización', value: i => i.reservaDto?.organizacionDto?.tipoOrganizacion || '-' },
+    { header: 'Representante Organización', value: i => i.reservaDto?.organizacionDto?.representanteDto?.nombreCompleto || '-' },
+    { header: 'Estudiante', value: () => '-' },
+    { header: 'Matrícula', value: () => '-' },
+    { header: 'Tipo Contribuyente', value: i => i.reservaDto?.contribuyenteDto?.tipoContribuyente || '-' },
+    { header: 'Contribuyente', value: i => i.reservaDto?.contribuyenteDto?.nombreCompleto || `${i.reservaDto?.contribuyenteDto?.nombre || ''} ${i.reservaDto?.contribuyenteDto?.primerApellido || ''} ${i.reservaDto?.contribuyenteDto?.segundoApellido || ''}`.replace(/\s+/g, ' ').trim() || '-' },
+    { header: 'Carnet', value: i => i.reservaDto?.contribuyenteDto?.numeroDocumento || '-' },
+    { header: 'Observaciones', value: i => i.observaciones || '-' },
+  ];
+  csvExportItems: ReservaRecurrente[] = [];
   searchResults: any;
 
   dateRange: { from: Date, to: Date } | null = null;  
@@ -86,13 +122,13 @@ export class BookingRecurrentComponent implements OnInit {
       private ruatService: RuatRequestsService,
       private pagoService: PagoService,
   ) {
-      this.canActivate = this.authService.hasPermission(this.title);
+      this.canActivate = this.authService.hasPermission('Reservas Recurrentes');
   }
 
   async ngOnInit() {
     this.breadCrumbItems = [
-      { label: '' },
-      { label: this.title, active: true }
+      { label: 'Reservas' },
+      { label: 'Reservas Recurrentes', active: true }
     ];
     this.itemsList = [
       { name: 'Número Reserva', prop: 'reservaDto.numeroReserva', visible: false },
@@ -290,180 +326,6 @@ export class BookingRecurrentComponent implements OnInit {
       this.getRecurrentReservations();
     });
   }
-  public async consultModal(data: any, content: any, size: string) {
-    if (this.selectedItems.length === 0) {
-      this.selectedItems.push(data);
-    }    
-    this.consultResults = [];
-    this.dataSelected = null;
-    this.loading = true;
-    let shouldRefreshData = false;
-    try {
-      for (const item of this.selectedItems) {
-        try {
-          const result = await this.consultData(item, { silent: false });
-          this.consultResults.push(result);          
-          if (!this.dataSelected && result.hasPayment && result.pagoData) {
-            this.dataSelected = {
-              reserva: result.item,
-              pago: result.pagoData,
-              ruatResponse: result.ruatResponse
-            };
-          }
-          if (result.hasPayment) {
-            shouldRefreshData = true;
-          }
-        } catch (error) {
-          this.consultResults.push({ 
-            item, 
-            text: 'Error durante la consulta', 
-            type: 'error',
-            hasPayment: false,
-            consultationSuccessful: false,
-            ruatResponse: error,
-            errorCode: 'RUAT_EXCEPTION'
-          });
-        }
-      }
-    } finally {
-      this.loading = false;
-      if (this.consultResults.length > 0) {
-        if (this.dataSelected) {
-          this.modalService.open(content, { 
-            centered: true, 
-            size: size
-          });
-        } else {
-          this.modalService.open(content, { centered: true });
-        }
-      }    
-      this.selectedItems = [];
-      if (shouldRefreshData) {
-        this.getRecurrentReservations();
-      }
-    }
-  }
-  csvFileExport() {
-    const lista = this.selectedItems.flatMap((item: ReservaRecurrente) => {
-      const contribuyenteNombre =
-        item.reservaDto?.contribuyenteDto?.nombreCompleto ||
-        `${item.reservaDto?.contribuyenteDto?.nombre || ''} ${item.reservaDto?.contribuyenteDto?.primerApellido || ''} ${item.reservaDto?.contribuyenteDto?.segundoApellido || ''}`.replace(/\s+/g, ' ').trim();
-
-      const baseData = {
-        numeroReserva: item.reservaDto?.numeroReserva || '-',
-        tipoReserva: item.reservaDto?.tipoReserva || '-',
-        fechaCreacion: item.reservaDto?.fechaCreacion
-          ? new Date(item.reservaDto.fechaCreacion).toLocaleDateString()
-          : '-',
-        estadoReserva: item.reservaDto?.estadoReserva || '-',
-        estadoValidacion: item.reservaDto?.estadoValidacion || '-',
-        activo: item.activo ? 'Sí' : 'No',
-
-        complejo: item.reservaDto?.campoDeportivoDto?.complejoDto?.nombre || '-',
-        campoDeportivo: item.reservaDto?.campoDeportivoDto?.nombre || '-',
-        superficie: item.superficie || '-',
-        categoria: item.categoria || '-',
-        tipoCobro: item.reservaDto?.tarifaDto?.tipoCobro || '-',
-        cantidadMeses:
-          item.reservaDto?.tarifaDto?.tipoCobro === 'mensualidad'
-            ? this.calculateMonthsForExport(item.fechaInicio, item.fechaFin)
-            : '-',
-        frecuenciaMensual: item.reservaDto?.tarifaDto?.frecuencia || '-',
-        sesionesIncluidas: item.reservaDto?.tarifaDto?.sesionesIncluidas || '-',
-        fechaInicio: item.fechaInicio ? new Date(item.fechaInicio).toLocaleDateString() : '-',
-        fechaFin: item.fechaFin ? new Date(item.fechaFin).toLocaleDateString() : '-',
-        diasSemana: item.diasSemana || '-',
-        cantidadSesiones: item.cantidadSesiones || '-',
-        duracionSesion: item.duracionSesionHoras ? `${item.duracionSesionHoras} hrs` : '-',
-        cantidadPersonas: item.cantidadPersonas || '-',
-        precioBaseAplicado: item.precioBaseAplicado || '-',
-        tablero: item.tableroDto?.horario ? JSON.stringify(item.tableroDto.horario) : '-',
-
-        tasa: item.reservaDto?.numeroTasa || '-',
-        montoTotal: item.reservaDto?.montoTotal || '-',
-        esReservaGratuita: item.reservaDto?.esReservaGratuita ? 'SI' : 'NO',
-        motivoGratuidad: item.reservaDto?.motivoGratuidad || '-',
-
-        esOrganizacion: item.reservaDto?.organizacionDto ? 'SI' : 'NO',
-        nombreOrganizacion: item.reservaDto?.organizacionDto?.nombre || '-',
-        tipoOrganizacion: item.reservaDto?.organizacionDto?.tipoOrganizacion || '-',
-        representanteOrganizacion: item.reservaDto?.organizacionDto?.representanteDto?.nombreCompleto || '-',
-
-        estudiante: '-',
-        matricula: '-',
-
-        tipoContribuyente: item.reservaDto?.contribuyenteDto?.tipoContribuyente || '-',
-        contribuyente: contribuyenteNombre || '-',
-        carnet: item.reservaDto?.contribuyenteDto?.numeroDocumento || '-',
-
-        observaciones: item.observaciones || '-',
-      };
-
-      return [{ ...baseData }];
-    });
-
-    const data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de Reservas Recurrentes',
-      useBom: true,
-      noDownload: false,
-      headers: [
-        'Número Reserva',
-        'Tipo Reserva',
-        'Fecha Creación',
-        'Estado Reserva',
-        'Estado Validación',
-        'Activo',
-
-        'Complejo',
-        'Campo Deportivo',
-        'Superficie',
-        'Categoría',
-        'Tipo Cobro',
-        'Cantidad Meses',
-        'Frecuencia Mensual',
-        'Sesiones Incluidas',
-        'Fecha Inicio',
-        'Fecha Fin',
-        'Días Semana',
-        'Cant. Sesiones',
-        'Duración Sesión',
-        'Cant. Personas',
-        'Tarifa Mensual',
-        'Tablero',
-
-        'Número Tasa',
-        'Monto Total',
-        'Reserva Gratuita',
-        'Motivo Gratuidad',
-
-        'Es Para Organización',
-        'Nombre Organización',
-        'Tipo Organización',
-        'Representante Organización',
-
-        'Estudiante',
-        'Matrícula',
-
-        'Tipo Contribuyente',
-        'Contribuyente',
-        'Carnet',
-
-        'Observaciones'
-      ]
-    };
-
-    new ngxCsv(
-      lista,
-      `Reservas_Recurrentes_${new Date().toISOString().split('T')[0]}`,
-      data
-    );
-  }
-
   private calculateMonthsForExport(
     fechaInicio?: Date | string,
     fechaFin?: Date | string
@@ -532,18 +394,6 @@ export class BookingRecurrentComponent implements OnInit {
     if (terminalStates.includes(reservaDto.estadoReserva)) return reservaRec;
     try {
       if (reservaDto.estadoReserva === EstadoReserva.SOLICITADA) {
-        if (
-          reservaDto.estadoValidacion === EstadoValidacion.PENDIENTE &&
-          this.hasPeriodStartPassed(reservaRec)
-        ) {
-          return await this.updateReservationByRR(reservaRec, {
-            estadoReserva: EstadoReserva.CANCELADA,
-            estadoValidacion: EstadoValidacion.VENCIDA,
-            motivoRechazo: 'RESERVA VENCIDA SIN VALIDACIÓN ADMINISTRATIVA',
-            fechaRechazo: new Date(),
-          });
-        }
-
         if (reservaDto.estadoValidacion === EstadoValidacion.RECHAZADA) {
           return await this.updateReservationByRR(reservaRec, {
             estadoReserva: EstadoReserva.CANCELADA,
@@ -918,11 +768,7 @@ export class BookingRecurrentComponent implements OnInit {
     };
     try {
       const response: any = await this.reservaService.update(updatedReservaDto).toPromise();
-      if (response && response.status === 'OK') {
-        reserva.reservaDto = response.payload;
-      } else {
-        console.warn('Failed to update reservation:', response?.payload || 'Unknown error');
-      }
+      reserva.reservaDto = response;
       return reserva;
     } catch (error) { return reserva;}
   }
@@ -949,25 +795,14 @@ export class BookingRecurrentComponent implements OnInit {
       const data: any = await this.reservaRecurrenteService.getAll(
         this.currentPage - 1,
         this.pageSize,
-        {
-          tab: this.filters.tab,
-          searchTerm: this.filters.searchTerm,
-          estadoReserva: this.filters.estadoReserva,
-          estadoValidacion: this.filters.estadoValidacion,
-          categoria: this.filters.categoria,
-          activo: this.filters.activo,
-          fromDate: this.filters.fromDate?.toISOString(),
-          toDate: this.filters.toDate?.toISOString(),
-        }
+        this.getRecurrentReservationFilters()
       ).toPromise();
-      if (!data || data['status'] !== 'OK') {
-        throw new Error(data?.payload || 'Respuesta inválida del servidor');
-      }
+      if (!data) throw new Error('Respuesta inválida del servidor');
       let list: ReservaRecurrente[] = [];
-      if (data.payload?.content && Array.isArray(data.payload.content)) {
-        list = data.payload.content;
-      } else if (Array.isArray(data.payload)) {
-        list = data.payload;
+      if (data.content && Array.isArray(data.content)) {
+        list = data.content;
+      } else if (Array.isArray(data)) {
+        list = data;
       }
       const employee = this.authService.staff();
       if(employee?.complejoDto){
@@ -983,18 +818,75 @@ export class BookingRecurrentComponent implements OnInit {
       const updatedList = await this.checkAndUpdateReservationsStatuses(list);
       this.notifyAboutExpiredReservations(list, updatedList);
       this.reservasList ={
-        ...data.payload,
+        ...data,
         content: updatedList
       } ;
       this.temp = this.reservasList;
+      await this.loadRecurrentReservationsForExport(data, updatedList);
     } catch (error:any) {
       this.loading = false;
       this.handleError(error, 'Error al obtener las reservas');
       this.reservasList = { content: [], totalElements: 0, pageable: { pageNumber: 0, pageSize: 20 } };
       this.temp = [];
+      this.csvExportItems = [];
     } finally {
       this.loading = false;
     }
+  }
+
+  private getRecurrentReservationFilters(): ReservaRecurrenteFilters {
+    return {
+      tab: this.filters.tab,
+      searchTerm: this.filters.searchTerm,
+      estadoReserva: this.filters.estadoReserva,
+      estadoValidacion: this.filters.estadoValidacion,
+      categoria: this.filters.categoria,
+      activo: this.filters.activo,
+      fromDate: this.filters.fromDate?.toISOString(),
+      toDate: this.filters.toDate?.toISOString(),
+    };
+  }
+
+  private async loadRecurrentReservationsForExport(
+    pageData: any,
+    currentPageList: ReservaRecurrente[]
+  ): Promise<void> {
+    const totalElements = Number(pageData?.totalElements || currentPageList.length);
+    if (totalElements <= currentPageList.length) {
+      this.csvExportItems = currentPageList;
+      return;
+    }
+    try {
+      const data: any = await this.reservaRecurrenteService.getAll(
+        0,
+        totalElements,
+        this.getRecurrentReservationFilters()
+      ).toPromise();
+      let list: ReservaRecurrente[] = Array.isArray(data?.content)
+        ? data.content
+        : Array.isArray(data)
+          ? data
+          : [];
+      list = this.filterRecurrentReservationsByUserScope(list);
+      this.csvExportItems = list;
+    } catch {
+      this.csvExportItems = currentPageList;
+    }
+  }
+
+  private filterRecurrentReservationsByUserScope(list: ReservaRecurrente[]): ReservaRecurrente[] {
+    const employee = this.authService.staff();
+    if (employee?.complejoDto) {
+      list = list.filter((item: any) =>
+        item.reservaDto?.campoDeportivoDto?.complejoDto?.uuid === employee.complejoDto?.uuid
+      );
+    }
+    if (this.contribuyente) {
+      list = list.filter((item: any) =>
+        item.reservaDto?.contribuyenteDto?.uuid === this.contribuyente.uuid
+      );
+    }
+    return list;
   }
   private getCategories() {
     this.categoriesService.getAll().subscribe({

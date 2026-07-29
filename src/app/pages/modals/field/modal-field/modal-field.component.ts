@@ -4,7 +4,7 @@ import { AbstractControl, FormBuilder,FormArray, FormGroup, UntypedFormBuilder, 
 import { NgbDatepickerModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import Swal from 'sweetalert2';
-import { catchError, Subscription, forkJoin, Observable, of, switchMap, tap, map } from 'rxjs';
+import { catchError, Subscription, forkJoin, Observable, of, tap, map } from 'rxjs';
 
 import { Categoria } from 'src/app/core/models/categoria.model';
 import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
@@ -79,7 +79,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   @ViewChild('deleteConfirmation', { static: true }) deleteConfirmation!: TemplateRef<any>;
   @ViewChild('deleteModel') deleteModel!: ElementRef;  
   private subscription: Subscription = new Subscription();
-
+ 
   constructor(
     private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
@@ -552,11 +552,9 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
       if (this.fieldsForm.get('uuid')?.value) {
         this.updateField(formData).subscribe({
           next: (result) => {
-            if (result && result.status === 'OK') {
-              this.notify('Campo deportivo actualizado exitosamente', 'success');
-              this.closeModal();
-              this.emitList.emit();
-            }
+            this.notify('Campo deportivo actualizado exitosamente', 'success');
+            this.closeModal();
+            this.emitList.emit();
           },
           error: (error) => {
             this.notify('Error en actualización: ' + error.message, 'error');
@@ -566,11 +564,9 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
       } else {
         this.addField(formData).subscribe({
           next: (result) => {
-            if (result && result.status === 'OK') {
-              this.notify('Campo deportivo creado exitosamente', 'success');
-              this.closeModal();
-              this.emitList.emit();
-            }
+            this.notify('Campo deportivo creado exitosamente', 'success');
+            this.closeModal();
+            this.emitList.emit();
           },
           error: (error) => {
             this.notify('Error en creación: ' + error.message, 'error');
@@ -857,9 +853,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   private getFacilities() {
     this.complejoService.getAll().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.complejosList = data.payload;
-        }
+        this.complejosList = data;
       },
       error: (error) => {
         this.notify('No se pudo recuperar los complejos', 'error');
@@ -879,9 +873,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   private getClasificadoresRuat() {
     this.clasificadoresRuatService.getAll().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.clasificadoresRuatList = data.payload;
-        }
+        this.clasificadoresRuatList = data;
       },
       error: (error) => {
         this.notify('No se pudo recuperar los clasificadores RUAT', 'error');
@@ -901,11 +893,6 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
 
   private addField(datos: CampoDeportivo): Observable<any> {
     return this.fieldService.save(datos).pipe(
-      tap((result: any) => {
-        if (result.status !== 'OK') {
-          throw new Error(result.message || 'Error al crear el campo deportivo');
-        }
-      }),
       catchError((error) => {
         throw error;
       })
@@ -913,11 +900,6 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   }
   private updateField(campoData: CampoDeportivo): Observable<any> {
     return this.fieldService.update(campoData).pipe(
-      tap((result: any) => {
-        if (result.status !== 'OK') {
-          throw new Error(result.message || 'Error al actualizar el campo deportivo');
-        }
-      }),
       catchError((error) => {
         throw error;
       })
@@ -925,31 +907,26 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   }
   deleteData(uuid: string) {
     this.fieldService.delete(uuid).subscribe({
-      next: (data: any) => {
+      next: (message: string) => {
         this.submitted = false;
-        if (data['status'] === 'OK') {
-          this.notify(data.payload, 'success');
-          this.modalService.dismissAll();
-          this.emitList.emit();
-          this.closeModal();
-        }
+        this.notify(message || 'Campo eliminado exitosamente', 'success');
+        this.modalService.dismissAll();
+        this.emitList.emit();
+        this.closeModal();
       },
       error: err => {
         this.submitted = false;
-        this.notify('No se pudo eliminar el registro!', 'error');
+        this.notify(err.message || 'No se pudo eliminar el registro!', 'error');
       }
     });
   }
 
   private deleteTarifa(uuid: string): Observable<boolean> {
     return this.tarifaService.delete(uuid).pipe(
-      tap((data: any) => {
-        if (data.status === 'OK') {
-          this.notify('Tarifa eliminada exitosamente', 'success');
-        } else {
-          Swal.fire({ text: 'No se pudo eliminar la Tarifa', confirmButtonColor: '#299cdb' });
-        }
+      tap(() => {
+        this.notify('Tarifa eliminada exitosamente', 'success');
       }),
+      map(() => true),
       catchError((error) => {
         Swal.fire({ 
           text: error, 
@@ -957,9 +934,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
           icon: 'error'
         });
         return of(false);
-      }),
-      map((response: string) => true),
-      catchError(() => of(false))
+      })
     );
   }
   

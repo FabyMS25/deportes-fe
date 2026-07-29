@@ -31,6 +31,7 @@
                 "src/manifest.webmanifest"
               ],
               "styles": [
+                "node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
                 "node_modules/@ng-select/ng-select/themes/default.theme.css",
                 "node_modules/prismjs/themes/prism.css",
                 "node_modules/shepherd.js/dist/css/shepherd.css",

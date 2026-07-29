@@ -286,14 +286,12 @@ export class ModalOrganizationComponent implements OnInit {
 
   deleteData(uuid: string) {
     this.organizacionesService.delete(uuid).subscribe({
-      next: (data: any) => {
+      next: (message: string) => {
         this.submitted = false;
-        if (data['status'] === 'OK') {
-          this.notify(data.payload, 'success');
-          this.modalService.dismissAll();
-          this.emitList.emit();
-          this.closeModal();
-        }
+        this.notify(message || 'Organización eliminada exitosamente', 'success');
+        this.modalService.dismissAll();
+        this.emitList.emit();
+        this.closeModal();
       },
       error: err => {
         this.submitted = false;

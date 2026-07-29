@@ -1,17 +1,17 @@
-<!-- Start Breadcrumbs -->
-<app-breadcrumbs [title]="title" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
-<!-- End Breadcrumbs -->
+<app-breadcrumbs [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
 
 <div class="row">
     <app-data-header
-        [title]="title"
+        [breadcrumbItems]="breadCrumbItems"
         [headersImport]="headersImport"
+        [csvItems]="employeesList"
+        [csvColumns]="CSV_COLUMNS"
+        [SelectedItems]="selectedItems"
         [newShow]="canActivate.includes('CREAR')"
         [importShow]="canActivate.includes('CREAR')"
         [exportShow]="canActivate.includes('VER')"
         (createEmitter)="openModal( undefined,'','')"
         (importEmitter)="openModalImport()"
-        (exportEmitter)="csvFileExport()"
     ></app-data-header>
     <div class="col-lg-8">
         <div class="card">

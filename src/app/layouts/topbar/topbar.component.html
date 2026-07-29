@@ -205,16 +205,16 @@
                                                             </div>
                                                         </div>
                                                         }
-                                                        @if(allnotifications.length > 0){
                                                         <div class="my-3 d-flex justify-content-center gap-2 flex-wrap">
                                                             <button type="button" class="btn btn-soft-secondary btn-sm waves-effect waves-light" (click)="refreshNotifications()">
-                                                                <i class="ri-refresh-line align-middle me-1"></i>{{ 'Actualizar' | translate }}</button>
+                                                                <i class="ri-refresh-line align-middle me-1"></i>{{ 'Actualizar notificaciones' | translate }}</button>
+                                                            @if(allnotifications.length > 0){
                                                             <button type="button" class="btn btn-soft-success btn-sm waves-effect waves-light"
                                                                 [disabled]="unreadNotificationCount === 0"
                                                                 (click)="markAllNotificationsAsRead()">
                                                                 {{ 'Marcar todo como leído' | translate }}</button>
+                                                            }
                                                         </div>
-                                                        }
                                                     </div>
 
 

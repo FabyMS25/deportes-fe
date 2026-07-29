@@ -4,6 +4,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 import { ClasificadorRuat } from '../../models/clasificadorRuat.model';
+import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 
 @Injectable({
@@ -16,20 +17,20 @@ export class ClasificadorRuatService {
   constructor(private http: HttpClient) { }
 
   getAll(): Observable<ClasificadorRuat[]> {
-    return this.http.get<ClasificadorRuat[]>(`${this.apiUrl}`);
+    return apiGet<ClasificadorRuat[]>(this.http, this.apiUrl, 'obtener clasificadores RUAT');
   }
 
   getByUuid(uuid:string):Observable<ClasificadorRuat>{
-    return this.http.get<ClasificadorRuat>(`${this.apiUrl}/${uuid}`);
+    return apiGet<ClasificadorRuat>(this.http, `${this.apiUrl}/${uuid}`, `obtener clasificador RUAT (${uuid})`);
   }
   save(data: ClasificadorRuat): Observable<ClasificadorRuat> {    
-    return this.http.post<ClasificadorRuat>(`${this.apiUrl}`, data);
+    return apiPost<ClasificadorRuat>(this.http, this.apiUrl, data, 'guardar clasificador RUAT');
   }
 
   update(data: ClasificadorRuat): Observable<ClasificadorRuat> {
-    return this.http.put<ClasificadorRuat>(`${this.apiUrl}`, data);
+    return apiPut<ClasificadorRuat>(this.http, this.apiUrl, data, 'actualizar clasificador RUAT');
   }
-  delete(uuid: string) {
-    return this.http.delete(`${this.apiUrl}/${uuid}`);
+  delete(uuid: string): Observable<string> {
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar clasificador RUAT (${uuid})`);
   }
 }

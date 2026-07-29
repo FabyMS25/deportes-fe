@@ -1,23 +1,35 @@
  <!-- start page title -->
   <div class="row d-none d-sm-block">
-    <div class="col-12 ">
+    <div class="col-12">
         <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-            <h4 class="mb-sm-0">{{title}}</h4>
-  
+            <div>
+              <!-- <p *ngIf="title" class="text-primary text-uppercase fw-semibold fs-12 mb-1">
+                {{ title | translate }}
+              </p> -->
+              <h4 *ngIf="subtitle" class="mb-sm-0">{{ subtitle | translate }}</h4>
+            </div>
             <div class="page-title-right">
                 <ol class="breadcrumb m-0">
-                @for(item of breadcrumbItems;track $index){
+                @for(item of breadcrumbItems;track $index; let first = $first){
                   <ng-container>
                     <li class="breadcrumb-item" [ngClass]="{'active': item.active == true}">
-                      <i class="ri-home-2-line" *ngIf="!item.label"></i>
+                      <a *ngIf="item.link && !item.active; else breadcrumbText" [href]="item.link">
+                        <i class="ri-home-2-line" *ngIf="first && !item.label"></i>
                         {{ (item.label ?? '') | translate }}
+                      </a>
+                      <ng-template #breadcrumbText>
+                        <i class="ri-home-2-line" *ngIf="first && !item.label"></i>
+                        {{ (item.label ?? '') | translate }}
+                      </ng-template>
                     </li>                      
                 </ng-container>
                 }
                 </ol>
-            </div>
-  
+            </div>  
         </div> 
+        <p *ngIf="description" class="text-muted mb-2">
+          {{ description | translate }}
+        </p>
     </div>
   </div>
   <!-- end page title -->

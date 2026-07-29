@@ -74,6 +74,8 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   submitted = false;
   validationSubmitted = false;
   showLoading = false;
+  isConsultingRuat = false;
+  consultationResult?: any;
   originalDurationMinutes = 0;
 
   constructor(
@@ -118,6 +120,9 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
           break;
         case 'ticketModal':
           this.openTicketModal(this.ticketModal);
+          break;
+        case 'consult':
+          void this.consultPaymentInModal();
           break;
       }
     });
@@ -580,6 +585,121 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
     this.systemConfigList = Object.values(this.authService.getAllConfigs() || {});
   }
 
+  canConsultPayment(): boolean {
+    return !!this.row?.reservaDto?.numeroTasa &&
+      this.canActivate?.includes('ACTUALIZAR') &&
+      this.row.reservaDto.estadoReserva !== EstadoReserva.CANCELADA;
+  }
+
+  async consultPaymentInModal(): Promise<void> {
+    const reserva = this.row?.reservaDto;
+    if (!reserva?.numeroTasa) {
+      this.consultationResult = {
+        type: 'warning',
+        text: 'La reserva no tiene número de tasa para consultar.'
+      };
+      return;
+    }
+
+    this.isConsultingRuat = true;
+    this.consultationResult = undefined;
+    this.activeTab = 2;
+
+    try {
+      const resp: any = await this.ruatService.consultaPagoTasa(reserva.numeroTasa).toPromise();
+      const persistedPayment = reserva.pagosDtoList?.find(
+        pago => pago.estadoPago === EstadoPago.PAGADO
+      ) || reserva.pagosDtoList?.[0];
+
+      if (resp?.status !== 'OK') {
+        if (persistedPayment) {
+          this.consultationResult = this.buildPersistedPaymentResult(resp, persistedPayment);
+          return;
+        }
+        this.consultationResult = {
+          type: resp?.status === 'NOT_FOUND' ? 'info' : 'warning',
+          text: this.ruatService.getResponseMessage(resp, 'No se encontraron pagos realizados para esta tasa.')
+        };
+        return;
+      }
+      const pagoTasa = this.ruatService.getResponseData(resp)?.pagoTasa;
+      if (!pagoTasa && persistedPayment) {
+        this.consultationResult = this.buildPersistedPaymentResult(resp, persistedPayment);
+        return;
+      }
+      if (!pagoTasa && !this.ruatService.canContinue(resp)) {
+        this.consultationResult = {
+          type: 'warning',
+          text: this.ruatService.getResponseMessage(resp, 'No se puede continuar con el flujo.')
+        };
+        return;
+      }
+
+      if (!pagoTasa) {
+        this.consultationResult = { type: 'info', text: 'No se encontraron datos de pago.' };
+        return;
+      }
+
+      if (!reserva.pagosDtoList?.some(pago =>
+        pago.folio === pagoTasa.folio && pago.numeroTasa === pagoTasa.numeroTasa
+      )) {
+        await this.pagoService.save({
+          numeroTasa: pagoTasa.numeroTasa,
+          tipoTasa: 'TO',
+          folio: pagoTasa.folio,
+          formaPago: pagoTasa.formaPago,
+          fechaPago: this.parseRuatPaymentDate(pagoTasa.fechaPago),
+          entidadFinanciera: pagoTasa.entidadFinanciera,
+          montoPagado: parseFloat(pagoTasa.montoPago) || 0,
+          observaciones: pagoTasa.observacion,
+          estadoPago: EstadoPago.PAGADO,
+          ultimaConsulta: new Date(),
+          respuestaCompletaRuat: JSON.stringify(resp),
+          reservaDto: { uuid: reserva.uuid }
+        }).toPromise();
+      }
+
+      this.consultationResult = {
+        type: 'success',
+        text: `${this.ruatService.getResponseMessage(resp, 'La tasa se encuentra pagada')} - Pago verificado`,
+        pagoData: pagoTasa
+      };
+      this.emitList.emit();
+    } catch (error) {
+      this.consultationResult = {
+        type: 'error',
+        text: this.ruatService.getResponseMessage(error, 'Error al realizar la consulta al RUAT.')
+      };
+    } finally {
+      this.isConsultingRuat = false;
+    }
+  }
+
+  private parseRuatPaymentDate(fechaPago: string): Date | null {
+    if (!fechaPago || !/^\d{2}\/\d{2}\/\d{4}$/.test(fechaPago)) return null;
+    const [day, month, year] = fechaPago.split('/').map(Number);
+    return new Date(year, month - 1, day, 12, 0, 0, 0);
+  }
+
+  private buildPersistedPaymentResult(resp: any, pago: Pago): any {
+    return {
+      type: 'success',
+      text: `${this.ruatService.getResponseMessage(resp, 'La tasa se encuentra pagada')} - Pago verificado`,
+      pagoData: {
+        ...pago,
+        montoPago: pago.montoPagado,
+        fechaPago: this.formatPersistedPaymentDate(pago.fechaPago)
+      }
+    };
+  }
+
+  private formatPersistedPaymentDate(value: Date | string): string {
+    if (typeof value === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(value)) return value;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+  }
+
   private updateReservaPuntual(data: any): Promise<ReservaPuntual> {
     return new Promise((resolve, reject) => {
       this.reservaPuntualService.update(data).subscribe({
@@ -669,11 +789,6 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
         .subscribe({
           next: async (response: any) => {
             try {
-              if (response?.status !== 'OK') {
-                reject(new Error(this.ruatService.getResponseMessage(response, 'No se pudo registrar la tasa en RUAT')));
-                return;
-              }
-
               const ruatData = this.ruatService.getResponseData(response);
               if (!this.ruatService.canContinue(response) || !ruatData?.numeroTasa) {
                 reject(new Error(this.ruatService.getResponseMessage(response, 'RUAT no devolvió un número de tasa válido')));
@@ -725,14 +840,8 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
 
 
   private cancelGratuitousReservation(reserva: Reserva, formValues: any) {
-    const updatedReserva: Reserva = {
-      ...reserva,
-      estadoReserva: EstadoReserva.CANCELADA,
-      motivoRechazo: formValues.motivo
-    };
-
     this.showLoading = true;
-    this.reservaService.update(updatedReserva).subscribe({
+    this.reservaService.cancelarReserva(reserva.uuid!, formValues.motivo).subscribe({
       next: () => {
         this.showLoading = false;
         Swal.fire({
@@ -770,13 +879,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
       next: (resp: any) => {
         if (resp['status'] === 'OK') {
           const text = this.ruatService.getResponseMessage(resp, 'Tasa anulada correctamente.');
-          const updatedReserva: Reserva = {
-            ...reserva,
-            estadoReserva: EstadoReserva.CANCELADA,
-            motivoRechazo: formValues.motivo
-          };
-
-          this.reservaService.update(updatedReserva).subscribe({
+          this.reservaService.cancelarReserva(reserva.uuid!, formValues.motivo).subscribe({
             next: () => {
               this.showLoading = false;
               Swal.fire({

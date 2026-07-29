@@ -1,13 +1,15 @@
-<app-breadcrumbs [title]="'Lista de pagos a '+title" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+<app-breadcrumbs [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
 
 <div class="content">
     <app-data-header
-        [title]="title"
+        [breadcrumbItems]="breadCrumbItems"
+        [csvItems]="csvExportItems"
+        [csvColumns]="CSV_COLUMNS"
+        [SelectedItems]="selectedItems"
         [newShow]="canActivate.includes('CREAR')"
         [consultShow]="false"
         [exportShow]="canActivate.includes('VER')"
         (createEmitter)="generarNuevaMensualidad()"
-        (exportEmitter)="csvFileExport()"
     ></app-data-header>
     <div class="card rounded-2">
         <div class="card-header border border-dashed border-end-0 border-start-0">
@@ -74,8 +76,10 @@
         <div class="card-header p-0">
             <div class="row g-2">
                 <div class="col-auto flex-grow-1">
-                    <ul ngbNav #nav="ngbNav" [activeId]="0" (navChange)="onNavChange($event)"
-                        class="nav nav-tabs nav-tabs-custom nav-success " role="tablist">
+                    <ul ngbNav #nav="ngbNav" [activeId]="filters.tab"
+                        (navChange)="onNavChange($event)"
+                        class="nav nav-tabs nav-tabs-custom nav-success"
+                        role="tablist">
                         <li [ngbNavItem]="0" class="nav-item">
                             <a ngbNavLink class="nav-link All py-3" data-bs-toggle="tab" id="All" href="javascript:void(0);" role="tab" aria-selected="true">
                             Todo<span class="badge bg-danger align-middle ms-1">{{temp.length || 0}}</span>
@@ -144,7 +148,7 @@
             <app-data-table
                 [loading]="loading"
                 [itemsList]="itemsList"
-                [allcontent]="reservasList"
+                [allcontent]="reservasList.content"
                 [serverSidePagination]="true"
                 [paginationInfo]="{
                     pageNumber: currentPage - 1,
@@ -157,8 +161,14 @@
                 (pageChange)="onPageChange($event)"
                 (pageSizeChange)="onPageSizeChange($event)"
                 [actions]="{
-                  show: canActivate.includes('VER')}"                  
+                    show: canActivate.includes('VER'),
+                    consult: canActivate.includes('ACTUALIZAR'),
+                    records: true,
+                    close: canActivate.includes('ANULAR')?'Anular':'',}"
                 (showItemEmitter)="openModal($event,'show','lg')"
+                (consultItemEmitter)="openModal($event,'consult','md')"
+                (closeItemEmitter)="openModal($event,'annularModal','')"
+                (recordsEmitter)="showTicket($event)"
                 [multiCheck]="canActivate.includes('CREAR')"
                 (selectedItemEmitter)="getSelectedItems($event)" 
                 [viewMode]="viewMode">

@@ -1,15 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 /**Enviroments */
 import { environment } from 'src/environments/environment';
 import { CampoDeportivo } from '../../models/campoDeportivo.model';
-
-/**Models */
-const httpOptions = {
-  headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${window.sessionStorage.getItem('auth-token')}` })
-};
+import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 @Injectable({
   providedIn: 'root'
@@ -20,26 +16,26 @@ export class CamposDeportivoService {
 
   constructor(private http: HttpClient) { }
 
-  getAll(): Observable<any> {
-    return this.http.get<any[]>(`${this.apiUrl}`);
+  getAll(): Observable<CampoDeportivo[]> {
+    return apiGet<CampoDeportivo[]>(this.http, this.apiUrl, 'obtener campos deportivos');
   }
 
-  getByUuid(uuid:string):Observable<any>{
-    return this.http.get<any>(`${this.apiUrl}/${uuid}`);
+  getByUuid(uuid:string): Observable<CampoDeportivo> {
+    return apiGet<CampoDeportivo>(this.http, `${this.apiUrl}/${uuid}`, `obtener campo deportivo (${uuid})`);
   }
 
-  getByComplejo(data:any):Observable<any>{
-    return this.http.get<any>(`${this.apiUrl}/complejo/${data.uuid}`);
+  getByComplejo(data:any): Observable<CampoDeportivo[]> {
+    return apiGet<CampoDeportivo[]>(this.http, `${this.apiUrl}/complejo/${data.uuid}`, `obtener campos por complejo (${data.uuid})`);
   }
 
-  save(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}`, data);
+  save(data: any): Observable<CampoDeportivo> {
+    return apiPost<CampoDeportivo>(this.http, this.apiUrl, data, 'guardar campo deportivo');
   }
 
-  update(data: any): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}`, data);
+  update(data: any): Observable<CampoDeportivo> {
+    return apiPut<CampoDeportivo>(this.http, this.apiUrl, data, 'actualizar campo deportivo');
   }
-  delete(uuid: string) {
-    return this.http.delete(`${this.apiUrl}/${uuid}`);
+  delete(uuid: string): Observable<string> {
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar campo deportivo (${uuid})`);
   }
 }

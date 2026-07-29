@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbModal, NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
-import { ngxCsv } from 'ngx-csv/ngx-csv';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
+import { CsvColumn } from 'src/app/shared/data-header/data-header.component';
 import { SystemConfigurationModalComponent } from '../../modals/modal-system-configuration/modal-system-configuration.component';
+import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component';
 
 
 @Component({
@@ -15,14 +16,12 @@ import { SystemConfigurationModalComponent } from '../../modals/modal-system-con
   styleUrl: './system-configurations.component.scss'
 })
 export class SystemConfigurationsComponent implements OnInit {
-  title = "Configuraciones de Sistema";
-  breadCrumbItems!: Array<{}>;
+  breadCrumbItems: BreadCrumbItem[] =[];
+  viewMode: 'table' | 'cards' = 'table';
   canActivate: string[];
   itemsList: any[] = [];
-  viewMode: 'table' | 'cards' = 'table';
-
-  configuracionesList: ConfiguracionSistema[] = [];
   temp: ConfiguracionSistema[] = [];
+  configuracionesList: ConfiguracionSistema[] = [];
   categoriasList: string[] = [];
 
   // Search filters
@@ -32,13 +31,29 @@ export class SystemConfigurationsComponent implements OnInit {
   modificable: string = '';
 
   selectedItems: any[] = [];
+  readonly CSV_COLUMNS: CsvColumn<ConfiguracionSistema>[] = [
+    { header: 'Clave', value: item => item.clave || '-' },
+    { header: 'Nombre', value: item => item.nombre || '-' },
+    { header: 'Categoría', value: item => item.categoria || '-' },
+    { header: 'Valor Texto', value: item => item.valorTexto || '-' },
+    { header: 'Valor Numérico', value: item => item.valorNumerico ?? '-' },
+    { header: 'Valor Boolean', value: item => item.valorBoolean ? 'Sí' : 'No' },
+    { header: 'Unidad Medida', value: item => item.unidadMedida || '-' },
+    { header: 'Descripción', value: item => item.descripcion || '-' },
+    { header: 'Modificable por Usuario', value: item => item.modificablePorUsuario ? 'Sí' : 'No' },
+    { header: 'Requiere Aprobación', value: item => item.requiereAprobacion ? 'Sí' : 'No' },
+    { header: 'Estado', value: item => item.activo ? 'Activo' : 'Inactivo' },
+    { header: 'Aplica A', value: item => item.aplicaA || '-' },
+    { header: 'Referencia UUID', value: item => item.referenciaUuid || '-' },
+    { header: 'Fecha Creación', value: item => item.fechaCreacion || '-' },
+  ];
 
   constructor(
     private modalService: NgbModal, 
     private authService: AuthenticationService,
     private configuracionSistemaService: ConfiguracionSistemaService,
   ) {
-    this.canActivate = this.authService.hasPermission(this.title);
+    this.canActivate = this.authService.hasPermission('Configuraciones de Sistema');
   }
 
   ngOnInit(): void {
@@ -47,8 +62,8 @@ export class SystemConfigurationsComponent implements OnInit {
       this.viewMode = savedViewMode;
     }
     this.breadCrumbItems = [
-      { label: '' },
-      { label: this.title, active: true }
+      { label: 'Administración' },
+      { label: 'Configuraciones de Sistema', active: true }
     ];
     
     this.itemsList = [
@@ -137,61 +152,11 @@ export class SystemConfigurationsComponent implements OnInit {
     modalRef.componentInstance.row = content;
     modalRef.componentInstance.accion = accion;
     modalRef.componentInstance.categoriasList = this.categoriasList;
+    modalRef.componentInstance.permissions = this.canActivate;
     modalRef.componentInstance.emitList.subscribe(() => {
       this.getConfiguraciones();
       this.getCategorias();
     });
-  }
-
-  // Csv File Export
-  csvFileExport() {
-    const lista = this.selectedItems.flatMap((item: any) => {
-      const baseData = {
-        clave: item.clave,
-        nombre: item.nombre,
-        categoria: item.categoria,
-        valorTexto: item.valorTexto,
-        valorNumerico: item.valorNumerico,
-        valorBoolean: item.valorBoolean ? 'Sí' : 'No',
-        unidadMedida: item.unidadMedida,
-        descripcion: item.descripcion,
-        modificablePorUsuario: item.modificablePorUsuario ? 'Sí' : 'No',
-        requiereAprobacion: item.requiereAprobacion ? 'Sí' : 'No',
-        activo: item.activo ? 'Activo' : 'Inactivo',
-        aplicaA: item.aplicaA,
-        referenciaUuid: item.referenciaUuid,
-        fechaCreacion: item.fechaCreacion,
-      };
-      return [{...baseData}];
-    });
-
-    var data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de Configuraciones del Sistema',
-      useBom: true,
-      noDownload: false,
-      headers: [
-        "Clave", 
-        "Nombre", 
-        "Categoría", 
-        "Valor Texto", 
-        "Valor Numérico", 
-        "Valor Boolean", 
-        "Unidad Medida", 
-        "Descripción", 
-        "Modificable por Usuario", 
-        "Requiere Aprobación",
-        "Estado",
-        "Aplica A",
-        "Referencia UUID", 
-        "Fecha Creación"
-      ]
-    };
-    new ngxCsv(lista, "configuraciones_sistema", data);
   }
 
   /* API Services */
@@ -201,10 +166,8 @@ export class SystemConfigurationsComponent implements OnInit {
     this.configuracionSistemaService.getAll().subscribe({
       next: (data: any) => {
         this.loading = false;
-        if (data['status'] === 'OK') {
-          this.configuracionesList = data.payload;
-          this.temp = this.configuracionesList;
-        }
+        this.configuracionesList = data;
+        this.temp = this.configuracionesList;
       },
       error: (error) => {
         this.loading = false;
@@ -216,9 +179,7 @@ export class SystemConfigurationsComponent implements OnInit {
   private getCategorias() {
     this.configuracionSistemaService.getCategorias().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.categoriasList = data.payload;
-        }
+        this.categoriasList = data;
       },
     });
   }

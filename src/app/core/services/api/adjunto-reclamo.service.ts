@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 // import { AdjuntoReclamo } from '../../models/adjunto-reclamo.models';
 @Injectable({
   providedIn: 'root'
@@ -14,14 +15,14 @@ export class AdjuntoReclamoService {
   constructor(private http: HttpClient) { }
 
   getAll(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/adjuntoreclamos`);
+    return apiGet<any[]>(this.http, `${this.apiUrl}/adjuntoreclamos`, 'obtener adjuntos de reclamo');
   }
 
   getByUuid(uuid:String):Observable<any>{
-    return this.http.get<any>(`${this.apiUrl}/uuid/${uuid}`);
+    return apiGet<any>(this.http, `${this.apiUrl}/uuid/${uuid}`, `obtener adjunto de reclamo (${uuid})`);
   }
   save(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/create`, data);
+    return apiPost<any>(this.http, `${this.apiUrl}/create`, data, 'guardar adjunto de reclamo');
   }
 
 createAdjunto(adjuntoReclamoDto: any, file: File): Observable<any> {
@@ -33,7 +34,7 @@ createAdjunto(adjuntoReclamoDto: any, file: File): Observable<any> {
   formData.append('archivoFile', file);
   formData.append('adjuntoReclamoDto', JSON.stringify(adjuntoReclamoDto));
 
-    return this.http.post<any>(`${this.apiUrl}/create-anterior`, formData, { params });
+    return apiPost<any>(this.http, `${this.apiUrl}/create-anterior`, formData, 'crear adjunto de reclamo anterior', { params });
 }
 
 
@@ -42,7 +43,7 @@ createAdjunto(adjuntoReclamoDto: any, file: File): Observable<any> {
     formData.append('adjuntoReclamoDto', JSON.stringify(adjuntoReclamoDto));
     formData.append('archivoFile', file, file.name);
 
-    return this.http.post<any>(`${this.apiUrl}/create`, formData,{
+    return apiPost<any>(this.http, `${this.apiUrl}/create`, formData, 'crear adjunto de reclamo', {
       headers: new HttpHeaders({
         'Content-Type': 'multipart/form-data'
       })
@@ -51,13 +52,13 @@ createAdjunto(adjuntoReclamoDto: any, file: File): Observable<any> {
 
 
   update(data: any): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/update`, data);
+    return apiPut<any>(this.http, `${this.apiUrl}/update`, data, 'actualizar adjunto de reclamo');
   }
-  delete(uuid: string) {
-    return this.http.delete(`${this.apiUrl}/delete/${uuid}`);
+  delete(uuid: string): Observable<string> {
+    return apiDelete<string>(this.http, `${this.apiUrl}/delete/${uuid}`, `eliminar adjunto de reclamo (${uuid})`);
   }
   getAdjuntosByUuidReclamo(uuid:String):Observable<any>{
-    return this.http.get<any>(`${this.apiUrl}/por-uuidreclamo/${uuid}`);
+    return apiGet<any>(this.http, `${this.apiUrl}/por-uuidreclamo/${uuid}`, `obtener adjuntos por reclamo (${uuid})`);
   }
   // descargarArchivo(nombre:string): Observable <any>{
   //   return this.http.get<any>(`${this.apiUrl}/descargar/${nombre}`,{
@@ -65,7 +66,7 @@ createAdjunto(adjuntoReclamoDto: any, file: File): Observable<any> {
   //     });
   // }
   descargarArchivo(nombre: string): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/descargar/${nombre}`, {
+    return apiGet<Blob>(this.http, `${this.apiUrl}/descargar/${nombre}`, `descargar adjunto (${nombre})`, {
       responseType: 'blob'
     });
   }

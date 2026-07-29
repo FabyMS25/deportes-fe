@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import {  catchError, map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { LoginResponse } from '../../models/user/login-response.model';
-import { handleError } from '../apiResponses';
+import { apiGet, apiPost, apiPut } from '../apiResponses';
 import { Person } from '../../models/user/person.model';
 
 const usersUrl = `${environment.apiLoginUrl}`;
@@ -15,10 +15,7 @@ export class UserService {
     constructor(private http: HttpClient ) {}
   
     loginByUsername(username: string, password: string): Observable<LoginResponse> {
-      return this.http.post<LoginResponse>(`${usersUrl}/auth/signin`, {username, password}).pipe(
-        map((res) => res),
-        catchError(handleError(`loguear usuario`))
-      );
+      return apiPost<LoginResponse>(this.http, `${usersUrl}/auth/signin`, {username, password}, 'loguear usuario');
     }
 
     // loginByUsername(username: String, password: String) {
@@ -26,22 +23,22 @@ export class UserService {
     // }
 
     getAllUsers(): Observable<any[]> {
-        return this.http.get<any[]>(`${usersUrl}/listar/usuarios`);
+        return apiGet<any[]>(this.http, `${usersUrl}/listar/usuarios`, 'obtener usuarios');
     } 
   
     getUserByUuid(uuid:String) {
-        return this.http.get<any[]>(`${usersUrl}/usuario/${uuid}`);
+        return apiGet<any[]>(this.http, `${usersUrl}/usuario/${uuid}`, `obtener usuario (${uuid})`);
     }
 
     updateUser(data:any): Observable<any> {
-        return this.http.put<any>(`${usersUrl}/user/update`, data);
+        return apiPut<any>(this.http, `${usersUrl}/user/update`, data, 'actualizar usuario');
     }
 
     changePassword(uuidUsuario:string, newPassword:string): Observable<any> {
-        return this.http.post<any>(`${usersUrl}/user/change-password`, {uuidUsuario, newPassword});
+        return apiPost<any>(this.http, `${usersUrl}/user/change-password`, {uuidUsuario, newPassword}, 'cambiar contraseña');
     }
 
     updatePersona(persona: Person): Observable<Person> {
-        return this.http.put<Person>(`${usersUrl}/persona`, persona);
+        return apiPut<Person>(this.http, `${usersUrl}/persona`, persona, 'actualizar persona');
     }
 }

@@ -4,7 +4,7 @@ import { AbstractControl, FormBuilder,FormArray, FormGroup, UntypedFormBuilder,F
 import { NgbDatepickerModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import Swal from 'sweetalert2';
-import { catchError, forkJoin, Observable, of, switchMap, tap, map } from 'rxjs';
+import { catchError, forkJoin, Observable, of, tap, map } from 'rxjs';
 
 import { TarifaService } from 'src/app/core/services/api/tarifa.service';
 import { Categoria } from 'src/app/core/models/categoria.model';
@@ -514,9 +514,7 @@ export class ModalTarifaComponent implements OnInit {
   private getClasificadoresRuat() {
     this.clasificadoresRuatService.getAll().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.clasificadoresRuatList = data.payload;
-        }
+        this.clasificadoresRuatList = data;
       },
       error: (error) => {
         this.notify('No se pudo recuperar los clasificadores RUAT', 'error');
@@ -537,13 +535,7 @@ export class ModalTarifaComponent implements OnInit {
 
   private addTariff(datos: Tarifa): Observable<any> {
     return this.tarifaService.save(datos).pipe(
-      switchMap((result: any) => {
-        if (result.status === 'OK') {
-          return of(result);
-        } else { 
-          return of(null);
-        }
-      }),
+      map((result: Tarifa) => result),
       catchError((error) => {
         return of(null);
       })
@@ -552,13 +544,7 @@ export class ModalTarifaComponent implements OnInit {
 
   private updateTariff(datos: Tarifa): Observable<any> {
     return this.tarifaService.update(datos).pipe(
-      switchMap((result: any) => {
-        if (result.status === 'OK') {
-          return of(result);
-        } else {
-          return of(null);
-        }
-      }),
+      map((result: Tarifa) => result),
       catchError((error) => {
         return of(null);
       })
@@ -567,13 +553,10 @@ export class ModalTarifaComponent implements OnInit {
 
   private deleteTarifa(uuid: string): Observable<boolean> {
     return this.tarifaService.delete(uuid).pipe(
-      tap((data: any) => {
-        if (data.status === 'OK') {
-          this.notify('Tarifa eliminada exitosamente', 'success');
-        } else {
-          Swal.fire({ text: 'No se pudo eliminar la Tarifa', confirmButtonColor: '#299cdb' });
-        }
+      tap(() => {
+        this.notify('Tarifa eliminada exitosamente', 'success');
       }),
+      map(() => true),
       catchError((error) => {
         Swal.fire({ 
           text: error, 
@@ -581,9 +564,7 @@ export class ModalTarifaComponent implements OnInit {
           icon: 'error'
         });
         return of(false);
-      }),
-      map((response: string) => true),
-      catchError(() => of(false))
+      })
     );
   }
 

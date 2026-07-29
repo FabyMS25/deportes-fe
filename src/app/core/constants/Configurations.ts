@@ -14,11 +14,11 @@ export enum CategoriaConfiguracion {
 
 export enum AplicaAConfiguracion {
   GLOBAL = 'global',
-  CAMPO_DEPORTIVO = 'campo_deportivo',
+  CONTRIBUYENTE = 'contribuyente',
+  ORGANIZACION = 'organizacion',
   COMPLEJO = 'complejo',
-  TARIFA = 'tarifa',
-  USUARIO = 'usuario',
-  ORGANIZACION = 'organizacion'
+  CAMPO_DEPORTIVO = 'campo_deportivo',
+  TARIFA = 'tarifa'
 }
 
 // Unidades de medida para valores numéricos
@@ -67,12 +67,10 @@ export enum ClaveConfiguracion {
   HORAS_VALIDACION_PAGO_RECURRENTES = 'HORAS_VALIDACION_PAGO_RECURRENTES',
 
   /* Notificaciones */
-  NOTIFICAR_RESERVA_CREADA = 'NOTIFICAR_RESERVA_CREADA',
-  NOTIFICAR_SOLICITUD_APROBADA = 'NOTIFICAR_SOLICITUD_APROBADA',
-  NOTIFICAR_SOLICITUD_RECHAZADA = 'NOTIFICAR_SOLICITUD_RECHAZADA',
-  NOTIFICAR_PAGO_PENDIENTE = 'NOTIFICAR_PAGO_PENDIENTE',
+  NOTIFICAR_REGISTRO_RESERVA = 'NOTIFICAR_REGISTRO_RESERVA',
+  NOTIFICAR_RESULTADO_SOLICITUD = 'NOTIFICAR_RESULTADO_SOLICITUD',
   NOTIFICAR_PAGO_CONFIRMADO = 'NOTIFICAR_PAGO_CONFIRMADO',
-  NOTIFICAR_RESERVA_CANCELADA = 'NOTIFICAR_RESERVA_CANCELADA',
+  NOTIFICAR_RESERVA_ANULADA = 'NOTIFICAR_RESERVA_ANULADA',
   HORAS_ANTICIPACION_RECORDATORIO_RESERVA = 'HORAS_ANTICIPACION_RECORDATORIO_RESERVA',
   HORAS_ANTICIPACION_RECORDATORIO_PAGO = 'HORAS_ANTICIPACION_RECORDATORIO_PAGO',
   MINUTOS_ANTICIPACION_CHECKIN = 'MINUTOS_ANTICIPACION_CHECKIN',
@@ -115,7 +113,7 @@ export const LabelsConfiguracion = {
   [AplicaAConfiguracion.CAMPO_DEPORTIVO]: 'Campo Deportivo',
   [AplicaAConfiguracion.COMPLEJO]: 'Complejo',
   [AplicaAConfiguracion.TARIFA]: 'Tarifa',
-  [AplicaAConfiguracion.USUARIO]: 'Usuario',
+  [AplicaAConfiguracion.CONTRIBUYENTE]: 'Contribuyente',
   [AplicaAConfiguracion.ORGANIZACION]: 'Organización',
 
   // Unidades de Medida
@@ -133,7 +131,7 @@ export const LabelsConfiguracion = {
   // Tipos de Valor
   [TipoValorConfiguracion.NUMERICO]: 'Numérico',
   [TipoValorConfiguracion.TEXTO]: 'Texto',
-  [TipoValorConfiguracion.BOOLEANO]: 'Boolean',
+  [TipoValorConfiguracion.BOOLEANO]: 'Booleano',
   [TipoValorConfiguracion.JSON]: 'JSON',
 
   // Estados de Control
@@ -157,4 +155,14 @@ export function obtenerLabelConfiguracion(valor: string, tipo: 'categoria' | 'ap
   }
   
   return valor;
+}
+
+
+export interface AdminDeportesConfig {
+  name: string;
+  role?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  avatar?: string;
 }

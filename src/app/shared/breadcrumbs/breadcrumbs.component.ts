@@ -1,5 +1,12 @@
 import { Component, OnInit, Input } from '@angular/core';
 
+export interface BreadCrumbItem {
+  active?: boolean;
+  label?: string;
+  description?: string;
+  link?: string;
+}
+
 @Component({
   selector: 'app-breadcrumbs',
   templateUrl: './breadcrumbs.component.html',
@@ -7,21 +14,14 @@ import { Component, OnInit, Input } from '@angular/core';
 })
 
 export class BreadcrumbsComponent implements OnInit {
-
-  @Input() title: string | undefined;
-  @Input()
-  breadcrumbItems!: Array<{
-    active?: boolean;
-    label?: string;
-  }>;
-
-  Item!: Array<{
-    label?: string;
-  }>;
+  @Input() breadcrumbItems!: Array<BreadCrumbItem>;
 
   constructor() { }
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void { }
 
+  get title() { return this.breadcrumbItems[0]?.label; }
+  get subtitle()    { return this.breadcrumbItems.at(-1)?.label; }
+  get description() { return this.breadcrumbItems.at(-1)?.description; }
+  
 }

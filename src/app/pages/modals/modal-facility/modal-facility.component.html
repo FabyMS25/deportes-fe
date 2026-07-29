@@ -1,137 +1,178 @@
-<div class="modal-header bg-info-subtle p-2">
-    <h5 class="modal-title" *ngIf="accion === ''" ngbAutofocus>
-        <i class="ri-government-line me-2"></i>Agregar Complejo Deportivo
-    </h5>
-    <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>
-        <i class="ri-government-line me-2"></i>Editar Datos de Complejo Deportivo
-    </h5>
-    <button type="button" class="btn-close"
-        data-dismiss="modal" aria-label="Cerrar"
-        [disabled]="submitted" (click)="closeModal()">
-    </button>
+<div class="modal-content" *ngIf="accion!=='delete';else deleteModel">
+    <div class="modal-header bg-info-subtle p-2">
+        <h5 class="modal-title" *ngIf="accion === ''" ngbAutofocus>
+            <i class="ri-government-line me-2"></i>Agregar Complejo Deportivo
+        </h5>
+        <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>
+            <i class="ri-government-line me-2"></i>Editar Datos de Complejo Deportivo
+        </h5>
+        <button type="button" class="btn-close"
+            data-dismiss="modal" aria-label="Cerrar"
+            [disabled]="submitted" (click)="closeModal()">
+        </button>
+    </div>
+    <form (ngSubmit)="saveData()" *ngIf="accion === 'edit' || accion === ''"
+        class="tablelist-form" autocomplete="off" [formGroup]="complejoForm">
+        <div class="modal-body">
+            <div class="row g-3">
+                <div class="col-lg-12">
+                    <input type="hidden" formControlName="uuid" />                
+                    <div>
+                        <label for="nombre-field" class="form-label mb-0">Nombre</label>
+                        <input type="text" id="nombre-field" class="form-control"
+                            placeholder="Ingresa el Nombre del Complejo" required formControlName="nombre"
+                            [ngClass]="{ 'is-invalid': submitted && form['nombre'].errors }" />
+                        <div *ngIf="submitted && form['nombre'].errors" class="invalid-feedback" align="left">
+                            <div *ngIf="form['nombre'].errors['required']">El nombre es requerido</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div>
+                        <label for="estadoActual-field" class="form-label mb-0">Estado Actual</label>
+                        <select id="estadoActual-field" class="form-control" formControlName="estadoActual">
+                            <option *ngFor="let estado of estadoComplejoList" [value]="estado">{{ estado }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div>
+                        <label for="tipoEstructura-field" class="form-label mb-0">Tipo de Estructura</label>
+                        <select id="tipoEstructura-field" class="form-control" formControlName="tipoEstructura"
+                            [ngClass]="{'is-invalid': submitted && form['tipoEstructura'].errors }">
+                            <option value="">Seleccione una opción</option>
+                            <option *ngFor="let tipo of tipoEstructuraList" [value]="tipo">{{ tipo }}</option>
+                        </select>
+                        <div *ngIf="submitted && form['tipoEstructura'].errors" class="invalid-feedback" align="left">
+                            <div *ngIf="form['tipoEstructura'].errors['required']">Debe seleccionar una opción</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div>
+                        <label for="telefonoPrincipal-field" class="form-label mb-0">Teléfono Principal</label>
+                        <input type="text" id="telefonoPrincipal-field" class="form-control"
+                            placeholder="Ingresa el teléfono" formControlName="telefonoPrincipal" />
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div>
+                        <label for="distrito-field" class="form-label mb-0">Distrito</label>
+                        <select id="distrito-field" class="form-control" formControlName="distrito"
+                            [ngClass]="{'is-invalid': submitted && form['distrito'].errors }">
+                            <option value="">Seleccione un distrito</option>
+                            <option *ngFor="let distrito of distictList" [value]="distrito.value">{{ distrito.value }}</option>
+                        </select>
+                        <div *ngIf="submitted && form['distrito'].errors" class="invalid-feedback" align="left">
+                            <div *ngIf="form['distrito'].errors['required']">Debe seleccionar un distrito</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <label for="ubicacion-field" class="form-label mb-0">Ubicación</label>
+                    <div class="input-group">
+                        <input type="text" id="ubicacion-field" class="form-control" [disabled]="true"
+                            placeholder="Seleccione la ubicación en el mapa" required formControlName="ubicacion"
+                            [ngClass]="{ 'is-invalid': submitted && form['ubicacion'].errors }" />
+                        <button class="btn btn-soft-secondary fw-medium" type="button"
+                            (click)="openMapa()">Abrir Mapa</button>
+                        <div *ngIf="submitted && form['ubicacion'].errors" class="invalid-feedback" align="left">
+                            <div *ngIf="form['ubicacion'].errors['required']">El campo Dirección es obligatorio</div>
+                        </div>
+                    </div>
+                    <div class="input-group mt-2" *ngIf="form['ubicacion'].value">
+                        <small class="text-muted">
+                            Latitud: {{form['latitud'].value}} | Longitud: {{form['longitud'].value}}
+                        </small>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="tieneIluminacion-field" 
+                                    formControlName="tieneIluminacion">
+                                <label class="form-check-label" for="tieneIluminacion-field">
+                                    ¿Tiene Iluminación?
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="tieneVestuarios-field" 
+                                    formControlName="tieneVestuarios">
+                                <label class="form-check-label" for="tieneVestuarios-field">
+                                    ¿Tiene Vestuarios?
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="tieneGraderias-field" 
+                                    formControlName="tieneGraderias">
+                                <label class="form-check-label" for="tieneGraderias-field">
+                                    ¿Tiene Gradarías?
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <div>
+                        <label for="observaciones-field" class="form-label mb-0">Observaciones</label>
+                        <textarea id="observaciones-field" class="form-control" rows="3"
+                            placeholder="Observaciones adicionales" formControlName="observaciones"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>    
+        <div class="modal-footer">
+            <div class="hstack gap-2 justify-content-end">
+                <button type="button" class="btn btn-light" (click)="closeModal()">Cerrar</button>
+                <button type="submit" class="btn btn-success" [disabled]="submitted">
+                    {{ accion === 'edit' ? 'Actualizar' : 'Agregar' }}
+                </button>
+            </div>
+        </div>
+    </form>
 </div>
 
-<form (ngSubmit)="saveData()" *ngIf="accion === 'edit' || accion === ''"
-    class="tablelist-form" autocomplete="off" [formGroup]="complejoForm">
-    <div class="modal-body">
-        <div class="row g-3">
-            <div class="col-lg-12">
-                <input type="hidden" formControlName="uuid" />                
-                <div>
-                    <label for="nombre-field" class="form-label mb-0">Nombre</label>
-                    <input type="text" id="nombre-field" class="form-control"
-                        placeholder="Ingresa el Nombre del Complejo" required formControlName="nombre"
-                        [ngClass]="{ 'is-invalid': submitted && form['nombre'].errors }" />
-                    <div *ngIf="submitted && form['nombre'].errors" class="invalid-feedback" align="left">
-                        <div *ngIf="form['nombre'].errors['required']">El nombre es requerido</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div>
-                    <label for="estadoActual-field" class="form-label mb-0">Estado Actual</label>
-                    <select id="estadoActual-field" class="form-control" formControlName="estadoActual">
-                        <option *ngFor="let estado of estadoComplejoList" [value]="estado">{{ estado }}</option>
-                    </select>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div>
-                    <label for="tipoEstructura-field" class="form-label mb-0">Tipo de Estructura</label>
-                    <select id="tipoEstructura-field" class="form-control" formControlName="tipoEstructura"
-                        [ngClass]="{'is-invalid': submitted && form['tipoEstructura'].errors }">
-                        <option value="">Seleccione una opción</option>
-                        <option *ngFor="let tipo of tipoEstructuraList" [value]="tipo">{{ tipo }}</option>
-                    </select>
-                    <div *ngIf="submitted && form['tipoEstructura'].errors" class="invalid-feedback" align="left">
-                        <div *ngIf="form['tipoEstructura'].errors['required']">Debe seleccionar una opción</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div>
-                    <label for="telefonoPrincipal-field" class="form-label mb-0">Teléfono Principal</label>
-                    <input type="text" id="telefonoPrincipal-field" class="form-control"
-                        placeholder="Ingresa el teléfono" formControlName="telefonoPrincipal" />
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div>
-                    <label for="distrito-field" class="form-label mb-0">Distrito</label>
-                    <select id="distrito-field" class="form-control" formControlName="distrito"
-                        [ngClass]="{'is-invalid': submitted && form['distrito'].errors }">
-                        <option value="">Seleccione un distrito</option>
-                        <option *ngFor="let distrito of distictList" [value]="distrito.value">{{ distrito.value }}</option>
-                    </select>
-                    <div *ngIf="submitted && form['distrito'].errors" class="invalid-feedback" align="left">
-                        <div *ngIf="form['distrito'].errors['required']">Debe seleccionar un distrito</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-12">
-                <label for="ubicacion-field" class="form-label mb-0">Ubicación</label>
-                <div class="input-group">
-                    <input type="text" id="ubicacion-field" class="form-control" [disabled]="true"
-                        placeholder="Seleccione la ubicación en el mapa" required formControlName="ubicacion"
-                        [ngClass]="{ 'is-invalid': submitted && form['ubicacion'].errors }" />
-                    <button class="btn btn-soft-secondary fw-medium" type="button"
-                        (click)="openMapa()">Abrir Mapa</button>
-                    <div *ngIf="submitted && form['ubicacion'].errors" class="invalid-feedback" align="left">
-                        <div *ngIf="form['ubicacion'].errors['required']">El campo Dirección es obligatorio</div>
-                    </div>
-                </div>
-                <div class="input-group mt-2" *ngIf="form['ubicacion'].value">
-                    <small class="text-muted">
-                        Latitud: {{form['latitud'].value}} | Longitud: {{form['longitud'].value}}
-                    </small>
-                </div>
-            </div>
-            <div class="col-lg-12">
-                <div class="row">
-                    <div class="col-lg-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="tieneIluminacion-field" 
-                                formControlName="tieneIluminacion">
-                            <label class="form-check-label" for="tieneIluminacion-field">
-                                ¿Tiene Iluminación?
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-lg-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="tieneVestuarios-field" 
-                                formControlName="tieneVestuarios">
-                            <label class="form-check-label" for="tieneVestuarios-field">
-                                ¿Tiene Vestuarios?
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-lg-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="tieneGraderias-field" 
-                                formControlName="tieneGraderias">
-                            <label class="form-check-label" for="tieneGraderias-field">
-                                ¿Tiene Gradarías?
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-12">
-                <div>
-                    <label for="observaciones-field" class="form-label mb-0">Observaciones</label>
-                    <textarea id="observaciones-field" class="form-control" rows="3"
-                        placeholder="Observaciones adicionales" formControlName="observaciones"></textarea>
-                </div>
-            </div>
+<ng-template #deleteModel>
+    <div class="modal-content" *ngIf="row.uuid">
+        <div class="modal-header">
+            <button type="button" class="btn-close" 
+                    (click)="closeModal()"></button>
         </div>
-    </div>    
-    <div class="modal-footer">
-        <div class="hstack gap-2 justify-content-end">
-            <button type="button" class="btn btn-light" (click)="closeModal()">Cerrar</button>
-            <button type="submit" class="btn btn-success" [disabled]="submitted">
-                {{ accion === 'edit' ? 'Actualizar' : 'Agregar' }}
-            </button>
+        <div class="modal-body">
+            <div class="mt-2 text-center">
+                <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
+                    colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
+                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+                    <h4>Estas seguro de Eliminar el Registro ?</h4>
+                    <p class="text-muted mx-4 mb-0">
+                        Esta acción eliminará permanentemente el complejo deportivo "<strong>{{row.nombre}}</strong>"
+                        y toda su información asociadas si no fueron usadas.
+                    </p>
+                </div>
+            </div>
+            <div class="d-flex gap-2 justify-content-center my-4">
+                <button class="btn btn-link link-success fw-medium text-decoration-none" 
+                        (click)="closeModal()"
+                        [disabled]="submitted">
+                    <i class="ri-close-line me-1 align-middle"></i> Cancelar
+                </button>
+                <button type="button" 
+                        class="btn w-sm btn-danger" 
+                        (click)="deleteData(row.uuid)"
+                        [disabled]="submitted">
+                    <span *ngIf="!submitted">
+                        <i class="ri-delete-bin-line me-1 align-middle"></i> Sí, Eliminar
+                    </span>
+                    <span *ngIf="submitted">
+                        <span class="spinner-border spinner-border-sm me-2"></span>Eliminando...
+                    </span>
+                </button>
+            </div>
         </div>
     </div>
-</form>
+</ng-template>

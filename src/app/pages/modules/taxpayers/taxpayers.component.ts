@@ -1,13 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbModal, NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
-import { ngxCsv } from 'ngx-csv/ngx-csv';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { CityAcronym } from 'src/app/core/constants/Places';
+import { CsvColumn } from 'src/app/shared/data-header/data-header.component';
 import { EstadoRuat, EstadoUsuario } from 'src/app/core/constants/Estados';
 import { ModalTaxpayerComponent } from '../../modals/modal-taxpayer/modal-taxpayer.component';
+import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component';
+import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 
 @Component({
   selector: 'app-taxpayers',
@@ -15,30 +17,81 @@ import { ModalTaxpayerComponent } from '../../modals/modal-taxpayer/modal-taxpay
   styleUrls: ['./taxpayers.component.scss']
 })
 export class TaxpayersComponent implements OnInit {
-  title = "Contribuyentes";
-  breadCrumbItems!: Array<{}>;
+  breadCrumbItems: BreadCrumbItem[] =[];
+  viewMode: 'table' | 'cards' = 'table';
   canActivate: string[];
   itemsList: any[] = [];
-  temp: any[] = [];
-  viewMode: 'table' | 'cards' = 'table';
-
-  contribuyentesList: any[] = [];
-
+  temp: Contribuyente[] = [];
+  contribuyentesList: Contribuyente[] = [];
+  
+  selectedTab = 'TODOS';
   searchTerm: string = '';
-  estadoUsuario: string = '';
-  estadoRuat: string = '';
-  tipoContribuyente: string = '';
-  puedeReservarGratis: string = '';
-  esDeportistaElite: string = '';
-
-  selectedItems: any[] = [];
+  estadoUsuario: EstadoUsuario | '' = '';
+  estadoRuat: EstadoRuat | '' = '';
+  verificadoRuat: '' | 'SI' | 'NO' = '';
+  selectedItems: Contribuyente[] = [];
+  readonly CSV_COLUMNS: CsvColumn<Contribuyente>[] = [
+    { header: 'Nombre Completo', value: item => item.nombreCompleto?.toString() ?? '' },
+    { header: 'Tipo Contribuyente', value: item => item.tipoContribuyente ?? '' },
+    { header: 'Nro Documento', value: item => item.numeroDocumento ?? '' },
+    {
+      header: 'Expedido',
+      value: item =>
+        CityAcronym.find(
+          city => String(city.id) === String(item.expedido)
+        )?.value ??
+        item.expedido ??
+        ''
+    },
+    { header: 'NIT', value: item => item.nroNit ?? '' },
+    { header: 'Teléfono', value: item => item.telefono ?? '' },
+    { header: 'Email', value: item => item.email ?? '' },
+    { header: 'Dirección', value: item => item.direccion ?? '' },
+    { header: 'Estado Usuario', value: item => item.estadoUsuario ?? '' },
+    { header: 'Estado RUAT', value: item => item.estadoRuat ?? '' },
+    {
+      header: 'Puede Reservar Gratis',
+      value: item => item.puedeReservarGratis ? 'SI' : 'NO'
+    },
+    {
+      header: 'Es Deportista Élite',
+      value: item => item.esDeportistaElite ? 'SI' : 'NO'
+    },
+    {
+      header: 'Registro Único Deportivo',
+      value: item => item.registroUnicoDeportivo ?? ''
+    },
+    {
+      header: 'Está Sancionado',
+      value: item => item.estaSancionado ? 'SI' : 'NO'
+    },
+    {
+      header: 'Fecha Fin Sanción',
+      value: item => item.fechaFinSancion
+        ? new Date(item.fechaFinSancion).toLocaleDateString('es-BO')
+        : ''
+    },
+    { header: 'Motivo Sanción', value: item => item.motivoSancion ?? '' },
+    {
+      header: 'Fecha Creación',
+      value: item => item.fechaCreacion
+        ? new Date(item.fechaCreacion).toLocaleDateString('es-BO')
+        : ''
+    },
+    {
+      header: 'Fecha Actualización',
+      value: item => item.fechaActualizacion
+        ? new Date(item.fechaActualizacion).toLocaleDateString('es-BO')
+        : ''
+    }
+  ];
 
   constructor(
     private modalService: NgbModal,
     private authService: AuthenticationService,
     private contribuyentesService: ContribuyentesService,
   ) {
-    this.canActivate = this.authService.hasPermission(this.title);
+    this.canActivate = this.authService.hasPermission('Contribuyentes');
   }
 
   ngOnInit(): void {
@@ -48,7 +101,7 @@ export class TaxpayersComponent implements OnInit {
     }
     this.breadCrumbItems = [
       { label: '' },
-      { label: this.title, active: true }
+      { label: 'Contribuyentes', active: true }
     ];    
     this.itemsList = [
       { name: 'Nombre Completo', prop: 'nombreCompleto', visible: true },
@@ -84,7 +137,7 @@ export class TaxpayersComponent implements OnInit {
     this.getTaxpayers();
   }
 
-  getSelectedItems(items: any) {
+  getSelectedItems(items: Contribuyente[]): void {
     this.selectedItems = items;
   }
   toggleColumn(column: any) {
@@ -94,72 +147,123 @@ export class TaxpayersComponent implements OnInit {
     this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
     localStorage.setItem('dataTableViewMode', this.viewMode);
   }
-
-  applyFilters() {
-    if (!this.temp || this.temp.length === 0) return;
-    this.contribuyentesList = this.temp.filter(item => {
-      const searchMatch = !this.searchTerm || this.searchInContribuyente(item, this.searchTerm);
-      const estadoUsuarioMatch = !this.estadoUsuario || 
-        item.estadoUsuario === this.estadoUsuario;
-      const estadoRuatMatch = !this.estadoRuat || 
-        item.estadoRuat === this.estadoRuat;
-      const tipoContribuyenteMatch = !this.tipoContribuyente || 
-        item.tipoContribuyente === this.tipoContribuyente;
-      const puedeReservarGratisMatch = !this.puedeReservarGratis || 
-        (this.puedeReservarGratis === 'SI' && item.puedeReservarGratis) ||
-        (this.puedeReservarGratis === 'NO' && !item.puedeReservarGratis);
-      const esDeportistaEliteMatch = !this.esDeportistaElite || 
-        (this.esDeportistaElite === 'SI' && item.esDeportistaElite) ||
-        (this.esDeportistaElite === 'NO' && !item.esDeportistaElite);
-      return searchMatch && estadoUsuarioMatch && estadoRuatMatch && 
-             tipoContribuyenteMatch && puedeReservarGratisMatch && esDeportistaEliteMatch;
-    });
+  onNavChange(event: NgbNavChangeEvent): void {
+    this.selectedTab = String(event.nextId);
+    this.applyFilters();
   }
-
-  private searchInContribuyente(item: any, searchTerm: string): boolean {
-    if (!searchTerm) return true;    
-    const term = searchTerm.toLowerCase();    
-    return (
-      item.nombreCompleto?.toLowerCase().includes(term) ||
-      item.nombre?.toLowerCase().includes(term) ||
-      item.primerApellido?.toLowerCase().includes(term) ||
-      item.segundoApellido?.toLowerCase().includes(term) ||
-      item.apellidoEsposo?.toLowerCase().includes(term) ||
-      item.numeroDocumento?.toLowerCase().includes(term) ||
-      item.nroNit?.toLowerCase().includes(term) ||
-      item.telefono?.toLowerCase().includes(term) ||
-      item.email?.toLowerCase().includes(term) ||
-      item.direccion?.toLowerCase().includes(term) ||
-      item.registroUnicoDeportivo?.toLowerCase().includes(term) ||
-      item.observacionesMunicipales?.toLowerCase().includes(term) ||
-      item.motivoSancion?.toLowerCase().includes(term) ||
-      item.estadoUsuario?.toLowerCase().includes(term) ||
-      item.estadoRuat?.toLowerCase().includes(term) ||
-      item.tipoContribuyente?.toLowerCase().includes(term)
+  getTabCount(tab: string): number {
+    return this.temp.filter(item =>
+      this.matchesFilters(item, tab)
+    ).length;
+  }
+  clearFilters(): void {
+    this.searchTerm = '';
+    this.estadoUsuario = '';
+    this.estadoRuat = '';
+    this.verificadoRuat = '';
+    this.selectedTab = 'TODOS';
+    this.selectedItems = [];
+    this.applyFilters();
+  }
+  applyFilters(): void {
+    this.contribuyentesList = this.temp.filter(item =>
+      this.matchesFilters(item, this.selectedTab)
+    );
+    this.selectedItems = this.selectedItems.filter(selected =>
+      this.contribuyentesList.some(
+        item => item.uuid === selected.uuid
+      )
     );
   }
+  private matchesFilters(
+    item: Contribuyente,
+    tab: string
+  ): boolean {
+    const search = this.normalizeFilterText(this.searchTerm);
 
-  onNavChange(changeEvent: NgbNavChangeEvent) {
-    switch (changeEvent.nextId) {
-      case 1: 
-        this.contribuyentesList = this.temp;
-        break;
-      case 2:
-        this.contribuyentesList = this.temp.filter(item => item.tipoContribuyente === 'NA');
-        break;
-      case 3: 
-        this.contribuyentesList = this.temp.filter(item => item.tipoContribuyente === 'JU');
-        break;
-      case 4:
-        this.contribuyentesList = this.temp.filter(item => item.puedeReservarGratis === true);
-        break;
-      case 5:
-        this.contribuyentesList = this.temp.filter(item => item.esDeportistaElite === true);
-        break;
-      case 6:
-        this.contribuyentesList = this.temp.filter(item => item.estaSancionado === true);
-        break;
-    }
+    const matchesSearch =
+      !search ||
+      [
+        item.nombreCompleto,
+        item.nombre,
+        item.primerApellido,
+        item.segundoApellido,
+        item.apellidoEsposo,
+        item.numeroDocumento,
+        item.codigoContribuyente,
+        item.nroNit,
+        item.telefono,
+        item.email,
+        item.direccion,
+        item.registroUnicoDeportivo,
+        item.observacionesMunicipales,
+        item.motivoSancion,
+        item.estadoUsuario,
+        item.estadoRuat,
+        item.tipoContribuyente
+      ].some(value =>
+        this.normalizeFilterText(value).includes(search)
+      );
+
+    const matchesEstadoUsuario =
+      !this.estadoUsuario ||
+      item.estadoUsuario === this.estadoUsuario;
+
+    const matchesEstadoRuat =
+      !this.estadoRuat ||
+      item.estadoRuat === this.estadoRuat;
+
+    const matchesVerificacionRuat =
+      !this.verificadoRuat ||
+      (
+        this.verificadoRuat === 'SI' &&
+        item.verificadoRuat === true
+      ) ||
+      (
+        this.verificadoRuat === 'NO' &&
+        item.verificadoRuat === false
+      );
+
+    const matchesTab =
+      tab === 'TODOS' ||
+      (
+        tab === 'NA' &&
+        item.tipoContribuyente === 'NA'
+      ) ||
+      (
+        tab === 'JU' &&
+        item.tipoContribuyente === 'JU'
+      ) ||
+      (
+        tab === 'GRATIS' &&
+        item.puedeReservarGratis === true
+      ) ||
+      (
+        tab === 'ELITE' &&
+        item.esDeportistaElite === true
+      ) ||
+      (
+        tab === 'SANCIONADOS' &&
+        (
+          item.estaSancionado === true ||
+          item.estadoUsuario === EstadoUsuario.SANCIONADO
+        )
+      );
+
+    return (
+      matchesSearch &&
+      matchesEstadoUsuario &&
+      matchesEstadoRuat &&
+      matchesVerificacionRuat &&
+      matchesTab
+    );
+  }
+  private normalizeFilterText(value: unknown): string {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
   }
 
   public openModal(content: any | undefined, accion: string, size: string) {
@@ -176,69 +280,23 @@ export class TaxpayersComponent implements OnInit {
     });
   }
 
-  // Csv File Export
-  csvFileExport() {
-    const lista = this.selectedItems.flatMap((item: any) => {
-      const city = CityAcronym.find(city => city.id === item.expedido);
-      const baseData = {
-        nombreCompleto: item.nombreCompleto,
-        tipoContribuyente: item.tipoContribuyente,
-        numeroDocumento: item.numeroDocumento,
-        expedido: city ? city.value : item.expedido,
-        nroNit: item.nroNit,
-        telefono: item.telefono,
-        email: item.email,
-        direccion: item.direccion,
-        estadoUsuario: item.estadoUsuario,
-        estadoRuat: item.estadoRuat,
-        puedeReservarGratis: item.puedeReservarGratis ? 'SI' : 'NO',
-        esDeportistaElite: item.esDeportistaElite ? 'SI' : 'NO',
-        perteneceEscuelaMunicipal: item.perteneceEscuelaMunicipal ? 'SI' : 'NO',
-        registroUnicoDeportivo: item.registroUnicoDeportivo,
-        descuentoAplicable: item.descuentoAplicable,
-        estaSancionado: item.estaSancionado ? 'SI' : 'NO',
-        fechaFinSancion: item.fechaFinSancion,
-        motivoSancion: item.motivoSancion,
-        fechaCreacion: item.fechaCreacion,
-        fechaActualizacion: item.fechaActualizacion
-      };
-      return [{ ...baseData }];
-    });
-
-    var data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de Contribuyentes',
-      useBom: true,
-      noDownload: false,
-      headers: [
-        "Nombre Completo", "Tipo Contribuyente", "Nro Documento", "Expedido", "NIT",
-        "Teléfono", "Email", "Dirección", "Estado Usuario", "Estado Ruat",
-        "Puede Reservar Gratis", "Es Deportista Elite", "Pertenece Escuela Municipal",
-        "Registro Único Deportivo", "Descuento Aplicable", "Está Sancionado",
-        "Fecha Fin Sanción", "Motivo Sanción", "Fecha Creación", "Fecha Actualización"
-      ]
-    };
-    new ngxCsv(lista, "contribuyentes", data);
-  }
-
   /* API Services */
   loading: boolean = true;
-  private getTaxpayers() {
+  private getTaxpayers(): void {
+    this.loading = true;
     this.contribuyentesService.getAll().subscribe({
-      next: (data: any) => {
+      next: (data: Contribuyente[]) => {
+        this.temp = data ?? [];
+        this.applyFilters();
         this.loading = false;
-        if (data['status'] === 'OK') {
-          this.contribuyentesList = data.payload;
-          this.temp = data.payload;
-        }
       },
-      error: (error) => {
+      error: () => {
         this.loading = false;
-        Swal.fire({ text: 'Error al obtener los contribuyentes', icon: 'error', confirmButtonColor: '#299cdb' });
+        Swal.fire({
+          text: 'Error al obtener los contribuyentes',
+          icon: 'error',
+          confirmButtonColor: '#299cdb'
+        });
       }
     });
   }

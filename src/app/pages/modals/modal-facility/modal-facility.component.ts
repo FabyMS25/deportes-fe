@@ -1,4 +1,4 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, EventEmitter, Input, Output, TemplateRef, ViewChild, OnInit } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, EventEmitter, Input, Output, TemplateRef, ViewChild, OnInit, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder,FormArray, FormGroup, UntypedFormBuilder,UntypedFormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { NgbDatepickerModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -35,14 +35,10 @@ export class ModalFacilitiesComponent {
   estadoComplejoList = Object.values(EstadoActual);
   distictList = Districts;
 
-  tieneIluminacion: boolean = false;
-  tieneVestuarios: boolean = false;
-  tieneGraderias: boolean = false;
-
   submitted = false;
   complejoForm!: UntypedFormGroup;
-
-  masterSelected!: boolean;
+  
+  @ViewChild('deleteModel') deleteModel!: ElementRef;  
   
   constructor(
     private modalService: NgbModal,
@@ -153,15 +149,11 @@ export class ModalFacilitiesComponent {
   private addData(datos: ComplejoDeportivo) {
     this.complejosService.save(datos).subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.submitted = false;
-          this.modalService.dismissAll();
-          this.complejoForm.reset();
-          this.emitList.emit();       
-          this.notify('Complejo Deportivo registrado exitosamente!', 'success');
-        } else {
-          this.notify(data.payload, 'error');
-        }
+        this.submitted = false;
+        this.modalService.dismissAll();
+        this.complejoForm.reset();
+        this.emitList.emit();       
+        this.notify('Complejo Deportivo registrado exitosamente!', 'success');
       },
       error: (error) => {
         this.notify('Error: ' + error.message, 'error');
@@ -190,21 +182,20 @@ export class ModalFacilitiesComponent {
   /**
   * Delete model
   */
-  deleteId: any;
-  confirm(content: any, id: any) {
-    this.deleteId = id;
-    this.modalService.open(content, { centered: true });
-  }
-
-  // Delete Data
-  deleteData(id: any) {
-    if (id) {
-      // Implement delete logic here
-    } else {
-      // Implement bulk delete logic here
-    }
-    this.deleteId = '';
-    this.masterSelected = false;
+  deleteData(uuid: string) {
+    this.complejosService.delete(uuid).subscribe({
+      next: (message: string) => {
+        this.submitted = false;
+        this.notify(message || 'Complejo eliminado exitosamente', 'success');
+        this.modalService.dismissAll();
+        this.emitList.emit();
+        this.closeModal();
+      },
+      error: err => {
+        this.submitted = false;
+        this.notify(err.message || 'No se pudo eliminar el registro!', 'error');
+      }
+    });
   }
 
   public closeModal() {

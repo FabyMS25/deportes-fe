@@ -22,4 +22,6 @@ export interface Notificacion {
   leidaEn?: string;
   expiraEn?: string;
   metadataJson?: string;
+  /** Identifies the administrator event that produced this personal delivery. */
+  notificacionAdminUuid?: string;
 }

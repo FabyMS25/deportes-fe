@@ -416,7 +416,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   private generateReservationNumber(): void {
     this.reservaService.previewNumeroReserva(this.bookingType).subscribe({
       next: (response: any) => {
-        this.numeroReserva = response.payload;        
+        this.numeroReserva = response;        
         if (this.reservationForm) {
           this.reservationForm.patchValue({ 
             numeroReserva: this.numeroReserva 
@@ -480,7 +480,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    this.reservaService.validateNumeroReserva(customNumber).subscribe({
+    this.reservaService.validateNumeroReserva(customNumber, this.bookingType).subscribe({
       next: (response: any) => {
         if (response.valid) {
           this.numeroReserva = customNumber;
@@ -1845,18 +1845,13 @@ private prepareReservationData(): Reserva {
     this.ruatService.createTasa(ruatData, ruatData.codigoContribuyente)
     .subscribe({
       next: (response: any) => {
-        if (response.status === 'OK' ) {
-          const ruatData = this.ruatService.getResponseData(response);
-          if(this.ruatService.canContinue(response) && ruatData?.numeroTasa){
-            reservaData.numeroTasa = ruatData.numeroTasa;
-            this.saveReservation(reservaData);
-          } else {
-            this.isSubmitting = false;
-            this.handleError('Error en RUAT', this.getRuatErrorMessage(response, 'RUAT no permitió registrar la tasa.'));
-          }
+        const ruatData = this.ruatService.getResponseData(response);
+        if(this.ruatService.canContinue(response) && ruatData?.numeroTasa){
+          reservaData.numeroTasa = ruatData.numeroTasa;
+          this.saveReservation(reservaData);
         } else {
           this.isSubmitting = false;
-          this.handleError('Error en RUAT', this.getRuatErrorMessage(response, 'No se pudo registrar la tasa.'));
+          this.handleError('Error en RUAT', this.getRuatErrorMessage(response, 'RUAT no permitió registrar la tasa.'));
         }
       },
       error: (error) => {
@@ -1974,33 +1969,28 @@ private prepareReservationData(): Reserva {
 
     this.reservaService.create(reservaPayload).subscribe({
       next: (response: any) => {
-        if (response.status === 'OK') {
-          const savedReserva = response.payload || response;
-          if (savedReserva.tarifaDetallesDtoList?.length) {
+        const savedReserva = response;
+        if (savedReserva.tarifaDetallesDtoList?.length) {
+          this.isSubmitting = false;
+          this.submitted = false;
+          this.showSuccessMessage(savedReserva);
+          this.reservationCompleted.emit(savedReserva);
+          return;
+        }
+
+        this.saveReservaTarifaDetalles(savedReserva, tarifaDetalles).subscribe({
+          next: (savedDetalleResponses) => {
+            savedReserva.tarifaDetallesDtoList = this.extractSavedTarifaDetalles(savedDetalleResponses, tarifaDetalles, savedReserva);
             this.isSubmitting = false;
             this.submitted = false;
             this.showSuccessMessage(savedReserva);
             this.reservationCompleted.emit(savedReserva);
-            return;
+          },
+          error: (error) => {
+            this.isSubmitting = false;
+            this.handleError('Reserva creada, pero no se guardó el detalle de tarifa', error);
           }
-
-          this.saveReservaTarifaDetalles(savedReserva, tarifaDetalles).subscribe({
-            next: (savedDetalleResponses) => {
-              savedReserva.tarifaDetallesDtoList = this.extractSavedTarifaDetalles(savedDetalleResponses, tarifaDetalles, savedReserva);
-              this.isSubmitting = false;
-              this.submitted = false;
-              this.showSuccessMessage(savedReserva);
-              this.reservationCompleted.emit(savedReserva);
-            },
-            error: (error) => {
-              this.isSubmitting = false;
-              this.handleError('Reserva creada, pero no se guardó el detalle de tarifa', error);
-            }
-          });
-        } else {
-          this.isSubmitting = false;
-          this.handleError('Error al guardar la reserva', response.message);
-        }
+        });
       },
       error: (error) => {
         this.isSubmitting = false;
@@ -2291,13 +2281,8 @@ getPaidReservationDescription(): string {
   private loadContribuyentes(): void {
     this.contribuyenteService.getAll().subscribe({
       next: (response: any) => {
-        if (response.status === 'OK') {
-          this.contribuyentesList = response.payload || [];
-          this.filteredContribuyentes = [...this.contribuyentesList];
-        } else {
-          this.contribuyentesList = [];
-          this.filteredContribuyentes = [];
-        }
+        this.contribuyentesList = response || [];
+        this.filteredContribuyentes = [...this.contribuyentesList];
       },
       error: (error) => {
         console.error('Error loading taxpayers:', error);
@@ -2316,11 +2301,7 @@ getPaidReservationDescription(): string {
   private loadAllOrganizations(): void {
     this.organizationService.getAll().subscribe({
       next: (response: any) => {
-        if (response.status === 'OK') {
-          this.organizationsList = response.payload.content || [];
-        } else {
-          this.organizationsList = [];
-        }
+        this.organizationsList = response?.content || response || [];
       },
       error: (error) => {
         console.error('Error loading organizations:', error);

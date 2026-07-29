@@ -4,7 +4,6 @@ import { NgbModal} from '@ng-bootstrap/ng-bootstrap';
 
 // Sweet Alert
 import Swal from 'sweetalert2';
-import { ngxCsv } from 'ngx-csv';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { Categoria } from 'src/app/core/models/categoria.model';
@@ -12,6 +11,8 @@ import { CategoriasService } from 'src/app/core/services/api/categorias.service'
 import { TranslateService } from '@ngx-translate/core';
 import { ModalImportComponent } from 'src/app/shared/modal-import/modal-import.component';
 import { TipoCobro } from 'src/app/core/constants/TipoCobro';
+import { CsvColumn } from 'src/app/shared/data-header/data-header.component';
+import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component';
 
 @Component({
   selector: 'app-categories',
@@ -22,12 +23,11 @@ import { TipoCobro } from 'src/app/core/constants/TipoCobro';
  * Leads Component
  */
 export class CategoriesComponent {
-  breadCrumbItems!: Array<{}>;
-  title="Categorias";
-  canActivate:string[];
-  itemsList:any[]=[];
-  temp:any[]=[];
+  breadCrumbItems: BreadCrumbItem[] =[];
   viewMode: 'table' | 'cards' = 'table';
+  canActivate: string[];
+  itemsList: any[] = [];
+  temp: Categoria[] = [];
 
   typeList=TipoCobro
   categoryList:any[]=[];
@@ -44,7 +44,7 @@ export class CategoriesComponent {
     public translate: TranslateService,
     private categoriesService: CategoriasService,
     private formBuilder: UntypedFormBuilder,) {
-      this.canActivate = this.authService.hasPermission(this.title);
+      this.canActivate = this.authService.hasPermission('Categorias');
   }
 
   ngOnInit(): void {
@@ -54,7 +54,7 @@ export class CategoriesComponent {
     }
     this.breadCrumbItems = [
       { label: 'Administración' },
-      { label: this.title, active: true }
+      { label: 'Categorias', active: true }
     ];
 
     this.itemsList = [
@@ -147,6 +147,14 @@ export class CategoriesComponent {
   }
 
   headersImport = ['Código', 'Nombre', 'Descripción', 'Tipo Cobro', 'Activo', 'Para Asociación','Requiere Aprobacion','Max Duración', 'Max Personas'];
+  readonly CSV_COLUMNS: CsvColumn<Categoria>[] = [
+    { header: 'Código', value: item => item.codigo || '-' },
+    { header: 'Nombre', value: item => item.nombre || '-' },
+    { header: 'Descripción', value: item => item.descripcion || '-' },
+    { header: 'Tipo Cobro', value: item => item.tipo || '-' },
+    { header: 'Activo', value: item => item.activo ? 'Sí' : 'No' },
+    { header: 'Para Asociación', value: item => item.forAsociacion ? 'Sí' : 'No' },
+  ];
   public openModalImport() {
     const modalRef = this.modalService.open(ModalImportComponent, {
       size: 'lg', backdrop: 'static'
@@ -206,34 +214,6 @@ export class CategoriesComponent {
   }
 
   // Csv File Export
-  public csvFileExport() {
-    const lista = this.selectedItems.flatMap((item: Categoria) => {
-      return {
-        code: item.codigo,
-        name: item.nombre,
-        description: item.descripcion || '',
-        type: item.tipo,
-        active: item.activo ? 'Sí' : 'No',
-        forAssociation: item.forAsociacion ? 'Sí' : 'No',
-        // requiereAprobacion: item.requiereAprobacion? 'Sí' : 'No',
-        // maxDuracionAutoAprobacion:item.maxDuracionAutoAprobacion,
-        // maxPersonasAutoAprobacion:item.maxPersonasAutoAprobacion,
-      };
-    });
-    var data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de ' + this.title,
-      useBom: true,
-      noDownload: false,
-      headers: this.headersImport
-    };
-    new ngxCsv(lista, this.title, data);
-  }
-
   /**
    * Delete model
    */

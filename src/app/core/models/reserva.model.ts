@@ -31,6 +31,8 @@ export interface Reserva{
   estadoValidacion:EstadoValidacion;  
   fechaAprobacion?:Date;
   aprobadoPor?:string;
+  creadoPor?: string;
+  anuladoPor?: string | null;
   fechaRechazo?:Date;
   motivoRechazo?:string;
   esReservaGratuita: boolean;

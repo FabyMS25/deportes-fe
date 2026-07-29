@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbModal, NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
-import { ngxCsv } from 'ngx-csv/ngx-csv';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
@@ -9,31 +8,50 @@ import { OrganizacionService } from 'src/app/core/services/api/organizacion.serv
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { Organizacion } from 'src/app/core/models/organizacion.model';
 import { ModalOrganizationComponent } from '../../modals/modal-organization/modal-organization.component';
-
+import { CsvColumn } from 'src/app/shared/data-header/data-header.component';
+import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component';
+import { TipoOrganizacion } from 'src/app/core/constants/Features';
 @Component({
   selector: 'app-organizations',
   templateUrl: './organizations.component.html',
   styleUrl: './organizations.component.scss'
 })
 export class OrganizationsComponent implements OnInit {
-  title = "Organizaciones";
-  breadCrumbItems!: Array<{}>;
+  breadCrumbItems: BreadCrumbItem[] =[];
+  viewMode: 'table' | 'cards' = 'table';
   canActivate: string[];
   itemsList: any[] = [];
-  temp: any[] = [];
-  viewMode: 'table' | 'cards' = 'table';
+  temp: Organizacion[] = [];
+  organizacionesList: Organizacion[] = [];
 
   loading: boolean = true;
-  organizacionesList: any[] = [];
   contribuyentesList: any[] = []; 
   contribuyente!:Contribuyente;
   
-  searchTerm: string = '';
-  estado: string = '';
-  tipoOrganizacion: string = '';
-  tieneNit: string = '';
-  tienePersoneriaJuridica: string = '';
-  selectedItems: any[] = [];
+  selectedItems: Organizacion[] = [];
+  searchTerm = '';
+  estado = '';
+  tieneNit = '';
+  tienePersoneriaJuridica = '';
+  tipoOrganizacion = 'TODAS';
+  tipoOrganizacionList = Object.values(TipoOrganizacion);
+
+  readonly CSV_COLUMNS: CsvColumn<Organizacion>[] = [
+    { header: 'Nombre', value: item => item.nombre ?? '' },
+    { header: 'Tipo Organización', value: item => item.tipoOrganizacion ?? '' },
+    { header: 'Teléfono', value: item => item.telefono ?? '' },
+    { header: 'Email', value: item => item.email ?? '' },
+    { header: 'Dirección', value: item => item.direccion ?? '' },
+    { header: 'Personería Jurídica', value: item => item.personeriaJuridica ?? '' },
+    { header: 'NIT', value: item => item.nroNit ?? '' },
+    { header: 'Estado', value: item => item.activo ? 'Activo' : 'Inactivo' },
+    { header: 'Representante', value: item => item.representanteDto?.nombreCompleto ?? ''},
+    { header: 'Documento Representante', value: item => item.representanteDto?.numeroDocumento ?? ''},
+    { header: 'Email Representante', value: item => item.representanteDto?.email ?? ''},
+    { header: 'Teléfono Representante', value: item => item.representanteDto?.telefono ?? ''},
+    { header: 'Fecha Creación', value: item =>    item.fechaCreacion
+          ? new Date(item.fechaCreacion).toLocaleDateString('es-BO') : '' }
+  ];
 
   constructor(
     private modalService: NgbModal, 
@@ -41,7 +59,7 @@ export class OrganizationsComponent implements OnInit {
     private organizacionesService: OrganizacionService,
     private contribuyentesService: ContribuyentesService,
   ) {
-    this.canActivate = this.authService.hasPermission(this.title);
+    this.canActivate = this.authService.hasPermission('Organizaciones');
   }
 
   ngOnInit(): void {
@@ -51,7 +69,7 @@ export class OrganizationsComponent implements OnInit {
     }
     this.breadCrumbItems = [
       { label: '' },
-      { label: this.title, active: true }
+      { label: 'Organizaciones', active: true }
     ];
     const currentUser = this.authService.currentUser();
     if (this.authService.getUserRole() === 'Contribuyente') {
@@ -75,8 +93,7 @@ export class OrganizationsComponent implements OnInit {
     this.getOrganizaciones();
     this.getContribuyentesForRepresentatives();
   }
-
-  getSelectedItems(items: any) {
+  getSelectedItems(items: Organizacion[]): void {
     this.selectedItems = items;
   }
   toggleColumn(column: any) {
@@ -86,26 +103,104 @@ export class OrganizationsComponent implements OnInit {
     this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
     localStorage.setItem('dataTableViewMode', this.viewMode);
   }
+  onNavChange(event: NgbNavChangeEvent): void {
+    this.tipoOrganizacion = String(event.nextId);
+    this.applyFilters();
+  }
+  getTabCount(organizationType: string ): number {
+    return this.temp.filter(item =>
+      this.matchesFilters(item, organizationType)
+    ).length;
+  }
+  clearFilters(): void {
+    this.searchTerm = '';
+    this.estado = '';
+    this.tipoOrganizacion = 'TODAS';
+    this.tieneNit = '';
+    this.tienePersoneriaJuridica = '';
+    this.selectedItems = [];
+    this.applyFilters();
+  }
 
-  applyFilters() {
-    if (!this.temp || this.temp.length === 0) return;
+  applyFilters(): void {
+    this.organizacionesList = this.temp.filter(item =>
+      this.matchesFilters(item, this.tipoOrganizacion)
+    );
+    this.selectedItems = this.selectedItems.filter(selected =>
+      this.organizacionesList.some(
+        item => item.uuid === selected.uuid
+      )
+    );
+  }
+  private matchesFilters(
+    item: Organizacion,
+    organizationType: string
+  ): boolean {
+    const search = this.normalizeFilterText(this.searchTerm);
 
-    this.organizacionesList = this.temp.filter(item => {
-      const searchMatch = !this.searchTerm || this.searchInOrganizacion(item, this.searchTerm);
-      const estadoMatch = !this.estado || 
-        (this.estado === 'ACTIVO' && item.activo) ||
-        (this.estado === 'INACTIVO' && !item.activo);
-      const tipoOrganizacionMatch = !this.tipoOrganizacion || 
-        item.tipoOrganizacion?.toLowerCase().includes(this.tipoOrganizacion.toLowerCase());
-      const tieneNitMatch = !this.tieneNit || 
-        (this.tieneNit === 'SI' && item.nroNit) ||
-        (this.tieneNit === 'NO' && !item.nroNit);
-      const tienePersoneriaMatch = !this.tienePersoneriaJuridica || 
-        (this.tienePersoneriaJuridica === 'SI' && item.personeriaJuridica) ||
-        (this.tienePersoneriaJuridica === 'NO' && !item.personeriaJuridica);
-      return searchMatch && estadoMatch && tipoOrganizacionMatch && 
-             tieneNitMatch && tienePersoneriaMatch;
-    });
+    const hasNit =
+      this.normalizeFilterText(item.nroNit) !== '';
+
+    const hasLegalStatus =
+      this.normalizeFilterText(item.personeriaJuridica) !== '';
+
+    const matchesSearch =
+      !search ||
+      [
+        item.nombre,
+        item.tipoOrganizacion,
+        item.telefono,
+        item.email,
+        item.direccion,
+        item.personeriaJuridica,
+        item.nroNit,
+        item.representanteDto?.nombreCompleto,
+        item.representanteDto?.numeroDocumento,
+        item.representanteDto?.email,
+        item.representanteDto?.telefono
+      ].some(value =>
+        this.normalizeFilterText(value).includes(search)
+      );
+
+    const matchesStatus =
+      !this.estado ||
+      (this.estado === 'ACTIVO' && item.activo === true) ||
+      (this.estado === 'INACTIVO' && item.activo === false);
+
+    const matchesNit =
+      !this.tieneNit ||
+      (this.tieneNit === 'SI' && hasNit) ||
+      (this.tieneNit === 'NO' && !hasNit);
+
+    const matchesLegalStatus =
+      !this.tienePersoneriaJuridica ||
+      (
+        this.tienePersoneriaJuridica === 'SI' &&
+        hasLegalStatus
+      ) ||
+      (
+        this.tienePersoneriaJuridica === 'NO' &&
+        !hasLegalStatus
+      );
+
+    const matchesOrganizationType =
+      organizationType === 'TODAS' ||
+      item.tipoOrganizacion === organizationType;
+
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesNit &&
+      matchesLegalStatus &&
+      matchesOrganizationType
+    );
+  }
+  private normalizeFilterText(value: unknown): string {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
   }
 
   private searchInOrganizacion(item: any, searchTerm: string): boolean {
@@ -126,28 +221,6 @@ export class OrganizationsComponent implements OnInit {
     );
   }
 
-  onNavChange(changeEvent: NgbNavChangeEvent) {
-    switch (changeEvent.nextId) {
-      case 1: 
-        this.organizacionesList = this.temp;
-        break;
-      case 2:
-        this.organizacionesList = this.temp.filter(item => item.activo === true);
-        break;
-      case 3:
-        this.organizacionesList = this.temp.filter(item => item.activo === false);
-        break;
-      case 4:
-        this.organizacionesList = this.temp.filter(item => item.nroNit && item.nroNit.trim() !== '');
-        break;
-      case 5:
-        this.organizacionesList = this.temp.filter(item => item.personeriaJuridica && item.personeriaJuridica.trim() !== '');
-        break;
-      case 6:
-        this.organizacionesList = this.temp.filter(item => !item.representanteDto || !item.representanteNombre);
-        break;
-    }
-  }
 
   public openModal(content: any | undefined, accion: string, size: string) {
     const modalRef = this.modalService.open(ModalOrganizationComponent, {
@@ -162,73 +235,34 @@ export class OrganizationsComponent implements OnInit {
     });
   }
 
-  // Csv File Export
-  csvFileExport() {
-    const lista = this.selectedItems.flatMap((item: any) => {
-      const baseData = {
-        nombre: item.nombre,
-        tipoOrganizacion: item.tipoOrganizacion,
-        telefono: item.telefono,
-        email: item.email,
-        direccion: item.direccion,
-        personeriaJuridica: item.personeriaJuridica,
-        nroNit: item.nroNit,
-        activo: item.activo ? 'Activo' : 'Inactivo',
-        representante: item.representanteNombre,
-        documentoRepresentante: item.representanteDocumento,
-        emailRepresentante: item.representanteEmail,
-        telefonoRepresentante: item.representanteTelefono,
-        fechaCreacion: item.fechaCreacion,
-      };
-      return [{...baseData}];
-    });
-
-    var data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de Organizaciones',
-      useBom: true,
-      noDownload: false,
-      headers: [
-        "Nombre", 
-        "Tipo Organización", 
-        "Teléfono", 
-        "Email", 
-        "Dirección", 
-        "Personería Jurídica", 
-        "NIT", 
-        "Estado", 
-        "Representante", 
-        "Documento Representante",
-        "Email Representante",
-        "Teléfono Representante", 
-        "Fecha Creación"
-      ]
-    };
-    new ngxCsv(lista, "organizaciones", data);
-  }
-
   /* API Services */  
-  private getOrganizaciones() {
+  private getOrganizaciones(): void {
+    this.loading = true;
+
     this.organizacionesService.getAll().subscribe({
       next: (data: any) => {
-        this.loading = false;
-        if (data['status'] === 'OK') {
-          this.organizacionesList = data.payload.content;
-          if(this.contribuyente){
-            this.organizacionesList = this.organizacionesList.filter((item:Organizacion)=>
-              item.representanteDto.uuid === this.contribuyente.uuid
-            );
-          }
-          this.temp = this.organizacionesList;
+        let organizations: Organizacion[] =
+          data?.content ?? data ?? [];
+
+        if (this.contribuyente) {
+          organizations = organizations.filter(item =>
+            item.representanteDto?.uuid ===
+            this.contribuyente.uuid
+          );
         }
-      },
-      error: (error) => {
+
+        this.temp = organizations;
+        this.applyFilters();
         this.loading = false;
-        Swal.fire({ text: 'Error al obtener las organizaciones', icon: 'error', confirmButtonColor: '#299cdb' });
+      },
+      error: () => {
+        this.loading = false;
+
+        Swal.fire({
+          text: 'Error al obtener las organizaciones',
+          icon: 'error',
+          confirmButtonColor: '#299cdb'
+        });
       }
     });
   }
@@ -236,9 +270,7 @@ export class OrganizationsComponent implements OnInit {
   private getContribuyentesForRepresentatives() {
     this.contribuyentesService.getAll().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.contribuyentesList = data.payload;
-        }
+        this.contribuyentesList = data;
       }
     });
   }

@@ -3,12 +3,13 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 // Sweet Alert
 import Swal from 'sweetalert2';
-import { ngxCsv } from 'ngx-csv';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
 import { Superficie } from 'src/app/core/models/superficie.model';
+import { CsvColumn } from 'src/app/shared/data-header/data-header.component';
 import { ModalImportComponent } from 'src/app/shared/modal-import/modal-import.component';
+import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component';
 
 @Component({
   selector: 'app-surfaces',
@@ -17,24 +18,22 @@ import { ModalImportComponent } from 'src/app/shared/modal-import/modal-import.c
 })
 
 export class SurfacesComponent {
-
-  breadCrumbItems!: Array<{}>;
-  title="Superficies";
-  canActivate:string[];
-  itemsList:any[]=[];
-  temp:any[]=[];
+  breadCrumbItems: BreadCrumbItem[] =[];
   viewMode: 'table' | 'cards' = 'table';
+  canActivate: string[];
+  itemsList: any[] = [];
+  temp: Superficie[] = [];
+  superficiesList:any[]=[];
 
   submitted = false;
   contentForm!: UntypedFormGroup;
-  superficiesList:any[]=[];
   selectedItems:any[] =[];
 
   constructor(private modalService: NgbModal,
     private authService: AuthenticationService,
     private superficiesService: SuperficiesService,
     private formBuilder: UntypedFormBuilder) {
-      this.canActivate = this.authService.hasPermission(this.title);
+      this.canActivate = this.authService.hasPermission('Superficies');
   }
 
   ngOnInit(): void {
@@ -44,7 +43,7 @@ export class SurfacesComponent {
     }
     this.breadCrumbItems = [
       { label: 'Administración' },
-      { label: this.title, active: true }
+      { label: 'Superficies', active: true }
     ];
 
     this.itemsList = [
@@ -116,6 +115,9 @@ export class SurfacesComponent {
     this.modalService.open(content, { centered: true });
   }
   headersImport = ['Descripcion'];
+  readonly CSV_COLUMNS: CsvColumn<Superficie>[] = [
+    { header: 'Descripcion', value: item => item.descripcion || '-' },
+  ];
   public openModalImport() {
     const modalRef = this.modalService.open(ModalImportComponent, {
       size: 'lg', backdrop: 'static'
@@ -138,26 +140,6 @@ export class SurfacesComponent {
       this.getSurfaces();
     });
   }
-  // Csv File Export
-  public csvFileExport() {
-    const lista = this.selectedItems.flatMap((item: Superficie) => {
-    return {
-      value: item.descripcion
-    };});
-    var data = {
-    fieldSeparator: ',',
-    quoteStrings: '"',
-    decimalseparator: '.',
-    showLabels: true,
-    showTitle: true,
-    title: 'Lista de '+ this.title,
-    useBom: true,
-    noDownload: false,
-    headers: this.headersImport
-    };
-    new ngxCsv(lista, this.title, data);
-  }
-
   /**
   * Save
   */

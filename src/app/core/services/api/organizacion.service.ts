@@ -1,8 +1,9 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Organizacion } from '../../models/organizacion.model';
+import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 @Injectable({
   providedIn: 'root'
@@ -14,30 +15,30 @@ export class OrganizacionService {
   constructor(private http: HttpClient) { }
 
   getAll(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}`);
+    return apiGet<any[]>(this.http, this.apiUrl, 'obtener organizaciones');
   }
 
   getByUuid(uuid: String): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/${uuid}`)
+    return apiGet<any>(this.http, `${this.apiUrl}/${uuid}`, `obtener organización (${uuid})`)
   }
 
   save(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}`, data);
+    return apiPost<any>(this.http, this.apiUrl, data, 'guardar organización');
   }
 
   update(data: any): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}`, data);
+    return apiPut<any>(this.http, this.apiUrl, data, 'actualizar organización');
   }
-  delete(uuid: string) {
-    return this.http.delete(`${this.apiUrl}/${uuid}`);
+  delete(uuid: string): Observable<string> {
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar organización (${uuid})`);
   }
   
   getByRepresentante(contribuyenteUuid: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/representante/${contribuyenteUuid}`);
+    return apiGet<any>(this.http, `${this.apiUrl}/representante/${contribuyenteUuid}`, `obtener organización por representante (${contribuyenteUuid})`);
   }
 
   getByContribuyente(contribuyenteUuid: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/contribuyente/${contribuyenteUuid}`);
+    return apiGet<any>(this.http, `${this.apiUrl}/contribuyente/${contribuyenteUuid}`, `obtener organizaciones por contribuyente (${contribuyenteUuid})`);
   }
 }
 

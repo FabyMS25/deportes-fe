@@ -1,3 +1,104 @@
+<div class="modal-content" *ngIf="accion === 'consult'">
+  <div class="modal-header border-bottom py-2 px-3">
+    <div class="d-flex w-100 align-items-center justify-content-between">
+      <div class="d-flex align-items-center">
+        <div class="flex-shrink-0 avatar-sm">
+          <span class="avatar-title rounded-circle bg-info-subtle text-info fs-4">
+            <i class="ri-bubble-chart-line"></i>
+          </span>
+        </div>
+        <div class="ms-2">
+          <h5 class="modal-title mb-0">Consulta RUAT</h5>
+          <small class="text-muted">{{ consultationResult ? 1 : 0 }} resultado(s) procesado(s)</small>
+        </div>
+      </div>
+      <button type="button" class="btn-close" (click)="onCloseModal()"></button>
+    </div>
+  </div>
+
+  <div class="modal-body px-3 py-2">
+    <div *ngIf="isConsultingRuat" class="text-center py-4">
+      <div class="spinner-border text-info" role="status"></div>
+      <div class="text-muted small mt-2">Consultando pago en RUAT...</div>
+    </div>
+
+    <ng-container *ngIf="consultationResult">
+      <div class="card border shadow-none mb-2">
+        <div class="card-header bg-light py-2 px-3">
+          <h6 class="mb-0 text-primary">
+            <i class="ri-information-line me-1"></i>Información de Reserva
+          </h6>
+        </div>
+        <div class="card-body py-2 px-3">
+          <div class="row g-2">
+            <div class="col-6">
+              <small class="text-muted d-block">Complejo</small>
+              <strong class="small">{{ row.reservaDto?.campoDeportivoDto?.complejoDto?.nombre || 'N/A' }}</strong>
+            </div>
+            <div class="col-6">
+              <small class="text-muted d-block">Campo Deportivo</small>
+              <strong class="small">{{ row.reservaDto?.campoDeportivoDto?.nombre || 'N/A' }}</strong>
+            </div>
+            <div class="col-6">
+              <small class="text-muted d-block">Número de Tasa</small>
+              <strong class="small">{{ row.reservaDto?.numeroTasa || 'N/A' }}</strong>
+            </div>
+            <div class="col-6">
+              <small class="text-muted d-block">Estado Reserva</small>
+              <span class="badge" [ngClass]="getStatusBadgeClass(row.reservaDto?.estadoReserva)">
+                {{ row.reservaDto?.estadoReserva || 'N/A' }}
+              </span>
+            </div>
+            <div class="col-6">
+              <small class="text-muted d-block">Fecha de Uso</small>
+              <strong class="small">{{ row.fechaUso | date:'dd/MM/yyyy' }}</strong>
+            </div>
+            <div class="col-6">
+              <small class="text-muted d-block">Horario</small>
+              <strong class="small">{{ row.horaInicio }} – {{ row.horaFin }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="consultationResult.pagoData" class="card border border-success shadow-none mb-2">
+        <div class="card-header bg-success-subtle py-2 px-3">
+          <h6 class="mb-0 text-success">
+            <i class="ri-money-dollar-circle-line me-1"></i>Información de Pago
+          </h6>
+        </div>
+        <div class="card-body py-2 px-3">
+          <div class="row g-2">
+            <div class="col-6"><small class="text-muted d-block">Fecha de Pago</small><strong class="small">{{ consultationResult.pagoData?.fechaPago }}</strong></div>
+            <div class="col-6"><small class="text-muted d-block">Monto Pagado</small><strong class="small">{{ consultationResult.pagoData?.montoPago }} Bs.</strong></div>
+            <div class="col-6"><small class="text-muted d-block">Forma de Pago</small><strong class="small">{{ consultationResult.pagoData?.formaPago || 'N/A' }}</strong></div>
+            <div class="col-6"><small class="text-muted d-block">Entidad Financiera</small><strong class="small">{{ consultationResult.pagoData?.entidadFinanciera || 'N/A' }}</strong></div>
+            <div class="col-6"><small class="text-muted d-block">Folio</small><strong class="small">{{ consultationResult.pagoData?.folio || 'N/A' }}</strong></div>
+            <div class="col-6"><small class="text-muted d-block">Estado Pago</small><span class="badge bg-success-subtle text-success">{{ consultationResult.pagoData?.estadoPago || 'PAGADO' }}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert mb-0 py-2 px-3 d-flex align-items-start gap-2"
+           [ngClass]="'alert-' + (consultationResult.type === 'error' ? 'danger' : consultationResult.type)">
+        <i class="fs-5 ri-checkbox-circle-fill"></i>
+        <div>
+          <div class="small fw-semibold">{{ consultationResult.text }}</div>
+          <div *ngIf="consultationResult.type === 'success' && consultationResult.pagoData" class="small mt-1">
+            <i class="ri-check-double-line me-1"></i>El pago fue registrado correctamente y la reserva fue actualizada.
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+
+  <div class="modal-footer border-top py-2">
+    <button type="button" class="btn btn-primary btn-sm" (click)="onCloseModal()">
+      <i class="ri-close-line me-1"></i>Cerrar
+    </button>
+  </div>
+</div>
+
 <div class="modal-content modal-booking-one-time" *ngIf="accion === 'show' || accion === 'edit'">
   <div id="elmLoader" *ngIf="showLoading" class="text-center py-2">
     <div class="spinner-border text-primary avatar-sm" role="status">
@@ -150,7 +251,7 @@
               </div>
             </div>
           </div>
-          <div class="col-md-6 col-xl-3">
+          <div class="col-md-6 col-xl-3" *ngIf="row.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE">
             <div class="card border-0 bg-light h-100 mb-0">
               <div class="card-body py-2 px-3">
                 <small class="text-muted d-block">Límite de pago</small>
@@ -158,7 +259,7 @@
               </div>
             </div>
           </div>
-          <div class="col-md-6 col-xl-3">
+          <div class="col-md-6 col-xl-3" *ngIf="row.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE">
             <div class="card border-0 bg-light h-100 mb-0">
               <div class="card-body py-2 px-3">
                 <small class="text-muted d-block">Cancelación automática</small>
@@ -166,7 +267,8 @@
               </div>
             </div>
           </div>
-          <div class="col-md-6 col-xl-3" *ngIf="row.reservaDto?.cancelacionAutomatica === false">
+          <div class="col-md-6 col-xl-3"
+               *ngIf="row.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE && row.reservaDto?.cancelacionAutomatica === false">
             <div class="card border-0 bg-light h-100 mb-0">
               <div class="card-body py-2 px-3">
                 <small class="text-muted d-block">Autorizado por</small>

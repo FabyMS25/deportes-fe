@@ -1,9 +1,10 @@
 import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 
 /** Environments */
 import { environment } from 'src/environments/environment';
+import { apiGet } from '../apiResponses';
 
 @Injectable({
   providedIn: 'root'
@@ -28,7 +29,7 @@ export class ReportsService {
     params = params.append('estado', estado);
     params = params.append('cancha', cancha);
     
-    return this.http.get(`${this.apiUrl}/lista-Reservas`, {
+    return apiGet<ArrayBuffer>(this.http, `${this.apiUrl}/lista-Reservas`, 'generar reporte de reservas puntuales', {
       responseType: 'arraybuffer',
       params
     });
@@ -47,7 +48,7 @@ export class ReportsService {
     params = params.append('tipocobro', tipocobro);
     params = params.append('estado', estado);
     params = params.append('cancha', cancha);
-    return this.http.get(`${this.apiUrl}/lista-Recurrentes`, {
+    return apiGet<ArrayBuffer>(this.http, `${this.apiUrl}/lista-Recurrentes`, 'generar reporte de reservas recurrentes', {
       responseType: 'arraybuffer',
       params
     });
@@ -66,7 +67,7 @@ export class ReportsService {
     params = params.append('estado', estado);
     params = params.append('escuelita', escuelita);
     params = params.append('estudiante', estudiante);
-    return this.http.get(`${this.apiUrl}/lista-mensuales`, {
+    return apiGet<ArrayBuffer>(this.http, `${this.apiUrl}/lista-mensuales`, 'generar reporte mensual', {
       responseType: 'arraybuffer',
       params
     });
@@ -86,7 +87,7 @@ export class ReportsService {
     params = params.append('matricula', matricula);
     params = params.append('alumno', alumno);
     
-    return this.http.get(`${this.apiUrl}/lista-alumno`, {
+    return apiGet<ArrayBuffer>(this.http, `${this.apiUrl}/lista-alumno`, 'generar reporte mensual por estudiante', {
       responseType: 'arraybuffer',
       params
     });
@@ -97,7 +98,7 @@ export class ReportsService {
     params = params.append('fecha_ini', fecha_ini);
     params = params.append('fecha_fin', fecha_fin);
     
-    return this.http.get(`${this.apiUrl}/lista-Pagos`, {
+    return apiGet<ArrayBuffer>(this.http, `${this.apiUrl}/lista-Pagos`, 'generar reporte de pagos', {
       responseType: 'arraybuffer',
       params
     });
@@ -107,7 +108,7 @@ export class ReportsService {
   getTicketReservaPuntual(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);
-    return this.http.get(`${this.apiUrl}/ticket-reservap`, {
+    return apiGet<ArrayBuffer>(this.http, `${this.apiUrl}/ticket-reservap`, `generar ticket de reserva puntual (${uuid})`, {
       responseType: 'arraybuffer',
       params
     });
@@ -115,7 +116,7 @@ export class ReportsService {
   getTicketReservaPersona(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);
-    return this.http.get(`${this.apiUrl}/ticket-reser-per`, {
+    return apiGet<ArrayBuffer>(this.http, `${this.apiUrl}/ticket-reser-per`, `generar ticket de reserva persona (${uuid})`, {
       responseType: 'arraybuffer',
       params
     });
@@ -123,7 +124,7 @@ export class ReportsService {
   getTicketReservaEvento(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);
-    return this.http.get(`${this.apiUrl}/ticket-reser-ev`, {
+    return apiGet<ArrayBuffer>(this.http, `${this.apiUrl}/ticket-reser-ev`, `generar ticket de reserva evento (${uuid})`, {
       responseType: 'arraybuffer',
       params
     });
@@ -132,7 +133,7 @@ export class ReportsService {
   getTicketRecurrenteSesion(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);
-    return this.http.get(`${this.apiUrl}/ticket-recuses`, {
+    return apiGet<ArrayBuffer>(this.http, `${this.apiUrl}/ticket-recuses`, `generar ticket de sesión recurrente (${uuid})`, {
       responseType: 'arraybuffer',
       params
     });
@@ -140,7 +141,7 @@ export class ReportsService {
   getTicketRecurrentePersona(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);
-    return this.http.get(`${this.apiUrl}/ticket-recuper`, {
+    return apiGet<ArrayBuffer>(this.http, `${this.apiUrl}/ticket-recuper`, `generar ticket de reserva recurrente (${uuid})`, {
       responseType: 'arraybuffer',
       params
     });
@@ -148,7 +149,7 @@ export class ReportsService {
   getTicketRecurrenteMensualidad(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);
-    return this.http.get(`${this.apiUrl}/ticket-recumes`, {
+    return apiGet<ArrayBuffer>(this.http, `${this.apiUrl}/ticket-recumes`, `generar ticket de mensualidad recurrente (${uuid})`, {
       responseType: 'arraybuffer',
       params
     });
@@ -157,7 +158,7 @@ export class ReportsService {
   getTicketByPeriodo(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);
-    return this.http.get(`${this.apiUrl}/ticket-mensual`, {
+    return apiGet<ArrayBuffer>(this.http, `${this.apiUrl}/ticket-mensual`, `generar ticket mensual (${uuid})`, {
       responseType: 'arraybuffer',
       params
     });
@@ -166,7 +167,7 @@ export class ReportsService {
   getPayTicket(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);
-    return this.http.get(`${this.apiUrl}/ticket-pago`, {
+    return apiGet<ArrayBuffer>(this.http, `${this.apiUrl}/ticket-pago`, `generar ticket de pago (${uuid})`, {
       responseType: 'arraybuffer',
       params
     });

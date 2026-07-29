@@ -434,7 +434,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
-          const config = response?.payload;
+          const config = response;
           if (!config?.activo) {
             return;
           }
@@ -484,19 +484,10 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response: any) => {
-            if (response?.status === 'OK') {
-              this.reservationsList = response.payload.filter((reserva: Reserva) =>
-                this.conflictService.isBlockingReservation(reserva)
-              );
-              resolve();
-            } else {
-              if (response?.payload) {
-                this.reservationsList = [];
-                resolve();
-              } else {
-                reject(new Error(response?.payload || 'Error al cargar reservas'));
-              }
-            }
+            this.reservationsList = (response || []).filter((reserva: Reserva) =>
+              this.conflictService.isBlockingReservation(reserva)
+            );
+            resolve();
           },
           error: (error) => {
             console.error('Error loading reservations:', error);
@@ -513,15 +504,11 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
-        if (response.status === 'OK') {
-          this.complejosList = response.payload.filter(
+          this.complejosList = response.filter(
             (c: ComplejoDeportivo) => c.estadoActual === EstadoActual.ACTIVO && this.getCamposCount(c) > 0
           );
           resolve();
-        } else {
-          reject(new Error(response?.payload || 'Error al cargar Complejos Deportivos'));
-        }
-        this.isLoading = false;
+          this.isLoading = false;
         },
         error: (error) => {
           reject(error);

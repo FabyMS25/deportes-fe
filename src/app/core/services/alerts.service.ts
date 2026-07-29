@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { handleResponse, handleError } from './apiResponses';
+import { apiDelete, apiGet, apiPost, apiPut } from './apiResponses';
 import { environment } from 'src/environments/environment';
 import { Alert } from '../models/alert.models';
 
@@ -16,46 +15,28 @@ export class AlertService {
   constructor(private http: HttpClient) { }
 
   getAll(): Observable<Alert[]> {
-    return this.http.get<{ status: string; payload: any }>(`${url}`).pipe(
-      map((res) => handleResponse<Alert[]>(res)),
-      catchError(handleError('obtener todas las Alertas'))
-    );
+    return apiGet<Alert[]>(this.http, url, 'obtener todas las Alertas');
   }
 
   getByUuid(uuid: string): Observable<Alert> {
-    return this.http.get<{ status: string; payload: any }>(`${url}/uuid/${uuid}`).pipe(
-      map((res) => handleResponse<Alert>(res)),
-      catchError(handleError(`obtener Alerta por UUID (${uuid})`))
-    );
+    return apiGet<Alert>(this.http, `${url}/uuid/${uuid}`, `obtener Alerta por UUID (${uuid})`);
   }
 
   create(alertaDto: Alert): Observable<Alert> {
-    return this.http.post<{ status: string; payload: any }>(`${url}`, alertaDto).pipe(
-      map((res) => handleResponse<Alert>(res)),
-      catchError(handleError('crear Alerta'))
-    );
+    return apiPost<Alert>(this.http, url, alertaDto, 'crear Alerta');
   }
 
   update(alertaDto: Alert): Observable<Alert> {
-    return this.http.put<{ status: string; payload: any }>(`${url}`, alertaDto).pipe(
-      map((res) => handleResponse<Alert>(res)),
-      catchError(handleError('actualizar Alerta'))
-    );
+    return apiPut<Alert>(this.http, url, alertaDto, 'actualizar Alerta');
   }
 
   delete(uuid: string): Observable<any> {
-    return this.http.delete<{ status: string; payload: any }>(`${url}/${uuid}`).pipe(
-      map((res) => handleResponse<any>(res)),
-      catchError(handleError(`eliminar Alerta por UUID (${uuid})`))
-    );
+    return apiDelete<any>(this.http, `${url}/${uuid}`, `eliminar Alerta por UUID (${uuid})`);
   }
 
   getByFechaActual(fechaActual: Date): Observable<Alert[]> {
     const params = new HttpParams().set('fechaActual', fechaActual.toISOString());
-    return this.http.get<{ status: string; payload: any }>(`${url}/fecha-actual`, { params }).pipe(
-      map(res => handleResponse<Alert[]>(res)),
-      catchError(handleError(`obtener Alertas por fecha actual ${fechaActual}`))
-    );
+    return apiGet<Alert[]>(this.http, `${url}/fecha-actual`, `obtener Alertas por fecha actual ${fechaActual}`, { params });
   }
 
   getByFechaActualAndUuidDestinatario(fechaActual: Date, uuidDestinatario: string): Observable<Alert[]> {
@@ -63,9 +44,6 @@ export class AlertService {
       .set('fechaActual', fechaActual.toISOString())
       .set('uuidDestinatario', uuidDestinatario);
       
-    return this.http.get<{ status: string; payload: any }>(`${url}/fecha-destinatario`, { params }).pipe(
-      map(res => handleResponse<Alert[]>(res)),
-      catchError(handleError(`obtener Alertas por fecha actual ${fechaActual} y destinatario ${uuidDestinatario}`))
-    );
+    return apiGet<Alert[]>(this.http, `${url}/fecha-destinatario`, `obtener Alertas por fecha actual ${fechaActual} y destinatario ${uuidDestinatario}`, { params });
   }
 }

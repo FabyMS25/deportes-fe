@@ -40,14 +40,10 @@ export class ComplejoSelectionComponent implements OnInit {
     
     this.complejoService.getAll().subscribe({
       next: (response: any) => {
-        if (response.status === 'OK') {
-          this.complejosList = response.payload.filter(
-            (c: ComplejoDeportivo) => c.estadoActual === EstadoActual.ACTIVO && this.hasActiveFields(c)
-          );
-          this.filteredComplejos = [...this.complejosList];
-        } else {
-          this.loadError = true;
-        }
+        this.complejosList = response.filter(
+          (c: ComplejoDeportivo) => c.estadoActual === EstadoActual.ACTIVO && this.hasActiveFields(c)
+        );
+        this.filteredComplejos = [...this.complejosList];
         this.isLoading = false;
       },
       error: (error) => {

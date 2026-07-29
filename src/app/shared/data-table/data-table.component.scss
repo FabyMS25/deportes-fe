@@ -2,9 +2,54 @@
   color: inherit;
   text-decoration: none;
   cursor: pointer;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .table-cell-link:hover {
   color: var(--vz-primary);
   text-decoration: underline;
+}
+
+.sort {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.sort-disabled {
+  cursor: default;
+}
+
+.sort-indicator {
+  display: inline-flex;
+  width: 1rem;
+  justify-content: center;
+  margin-left: 0.25rem;
+  color: var(--vz-secondary-color, #878a99);
+}
+
+.table-column-primary {
+  font-weight: 600;
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-inline a,
+.card-footer .btn {
+  cursor: pointer;
+}
+
+.noresult {
+  padding: 2rem 1rem;
+}
+
+#elmLoader {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
 }

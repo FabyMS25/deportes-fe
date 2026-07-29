@@ -120,14 +120,10 @@ export class PassResetComponent {
     };
     this.userService.update(updateData as Contribuyente).subscribe({
       next: (response: any) => {
-        if(response.status === 'OK') {        
-          this.notify('success', "Su contraseña se ha restablecido correctamente.");
-          this.updateLocalStoragePassword(newPassword);          
-          this.initForm();
-          this.modalService.dismissAll();
-        } else {
-          this.notify('error', response.payload || 'Error al actualizar la contraseña');
-        }
+        this.notify('success', "Su contraseña se ha restablecido correctamente.");
+        this.updateLocalStoragePassword(newPassword);          
+        this.initForm();
+        this.modalService.dismissAll();
       },
       error: (err) => {
         this.notify('error', 'Ocurrió un error inesperado al cambiar la contraseña');

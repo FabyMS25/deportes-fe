@@ -331,8 +331,6 @@ export class ModalTaxpayerComponent implements OnInit {
       this.editForm.patchValue({
         uuid: this.row.uuid,
         userName: this.row.userName,
-        password: this.row.password,
-        cpassword: this.row.password,
         estadoUsuario: this.row.estadoUsuario,
         tipoContribuyente: this.row.tipoContribuyente,
         codigoContribuyente: this.row.codigoContribuyente,
@@ -359,6 +357,13 @@ export class ModalTaxpayerComponent implements OnInit {
         fechaUltimoUsoGratuito: this.toDateInputValue(this.row.fechaUltimoUsoGratuito),
         observacionesMunicipales: this.row.observacionesMunicipales,
       });
+
+      // Existing credentials are backend-only. An edit without a new password
+      // must preserve the stored credential instead of exposing or replacing it.
+      this.editForm.get('password')?.clearValidators();
+      this.editForm.get('cpassword')?.clearValidators();
+      this.editForm.get('password')?.updateValueAndValidity({ emitEvent: false });
+      this.editForm.get('cpassword')?.updateValueAndValidity({ emitEvent: false });
 
       // Normalise child dates so date inputs display correctly
       if (this.row.estudianteEnEscuelas?.length) {
@@ -582,8 +587,12 @@ export class ModalTaxpayerComponent implements OnInit {
     const formData = this.editForm.getRawValue();
 
     const userName = (formData.userName || '').trim() || (formData.numeroDocumento || '').trim();
-    const password = (formData.password || '').trim() || (formData.numeroDocumento || '').trim();
-    this.editForm.patchValue({ userName, password, cpassword: password });
+    const password = this.accion === ''
+      ? (formData.password || '').trim() || (formData.numeroDocumento || '').trim()
+      : undefined;
+    if (this.accion === '') {
+      this.editForm.patchValue({ userName, password, cpassword: password });
+    }
 
     // ── Email verification ──────────────────────────────────────────────────
     if (this.accion === '' && !this.emailVerified) {
@@ -1052,13 +1061,13 @@ export class ModalTaxpayerComponent implements OnInit {
 
   private getOrganizations(): void {
     this.organizationService.getAll().subscribe({
-      next: (data: any) => { if (data['status'] === 'OK') this.organizationsList = data.payload; },
+      next: (data: any) => { this.organizationsList = data.content || data; },
     });
   }
 
   private getEstudiantes(): void {
     this.estudianteEscuelaService.getAll().subscribe({
-      next: (data: any) => { if (data['status'] === 'OK') this.estudiantesList = data.payload; },
+      next: (data: any) => { this.estudiantesList = data; },
     });
   }
 
@@ -1071,9 +1080,7 @@ export class ModalTaxpayerComponent implements OnInit {
       this.contribuyentesService.save(datos).subscribe({
         next: (data: any) => {
           this.submitted = false;
-          data['status'] === 'OK'
-            ? resolve(data.payload)
-            : (this.notify(this.getContribuyenteErrorMessage(data, datos), 'error'), resolve(null));
+          resolve(data);
         },
         error: (err) => {
           this.submitted = false;
@@ -1105,13 +1112,11 @@ export class ModalTaxpayerComponent implements OnInit {
 
   deleteData(uuid: string): void {
     this.contribuyentesService.delete(uuid).subscribe({
-      next: (data: any) => {
+      next: (message: string) => {
         this.submitted = false;
-        if (data.status === 'OK') {
-          this.closeModal();
-          this.emitList.emit();
-          this.notify(data.payload, 'info');
-        }
+        this.closeModal();
+        this.emitList.emit();
+        this.notify(message || 'Contribuyente eliminado exitosamente', 'info');
       },
       error: () => {
         this.submitted = false;

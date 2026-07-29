@@ -2,13 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgbModal, NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
-import { ngxCsv } from 'ngx-csv';
 import Swal from 'sweetalert2';
 
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { PagoService } from 'src/app/core/services/api/pago.service';
-import { ReservaPuntualService } from 'src/app/core/services/api/reserva-puntual.service';
+import { ReservaPuntualFilters, ReservaPuntualService } from 'src/app/core/services/api/reserva-puntual.service';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
 import { EstadoReserva, EstadoValidacion, EstadoPago, EstadoUsuario, EstadoRuat, EstadoActual, StatusUtils} from 'src/app/core/constants/Estados';
@@ -22,6 +21,8 @@ import { Pago } from 'src/app/core/models/pago.model';
 import { TicketComponent } from '../reports/ticket/ticket.component';
 import { BookingOneTimeModalComponent } from '../../modals/modal-booking-one-time/modal-booking-one-time.component';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
+import { CsvColumn } from 'src/app/shared/data-header/data-header.component';
+import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component';
 
 @Component({
   selector: 'app-booking-one-time',
@@ -29,29 +30,62 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
   styleUrls: ['./booking-one-time.component.scss']
 })
 export class BookingOneTimeComponent implements OnInit {
-  title = 'Reservas Puntuales';
-  breadCrumbItems!: Array<{}>;
-  itemsList: any[] = [];
+  breadCrumbItems: BreadCrumbItem[] =[];
   viewMode: 'table' | 'cards' = 'table';
+  canActivate: string[];
+  itemsList: any[] = [];
+  temp: any[] = [];
   serverSidePagination: boolean = true;
   currentPage: number = 1;
   pageSize: number = 5;
   
-  canActivate: string[];
+  loading: boolean = true;
+  reservasList: any;
+  categoryList: Categoria[] = [];
   userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
   userData!:any;
   contribuyente!: Contribuyente;
-
   estadoReservaOptions = StatusUtils.getEstadoReservaOptions();
   estadoValidacionOptions = StatusUtils.getEstadoValidacionOptions();
 
-  loading: boolean = true;
-  reservasList: any;
-  temp: any[] = [];
-  categoryList: Categoria[] = [];
   selectedItems: ReservaPuntual[] = [];
-  dataSelected!: any;
-  consultResults: any[] = [];
+  readonly CSV_COLUMNS: CsvColumn<ReservaPuntual>[] = [
+    { header: 'Complejo', value: i => i.reservaDto?.campoDeportivoDto?.complejoDto?.nombre || '-' },
+    { header: 'Campo Deportivo', value: i => i.reservaDto?.campoDeportivoDto?.nombre || '-' },
+    { header: 'Superficie', value: i => i.superficie || '-' },
+    { header: 'Categoría', value: i => i.categoria || '-' },
+    { header: 'Fecha Uso', value: i => i.fechaUso ? new Date(i.fechaUso).toLocaleDateString() : '-' },
+    { header: 'Hora Inicio', value: i => i.horaInicio || '-' },
+    { header: 'Hora Fin', value: i => i.horaFin || '-' },
+    { header: 'Duración', value: i => i.duracionHoras ? `${i.duracionHoras} hrs` : '-' },
+    { header: 'Cant. Personas', value: i => i.cantidadPersonas || '-' },
+    { header: 'Precio Base Aplicado', value: i => i.precioBaseAplicado || '-' },
+    { header: 'Tipo Reserva', value: i => i.reservaDto?.tipoReserva || '-' },
+    { header: 'Tipo Cobro', value: i => i.reservaDto?.tarifaDto?.tipoCobro || '-' },
+    { header: 'Número Reserva', value: i => i.reservaDto?.numeroReserva || '-' },
+    { header: 'Número Tasa', value: i => i.reservaDto?.numeroTasa || '-' },
+    { header: 'Monto Total', value: i => i.reservaDto?.montoTotal || '-' },
+    { header: 'Clasificador RUAT', value: i => i.reservaDto?.tarifaDto?.clasificadorRuatDto?.nombre || '-' },
+    { header: 'Reserva Gratuita', value: i => i.reservaDto?.esReservaGratuita ? 'SI' : 'NO' },
+    { header: 'Motivo Gratuidad', value: i => i.reservaDto?.motivoGratuidad || '-' },
+    { header: 'Tipo Organización', value: i => i.reservaDto?.organizacionDto?.tipoOrganizacion || '-' },
+    { header: 'Estudiante', value: () => '-' },
+    { header: 'Matrícula', value: () => '-' },
+    { header: 'Estado Validación', value: i => i.reservaDto?.estadoValidacion || '-' },
+    { header: 'Estado Reserva', value: i => i.reservaDto?.estadoReserva || '-' },
+    { header: 'Observaciones', value: i => i.observaciones || '-' },
+    { header: 'Fecha Aprobación', value: i => i.reservaDto?.fechaAprobacion ? new Date(i.reservaDto.fechaAprobacion).toLocaleDateString() : '-' },
+    { header: 'Fecha Rechazo', value: i => i.reservaDto?.fechaRechazo ? new Date(i.reservaDto.fechaRechazo).toLocaleDateString() : '-' },
+    { header: 'Motivo Rechazo', value: i => i.reservaDto?.motivoRechazo || '-' },
+    { header: 'Aprobado Por', value: i => i.reservaDto?.aprobadoPor || '-' },
+    { header: 'Tipo Contribuyente', value: i => i.reservaDto?.contribuyenteDto?.tipoContribuyente || '-' },
+    { header: 'Contribuyente', value: i => i.reservaDto?.contribuyenteDto?.nombreCompleto || `${i.reservaDto?.contribuyenteDto?.nombre || ''} ${i.reservaDto?.contribuyenteDto?.primerApellido || ''} ${i.reservaDto?.contribuyenteDto?.segundoApellido || ''}`.trim() || '-' },
+    { header: 'Carnet', value: i => i.reservaDto?.contribuyenteDto?.numeroDocumento || '-' },
+    { header: 'Es Para Organización', value: i => i.reservaDto?.organizacionDto ? 'SI' : 'NO' },
+    { header: 'Nombre Organización', value: i => i.reservaDto?.organizacionDto?.nombre || '-' },
+    { header: 'Fecha Creación', value: i => i.reservaDto?.fechaCreacion ? new Date(i.reservaDto.fechaCreacion).toLocaleDateString() : '-' },
+  ];
+  csvExportItems: ReservaPuntual[] = [];
   searchResults: any;
 
   dateRange: { from: Date, to: Date } | null = null;
@@ -78,13 +112,13 @@ export class BookingOneTimeComponent implements OnInit {
     private ruatService: RuatRequestsService,
     private pagoService: PagoService,
   ) {
-    this.canActivate = this.authService.hasPermission(this.title);
+    this.canActivate = this.authService.hasPermission('Reservas Puntuales');
   }
 
   async ngOnInit() {
     this.breadCrumbItems = [
-      { label: '' },
-      { label: this.title, active: true }
+      { label: 'Reservas' },
+      { label: 'Reservas Puntuales', active: true }
     ];
     this.itemsList = [
       { name: 'Número Reserva', prop: 'reservaDto.numeroReserva', visible: false },
@@ -232,128 +266,6 @@ export class BookingOneTimeComponent implements OnInit {
       this.getPuntualReservations();
     });
   }
-  public async consultModal(data: any, content: any, size: string) {
-    if (this.selectedItems.length === 0 && data) {
-      this.selectedItems.push(data);
-    }    
-    this.consultResults = [];
-    this.dataSelected = null;
-    this.loading = true;    
-    let shouldRefreshData = false;    
-    try {
-      for (const item of this.selectedItems) {
-        try {
-          const result = await this.consultData(item, { silent: false });
-          this.consultResults.push(result);
-          if (!this.dataSelected && result.hasPayment && result.pagoData) {
-            this.dataSelected = {
-              reserva: result.item,
-              pago: result.pagoData,
-              ruatResponse: result.ruatResponse
-            };
-          }
-          if ( result.hasPayment) {
-            shouldRefreshData = true;
-          }
-        } catch (error) {
-          this.consultResults.push({ 
-            item, 
-            text: 'Error durante la consulta', 
-            type: 'error',
-            hasPayment: false,
-            consultationSuccessful: false,
-            ruatResponse: error,
-            errorCode: 'RUAT_EXCEPTION'
-          });
-        }
-      }
-    } finally {
-      this.loading = false;      
-      if (this.consultResults.length > 0) {
-        if (this.dataSelected) {
-          this.modalService.open(content, { 
-            centered: true, 
-            size: size
-          });
-        } else {
-          this.modalService.open(content, { centered: true });
-        }
-      }    
-      this.selectedItems = [];
-      if (shouldRefreshData) {
-        this.getPuntualReservations();
-      }
-    }
-  }
-  public csvFileExport() {
-    const lista = this.selectedItems.flatMap((item: ReservaPuntual) => {
-      const baseData = {
-        complejo: item.reservaDto?.campoDeportivoDto?.complejoDto?.nombre || '-',
-        campo: item.reservaDto?.campoDeportivoDto?.nombre || '-',
-        superficie: item.superficie || '-',
-        categoria: item.categoria || '-',        
-        fechaUso: item.fechaUso ? new Date(item.fechaUso).toLocaleDateString() : '-',
-        horaInicio: item.horaInicio || '-',
-        horaFin: item.horaFin || '-',
-        duracion: item.duracionHoras ? `${item.duracionHoras} hrs` : '-',
-        cantidadPersonas: item.cantidadPersonas || '-',
-        precioBaseAplicado: item.precioBaseAplicado || '-',
-        tipoReserva: item.reservaDto?.tipoReserva || '-',
-        tipoCobro: item.reservaDto?.tarifaDto?.tipoCobro || '-',
-        numeroReserva: item.reservaDto?.numeroReserva || '-',
-        tasa: item.reservaDto?.numeroTasa || '-',
-        montoTotal: item.reservaDto?.montoTotal || '-',  
-        clasificadorRuat: item.reservaDto?.tarifaDto?.clasificadorRuatDto?.nombre || '-',
-        esReservaGratuita: item.reservaDto?.esReservaGratuita ? 'SI' : 'NO',
-        motivoGratuidad: item.reservaDto?.motivoGratuidad || '-',
-        estudiante: '-',
-        matricula: '-',
-        tipoOrganizacion: item.reservaDto?.organizacionDto?.tipoOrganizacion || '-',      
-        estadoValidacion: item.reservaDto?.estadoValidacion || '-',
-        estadoReserva: item.reservaDto?.estadoReserva || '-',
-        observaciones: item.observaciones || '-',  
-        fechaAprobacion: item.reservaDto?.fechaAprobacion ? new Date(item.reservaDto.fechaAprobacion).toLocaleDateString() : '-',
-        fechaRechazo: item.reservaDto?.fechaRechazo ? new Date(item.reservaDto.fechaRechazo).toLocaleDateString() : '-',
-        motivoRechazo: item.reservaDto?.motivoRechazo || '-',
-        aprobadoPor: item.reservaDto?.aprobadoPor || '-',        
-        tipoContribuyente: item.reservaDto?.contribuyenteDto?.tipoContribuyente || '-',
-        contribuyente: item.reservaDto?.contribuyenteDto?.nombreCompleto || 
-                    `${item.reservaDto?.contribuyenteDto?.nombre || ''} ${item.reservaDto?.contribuyenteDto?.primerApellido || ''} ${item.reservaDto?.contribuyenteDto?.segundoApellido || ''}`.trim(),
-        carnet: item.reservaDto?.contribuyenteDto?.numeroDocumento || '-',        
-        esOrganizacion: item.reservaDto?.organizacionDto ? 'SI' : 'NO',
-        nombreOrganizacion: item.reservaDto?.organizacionDto?.nombre || '-',
-        fechaCreacion: item.reservaDto?.fechaCreacion ? new Date(item.reservaDto.fechaCreacion).toLocaleDateString() : '-',
-      };      
-      return [{ ...baseData }];
-    });    
-    const data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de Reservas Puntuales',
-      useBom: true,
-      noDownload: false,
-      headers: [
-        "Complejo", "Campo Deportivo", "Superficie","Categoría",        
-        "Fecha Uso", "Hora Inicio", "Hora Fin", "Duración", "Cant. Personas", "Precio Base Aplicado",
-        "Tipo Reserva", "Tipo Cobro", 
-        "Número Reserva", "Número Tasa", "Monto Total",
-        "Clasificador RUAT",
-        "Reserva Gratuita", "Motivo Gratuidad",
-        "Tipo Organización",
-        "Estudiante", "Matrícula",
-        "Estado Validación", "Estado Reserva", "Observaciones",
-        "Fecha Aprobación", "Fecha Rechazo", "Motivo Rechazo", "Aprobado Por",  
-        "Tipo Contribuyente", "Contribuyente", "Carnet",
-        "Es Para Organización", "Nombre Organización",
-        "Fecha Creación", /* "Fecha Actualización", */ 
-      ]
-    };
-    new ngxCsv(lista, `Reservas_Puntuales_${new Date().toISOString().split('T')[0]}`, data);
-  }
-
   /* BUSINESS LOGIC */
   private async checkAndUpdateReservationStatuses(
     list: ReservaPuntual[]
@@ -378,17 +290,6 @@ export class BookingOneTimeComponent implements OnInit {
       if (terminalStates.includes(reservaDto.estadoReserva)) return reservaPun;
       try {
         if (reservaDto.estadoReserva === EstadoReserva.SOLICITADA) {
-          if (
-            reservaDto.estadoValidacion === EstadoValidacion.PENDIENTE &&
-            this.isTimeCompleted(reservaPun)
-          ) {
-            return await this.updateReservationByPR(reservaPun, {
-              estadoReserva:    EstadoReserva.CANCELADA,
-              estadoValidacion: EstadoValidacion.VENCIDA,
-              motivoRechazo:    'RESERVA VENCIDA SIN VALIDACIÓN ADMINISTRATIVA',
-              fechaRechazo:     new Date(),
-            });
-          }
           if (reservaDto.estadoValidacion === EstadoValidacion.RECHAZADA) {
             return await this.updateReservationByPR(reservaPun, {
               estadoReserva: EstadoReserva.CANCELADA,
@@ -755,11 +656,7 @@ export class BookingOneTimeComponent implements OnInit {
     };
     try {
       const response: any = await this.reservaService.update(updatedReservaDto).toPromise();
-      if (response && response.status === 'OK') {
-        reserva.reservaDto = response.payload;
-      } else {
-        console.warn('Failed to update reservation:', response?.payload || 'Unknown error');
-      }
+      reserva.reservaDto = response;
       return reserva;
     } catch (error) { return reserva;}
   }
@@ -785,24 +682,14 @@ export class BookingOneTimeComponent implements OnInit {
       const data: any = await this.reservaPuntualService.getAll(
         this.currentPage - 1,
         this.pageSize,
-        {
-          tab: this.filters.tab,
-          searchTerm: this.filters.searchTerm,
-          estadoReserva: this.filters.estadoReserva,
-          estadoValidacion: this.filters.estadoValidacion,
-          categoria: this.filters.categoria,
-          fromDate: this.filters.fromDate?.toISOString(),
-          toDate: this.filters.toDate?.toISOString(),
-        }
+        this.getPuntualReservationFilters()
       ).toPromise();     
-      if (!data || data['status'] !== 'OK') {
-        throw new Error(data?.payload || 'Respuesta inválida del servidor');
-      }
+      if (!data) throw new Error('Respuesta inválida del servidor');
       let list: ReservaPuntual[] = [];   
-      if (data.payload?.content && Array.isArray(data.payload.content)) {
-        list = data.payload.content;
-      } else if (Array.isArray(data.payload)) {
-        list = data.payload;
+      if (data.content && Array.isArray(data.content)) {
+        list = data.content;
+      } else if (Array.isArray(data)) {
+        list = data;
       }
       const employee = this.authService.staff();
       if(employee?.complejoDto){
@@ -818,18 +705,74 @@ export class BookingOneTimeComponent implements OnInit {
       const updatedList = await this.checkAndUpdateReservationStatuses(list);
       this.notifyAboutExpiredReservations(list, updatedList);
       this.reservasList ={
-        ...data.payload,
+        ...data,
         content: updatedList
       } ;
       this.temp = updatedList;
+      await this.loadPuntualReservationsForExport(data, updatedList);
     } catch (error) {
       this.loading = false;
       this.handleError(error, 'Error al obtener las reservas');
       this.reservasList = { content: [], totalElements: 0, pageable: { pageNumber: 0, pageSize: 20 } };
       this.temp = [];
+      this.csvExportItems = [];
     } finally {
       this.loading = false;
     }
+  }
+
+  private getPuntualReservationFilters(): ReservaPuntualFilters {
+    return {
+      tab: this.filters.tab,
+      searchTerm: this.filters.searchTerm,
+      estadoReserva: this.filters.estadoReserva,
+      estadoValidacion: this.filters.estadoValidacion,
+      categoria: this.filters.categoria,
+      fromDate: this.filters.fromDate?.toISOString(),
+      toDate: this.filters.toDate?.toISOString(),
+    };
+  }
+
+  private async loadPuntualReservationsForExport(
+    pageData: any,
+    currentPageList: ReservaPuntual[]
+  ): Promise<void> {
+    const totalElements = Number(pageData?.totalElements || currentPageList.length);
+    if (totalElements <= currentPageList.length) {
+      this.csvExportItems = currentPageList;
+      return;
+    }
+    try {
+      const data: any = await this.reservaPuntualService.getAll(
+        0,
+        totalElements,
+        this.getPuntualReservationFilters()
+      ).toPromise();
+      let list: ReservaPuntual[] = Array.isArray(data?.content)
+        ? data.content
+        : Array.isArray(data)
+          ? data
+          : [];
+      list = this.filterPuntualReservationsByUserScope(list);
+      this.csvExportItems = list;
+    } catch {
+      this.csvExportItems = currentPageList;
+    }
+  }
+
+  private filterPuntualReservationsByUserScope(list: ReservaPuntual[]): ReservaPuntual[] {
+    const employee = this.authService.staff();
+    if (employee?.complejoDto) {
+      list = list.filter((item: any) =>
+        item.reservaDto?.campoDeportivoDto?.complejoDto?.uuid === employee.complejoDto?.uuid
+      );
+    }
+    if (this.contribuyente) {
+      list = list.filter((item: any) =>
+        item.reservaDto?.contribuyenteDto?.uuid === this.contribuyente.uuid
+      );
+    }
+    return list;
   }
   private getCategories() {
     this.categoriesService.getAll().subscribe({

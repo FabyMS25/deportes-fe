@@ -1,15 +1,12 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 /**Enviroments */
 import { environment } from 'src/environments/environment';
 import { ConfiguracionSistema } from '../../models/configuracionSistema.model';
-
-/**Models */
-const httpOptions = {
-  headers: new HttpHeaders({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${window.sessionStorage.getItem('auth-token')}` })
-};
+import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 @Injectable({
   providedIn: 'root'
@@ -19,106 +16,79 @@ export class ConfiguracionSistemaService {
 
   constructor(private http: HttpClient) { }
 
-  getAll(): Observable<any> {
-    return this.http.get<any[]>(`${this.apiUrl}`);
+  getAll(): Observable<ConfiguracionSistema[]> {
+    return apiGet<ConfiguracionSistema[]>(this.http, this.apiUrl, 'obtener configuraciones del sistema');
   }
 
-  getByUuid(uuid: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/${uuid}`);
+  getByUuid(uuid: string): Observable<ConfiguracionSistema> {
+    return apiGet<ConfiguracionSistema>(this.http, `${this.apiUrl}/${uuid}`, `obtener configuración (${uuid})`);
   }
 
-  getByClave(clave: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/clave/${clave}`);
+  getByClave(clave: string): Observable<ConfiguracionSistema> {
+    return apiGet<ConfiguracionSistema>(this.http, `${this.apiUrl}/clave/${clave}`, `obtener configuración (${clave})`);
   }
 
-  getByCategoria(categoria: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/categoria/${categoria}`);
+  getByCategoria(categoria: string): Observable<ConfiguracionSistema[]> {
+    return apiGet<ConfiguracionSistema[]>(this.http, `${this.apiUrl}/categoria/${categoria}`, `obtener configuraciones por categoría (${categoria})`);
   }
 
-  getByAplicaA(aplicaA: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/aplicaA/${aplicaA}`);
+  getByAplicaA(aplicaA: string): Observable<ConfiguracionSistema[]> {
+    return apiGet<ConfiguracionSistema[]>(this.http, `${this.apiUrl}/aplicaA/${aplicaA}`, `obtener configuraciones por aplica a (${aplicaA})`);
   }
 
-  getByReferenciaUuid(referenciaUuid: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/referencia/${referenciaUuid}`);
+  getByReferenciaUuid(referenciaUuid: string): Observable<ConfiguracionSistema[]> {
+    return apiGet<ConfiguracionSistema[]>(this.http, `${this.apiUrl}/referencia/${referenciaUuid}`, `obtener configuraciones por referencia (${referenciaUuid})`);
   }
 
-  getModificablesPorUsuario(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/modificables/usuario`);
+  getModificablesPorUsuario(): Observable<ConfiguracionSistema[]> {
+    return apiGet<ConfiguracionSistema[]>(this.http, `${this.apiUrl}/modificables/usuario`, 'obtener configuraciones modificables por usuario');
   }
 
-  getCategorias(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/categorias`);
+  getCategorias(): Observable<string[]> {
+    return apiGet<string[]>(this.http, `${this.apiUrl}/categorias`, 'obtener categorías de configuración');
   }
 
-  save(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}`, data, httpOptions);
+  save(data: any): Observable<ConfiguracionSistema> {
+    return apiPost<ConfiguracionSistema>(this.http, this.apiUrl, data, 'guardar configuración');
   }
 
-  update(data: any): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}`, data, httpOptions);
+  update(data: any): Observable<ConfiguracionSistema> {
+    return apiPut<ConfiguracionSistema>(this.http, this.apiUrl, data, 'actualizar configuración');
   }
 
-  updateByClave(clave: string, data: any): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/clave/${clave}`, data, httpOptions);
+  updateByClave(clave: string, data: any): Observable<ConfiguracionSistema> {
+    return apiPut<ConfiguracionSistema>(this.http, `${this.apiUrl}/clave/${clave}`, data, `actualizar configuración (${clave})`);
   }
 
-  delete(uuid: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${uuid}`, httpOptions);
+  delete(uuid: string): Observable<string> {
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar configuración (${uuid})`);
   }
 
-  desactivar(uuid: string): Observable<any> {
-    return this.http.put(`${this.apiUrl}/desactivar/${uuid}`, {}, httpOptions);
+  desactivar(uuid: string): Observable<ConfiguracionSistema> {
+    return apiPut<ConfiguracionSistema>(this.http, `${this.apiUrl}/desactivar/${uuid}`, {}, `desactivar configuración (${uuid})`);
   }
 
   // Métodos utilitarios para obtener valores específicos
   getValorTexto(clave: string, valorPorDefecto: string = ''): Observable<string> {
-    return new Observable(observer => {
-      this.getByClave(clave).subscribe({
-        next: (response) => {
-          const valor = response.payload?.valorTexto || valorPorDefecto;
-          observer.next(valor);
-          observer.complete();
-        },
-        error: () => {
-          observer.next(valorPorDefecto);
-          observer.complete();
-        }
-      });
-    });
+    return this.getByClave(clave).pipe(
+      map(config => config?.valorTexto || valorPorDefecto),
+      catchError(() => of(valorPorDefecto))
+    );
   }
 
   getValorNumerico(clave: string, valorPorDefecto: number = 0): Observable<number> {
-    return new Observable(observer => {
-      this.getByClave(clave).subscribe({
-        next: (response) => {
-          const valor = response.payload?.valorNumerico ?? valorPorDefecto;
-          observer.next(valor);
-          observer.complete();
-        },
-        error: () => {
-          observer.next(valorPorDefecto);
-          observer.complete();
-        }
-      });
-    });
+    return this.getByClave(clave).pipe(
+      map(config => config?.valorNumerico ?? valorPorDefecto),
+      catchError(() => of(valorPorDefecto))
+    );
   }
 
   getValorBoolean(clave: string, valorPorDefecto: boolean = false): Observable<boolean> {
-    return new Observable(observer => {
-      this.getByClave(clave).subscribe({
-        next: (response) => {
-          const valor = typeof response.payload?.valorBoolean === 'boolean'
-            ? response.payload.valorBoolean
-            : valorPorDefecto;
-          observer.next(valor);
-          observer.complete();
-        },
-        error: () => {
-          observer.next(valorPorDefecto);
-          observer.complete();
-        }
-      });
-    });
+    return this.getByClave(clave).pipe(
+      map(config => typeof config?.valorBoolean === 'boolean'
+        ? config.valorBoolean
+        : valorPorDefecto),
+      catchError(() => of(valorPorDefecto))
+    );
   }
 }

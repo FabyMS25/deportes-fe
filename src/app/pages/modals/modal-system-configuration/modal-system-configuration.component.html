@@ -36,8 +36,7 @@
                     <select class="form-select" 
                             id="clave-field" 
                             formControlName="clave"
-                            [ngClass]="{ 'is-invalid': submitted && form['clave'].errors }"
-                            [disabled]="accion === 'show' || accion === 'edit'">
+                            [ngClass]="{ 'is-invalid': submitted && form['clave'].errors }">
                         <option value="" disabled>Seleccione una clave...</option>
                         <option *ngFor="let clave of clavesDisponibles" [value]="clave">
                             {{clave}}
@@ -81,8 +80,7 @@
                     <select class="form-select" 
                             id="categoria-field" 
                             formControlName="categoria"
-                            [ngClass]="{ 'is-invalid': submitted && form['categoria'].errors }"
-                            [disabled]="accion === 'show'">
+                            [ngClass]="{ 'is-invalid': submitted && form['categoria'].errors }">
                         <option value="" disabled>Seleccione la categoría...</option>
                         <option *ngFor="let categoria of categorias" [value]="categoria">
                             {{getCategoriaLabel(categoria)}}
@@ -137,8 +135,7 @@
                             id="tipoValor-field" 
                             formControlName="tipoValor"
                             (change)="onTipoValorChange()"
-                            [ngClass]="{ 'is-invalid': submitted && form['tipoValor'].errors }"
-                            [disabled]="accion === 'show'">
+                            [ngClass]="{ 'is-invalid': submitted && form['tipoValor'].errors }">
                         <option value="" disabled>Seleccione el tipo...</option>
                         <option *ngFor="let tipo of tiposValor" [value]="tipo">
                             {{getTipoValorLabel(tipo)}}
@@ -158,8 +155,7 @@
                     </label>
                     <select class="form-select" 
                             id="unidadMedida-field" 
-                            formControlName="unidadMedida"
-                            [disabled]="accion === 'show'">
+                            formControlName="unidadMedida">
                         <option value="">Sin unidad</option>
                         <option *ngFor="let unidad of unidadesMedida" [value]="unidad">
                             {{getUnidadMedidaLabel(unidad)}}
@@ -168,7 +164,7 @@
                 </div>
 
                 <!-- Campos de Valor Dinámicos -->
-                <div class="col-lg-12" *ngIf="form['tipoValor'].value === 'TEXTO'">
+                <div class="col-lg-6" *ngIf="form['tipoValor'].value === 'TEXTO'">
                     <label for="valorTexto-field" class="form-label mb-0">
                         <i class="ri-input-field me-2"></i>Valor Texto
                     </label>
@@ -224,7 +220,7 @@
 
                 <div class="col-lg-6" *ngIf="form['tipoValor'].value === 'BOOLEANO'">
                     <label class="form-label mb-0 d-block">
-                        <i class="ri-toggle-line me-2"></i>Valor Boolean
+                        <i class="ri-toggle-line me-2"></i>Estado de la funcionalidad
                     </label>
                     <div class="form-check form-switch mt-2">
                         <input class="form-check-input" 
@@ -234,12 +230,102 @@
                                formControlName="valorBoolean"
                                [readonly]="accion === 'show'">
                         <label class="form-check-label fw-medium" for="valorBoolean-field">
-                            {{ form['valorBoolean'].value ? 'Verdadero' : 'Falso' }}
+                            {{ form['valorBoolean'].value ? 'Habilitado' : 'Deshabilitado' }}
                         </label>
                     </div>
                 </div>
 
-                <div class="col-lg-12" *ngIf="form['tipoValor'].value === 'JSON'">
+                <div class="col-12" *ngIf="form['tipoValor'].value === 'JSON' && form['clave'].value === ClaveConfiguracion.ADMIN_DEPORTES">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <label class="form-label mb-0"><i class="ri-contacts-book-line me-2"></i>Datos de contacto</label>
+                            <small class="text-muted d-block">Elija cómo desea editar esta configuración.</small>
+                        </div>
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Modo de edición de ADMIN_DEPORTES">
+                            <button type="button" class="btn"
+                                    [ngClass]="adminEditorMode === 'form' ? 'btn-primary' : 'btn-outline-primary'"
+                                    (click)="setAdminEditorMode('form')">
+                                <i class="ri-layout-2-line me-1"></i>Formulario
+                            </button>
+                            <button type="button" class="btn"
+                                    [ngClass]="adminEditorMode === 'json' ? 'btn-primary' : 'btn-outline-primary'"
+                                    (click)="setAdminEditorMode('json')">
+                                <i class="ri-braces-line me-1"></i>JSON
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <ng-container *ngIf="form['tipoValor'].value === 'JSON' && form['clave'].value === ClaveConfiguracion.ADMIN_DEPORTES && adminEditorMode === 'form'">
+                    <div class="col-lg-6">
+                        <label for="adminName-field" class="form-label mb-0">Nombre de contacto <span class="text-danger">*</span></label>
+                        <input id="adminName-field" type="text" class="form-control" formControlName="adminName"
+                               placeholder="Nombre completo"
+                               [ngClass]="{ 'is-invalid': (submitted || form['adminName'].touched) && form['adminName'].errors }">
+                        <div class="invalid-feedback" *ngIf="(submitted || form['adminName'].touched) && form['adminName'].errors">
+                            Ingrese el nombre del contacto administrativo.
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <label for="adminRole-field" class="form-label mb-0">Cargo</label>
+                        <input id="adminRole-field" type="text" class="form-control" formControlName="adminRole" placeholder="Ej. Administrador de Deportes">
+                    </div>
+                    <div class="col-lg-6">
+                        <label for="adminPhone-field" class="form-label mb-0">Teléfono</label>
+                        <input id="adminPhone-field" type="text" class="form-control" formControlName="adminPhone" placeholder="Ej. +591 72248669"
+                               [ngClass]="{ 'is-invalid': (submitted || form['adminPhone'].touched) && form['adminPhone'].errors }">
+                        <div class="invalid-feedback">Use solamente números, espacios, +, guiones o paréntesis.</div>
+                    </div>
+                    <div class="col-lg-6">
+                        <label for="adminEmail-field" class="form-label mb-0">Correo electrónico</label>
+                        <input id="adminEmail-field" type="email" class="form-control" formControlName="adminEmail" placeholder="contacto@quillacollo.gob.bo"
+                               [ngClass]="{ 'is-invalid': (submitted || form['adminEmail'].touched) && form['adminEmail'].errors }">
+                        <div class="invalid-feedback">Ingrese un correo electrónico válido.</div>
+                    </div>
+                    <div class="col-lg-8">
+                        <label for="adminAddress-field" class="form-label mb-0">Dirección</label>
+                        <input id="adminAddress-field" type="text" class="form-control" formControlName="adminAddress" placeholder="Dirección de atención">
+                    </div>
+                    <div class="col-lg-4">
+                        <label for="adminAvatar-field" class="form-label mb-0">Avatar</label>
+                        <input id="adminAvatar-field" type="text" class="form-control" formControlName="adminAvatar" placeholder="archivo.png">
+                    </div>
+                    <div class="col-12">
+                        <small class="form-text text-muted"><i class="ri-information-line me-1"></i>Estos campos se guardarán automáticamente como un JSON válido.</small>
+                    </div>
+                </ng-container>
+
+                <div class="col-lg-12"
+                     *ngIf="form['tipoValor'].value === 'JSON' && form['clave'].value === ClaveConfiguracion.ADMIN_DEPORTES && adminEditorMode === 'json'">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label for="adminValorJson-field" class="form-label mb-0">
+                            <i class="ri-braces-line me-2"></i>Contacto administrativo en JSON <span class="text-danger">*</span>
+                        </label>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                [disabled]="form['valorJson'].disabled"
+                                (click)="formatJsonField('valorJson')">
+                            <i class="ri-align-left me-1"></i>Formatear
+                        </button>
+                    </div>
+                    <textarea class="form-control font-monospace"
+                              id="adminValorJson-field"
+                              formControlName="valorJson"
+                              rows="9"
+                              [ngClass]="{ 'is-invalid': (submitted || form['valorJson'].touched) && form['valorJson'].errors }"></textarea>
+                    <div class="invalid-feedback"
+                         *ngIf="(submitted || form['valorJson'].touched) && form['valorJson'].errors">
+                        <span *ngIf="form['valorJson'].errors['required']">El JSON es requerido.</span>
+                        <span *ngIf="form['valorJson'].errors['jsonInvalid']">El JSON no tiene un formato válido.</span>
+                        <span *ngIf="form['valorJson'].errors['adminStructure']">Debe ingresar un objeto JSON.</span>
+                        <span *ngIf="form['valorJson'].errors['adminFields']">Solo se permiten: name, role, phone, email, address y avatar.</span>
+                        <span *ngIf="form['valorJson'].errors['adminName']">El campo name es obligatorio y debe contener texto.</span>
+                        <span *ngIf="form['valorJson'].errors['adminTypes']">Todos los campos deben contener texto.</span>
+                        <span *ngIf="form['valorJson'].errors['adminEmail']">El correo electrónico no es válido.</span>
+                        <span *ngIf="form['valorJson'].errors['adminPhone']">El teléfono contiene caracteres no permitidos.</span>
+                    </div>
+                </div>
+
+                <div class="col-lg-12" *ngIf="form['tipoValor'].value === 'JSON' && form['clave'].value !== ClaveConfiguracion.ADMIN_DEPORTES">
                     <div class="d-flex justify-content-between align-items-center">
                         <label for="valorJson-field" class="form-label mb-0">
                             <i class="ri-braces-line me-2"></i>Valor JSON <span class="text-danger">*</span>
@@ -247,6 +333,7 @@
                         <div class="hstack gap-2" *ngIf="accion !== 'show'">
                             <button type="button"
                                     class="btn btn-sm btn-outline-secondary"
+                                    [disabled]="form['valorJson'].disabled"
                                     (click)="formatJsonField('valorJson')">
                                 <i class="ri-align-left me-1"></i>Formatear
                             </button>
@@ -270,10 +357,6 @@
                             <i class="ri-error-warning-line me-1"></i>El JSON debe ser un objeto o un arreglo
                         </div>
                     </div>
-                    <small class="form-text text-muted">
-                        <i class="ri-information-line me-1"></i>
-                        Para datos como ADMIN_DEPORTES use un objeto con campos como role, phone, email y address.
-                    </small>
                 </div>
 
                 <!-- Ámbito de Aplicación -->
@@ -285,8 +368,7 @@
                             id="aplicaA-field" 
                             formControlName="aplicaA"
                             (change)="onAplicaAChange()"
-                            [ngClass]="{ 'is-invalid': submitted && form['aplicaA'].errors }"
-                            [disabled]="accion === 'show'">
+                            [ngClass]="{ 'is-invalid': submitted && form['aplicaA'].errors }">
                         <option value="" disabled>Seleccione el ámbito...</option>
                         <option *ngFor="let ambito of ambitosAplicacion" [value]="ambito">
                             {{getAmbitoAplicacionLabel(ambito)}}
@@ -299,23 +381,6 @@
                     </div>
                 </div>
 
-                <!-- Referencia UUID -->
-                <div class="col-lg-6" *ngIf="mostrarReferenciaUuid">
-                    <label for="referenciaUuid-field" class="form-label mb-0">
-                        <i class="ri-link me-2"></i>UUID de Referencia
-                    </label>
-                    <input type="text" 
-                           class="form-control" 
-                           id="referenciaUuid-field" 
-                           formControlName="referenciaUuid"
-                           placeholder="UUID del elemento específico"
-                           [readonly]="accion === 'show'" />
-                    <small class="form-text text-muted" *ngIf="accion !== 'show'">
-                        <i class="ri-information-line me-1"></i>
-                        UUID del {{form['aplicaA'].value | lowercase}} específico
-                    </small>
-                </div>
-
                 <!-- Configuraciones de Control -->
                 <div class="col-lg-12">
                     <div class="row g-3">
@@ -325,10 +390,9 @@
                                        type="checkbox" 
                                        role="switch"
                                        id="activo-field" 
-                                       formControlName="activo"
-                                       [disabled]="accion === 'show'">
+                                       formControlName="activo">
                                 <label class="form-check-label fw-medium" for="activo-field">
-                                    <i class="ri-checkbox-circle-line me-2"></i>Configuración Activa
+                                    <i class="ri-checkbox-circle-line me-2"></i>Configuración en uso
                                 </label>
                             </div>
                         </div>
@@ -339,10 +403,9 @@
                                        type="checkbox" 
                                        role="switch"
                                        id="modificablePorUsuario-field" 
-                                       formControlName="modificablePorUsuario"
-                                       [disabled]="accion === 'show'">
+                                       formControlName="modificablePorUsuario">
                                 <label class="form-check-label fw-medium" for="modificablePorUsuario-field">
-                                    <i class="ri-user-settings-line me-2"></i>Modificable por Usuario
+                                    <i class="ri-user-settings-line me-2"></i>Edición Protegida
                                 </label>
                             </div>
                         </div>
@@ -353,8 +416,7 @@
                                        type="checkbox" 
                                        role="switch"
                                        id="requiereAprobacion-field" 
-                                       formControlName="requiereAprobacion"
-                                       [disabled]="accion === 'show'">
+                                       formControlName="requiereAprobacion">
                                 <label class="form-check-label fw-medium" for="requiereAprobacion-field">
                                     <i class="ri-shield-check-line me-2"></i>Requiere Aprobación
                                 </label>
@@ -407,7 +469,7 @@
                     </button>
                     <button type="submit" 
                             class="btn btn-success"
-                            [disabled]="showLoading || contentForm.invalid"
+                            [disabled]="showLoading || contentForm.invalid || (accion === 'edit' && !hasEditableFields)"
                             id="add-btn">
                         <span *ngIf="showLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
                         <i *ngIf="!showLoading" [class]="accion === 'edit' ? 'ri-save-line me-1' : 'ri-add-line me-1'"></i>
@@ -420,153 +482,130 @@
 
     <!-- Vista de Solo Lectura -->
     <div class="modal-body" *ngIf="accion === 'show' && row">
-        <div class="d-flex align-items-center">
-            <div class="flex-shrink-0 me-3">
-                <i class="ri-information-line text-muted fs-5"></i>
-            </div>
-            <div class="flex-grow-1">
-                <h6 class="fw-semibold mb-1">Información General</h6>
-            </div>
+        <div class="d-flex align-items-center mb-2">
+            <i class="ri-information-line text-muted fs-5 me-3"></i>
+            <h6 class="fw-semibold mb-0">Información General</h6>
         </div>
-        <div class="row">
+        <div class="row g-3">
+            <div class="col-12">
+                <small class="text-muted d-block">Nombre:</small>
+                <div class="fw-semibold">{{ row.nombre }}</div>
+            </div>
             <div class="col-sm-6">
                 <small class="text-muted d-block">Clave:</small>
-                <div class="fw-medium font-monospace">{{ row.clave }}</div>
+                <div class="fw-medium font-monospace text-break">{{ row.clave }}</div>
             </div>
             <div class="col-sm-6">
                 <small class="text-muted d-block">Categoría:</small>
-                <div class="fw-medium">
-                    <span class="badge bg-primary">{{ getCategoriaLabel(row.categoria) }}</span>
-                </div>
+                <span class="badge bg-primary">{{ getCategoriaLabel(row.categoria) }}</span>
             </div>
             <div class="col-sm-6" *ngIf="row.aplicaA">
-                <small class="text-muted d-block">Ámbito:</small>
-                <div class="fw-medium">
-                    <span class="badge bg-info">{{ getAmbitoAplicacionLabel(row.aplicaA) }}</span>
-                </div>
+                <small class="text-muted d-block">Ámbito de aplicación:</small>
+                <span class="badge bg-info">{{ getAmbitoAplicacionLabel(row.aplicaA) }}</span>
             </div>
             <div class="col-sm-6">
                 <small class="text-muted d-block">Estado:</small>
-                <div class="fw-medium">
-                    <span class="badge" [ngClass]="row.activo ? 'bg-success' : 'bg-danger'">
-                        {{ row.activo ? 'Activo' : 'Inactivo' }}
-                    </span>
-                </div>
+                <span class="badge" [ngClass]="row.activo ? 'bg-success' : 'bg-danger'">{{ row.activo ? 'En uso' : 'Inactiva' }}</span>
             </div>
-            <div class="col-12" *ngIf="row.descripcion">
+            <div class="col-12">
                 <small class="text-muted d-block">Descripción:</small>
-                <div class="fw-medium">{{ row.descripcion }}</div>
+                <div class="fw-medium">{{ row.descripcion || 'Sin descripción registrada' }}</div>
             </div>
         </div>
 
         <hr>
 
-        <div class="d-flex align-items-center">
-            <div class="flex-shrink-0 me-3">
-                <i class="ri-database-2-line text-muted fs-5"></i>
-            </div>
-            <div class="flex-grow-1">
-                <h6 class="fw-semibold mb-1">Valor de Configuración</h6>
-            </div>
+        <div class="d-flex align-items-center mb-2">
+            <i class="ri-database-2-line text-muted fs-5 me-3"></i>
+            <h6 class="fw-semibold mb-0">Valor de Configuración</h6>
         </div>
-        <div class="row">
-            <div class="col-sm-6" *ngIf="isTextoConfig && row.valorTexto">
-                <small class="text-muted d-block">Valor Texto:</small>
-                <div class="fw-medium">{{ row.valorTexto }}</div>
+
+        <div class="alert alert-warning d-flex align-items-start mb-0" *ngIf="row.categoria === CategoriaConfiguracion.RUAT">
+            <i class="ri-shield-keyhole-line fs-5 me-2"></i>
+            <div><strong class="d-block">Valor protegido</strong><small>Este dato es administrado por el backend y no se muestra en la interfaz.</small></div>
+        </div>
+
+        <div class="row g-3" *ngIf="row.categoria !== CategoriaConfiguracion.RUAT">
+            <div class="col-12">
+                <small class="text-muted d-block">Tipo de valor:</small>
+                <span class="badge bg-secondary">{{ getTipoValorLabel(tipoValorActual) }}</span>
             </div>
-            <div class="col-sm-6" *ngIf="isNumericoConfig && row.valorNumerico !== null && row.valorNumerico !== undefined">
-                <small class="text-muted d-block">Valor Numérico:</small>
-                <div class="fw-medium">
-                    {{ row.valorNumerico }} 
-                    <span *ngIf="row.unidadMedida" class="text-muted">({{ getUnidadMedidaLabel(row.unidadMedida) }})</span>
+            <div class="col-12" *ngIf="tipoValorActual === TipoValorConfiguracion.TEXTO">
+                <small class="text-muted d-block">Valor:</small>
+                <div class="fw-medium">{{ row.valorTexto || 'Sin valor registrado' }}</div>
+            </div>
+            <div class="col-sm-6" *ngIf="tipoValorActual === TipoValorConfiguracion.NUMERICO">
+                <small class="text-muted d-block">Valor:</small>
+                <div class="fw-semibold">{{ row.valorNumerico !== null && row.valorNumerico !== undefined ? row.valorNumerico : 'Sin valor' }} <span class="text-muted" *ngIf="row.unidadMedida">{{ getUnidadMedidaLabel(row.unidadMedida) }}</span></div>
+            </div>
+            <div class="col-sm-3" *ngIf="tipoValorActual === TipoValorConfiguracion.NUMERICO && row.valorMinimo !== null && row.valorMinimo !== undefined">
+                <small class="text-muted d-block">Valor mínimo:</small>
+                <div class="fw-medium"><i class="ri-arrow-down-line me-1"></i>{{ row.valorMinimo }}</div>
+            </div>
+            <div class="col-sm-3" *ngIf="tipoValorActual === TipoValorConfiguracion.NUMERICO && row.valorMaximo !== null && row.valorMaximo !== undefined">
+                <small class="text-muted d-block">Valor máximo:</small>
+                <div class="fw-medium"><i class="ri-arrow-up-line me-1"></i>{{ row.valorMaximo }}</div>
+            </div>
+            <div class="col-12" *ngIf="tipoValorActual === TipoValorConfiguracion.BOOLEANO">
+                <small class="text-muted d-block">Estado de la funcionalidad:</small>
+                <span class="badge" [ngClass]="row.valorBoolean ? 'bg-success' : 'bg-secondary'">
+                    <i [class]="row.valorBoolean ? 'ri-toggle-fill me-1' : 'ri-toggle-line me-1'"></i>{{ row.valorBoolean ? 'Habilitado' : 'Deshabilitado' }}
+                </span>
+            </div>
+
+            <ng-container *ngIf="tipoValorActual === TipoValorConfiguracion.JSON && row.clave === ClaveConfiguracion.ADMIN_DEPORTES && adminDeportesView">
+                <div class="col-sm-6"><small class="text-muted d-block">Nombre de contacto:</small><div class="fw-medium">{{ adminDeportesView.name }}</div></div>
+                <div class="col-sm-6" *ngIf="adminDeportesView.role"><small class="text-muted d-block">Cargo:</small><div class="fw-medium">{{ adminDeportesView.role }}</div></div>
+                <div class="col-sm-6" *ngIf="adminDeportesView.phone"><small class="text-muted d-block"><i class="ri-phone-line me-1"></i>Teléfono:</small><div class="fw-medium">{{ adminDeportesView.phone }}</div></div>
+                <div class="col-sm-6" *ngIf="adminDeportesView.email"><small class="text-muted d-block"><i class="ri-mail-line me-1"></i>Correo:</small><div class="fw-medium text-break">{{ adminDeportesView.email }}</div></div>
+                <div class="col-sm-6" *ngIf="adminDeportesView.address"><small class="text-muted d-block"><i class="ri-map-pin-line me-1"></i>Dirección:</small><div class="fw-medium">{{ adminDeportesView.address }}</div></div>
+                <div class="col-sm-6" *ngIf="adminDeportesView.avatar"><small class="text-muted d-block"><i class="ri-image-line me-1"></i>Avatar:</small><div class="fw-medium text-break">{{ adminDeportesView.avatar }}</div></div>
+                <div class="col-12">
+                    <details>
+                        <summary class="text-primary">Ver JSON original</summary>
+                        <pre class="bg-light p-2 rounded border mt-2 mb-0">{{ displayJson(row.valorJson) }}</pre>
+                    </details>
                 </div>
-            </div>
-            <div class="col-sm-6" *ngIf="isBooleanConfig && row.valorBoolean !== null && row.valorBoolean !== undefined">
-                <small class="text-muted d-block">Valor Boolean:</small>
-                <div class="fw-medium">
-                    <span class="badge" [ngClass]="row.valorBoolean ? 'bg-success' : 'bg-secondary'">
-                        {{ row.valorBoolean ? 'Verdadero' : 'Falso' }}
-                    </span>
-                </div>
-            </div>
-            <div class="col-12" *ngIf="isJsonConfig && row.valorJson">
+            </ng-container>
+
+            <div class="col-12" *ngIf="tipoValorActual === TipoValorConfiguracion.JSON && row.clave !== ClaveConfiguracion.ADMIN_DEPORTES">
                 <small class="text-muted d-block">Valor JSON:</small>
-                <div class="fw-medium">
-                    <pre class="bg-light p-2 rounded border">{{ displayJson(row.valorJson) }}</pre>
-                </div>
+                <pre class="bg-light p-2 rounded border mb-0">{{ displayJson(row.valorJson) || 'Sin valor JSON registrado' }}</pre>
             </div>
-            <div class="col-sm-6" *ngIf="isNumericoConfig && row.valorMinimo !== null && row.valorMinimo !== undefined">
-                <small class="text-muted d-block">Valor Mínimo:</small>
-                <div class="fw-medium">{{ row.valorMinimo }}</div>
-            </div>
-            <div class="col-sm-6" *ngIf="isNumericoConfig && row.valorMaximo !== null && row.valorMaximo !== undefined">
-                <small class="text-muted d-block">Valor Máximo:</small>
-                <div class="fw-medium">{{ row.valorMaximo }}</div>
-            </div>
-            <div class="col-12" *ngIf="isTextoConfig && row.valoresPosibles">
-                <small class="text-muted d-block">Valores Posibles:</small>
-                <div class="fw-medium">
-                    <pre class="bg-light p-2 rounded border">{{ displayJson(row.valoresPosibles) }}</pre>
-                </div>
+            <div class="col-12" *ngIf="tipoValorActual === TipoValorConfiguracion.TEXTO && valoresPosiblesView.length">
+                <small class="text-muted d-block mb-1">Valores permitidos:</small>
+                <span class="badge bg-light text-dark me-1 mb-1" *ngFor="let value of valoresPosiblesView">{{ value }}</span>
             </div>
         </div>
 
         <hr>
 
-        <div class="d-flex align-items-center">
-            <div class="flex-shrink-0 me-3">
-                <i class="ri-settings-3-line text-muted fs-5"></i>
-            </div>
-            <div class="flex-grow-1">
-                <h6 class="fw-semibold mb-1">Configuraciones de Control</h6>
-            </div>
+        <div class="d-flex align-items-center mb-2">
+            <i class="ri-settings-3-line text-muted fs-5 me-3"></i>
+            <h6 class="fw-semibold mb-0">Control y Aplicación</h6>
         </div>
-        <div class="row">
-            <div class="col-sm-4">
-                <small class="text-muted d-block">Modificable por Usuario:</small>
-                <div class="fw-medium">
-                    <span class="badge" [ngClass]="row.modificablePorUsuario ? 'bg-info' : 'bg-secondary'">
-                        {{ row.modificablePorUsuario ? 'Sí' : 'No' }}
-                    </span>
-                </div>
-            </div>
-            <div class="col-sm-4">
-                <small class="text-muted d-block">Requiere Aprobación:</small>
-                <div class="fw-medium">
-                    <span class="badge" [ngClass]="row.requiereAprobacion ? 'bg-warning' : 'bg-secondary'">
-                        {{ row.requiereAprobacion ? 'Sí' : 'No' }}
-                    </span>
-                </div>
-            </div>
-            <div class="col-sm-4" *ngIf="row.referenciaUuid">
-                <small class="text-muted d-block">Referencia UUID:</small>
-                <div class="fw-medium font-monospace small">{{ row.referenciaUuid }}</div>
-            </div>
-        </div>
-
-        <hr>
-
-        <div class="d-flex align-items-center">
-            <div class="flex-shrink-0 me-3">
-                <i class="ri-history-line text-muted fs-5"></i>
-            </div>
-            <div class="flex-grow-1">
-                <h6 class="fw-semibold mb-1">Información del Sistema</h6>
-            </div>
-        </div>
-        <div class="row">
+        <div class="row g-3">
             <div class="col-sm-6">
-                <small class="text-muted d-block">Fecha de Creación:</small>
-                <div class="fw-medium">{{ formatDate(row.fechaCreacion) }}</div>
+                <small class="text-muted d-block">Nivel de edición:</small>
+                <span class="badge" [ngClass]="row.modificablePorUsuario ? 'bg-info' : 'bg-warning'">
+                    <i [class]="row.modificablePorUsuario ? 'ri-edit-circle-line me-1' : 'ri-lock-line me-1'"></i>{{ row.modificablePorUsuario ? 'Edición estándar' : 'Edición protegida' }}
+                </span>
             </div>
-            <div class="col-sm-6" *ngIf="row.ultimaModificacion">
-                <small class="text-muted d-block">Última Modificación:</small>
-                <div class="fw-medium">{{ formatDate(row.ultimaModificacion) }}</div>
+            <div class="col-sm-6">
+                <small class="text-muted d-block">Aprobación:</small>
+                <span class="badge" [ngClass]="row.requiereAprobacion ? 'bg-warning' : 'bg-secondary'">{{ row.requiereAprobacion ? 'Requerida' : 'No requerida' }}</span>
             </div>
-            <div class="col-sm-6" *ngIf="row.modificadoPor">
-                <small class="text-muted d-block">Modificado Por:</small>
-                <div class="fw-medium">{{ row.modificadoPor }}</div>
-            </div>
+        </div>
+
+        <hr>
+
+        <div class="d-flex align-items-center mb-2">
+            <i class="ri-history-line text-muted fs-5 me-3"></i>
+            <h6 class="fw-semibold mb-0">Información del Sistema</h6>
+        </div>
+        <div class="row g-3">
+            <div class="col-sm-6"><small class="text-muted d-block">Fecha de creación:</small><div class="fw-medium">{{ formatDate(row.fechaCreacion) }}</div></div>
+            <div class="col-sm-6"><small class="text-muted d-block">Última actualización:</small><div class="fw-medium">{{ formatDate(row.ultimaModificacion || row.fechaActualizacion) }}</div></div>
         </div>
     </div>
 
@@ -591,10 +630,10 @@
                 <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
                     colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
                 <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
-                    <h4>¿Está seguro de eliminar la Configuración?</h4>
+                    <h4>¿Está seguro de anular la configuración?</h4>
                     <p class="text-muted mx-4 mb-0">
-                        Esta acción eliminará permanentemente la configuración "<strong>{{row.nombre}}</strong>" 
-                        ({{row.clave}}) del sistema.
+                        Esta acción desactivará la configuración "<strong>{{row.nombre}}</strong>"
+                        ({{row.clave}}) sin eliminar su historial.
                     </p>
                 </div>
             </div>
@@ -606,13 +645,13 @@
                 </button>
                 <button type="button" 
                         class="btn w-sm btn-danger" 
-                        (click)="deleteData(row.uuid)"
+                        (click)="deactivateData(row.uuid)"
                         [disabled]="submitted">
                     <span *ngIf="!submitted">
-                        <i class="ri-delete-bin-line me-1 align-middle"></i> Sí, Eliminar
+                        <i class="ri-close-circle-line me-1 align-middle"></i> Sí, Anular
                     </span>
                     <span *ngIf="submitted">
-                        <span class="spinner-border spinner-border-sm me-2"></span>Eliminando...
+                        <span class="spinner-border spinner-border-sm me-2"></span>Anulando...
                     </span>
                 </button>
             </div>

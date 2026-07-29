@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { ReservaTarifaDetalle } from '../../models/reservaTarifaDetalle.model';
+import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 @Injectable({
   providedIn: 'root'
@@ -13,26 +14,26 @@ export class ReservaTarifaDetalleService {
   constructor(private http: HttpClient) { }
 
   getAll(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}`);
+    return apiGet<any>(this.http, this.apiUrl, 'obtener detalles de tarifa de reserva');
   }
 
   getByUuid(uuid: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/${uuid}`);
+    return apiGet<any>(this.http, `${this.apiUrl}/${uuid}`, `obtener detalle de tarifa (${uuid})`);
   }
 
   getByReservaUuid(reservaUuid: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/reserva/${reservaUuid}`);
+    return apiGet<any>(this.http, `${this.apiUrl}/reserva/${reservaUuid}`, `obtener detalles de tarifa por reserva (${reservaUuid})`);
   }
 
   create(data: ReservaTarifaDetalle): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}`, data);
+    return apiPost<any>(this.http, this.apiUrl, data, 'crear detalle de tarifa');
   }
 
   update(data: ReservaTarifaDetalle): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}`, data);
+    return apiPut<any>(this.http, this.apiUrl, data, 'actualizar detalle de tarifa');
   }
 
   delete(uuid: string): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/${uuid}`);
+    return apiDelete<any>(this.http, `${this.apiUrl}/${uuid}`, `eliminar detalle de tarifa (${uuid})`);
   }
 }

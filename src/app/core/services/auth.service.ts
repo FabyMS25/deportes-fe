@@ -197,9 +197,9 @@ export class AuthenticationService {
       const response = await firstValueFrom(
         this.authContribuyente.loginByUsername(username, password)
       );
-      if (response?.status !=='OK') throw 'badCredentials';      
-      this.currentUserSubject = response.payload;
-      return response.payload;
+      if (!response?.uuid) throw 'badCredentials';      
+      this.currentUserSubject = response;
+      return response;
     } catch (error: any) {
       if (this.isBackendError(error)) throw { backendError: true };
       if (error.status === 401) throw 'badCredentials';
@@ -216,7 +216,7 @@ export class AuthenticationService {
       const [userPermissions, userAssignations] = await Promise.all([
         firstValueFrom(this.permissionService.getPermissionsUser(user)),
         firstValueFrom(this.staffService.getByUserUuid(user.uuid))
-          .then((res: any) => res?.status === 'OK' ? res.payload : null)
+          .then((res: any) => res || null)
           .catch(() => null),
       ]);
       if (!Array.isArray(userPermissions) || userPermissions.length === 0) {
@@ -277,7 +277,7 @@ export class AuthenticationService {
           errorMessage: this.systemStatus.message
         };
       }
-      if (configResponse.status !== 'OK' || !Array.isArray(configResponse.payload)) {
+      if (!Array.isArray(configResponse)) {
         this.systemStatus.message = 'Invalid configuration response';
         return {
           configsStatus: false,
@@ -287,10 +287,10 @@ export class AuthenticationService {
         };
       }
       const configsMap: { [key: string]: ConfiguracionSistema } = {};
-      for (const config of configResponse.payload) {
+      for (const config of configResponse) {
         if (!config.activo) continue;
         if (config.categoria === CategoriaConfiguracion.RUAT) continue;
-        if (!isContribuyente && config.aplicaA === AplicaAConfiguracion.USUARIO) continue;
+        if (!isContribuyente && config.aplicaA === AplicaAConfiguracion.CONTRIBUYENTE) continue;
         configsMap[config.clave] = config;
       }
       this.systemConfigList = configsMap;
@@ -333,7 +333,7 @@ export class AuthenticationService {
       const response: any = await firstValueFrom(
         this.ruatService.authenticate().pipe(timeout(this.ruatLoginTimeoutMs))
       );
-      return { success: response?.status === 'OK' && response?.payload?.available === true };
+      return { success: response?.available === true };
     } catch (error) {
       return { success: false, error };
     }

@@ -1,15 +1,17 @@
-<app-breadcrumbs [title]="title | translate" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+<app-breadcrumbs [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
 
 <div class="content">
     <app-data-header
-        [title]="title"
+        [breadcrumbItems]="breadCrumbItems"
         [headersImport]="headersImport"
+        [csvItems]="categoryList"
+        [csvColumns]="CSV_COLUMNS"
+        [SelectedItems]="selectedItems"
         [newShow]="canActivate.includes('CREAR')"
         [importShow]="canActivate.includes('CREAR')"
         [exportShow]="canActivate.includes('VER')"
         (createEmitter)="openModal( undefined,content,'')"
         (importEmitter)="openModalImport()"
-        (exportEmitter)="csvFileExport()"
     ></app-data-header>
     <div class="card rounded-2">
         <div class="card-header pb-1">

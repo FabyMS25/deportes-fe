@@ -5,8 +5,6 @@ export const GlobalComponent = {
         USER: 'currentUser',
         STAFF: 'assignaments', 
         TOKEN: 'auth-token', 
-        RUAT_TOKEN: 'ruat-token',
-        RUAT_TOKEN_CREATED_AT: 'ruat-token-created-at',
         REMEMBER_ME: 'remember_me'
     },
 

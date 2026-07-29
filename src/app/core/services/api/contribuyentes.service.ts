@@ -1,8 +1,9 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Contribuyente } from '../../models/contribuyente.model';
+import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 @Injectable({
   providedIn: 'root'
@@ -37,7 +38,7 @@ export class ContribuyentesService {
   constructor(private http: HttpClient) { }
 
   loginByUsername(user: String, pass: String) {
-    return this.http.post<any>(`${this.apiUrl}/login`, { user, pass });
+    return apiPost<any>(this.http, `${this.apiUrl}/login`, { user, pass }, 'loguear contribuyente');
   }
   // loginByUsername(user: string, pass: string) {
   //   const params = { user, pass };
@@ -55,26 +56,26 @@ export class ContribuyentesService {
   //   }
   // }
   getAll(): Observable<Contribuyente[]> {
-    return this.http.get<Contribuyente[]>(`${this.apiUrl}`);
+    return apiGet<Contribuyente[]>(this.http, this.apiUrl, 'obtener contribuyentes');
   }
 
   getByUuid(uuid: String): Observable<Contribuyente> {
-    return this.http.get<Contribuyente>(`${this.apiUrl}/${uuid}`)
+    return apiGet<Contribuyente>(this.http, `${this.apiUrl}/${uuid}`, `obtener contribuyente (${uuid})`)
   }
 
   getByEmail(email: String): Observable<Contribuyente> {
-    return this.http.get<Contribuyente>(`${this.apiUrl}/email/${email}`)
+    return apiGet<Contribuyente>(this.http, `${this.apiUrl}/email/${email}`, `obtener contribuyente por email (${email})`)
   }
 
   save(data: Contribuyente): Observable<Contribuyente> {
-    return this.http.post<Contribuyente>(`${this.apiUrl}`, data);
+    return apiPost<Contribuyente>(this.http, this.apiUrl, data, 'guardar contribuyente');
   }
 
   update(data: Contribuyente): Observable<Contribuyente> {
-    return this.http.put<Contribuyente>(`${this.apiUrl}`, data);
+    return apiPut<Contribuyente>(this.http, this.apiUrl, data, 'actualizar contribuyente');
   }
-  delete(uuid: string) {
-    return this.http.delete(`${this.apiUrl}/${uuid}`);
+  delete(uuid: string): Observable<string> {
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar contribuyente (${uuid})`);
   }
 }
 

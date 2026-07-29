@@ -1,14 +1,16 @@
-<app-breadcrumbs title="Reservas" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+<app-breadcrumbs [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
 
 <div class="content">
     <app-data-header
-        [title]="title"
+        [breadcrumbItems]="breadCrumbItems"
+        [csvItems]="csvExportItems"
+        [csvColumns]="CSV_COLUMNS"
+        [SelectedItems]="selectedItems"
         [newShow]="canActivate.includes('CREAR')"
         [consultShow]="selectedItems.length > 0"
         [exportShow]="canActivate.includes('VER')"
         (createEmitter)="agregarReserva()"
-        (consultEmitter)="consultModal(undefined,consultModel,'lg')"
-        (exportEmitter)="csvFileExport()"
+        (consultEmitter)="openModal(selectedItems[0],'consult','md')"
     ></app-data-header>
     <div class="card rounded-2">
         <div class="card-header border border-dashed border-end-0 border-start-0">
@@ -78,8 +80,10 @@
         <div class="card-header p-0">
             <div class="row g-2">
                 <div class="col-auto flex-grow-1">
-                    <ul ngbNav #nav="ngbNav" [activeId]="0" (navChange)="onNavChange($event)"
-                    class="nav nav-tabs nav-tabs-custom nav-success" role="tablist">
+                    <ul ngbNav #nav="ngbNav" [activeId]="filters.tab"
+                        (navChange)="onNavChange($event)"
+                        class="nav nav-tabs nav-tabs-custom nav-success"
+                        role="tablist">
                         <li [ngbNavItem]="0" class="nav-item">
                             <a ngbNavLink class="nav-link All py-3" data-bs-toggle="tab" id="All" href="javascript:void(0);" role="tab" aria-selected="true">
                             Todas las Reservas<span class="badge bg-danger align-middle ms-1">{{temp.length || 0}}</span>
@@ -174,7 +178,7 @@
                     close: canActivate.includes('ANULAR')?'Anular':'',}"
                 (showItemEmitter)="openModal($event,'show','lg')"
                 (editItemEmitter)="openModal($event,'edit','lg')"
-                (consultItemEmitter)="consultModal($event,consultModel,'md')"
+                (consultItemEmitter)="openModal($event,'consult','md')"
                 (validateItemEmitter)="openModal($event,'validarModal','')"
                 (closeItemEmitter)="openModal($event,'annularModal','')"
                 (processItemEmitter)="openModal($event,'noShowModal','')"
@@ -186,179 +190,3 @@
         </div>
     </div>
 </div>
-
-<ng-template #consultModel role="document" let-modal>
-  <div class="modal-header border-bottom py-2 px-3">
-    <div class="d-flex w-100 align-items-center justify-content-between">
-      <div class="d-flex align-items-center">
-        <div class="flex-shrink-0 avatar-sm">
-          <span class="avatar-title rounded-circle bg-info-subtle text-info fs-4">
-            <i class="ri-bubble-chart-line"></i>
-          </span>
-        </div>
-        <div class="ms-2">
-          <h5 class="modal-title mb-0">Consulta RUAT</h5>
-          <small class="text-muted">{{ consultResults.length }} resultado(s) procesado(s)</small>
-        </div>
-      </div>
-      <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
-    </div>
-  </div>
-
-  <div class="modal-body px-3 py-2">
-    <div *ngFor="let result of consultResults" class="mb-2">
-      <div class="card border shadow-none mb-2">
-        <div class="card-header bg-light py-2 px-3">
-          <h6 class="mb-0 text-primary">
-            <i class="ri-information-line me-1"></i>Información de Reserva
-          </h6>
-        </div>
-        <div class="card-body py-2 px-3">
-          <div class="row g-2">
-            <div class="col-6">
-              <small class="text-muted d-block">Complejo</small>
-              <strong class="small">{{ result.item.reservaDto?.campoDeportivoDto?.complejoDto?.nombre || 'N/A' }}</strong>
-            </div>
-            <div class="col-6">
-              <small class="text-muted d-block">Campo Deportivo</small>
-              <strong class="small">{{ result.item.reservaDto?.campoDeportivoDto?.nombre || 'N/A' }}</strong>
-            </div>
-            <div class="col-6">
-              <small class="text-muted d-block">Número de Tasa</small>
-              <strong class="small">{{ result.item.reservaDto?.numeroTasa || 'N/A' }}</strong>
-            </div>
-            <div class="col-6">
-              <small class="text-muted d-block">Estado Reserva</small>
-              <span class="badge" [ngClass]="{
-                'bg-warning-subtle text-warning':   result.item.reservaDto?.estadoReserva === 'PENDIENTE' || result.item.reservaDto?.estadoReserva === 'SOLICITADA',
-                'bg-primary-subtle text-primary':   result.item.reservaDto?.estadoReserva === 'PAGADA',
-                'bg-success-subtle text-success':   result.item.reservaDto?.estadoReserva === 'EN_CURSO' || result.item.reservaDto?.estadoReserva === 'COMPLETADA',
-                'bg-danger-subtle text-danger':     result.item.reservaDto?.estadoReserva === 'CANCELADA' || result.item.reservaDto?.estadoReserva === 'RECHAZADA' || result.item.reservaDto?.estadoReserva === 'EXPIRADA' || result.item.reservaDto?.estadoReserva === 'NO_SHOW',
-                'bg-secondary-subtle text-secondary': !result.item.reservaDto?.estadoReserva
-              }">
-                {{ result.item.reservaDto?.estadoReserva || 'N/A' }}
-              </span>
-            </div>
-            <div class="col-6">
-              <small class="text-muted d-block">Fecha de Uso</small>
-              <strong class="small">{{ result.item.fechaUso | date:'dd/MM/yyyy' }}</strong>
-            </div>
-            <div class="col-6">
-              <small class="text-muted d-block">Horario</small>
-              <strong class="small">{{ result.item.horaInicio }} – {{ result.item.horaFin }}</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PAYMENT INFO CARD (only when payment found) -->
-      <div *ngIf="result.hasPayment" class="card border border-success shadow-none mb-2">
-        <div class="card-header bg-success-subtle py-2 px-3">
-          <h6 class="mb-0 text-success">
-            <i class="ri-money-dollar-circle-line me-1"></i>Información de Pago
-          </h6>
-        </div>
-        <div class="card-body py-2 px-3">
-          <div class="row g-2">
-            <div class="col-6">
-              <small class="text-muted d-block">Fecha de Pago</small>
-              <strong class="small">{{ result.pagoData?.fechaPago }}</strong>
-            </div>
-            <div class="col-6">
-              <small class="text-muted d-block">Monto Pagado</small>
-              <strong class="small">{{ result.pagoData?.montoPago }} Bs.</strong>
-            </div>
-            <div class="col-6">
-              <small class="text-muted d-block">Forma de Pago</small>
-              <strong class="small">{{ result.pagoData?.formaPago || 'N/A' }}</strong>
-            </div>
-            <div class="col-6">
-              <small class="text-muted d-block">Entidad Financiera</small>
-              <strong class="small">{{ result.pagoData?.entidadFinanciera || 'N/A' }}</strong>
-            </div>
-            <div class="col-6">
-              <small class="text-muted d-block">Folio</small>
-              <strong class="small">{{ result.pagoData?.folio || 'N/A' }}</strong>
-            </div>
-            <div class="col-6">
-              <small class="text-muted d-block">Estado Pago</small>
-              <span class="badge bg-success-subtle text-success">
-                {{ result.pagoData?.estadoPago || 'PAGADO' }}
-              </span>
-            </div>
-            <div *ngIf="result.pagoData?.observaciones" class="col-12">
-              <small class="text-muted d-block">Observaciones</small>
-              <span class="small">{{ result.pagoData?.observaciones || result.pagoData?.observacion }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- SYSTEM RESPONSE -->
-      <div class="alert mb-0 py-2 px-3 d-flex align-items-start gap-2" [ngClass]="{
-        'alert-success': result.type === 'success',
-        'alert-warning': result.type === 'warning',
-        'alert-danger':  result.type === 'error',
-        'alert-info':    result.type === 'info'
-      }">
-        <i class="fs-5 mt-1 flex-shrink-0" [ngClass]="{
-          'ri-checkbox-circle-fill': result.type === 'success',
-          'ri-error-warning-fill':   result.type === 'warning',
-          'ri-close-circle-fill':    result.type === 'error',
-          'ri-information-fill':     result.type === 'info'
-        }"></i>
-
-        <div>
-          <div class="small fw-semibold">{{ result.text }}</div>
-
-          <!-- Payment found and saved correctly -->
-          <div *ngIf="result.type === 'success' && result.hasPayment" class="small mt-1">
-            <i class="ri-check-double-line me-1"></i>
-            El pago fue registrado correctamente y la reserva fue actualizada.
-          </div>
-
-          <!-- RUAT timeout / connection problem -->
-          <div *ngIf="result.errorCode === 'RUAT_TIMEOUT'" class="small mt-1">
-            <i class="ri-wifi-off-line me-1"></i>
-            La reserva no fue modificada. Intente nuevamente en unos minutos.
-          </div>
-
-          <!-- RUAT responded with NOT_FOUND / invalid consultation error -->
-          <div *ngIf="result.errorCode === 'RUAT_NOT_FOUND_ERROR'" class="small mt-1">
-            <i class="ri-error-warning-line me-1"></i>
-            No se realizaron cambios en el estado de la reserva.
-          </div>
-
-          <!-- RUAT answered correctly but no payment was found / flow stopped -->
-          <div *ngIf="result.errorCode === 'RUAT_FLOW_STOPPED' || result.errorCode === 'PAYMENT_NOT_FOUND'" class="small mt-1">
-            <i class="ri-information-line me-1"></i>
-            No se registró ningún pago para esta tasa.
-          </div>
-
-          <!-- Payment exists in RUAT but could not be saved locally -->
-          <div *ngIf="result.errorCode === 'PAYMENT_SAVE_ERROR'" class="small mt-1">
-            <i class="ri-error-warning-line me-1"></i>
-            La reserva no fue actualizada porque el pago no pudo guardarse en el sistema.
-          </div>
-
-          <!-- Invalid RUAT response or invalid payment date -->
-          <div *ngIf="result.errorCode === 'INVALID_RESPONSE'" class="small mt-1">
-            <i class="ri-error-warning-line me-1"></i>
-            La reserva no fue modificada porque la respuesta de RUAT no pudo procesarse correctamente.
-          </div>
-          <!-- Unexpected exception -->
-          <div *ngIf="result.errorCode === 'RUAT_EXCEPTION'" class="small mt-1">
-            <i class="ri-close-circle-line me-1"></i>
-            La consulta no pudo completarse. Intente nuevamente o contacte al soporte.
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <div class="modal-footer border-top py-2">
-    <button type="button" class="btn btn-primary btn-sm" (click)="modal.dismiss('Cross click')">
-      <i class="ri-close-line me-1"></i>Cerrar
-    </button>
-  </div>
-</ng-template>

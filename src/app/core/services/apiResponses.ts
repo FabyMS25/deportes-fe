@@ -1,4 +1,6 @@
+import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 export interface ApiResponse<T> {
   status: string;
@@ -61,6 +63,69 @@ export function handleError(operation = 'operación') {
     const message = extractMessage(error) || `Error en ${operation}`;
     return throwError(() => new Error(message));
   };
+}
+
+export function apiGet<T>(
+  http: HttpClient,
+  url: string,
+  operation: string,
+  options?: any
+): Observable<T> {
+  return http.get<unknown>(url, options).pipe(
+    map(response => handleResponse<T>(response)),
+    catchError(handleError(operation))
+  );
+}
+
+export function apiPost<T>(
+  http: HttpClient,
+  url: string,
+  body: unknown,
+  operation: string,
+  options?: any
+): Observable<T> {
+  return http.post<unknown>(url, body, options).pipe(
+    map(response => handleResponse<T>(response)),
+    catchError(handleError(operation))
+  );
+}
+
+export function apiPut<T>(
+  http: HttpClient,
+  url: string,
+  body: unknown,
+  operation: string,
+  options?: any
+): Observable<T> {
+  return http.put<unknown>(url, body, options).pipe(
+    map(response => handleResponse<T>(response)),
+    catchError(handleError(operation))
+  );
+}
+
+export function apiPatch<T>(
+  http: HttpClient,
+  url: string,
+  body: unknown,
+  operation: string,
+  options?: any
+): Observable<T> {
+  return http.patch<unknown>(url, body, options).pipe(
+    map(response => handleResponse<T>(response)),
+    catchError(handleError(operation))
+  );
+}
+
+export function apiDelete<T>(
+  http: HttpClient,
+  url: string,
+  operation: string,
+  options?: any
+): Observable<T> {
+  return http.delete<unknown>(url, options).pipe(
+    map(response => handleResponse<T>(response)),
+    catchError(handleError(operation))
+  );
 }
 
 function isWrappedResponse(response: unknown): response is WrappedApiResponse {

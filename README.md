@@ -17,13 +17,6 @@
     <br />
     <a href="http://www.quillacollo.gob.bo/"><strong>GAMQ »</strong></a>
     <br />
-    <br />
-    <a href="https://github.com/othneildrew/Best-README-Template">View Demo</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
-  </p>
 </div>
 
 <!-- TABLE OF CONTENTS -->
@@ -137,15 +130,3 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
-
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[Angular.io]: https://img.shields.io/badge/Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white
-[Angular-url]: https://angular.io
-[Typescriptlang.org]: https://img.shields.io/badge/typescript-3178c6?style=for-the-badge&logo=typescript&logoColor=white
-[Typescript-url]: https://www.typescriptlang.org
-[Primeng.org]: https://img.shields.io/badge/Primeng-60a5FA?style=for-the-badge&logo=primeng&logoColor=white
-[Primeng-url]: https://primeng.org
-[Sass-lang.com]: https://img.shields.io/badge/Sass-BF4080?style=for-the-badge&logo=sass&logoColor=white
-[Sass-url]: https://sass-lang.com/

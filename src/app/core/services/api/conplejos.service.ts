@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 /**Enviroments */
@@ -7,6 +7,7 @@ import { environment } from 'src/environments/environment';
 
 /**Models */
 import { ComplejoDeportivo } from '../../models/complejoDeportivo.model';
+import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 
 @Injectable({
@@ -19,21 +20,21 @@ export class ComplejosService {
   constructor(private http: HttpClient) { }
 
   getAll(): Observable<ComplejoDeportivo[]> {
-    return this.http.get<ComplejoDeportivo[]>(`${this.apiUrl}`);
+    return apiGet<ComplejoDeportivo[]>(this.http, this.apiUrl, 'obtener complejos');
   }
 
   getByUuid(uuid:string):Observable<ComplejoDeportivo>{
-    return this.http.get<ComplejoDeportivo>(`${this.apiUrl}/${uuid}`);
+    return apiGet<ComplejoDeportivo>(this.http, `${this.apiUrl}/${uuid}`, `obtener complejo (${uuid})`);
   }
 
   save(data: ComplejoDeportivo): Observable<ComplejoDeportivo> {  
-    return this.http.post<ComplejoDeportivo>(`${this.apiUrl}`, data);
+    return apiPost<ComplejoDeportivo>(this.http, this.apiUrl, data, 'guardar complejo');
   }
 
   update(data: ComplejoDeportivo): Observable<ComplejoDeportivo> {
-    return this.http.put<ComplejoDeportivo>(`${this.apiUrl}`, data);
+    return apiPut<ComplejoDeportivo>(this.http, this.apiUrl, data, 'actualizar complejo');
   }
-  delete(uuid: string) {
-    return this.http.delete(`${this.apiUrl}/${uuid}`);
+  delete(uuid: string): Observable<string> {
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar complejo (${uuid})`);
   }
 }

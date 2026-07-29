@@ -227,6 +227,9 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
         case 'ticketModal':
           this.openTicketModal(this.ticketModal);
           break;
+        case 'consult':
+          void this.consultPaymentInModal();
+          break;
       }
     });
   }
@@ -908,10 +911,6 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
     this.reservaService.cancelarReserva(reserva.uuid, motivo || 'Anulación de mensualidad').subscribe({
       next: (response: any) => {
         this.isLoading = false;
-        if (response?.status && response.status !== 'OK') {
-          this.notify(response?.message || response?.payload || 'No se pudo actualizar la mensualidad localmente.', 'error');
-          return;
-        }
         this.notify(successMessage, notificationType);
         this.emitList.emit();
         this.onCloseModal();
@@ -946,7 +945,10 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
 
   async consultPaymentInModal(): Promise<void> {
     if (!this.row?.numeroTasa) {
-      this.notify('La mensualidad no tiene número de tasa para consultar.', 'warning');
+      this.consultationResult = {
+        type: 'warning',
+        text: 'La mensualidad no tiene número de tasa para consultar.'
+      };
       return;
     }
 
@@ -958,8 +960,15 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
       const resp: any = await this.ruatService
         .consultaPagoTasa(this.row.numeroTasa)
         .toPromise();
+      const persistedPayment = this.row.pagosDtoList?.find(
+        pago => pago.estadoPago === EstadoPago.PAGADO
+      ) || this.row.pagosDtoList?.[0];
 
       if (resp?.status !== 'OK') {
+        if (persistedPayment) {
+          this.consultationResult = this.buildPersistedPaymentResult(resp, persistedPayment);
+          return;
+        }
         this.consultationResult = {
           type: resp?.status === 'NOT_FOUND' ? 'info' : 'warning',
           text: this.ruatService.getResponseMessage(resp, 'No se encontraron pagos realizados para esta tasa.')
@@ -967,7 +976,12 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
         return;
       }
 
-      if (!this.ruatService.canContinue(resp)) {
+      const pagoTasa = this.ruatService.getResponseData(resp)?.pagoTasa;
+      if (!pagoTasa && persistedPayment) {
+        this.consultationResult = this.buildPersistedPaymentResult(resp, persistedPayment);
+        return;
+      }
+      if (!pagoTasa && !this.ruatService.canContinue(resp)) {
         this.consultationResult = {
           type: 'warning',
           text: this.ruatService.getResponseMessage(resp, 'No se puede continuar con el flujo.')
@@ -975,7 +989,6 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
         return;
       }
 
-      const pagoTasa = this.ruatService.getResponseData(resp)?.pagoTasa;
       if (!pagoTasa) {
         this.consultationResult = {
           type: 'info',
@@ -1025,6 +1038,25 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
     }
     const parts = fechaPago.split('/').map(Number);
     return new Date(parts[2], parts[1] - 1, parts[0], 12, 0, 0, 0);
+  }
+
+  private buildPersistedPaymentResult(resp: any, pago: Pago): any {
+    return {
+      type: 'success',
+      text: `${this.ruatService.getResponseMessage(resp, 'La tasa se encuentra pagada')} - Pago verificado`,
+      pagoData: {
+        ...pago,
+        montoPago: pago.montoPagado,
+        fechaPago: this.formatPersistedPaymentDate(pago.fechaPago)
+      }
+    };
+  }
+
+  private formatPersistedPaymentDate(value: Date | string): string {
+    if (typeof value === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(value)) return value;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
   }
 
   formatPeriodoDetalle(detalle?: ReservaPeriodo): string {
@@ -1200,13 +1232,9 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
 
     this.reservaPeriodoService.getByEstudiante(this.selection.student.uuid).subscribe({
       next: (response: any) => {
-        if (response?.status === 'OK') {
-          this.catalogs.periodRegistrations = Array.isArray(response.payload)
-            ? response.payload
-            : (response.payload?.content || []);
-        } else {
-          this.catalogs.periodRegistrations = [];
-        }
+        this.catalogs.periodRegistrations = Array.isArray(response)
+          ? response
+          : (response?.content || []);
 
         this.resolveMensualidadExistente();
       },
@@ -1220,11 +1248,9 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
   private loadAllPeriodRegistrations(): void {
     this.reservaPeriodoService.getAllWithoutPagination().subscribe({
       next: (response: any) => {
-        if (response?.status === 'OK') {
-          this.catalogs.periodRegistrations = Array.isArray(response.payload)
-            ? response.payload
-            : (response.payload?.content || []);
-        }
+        this.catalogs.periodRegistrations = Array.isArray(response)
+          ? response
+          : (response?.content || []);
       },
       error: () => {
         this.catalogs.periodRegistrations = [];
@@ -1413,15 +1439,6 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
 
       this.ruatService.createTasa(ruatData, contribuyente.codigoContribuyente).subscribe({
         next: (response: any) => {
-          if (response?.status !== 'OK') {
-            reject(
-              new Error(
-                this.ruatService.getResponseMessage(response, 'No se pudo registrar la tasa en RUAT.')
-              )
-            );
-            return;
-          }
-
           const ruatData = this.ruatService.getResponseData(response);
           if (!this.ruatService.canContinue(response) || !ruatData?.numeroTasa) {
             reject(
@@ -1449,11 +1466,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
     return new Promise((resolve, reject) => {
       this.reservaService.create(reservaData).subscribe({
         next: (response: any) => {
-          if (response?.status === 'OK') {
-            resolve(response.payload);
-          } else {
-            reject(new Error(response?.message || response?.payload || 'No se pudo registrar la mensualidad.'));
-          }
+          resolve(response);
         },
         error: (error) => {
           reject(
@@ -1607,9 +1620,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
   private getOrganizations(): void {
     this.organizationService.getAll().subscribe({
       next: (response: any) => {
-        this.catalogs.organizations = response.status === 'OK'
-          ? (response.payload?.content || response.payload || [])
-          : [];
+        this.catalogs.organizations = response?.content || response || [];
         this.catalogs.schools = this.catalogs.organizations.filter(
           org => org.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL && org.activo
         );
@@ -1626,9 +1637,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
       : this.estudianteService.getAll();
     request.subscribe({
       next: (response: any) => {
-        this.estudiantes = response.status === 'OK'
-          ? (response.payload?.content || response.payload || [])
-          : [];
+        this.estudiantes = response?.content || response || [];
       },
       error: () => {
         this.estudiantes = [];
@@ -1671,13 +1680,9 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
     this.reservaPeriodoService.update(data).subscribe({
       next: (response: any) => {
         this.isLoading = false;
-        if (response.status === 'OK') {
-          this.notify('Mensualidad actualizada exitosamente', 'success');
-          this.emitList.emit();
-          this.onCloseModal();
-        } else {
-          throw new Error(response.message || 'Error al actualizar mensualidad');
-        }
+        this.notify('Mensualidad actualizada exitosamente', 'success');
+        this.emitList.emit();
+        this.onCloseModal();
       },
       error: () => {
         this.isLoading = false;

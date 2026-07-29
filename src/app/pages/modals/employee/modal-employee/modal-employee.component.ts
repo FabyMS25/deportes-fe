@@ -241,12 +241,8 @@ export class ModalEmployeeComponent {
   private getFields() {
     this.complejosService.getAll().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.canchasList = data.payload.sort((a: any, b: any) => 
-            a.nombre.localeCompare(b.nombre));
-        } else {
-          this.notify(data.payload, 'error');
-        }
+        this.canchasList = data.sort((a: any, b: any) => 
+          a.nombre.localeCompare(b.nombre));
       },
       error: (error) => {
         this.notify('Error al cargar los complejos deportivos', 'error');
@@ -337,17 +333,15 @@ export class ModalEmployeeComponent {
   }
   deleteData(uuid:string) {
     this.encargadoCanchaService.delete(uuid).subscribe({
-      next: (data: any) => {
+      next: (message: string) => {
         this.submitted = false;
-        if (data.status == 'OK') {
-          this.getUsers();
-          this.notify(data.payload, 'success');
-          this.modalService.dismissAll();
-        }
+        this.getUsers();
+        this.notify(message || 'Encargado eliminado exitosamente', 'success');
+        this.modalService.dismissAll();
       },
       error: err => {
         this.submitted = false;
-        this.notify('No se pudo eliminar el registro!', 'error');
+        this.notify(err.message || 'No se pudo eliminar el registro!', 'error');
       }
     });
   }

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 /**Enviroments */
@@ -7,6 +7,7 @@ import { environment } from 'src/environments/environment';
 
 /**Models */
 import { Tarifa } from '../../models/tarifa.model';
+import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 
 @Injectable({
@@ -18,21 +19,21 @@ export class TarifaService {
   constructor(private http: HttpClient) { }
 
   getAll(): Observable<Tarifa[]> {
-    return this.http.get<Tarifa[]>(`${this.apiUrl}`);
+    return apiGet<Tarifa[]>(this.http, this.apiUrl, 'obtener tarifas');
   }
 
   getByUuid(uuid:string):Observable<Tarifa>{
-    return this.http.get<Tarifa>(`${this.apiUrl}/${uuid}`);
+    return apiGet<Tarifa>(this.http, `${this.apiUrl}/${uuid}`, `obtener tarifa (${uuid})`);
   }
 
   save(data: any): Observable<Tarifa> {  
-    return this.http.post<Tarifa>(`${this.apiUrl}`, data);
+    return apiPost<Tarifa>(this.http, this.apiUrl, data, 'guardar tarifa');
   }
 
   update(data: any): Observable<Tarifa> {
-    return this.http.put<Tarifa>(`${this.apiUrl}`, data);
+    return apiPut<Tarifa>(this.http, this.apiUrl, data, 'actualizar tarifa');
   }
-  delete(uuid: string) {
-    return this.http.delete(`${this.apiUrl}/${uuid}`);
+  delete(uuid: string): Observable<string> {
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar tarifa (${uuid})`);
   }
 }

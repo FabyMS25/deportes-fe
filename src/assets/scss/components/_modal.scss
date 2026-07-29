@@ -20,6 +20,46 @@
     }
 }
 
+// Component-based ng-bootstrap modals render their component host and, in this
+// project, an additional .modal-content/form layer inside Bootstrap's content.
+// Carry the scrollable flex layout through those wrappers so only the body
+// scrolls and the header/footer remain visible.
+.modal-dialog-scrollable {
+	> .modal-content {
+		overflow: hidden;
+
+		> :not(.modal-header):not(.modal-body):not(.modal-footer) {
+			display: flex;
+			flex: 1 1 auto;
+			flex-direction: column;
+			min-height: 0;
+			overflow: hidden;
+
+			> .modal-content {
+				display: flex;
+				flex: 1 1 auto;
+				flex-direction: column;
+				min-height: 0;
+				max-height: 100%;
+				overflow: hidden;
+
+				> form {
+					display: flex;
+					flex: 1 1 auto;
+					flex-direction: column;
+					min-height: 0;
+					overflow: hidden;
+				}
+			}
+		}
+	}
+
+	.modal-body {
+		min-height: 0;
+		overflow-y: auto;
+	}
+}
+
 .modal {
 	&.fadeInRight {
 		.modal-dialog {

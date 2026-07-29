@@ -1,13 +1,29 @@
-    <div class="card rounded-2 mb-2">
+    <div class="card rounded-2 mb-1">
         <div class="card-header d-flex flex-wrap align-items-center">
-            <h5 class="card-title flex-grow-1">{{ 'Lista de' | translate }} {{ title | translate }}</h5>
+            <div class="flex-grow-1">
+                <div *ngIf="breadcrumbItems.length > 0">
+                    <!-- <p class="text-primary text-uppercase fw-semibold fs-12 mb-1">
+                        {{ title | translate }}
+                    </p> -->
+                    <h5 class="card-title mb-sm-0">{{ 'Lista de' | translate }} {{ subtitle | translate }}</h5>
+                    <p *ngIf="description" class="text-muted mb-0 mt-1">
+                        {{ description | translate }}
+                    </p>
+                </div>
+            </div>
             <div class="d-flex gap-1 flex-wrap">
                 <button *ngIf="newShow" (click)="openPopup()"
                     class="btn btn-soft-secondary add-btn" data-bs-placement="top"
-                    data-bs-toggle="tooltip" title="{{'Agregar' | translate}}">
+                    data-bs-toggle="tooltip" title="{{ 'Agregar' | translate }}">
                     <i class="ri-add-circle-line align-middle"></i> 
-                    <span class="d-none d-md-inline-block ms-1">{{"Agregar" | translate}}</span>
+                    <span class="d-none d-md-inline-block ms-1">{{ 'Agregar' | translate }}</span>
                 </button>
+                <button *ngIf="consultShow" (click)="consult()"
+                    class="btn btn-soft-primary" data-bs-placement="top"
+                    data-bs-toggle="tooltip" title="{{'Consultar' | translate}}">
+                    <i class="ri-refresh-line align-middle"></i> 
+                    <span class="d-none d-md-inline-block ms-1">{{"Consultar" | translate}}</span>
+                </button>                
                 <button *ngIf="importShow" (click)="import($event)" 
                     class="btn btn-soft-primary" data-bs-placement="top"
                     data-bs-toggle="tooltip" title="{{'Importar' | translate}}">
@@ -20,23 +36,33 @@
                     <i class="ri-download-2-line align-bottom"></i>
                     <span class="d-none d-md-inline-block ms-1">{{ "Descargar plantilla" | translate }}</span>
                 </button>
-                <button *ngIf="consultShow" (click)="consult()"
-                    class="btn btn-soft-primary" data-bs-placement="top"
-                    data-bs-toggle="tooltip" title="{{'Consultar' | translate}}">
-                    <i class="ri-refresh-line align-middle"></i> 
-                    <span class="d-none d-md-inline-block ms-1">{{"Consultar" | translate}}</span>
-                </button>                
                 <button *ngIf="notifyShow" (click)="notify()"
                     class="btn btn-soft-success add-btn" data-bs-placement="top"
                     data-bs-toggle="tooltip" title="{{'Notificación Masiva' | translate}}">
                     <i class="ri-mail-send-fill align-middle"></i> 
                     <span class="d-none d-md-inline-block ms-1">{{"Notificación Masiva" | translate}}</span>
-                </button>     
-                <button *ngIf="exportShow" (click)="csvFileExport($event)" id="remove-actions" 
-                    class="btn btn-soft-info" style="display: none" data-bs-placement="top"
+                </button>
+                <button *ngIf="exportShow && csvColumns.length > 0 && (csvItems.length > 0 || SelectedItems.length > 0)"
+                    (click)="csvFileExport()"
+                    class="btn btn-soft-info" data-bs-placement="top"
                     data-bs-toggle="tooltip" title="{{'Exportar' | translate}}">
                     <i class="ri-file-download-line align-bottom"></i>
-                    <span class="d-none d-md-inline-block ms-1">{{"Exportar" | translate}}</span>
+                    <span class="d-none d-md-inline-block ms-1">
+                        {{ (SelectedItems.length > 0 ? 'Exportar selección' : 'Exportar') | translate }}
+                    </span>
+                </button>
+                <button *ngIf="toggleOptions" (click)="toggle()"
+                    class="btn btn-soft-primary"
+                    type="button"
+                    [attr.aria-expanded]="toggleOptions.ariaExpanded"
+                    [attr.aria-controls]="toggleOptions.ariaControls">
+                    <i [class]="toggleOptions.ariaExpanded ? 'ri-filter-off-line align-bottom' : 'ri-filter-3-line align-bottom'"></i>
+                    <span class="d-none d-md-inline-block ms-1">
+                        {{ (toggleOptions.ariaExpanded ? toggleOptions.closeText : toggleOptions.openText) | translate }}
+                    </span>
+                    <span *ngIf="toggleOptions.count !== undefined && toggleOptions.count > 0" class="badge bg-primary ms-1">
+                        {{ toggleOptions.count }}
+                    </span>
                 </button>
             </div>                
         </div>

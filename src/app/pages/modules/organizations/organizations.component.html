@@ -1,104 +1,150 @@
-<app-breadcrumbs [title]="title | translate" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+<app-breadcrumbs [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
 
 <div class="content">
     <app-data-header
-        [title]="title"
+        [breadcrumbItems]="breadCrumbItems"
+        [csvItems]="organizacionesList"
+        [csvColumns]="CSV_COLUMNS"
+        [SelectedItems]="selectedItems"
         [newShow]="canActivate.includes('CREAR')"
         [exportShow]="canActivate.includes('VER')"
         (createEmitter)="openModal( undefined,'','lg')"
-        (exportEmitter)="csvFileExport()"
     ></app-data-header>
     <div class="card rounded-2">
       <div class="card-header border border-dashed border-end-0 border-start-0">
-        <form (ngSubmit)="applyFilters()">
-          <div class="row g-2">
-            <div class="col-6 col-sm-6 col-lg-3">
-              <div class="search-box">
-                <input type="text" class="form-control search" name="searchTerm"
-                  [placeholder]="'Buscar...' | translate"
-                  [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()">
-                <i class="ri-search-line search-icon"></i>
-              </div>
-            </div>
-            <div class="col-6 col-sm-6 col-lg-2">
-              <input type="text" class="form-control" name="tipoOrganizacion"
-                [placeholder]="'Tipo Organización' | translate"
-                [(ngModel)]="tipoOrganizacion">
-            </div>
-            <div class="col-6 col-sm-6 col-lg-2">
-              <select class="form-control" data-choices data-choices-search-false 
-                name="estado" id="idEstado" [(ngModel)]="estado">
-                <option value="" selected>{{ 'Estado' | translate }}</option>
-                <option value="ACTIVO">{{ 'Activo' | translate }}</option>
-                <option value="INACTIVO">{{ 'Inactivo' | translate }}</option>
-              </select>
-            </div>
-            <div class="col-6 col-sm-6 col-lg-2">
-              <select class="form-control" data-choices data-choices-search-false 
-                name="tieneNit" id="idTieneNit" [(ngModel)]="tieneNit">
-                <option value="" selected>{{ 'Tiene NIT' | translate }}</option>
-                <option value="SI">{{ 'Sí' | translate }}</option>
-                <option value="NO">{{ 'No' | translate }}</option>
-              </select>
-            </div>
-            <div class="col-6 col-sm-6 col-lg-2">
-              <select class="form-control" data-choices data-choices-search-false 
-                name="tienePersoneriaJuridica" id="idTienePersoneria" [(ngModel)]="tienePersoneriaJuridica">
-                <option value="" selected>{{ 'Personería Jurídica' | translate }}</option>
-                <option value="SI">{{ 'Sí' | translate }}</option>
-                <option value="NO">{{ 'No' | translate }}</option>
-              </select>
-            </div>
-            <div class="col-6 col-sm-6 col-lg-1">
-              <button class="btn btn-primary w-100" 
-                [title]="'Filtrar' | translate" type="submit">
-                <i class="ri-filter-line align-bottom"></i>
-              </button>
+        <div class="row g-2">
+
+          <div class="col-6 col-sm-6 col-lg-4">
+            <div class="search-box">
+              <input
+                type="text"
+                class="form-control search"
+                name="searchTerm"
+                [placeholder]="'Buscar...' | translate"
+                [(ngModel)]="searchTerm"
+                (ngModelChange)="applyFilters()">
+
+              <i class="ri-search-line search-icon"></i>
             </div>
           </div>
-        </form>
+
+          <div class="col-6 col-sm-6 col-lg-2">
+            <select
+              class="form-select"
+              name="estado"
+              [(ngModel)]="estado"
+              (ngModelChange)="applyFilters()">
+
+              <option [ngValue]="''">
+                {{ 'Todos los estados' | translate }}
+              </option>
+
+              <option value="ACTIVO">
+                {{ 'Activo' | translate }}
+              </option>
+
+              <option value="INACTIVO">
+                {{ 'Inactivo' | translate }}
+              </option>
+            </select>
+          </div>
+
+          <div class="col-6 col-sm-6 col-lg-2">
+            <select
+              class="form-select"
+              name="tieneNit"
+              [(ngModel)]="tieneNit"
+              (ngModelChange)="applyFilters()">
+
+              <option [ngValue]="''">
+                {{ 'Todos: NIT' | translate }}
+              </option>
+
+              <option value="SI">
+                {{ 'Con NIT' | translate }}
+              </option>
+
+              <option value="NO">
+                {{ 'Sin NIT' | translate }}
+              </option>
+            </select>
+          </div>
+
+          <div class="col-6 col-sm-6 col-lg-3">
+            <select
+              class="form-select"
+              name="tienePersoneriaJuridica"
+              [(ngModel)]="tienePersoneriaJuridica"
+              (ngModelChange)="applyFilters()">
+
+              <option [ngValue]="''">
+                {{ 'Toda personería jurídica' | translate }}
+              </option>
+
+              <option value="SI">
+                {{ 'Con Personería Jurídica' | translate }}
+              </option>
+
+              <option value="NO">
+                {{ 'Sin Personería Jurídica' | translate }}
+              </option>
+            </select>
+          </div>
+
+          <div class="col-6 col-sm-6 col-lg-1">
+            <button
+              type="button"
+              class="btn btn-outline-secondary w-100"
+              [title]="'Limpiar' | translate"
+              (click)="clearFilters()">
+
+              <i class="ri-refresh-line align-bottom"></i>
+            </button>
+          </div>
+
+        </div>
       </div>
       <div class="card-header p-0">
         <div class="row g-2">
           <div class="col-auto flex-grow-1">
-            <ul ngbNav #nav="ngbNav" [activeId]="1" (navChange)="onNavChange($event)"
-              class="nav nav-tabs nav-tabs-custom nav-success " role="tablist">
-            <li [ngbNavItem]="1" class="nav-item">
-              <a ngbNavLink class="nav-link py-2" data-bs-toggle="tab" id="All" 
-                href="javascript:void(0);" role="tab" aria-selected="true">
-                {{ 'Todo' | translate }}<span class="badge bg-danger align-middle ms-1">{{temp.length}}</span>
-              </a>
-            </li>
-            <li [ngbNavItem]="2" class="nav-item">
-              <a ngbNavLink class="nav-link py-2" data-bs-toggle="tab" id="Activas" 
-                href="javascript:void(0);" role="tab" aria-selected="false">
-                {{ 'Activas' | translate }}
-              </a>
-            </li>
-            <li [ngbNavItem]="3" class="nav-item">
-              <a ngbNavLink class="nav-link py-2" data-bs-toggle="tab" id="Inactivas" 
-                href="javascript:void(0);" role="tab" aria-selected="false">
-                {{ 'Inactivas' | translate }}
-              </a>
-            </li>
-            <li [ngbNavItem]="4" class="nav-item">
-              <a ngbNavLink class="nav-link py-2" data-bs-toggle="tab" id="ConNit" 
-                href="javascript:void(0);" role="tab" aria-selected="false">
-                {{ 'Con NIT' | translate }}
-              </a>
-            </li>
-            <li [ngbNavItem]="5" class="nav-item">
-              <a ngbNavLink class="nav-link py-2" data-bs-toggle="tab" id="ConPersoneria" 
-                href="javascript:void(0);" role="tab" aria-selected="false">
-                {{ 'Con Personería Jurídica' | translate }}
-              </a>
-            </li>
-            <li [ngbNavItem]="6" class="nav-item">
-              <a ngbNavLink class="nav-link py-2" data-bs-toggle="tab" id="SinRepresentante" 
-                href="javascript:void(0);" role="tab" aria-selected="false">
-                {{ 'Sin Representante' | translate }}
-              </a>
-            </li>
+            <ul
+              ngbNav
+              #nav="ngbNav"
+              [activeId]="tipoOrganizacion"
+              (navChange)="onNavChange($event)"
+              class="nav nav-tabs nav-tabs-custom nav-success"
+              role="tablist">
+
+              <li
+                [ngbNavItem]="'TODAS'"
+                class="nav-item flex-shrink-0">
+
+                <a ngbNavLink class="nav-link py-2">
+                  {{ 'Todas' | translate }}
+
+                  <span
+                    *ngIf="tipoOrganizacion === 'TODAS'"
+                    class="badge bg-secondary ms-1">
+                    {{ getTabCount('TODAS') }}
+                  </span>
+                </a>
+              </li>
+
+              <li
+                *ngFor="let tipo of tipoOrganizacionList"
+                [ngbNavItem]="tipo"
+                class="nav-item flex-shrink-0">
+
+                <a ngbNavLink class="nav-link py-2">
+                  {{ tipo.split('_').join(' ') | titlecase }}
+
+                  <span
+                    *ngIf="tipoOrganizacion === tipo"
+                    class="badge bg-secondary ms-1">
+                    {{ getTabCount(tipo) }}
+                  </span>
+                </a>
+              </li>
             </ul>
           </div>
           <div class="col-auto ms-auto d-flex justify-content-end align-items-center gap-2">
@@ -115,7 +161,7 @@
                   <i class="ri-settings-4-line"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
-                  @for (column of itemsList; track column) {
+                  @for (column of itemsList; track column.prop) {
                     <li class="dropdown-item p-1">
                       <div class="form-check form-check-outline form-check-primary">
                         <input class="form-check-input" type="checkbox" [id]="'formCheck' + column.prop"
@@ -144,7 +190,7 @@
           (showItemEmitter)="openModal($event,'show','md')"
           (editItemEmitter)="openModal($event,'edit','lg')"
           (closeItemEmitter)="openModal($event,'delete','md')"
-          [multiCheck]="canActivate.includes('CREAR')"
+          [multiCheck]="canActivate.includes('VER')"
           (selectedItemEmitter)="getSelectedItems($event)"
           [viewMode]="viewMode">
         </app-data-table>

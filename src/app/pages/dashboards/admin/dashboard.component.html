@@ -191,7 +191,7 @@
 
             <div class="card-body p-0 pb-2">
                 <div class="w-100">
-                    <apx-chart *ngIf="reservationsList.length>0" 
+                    <apx-chart *ngIf="reservationsList.length > 0 && analyticsChart"
                         dir="ltr" class="apex-charts" 
                         [series]="analyticsChart.series"
                         [chart]="analyticsChart.chart"
@@ -250,7 +250,7 @@
                 <h4 class="card-title mb-0">Estados de Reservas por Complejo (últimos 6 meses)</h4>
             </div>
             <div class="card-body">
-                <apx-chart *ngIf="reservationsList.length>0"
+                <apx-chart *ngIf="reservationsList.length > 0 && StackedColumnChart"
                     [series]="StackedColumnChart.series" 
                     [chart]="StackedColumnChart.chart"
                     [dataLabels]="StackedColumnChart.dataLabels" 
@@ -269,4 +269,4 @@
     </div>
 </div>
 
-<app-toasts aria-live="polite" aria-atomic="true"></app-toasts>
+<app-dashboard-toasts aria-live="polite" aria-atomic="true"></app-dashboard-toasts>

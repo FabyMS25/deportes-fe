@@ -6,8 +6,6 @@ import { UntypedFormBuilder, UntypedFormGroup, UntypedFormArray, UntypedFormCont
 
 // Date Format
 import { DatePipe } from '@angular/common';
-// Csv File Export
-import { ngxCsv } from 'ngx-csv/ngx-csv';
 
 // Sweet Alert
 import Swal from 'sweetalert2';
@@ -22,6 +20,8 @@ import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
 import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
 import { ModalEmployeeComponent } from '../../modals/employee/modal-employee/modal-employee.component';
 import { ModalImportComponent } from '../../modals/employee/modal-import/modal-import.component';
+import { CsvColumn } from 'src/app/shared/data-header/data-header.component';
+import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component';
 
 @Component({
   selector: 'app-employees',
@@ -30,13 +30,11 @@ import { ModalImportComponent } from '../../modals/employee/modal-import/modal-i
 })
 
 export class EmployeesComponent implements OnInit {
-  title = 'Encargados'
-  breadCrumbItems!: Array<{}>;
-  
+  breadCrumbItems: BreadCrumbItem[] =[];
+  viewMode: 'table' | 'cards' = 'table';
   canActivate: string[];
   itemsList: any[] = [];
-  temp: any[] = [];
-  viewMode: 'table' | 'cards' = 'table';
+  temp: EncargadoComplejo[] = [];
 
   submitted = false;
 
@@ -46,6 +44,17 @@ export class EmployeesComponent implements OnInit {
   funcionarioSelected!: any;
   complejosList: any[] = [];
   selectedItems: any[] = [];
+  readonly CSV_COLUMNS: CsvColumn<EncargadoComplejo>[] = [
+    { header: 'Nombre', value: item => item.nombre || '-' },
+    { header: 'Telefono', value: item => item.telefono || '-' },
+    { header: 'Activo', value: item => item.activo ? 'Activo' : 'Inactivo' },
+    { header: 'Fecha Asignación', value: item => this.formatDate(item.fechaAsignacion) || '-' },
+    { header: 'Fecha Fin', value: item => this.formatDate(item.fechaFinAsignacion) || '-' },
+    { header: 'Hora Entrada', value: item => item.horaEntrada || '-' },
+    { header: 'Hora Salida', value: item => item.horaSalida || '-' },
+    { header: 'Complejo', value: item => item.complejoDto?.nombre || '-' },
+    { header: 'User UUID', value: item => item.userUuid || '-' },
+  ];
 
   @ViewChild('viewModel') viewModel!: ElementRef;
 
@@ -56,9 +65,8 @@ export class EmployeesComponent implements OnInit {
     private employeesService: EncargadoService,
     private complejosService: ComplejosService,
     private datePipe: DatePipe
-    
   ) {
-    this.canActivate = this.authService.hasPermission(this.title);
+    this.canActivate = this.authService.hasPermission('Encargado');
   }
 
   ngOnInit(): void {
@@ -68,7 +76,7 @@ export class EmployeesComponent implements OnInit {
     }
     this.breadCrumbItems = [
       { label: 'Administración' },
-      { label: this.title, active: true }
+      { label: 'Encargado', active: true }
     ];
     this.itemsList = [
       { name: 'Nombre', prop: 'nombre', avatar: true, visible: true },
@@ -229,37 +237,6 @@ export class EmployeesComponent implements OnInit {
   }
 
   // Csv File Export
-  csvFileExport() {
-    const lista = this.selectedItems.flatMap((item: EncargadoComplejo) => {
-      const data = {
-        nombre: item.nombre,
-        telefono: item.telefono,
-        activo: item.activo ? 'Activo' : 'Inactivo',
-        fechaAsignacion: this.formatDate(item.fechaAsignacion),
-        fechaFinAsignacion: this.formatDate(item.fechaFinAsignacion),
-        horaEntrada: item.horaEntrada,
-        horaSalida: item.horaSalida,
-        complejo: item.complejoDto?.nombre,
-        userUuid: item.userUuid
-      };    
-      return [{ ...data }];      
-    });
-    
-    var xlsxData = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de ' + this.title,
-      useBom: true,
-      noDownload: false,
-      headers: ["Nombre", "Telefono", "Activo", "Fecha Asignación", "Fecha Fin", 
-                "Hora Entrada", "Hora Salida", "Complejo", "User UUID"]
-    };
-    new ngxCsv(lista, "Lista de " + this.title, xlsxData);
-  }
-
   formatDate(date: any): string {
     if (!date) return '';
     const dateObj = new Date(date);
@@ -276,9 +253,7 @@ export class EmployeesComponent implements OnInit {
   private getComplejos() {
     this.complejosService.getAll().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.complejosList = data.payload;
-        }
+        this.complejosList = data;
       }
     });
   }
@@ -288,13 +263,11 @@ export class EmployeesComponent implements OnInit {
     this.employeesService.getAll().subscribe({
       next: (data: any) => {
         this.loading = false;
-        if (data.status === 'OK') {
-          this.employeesList = data.payload
-          this.temp = this.employeesList;
-          if (this.employeesList.length > 0) {
-            this.funcionarioSelected = this.employeesList[0];
-          }
-        } 
+        this.employeesList = data
+        this.temp = this.employeesList;
+        if (this.employeesList.length > 0) {
+          this.funcionarioSelected = this.employeesList[0];
+        }
       },
       error: () => {
         this.loading = false;
@@ -307,13 +280,11 @@ export class EmployeesComponent implements OnInit {
   deleteData() {
     let uuid = this.deleteId;
     this.employeesService.delete(uuid).subscribe({
-      next: (data: any) => {
+      next: (message: string) => {
         this.submitted = false;
-        if (data.status == 'OK') {
-          this.loadData();
-          this.notify(data.payload, 'success');
-          this.modalService.dismissAll();
-        }
+        this.loadData();
+        this.notify(message || 'Encargado eliminado exitosamente', 'success');
+        this.modalService.dismissAll();
       },
       error: err => {
         this.submitted = false;

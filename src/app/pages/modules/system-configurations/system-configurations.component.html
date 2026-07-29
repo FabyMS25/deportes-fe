@@ -1,12 +1,14 @@
-<app-breadcrumbs [title]="title | translate" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+<app-breadcrumbs [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
 
 <div class="content">
     <app-data-header
-        [title]="title"
+        [breadcrumbItems]="breadCrumbItems"
+        [csvColumns]="CSV_COLUMNS"
+        [csvItems]="configuracionesList"
+        [SelectedItems]="selectedItems"
         [newShow]="canActivate.includes('CREAR')"
         [exportShow]="canActivate.includes('VER')"
         (createEmitter)="openModal( undefined,'','lg')"
-        (exportEmitter)="csvFileExport()"
     ></app-data-header>
     <div class="card rounded-2">
       <div class="card-header border border-dashed border-end-0 border-start-0">
@@ -123,8 +125,8 @@
           [allcontent]="configuracionesList"
           [actions]="{
             show: canActivate.includes('VER'),
-            edit: canActivate.includes('ACTUALIZAR'),
-            close: canActivate.includes('ELIMINAR')?'Eliminar':'',}"
+            edit: canActivate.includes('ACTUALIZAR') || canActivate.includes('ACTUALIZAR_PROTEGIDA') || canActivate.includes('ACTUALIZAR_CONTROL'),
+            close: canActivate.includes('ANULAR')?'Anular':'',}"
           (showItemEmitter)="openModal($event,'show','md')"
           (editItemEmitter)="openModal($event,'edit','lg')"
           (closeItemEmitter)="openModal($event,'delete','md')"

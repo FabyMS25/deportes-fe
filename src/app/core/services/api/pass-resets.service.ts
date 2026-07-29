@@ -7,6 +7,7 @@ import { map, Observable, switchMap } from 'rxjs';
 
 import { GlobalComponent } from "../../../global-component";
 import { UserService } from '../api-users/users.service';
+import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 @Injectable({
   providedIn: 'root'
@@ -19,11 +20,11 @@ export class PassResetsService {
   constructor(private http: HttpClient , private authService:UserService) { }
 
   getAll(): Observable<Reserva[]> {
-    return this.http.get<Reserva[]>(`${this.apiUrl}`);
+    return apiGet<Reserva[]>(this.http, this.apiUrl, 'obtener recuperaciones de contraseña');
   }
 
   getByUuid(uuid: String): Observable<Reserva> {
-    return this.http.get<Reserva>(`${this.apiUrl}${uuid}`);
+    return apiGet<Reserva>(this.http, `${this.apiUrl}${uuid}`, `obtener recuperación de contraseña (${uuid})`);
   }
 
 
@@ -48,24 +49,24 @@ export class PassResetsService {
           expiresAt: expirationTime.toISOString(), // Send expiration time in ISO format
           token: token 
         };
-          return this.http.post<any>(`${this.apiUrl}`, data);
+          return apiPost<any>(this.http, this.apiUrl, data, 'guardar recuperación de contraseña');
       })
     );
   }
 
   validateToken(token: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/validate-token/${token}` )
+    return apiGet<any>(this.http, `${this.apiUrl}/validate-token/${token}`, 'validar token de recuperación')
   }
   getUserByToken(token: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/validate-token-get-user/${token}` );
+    return apiGet<any>(this.http, `${this.apiUrl}/validate-token-get-user/${token}`, 'obtener usuario por token de recuperación');
   }
 
   
   update(data: Reserva): Observable<Reserva> {
-    return this.http.put<Reserva>(`${this.apiUrl}`, data);
+    return apiPut<Reserva>(this.http, this.apiUrl, data, 'actualizar recuperación de contraseña');
   }
 
-  delete(uuid: string) {
-    return this.http.delete(`${this.apiUrl}/${uuid}`);
+  delete(uuid: string): Observable<string> {
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar recuperación de contraseña (${uuid})`);
   }
 }

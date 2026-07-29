@@ -1,8 +1,6 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-// Csv File Export
-import { ngxCsv } from 'ngx-csv/ngx-csv';
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
@@ -16,6 +14,8 @@ import { TipoEstructura } from 'src/app/core/constants/Features';
 import { EstadoActual, StatusUtils } from 'src/app/core/constants/Estados';
 import { LeafletComponent } from 'src/app/shared/map/leaflet.component';
 import { ModalFacilitiesComponent } from '../../modals/modal-facility/modal-facility.component';
+import { CsvColumn } from 'src/app/shared/data-header/data-header.component';
+import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component';
 
 @Component({
   selector: 'app-facilities',
@@ -24,13 +24,12 @@ import { ModalFacilitiesComponent } from '../../modals/modal-facility/modal-faci
 })
 
 export class FacilitiesComponent {
-  title="Complejos Deportivos";
-  breadCrumbItems!: Array<{}>;
-  canActivate:string[];
-  itemsList:any[]=[];
-  temp:any[]=[];
-  dataSelected!:ComplejoDeportivo;
+  breadCrumbItems: BreadCrumbItem[] =[];
   viewMode: 'table' | 'cards' = 'table';
+  canActivate: string[];
+  itemsList: any[] = [];
+  temp: ComplejoDeportivo[] = [];
+  dataSelected!:ComplejoDeportivo;
 
   categoryList:any[]=[];
   facilitiesList:any[]=[]
@@ -46,7 +45,7 @@ export class FacilitiesComponent {
     private categoriasService: CategoriasService,
     private authService: AuthenticationService,
     private datePipe: DatePipe,) {
-      this.canActivate = this.authService.hasPermission(this.title);
+      this.canActivate = this.authService.hasPermission('Complejos Deportivos');
   }
 
   ngOnInit(): void {
@@ -56,7 +55,7 @@ export class FacilitiesComponent {
     }
     this.breadCrumbItems = [
       { label: 'Administración' },
-      { label: this.title, active: true }
+      { label: 'Complejos Deportivos', active: true }
     ];
     this.itemsList = [
       {name: 'Nombre', prop: 'nombre', visible:true},
@@ -163,6 +162,22 @@ export class FacilitiesComponent {
   }
 
   headersImport = ['Nombre', 'Tipo Estructura', 'Estado', 'Teléfono Principal', 'Distrito', 'Ubicación', 'Latitud', 'Longitud', 'Iluminación', 'Vestuarios', 'Gradarías'];
+  readonly CSV_COLUMNS: CsvColumn<any>[] = [
+    { header: 'Nombre', value: item => item.nombre || '-' },
+    { header: 'Tipo Estructura', value: item => item.tipoEstructura || '-' },
+    { header: 'Estado', value: item => item.estadoActual || '-' },
+    { header: 'Teléfono Principal', value: item => item.telefonoPrincipal || '-' },
+    { header: 'Distrito', value: item => item.distrito || '-' },
+    { header: 'Ubicación', value: item => item.ubicacion || '-' },
+    { header: 'Latitud', value: item => item.latitud || '-' },
+    { header: 'Longitud', value: item => item.longitud || '-' },
+    { header: 'Iluminación', value: item => item.tieneIluminacion ? 'SI' : 'NO' },
+    { header: 'Vestuarios', value: item => item.tieneVestuarios ? 'SI' : 'NO' },
+    { header: 'Gradarías', value: item => item.tieneGraderias ? 'SI' : 'NO' },
+    { header: 'Observaciones', value: item => item.observaciones || '-' },
+    { header: 'Encargado(Nombre)', value: item => this.getEncargadosForExport(item).map(encargado => encargado.nombre || '-') },
+    { header: 'Encargado(Teléfono)', value: item => this.getEncargadosForExport(item).map(encargado => encargado.telefono || '-') },
+  ];
   public openModalImport() {
     const modalRef = this.modalService.open(ModalImportComponent, {
       size: 'lg', backdrop: 'static'
@@ -231,54 +246,9 @@ export class FacilitiesComponent {
     return false;
   }
 
-  // Csv File Export
-  csvFileExport() {
-    const lista = this.selectedItems.flatMap((item: any) => {
-    const baseData = {
-      nombre: item.nombre || '',
-      tipoEstructura: item.tipoEstructura || '',
-      estadoActual: item.estadoActual ? 'ACTIVO' : 'INACTIVO',
-      telefonoPrincipal: item.telefonoPrincipal || '',
-      distrito: item.distrito || '',
-      ubicacion: item.ubicacion || '',
-      latitud: item.latitud || '',
-      longitud: item.longitud || '',
-      tieneIluminacion: item.tieneIluminacion ? 'SI' : 'NO',
-      tieneVestuarios: item.tieneVestuarios ? 'SI' : 'NO',
-      tieneGraderias: item.tieneGraderias ? 'SI' : 'NO',
-      observaciones: item.observaciones || ''
-    };
-
-      if (!item.encargadosList || item.encargadosList.length === 0) {
-        return [{
-          ...baseData,
-          encargado: '',
-          telefonoEncargado: '',
-        }];
-      }
-      return item.encargadosList.map((encargado: any) => ({
-        ...baseData,
-        encargado: encargado.nombre || '',
-        telefonoEncargado: encargado.telefono || '',
-      }));
-    });
-    
-    var data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de ' + this.title,
-      useBom: true,
-      noDownload: false,
-      headers: [
-        "Nombre", "Tipo Estructura", "Estado", "Teléfono Principal", "Distrito", 
-        "Ubicación", "Latitud", "Longitud", "Iluminación", "Vestuarios", "Gradarías",
-        "Observaciones", "Encargado(Nombre)", "Encargado(Teléfono)"
-      ]
-    };
-    new ngxCsv(lista, this.title, data);
+  private getEncargadosForExport(item: any): any[] {
+    const encargados = item.encargadosList || item.encargadosDtoList || [];
+    return encargados.length ? encargados : [{}];
   }
 
   /* API Services */
@@ -287,12 +257,10 @@ export class FacilitiesComponent {
     this.complejosService.getAll().subscribe({
       next: (data: any) => {
         this.loading = false;
-        if (data['status'] === 'OK') {
-          this.facilitiesList = data.payload;
-          this.temp = data.payload;
-          if (this.facilitiesList && this.facilitiesList.length > 0) {
-            this.dataSelected = this.facilitiesList[0];
-          }
+        this.facilitiesList = data;
+        this.temp = data;
+        if (this.facilitiesList && this.facilitiesList.length > 0) {
+          this.dataSelected = this.facilitiesList[0];
         }
       },
       error: (error) => {
@@ -313,12 +281,10 @@ export class FacilitiesComponent {
   deleteData() {
     let uuid = this.deleteId;
     this.complejosService.delete(uuid).subscribe({
-      next: (data:any) => {
-            if(data['status'] === 'OK') {
-              this.notify(data.payload, 'info')
-              this.getFacilities();
-              this.modalService.dismissAll();
-            }
+      next: (message: string) => {
+            this.notify(message || 'Complejo eliminado exitosamente', 'info')
+            this.getFacilities();
+            this.modalService.dismissAll();
        },
       error: err => {
         this.notify('No se pudo eliminar el registro!','error')

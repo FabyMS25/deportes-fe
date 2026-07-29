@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 import { Contribuyente } from '../models/contribuyente.model';
+import { apiPost } from './apiResponses';
 
 const apiUrl = `${environment.backendUrl}/ruat`;
 
@@ -85,7 +86,7 @@ export class RuatRequestsService {
   }
 
   authenticate(): Observable<any> {
-    return this.http.post<any>(`${apiUrl}/login`, {});
+    return apiPost<any>(this.http, `${apiUrl}/login`, {}, 'autenticar RUAT');
   }
 
   getContribuyentePorCi(numeroDocumento: string, tipoDocumento: string, expedido: string): Observable<any> {
@@ -96,7 +97,7 @@ export class RuatRequestsService {
         'expedido': expedido
       }
     };
-    return this.http.post<any>(`${apiUrl}/buscar`, requestData);
+    return apiPost<any>(this.http, `${apiUrl}/buscar`, requestData, 'buscar contribuyente RUAT');
   }
 
   registerContribuyente(data: Contribuyente): Observable<any> {
@@ -116,7 +117,7 @@ export class RuatRequestsService {
         observacion: "REGISTRO PARA DEPORTESAPP - GAMQ"
       }      
     };
-    return this.http.post<any>(`${apiUrl}/registro`, requestData);
+    return apiPost<any>(this.http, `${apiUrl}/registro`, requestData, 'registrar contribuyente RUAT');
   }
 
   getDeudasContribuyente(tipoConsulta: string, nroDocumento: string, tipoDocumento: string): Observable<any> {
@@ -126,9 +127,11 @@ export class RuatRequestsService {
       'tipoDocumento': tipoDocumento
     };
 
-    return this.http.post<any>(
+    return apiPost<any>(
+      this.http,
       `${apiUrl}/RuatServiciosWebTasasOI/tasasOI/consultaDeudaTasaContrib`,
-      requestData
+      requestData,
+      'consultar deuda RUAT'
     );
   }
 
@@ -140,7 +143,7 @@ export class RuatRequestsService {
         observacion: data.observacion
       }
     };
-    return this.http.post<any>(`${apiUrl}/creartasa`, requestData);
+    return apiPost<any>(this.http, `${apiUrl}/creartasa`, requestData, 'crear tasa RUAT');
   }
 
   cancelTasa(data: any): Observable<any> {
@@ -151,7 +154,7 @@ export class RuatRequestsService {
         'observacion': data.observacion
       }
     };
-    return this.http.post<any>(`${apiUrl}/anulartasa`, requestData);
+    return apiPost<any>(this.http, `${apiUrl}/anulartasa`, requestData, 'anular tasa RUAT');
   }
   
   consultaPagoTasa(nroTasa: string): Observable<any> {
@@ -160,7 +163,7 @@ export class RuatRequestsService {
         'numeroTasa': nroTasa
       }
     };
-    return this.http.post<any>(`${apiUrl}/pago`, requestData);
+    return apiPost<any>(this.http, `${apiUrl}/pago`, requestData, 'consultar pago RUAT');
   }
 
   setToken(_token: string): void {

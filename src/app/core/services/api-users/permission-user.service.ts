@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { GlobalComponent } from 'src/app/global-component';
+import { apiGet } from '../apiResponses';
 
 const CODE_APP = GlobalComponent.CODE_APP;
 const USERS_API = `${environment.apiLoginUrl}/permiso`;
@@ -14,7 +15,7 @@ export class PermissionUserService {
   constructor(private http: HttpClient) { }
 
   getPermissionsApp(): Observable<any[]> {
-    return this.http.get<any[]>(`${USERS_API}/padres/${CODE_APP}`);
+    return apiGet<any[]>(this.http, `${USERS_API}/padres/${CODE_APP}`, 'obtener permisos de aplicación');
   }
 
   getPermissionsUser(user: any): Observable<any[]> {
@@ -25,6 +26,6 @@ export class PermissionUserService {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + user.token
     });
-    return this.http.get<any[]>(`${USERS_API}/permisos-porusuario`, { params: params, headers: headers });
+    return apiGet<any[]>(this.http, `${USERS_API}/permisos-porusuario`, 'obtener permisos por usuario', { params: params, headers: headers });
   }
 }

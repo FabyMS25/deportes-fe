@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder } from '@angular/forms';
 import { NgbModal, NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
-import { ngxCsv } from 'ngx-csv';
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
@@ -22,21 +21,23 @@ import { Reserva } from 'src/app/core/models/reserva.model';
 import { Pago } from 'src/app/core/models/pago.model';
 import { TicketComponent } from '../reports/ticket/ticket.component';
 import { BookingPeriodoModalComponent } from '../../modals/modal-booking-school/modal-booking-school.component';
+import { CsvColumn } from 'src/app/shared/data-header/data-header.component';
+import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component';
 @Component({
   selector: 'app-booking-periodo',
   templateUrl: './booking-periodo.component.html',
   styleUrl: './booking-periodo.component.scss'
 })
 export class BookingPeriodoComponent implements OnInit {
-  title = 'Escuelas Municipales';
-  breadCrumbItems!: Array<{}>;
-  itemsList: any[] = [];
+  breadCrumbItems: BreadCrumbItem[] =[];
   viewMode: 'table' | 'cards' = 'table';
+  canActivate: string[];
+  itemsList: any[] = [];
+  temp: any[] = [];
   serverSidePagination = true;
   currentPage = 1;
   pageSize = 5;
 
-  canActivate: string[];
   userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
   userData!: any;
   contribuyente!: Contribuyente;
@@ -52,12 +53,72 @@ export class BookingPeriodoComponent implements OnInit {
     last: true,
     pageable: { pageNumber: 0, pageSize: 5 }
   };
-  temp: any[] = [];
   escuelasList: Organizacion[] = [];
   estudiantesList: EstudianteEscuela[] = [];
   selectedItems: Reserva[] = [];
-  dataSelected!: any;
-  consultResults: any[] = [];
+  readonly CSV_COLUMNS: CsvColumn<Reserva>[] = [
+    { header: 'Estudiante',
+      value: item => this.getEstudiantesResumen(item)
+    },
+    { header: 'Matrícula',
+      value: item => this.getMatriculasResumen(item)
+    },
+    { header: 'Escuela',
+      value: item => item.organizacionDto?.nombre ?? ''
+    },
+    { header: 'Período',
+      value: item => this.getPeriodosResumen(item)
+    },
+    { header: 'Disciplina',
+      value: item => item.organizacionDto?.disciplina ??
+        item.reservasPeriodoDtoList?.[0]?.disciplina ?? ''
+    },
+    { header: 'Entrenador',
+      value: item => item.organizacionDto?.entrenador ??
+        item.reservasPeriodoDtoList?.[0]?.entrenador ?? ''
+    },
+    { header: 'Mes',
+      value: item => item.reservasPeriodoDtoList?.[0]?.mes ?? ''
+    },
+    { header: 'Año',
+      value: item => item.reservasPeriodoDtoList?.[0]?.año ?? ''
+    },
+    { header: 'Monto Total',
+      value: item => item.montoTotal ?? ''
+    },
+    { header: 'Estado Validación',
+      value: item => item.estadoValidacion ?? ''
+    },
+    { header: 'Estado Reserva',
+      value: item => item.estadoReserva ?? ''
+    },
+    { header: 'Número Reserva',
+      value: item => item.numeroReserva ?? ''
+    },
+    { header: 'Número Tasa',
+      value: item => item.numeroTasa ?? ''
+    },
+    { header: 'Fecha Creación',
+      value: item => item.fechaCreacion
+          ? new Date(item.fechaCreacion).toLocaleDateString()
+          : ''
+    },
+    { header: 'Fecha Pago',
+      value: item => item.pagosDtoList?.[0]?.fechaPago
+          ? new Date(
+              item.pagosDtoList[0].fechaPago
+            ).toLocaleDateString()
+          : ''
+    },
+    { header: 'Complejo',
+      value: item => item.campoDeportivoDto
+          ?.complejoDto?.nombre ?? ''
+    },
+    { header: 'Campo Deportivo',
+      value: item => item.campoDeportivoDto?.nombre ?? ''
+    }
+  ];
+  csvExportItems: Reserva[] = [];
   searchResults: any;
   periodMonths = [
     { value: 1, label: 'Enero' },
@@ -104,13 +165,12 @@ export class BookingPeriodoComponent implements OnInit {
     private organizacionesService: OrganizacionService,
     private estuduanteService: EstudianteEscuelaService,
   ) {
-    this.canActivate = this.authService.hasPermission(this.title);
+    this.canActivate = this.authService.hasPermission('Escuelas Municipales');
   }
 
   async ngOnInit() {
     this.breadCrumbItems = [
-      { label: '' },
-      { label: this.title, active: true }
+      { label: 'Mensualidades de Escuelas Municipales', active: true }
     ];
     this.itemsList = [
       { name: 'Número Reserva', prop: 'numeroReserva', visible: true, fallbackProp: 'numeroReserva' },
@@ -263,6 +323,15 @@ export class BookingPeriodoComponent implements OnInit {
     return reserva?.reservasPeriodoDtoList || [];
   }
 
+  private getReservaForPeriodoExport(item: any): Reserva {
+    return item?.reservaDto || item;
+  }
+
+  private getReservaPeriodoDetails(item: any): any[] {
+    const reserva = this.getReservaForPeriodoExport(item);
+    return reserva?.reservasPeriodoDtoList?.length ? reserva.reservasPeriodoDtoList : [item];
+  }
+
   getFirstDetalle(reserva: Reserva | any): ReservaPeriodo | undefined {
     return this.getReservaDetalles(reserva)[0];
   }
@@ -374,9 +443,6 @@ export class BookingPeriodoComponent implements OnInit {
         return;
       }
       const response: any = await this.reservaService.create(reserva).toPromise();
-      if (response.status !== 'OK') {
-        throw new Error(response.message || response.payload || 'Error al guardar la reserva');
-      }
       await this.getReservations();
     } catch (error: any) {
       Swal.fire({
@@ -455,107 +521,6 @@ export class BookingPeriodoComponent implements OnInit {
       this.getReservations();
     });
   }
-  public async consultModal(data: any, content: any, size: string) {
-    if (this.selectedItems.length === 0) {
-      this.selectedItems.push(data);
-    }    
-    this.consultResults = [];
-    this.dataSelected = null;
-    this.loading = true;    
-    let shouldRefreshData = false;    
-    try {
-      for (const item of this.selectedItems) {
-        try {
-          const result = await this.consultData(item, { silent: false });
-          this.consultResults.push(result);
-          if (!this.dataSelected && result.hasPayment && result.pagoData) {
-            this.dataSelected = {
-              reserva: result.item,
-              pago: result.pagoData,
-              ruatResponse: result.ruatResponse
-            };
-          }
-          if ( result.hasPayment) {
-            shouldRefreshData = true;
-          }
-        } catch (error) {
-          this.consultResults.push({ 
-            item, 
-            text: 'Error durante la consulta', 
-            type: 'error',
-            hasPayment: false,
-            consultationSuccessful: false,
-            ruatResponse: error,
-            errorCode: 'RUAT_EXCEPTION'
-          });
-        }
-      }
-    } finally {
-      this.loading = false;      
-      if (this.consultResults.length > 0) {
-        if (this.dataSelected) {
-          this.modalService.open(content, { 
-            centered: true, 
-            size: size
-          });
-        } else {
-          this.modalService.open(content, { centered: true });
-        }
-      }          
-      this.selectedItems = [];
-      if (shouldRefreshData) {
-        this.getReservations();
-      }
-    }
-  }
-  public csvFileExport() {
-    const lista = this.selectedItems.flatMap((item: any) => {
-      const reserva: Reserva = item?.reservaDto || item;
-      const detalles = reserva?.reservasPeriodoDtoList?.length
-        ? reserva.reservasPeriodoDtoList
-        : [item];
-      return detalles.map((detalle: any) => {
-      const baseData = {
-        estudiante: detalle.estudianteEscuelaDto?.nombreCompleto || '-',
-        matricula: detalle.estudianteEscuelaDto?.matricula || detalle.matricula || '-',
-        escuela: reserva?.organizacionDto?.nombre || '-',
-        periodo: this.getPeriodoDisplayForReserva(detalle),
-        disciplina: reserva?.organizacionDto?.disciplina || detalle.disciplina || '-',
-        entrenador: reserva?.organizacionDto?.entrenador || detalle.entrenador || '-',
-        mes: detalle.mes || '-',
-        año: detalle.año || '-',
-        montoTotal: reserva?.montoTotal || '-',
-        estadoValidacion: reserva?.estadoValidacion || '-',
-        estadoReserva: reserva?.estadoReserva || '-',
-        numeroReserva: reserva?.numeroReserva || '-',
-        numeroTasa: reserva?.numeroTasa || '-',
-        fechaCreacion: reserva?.fechaCreacion ? new Date(reserva.fechaCreacion).toLocaleDateString() : '-',
-        fechaPago: reserva?.pagosDtoList?.[0]?.fechaPago ? new Date(reserva.pagosDtoList[0].fechaPago).toLocaleDateString() : '-',
-        complejo: reserva?.campoDeportivoDto?.complejoDto?.nombre || '-',
-        campoDeportivo: reserva?.campoDeportivoDto?.nombre || '-'
-      };
-      return { ...baseData };
-      });
-    });
-    const data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de Mensualidades - Escuelas Municipales',
-      useBom: true,
-      noDownload: false,
-      headers: [
-        "Estudiante", "Matrícula", "Escuela", "Período", "Disciplina", "Entrenador",
-        "Mes", "Año", "Monto Total", "Estado Validación", "Estado Reserva",
-        "Número Reserva", "Número Tasa", "Fecha Creación", "Fecha Pago",
-        "Complejo", "Campo Deportivo"
-      ]
-    };
-    new ngxCsv(lista, `Mensualidades_Escuelas_${new Date().toISOString().split('T')[0]}`, data);
-  }
-
   /* BUSINESS LOGIC */
   private async checkAndUpdateReservationStatuses(
     list: Reserva[]
@@ -806,14 +771,12 @@ export class BookingPeriodoComponent implements OnInit {
         this.pageSize,
         this.filters
       ).toPromise();
-      if (!data || data.status !== 'OK') {
-        throw new Error(data?.payload || 'Respuesta inválida del servidor');
-      }
+      if (!data) throw new Error('Respuesta inválida del servidor');
       let list: Reserva[] = [];
-      if (Array.isArray(data.payload?.content)) {
-        list = data.payload.content;
-      } else if (Array.isArray(data.payload)) {
-        list = data.payload;
+      if (Array.isArray(data.content)) {
+        list = data.content;
+      } else if (Array.isArray(data)) {
+        list = data;
       }
       const employee = this.authService.staff();
       if (employee?.complejoDto) {
@@ -830,10 +793,11 @@ export class BookingPeriodoComponent implements OnInit {
         await this.checkAndUpdateReservationStatuses(list)
       );
       this.reservasList = {
-        ...data.payload,
+        ...data,
         content: updatedList
       };
       this.temp = updatedList;
+      await this.loadReservationsForExport(data, updatedList);
     } catch (error: any) {
       this.loading = false;
       this.handleError(error, 'Error al obtener las mensualidades');
@@ -846,9 +810,52 @@ export class BookingPeriodoComponent implements OnInit {
         }
       };
       this.temp = [];
+      this.csvExportItems = [];
     } finally {
       this.loading = false;
     }
+  }
+
+  private async loadReservationsForExport(
+    pageData: any,
+    currentPageList: Reserva[]
+  ): Promise<void> {
+    const totalElements = Number(pageData?.totalElements || currentPageList.length);
+    if (totalElements <= currentPageList.length) {
+      this.csvExportItems = currentPageList;
+      return;
+    }
+    try {
+      const data = await this.reservaService.getAll(
+        0,
+        totalElements,
+        this.filters
+      ).toPromise();
+      let list: Reserva[] = Array.isArray(data?.content)
+        ? data.content
+        : Array.isArray(data)
+          ? data
+          : [];
+      list = this.filterReservationsByUserScope(list);
+      this.csvExportItems = this.enrichReservationsForDisplay(list);
+    } catch {
+      this.csvExportItems = currentPageList;
+    }
+  }
+
+  private filterReservationsByUserScope(list: Reserva[]): Reserva[] {
+    const employee = this.authService.staff();
+    if (employee?.complejoDto) {
+      list = list.filter(item =>
+        item.campoDeportivoDto?.complejoDto?.uuid === employee.complejoDto.uuid
+      );
+    }
+    if (this.contribuyente) {
+      list = list.filter(item =>
+        item.contribuyenteDto?.uuid === this.contribuyente.uuid
+      );
+    }
+    return list;
   }
   private async updateReservation(
     reserva: Reserva,
@@ -864,13 +871,7 @@ export class BookingPeriodoComponent implements OnInit {
     try {
 
       const response: any = await this.reservaService.update(updatedReserva).toPromise();
-
-      if (response?.status === 'OK') {
-        return response.payload;
-      }
-      console.warn('Failed to update reservation:', response?.payload);
-
-      return reserva;
+      return response || reserva;
 
     } catch {
 
@@ -884,9 +885,7 @@ export class BookingPeriodoComponent implements OnInit {
     this.organizacionesService.getAll().subscribe({
       next: (data: any) => {
         this.loading = false;
-        if (data['status'] === 'OK') {
-          this.escuelasList = data.payload.content || data.payload;
-        }
+        this.escuelasList = data.content || data;
       },
       error: (error) => {
         this.loading = false;
@@ -898,9 +897,7 @@ export class BookingPeriodoComponent implements OnInit {
   private loadEstudiantes() {
     this.estuduanteService.getAll().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.estudiantesList = data.payload.content || data.payload;
-        }
+        this.estudiantesList = data.content || data;
       },
       error: (error) => {
         Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });

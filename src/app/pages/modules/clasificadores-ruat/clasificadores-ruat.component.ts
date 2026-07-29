@@ -3,13 +3,14 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { NgbModal} from '@ng-bootstrap/ng-bootstrap';
 
 import Swal from 'sweetalert2';
-import { ngxCsv } from 'ngx-csv';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ModalImportComponent } from 'src/app/shared/modal-import/modal-import.component';
 import { ClasificadorRuat } from 'src/app/core/models/clasificadorRuat.model';
 import { ClasificadorRuatService } from 'src/app/core/services/api/clasificadorRuat.service';
+import { CsvColumn } from 'src/app/shared/data-header/data-header.component';
+import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component';
 
 @Component({
   selector: 'app-clasificadores-ruat',
@@ -18,12 +19,11 @@ import { ClasificadorRuatService } from 'src/app/core/services/api/clasificadorR
 })
 
 export class ClasificadoresRuatComponent {
-  breadCrumbItems!: Array<{}>;
-  title="Clasificadores Ruat";
-  canActivate:string[];
-  itemsList:any[]=[];
-  temp:any[]=[];
+  breadCrumbItems: BreadCrumbItem[] =[];
   viewMode: 'table' | 'cards' = 'table';
+  canActivate: string[];
+  itemsList: any[] = [];
+  temp: ClasificadorRuat[] = [];
 
   clasificadorList:any[]=[];
   submitted = false;
@@ -39,7 +39,7 @@ export class ClasificadoresRuatComponent {
     public translate: TranslateService,
     private clasificadoresService: ClasificadorRuatService,
     private formBuilder: UntypedFormBuilder,) {
-      this.canActivate = this.authService.hasPermission(this.title);
+      this.canActivate = this.authService.hasPermission('Clasificadores Ruat');
   }
 
   ngOnInit(): void {
@@ -49,7 +49,7 @@ export class ClasificadoresRuatComponent {
     }
     this.breadCrumbItems = [
       { label: 'Administración' },
-      { label: this.title, active: true }
+      { label: 'Clasificadores Ruat', active: true }
     ];
     this.itemsList = [
       {name: 'Código', prop: 'codigo', visible: true},
@@ -128,6 +128,13 @@ export class ClasificadoresRuatComponent {
   }
 
   headersImport = ['Código', 'Nombre', 'Descripción', 'Tipo Arancel', 'Activo'];
+  readonly CSV_COLUMNS: CsvColumn<ClasificadorRuat>[] = [
+    { header: 'Código', value: item => item.codigo || '-' },
+    { header: 'Nombre', value: item => item.nombre || '-' },
+    { header: 'Descripción', value: item => item.descripcion || '-' },
+    { header: 'Tipo Arancel', value: item => item.tipoArancel || '-' },
+    { header: 'Activo', value: item => item.activo ? 'SI' : 'NO' },
+  ];
   public openModalImport() {
     const modalRef = this.modalService.open(ModalImportComponent, {
       size: 'lg', backdrop: 'static'
@@ -180,30 +187,6 @@ export class ClasificadoresRuatComponent {
     });
   }
 
-  public csvFileExport() {
-    const lista = this.selectedItems.flatMap((item: ClasificadorRuat) => {
-      return {
-        code: item.codigo,
-        name: item.nombre,
-        description: item.descripcion || '',
-        tariffType: item.tipoArancel,
-        active: item.activo ? 'SI' : 'NO'
-      };
-    });
-    var data = {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de ' + this.title,
-      useBom: true,
-      noDownload: false,
-      headers: this.headersImport
-    };
-    new ngxCsv(lista, this.title, data);
-  }
-
   /**
    * Delete model
    */
@@ -242,31 +225,24 @@ export class ClasificadoresRuatComponent {
   loading: boolean = true;
   private getClasificadores() {
     this.clasificadoresService.getAll().subscribe({
-      next: (data: any) => {
+      next: (data: ClasificadorRuat[]) => {
         this.loading = false;
-        if (data['status'] === 'OK') {
-          this.clasificadorList = data.payload;
-          this.temp = this.clasificadorList;
-        }
+        this.clasificadorList = data;
+        this.temp = this.clasificadorList;
       },
       error: (error) => {
         this.loading = false;
-        Swal.fire({ text: 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
+        Swal.fire({ text: error?.message || 'No se pudo recuperar los registros', confirmButtonColor: '#299cdb' });
       }
     });
   }
 
   private addData(datos: ClasificadorRuat) {
     this.clasificadoresService.save(datos).subscribe({
-      next: (data: any) => {
-        if (data.status === 'OK') {
-          this.submitted = false;
-          this.notify('Datos registrados exitosamente!', 'success');
-          this.closeModal();
-        } else {
-          const errorMessage = data.payload || 'Error desconocido al guardar';
-          this.notify('No se pudo guardar los datos: ' + errorMessage, 'error');
-        }
+      next: () => {
+        this.submitted = false;
+        this.notify('Datos registrados exitosamente!', 'success');
+        this.closeModal();
       },
       error: (error) => {
         console.error('Error saving data:', error);
@@ -278,15 +254,10 @@ export class ClasificadoresRuatComponent {
 
   private updateData(datosUnit: ClasificadorRuat) {
     this.clasificadoresService.update(datosUnit).subscribe({
-      next: (data: any) => {
-        if (data.status === 'OK') {
-          this.submitted = false;
-          this.closeModal();
-          this.notify('Datos actualizados exitosamente!', 'success');
-        } else {
-          const errorMessage = data.payload || 'Error desconocido al actualizar';
-          this.notify('No se pudo actualizar los datos: ' + errorMessage, 'error');
-        }
+      next: () => {
+        this.submitted = false;
+        this.closeModal();
+        this.notify('Datos actualizados exitosamente!', 'success');
       },
       error: (error) => {
         const errorMessage = this.getErrorMessage(error);
@@ -300,11 +271,9 @@ export class ClasificadoresRuatComponent {
   deleteData() {
     let uuid = this.deleteId;
     this.clasificadoresService.delete(uuid).subscribe({
-      next: (data: any) => {
+      next: (message: string) => {
         this.submitted = false;
-        if (data['status'] === 'OK') {
-          this.notify(data.payload, 'info')
-        }
+        this.notify(message || 'Registro eliminado correctamente', 'info')
         this.closeModal();
       },
       error: err => {

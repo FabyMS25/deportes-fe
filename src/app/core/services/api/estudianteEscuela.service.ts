@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { EstudianteEscuela } from '../../models/EstudianteEscuela.model';
-import { ApiResponse } from '../apiResponses';
+import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 @Injectable({
   providedIn: 'root'
@@ -15,44 +15,44 @@ export class EstudianteEscuelaService {
   constructor(private http: HttpClient) { }
 
   // Basic CRUD Operations
-  getAll(): Observable<ApiResponse<EstudianteEscuela[]>> {
-    return this.http.get<ApiResponse<EstudianteEscuela[]>>(this.apiUrl);
+  getAll(): Observable<EstudianteEscuela[]> {
+    return apiGet<EstudianteEscuela[]>(this.http, this.apiUrl, 'obtener estudiantes escuela');
   }
 
-  getByUuid(uuid: string): Observable<ApiResponse<EstudianteEscuela>> {
-    return this.http.get<ApiResponse<EstudianteEscuela>>(`${this.apiUrl}/${uuid}`);
+  getByUuid(uuid: string): Observable<EstudianteEscuela> {
+    return apiGet<EstudianteEscuela>(this.http, `${this.apiUrl}/${uuid}`, `obtener estudiante escuela (${uuid})`);
   }
 
-  getByMatricula(matricula: string): Observable<ApiResponse<EstudianteEscuela>> {
-    return this.http.get<ApiResponse<EstudianteEscuela>>(`${this.apiUrl}/matricula/${matricula}`);
+  getByMatricula(matricula: string): Observable<EstudianteEscuela> {
+    return apiGet<EstudianteEscuela>(this.http, `${this.apiUrl}/matricula/${matricula}`, `obtener estudiante por matrícula (${matricula})`);
   }
 
-  save(data: EstudianteEscuela): Observable<ApiResponse<EstudianteEscuela>> {
-    return this.http.post<ApiResponse<EstudianteEscuela>>(this.apiUrl, data);
+  save(data: EstudianteEscuela): Observable<EstudianteEscuela> {
+    return apiPost<EstudianteEscuela>(this.http, this.apiUrl, data, 'guardar estudiante escuela');
   }
 
-  update(data: EstudianteEscuela): Observable<ApiResponse<EstudianteEscuela>> {
-    return this.http.put<ApiResponse<EstudianteEscuela>>(this.apiUrl, data);
+  update(data: EstudianteEscuela): Observable<EstudianteEscuela> {
+    return apiPut<EstudianteEscuela>(this.http, this.apiUrl, data, 'actualizar estudiante escuela');
   }
 
-  delete(uuid: string): Observable<ApiResponse<EstudianteEscuela>> {
-    return this.http.delete<ApiResponse<EstudianteEscuela>>(`${this.apiUrl}/${uuid}`);
+  delete(uuid: string): Observable<EstudianteEscuela> {
+    return apiDelete<EstudianteEscuela>(this.http, `${this.apiUrl}/${uuid}`, `eliminar estudiante escuela (${uuid})`);
   }
 
   // Business Operations
-  getByContribuyente(contribuyenteUuid: string): Observable<ApiResponse<EstudianteEscuela[]>> {
-    return this.http.get<ApiResponse<EstudianteEscuela[]>>(`${this.apiUrl}/contribuyente/${contribuyenteUuid}`);
+  getByContribuyente(contribuyenteUuid: string): Observable<EstudianteEscuela[]> {
+    return apiGet<EstudianteEscuela[]>(this.http, `${this.apiUrl}/contribuyente/${contribuyenteUuid}`, `obtener estudiantes por contribuyente (${contribuyenteUuid})`);
   }
 
-  getActivos(): Observable<ApiResponse<EstudianteEscuela[]>> {
-    return this.http.get<ApiResponse<EstudianteEscuela[]>>(`${this.apiUrl}/activos`);
+  getActivos(): Observable<EstudianteEscuela[]> {
+    return apiGet<EstudianteEscuela[]>(this.http, `${this.apiUrl}/activos`, 'obtener estudiantes activos');
   }
 
-  darDeBaja(uuid: string): Observable<ApiResponse<EstudianteEscuela>> {
-    return this.http.put<ApiResponse<EstudianteEscuela>>(`${this.apiUrl}/${uuid}/baja`, null);
+  darDeBaja(uuid: string): Observable<EstudianteEscuela> {
+    return apiPut<EstudianteEscuela>(this.http, `${this.apiUrl}/${uuid}/baja`, null, `dar de baja estudiante (${uuid})`);
   }
 
-  reactivar(uuid: string): Observable<ApiResponse<EstudianteEscuela>> {
-    return this.http.put<ApiResponse<EstudianteEscuela>>(`${this.apiUrl}/${uuid}/reactivar`, null);
+  reactivar(uuid: string): Observable<EstudianteEscuela> {
+    return apiPut<EstudianteEscuela>(this.http, `${this.apiUrl}/${uuid}/reactivar`, null, `reactivar estudiante (${uuid})`);
   }
 }

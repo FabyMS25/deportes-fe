@@ -5,7 +5,7 @@ import { NgbDatepickerModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import Swal from 'sweetalert2';
 
-import { catchError, forkJoin, Observable, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, Observable } from 'rxjs';
 import { HorarioFijoService } from 'src/app/core/services/api/horarioFijo.service';
 import { HorarioExcepcionService } from 'src/app/core/services/api/horarioExcepcion.service';
 import { TipoExcepcion } from 'src/app/core/constants/Features';
@@ -546,16 +546,8 @@ export class ModalScheduleComponent implements OnInit {
     });
   }
   
-  /* API requests - same as before */
   private addSchedule(datos: HorarioFijo): Observable<any> {
     return this.horarioFijoService.save(datos).pipe(
-      switchMap((result: any) => {
-        if (result.status === 'OK') {
-          return of(result);
-        } else {
-          throw new Error(result.message || 'Error al guardar horario');
-        }
-      }),
       catchError((error) => {
         throw new Error(error);
       })
@@ -563,13 +555,6 @@ export class ModalScheduleComponent implements OnInit {
   }
   private updateSchedule(datos: HorarioFijo): Observable<any> {
     return this.horarioFijoService.update(datos).pipe(
-      switchMap((result: any) => {
-        if (result.status === 'OK') {
-          return of(result);
-        } else {
-          throw new Error(result.message || 'Error al actualizar horario');
-        }
-      }),
       catchError((error) => {
         throw new Error(error);
       })
@@ -578,13 +563,6 @@ export class ModalScheduleComponent implements OnInit {
 
   private deleteSchedule(uuid: string): Observable<any> {
     return this.horarioFijoService.delete(uuid).pipe(
-      switchMap((result: any) => {
-        if (result.status === 'OK') {
-          return of(result);
-        } else {
-          throw new Error(result.message || 'Error al eliminar horario');
-        }
-      }),
       catchError((error) => {
         throw new Error(error);
       })
@@ -593,13 +571,6 @@ export class ModalScheduleComponent implements OnInit {
 
   private addExcepcion(datos: HorarioExcepcion): Observable<any> {
     return this.horarioExcepcionService.save(datos).pipe(
-      switchMap((result: any) => {
-        if (result.status === 'OK') {
-          return of(result);
-        } else {
-          throw new Error(result.message || 'Error al guardar excepción');
-        }
-      }),
       catchError((error) => {
         throw new Error(error);
       })
@@ -608,13 +579,6 @@ export class ModalScheduleComponent implements OnInit {
 
   private updateExcepcion(datos: HorarioExcepcion): Observable<any> {
     return this.horarioExcepcionService.update(datos).pipe(
-      switchMap((result: any) => {
-        if (result.status === 'OK') {
-          return of(result);
-        } else {
-          throw new Error(result.message || 'Error al actualizar excepción');
-        }
-      }),
       catchError((error) => {
         throw new Error(error);
       })
@@ -623,13 +587,6 @@ export class ModalScheduleComponent implements OnInit {
 
   private deleteExcepcion(uuid: string): Observable<any> {
     return this.horarioExcepcionService.delete(uuid).pipe(
-      switchMap((result: any) => {
-        if (result.status === 'OK') {
-          return of(result);
-        } else {
-          throw new Error(result.message || 'Error al eliminar excepción');
-        }
-      }),
       catchError((error) => {
         throw new Error(error);
       })

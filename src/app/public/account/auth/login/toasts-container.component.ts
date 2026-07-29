@@ -4,7 +4,7 @@ import { ToastService } from 'src/app/core/services/toast-service';
 
 
 @Component({
-  selector: 'app-toasts',
+  selector: 'app-login-toasts',
   template: `
   @for(toast of toastService.toasts;track $index){
     <ngb-toast

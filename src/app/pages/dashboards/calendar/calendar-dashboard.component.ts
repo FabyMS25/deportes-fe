@@ -106,11 +106,7 @@ export class CalendarDashboardComponent implements OnInit {
     }else{
       try {
         this.complejosList = await this.complejoService.getAll().toPromise().then((res:any) => {
-          if (res.status === 'OK') {
-            return res.payload as ComplejoDeportivo[];
-          } else {
-            return [];
-          }
+          return (res || []) as ComplejoDeportivo[];
         });
       }catch (error) {
         this.complejosList = [];
@@ -193,8 +189,8 @@ export class CalendarDashboardComponent implements OnInit {
  
       let allEvents: any[] = [];
 
-      if (reservasPuntuales?.status === 'OK') {
-        let reservasPuntualesData = reservasPuntuales.payload.filter((item: Reserva) =>
+      if (Array.isArray(reservasPuntuales)) {
+        let reservasPuntualesData = reservasPuntuales.filter((item: Reserva) =>
           this.visibleReservationStates.includes(item.estadoReserva)
         );
         
@@ -251,8 +247,8 @@ export class CalendarDashboardComponent implements OnInit {
         allEvents = [...allEvents, ...eventosPuntuales];
       }
 
-      if (reservasRecurrentes?.status === 'OK') {
-        let reservasRecurrentesData = reservasRecurrentes.payload.filter((item: Reserva) =>
+      if (Array.isArray(reservasRecurrentes)) {
+        let reservasRecurrentesData = reservasRecurrentes.filter((item: Reserva) =>
           this.visibleReservationStates.includes(item.estadoReserva)
         );
         
@@ -275,8 +271,8 @@ export class CalendarDashboardComponent implements OnInit {
         allEvents = [...allEvents, ...eventosRecurrentes];
       }
 
-      if (camposDeportivos?.status === 'OK') {
-        let camposDeportivosData = camposDeportivos.payload;
+      if (Array.isArray(camposDeportivos)) {
+        let camposDeportivosData = camposDeportivos;
         let horariosExcepcion: any[] = [];
         
         camposDeportivosData.forEach((campo: any) => {

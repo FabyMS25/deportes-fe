@@ -5,20 +5,39 @@ import * as userData from 'src/app/core/constants/UserData';
 import * as statusData from 'src/app/core/constants/Estados';
 import { CityAcronym } from 'src/app/core/constants/Places';
 
-interface ColumnDefinition {
+type StatusColor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'light' | 'dark';
+
+export interface CategoryOption {
+  id: unknown;
+  label: string;
+  color?: StatusColor;
+}
+
+export interface ColumnDefinition {
   name: string;
   prop: string;
+  value?: (row: unknown) => unknown;
+  fallbackProp?: string;
   visible: boolean;
+  scope?: string | string[];
+  sortable?: boolean;
   tag?: boolean;
-  category?: any[];
+  category?: CategoryOption[];
   date?: boolean;
-  color?: boolean,
+  color?: string;
   html?: boolean;
   image?: boolean;
   avatar?: boolean;
+  currency?: string | boolean;
+  number?: boolean;
+  truncate?: number;
+  phone?: boolean;
+  link?: boolean;
   primary?: boolean;
+  emptyText?: string;
+  cssClass?: string;
 }
-interface TableActions {
+export interface TableActions {
   show?: boolean;
   edit?: boolean;
   close?: string;
@@ -31,7 +50,7 @@ interface TableActions {
   records?: boolean;
   // [key: string]: boolean | undefined;
 }
-interface PaginationInfo {
+export interface PaginationInfo {
   pageNumber: number;
   pageSize: number;
   totalElements: number;
@@ -54,6 +73,9 @@ export class DataTableComponent implements OnChanges {
   @Input() viewMode: 'table' | 'cards' = 'table';
   @Input() serverSidePagination: boolean = false;
   @Input() paginationInfo: PaginationInfo | null = null;
+  @Input() activeScope: string | null = null;
+  @Input() emptyMessage: string = 'No se encontró ningún dato';
+  @Input() emptyDescription: string = 'No encontramos datos para mostrar';
 
   @Output() showItemEmitter = new EventEmitter<any>();
   @Output() editItemEmitter = new EventEmitter<any>();
@@ -62,7 +84,7 @@ export class DataTableComponent implements OnChanges {
   @Output() processItemEmitter = new EventEmitter<any>();
   @Output() recordsEmitter = new EventEmitter<any>();
   @Output() notifyItemEmitter = new EventEmitter<any>();
-  @Output() consultItemEmitter = new EventEmitter<any[]>();
+  @Output() consultItemEmitter = new EventEmitter<any>();
   @Output() validateItemEmitter = new EventEmitter<any>();
   @Output() selectedItemEmitter = new EventEmitter<any[]>();
   @Output() pageChange = new EventEmitter<number>();
@@ -82,7 +104,7 @@ export class DataTableComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['allcontent'] || changes['serverSidePagination']) {
+    if (changes['allcontent'] || changes['serverSidePagination'] || changes['itemsPerPage']) {
       this.processContent();
     }
   }
@@ -108,23 +130,32 @@ export class DataTableComponent implements OnChanges {
     // https://api.whatsapp.com/send?phone=+59172248669&text=MENSAJE DESDE SISTEMA DE DEPORTES"
   }
 
+  get visibleColumns(): ColumnDefinition[] {
+    return (this.itemsList || []).filter(column => column.visible && this.columnMatchesScope(column));
+  }
+
+  get hasVisibleActions(): boolean {
+    return !!this.actions && Object.values(this.actions).some(Boolean);
+  }
+
   showActions(data: any): { tooltip: string; icon: string; handler: (data: any) => void; buttonClass: string }[] {
+    const actions = this.actions || {};
     return [
-      ...(this.actions.show ? [{ tooltip: 'Ver', icon: 'ri-eye-fill', handler: () => this.showItem(data), buttonClass: '' }] : []),
-      ...(this.actions.records ? [{ tooltip: 'Historial', icon: 'ri-file-list-3-line', handler: () => this.recordsItem(data), buttonClass: '' }] : []),
-      ...(this.actions.consult ? [{ tooltip: 'Consultar', icon: 'ri-restart-fill', handler: () => this.consultItem(data), buttonClass: 'text-primary d-inline-block edit-item-btn' }] : []),
-      ...(this.actions.validate && this.canShow('validate',data)? [{ tooltip: 'Validar', icon: ' ri-toggle-fill', handler: () => this.validateItem(data), buttonClass: 'text-primary d-inline-block edit-item-btn' }] : []),
-      ...(this.actions.edit && this.canShow('Editar',data)? [{ tooltip: 'Editar', icon: 'ri-pencil-fill', handler: () => this.editItem(data), buttonClass: 'text-primary edit-item-btn' }] : []),
-      ...((this.actions.close && this.canShow(this.actions.close,data,)) ? [{ tooltip: this.actions.close, icon: 'ri-close-circle-line', handler: () => this.closeItem(data), buttonClass: 'text-danger remove-item-btn' }] : []),
-      ...((this.actions.check && this.canShow(this.actions.check,data,)) ? [{ tooltip: this.actions.check, icon: 'ri-checkbox-circle-line', handler: () => this.checkItem(data), buttonClass: 'text-success' }] : []),
-      ...((this.actions.process && this.canShow(this.actions.process, data)) ? [{
-        tooltip: this.actions.process,
-        icon: this.actions.process === 'No Show' ? 'ri-user-unfollow-line' : 'ri-auction-line',
+      ...(actions.show ? [{ tooltip: 'Ver', icon: 'ri-eye-fill', handler: () => this.showItem(data), buttonClass: '' }] : []),
+      ...(actions.records ? [{ tooltip: 'Historial', icon: 'ri-file-list-3-line', handler: () => this.recordsItem(data), buttonClass: '' }] : []),
+      ...(actions.consult ? [{ tooltip: 'Consultar', icon: 'ri-restart-fill', handler: () => this.consultItem(data), buttonClass: 'text-primary d-inline-block edit-item-btn' }] : []),
+      ...(actions.validate && this.canShow('validate',data)? [{ tooltip: 'Validar', icon: 'ri-toggle-fill', handler: () => this.validateItem(data), buttonClass: 'text-primary d-inline-block edit-item-btn' }] : []),
+      ...(actions.edit && this.canShow('Editar',data)? [{ tooltip: 'Editar', icon: 'ri-pencil-fill', handler: () => this.editItem(data), buttonClass: 'text-primary edit-item-btn' }] : []),
+      ...((actions.close && this.canShow(actions.close,data,)) ? [{ tooltip: actions.close, icon: 'ri-close-circle-line', handler: () => this.closeItem(data), buttonClass: 'text-danger remove-item-btn' }] : []),
+      ...((actions.check && this.canShow(actions.check,data,)) ? [{ tooltip: actions.check, icon: 'ri-checkbox-circle-line', handler: () => this.checkItem(data), buttonClass: 'text-success' }] : []),
+      ...((actions.process && this.canShow(actions.process, data)) ? [{
+        tooltip: actions.process,
+        icon: actions.process === 'No Show' ? 'ri-user-unfollow-line' : 'ri-auction-line',
         handler: () => this.processItem(data),
         buttonClass: 'text-warning'
       }] : []),
-      ...(this.actions.notify ? [{ tooltip: 'Notificar', icon: 'ri-mail-send-fill', handler: () => this.notifyItem(data), buttonClass: 'text-success' }] : []),
-      ...(this.actions.telf ? [{ tooltip: 'Telefono', icon: 'ri-phone-line', handler: () => this.sentMessage(data), buttonClass: 'text-success' }] : []),
+      ...(actions.notify ? [{ tooltip: 'Notificar', icon: 'ri-mail-send-fill', handler: () => this.notifyItem(data), buttonClass: 'text-success' }] : []),
+      ...(actions.telf ? [{ tooltip: 'Telefono', icon: 'ri-phone-line', handler: () => this.sentMessage(data), buttonClass: 'text-success' }] : []),
     ];  
   } 
   canShow(action:string,data: any): boolean {
@@ -135,7 +166,8 @@ export class DataTableComponent implements OnChanges {
       case 'validate':
         return reserva?.estadoValidacion === statusData.EstadoValidacion.PENDIENTE;
       case 'Anular':
-        return reserva?.estadoReserva === statusData.EstadoReserva.PENDIENTE;
+        return reserva?.estadoReserva === statusData.EstadoReserva.SOLICITADA ||
+          reserva?.estadoReserva === statusData.EstadoReserva.PENDIENTE;
       case 'No Show':
         return !!reserva && (
           reserva.estadoReserva === statusData.EstadoReserva.PAGADA ||
@@ -194,6 +226,72 @@ export class DataTableComponent implements OnChanges {
         return value === 0 ? '0' : value;
     }
   }
+
+  getCellValue(row: any, column: ColumnDefinition): any {
+    const rawValue = this.getRawCellValue(row, column);
+    return this.formatColumnValue(rawValue, column);
+  }
+
+  getRawCellValue(row: any, column: ColumnDefinition): any {
+    let value = column.value ? column.value(row) : this.getPropertyValue(row, column.prop);
+    if (this.isEmptyValue(value) && column.fallbackProp) {
+      value = this.getPropertyValue(row, column.fallbackProp);
+    }
+    return value;
+  }
+
+  getCategoryOption(row: any, column: ColumnDefinition): CategoryOption | undefined {
+    const value = this.getRawCellValue(row, column);
+    return column.category?.find(option => String(option.id) === String(value));
+  }
+
+  getDisplayText(row: any, column: ColumnDefinition): string {
+    const category = this.getCategoryOption(row, column);
+    const value = category?.label ?? this.getCellValue(row, column);
+    if (this.isEmptyValue(value)) {
+      return column.emptyText || '';
+    }
+    return String(value);
+  }
+
+  getLinkValue(row: any, column: ColumnDefinition): string {
+    const value = this.getRawCellValue(row, column);
+    return this.isEmptyValue(value) ? '' : String(value);
+  }
+
+  getCellTitle(row: any, column: ColumnDefinition): string | null {
+    const value = this.getDisplayText(row, column);
+    return column.truncate && value.length > column.truncate ? value : null;
+  }
+
+  isEmptyValue(value: any): boolean {
+    return value === null || value === undefined || value === '';
+  }
+
+  isSortable(column: ColumnDefinition): boolean {
+    return !this.serverSidePagination && column.sortable !== false;
+  }
+
+  getColumnClass(column: ColumnDefinition): string {
+    return [
+      column.cssClass || '',
+      column.number || column.currency ? 'text-end' : '',
+      column.primary ? 'table-column-primary' : ''
+    ].filter(Boolean).join(' ');
+  }
+
+  getPhoneHref(row: any, column: ColumnDefinition): string {
+    const value = this.getLinkValue(row, column).replace(/[^\d+]/g, '');
+    return value ? `tel:${value}` : '';
+  }
+
+  getRowId(row: any, index: number): string | number {
+    return row?.uuid || row?.id || index;
+  }
+
+  trackByRow = (index: number, row: any): string | number => this.getRowId(row, index);
+  trackByColumn = (_: number, column: ColumnDefinition): string => column.prop || column.name;
+
   private resolveArrayProperty(obj: any, prop: string): any {
     try {
       const match = prop.match(/([^\[]+)\[(\d+)\](\..+)?/);
@@ -211,6 +309,28 @@ export class DataTableComponent implements OnChanges {
   private formatBoolean(val: any, trueText: string, falseText: string): string {
     return val === true ? trueText : val === false ? falseText : '';
   }
+  private formatColumnValue(value: any, column: ColumnDefinition): any {
+    if (this.isEmptyValue(value)) return value;
+    if (column.category) {
+      return column.category.find(option => String(option.id) === String(value))?.label ?? value;
+    }
+    if (column.currency) {
+      const currency = typeof column.currency === 'string' ? column.currency : 'BOB';
+      return new Intl.NumberFormat('es-BO', {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(Number(value) || 0);
+    }
+    if (column.number) {
+      return new Intl.NumberFormat('es-BO', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      }).format(Number(value) || 0);
+    }
+    return value === 0 ? '0' : value;
+  }
   getBadgeStatus(value: any): string {
     const customMappings: Record<string, string> = {
       'ENVIADA': 'success',   'PROGRAMADA': 'primary',
@@ -226,6 +346,12 @@ export class DataTableComponent implements OnChanges {
 
   getBadgeClass(value: any): string {
     const color = this.getBadgeStatus(value);
+    return `bg-${color}-subtle text-${color}`;
+  }
+
+  getColumnBadgeClass(row: any, column: ColumnDefinition): string {
+    const categoryColor = this.getCategoryOption(row, column)?.color;
+    const color = column.color || categoryColor || this.getBadgeStatus(this.getDisplayText(row, column));
     return `bg-${color}-subtle text-${color}`;
   }
   //#endregion
@@ -264,9 +390,13 @@ export class DataTableComponent implements OnChanges {
   }
   onCheckboxChange(e: Event, item: any): void {
     const target = e.target as HTMLInputElement;
-    target.checked
-      ? this.checkedValGet.push(item)
-      : this.checkedValGet = this.checkedValGet.filter(i => i !== item);
+    if (target.checked) {
+      if (!this.isSelected(item)) {
+        this.checkedValGet.push(item);
+      }
+    } else {
+      this.checkedValGet = this.checkedValGet.filter(selected => !this.sameItem(selected, item));
+    }
     this.updateSelectionState();
   }
   //#endregion
@@ -277,6 +407,10 @@ export class DataTableComponent implements OnChanges {
 
   onSort(column: string): void {
     if (this.serverSidePagination) {
+      return;
+    }
+    const columnDef = this.itemsList?.find(item => item.prop === column);
+    if (columnDef?.sortable === false) {
       return;
     }
     if (this.currentSortColumn === column) {
@@ -303,6 +437,7 @@ export class DataTableComponent implements OnChanges {
       this.content = [];
       this.totalElements = 0;
     }
+    this.updateMasterCheckbox();
   }
   private handleServerSidePagination(): void {
     if (this.allcontent && this.allcontent.content && Array.isArray(this.allcontent.content)) {
@@ -365,20 +500,37 @@ export class DataTableComponent implements OnChanges {
     }
     return Array.isArray(this.allcontent) ? this.allcontent.length : 0;
   }
+  hasRows(): boolean {
+    return this.content.length > 0;
+  }
   //#endregion
 
   // UI helpers
   isMobileColumn(column: ColumnDefinition): boolean {
-    return column.visible;
+    return column.visible && this.columnMatchesScope(column);
+  }
+
+  columnMatchesScope(column: ColumnDefinition): boolean {
+    if (!column.scope || this.activeScope == null) return true;
+    const scopes = Array.isArray(column.scope) ? column.scope : [column.scope];
+    return scopes.includes(this.activeScope);
+  }
+
+  isSelected(item: any): boolean {
+    return this.checkedValGet.some(selected => this.sameItem(selected, item));
+  }
+
+  sameItem(left: any, right: any): boolean {
+    return !!left && !!right && left.uuid && right.uuid ? left.uuid === right.uuid : left === right;
   }
 
   toggleExpand(data: any, prop: string): void {
-    const key = `${data.uuid}_${prop}`;
+    const key = `${data?.uuid || data?.id || ''}_${prop}`;
     this.expandedItems.has(key) ? this.expandedItems.delete(key) : this.expandedItems.add(key);
   }
 
   isExpanded(data: any, prop: string): boolean {
-    return this.expandedItems.has(`${data.uuid}_${prop}`);
+    return this.expandedItems.has(`${data?.uuid || data?.id || ''}_${prop}`);
   }
 
   toggleColumn(column: ColumnDefinition): void {

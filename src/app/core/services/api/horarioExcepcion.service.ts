@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { HorarioExcepcion } from '../../models/horarioExcepcion.model';
+import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 @Injectable({
   providedIn: 'root'
@@ -14,21 +15,21 @@ export class HorarioExcepcionService {
   constructor(private http: HttpClient) { }
 
   getAll(): Observable<HorarioExcepcion[]> {
-    return this.http.get<HorarioExcepcion[]>(`${this.apiUrl}`);
+    return apiGet<HorarioExcepcion[]>(this.http, this.apiUrl, 'obtener excepciones de horario');
   }
 
   getByUuid(uuid:string):Observable<HorarioExcepcion>{
-    return this.http.get<HorarioExcepcion>(`${this.apiUrl}/${uuid}`);
+    return apiGet<HorarioExcepcion>(this.http, `${this.apiUrl}/${uuid}`, `obtener excepción de horario (${uuid})`);
   }
 
   save(data: any): Observable<HorarioExcepcion> {  
-    return this.http.post<HorarioExcepcion>(`${this.apiUrl}`, data);
+    return apiPost<HorarioExcepcion>(this.http, this.apiUrl, data, 'guardar excepción de horario');
   }
 
   update(data: any): Observable<HorarioExcepcion> {
-    return this.http.put<HorarioExcepcion>(`${this.apiUrl}`, data);
+    return apiPut<HorarioExcepcion>(this.http, this.apiUrl, data, 'actualizar excepción de horario');
   }
-  delete(uuid: string) {
-    return this.http.delete(`${this.apiUrl}/${uuid}`);
+  delete(uuid: string): Observable<string> {
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar excepción de horario (${uuid})`);
   }
 }

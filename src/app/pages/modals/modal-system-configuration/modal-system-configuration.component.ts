@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
 import { CategoriaConfiguracion , AplicaAConfiguracion,UnidadMedida, 
-  ClaveConfiguracion, TipoValorConfiguracion, obtenerLabelConfiguracion } from 'src/app/core/constants/Configurations';
+  AdminDeportesConfig, ClaveConfiguracion, TipoValorConfiguracion, obtenerLabelConfiguracion } from 'src/app/core/constants/Configurations';
 
 
 @Component({
@@ -26,21 +26,35 @@ export class SystemConfigurationModalComponent implements OnInit {
   @Input() accion!: string;
   @Input() row!: ConfiguracionSistema;
   @Input() categoriasList: string[] = [];
+  @Input() permissions: string[] = [];
   @Output() emitList = new EventEmitter();
 
   contentForm!: UntypedFormGroup;
   submitted = false;
   showLoading = false;
+  hasEditableFields = true;
 
   categorias = Object.values(CategoriaConfiguracion);
   ambitosAplicacion = Object.values(AplicaAConfiguracion);
   unidadesMedida = Object.values(UnidadMedida);
   tiposValor = Object.values(TipoValorConfiguracion);
   clavesDisponibles = Object.values(ClaveConfiguracion);
+  readonly TipoValorConfiguracion = TipoValorConfiguracion;
+  readonly ClaveConfiguracion = ClaveConfiguracion;
+  readonly CategoriaConfiguracion = CategoriaConfiguracion;
+  private readonly ambitosConReferencia: AplicaAConfiguracion[] = [
+    AplicaAConfiguracion.CAMPO_DEPORTIVO,
+    AplicaAConfiguracion.COMPLEJO,
+    AplicaAConfiguracion.TARIFA,
+    AplicaAConfiguracion.ORGANIZACION
+  ];
 
   mostrarUnidadMedida = false;
   mostrarReferenciaUuid = false;
   tipoValorActual = TipoValorConfiguracion.TEXTO;
+  adminEditorMode: 'form' | 'json' = 'form';
+  adminDeportesView: AdminDeportesConfig | null = null;
+  valoresPosiblesView: string[] = [];
 
   constructor(
     private modalService: NgbModal,
@@ -52,6 +66,55 @@ export class SystemConfigurationModalComponent implements OnInit {
     this.initializeForm();
     this.formDataSet();
     this.setupFormListeners();
+    this.applyPermissionControls();
+  }
+
+  private applyPermissionControls(): void {
+    if (this.accion === 'show') {
+      this.contentForm.disable({ emitEvent: false });
+      return;
+    }
+
+    if (this.accion === '') {
+      return;
+    }
+
+    const canUpdateProtected = this.permissions.includes('ACTUALIZAR_PROTEGIDA');
+    const canUpdateValue = canUpdateProtected ||
+      (this.row?.modificablePorUsuario === true && this.permissions.includes('ACTUALIZAR'));
+    const canUpdateControl = this.permissions.includes('ACTUALIZAR_CONTROL');
+    this.hasEditableFields = canUpdateValue || canUpdateControl;
+    this.contentForm.get('uuid')?.disable({ emitEvent: false });
+
+    const valueControls = [
+      'valorTexto', 'valorNumerico', 'valorBoolean', 'valorJson',
+      'valorMinimo', 'valorMaximo', 'valoresPosibles',
+      'adminName', 'adminRole', 'adminPhone', 'adminEmail', 'adminAddress', 'adminAvatar'
+    ];
+    const descriptiveControls = ['nombre', 'descripcion'];
+    const controlControls = [
+      'clave', 'claveCustom', 'categoria', 'unidadMedida', 'modificablePorUsuario',
+      'requiereAprobacion', 'activo', 'aplicaA', 'referenciaUuid'
+    ];
+
+    if (!canUpdateValue) {
+      valueControls.forEach(name =>
+        this.contentForm.get(name)?.disable({ emitEvent: false })
+      );
+    }
+    if (!canUpdateValue && !canUpdateControl) {
+      descriptiveControls.forEach(name =>
+        this.contentForm.get(name)?.disable({ emitEvent: false })
+      );
+    }
+    if (!canUpdateControl) {
+      controlControls.forEach(name =>
+        this.contentForm.get(name)?.disable({ emitEvent: false })
+      );
+    }
+    if (!(canUpdateValue && canUpdateControl)) {
+      this.contentForm.get('tipoValor')?.disable({ emitEvent: false });
+    }
   }
 
   private initializeForm(): void {
@@ -67,6 +130,12 @@ export class SystemConfigurationModalComponent implements OnInit {
       valorNumerico: [null],
       valorBoolean: [false],
       valorJson: [''],
+      adminName: [''],
+      adminRole: [''],
+      adminPhone: [''],
+      adminEmail: [''],
+      adminAddress: [''],
+      adminAvatar: [''],
       unidadMedida: [''],
       valorMinimo: [null],
       valorMaximo: [null],
@@ -87,14 +156,21 @@ export class SystemConfigurationModalComponent implements OnInit {
       this.onAplicaAChange();
     });
 
-    this.contentForm.get('clave')?.valueChanges.subscribe(value => {
+    const updateClaveCustomValidators = (value: string) => {
       if (value === 'CUSTOM') {
         this.contentForm.get('claveCustom')?.setValidators([Validators.required, Validators.pattern('^[A-Z][A-Z0-9_]*$')]);
       } else {
         this.contentForm.get('claveCustom')?.clearValidators();
       }
-      this.contentForm.get('claveCustom')?.updateValueAndValidity();
+      this.contentForm.get('claveCustom')?.updateValueAndValidity({ emitEvent: false });
+    };
+
+    this.contentForm.get('clave')?.valueChanges.subscribe(value => {
+      updateClaveCustomValidators(value);
+      this.applyAdminDeportesValidators(value);
     });
+    updateClaveCustomValidators(this.contentForm.get('clave')?.value);
+    this.applyAdminDeportesValidators(this.contentForm.get('clave')?.value);
   }
 
   onTipoValorChange(): void {
@@ -124,7 +200,13 @@ export class SystemConfigurationModalComponent implements OnInit {
       valorNumerico?.setValidators([Validators.required]);
     }
     if (tipoValor === TipoValorConfiguracion.JSON) {
-      valorJson?.setValidators([Validators.required, this.jsonObjectOrArrayValidator]);
+      valorJson?.setValidators(
+        this.isAdminDeportesSelected() && this.adminEditorMode === 'json'
+          ? [Validators.required, this.adminDeportesJsonValidator]
+          : !this.isAdminDeportesSelected()
+            ? [Validators.required, this.jsonObjectOrArrayValidator]
+            : []
+      );
     }
 
     valorTexto?.updateValueAndValidity();
@@ -135,7 +217,7 @@ export class SystemConfigurationModalComponent implements OnInit {
 
   onAplicaAChange(): void {
     const aplicaA = this.contentForm.get('aplicaA')?.value;
-    this.mostrarReferenciaUuid = aplicaA !== 'global';
+    this.mostrarReferenciaUuid = this.ambitosConReferencia.includes(aplicaA);
     
     if (!this.mostrarReferenciaUuid) {
       this.contentForm.patchValue({ referenciaUuid: '' });
@@ -148,6 +230,12 @@ export class SystemConfigurationModalComponent implements OnInit {
       valorNumerico: null,
       valorBoolean: false,
       valorJson: '',
+      adminName: '',
+      adminRole: '',
+      adminPhone: '',
+      adminEmail: '',
+      adminAddress: '',
+      adminAvatar: '',
       valoresPosibles: ''
     });
   }
@@ -161,6 +249,7 @@ export class SystemConfigurationModalComponent implements OnInit {
 
   private formDataSet() {
     if (this.accion !== '' && this.row) {
+      const clavePredefinida = this.clavesDisponibles.includes(this.row.clave as ClaveConfiguracion);
       let tipoValor = 'TEXTO';
       if (this.row.valorJson) {
         tipoValor = 'JSON';
@@ -170,9 +259,16 @@ export class SystemConfigurationModalComponent implements OnInit {
         tipoValor = 'BOOLEANO';
       }
 
+      const adminConfig = this.row.clave === ClaveConfiguracion.ADMIN_DEPORTES
+        ? this.parseAdminDeportesConfig(this.row.valorJson)
+        : null;
+      this.adminDeportesView = adminConfig;
+      this.valoresPosiblesView = this.parsePossibleValues(this.row.valoresPosibles);
+
       this.contentForm.patchValue({
         uuid: this.row.uuid,
-        clave: this.row.clave,
+        clave: clavePredefinida ? this.row.clave : 'CUSTOM',
+        claveCustom: clavePredefinida ? '' : this.row.clave,
         categoria: this.row.categoria,
         nombre: this.row.nombre,
         descripcion: this.row.descripcion || '',
@@ -181,6 +277,12 @@ export class SystemConfigurationModalComponent implements OnInit {
         valorNumerico: this.row.valorNumerico,
         valorBoolean: this.row.valorBoolean !== null ? this.row.valorBoolean : false,
         valorJson: this.row.valorJson || '',
+        adminName: adminConfig?.name || '',
+        adminRole: adminConfig?.role || '',
+        adminPhone: adminConfig?.phone || '',
+        adminEmail: adminConfig?.email || '',
+        adminAddress: adminConfig?.address || '',
+        adminAvatar: adminConfig?.avatar || '',
         unidadMedida: this.row.unidadMedida || '',
         valorMinimo: this.row.valorMinimo,
         valorMaximo: this.row.valorMaximo,
@@ -195,6 +297,7 @@ export class SystemConfigurationModalComponent implements OnInit {
       this.tipoValorActual = tipoValor as TipoValorConfiguracion;
       this.mostrarUnidadMedida = tipoValor === TipoValorConfiguracion.NUMERICO;
       this.applyValueValidators(tipoValor);
+      this.applyAdminDeportesValidators(this.row.clave);
       this.onAplicaAChange();
 
       if (this.accion === 'show') {
@@ -217,22 +320,6 @@ export class SystemConfigurationModalComponent implements OnInit {
 
   getTipoValorLabel(tipo: string): string {
     return obtenerLabelConfiguracion(tipo, 'tipoValor');
-  }
-
-  get isTextoConfig(): boolean {
-    return this.tipoValorActual === TipoValorConfiguracion.TEXTO;
-  }
-
-  get isNumericoConfig(): boolean {
-    return this.tipoValorActual === TipoValorConfiguracion.NUMERICO;
-  }
-
-  get isBooleanConfig(): boolean {
-    return this.tipoValorActual === TipoValorConfiguracion.BOOLEANO;
-  }
-
-  get isJsonConfig(): boolean {
-    return this.tipoValorActual === TipoValorConfiguracion.JSON;
   }
 
   formatJsonField(controlName: 'valorJson' | 'valoresPosibles'): void {
@@ -282,6 +369,139 @@ export class SystemConfigurationModalComponent implements OnInit {
     }
   }
 
+  private isAdminDeportesSelected(): boolean {
+    return this.contentForm.get('clave')?.value === ClaveConfiguracion.ADMIN_DEPORTES;
+  }
+
+  private applyAdminDeportesValidators(clave: string): void {
+    const controls = ['adminName', 'adminRole', 'adminPhone', 'adminEmail', 'adminAddress', 'adminAvatar'];
+    controls.forEach(name => this.contentForm.get(name)?.clearValidators());
+
+    if (clave === ClaveConfiguracion.ADMIN_DEPORTES && this.adminEditorMode === 'form') {
+      this.contentForm.get('adminName')?.setValidators([Validators.required, Validators.maxLength(150)]);
+      this.contentForm.get('adminRole')?.setValidators([Validators.maxLength(100)]);
+      this.contentForm.get('adminPhone')?.setValidators([
+        Validators.maxLength(25),
+        Validators.pattern(/^[0-9+()\-\s]*$/)
+      ]);
+      this.contentForm.get('adminEmail')?.setValidators([Validators.email, Validators.maxLength(150)]);
+      this.contentForm.get('adminAddress')?.setValidators([Validators.maxLength(300)]);
+      this.contentForm.get('adminAvatar')?.setValidators([Validators.maxLength(255)]);
+    }
+
+    if (clave === ClaveConfiguracion.ADMIN_DEPORTES) {
+      this.contentForm.get('tipoValor')?.setValue(TipoValorConfiguracion.JSON, { emitEvent: false });
+      this.tipoValorActual = TipoValorConfiguracion.JSON;
+    }
+    this.applyValueValidators(this.contentForm.get('tipoValor')?.value);
+
+    controls.forEach(name => this.contentForm.get(name)?.updateValueAndValidity({ emitEvent: false }));
+  }
+
+  private parseAdminDeportesConfig(value?: string): AdminDeportesConfig | null {
+    if (!value) return null;
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? parsed as AdminDeportesConfig
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private parsePossibleValues(value?: string): string[] {
+    if (!value) return [];
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed.map(item => String(item)) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  setAdminEditorMode(mode: 'form' | 'json'): void {
+    if (mode === this.adminEditorMode) return;
+
+    if (mode === 'json') {
+      const formData = this.contentForm.getRawValue();
+      this.contentForm.get('valorJson')?.setValue(
+        JSON.stringify(this.buildAdminDeportesConfig(formData), null, 2)
+      );
+      this.adminEditorMode = 'json';
+      this.applyAdminDeportesValidators(ClaveConfiguracion.ADMIN_DEPORTES);
+      return;
+    }
+
+    const jsonControl = this.contentForm.get('valorJson');
+    jsonControl?.setValidators([Validators.required, this.adminDeportesJsonValidator]);
+    jsonControl?.updateValueAndValidity({ emitEvent: false });
+    if (jsonControl?.invalid) {
+      jsonControl.markAsTouched();
+      this.notify('Corrija el JSON de contacto antes de cambiar al formulario', 'warning');
+      return;
+    }
+
+    const config = this.parseAdminDeportesConfig(jsonControl?.value);
+    if (!config) return;
+    this.contentForm.patchValue({
+      adminName: config.name,
+      adminRole: config.role || '',
+      adminPhone: config.phone || '',
+      adminEmail: config.email || '',
+      adminAddress: config.address || '',
+      adminAvatar: config.avatar || ''
+    });
+    this.adminEditorMode = 'form';
+    this.applyAdminDeportesValidators(ClaveConfiguracion.ADMIN_DEPORTES);
+  }
+
+  private adminDeportesJsonValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value?.trim();
+    if (!value) return null;
+    try {
+      const parsed = JSON.parse(value);
+      const allowedFields = ['name', 'role', 'phone', 'email', 'address', 'avatar'];
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return { adminStructure: true };
+      }
+      if (Object.keys(parsed).some(key => !allowedFields.includes(key))) {
+        return { adminFields: true };
+      }
+      if (typeof parsed.name !== 'string' || !parsed.name.trim()) {
+        return { adminName: true };
+      }
+      if (allowedFields.slice(1).some(key => parsed[key] !== undefined && typeof parsed[key] !== 'string')) {
+        return { adminTypes: true };
+      }
+      if (parsed.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parsed.email)) {
+        return { adminEmail: true };
+      }
+      if (parsed.phone && !/^[0-9+()\-\s]*$/.test(parsed.phone)) {
+        return { adminPhone: true };
+      }
+      return null;
+    } catch {
+      return { jsonInvalid: true };
+    }
+  }
+
+  private buildAdminDeportesConfig(formData: any): AdminDeportesConfig {
+    const config: AdminDeportesConfig = { name: formData.adminName.trim() };
+    const optionalFields: Array<[keyof AdminDeportesConfig, string]> = [
+      ['role', formData.adminRole],
+      ['phone', formData.adminPhone],
+      ['email', formData.adminEmail],
+      ['address', formData.adminAddress],
+      ['avatar', formData.adminAvatar]
+    ];
+    optionalFields.forEach(([key, value]) => {
+      const normalized = value?.trim();
+      if (normalized) config[key] = normalized;
+    });
+    return config;
+  }
+
   /**
    * Save configuration
    */
@@ -290,9 +510,16 @@ export class SystemConfigurationModalComponent implements OnInit {
     
     if (this.contentForm.valid) {
       this.showLoading = true;
-      const formData = this.contentForm.value;
+      const formData = this.contentForm.getRawValue();
       const claveFinal = formData.clave === 'CUSTOM' ? formData.claveCustom : formData.clave;
       const tipoValor = formData.tipoValor;
+      const valorJson = claveFinal === ClaveConfiguracion.ADMIN_DEPORTES
+        ? this.adminEditorMode === 'json'
+          ? JSON.stringify(JSON.parse(formData.valorJson))
+          : JSON.stringify(this.buildAdminDeportesConfig(formData))
+        : tipoValor === TipoValorConfiguracion.JSON
+          ? JSON.stringify(JSON.parse(formData.valorJson))
+          : undefined;
 
       let datos: ConfiguracionSistema = {
         clave: claveFinal,
@@ -302,7 +529,7 @@ export class SystemConfigurationModalComponent implements OnInit {
         valorTexto: tipoValor === TipoValorConfiguracion.TEXTO ? formData.valorTexto?.trim() || undefined : undefined,
         valorNumerico: tipoValor === TipoValorConfiguracion.NUMERICO && formData.valorNumerico !== null ? Number(formData.valorNumerico) : undefined,
         valorBoolean: tipoValor === TipoValorConfiguracion.BOOLEANO ? Boolean(formData.valorBoolean) : undefined,
-        valorJson: tipoValor === TipoValorConfiguracion.JSON ? JSON.stringify(JSON.parse(formData.valorJson)) : undefined,
+        valorJson,
         unidadMedida: tipoValor === TipoValorConfiguracion.NUMERICO ? formData.unidadMedida?.trim() || undefined : undefined,
         valorMinimo: tipoValor === TipoValorConfiguracion.NUMERICO && formData.valorMinimo !== null ? Number(formData.valorMinimo) : undefined,
         valorMaximo: tipoValor === TipoValorConfiguracion.NUMERICO && formData.valorMaximo !== null ? Number(formData.valorMaximo) : undefined,
@@ -371,20 +598,18 @@ export class SystemConfigurationModalComponent implements OnInit {
     });
   }
 
-  deleteData(uuid: string) {
-    this.configuracionSistemaService.delete(uuid).subscribe({
-      next: (data: any) => {
+  deactivateData(uuid: string) {
+    this.submitted = true;
+    this.configuracionSistemaService.desactivar(uuid).subscribe({
+      next: () => {
         this.submitted = false;
-        if (data['status'] === 'OK') {
-          this.notify(data.payload, 'success');
-          this.modalService.dismissAll();
-          this.emitList.emit();
-          this.closeModal();
-        }
+        this.notify('Configuración anulada exitosamente', 'success');
+        this.modalService.dismissAll();
+        this.emitList.emit();
       },
-      error: err => {
+      error: () => {
         this.submitted = false;
-        this.notify('No se pudo eliminar el registro!', 'error');
+        this.notify('No se pudo anular la configuración', 'error');
       }
     });
   }
@@ -392,8 +617,6 @@ export class SystemConfigurationModalComponent implements OnInit {
   public closeModal() {
     this.submitted = false;
     this.showLoading = false;
-    this.contentForm.enable();
-    this.contentForm.reset();
     this.modalService.dismissAll();
   }
 

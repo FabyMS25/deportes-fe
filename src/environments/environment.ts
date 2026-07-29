@@ -7,9 +7,6 @@ export const environment = {
   backendUrl: "http://localhost:8085/api",
   backendRuat:'http://localhost:8085/api',
   assetsUrl: "http://deportes.quillacollo.gob.bo",
-  // backendUrl: "http://localhost:8085/api",
-  // backendRuat:'http://localhost:8085/api',
-  // assetsUrl: "http://localhost:4205",
 
   EmailJS:{
     idService:'service_auth',

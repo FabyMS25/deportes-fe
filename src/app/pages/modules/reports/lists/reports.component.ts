@@ -303,9 +303,7 @@ export class ListReportComponent implements OnInit {
   private getComplejos() {
     this.complejoService.getAll().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.complejosList = data.payload;
-        }
+        this.complejosList = data;
       },
       error: (error) => {
         console.error('Error loading complejos:', error);
@@ -316,12 +314,10 @@ export class ListReportComponent implements OnInit {
   private getEscuelas(type:string) {
     this.organizationService.getAll().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          const list = data.payload.content
-          this.organizationsEscuelasList = list.filter((item:Organizacion)=>
-            item.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL
-          );
-        }
+        const list = data.content || data;
+        this.organizationsEscuelasList = list.filter((item:Organizacion)=>
+          item.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL
+        );
       },
       error: (error) => {
         console.error('Error loading complejos:', error);
@@ -332,9 +328,7 @@ export class ListReportComponent implements OnInit {
   private getEstudiantes() {
     this.estudianteEscuelaService.getAll().subscribe({
       next: (data: any) => {
-        if (data['status'] === 'OK') {
-          this.estudiantesList = data.payload;
-        }
+        this.estudiantesList = data;
       },
       error: (error) => {
         console.error('Error loading estudiantes:', error);

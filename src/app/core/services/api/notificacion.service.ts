@@ -7,6 +7,7 @@ import SockJS from 'sockjs-client';
 import { environment } from 'src/environments/environment';
 import { Notificacion, EstadoLecturaNotificacion } from '../../models/notificacion.model';
 import { TokenStorageService } from '../token-storage.service';
+import { apiDelete, apiGet, apiPatch, apiPost, PageResponse } from '../apiResponses';
 
 @Injectable({ providedIn: 'root' })
 export class NotificacionService {
@@ -53,30 +54,48 @@ export class NotificacionService {
   }
 
   getByUsuario(usuarioUuid: string, page = 0, size = 20): Observable<Notificacion[]> {
-    return this.http.get<any>(`${this.apiUrl}/usuario/${usuarioUuid}`, { params: { page, size } })
-      .pipe(map(response => this.extractNotificationList(response)));
+    return apiGet<PageResponse<Notificacion>>(
+      this.http,
+      `${this.apiUrl}/usuario/${usuarioUuid}`,
+      `obtener notificaciones (${usuarioUuid})`,
+      { params: { page, size } }
+    ).pipe(map(response => response.content));
   }
 
   getUnread(usuarioUuid: string): Observable<Notificacion[]> {
-    return this.http.get<any>(`${this.apiUrl}/usuario/${usuarioUuid}/no-leidas`)
-      .pipe(map(response => this.extractNotificationList(response)));
+    return apiGet<Notificacion[]>(
+      this.http,
+      `${this.apiUrl}/usuario/${usuarioUuid}/no-leidas`,
+      `obtener notificaciones no leídas (${usuarioUuid})`
+    );
   }
 
   getUnreadCount(usuarioUuid: string): Observable<number> {
-    return this.http.get<any>(`${this.apiUrl}/usuario/${usuarioUuid}/contador-no-leidas`)
-      .pipe(map(response => this.extractCount(response)));
+    return apiGet<number>(
+      this.http,
+      `${this.apiUrl}/usuario/${usuarioUuid}/contador-no-leidas`,
+      `contar notificaciones no leídas (${usuarioUuid})`
+    );
+  }
+
+  syncAdminNotifications(usuarioUuid: string): Observable<Notificacion[]> {
+    return apiPost<Notificacion[]>(
+      this.http,
+      `${this.apiUrl}/admin/sincronizar/${usuarioUuid}`,
+      {},
+      `sincronizar notificaciones administrativas (${usuarioUuid})`
+    );
   }
 
   markAsRead(uuid: string): Observable<Notificacion | null> {
-    return this.http.patch<any>(`${this.apiUrl}/${uuid}/leer`, {})
+    return apiPatch<Notificacion>(this.http, `${this.apiUrl}/${uuid}/leer`, {}, `marcar notificación como leída (${uuid})`)
       .pipe(
-        map(response => this.extractNotification(response)),
-        tap(notification => this.patchLocalReadState(uuid, notification || undefined))
+        tap(notification => this.patchLocalReadState(uuid, notification))
       );
   }
 
-  markAllAsRead(usuarioUuid: string): Observable<any> {
-    return this.http.patch<any>(`${this.apiUrl}/usuario/${usuarioUuid}/leer-todas`, {})
+  markAllAsRead(usuarioUuid: string): Observable<Notificacion[]> {
+    return apiPatch<Notificacion[]>(this.http, `${this.apiUrl}/usuario/${usuarioUuid}/leer-todas`, {}, `marcar notificaciones como leídas (${usuarioUuid})`)
       .pipe(tap(() => {
         this.notificationsSubject.next(
           this.notificationsSubject.value.map(item => ({ ...item, estadoLectura: 'LEIDA' as EstadoLecturaNotificacion }))
@@ -85,16 +104,8 @@ export class NotificacionService {
       }));
   }
 
-  updateReadState(uuid: string, estadoLectura: EstadoLecturaNotificacion): Observable<Notificacion | null> {
-    return this.http.patch<any>(`${this.apiUrl}/${uuid}/estado-lectura`, { estadoLectura })
-      .pipe(
-        map(response => this.extractNotification(response)),
-        tap(notification => this.patchLocalReadState(uuid, notification || { uuid, estadoLectura } as Notificacion))
-      );
-  }
-
-  delete(uuid: string): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/${uuid}`)
+  delete(uuid: string): Observable<string> {
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar notificación (${uuid})`)
       .pipe(tap(() => {
         const removed = this.notificationsSubject.value.find(item => item.uuid === uuid);
         this.notificationsSubject.next(this.notificationsSubject.value.filter(item => item.uuid !== uuid));
@@ -128,6 +139,9 @@ export class NotificacionService {
     this.fallbackSubscription = undefined;
     this.connectionStateSubject.next(false);
 
+    if (this.stompClient) {
+      this.stompClient.reconnectDelay = 0;
+    }
     if (this.stompClient?.active) {
       this.stompClient.deactivate();
     }
@@ -166,7 +180,7 @@ export class NotificacionService {
   }
 
   private handleNotificationMessage(message: IMessage): void {
-    const notification = this.extractNotification(this.parseBody(message.body));
+    const notification = this.parseBody<Notificacion>(message.body);
     if (!notification?.uuid) return;
 
     const existing = this.notificationsSubject.value.filter(item => item.uuid !== notification.uuid);
@@ -178,7 +192,8 @@ export class NotificacionService {
   }
 
   private handleCounterMessage(message: IMessage): void {
-    this.unreadCountSubject.next(this.extractCount(this.parseBody(message.body)));
+    const count = Number(this.parseBody<number>(message.body));
+    this.unreadCountSubject.next(Number.isFinite(count) ? count : 0);
   }
 
   private patchLocalReadState(uuid: string, notification?: Notificacion): void {
@@ -194,30 +209,11 @@ export class NotificacionService {
     this.unreadCountSubject.next(notifications.filter(item => item.estadoLectura === 'NO_LEIDA').length);
   }
 
-  private extractNotificationList(response: any): Notificacion[] {
-    const payload = response?.payload ?? response;
-    if (Array.isArray(payload)) return payload;
-    if (Array.isArray(payload?.content)) return payload.content;
-    return [];
-  }
-
-  private extractNotification(response: any): Notificacion | null {
-    const payload = response?.payload ?? response;
-    if (payload?.uuid) return payload as Notificacion;
-    return null;
-  }
-
-  private extractCount(response: any): number {
-    const payload = response?.payload ?? response;
-    const count = typeof payload === 'number' ? payload : Number(payload?.count ?? payload?.total ?? 0);
-    return Number.isFinite(count) ? count : 0;
-  }
-
-  private parseBody(body: string): any {
+  private parseBody<T>(body: string): T {
     try {
-      return JSON.parse(body);
+      return JSON.parse(body) as T;
     } catch {
-      return body;
+      return body as T;
     }
   }
 }
