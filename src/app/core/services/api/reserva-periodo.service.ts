@@ -50,7 +50,7 @@ export class ReservaPeriodoService {
     return apiGet<ReservaPeriodo>(this.http, `${this.apiUrl}/${uuid}`, `obtener reserva periodo (${uuid})`);
   }
 
-  getByReservaUuid(reservaUuid: string): Observable<ReservaPeriodo[]> {
+  getByReservationUuid(reservaUuid: string): Observable<ReservaPeriodo[]> {
     return apiGet<ReservaPeriodo[]>(this.http, `${this.apiUrl}/reserva/${reservaUuid}`, `obtener reservas periodo por reserva (${reservaUuid})`);
   }
 
@@ -58,15 +58,15 @@ export class ReservaPeriodoService {
     return apiGet<ReservaPeriodo[]>(this.http, `${this.apiUrl}/periodo/${periodo}`, `obtener reservas por periodo (${periodo})`);
   }
 
-  getByContribuyente(contribuyenteUuid: string): Observable<ReservaPeriodo[]> {
+  getByTaxpayer(contribuyenteUuid: string): Observable<ReservaPeriodo[]> {
     return apiGet<ReservaPeriodo[]>(this.http, `${this.apiUrl}/contribuyente/${contribuyenteUuid}`, `obtener reservas periodo por contribuyente (${contribuyenteUuid})`);
   }
 
-  getByOrganizacion(organizacionUuid: string): Observable<ReservaPeriodo[]> {
+  getByOrganization(organizacionUuid: string): Observable<ReservaPeriodo[]> {
     return apiGet<ReservaPeriodo[]>(this.http, `${this.apiUrl}/organizacion/${organizacionUuid}`, `obtener reservas periodo por organización (${organizacionUuid})`);
   }
 
-  getByEstudiante(estudianteUuid: string): Observable<ReservaPeriodo[]> {
+  getByStudent(estudianteUuid: string): Observable<ReservaPeriodo[]> {
     return apiGet<ReservaPeriodo[]>(this.http, `${this.apiUrl}/estudiante/${estudianteUuid}`, `obtener reservas periodo por estudiante (${estudianteUuid})`);
   }
 

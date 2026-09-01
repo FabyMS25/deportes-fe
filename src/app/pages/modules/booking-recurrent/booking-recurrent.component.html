@@ -9,7 +9,7 @@
         [newShow]="canActivate.includes('CREAR')"
         [consultShow]="selectedItems.length > 0"
         [exportShow]="canActivate.includes('VER')"
-        (createEmitter)="agregarReserva()"
+        (createEmitter)="addReservation()"
         (consultEmitter)="openModal(selectedItems[0],'consult','md')"
     ></app-data-header>
     <div class="card rounded-2">

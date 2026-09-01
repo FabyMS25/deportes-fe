@@ -202,7 +202,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
     }
 
     if (!this.estudiantes.length) {
-      this.getEstudiantes();
+      this.getStudents();
     }
 
     this.initializeForm();
@@ -385,7 +385,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
      CREATE FLOW
   ========================= */
 
-  onEstudianteChange(event: Event): void {
+  onStudentChange(event: Event): void {
     const estudianteUuid = (event.target as HTMLSelectElement).value;
     const estudiante = this.estudiantes.find(e => e.uuid === estudianteUuid);
     if (estudiante) {
@@ -849,7 +849,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
 
     this.ruatService.cancelTasa(requestData).subscribe({
       next: (resp: any) => {
-        if (resp.status === 'OK') {
+        if (this.ruatService.canContinue(resp)) {
           this.cancelReservaLocal(
             reserva,
             requestData.motivo,
@@ -908,7 +908,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
       return;
     }
 
-    this.reservaService.cancelarReserva(reserva.uuid, motivo || 'Anulación de mensualidad').subscribe({
+    this.reservaService.cancelReservation(reserva.uuid, motivo || 'Anulación de mensualidad').subscribe({
       next: (response: any) => {
         this.isLoading = false;
         this.notify(successMessage, notificationType);
@@ -933,7 +933,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
     return this.months.find(m => m.value === month)?.name || '';
   }
 
-  getReservaDetalles(): ReservaPeriodo[] {
+  getReservationDetails(): ReservaPeriodo[] {
     return this.row?.reservasPeriodoDtoList || [];
   }
 
@@ -958,13 +958,13 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
 
     try {
       const resp: any = await this.ruatService
-        .consultaPagoTasa(this.row.numeroTasa)
+        .checkFeePayment(this.row.numeroTasa)
         .toPromise();
       const persistedPayment = this.row.pagosDtoList?.find(
         pago => pago.estadoPago === EstadoPago.PAGADO
       ) || this.row.pagosDtoList?.[0];
 
-      if (resp?.status !== 'OK') {
+      if (!this.ruatService.hasBusinessResponse(resp)) {
         if (persistedPayment) {
           this.consultationResult = this.buildPersistedPaymentResult(resp, persistedPayment);
           return;
@@ -1079,7 +1079,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
     return this.periodosUnicosActuales.length ? this.periodosUnicosActuales.join(', ') : 'N/A';
   }
 
-  getEstadoPagoActual(): string {
+  getCurrentPaymentStatus(): string {
     return this.pagoPrincipal?.estadoPago || 'SIN PAGO';
   }
 
@@ -1230,7 +1230,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
   private loadPeriodsByStudent(): void {
     if (!this.selection.student?.uuid) return;
 
-    this.reservaPeriodoService.getByEstudiante(this.selection.student.uuid).subscribe({
+    this.reservaPeriodoService.getByStudent(this.selection.student.uuid).subscribe({
       next: (response: any) => {
         this.catalogs.periodRegistrations = Array.isArray(response)
           ? response
@@ -1525,7 +1525,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
   private approveReserva(reservaUuid: string): void {
     const aprobadoPor = this.authService.currentUser()?.nombreCompleto || 'Sistema';
 
-    this.reservaService.aprobarReserva(reservaUuid, aprobadoPor).subscribe({
+    this.reservaService.approveReservation(reservaUuid, aprobadoPor).subscribe({
       next: () => {
         this.isLoading = false;
         this.notify('Mensualidad aprobada exitosamente.', 'success');
@@ -1545,7 +1545,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
   private rejectReserva(reservaUuid: string, motivoRechazo: string): void {
     const aprobadoPor = this.authService.currentUser()?.nombreCompleto || 'Sistema';
 
-    this.reservaService.rechazarReserva(reservaUuid, motivoRechazo, aprobadoPor).subscribe({
+    this.reservaService.rejectReservation(reservaUuid, motivoRechazo, aprobadoPor).subscribe({
       next: () => {
         this.isLoading = false;
         this.notify('Mensualidad rechazada exitosamente.', 'success');
@@ -1631,9 +1631,9 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
     });
   }
 
-  private getEstudiantes(): void {
+  private getStudents(): void {
     const request = this.userRole === 'Contribuyente' && this.userData?.uuid
-      ? this.estudianteService.getByContribuyente(this.userData.uuid)
+      ? this.estudianteService.getByTaxpayer(this.userData.uuid)
       : this.estudianteService.getAll();
     request.subscribe({
       next: (response: any) => {

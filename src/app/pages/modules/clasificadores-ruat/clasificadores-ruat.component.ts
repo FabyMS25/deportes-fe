@@ -67,7 +67,7 @@ export class ClasificadoresRuatComponent {
       tipoArancel: ['', [Validators.required]],
       activo: [true]
     });
-    this.getClasificadores();
+    this.getClassifiers();
   }
 
   getSelectedItems(items: any) {
@@ -183,7 +183,7 @@ export class ClasificadoresRuatComponent {
     modalRef.componentInstance.createRecordFn = (record: ClasificadorRuat) =>
       this.clasificadoresService.save(record).toPromise();
     modalRef.componentInstance.actionCompleted.subscribe(() => {
-      this.getClasificadores();
+      this.getClassifiers();
     });
   }
 
@@ -223,7 +223,7 @@ export class ClasificadoresRuatComponent {
 
   /* API Services */
   loading: boolean = true;
-  private getClasificadores() {
+  private getClassifiers() {
     this.clasificadoresService.getAll().subscribe({
       next: (data: ClasificadorRuat[]) => {
         this.loading = false;
@@ -288,7 +288,7 @@ export class ClasificadoresRuatComponent {
     this.modalService.dismissAll();
     this.contentForm.reset();
     this.contentForm.enable();
-    this.getClasificadores();
+    this.getClassifiers();
   }
 
   private getErrorMessage(error: any): string {

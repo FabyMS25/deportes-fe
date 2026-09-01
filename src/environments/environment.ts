@@ -3,7 +3,6 @@ export const environment = {
   subscriberId: "66acdd389313f20322afd3bb",
   applicationIdentifier: "uo-XSwSEFlyM",
   
-  apiLoginUrl: 'http://181.177.143.185:8080/api',
   backendUrl: "http://localhost:8085/api",
   backendRuat:'http://localhost:8085/api',
   assetsUrl: "http://deportes.quillacollo.gob.bo",

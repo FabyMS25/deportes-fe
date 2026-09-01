@@ -90,7 +90,7 @@ export class OrganizationsComponent implements OnInit {
       { name: 'Teléfono Representante', prop: 'representanteDto.telefono', visible: false },
       { name: 'Fecha Creación', prop: 'fechaCreacion', visible: false, date: true },
     ];
-    this.getOrganizaciones();
+    this.getOrganizations();
     this.getContribuyentesForRepresentatives();
   }
   getSelectedItems(items: Organizacion[]): void {
@@ -203,7 +203,7 @@ export class OrganizationsComponent implements OnInit {
       .toLowerCase();
   }
 
-  private searchInOrganizacion(item: any, searchTerm: string): boolean {
+  private searchInOrganization(item: any, searchTerm: string): boolean {
     if (!searchTerm) return true;    
     const term = searchTerm.toLowerCase();
     return (
@@ -231,12 +231,12 @@ export class OrganizationsComponent implements OnInit {
     modalRef.componentInstance.accion = accion;
     modalRef.componentInstance.contribuyentesList = this.contribuyentesList;
     modalRef.componentInstance.emitList.subscribe(() => {
-      this.getOrganizaciones();
+      this.getOrganizations();
     });
   }
 
   /* API Services */  
-  private getOrganizaciones(): void {
+  private getOrganizations(): void {
     this.loading = true;
 
     this.organizacionesService.getAll().subscribe({

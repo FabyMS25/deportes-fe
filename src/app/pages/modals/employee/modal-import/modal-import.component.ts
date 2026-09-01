@@ -8,7 +8,7 @@ import Swal from 'sweetalert2';
 import { SharedModule } from 'src/app/shared/shared.module';
 
 import { EncargadoService } from 'src/app/core/services/api/encargado.service';
-import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
 
 @Component({
   selector: 'app-modal-import',
@@ -36,7 +36,7 @@ export class ModalImportComponent {
   constructor(
       private activeModal: NgbActiveModal,
       private service: EncargadoService,
-      private complejoService: ComplejosService
+      private complejoService: FacilitiesService
   ) {}
 
   ngOnInit(): void {}
@@ -120,17 +120,12 @@ export class ModalImportComponent {
   
     private searchData(nombre: string): Observable<any> {
       return this.complejoService.getAll().pipe(
-        map((response: any) => {
-          if (response['status'] === 'OK') {
-            const list: any[] = response['payload'];
+        map((list: any[]) => {
             const foundItem = list.find(item => item.nombre === nombre);
             if (!foundItem) {
               throw new Error('Complejo not found');
             }
             return foundItem;
-          } else {
-            throw new Error('Invalid response from server');
-          }
         })
       );
     }

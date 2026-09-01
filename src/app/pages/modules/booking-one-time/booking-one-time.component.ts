@@ -45,7 +45,7 @@ export class BookingOneTimeComponent implements OnInit {
   userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
   userData!:any;
   contribuyente!: Contribuyente;
-  estadoReservaOptions = StatusUtils.getEstadoReservaOptions();
+  estadoReservaOptions = StatusUtils.getReservationStatusOptions();
   estadoValidacionOptions = StatusUtils.getEstadoValidacionOptions();
 
   selectedItems: ReservaPuntual[] = [];
@@ -247,7 +247,7 @@ export class BookingOneTimeComponent implements OnInit {
     modalRef.componentInstance.showAsModal = true;
     modalRef.componentInstance.autoLoad = true;
   }
-  public agregarReserva() {
+  public addReservation() {
     this.router.navigate(['/reservations/details'], {
       state: {
         tipoReserva: 'puntual'
@@ -480,49 +480,11 @@ export class BookingOneTimeComponent implements OnInit {
         return { item, text: "No hay número de tasa asociado", 
           type: 'warning', hasPayment: false, consultationSuccessful: false };
       }
-      const resp: any = await this.ruatService.consultaPagoTasa(nroTasa).toPromise();
-      if (resp?.status !== 'OK') {
-        if (this.isRuatConnectionError(resp?.payload)) {
-          return {
-            item,
-            text: 'RUAT no respondió a tiempo. No se pudo verificar el pago ni actualizar la reserva. Intente nuevamente en unos minutos.',
-            type: 'warning',
-            hasPayment: false,
-            consultationSuccessful: false,
-            ruatResponse: resp,
-            errorCode: 'RUAT_TIMEOUT'
-          };
-        }
-        const ruatPayload = this.extractRuatBusinessPayload(resp?.payload);
-        if (
-          resp?.status === 'NOT_FOUND' &&
-          ruatPayload &&
-          String(ruatPayload.continuarFlujo).toLowerCase() !== 'true'
-        ) {
-          return {
-            item,
-            text: 'No se encontraron pagos realizados para esta tasa.',
-            type: 'info',
-            hasPayment: false,
-            consultationSuccessful: true,
-            ruatResponse: resp,
-            errorCode: 'PAYMENT_NOT_FOUND'
-          };
-        }
-        if (resp?.status === 'NOT_FOUND') {
-          return {
-            item,
-            text: 'No se encontraron pagos realizados para esta tasa.',
-            type: 'info',
-            hasPayment: false,
-            consultationSuccessful: false,
-            ruatResponse: resp,
-            errorCode: 'PAYMENT_NOT_FOUND'
-          };
-        }
+      const resp: any = await this.ruatService.checkFeePayment(nroTasa).toPromise();
+      if (!this.ruatService.hasBusinessResponse(resp)) {
         return {
           item,
-          text: this.ruatService.getOperationalErrorMessage(resp, 'RUAT devolvió una respuesta inválida. No se actualizó la reserva.'),
+          text: 'RUAT devolvió una respuesta inválida. No se actualizó la reserva.',
           type: 'warning',
           hasPayment: false,
           consultationSuccessful: false,
@@ -634,7 +596,11 @@ export class BookingOneTimeComponent implements OnInit {
           motivo: "NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO",
           observacion: "ANULADO AUTOMATICO, VENCIDO PLAZO DE RESERVA"
         };
-        await this.ruatService.cancelTasa(requestData).toPromise();
+        const ruatResponse = await this.ruatService.cancelTasa(requestData).toPromise();
+        if (!this.ruatService.canContinue(ruatResponse)) {
+          console.warn('RUAT did not authorize automatic fee cancellation:', ruatResponse);
+          return reserva;
+        }
       } catch (error) {
         console.warn('Failed to cancel tasa in RUAT for expired reservation:', error);
         return reserva;
@@ -663,13 +629,7 @@ export class BookingOneTimeComponent implements OnInit {
   private updateReservation(data: Reserva): Promise<Reserva> {
     return new Promise((resolve, reject) => {
       this.reservaService.update(data).subscribe({
-        next: (resp: any) => {
-          if (resp['status'] === 'OK') {
-            resolve(resp.payload);
-          } else {
-            reject(resp.payload);
-          }
-        },
+        next: (resp: any) => resolve(resp),
         error: (error) => {
           reject(error);
         }

@@ -37,7 +37,7 @@ export class OrganizacionService {
     return apiGet<any>(this.http, `${this.apiUrl}/representante/${contribuyenteUuid}`, `obtener organización por representante (${contribuyenteUuid})`);
   }
 
-  getByContribuyente(contribuyenteUuid: string): Observable<any> {
+  getByTaxpayer(contribuyenteUuid: string): Observable<any> {
     return apiGet<any>(this.http, `${this.apiUrl}/contribuyente/${contribuyenteUuid}`, `obtener organizaciones por contribuyente (${contribuyenteUuid})`);
   }
 }

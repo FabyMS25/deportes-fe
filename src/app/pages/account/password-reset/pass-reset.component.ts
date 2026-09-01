@@ -100,7 +100,7 @@ export class PassResetComponent {
       const newPassword = this.f['password'].value;  
       
       if(this.userRole === 'Contribuyente'){
-        this.updateContribuyentePassword(newPassword);
+        this.updateTaxpayerPassword(newPassword);
       } else {
         this.updateEmployeePassword(newPassword);
       }    
@@ -113,7 +113,7 @@ export class PassResetComponent {
   /**
    * Update Contribuyente Password
    */
-  private updateContribuyentePassword(newPassword: string): void {
+  private updateTaxpayerPassword(newPassword: string): void {
     const updateData: Partial<Contribuyente> = {
       ...this.userData,
       password: newPassword,

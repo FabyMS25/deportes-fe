@@ -5,30 +5,34 @@ import { CookieService } from 'ngx-cookie-service';
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
 
-  public languages: string[] = [ 'es','en', 'de', 'it', 'ru'];
+  public readonly languages: string[] = ['es', 'en'];
+  public readonly defaultLanguage = 'es';
 
   constructor(public translate: TranslateService, private cookieService: CookieService) {
 
-    let browserLang: any;
-    /***
-     * cookie Language Get
-    */
+    let selectedLanguage: string;
+
     this.translate.addLangs(this.languages);
+    this.translate.setDefaultLang(this.defaultLanguage);
+
     if (this.cookieService.check('lang')) {
-      browserLang = this.cookieService.get('lang');
+      selectedLanguage = this.cookieService.get('lang');
+    } else {
+      selectedLanguage = this.translate.getBrowserLang() ?? this.defaultLanguage;
     }
-    else {
-      browserLang = translate.getBrowserLang();
-    }
-    translate.use(browserLang.match(/es|en|de|it|ru/) ? browserLang : 'es');
+
+    this.setLanguage(selectedLanguage, false);
   }
 
-  /***
-   * Cookie Language set
-   */
-  public setLanguage(lang: any) {
-    this.translate.use(lang);
-    this.cookieService.set('lang', lang);
+  public setLanguage(language: string, persist = true): void {
+    const supportedLanguage = this.languages.includes(language)
+      ? language
+      : this.defaultLanguage;
+
+    this.translate.use(supportedLanguage);
+    if (persist) {
+      this.cookieService.set('lang', supportedLanguage);
+    }
   }
 
 }

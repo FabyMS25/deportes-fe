@@ -40,7 +40,7 @@ export class EstudianteEscuelaService {
   }
 
   // Business Operations
-  getByContribuyente(contribuyenteUuid: string): Observable<EstudianteEscuela[]> {
+  getByTaxpayer(contribuyenteUuid: string): Observable<EstudianteEscuela[]> {
     return apiGet<EstudianteEscuela[]>(this.http, `${this.apiUrl}/contribuyente/${contribuyenteUuid}`, `obtener estudiantes por contribuyente (${contribuyenteUuid})`);
   }
 

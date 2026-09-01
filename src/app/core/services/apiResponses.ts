@@ -61,7 +61,18 @@ export function emptyPaginatedResponse<T>(page = 1, perPage = 10): PaginatedResp
 export function handleError(operation = 'operación') {
   return (error: unknown): Observable<never> => {
     const message = extractMessage(error) || `Error en ${operation}`;
-    return throwError(() => new Error(message));
+    const normalizedError = new Error(message) as Error & {
+      status?: number;
+      error?: unknown;
+      originalError?: unknown;
+    };
+    if (error && typeof error === 'object') {
+      const httpError = error as { status?: number; error?: unknown };
+      normalizedError.status = httpError.status;
+      normalizedError.error = httpError.error;
+      normalizedError.originalError = error;
+    }
+    return throwError(() => normalizedError);
   };
 }
 
@@ -152,11 +163,11 @@ function extractMessage(value: unknown): string {
   };
 
   return firstText(
-    data.mensaje,
-    data.message,
-    data.details,
     extractMessage(data.payload),
-    extractMessage(data.error)
+    extractMessage(data.error),
+    data.mensaje,
+    data.details,
+    data.message
   );
 }
 

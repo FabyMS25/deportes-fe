@@ -65,7 +65,7 @@
                             <!-- Student Name Field (only for mensual) -->
                             <div class="col-xxl-2 col-sm-4" *ngIf="this.reportType === 'mensual'">
                                 <div>
-                                    <select class="form-control" name="estudiante" [(ngModel)]="estudiante" (change)="onEstudianteChange()">
+                                    <select class="form-control" name="estudiante" [(ngModel)]="estudiante" (change)="onStudentChange()">
                                         <option [value]="'TODO'">Todos los estudiantes</option>
                                         <option *ngFor="let option of estudiantesList" [value]="option.nombreCompleto">
                                             {{option.nombreCompleto}}
@@ -124,8 +124,8 @@
                             <i class="ri-information-line align-middle"></i>
                             <strong>Reporte:</strong> {{ getReportTypeLabel() }}
                             <span *ngIf="this.reportType !== 'mensual'">| <strong>Complejo:</strong> {{ getCanchaLabel(cancha) }}</span>
-                            <span *ngIf="this.reportType === 'mensual'">| <strong>Escuela:</strong> {{ getEscuelitaLabel(escuelita) }}</span>
-                            <span *ngIf="this.reportType === 'mensual' && estudiante !== 'TODO'">| <strong>Estudiante:</strong> {{ getEstudianteLabel(estudiante) }}</span>
+                            <span *ngIf="this.reportType === 'mensual'">| <strong>Escuela:</strong> {{ getSchoolLabel(escuelita) }}</span>
+                            <span *ngIf="this.reportType === 'mensual' && estudiante !== 'TODO'">| <strong>Estudiante:</strong> {{ getStudentLabel(estudiante) }}</span>
                             <span *ngIf="this.reportType === 'mensual' && matricula">| <strong>Matrícula:</strong> {{ matricula }}</span>
                             | <strong>Estado:</strong> {{ getStatusLabel(status) }}
                             <span *ngIf="this.reportType !== 'mensual'">| <strong>Tipo de Cobro:</strong> {{ getPaymentTypeLabel(paymentType) }}</span>

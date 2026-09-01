@@ -30,7 +30,7 @@ export function obtenerValorConfiguracionConUnidad(
   return config.unidadMedida ? `${value} ${config.unidadMedida}` : `${value}`;
 }
 
-export function obtenerClaveValidacionPago(
+export function getPaymentValidationKey(
   tipoReserva: TipoReservaPago,
   tipoCobro: TipoCobroPago
 ): ClaveConfiguracion {
@@ -49,7 +49,7 @@ export function obtenerHorasValidacionPago(
   tipoCobro: TipoCobroPago,
   fallback = 4
 ): number {
-  const clave = obtenerClaveValidacionPago(tipoReserva, tipoCobro);
+  const clave = getPaymentValidationKey(tipoReserva, tipoCobro);
   return obtenerValorNumericoConfiguracion(configs, clave) ?? fallback;
 }
 
@@ -60,6 +60,6 @@ export function obtenerValidacionPagoConUnidad(
 ): string | undefined {
   return obtenerValorConfiguracionConUnidad(
     configs,
-    obtenerClaveValidacionPago(tipoReserva, tipoCobro)
+    getPaymentValidationKey(tipoReserva, tipoCobro)
   );
 }

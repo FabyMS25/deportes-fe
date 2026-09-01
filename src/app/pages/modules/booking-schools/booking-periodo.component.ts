@@ -42,7 +42,7 @@ export class BookingPeriodoComponent implements OnInit {
   userData!: any;
   contribuyente!: Contribuyente;
 
-  estadoReservaOptions = StatusUtils.getEstadoReservaOptions();
+  estadoReservaOptions = StatusUtils.getReservationStatusOptions();
 
   loading = true;
   reservasList: any = {
@@ -58,7 +58,7 @@ export class BookingPeriodoComponent implements OnInit {
   selectedItems: Reserva[] = [];
   readonly CSV_COLUMNS: CsvColumn<Reserva>[] = [
     { header: 'Estudiante',
-      value: item => this.getEstudiantesResumen(item)
+      value: item => this.getStudentsSummary(item)
     },
     { header: 'Matrícula',
       value: item => this.getMatriculasResumen(item)
@@ -206,8 +206,8 @@ export class BookingPeriodoComponent implements OnInit {
       await this.delay(1000);
     }
     this.generatePeriodYears();
-    this.loadEscuelas();
-    this.loadEstudiantes();
+    this.loadSchools();
+    this.loadStudents();
     await this.getReservations();
     setInterval(() => this.getReservations(), 5 * 60 * 1000);
   }
@@ -304,7 +304,7 @@ export class BookingPeriodoComponent implements OnInit {
     return 'todos los períodos';
   }
 
-  getPeriodoDisplayForReserva(item: any): string {
+  getReservationPeriodDisplay(item: any): string {
     if (!item) {
       return '-';
     }
@@ -319,25 +319,25 @@ export class BookingPeriodoComponent implements OnInit {
     return `${monthNames[item.mes - 1]} ${item.año}`;
   }
 
-  getReservaDetalles(reserva: Reserva | any): ReservaPeriodo[] {
+  getReservationDetails(reserva: Reserva | any): ReservaPeriodo[] {
     return reserva?.reservasPeriodoDtoList || [];
   }
 
-  private getReservaForPeriodoExport(item: any): Reserva {
+  private getReservationForPeriodExport(item: any): Reserva {
     return item?.reservaDto || item;
   }
 
   private getReservaPeriodoDetails(item: any): any[] {
-    const reserva = this.getReservaForPeriodoExport(item);
+    const reserva = this.getReservationForPeriodExport(item);
     return reserva?.reservasPeriodoDtoList?.length ? reserva.reservasPeriodoDtoList : [item];
   }
 
   getFirstDetalle(reserva: Reserva | any): ReservaPeriodo | undefined {
-    return this.getReservaDetalles(reserva)[0];
+    return this.getReservationDetails(reserva)[0];
   }
 
-  getEstudiantesResumen(reserva: Reserva | any): string {
-    const detalles = this.getReservaDetalles(reserva);
+  getStudentsSummary(reserva: Reserva | any): string {
+    const detalles = this.getReservationDetails(reserva);
     const names = Array.from(new Set(
       detalles
         .map(detalle => detalle.estudianteEscuelaDto?.nombreCompleto)
@@ -351,7 +351,7 @@ export class BookingPeriodoComponent implements OnInit {
 
   getMatriculasResumen(reserva: Reserva | any): string {
     const matriculas = Array.from(new Set(
-      this.getReservaDetalles(reserva)
+      this.getReservationDetails(reserva)
         .map(detalle => detalle.estudianteEscuelaDto?.matricula || detalle.matricula)
         .filter(Boolean)
     ));
@@ -360,8 +360,8 @@ export class BookingPeriodoComponent implements OnInit {
 
   getPeriodosResumen(reserva: Reserva | any): string {
     const periodos = Array.from(new Set(
-      this.getReservaDetalles(reserva)
-        .map(detalle => this.getPeriodoDisplayForReserva(detalle))
+      this.getReservationDetails(reserva)
+        .map(detalle => this.getReservationPeriodDisplay(detalle))
         .filter(periodo => periodo !== '-')
     ));
     if (!periodos.length) {
@@ -370,27 +370,27 @@ export class BookingPeriodoComponent implements OnInit {
     return periodos.join(', ');
   }
 
-  getEstudiantesCount(reserva: Reserva | any): number {
+  getStudentCount(reserva: Reserva | any): number {
     return new Set(
-      this.getReservaDetalles(reserva)
+      this.getReservationDetails(reserva)
         .map(detalle => detalle.estudianteEscuelaDto?.uuid || detalle.estudianteEscuelaDto?.matricula)
         .filter(Boolean)
     ).size;
   }
 
   getMontoUnitario(reserva: Reserva | any): number {
-    const detallesCount = this.getReservaDetalles(reserva).length || 1;
+    const detallesCount = this.getReservationDetails(reserva).length || 1;
     return Number(reserva?.montoTotal || 0) / detallesCount;
   }
 
-  getEstadoPago(reserva: Reserva | any): string {
+  getPaymentStatus(reserva: Reserva | any): string {
     return reserva?.pagosDtoList?.[0]?.estadoPago || 'SIN PAGO';
   }
 
   private enrichReservationsForDisplay(list: Reserva[]): Reserva[] {
     return list.map(reserva => ({
       ...reserva,
-      estudiantesResumen: this.getEstudiantesResumen(reserva),
+      estudiantesResumen: this.getStudentsSummary(reserva),
       matriculasResumen: this.getMatriculasResumen(reserva),
       periodosResumen: this.getPeriodosResumen(reserva)
     } as Reserva));
@@ -411,7 +411,7 @@ export class BookingPeriodoComponent implements OnInit {
     return `No hay mensualidades registradas para ${this.getPeriodoDisplay(this.filters.periodoFiltro)}.`;
   }
 
-  public generarNuevaMensualidad(): void {
+  public createNewMonthlyPayment(): void {
     if (this.escuelasList.length === 0) {
       Swal.fire({
         title: 'No hay escuelas disponibles',
@@ -431,11 +431,11 @@ export class BookingPeriodoComponent implements OnInit {
     modalRef.componentInstance.estudiantes = this.estudiantesList;
     modalRef.componentInstance.defaultPeriodo = this.filters.periodoFiltro;
     modalRef.componentInstance.reservaGenerada.subscribe((reserva: Reserva) => {
-      this.procesarReservaGenerada(reserva);
+      this.processCreatedReservation(reserva);
     });
   }
 
-  private async procesarReservaGenerada(reserva: Reserva): Promise<void> {
+  private async processCreatedReservation(reserva: Reserva): Promise<void> {
     try {
       this.loading = true;
       if (reserva?.uuid) {
@@ -621,49 +621,11 @@ export class BookingPeriodoComponent implements OnInit {
           errorCode: 'NO_TASA'
         };
       }
-      const resp: any = await this.ruatService.consultaPagoTasa(nroTasa).toPromise();
-      if (resp?.status !== 'OK') {
-        if (this.isRuatConnectionError(resp?.payload)) {
-          return {
-            item,
-            text: 'RUAT no respondió a tiempo. No se pudo verificar el pago ni actualizar la reserva. Intente nuevamente en unos minutos.',
-            type: 'warning',
-            hasPayment: false,
-            consultationSuccessful: false,
-            ruatResponse: resp,
-            errorCode: 'RUAT_TIMEOUT'
-          };
-        }
-        const ruatPayload = this.extractRuatBusinessPayload(resp?.payload);
-        if (
-          resp?.status === 'NOT_FOUND' &&
-          ruatPayload &&
-          String(ruatPayload.continuarFlujo).toLowerCase() !== 'true'
-        ) {
-          return {
-            item,
-            text: 'No se encontraron pagos realizados para esta tasa.',
-            type: 'info',
-            hasPayment: false,
-            consultationSuccessful: true,
-            ruatResponse: resp,
-            errorCode: 'PAYMENT_NOT_FOUND'
-          };
-        }
-        if (resp?.status === 'NOT_FOUND') {
-          return {
-            item,
-            text: 'No se encontraron pagos realizados para esta tasa.',
-            type: 'info',
-            hasPayment: false,
-            consultationSuccessful: false,
-            ruatResponse: resp,
-            errorCode: 'PAYMENT_NOT_FOUND'
-          };
-        }
+      const resp: any = await this.ruatService.checkFeePayment(nroTasa).toPromise();
+      if (!this.ruatService.hasBusinessResponse(resp)) {
         return {
           item,
-          text: this.ruatService.getOperationalErrorMessage(resp, 'RUAT devolvió una respuesta inválida. No se actualizó la reserva.'),
+          text: 'RUAT devolvió una respuesta inválida. No se actualizó la reserva.',
           type: 'warning',
           hasPayment: false,
           consultationSuccessful: false,
@@ -881,7 +843,7 @@ export class BookingPeriodoComponent implements OnInit {
 
   }
 
-  private loadEscuelas() {
+  private loadSchools() {
     this.organizacionesService.getAll().subscribe({
       next: (data: any) => {
         this.loading = false;
@@ -894,7 +856,7 @@ export class BookingPeriodoComponent implements OnInit {
       }
     });
   }
-  private loadEstudiantes() {
+  private loadStudents() {
     this.estuduanteService.getAll().subscribe({
       next: (data: any) => {
         this.estudiantesList = data.content || data;

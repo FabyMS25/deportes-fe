@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AbstractControl, FormGroup, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 import Swal from 'sweetalert2';
 import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
 
@@ -33,7 +33,6 @@ export class SignupComponent implements OnInit {
   userStatus = UserStatus;
   userSex = UserGender;
 
-  usersList!: any[];
   userExist = false;
   ruatData!: Contribuyente;
 
@@ -47,7 +46,6 @@ export class SignupComponent implements OnInit {
 
 
   ngOnInit(): void {
-    this.getUsers();
     this.initializeForm();    
     this.route.queryParams.subscribe(params => {
       const exist = params['userExist'];
@@ -234,46 +232,31 @@ export class SignupComponent implements OnInit {
   /**
    * Nro Documento Validator
    */
-  identityNumberValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (this.usersList) {
-          const itExist = this.usersList.some(user => user.numeroDocumento === control.value);
-          if (itExist) {
-            resolve({itExist: true });
-          } else { resolve(null); }
-        } else {   resolve(null); }
-      }, 300); 
-    });
+  identityNumberValidator(control: AbstractControl): Observable<ValidationErrors | null> {
+    if (!control.value) return of(null);
+    return this.contribuyentesService.publicExists({ numeroDocumento: control.value }).pipe(
+      map(result => result.numeroDocumento ? { itExist: true } : null),
+      catchError(() => of(null))
+    );
   }
 
-  emailValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (this.usersList) {
-          const isEmailTaken = this.usersList.some(user => user.email === control.value);
-          if (isEmailTaken) {
-            resolve({ emailTaken: true });
-          } else { resolve(null); }
-        } else {   resolve(null); }
-      }, 300); 
-    });
+  emailValidator(control: AbstractControl): Observable<ValidationErrors | null> {
+    if (!control.value) return of(null);
+    return this.contribuyentesService.publicExists({ email: control.value }).pipe(
+      map(result => result.email ? { emailTaken: true } : null),
+      catchError(() => of(null))
+    );
   }
   
   /**
    * Username / Password Validator
    */
-  usernameValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (this.usersList) {
-          const isUsernameTaken = this.usersList.some(user => user.userName === control.value);
-          if (isUsernameTaken) {
-            resolve({ usernameTaken: true });
-          } else { resolve(null); }
-        } else {   resolve(null); }
-      }, 300); 
-    });
+  usernameValidator(control: AbstractControl): Observable<ValidationErrors | null> {
+    if (!control.value) return of(null);
+    return this.contribuyentesService.publicExists({ userName: control.value }).pipe(
+      map(result => result.userName ? { usernameTaken: true } : null),
+      catchError(() => of(null))
+    );
   }
   usernameFormatValidator(control: AbstractControl): ValidationErrors | null {
     const value = control.value;
@@ -406,17 +389,6 @@ export class SignupComponent implements OnInit {
   }
  
   /* API REQUESTS */
-  private getUsers() {
-    this.contribuyentesService.getAll().subscribe({
-        next: (data: any) => {
-          if (data['status'] === 'OK') {
-            this.usersList = data.payload;
-          }
-        },
-        error: (error) => {         
-        }
-      });
-  }
 
   /*  */
   private notify(message: any, type: any): void {

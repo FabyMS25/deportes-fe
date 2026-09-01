@@ -8,7 +8,7 @@ import Swal from 'sweetalert2';
 import { UserService } from 'src/app/core/services/api-users/users.service';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
 import { EncargadoService } from 'src/app/core/services/api/encargado.service';
-import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
 import { UserRol } from 'src/app/core/constants/UserData';
 
 @Component({
@@ -99,7 +99,7 @@ export class ModalEmployeeComponent {
   constructor(
     private modalService: NgbModal,
     private usuariosService: UserService,
-    private complejosService: ComplejosService,
+    private complejosService: FacilitiesService,
     private encargadoCanchaService: EncargadoService,
     private formBuilder: UntypedFormBuilder,
   ) {}

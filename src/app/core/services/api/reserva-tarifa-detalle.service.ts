@@ -9,7 +9,7 @@ import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
   providedIn: 'root'
 })
 export class ReservaTarifaDetalleService {
-  apiUrl = environment.backendUrl + '/reservatarifadetalles';
+  apiUrl = environment.backendUrl + '/reservation-tariff-details';
 
   constructor(private http: HttpClient) { }
 
@@ -21,7 +21,7 @@ export class ReservaTarifaDetalleService {
     return apiGet<any>(this.http, `${this.apiUrl}/${uuid}`, `obtener detalle de tarifa (${uuid})`);
   }
 
-  getByReservaUuid(reservaUuid: string): Observable<any> {
+  getByReservationUuid(reservaUuid: string): Observable<any> {
     return apiGet<any>(this.http, `${this.apiUrl}/reserva/${reservaUuid}`, `obtener detalles de tarifa por reserva (${reservaUuid})`);
   }
 

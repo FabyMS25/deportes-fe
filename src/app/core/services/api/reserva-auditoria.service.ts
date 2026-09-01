@@ -17,7 +17,7 @@ export class ReservaAuditoriaService {
     return apiGet<ReservaAuditoria>(this.http, `${this.apiUrl}/${uuid}`, `obtener auditoría de reserva (${uuid})`);
   }
 
-  getByReservaUuid(reservaUuid: string, page: number = 0, size: number = 20): Observable<ReservaAuditoria[]> {
+  getByReservationUuid(reservaUuid: string, page: number = 0, size: number = 20): Observable<ReservaAuditoria[]> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString());
@@ -25,7 +25,7 @@ export class ReservaAuditoriaService {
     return apiGet<ReservaAuditoria[]>(this.http, `${this.apiUrl}/reserva/${reservaUuid}`, `obtener auditorías por reserva (${reservaUuid})`, { params });
   }
 
-  getUltimasByReserva(reservaUuid: string, limite: number = 10): Observable<ReservaAuditoria[]> {
+  getLatestByReservation(reservaUuid: string, limite: number = 10): Observable<ReservaAuditoria[]> {
     let params = new HttpParams().set('limite', limite.toString());
     return apiGet<ReservaAuditoria[]>(this.http, `${this.apiUrl}/reserva/${reservaUuid}/ultimas`, `obtener últimas auditorías (${reservaUuid})`, { params });
   }
@@ -72,7 +72,7 @@ export class ReservaAuditoriaService {
     return apiGet<any[]>(this.http, `${this.apiUrl}/estadisticas/accion`, 'obtener estadísticas de auditoría por acción');
   }
 
-  countByReserva(reservaUuid: string): Observable<number> {
+  countByReservation(reservaUuid: string): Observable<number> {
     return apiGet<number>(this.http, `${this.apiUrl}/contador/reserva/${reservaUuid}`, `contar auditorías por reserva (${reservaUuid})`);
   }
 }

@@ -320,7 +320,13 @@
       "FIELDS": "Fields",
       "EMPLOYEES": "Employees",
       "CATEGORIES": "Categories"
-  },  
+  },
+  "ADMINISTRATION1": {
+      "TEXT": "Administration",
+      "FIELDS": "Fields",
+      "EMPLOYEES": "Employees",
+      "CATEGORIES": "Categories"
+  },
   "MENUITEMS": {
     "MENU": {
       "TEXT": "MENU"
@@ -336,6 +342,12 @@
         "PROJECTS": "Projects",
         "NFT": "NFT",
         "JOB": "Job"
+      }
+    },
+    "ADMINISTRATION": {
+      "TEXT": "Administration",
+      "LIST": {
+        "EMPLOYEES": "Employees"
       }
     },
     "APPS": {
@@ -502,6 +514,7 @@
     },
     "ADVANCEUI": {
       "TEXT": "Advance UI",
+      "BADGE": "New",
       "LIST": {
         "SWEETALERTS": "Sweet Alerts",
         "NESTABLELIST": "Nestable List",
@@ -601,5 +614,45 @@
         }
       }
     }
-  }
+  },
+  "Customizar Tema": "Theme Customizer",
+  "Actualizar notificaciones": "Refresh notifications",
+  "Al confirmar se generará la tasa municipal de la reserva": "The municipal reservation fee will be generated upon confirmation",
+  "Anticipación:": "Advance notice:",
+  "Anulación automática por falta de pago": "Automatic cancellation for non-payment",
+  "Baja": "Inactive",
+  "Cargando": "Loading",
+  "Describa la autorización para no anular automáticamente...": "Describe the authorization to disable automatic cancellation...",
+  "Duración:": "Duration:",
+  "El pago debe realizarse dentro de": "Payment must be made within",
+  "Eliminar notificación": "Delete notification",
+  "La anulación automática por falta de pago quedará desactivada; el pago deberá tener seguimiento administrativo": "Automatic cancellation for non-payment will be disabled; payment will require administrative follow-up",
+  "Limpiar": "Clear",
+  "Marcar todo como leído": "Mark all as read",
+  "Motivo para no anular automáticamente": "Reason for disabling automatic cancellation",
+  "No verificado": "Not verified",
+  "Notificación Masiva": "Bulk Notification",
+  "Reserva directa:": "Direct reservation:",
+  "Se generará la tasa municipal al confirmar la reserva.": "The municipal fee will be generated when the reservation is confirmed.",
+  "Seleccionar notificación": "Select notification",
+  "Será revisada por el administrador del complejo antes de generar la tasa municipal.": "It will be reviewed by the facility administrator before the municipal fee is generated.",
+  "Sin NIT": "Without tax ID",
+  "Sin Personería Jurídica": "Without legal status",
+  "Solicitud de reserva:": "Reservation request:",
+  "Toda personería jurídica": "Any legal status",
+  "Todas": "All",
+  "Todos los estados": "All statuses",
+  "Todos los estados RUAT": "All RUAT statuses",
+  "Todos: NIT": "All: Tax ID",
+  "Vence aprox.:": "Approx. due:",
+  "Vencimiento estimado del plazo:": "Estimated deadline:",
+  "Verificación RUAT": "RUAT Verification",
+  "Verificado": "Verified",
+  "categorías": "categories",
+  "como mínimo.": "minimum.",
+  "máx.": "max.",
+  "mín.": "min.",
+  "para confirmar su reserva.": "to confirm your reservation.",
+  "para evitar la anulación automática": "to avoid automatic cancellation",
+  "reserva con": "reserve with"
 }

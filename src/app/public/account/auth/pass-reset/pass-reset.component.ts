@@ -47,13 +47,8 @@ export class PassResetComponent implements OnInit {
     if (this.passresetForm.valid) {
       this.resetService.save(this.passresetForm.value.email).subscribe(
         (result: any) => {
-          if(result.status === 'OK'){
-            const resp = result.payload
-            this.sendEmail(this.passresetForm.value.email, resp.token);
-            this.notify(result.message, 'success');
-          }else{
-            this.notify(result, 'error');
-          }
+          this.sendEmail(this.passresetForm.value.email, result.token);
+          this.notify('Se envió el enlace de recuperación', 'success');
         },
         (error: any) => {
           this.notify(error.error.message, 'error');

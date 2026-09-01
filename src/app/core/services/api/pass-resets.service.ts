@@ -2,11 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { Reserva } from '../../models/reserva.model';
-import { map, Observable, switchMap } from 'rxjs';
+import { Observable } from 'rxjs';
 
 
-import { GlobalComponent } from "../../../global-component";
-import { UserService } from '../api-users/users.service';
 import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 @Injectable({
@@ -15,43 +13,25 @@ import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 export class PassResetsService {
   apiUrl = environment.backendUrl + '/passresets';
-  user=GlobalComponent.super_admin;
-
-  constructor(private http: HttpClient , private authService:UserService) { }
+  constructor(private http: HttpClient) { }
 
   getAll(): Observable<Reserva[]> {
     return apiGet<Reserva[]>(this.http, this.apiUrl, 'obtener recuperaciones de contraseña');
   }
 
   getByUuid(uuid: String): Observable<Reserva> {
-    return apiGet<Reserva>(this.http, `${this.apiUrl}${uuid}`, `obtener recuperación de contraseña (${uuid})`);
+    return apiGet<Reserva>(this.http, `${this.apiUrl}/${uuid}`, `obtener recuperación de contraseña (${uuid})`);
   }
 
 
-  getToken(): Observable<any> {
-    const user: any = GlobalComponent.super_admin;
-  
-    return this.authService.loginByUsername(user.username, user.password).pipe(
-      map((data) => {
-        return data.token; // Return the token
-      })
-    );
-  }
-  
   save(email: any): Observable<any> {
     const expirationTime = new Date();
     expirationTime.setHours(expirationTime.getHours() + 24);  // 24 hours expiration
   
-    return this.getToken().pipe(
-      switchMap((token) => {
-        const data = {
-          email: email,
-          expiresAt: expirationTime.toISOString(), // Send expiration time in ISO format
-          token: token 
-        };
-          return apiPost<any>(this.http, this.apiUrl, data, 'guardar recuperación de contraseña');
-      })
-    );
+    return apiPost<any>(this.http, this.apiUrl, {
+      email,
+      expiresAt: expirationTime.toISOString()
+    }, 'guardar recuperación de contraseña');
   }
 
   validateToken(token: string): Observable<any> {

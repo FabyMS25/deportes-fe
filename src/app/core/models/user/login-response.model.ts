@@ -11,4 +11,6 @@ export interface LoginResponse {
     designacion: Designation,
     modulos: string[],
     roles: string[],
+    userType?: 'STAFF' | 'TAXPAYER',
+    admin?: boolean,
 }

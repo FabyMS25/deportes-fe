@@ -38,7 +38,7 @@ export class PaymentsCompoment {
     }
   
     this.showLoading = true;
-    this.generarReportePDF(fecha_ini, fecha_fin);
+    this.generatePdfReport(fecha_ini, fecha_fin);
   }
 
   private formatDateToDDMMYYYY(date: Date): string {
@@ -49,7 +49,7 @@ export class PaymentsCompoment {
   }
   
   /* API Services */
-  private generarReportePDF(fecha_ini: string, fecha_fin: string) {
+  private generatePdfReport(fecha_ini: string, fecha_fin: string) {
     this.reportsService.getPaymentsReport(fecha_ini, fecha_fin).subscribe(
       (data: ArrayBuffer) => {
         const file = new Blob([data], { type: 'application/pdf' });

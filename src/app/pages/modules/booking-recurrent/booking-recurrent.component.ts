@@ -42,7 +42,7 @@ export class BookingRecurrentComponent implements OnInit {
   loading: boolean = true;
   reservasList: any;
   categoryList: Categoria[] = [];
-  estadoReservaOptions = StatusUtils.getEstadoReservaOptions();
+  estadoReservaOptions = StatusUtils.getReservationStatusOptions();
   estadoValidacionOptions = StatusUtils.getEstadoValidacionOptions();
   userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
   userData!: any;
@@ -297,7 +297,7 @@ export class BookingRecurrentComponent implements OnInit {
   }
 
   /* NAVIGATIONS & MODALS */
-  public agregarReserva() {
+  public addReservation() {
     this.router.navigate(['/reservations/details'], { 
       state: { 
         tipoReserva: 'recurrente'
@@ -589,49 +589,11 @@ export class BookingRecurrentComponent implements OnInit {
           errorCode: 'NO_TASA'
         };
       }
-      const resp: any = await this.ruatService.consultaPagoTasa(nroTasa).toPromise();
-      if (resp?.status !== 'OK') {
-        if (this.isRuatConnectionError(resp?.payload)) {
-          return {
-            item,
-            text: 'RUAT no respondió a tiempo. No se pudo verificar el pago ni actualizar la reserva. Intente nuevamente en unos minutos.',
-            type: 'warning',
-            hasPayment: false,
-            consultationSuccessful: false,
-            ruatResponse: resp,
-            errorCode: 'RUAT_TIMEOUT'
-          };
-        }
-        const ruatPayload = this.extractRuatBusinessPayload(resp?.payload);
-        if (
-          resp?.status === 'NOT_FOUND' &&
-          ruatPayload &&
-          String(ruatPayload.continuarFlujo).toLowerCase() !== 'true'
-        ) {
-          return {
-            item,
-            text: 'No se encontraron pagos realizados para esta tasa.',
-            type: 'info',
-            hasPayment: false,
-            consultationSuccessful: true,
-            ruatResponse: resp,
-            errorCode: 'PAYMENT_NOT_FOUND'
-          };
-        }
-        if (resp?.status === 'NOT_FOUND') {
-          return {
-            item,
-            text: 'No se encontraron pagos realizados para esta tasa.',
-            type: 'info',
-            hasPayment: false,
-            consultationSuccessful: false,
-            ruatResponse: resp,
-            errorCode: 'PAYMENT_NOT_FOUND'
-          };
-        }
+      const resp: any = await this.ruatService.checkFeePayment(nroTasa).toPromise();
+      if (!this.ruatService.hasBusinessResponse(resp)) {
         return {
           item,
-          text: this.ruatService.getOperationalErrorMessage(resp, 'RUAT devolvió una respuesta inválida. No se actualizó la reserva.'),
+          text: 'RUAT devolvió una respuesta inválida. No se actualizó la reserva.',
           type: 'warning',
           hasPayment: false,
           consultationSuccessful: false,
@@ -745,7 +707,11 @@ export class BookingRecurrentComponent implements OnInit {
           motivo: "NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO",
           observacion: "ANULADO AUTOMATICO, VENCIDO PLAZO DE RESERVA"
         };
-        await this.ruatService.cancelTasa(requestData).toPromise();
+        const ruatResponse = await this.ruatService.cancelTasa(requestData).toPromise();
+        if (!this.ruatService.canContinue(ruatResponse)) {
+          console.warn('RUAT did not authorize automatic fee cancellation:', ruatResponse);
+          return reserva;
+        }
       } catch (error) {
         console.warn('Failed to cancel tasa in RUAT for expired reservation:', error);
         return reserva;
@@ -775,13 +741,7 @@ export class BookingRecurrentComponent implements OnInit {
   private updateReservation(data: Reserva): Promise<Reserva> {
     return new Promise((resolve, reject) => {
       this.reservaService.update(data).subscribe({
-        next: (resp: any) => {
-          if (resp['status'] === 'OK') {
-            resolve(resp.payload);
-          } else {
-            reject(resp.payload);
-          }
-        },
+        next: (resp: any) => resolve(resp),
         error: (error) => {
           console.error("Error updating reserva:", error);
           reject(error);

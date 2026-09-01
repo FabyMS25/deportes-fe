@@ -77,7 +77,7 @@ export class TwoStepComponent implements OnInit {
           const year = date.getFullYear();
           ruatData.fechaNacimiento = `${day}/${month}/${year}`;
         }        
-        const ruatResp = await this.registerContribuyente(ruatData);
+        const ruatResp = await this.registerTaxpayer(ruatData);
         if (!ruatResp) {
           this.notify('No se pudo registrar en el Ruat', 'error');
           return;
@@ -120,7 +120,7 @@ export class TwoStepComponent implements OnInit {
       this.authenticationAttempted = true;
       this.ruatService.authenticate().subscribe({
         next: (response) => {          
-          this.isAuthenticated = response?.status === 'OK' && response?.payload?.available === true;
+          this.isAuthenticated = response?.available === true;
           this.isAuthenticated ? resolve(true) : reject(response);
         },
         error: (error) => {
@@ -172,14 +172,7 @@ export class TwoStepComponent implements OnInit {
   private async addData(datos: Contribuyente): Promise<Contribuyente | null> {
     return new Promise((resolve, reject) => {
       this.contribuyentesService.save(datos).subscribe({
-        next: (data: any) => {
-          if (data.status === 'OK') {
-            resolve(data.payload as Contribuyente);
-          } else {
-            this.notify(data.payload || 'Error al guardar los datos', 'error');
-            resolve(null);
-          }
-        },
+        next: (data: Contribuyente) => resolve(data),
         error: (error) => {
           this.notify('No se pudo guardar los datos: ' + error.message, 'error');
           reject(error);
@@ -189,12 +182,10 @@ export class TwoStepComponent implements OnInit {
   }
   
   /* RUAT API Requests */
-private async registerContribuyente(data: any): Promise<any> {
+private async registerTaxpayer(data: any): Promise<any> {
   return new Promise((resolve, reject) => {
-    this.ruatService.registerContribuyente(data).subscribe({    
-      next: (resp: any) => {
-        if (resp['status'] === 'OK') {
-          const response = resp.payload;
+    this.ruatService.registerTaxpayer(data).subscribe({
+      next: (response: any) => {
           if (this.ruatService.canContinue(response)) {
             this.userData.codigoContribuyente = this.ruatService.getResponseData(response).codigoContribuyente;
             resolve(response); 
@@ -202,10 +193,6 @@ private async registerContribuyente(data: any): Promise<any> {
             this.notify(this.ruatService.getResponseMessage(response, 'No se pudo registrar en RUAT'), 'error');
             resolve(null); 
           }
-        } else {
-          this.notify(this.ruatService.getResponseMessage(resp, 'No se pudo registrar en RUAT'), 'error');
-          resolve(null); 
-        }
       },
       error: async (error) => {
         // If token might be expired, try to reauthenticate and retry once
@@ -214,11 +201,11 @@ private async registerContribuyente(data: any): Promise<any> {
             this.isAuthenticated = false;
             await this.authRuat();
             // Retry the registration after reauthentication
-            this.ruatService.registerContribuyente(data).subscribe({
+            this.ruatService.registerTaxpayer(data).subscribe({
               next: (retryResp: any) => {
-                if (retryResp['status'] === 'OK' && this.ruatService.canContinue(retryResp)) {
+                if (this.ruatService.canContinue(retryResp)) {
                   this.userData.codigoContribuyente = this.ruatService.getResponseData(retryResp).codigoContribuyente;
-                  resolve(retryResp.payload);
+                  resolve(retryResp);
                 } else {
                   this.notify(this.ruatService.getResponseMessage(retryResp, 'Error en reintento de registro RUAT'), 'error');
                   resolve(null);

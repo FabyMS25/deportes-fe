@@ -5,9 +5,9 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
-import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
+import { SystemConfigurationService } from 'src/app/core/services/api/system-configuration.service';
 import { CategoriaConfiguracion , AplicaAConfiguracion,UnidadMedida, 
-  AdminDeportesConfig, ClaveConfiguracion, TipoValorConfiguracion, obtenerLabelConfiguracion } from 'src/app/core/constants/Configurations';
+  AdminDeportesConfig, ClaveConfiguracion, TipoValorConfiguracion, getConfigurationLabel } from 'src/app/core/constants/Configurations';
 
 
 @Component({
@@ -58,7 +58,7 @@ export class SystemConfigurationModalComponent implements OnInit {
 
   constructor(
     private modalService: NgbModal,
-    private configuracionSistemaService: ConfiguracionSistemaService,
+    private configuracionSistemaService: SystemConfigurationService,
     private formBuilder: UntypedFormBuilder,
   ) {}
 
@@ -307,19 +307,19 @@ export class SystemConfigurationModalComponent implements OnInit {
   }
 
   getCategoriaLabel(categoria: string): string {
-    return obtenerLabelConfiguracion(categoria, 'categoria');
+    return getConfigurationLabel(categoria, 'categoria');
   }
 
   getAmbitoAplicacionLabel(ambito: string): string {
-    return obtenerLabelConfiguracion(ambito, 'aplicaA');
+    return getConfigurationLabel(ambito, 'aplicaA');
   }
 
   getUnidadMedidaLabel(unidad: string): string {
-    return obtenerLabelConfiguracion(unidad, 'unidadMedida');
+    return getConfigurationLabel(unidad, 'unidadMedida');
   }
 
   getTipoValorLabel(tipo: string): string {
-    return obtenerLabelConfiguracion(tipo, 'tipoValor');
+    return getConfigurationLabel(tipo, 'tipoValor');
   }
 
   formatJsonField(controlName: 'valorJson' | 'valoresPosibles'): void {

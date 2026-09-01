@@ -2,7 +2,7 @@ import { Component, ElementRef, ViewChild, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Spanish } from 'flatpickr/dist/l10n/es.js';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
-import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
 import { ReportsService } from 'src/app/core/services/api/reportes.service';
 import { EstadoReserva } from 'src/app/core/constants/Estados';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
@@ -62,7 +62,7 @@ export class ListReportComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private reportsService: ReportsService, 
-    private complejoService: ComplejosService,
+    private complejoService: FacilitiesService,
     private organizationService: OrganizacionService,
     private estudianteEscuelaService: EstudianteEscuelaService
   ) {}
@@ -79,9 +79,9 @@ export class ListReportComponent implements OnInit {
       { label: 'Reportes' },
       { label: this.title, active: true }
     ];      
-    this.getComplejos();  
-    this.getEscuelas(TipoOrganizacion.ESCUELA_MUNICIPAL);
-    this.getEstudiantes();
+    this.getFacilities();
+    this.getSchools(TipoOrganizacion.ESCUELA_MUNICIPAL);
+    this.getStudents();
   }
 
   private updateTitle() {
@@ -254,13 +254,13 @@ export class ListReportComponent implements OnInit {
     return complejo ? complejo.nombre : canchaValue;
   }
 
-  getEscuelitaLabel(escuelitaValue: string): string {
+  getSchoolLabel(escuelitaValue: string): string {
     if (escuelitaValue === 'TODO') return 'Todas las Escuelas';
     const option = this.organizationsEscuelasList.find((opt) => opt.nombre === escuelitaValue);
     return option ? option.nombre : escuelitaValue;
   }
 
-  getEstudianteLabel(estudianteValue: string): string {
+  getStudentLabel(estudianteValue: string): string {
     if (estudianteValue === 'TODO') return 'Todos los estudiantes';
     const estudiante:any = this.estudiantesList.find(e => e.nombreCompleto === estudianteValue);
     return estudiante ? estudiante.nombreCompleto : estudianteValue;
@@ -271,7 +271,7 @@ export class ListReportComponent implements OnInit {
     return this.matricula;
   }
 
-  onEstudianteChange() {
+  onStudentChange() {
     if (this.estudiante !== 'TODO') {
       const selectedEstudiante = this.estudiantesList.find(e => e.nombreCompleto === this.estudiante);
       if (selectedEstudiante) {
@@ -300,7 +300,7 @@ export class ListReportComponent implements OnInit {
     this.estudiante = 'TODO';
   }
 
-  private getComplejos() {
+  private getFacilities() {
     this.complejoService.getAll().subscribe({
       next: (data: any) => {
         this.complejosList = data;
@@ -311,7 +311,7 @@ export class ListReportComponent implements OnInit {
     });
   }
 
-  private getEscuelas(type:string) {
+  private getSchools(type:string) {
     this.organizationService.getAll().subscribe({
       next: (data: any) => {
         const list = data.content || data;
@@ -325,7 +325,7 @@ export class ListReportComponent implements OnInit {
     });
   }
 
-  private getEstudiantes() {
+  private getStudents() {
     this.estudianteEscuelaService.getAll().subscribe({
       next: (data: any) => {
         this.estudiantesList = data;

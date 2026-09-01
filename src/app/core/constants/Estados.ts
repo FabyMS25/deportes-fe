@@ -46,7 +46,7 @@ export enum EstadoActual {
 
 
 export const StatusUtils = {
-  getEstadoReservaOptions(): { value: string; label: string }[] {
+  getReservationStatusOptions(): { value: string; label: string }[] {
     return Object.keys(EstadoReserva).map(key => ({
       value: EstadoReserva[key as keyof typeof EstadoReserva],
       label: this.formatEnumLabel(key)
@@ -58,7 +58,7 @@ export const StatusUtils = {
       label: this.formatEnumLabel(key)
     }));
   },
-  getEstadoPagoOptions(): { value: string; label: string }[] {
+  getPaymentStatusOptions(): { value: string; label: string }[] {
     return Object.keys(EstadoPago).map(key => ({
       value: EstadoPago[key as keyof typeof EstadoPago],
       label: this.formatEnumLabel(key)

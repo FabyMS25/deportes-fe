@@ -93,7 +93,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
 
   ngOnInit(): void {
     this.userData = this.authService.currentUser();
-    if (this.authService.tokenUser() !== 'CONTRIBUYENTE_SESSION') {
+    if (!this.authService.isTaxpayer()) {
       this.userData = this.userData.designacion.personaDto;
     }
 
@@ -425,7 +425,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
       return;
     }
     this.showLoading = true;
-    this.reservaPuntualService.validarCambioHorario(
+    this.reservaPuntualService.validateScheduleChange(
       uuidCampo,
       this.formatDateForInput(data.fechaUso),
       data.horaInicio,
@@ -433,7 +433,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
       excludeReservaUuid
     ).subscribe({
       next: (resp: any) => {
-        const existeConflicto = !!resp?.payload;
+        const existeConflicto = !!resp;
 
         if (existeConflicto) {
           this.showLoading = false;
@@ -606,12 +606,12 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
     this.activeTab = 2;
 
     try {
-      const resp: any = await this.ruatService.consultaPagoTasa(reserva.numeroTasa).toPromise();
+      const resp: any = await this.ruatService.checkFeePayment(reserva.numeroTasa).toPromise();
       const persistedPayment = reserva.pagosDtoList?.find(
         pago => pago.estadoPago === EstadoPago.PAGADO
       ) || reserva.pagosDtoList?.[0];
 
-      if (resp?.status !== 'OK') {
+      if (!this.ruatService.hasBusinessResponse(resp)) {
         if (persistedPayment) {
           this.consultationResult = this.buildPersistedPaymentResult(resp, persistedPayment);
           return;
@@ -703,13 +703,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   private updateReservaPuntual(data: any): Promise<ReservaPuntual> {
     return new Promise((resolve, reject) => {
       this.reservaPuntualService.update(data).subscribe({
-        next: (resp: any) => {
-          if (resp['status'] === 'OK') {
-            resolve(resp.payload);
-          } else {
-            reject(resp.payload);
-          }
-        },
+        next: (resp: any) => resolve(resp),
         error: (error) => reject(error)
       });
     });
@@ -718,13 +712,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   private updateReserva(data: Reserva): Promise<Reserva> {
     return new Promise((resolve, reject) => {
       this.reservaService.update(data).subscribe({
-        next: (resp: any) => {
-          if (resp['status'] === 'OK') {
-            resolve(resp.payload);
-          } else {
-            reject(resp.payload);
-          }
-        },
+        next: (resp: any) => resolve(resp),
         error: (error) => reject(error)
       });
     });
@@ -732,7 +720,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
 
   private rejectReserva(reservaUuid: any, motivoRechazo: string = '') {
     const aprobadoPor = this.userData.nombreCompleto || this.userData.fullName;
-    this.reservaService.rechazarReserva(reservaUuid, motivoRechazo, aprobadoPor).subscribe({
+    this.reservaService.rejectReservation(reservaUuid, motivoRechazo, aprobadoPor).subscribe({
       next: async () => {
         this.showLoading = false;
         this.openTicketModal(this.ticketModal);
@@ -812,27 +800,15 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   private getReservaByUuid(uuid: string): Promise<Reserva> {
     return new Promise((resolve, reject) => {
       this.reservaService.getByUuid(uuid).subscribe({
-        next: (resp: any) => {
-          if (resp?.status === 'OK') {
-            resolve(resp.payload);
-          } else {
-            reject(new Error(resp?.payload || 'No se pudo obtener la reserva'));
-          }
-        },
+        next: (resp: any) => resolve(resp),
         error: (error) => reject(new Error(error?.error?.message || error?.message || 'Error al obtener la reserva'))
       });
     });
   }
   private approveReservaAfterRuat(reservaUuid: string, aprobadoPor: string): Promise<Reserva> {
     return new Promise((resolve, reject) => {
-      this.reservaService.aprobarReserva(reservaUuid, aprobadoPor).subscribe({
-        next: (resp: any) => {
-          if (resp?.status === 'OK') {
-            resolve(resp.payload);
-          } else {
-            reject(new Error(resp?.payload || 'No se pudo aprobar la reserva'));
-          }
-        },
+      this.reservaService.approveReservation(reservaUuid, aprobadoPor).subscribe({
+        next: (resp: any) => resolve(resp),
         error: (error) => reject(new Error(error?.error?.message || error?.message || 'Error al aprobar la reserva'))
       });
     });
@@ -841,7 +817,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
 
   private cancelGratuitousReservation(reserva: Reserva, formValues: any) {
     this.showLoading = true;
-    this.reservaService.cancelarReserva(reserva.uuid!, formValues.motivo).subscribe({
+    this.reservaService.cancelReservation(reserva.uuid!, formValues.motivo).subscribe({
       next: () => {
         this.showLoading = false;
         Swal.fire({
@@ -877,9 +853,9 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
     this.showLoading = true;
     this.ruatService.cancelTasa(requestData).subscribe({
       next: (resp: any) => {
-        if (resp['status'] === 'OK') {
+        if (this.ruatService.canContinue(resp)) {
           const text = this.ruatService.getResponseMessage(resp, 'Tasa anulada correctamente.');
-          this.reservaService.cancelarReserva(reserva.uuid!, formValues.motivo).subscribe({
+          this.reservaService.cancelReservation(reserva.uuid!, formValues.motivo).subscribe({
             next: () => {
               this.showLoading = false;
               Swal.fire({

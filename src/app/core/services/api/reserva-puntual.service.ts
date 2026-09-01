@@ -45,7 +45,7 @@ export class ReservaPuntualService {
     return apiPost<any>(this.http, `${this.apiUrl}/verificar-expiradas`, null, 'verificar reservas puntuales expiradas');
   }
   
-  validarCambioHorario(
+  validateScheduleChange(
     uuidCampo: string,
     fechaUso: string | Date,
     horaInicio: string,
@@ -82,7 +82,7 @@ export class ReservaPuntualService {
     return apiGet<any>(this.http, `${this.apiUrl}/${uuid}`, `obtener reserva puntual (${uuid})`);
   }
 
-  getByReservaUuid(reservaUuid: string): Observable<any> {
+  getByReservationUuid(reservaUuid: string): Observable<any> {
     return apiGet<any>(this.http, `${this.apiUrl}/reserva/${reservaUuid}`, `obtener reserva puntual por reserva (${reservaUuid})`);
   }
 
@@ -90,11 +90,11 @@ export class ReservaPuntualService {
     return apiGet<any[]>(this.http, `${this.apiUrl}/fecha-uso/${this.formatDateLocal(fechaUso)}`, 'obtener reservas puntuales por fecha de uso');
   }
 
-  getByCampoYFecha(uuidCampo: string, fechaUso: Date): Observable<any[]> {
+  getByFieldAndDate(uuidCampo: string, fechaUso: Date): Observable<any[]> {
     return apiGet<any[]>(this.http, `${this.apiUrl}/campo/${uuidCampo}/fecha/${this.formatDateLocal(fechaUso)}`, `obtener reservas puntuales por campo (${uuidCampo})`);
   }
 
-  getActivasByCampoYFecha(uuidCampo: string, fechaUso: Date): Observable<any[]> {
+  getActiveByFieldAndDate(uuidCampo: string, fechaUso: Date): Observable<any[]> {
     return apiGet<any[]>(this.http, `${this.apiUrl}/activas/campo/${uuidCampo}/fecha/${this.formatDateLocal(fechaUso)}`, `obtener reservas puntuales activas por campo (${uuidCampo})`);
   }
 

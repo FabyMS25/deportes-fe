@@ -54,7 +54,7 @@ export class SignupCheckComponent {
         numeroDocumento: this.SignupForm.value.numeroDocumento,
         expedido: this.SignupForm.value.expedido,
       };
-      await this.searchContribuyente(datos);
+      await this.searchTaxpayer(datos);
     } else {
       this.notify('Formulario Inválido!', 'error');
       Object.keys(this.SignupForm.controls).forEach(key => {
@@ -82,19 +82,8 @@ export class SignupCheckComponent {
   /* API REQUESTS */ 
   private searchUser(value: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      this.contribuyentesService.getAll().subscribe({
-        next: (data: any) => {
-          if (data['status'] === 'OK') {
-            const usersList:Contribuyente[] = data.payload
-            if (usersList) {
-                const itExist = usersList.some(user => user.numeroDocumento === value);
-                resolve(itExist);
-            } 
-            resolve(false);
-          } else {
-            resolve(false);
-          }
-        },
+      this.contribuyentesService.publicExists({ numeroDocumento: value }).subscribe({
+        next: result => resolve(result.numeroDocumento === true),
         error: (error) => {
           reject(error);
         }
@@ -103,11 +92,9 @@ export class SignupCheckComponent {
   }
   /* API RUAT Services */
   ruatData: any;
-  async searchContribuyente(data: any) {
-    this.ruatService.getContribuyentePorCi(data.numeroDocumento, data.tipoDocumento, data.expedido).subscribe({    
-      next: (resp: any) => {
-        if (resp['status'] === 'OK') {
-          const response = resp.payload;
+  async searchTaxpayer(data: any) {
+    this.ruatService.getTaxpayerByIdentityNumber(data.numeroDocumento, data.tipoDocumento, data.expedido).subscribe({
+      next: (response: any) => {
           if (this.ruatService.canContinue(response)) {
             this.ruatData = this.ruatService.getResponseData(response);
             this.searchUser(data.numeroDocumento)
@@ -127,15 +114,15 @@ export class SignupCheckComponent {
             this.notify(this.ruatService.getResponseMessage(response, 'No se encontraron datos en RUAT') + " Puede proceder con su registro", 'success');
             this.router.navigate(['/auth/signup'], { queryParams: { userExist: false } });          
           }
-        } else {      
-          this.notify(this.ruatService.getResponseMessage(resp, "El contribuyente no se encuentra registrado en el Gobierno Municipal.") + " Puede proceder con su registro", 'success');
-          this.router.navigate(['/auth/signup'], { queryParams: { userExist: false } }); 
-        }
       },
       error: (error: any) => {
-        if (error.status === 401 || error.status === 403) {
-          this.notify('No se pudo consultar RUAT, por favor intente nuevamente', 'error');
-        }
+        this.notify(
+          this.ruatService.getResponseMessage(
+            error,
+            'No se pudo conectar con RUAT. Por favor, intente nuevamente más tarde.'
+          ),
+          'error'
+        );
       }
     });
   }

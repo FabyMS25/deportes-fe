@@ -20,7 +20,7 @@ export class PagoService {
   }
 
   getByUuid(uuid: String): Observable<any> {
-    return apiGet<any>(this.http, `${this.apiUrl}${uuid}`, `obtener pago (${uuid})`);
+    return apiGet<any>(this.http, `${this.apiUrl}/${uuid}`, `obtener pago (${uuid})`);
   }
 
   save(data: any): Observable<any> {

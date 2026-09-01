@@ -4,7 +4,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { Districts } from 'src/app/core/constants/Places';
 // import { ModalFacilitiesComponent } from '../modal/modal.component';
@@ -41,7 +41,7 @@ export class FacilitiesComponent {
   @ViewChild('viewModel') viewModel!: ElementRef;
 
   constructor(private modalService: NgbModal,
-    private complejosService: ComplejosService,
+    private complejosService: FacilitiesService,
     private categoriasService: CategoriasService,
     private authService: AuthenticationService,
     private datePipe: DatePipe,) {

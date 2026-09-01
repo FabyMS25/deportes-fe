@@ -67,6 +67,16 @@ export class ContribuyentesService {
     return apiGet<Contribuyente>(this.http, `${this.apiUrl}/email/${email}`, `obtener contribuyente por email (${email})`)
   }
 
+  publicExists(criteria: {
+    numeroDocumento?: string;
+    email?: string;
+    userName?: string;
+  }): Observable<{ numeroDocumento?: boolean; email?: boolean; userName?: boolean }> {
+    return apiGet(this.http, `${this.apiUrl}/public/exists`, 'validar existencia de contribuyente', {
+      params: criteria
+    });
+  }
+
   save(data: Contribuyente): Observable<Contribuyente> {
     return apiPost<Contribuyente>(this.http, this.apiUrl, data, 'guardar contribuyente');
   }

@@ -1,18 +1,13 @@
 export const GlobalComponent = {
+    DISPLAY_NAME: 'DEPORTESAPP',
     STORAGE_KEYS: {
         CONFIGS:'systemConfigs',
         MENU: 'menu',
         USER: 'currentUser',
         STAFF: 'assignaments', 
         TOKEN: 'auth-token', 
-        REMEMBER_ME: 'remember_me'
+        REMEMBERED_USERNAME: 'remembered_username'
     },
-
-    /* APP DETAILS */
-    CODE_APP : "SIS-013",
-    NAME_APP : "DEPORTESAPP",
-    ADMIN_MENU:'Administracion',
-
     super_admin:{
         username:'faby25',
         whatsApp:'+59172248669',

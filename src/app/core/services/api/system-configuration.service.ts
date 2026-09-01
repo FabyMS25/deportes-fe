@@ -11,13 +11,21 @@ import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 @Injectable({
   providedIn: 'root'
 })
-export class ConfiguracionSistemaService {
-  apiUrl = environment.backendUrl + '/configuracionSistema';
+export class SystemConfigurationService {
+  apiUrl = environment.backendUrl + '/system-configurations';
 
   constructor(private http: HttpClient) { }
 
-  getAll(): Observable<ConfiguracionSistema[]> {
-    return apiGet<ConfiguracionSistema[]>(this.http, this.apiUrl, 'obtener configuraciones del sistema');
+  getAll(token?: string): Observable<ConfiguracionSistema[]> {
+    const options = token
+      ? { headers: { Authorization: `Bearer ${token}` } }
+      : undefined;
+    return apiGet<ConfiguracionSistema[]>(
+      this.http,
+      this.apiUrl,
+      'obtener configuraciones del sistema',
+      options
+    );
   }
 
   getByUuid(uuid: string): Observable<ConfiguracionSistema> {
@@ -44,7 +52,7 @@ export class ConfiguracionSistemaService {
     return apiGet<ConfiguracionSistema[]>(this.http, `${this.apiUrl}/modificables/usuario`, 'obtener configuraciones modificables por usuario');
   }
 
-  getCategorias(): Observable<string[]> {
+  getCategories(): Observable<string[]> {
     return apiGet<string[]>(this.http, `${this.apiUrl}/categorias`, 'obtener categorías de configuración');
   }
 

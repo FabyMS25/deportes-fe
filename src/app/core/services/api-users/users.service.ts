@@ -6,7 +6,7 @@ import { LoginResponse } from '../../models/user/login-response.model';
 import { apiGet, apiPost, apiPut } from '../apiResponses';
 import { Person } from '../../models/user/person.model';
 
-const usersUrl = `${environment.apiLoginUrl}`;
+const usersUrl = `${environment.backendUrl}/usuarios`;
 
 @Injectable({ providedIn: 'root' })
 
@@ -15,7 +15,7 @@ export class UserService {
     constructor(private http: HttpClient ) {}
   
     loginByUsername(username: string, password: string): Observable<LoginResponse> {
-      return apiPost<LoginResponse>(this.http, `${usersUrl}/auth/signin`, {username, password}, 'loguear usuario');
+      return apiPost<LoginResponse>(this.http, `${environment.backendUrl}/auth/login`, {username, password}, 'loguear usuario');
     }
 
     // loginByUsername(username: String, password: String) {
@@ -23,22 +23,22 @@ export class UserService {
     // }
 
     getAllUsers(): Observable<any[]> {
-        return apiGet<any[]>(this.http, `${usersUrl}/listar/usuarios`, 'obtener usuarios');
+        return apiGet<any[]>(this.http, usersUrl, 'obtener usuarios');
     } 
   
     getUserByUuid(uuid:String) {
-        return apiGet<any[]>(this.http, `${usersUrl}/usuario/${uuid}`, `obtener usuario (${uuid})`);
+        return apiGet<any[]>(this.http, `${usersUrl}/${uuid}`, `obtener usuario (${uuid})`);
     }
 
     updateUser(data:any): Observable<any> {
-        return apiPut<any>(this.http, `${usersUrl}/user/update`, data, 'actualizar usuario');
+        return apiPut<any>(this.http, `${usersUrl}/user`, data, 'actualizar usuario');
     }
 
     changePassword(uuidUsuario:string, newPassword:string): Observable<any> {
-        return apiPost<any>(this.http, `${usersUrl}/user/change-password`, {uuidUsuario, newPassword}, 'cambiar contraseña');
+        return apiPost<any>(this.http, `${usersUrl}/change-password`, {uuidUsuario, newPassword}, 'cambiar contraseña');
     }
 
     updatePersona(persona: Person): Observable<Person> {
-        return apiPut<Person>(this.http, `${usersUrl}/persona`, persona, 'actualizar persona');
+        return apiPut<Person>(this.http, `${usersUrl}/person`, persona, 'actualizar persona');
     }
 }

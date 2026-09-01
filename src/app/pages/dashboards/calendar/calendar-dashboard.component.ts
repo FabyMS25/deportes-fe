@@ -14,8 +14,8 @@ import { take } from 'rxjs';
 
 import { ToastService } from '../admin/toast-service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
-import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { SportsFieldsService } from 'src/app/core/services/api/sports-fields.service';
+import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
 import { EstadoReserva, StatusUtils } from 'src/app/core/constants/Estados';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 
@@ -71,8 +71,8 @@ export class CalendarDashboardComponent implements OnInit {
     private router: Router,
     public toastService: ToastService,
     private modalService: NgbModal,
-    private campoDeportivoService: CamposDeportivoService,
-    private complejoService: ComplejosService,
+    private campoDeportivoService: SportsFieldsService,
+    private complejoService: FacilitiesService,
     private reservasService: ReservaService,
     private authService: AuthenticationService
   ) { 
@@ -86,9 +86,13 @@ export class CalendarDashboardComponent implements OnInit {
     ]; 
     const currentUser = this.authService.currentUser();
     this.employee = this.authService.staff();
-    if (this.authService.tokenUser() === 'CONTRIBUYENTE_SESSION') {
+    if (this.authService.isTaxpayer()) {
       this.contribuyente = this.parseCurrentUser(currentUser);
     }
+    this.calendarOptions = {
+      ...this.calendarOptions,
+      selectable: this.authService.canCurrentUserCreateReservations()
+    };
     const pendingLoginEvent = this.authService.consumeLoginEvent();
     if (pendingLoginEvent) {
       this.showConsolidatedSystemStatus(pendingLoginEvent);
@@ -768,12 +772,27 @@ export class CalendarDashboardComponent implements OnInit {
   }
 
   public redirectTo() {
+    if (!this.ensureReservationAllowed()) return;
     this.modalService.open(this.confirmModal);
   }
 
   confirmReservation() {
+    if (!this.ensureReservationAllowed()) return;
     this.modalService.dismissAll();
     this.router.navigate(['/inicio/taxpayer']);
+  }
+
+  private ensureReservationAllowed(): boolean {
+    if (this.authService.canCurrentUserCreateReservations()) return true;
+
+    void Swal.fire({
+      icon: 'warning',
+      title: 'Reserva no disponible',
+      text: this.authService.getReservationRestrictionMessage(),
+      confirmButtonText: 'Entendido',
+      confirmButtonColor: '#299cdb'
+    });
+    return false;
   }
 
   getEventIcon(type: string): string {

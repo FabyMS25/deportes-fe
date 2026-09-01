@@ -2,22 +2,27 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { logout, logoutSuccess } from 'src/app/store/Authentication/authentication.actions';
-import { PermissionUserService } from './api-users/permission-user.service';
 import { TokenStorageService } from './token-storage.service';
 
 import { UserRol } from 'src/app/core/constants/UserData';
-import { EncargadoService } from './api/encargado.service';
-import { ContribuyentesService } from './api/contribuyentes.service';
 import { firstValueFrom, of, Subject, timeout } from 'rxjs';
-import { UserService } from './api-users/users.service';
-import { ConfiguracionSistemaService } from './api/configuracionSistema.service';
+import { SystemConfigurationService } from './api/system-configuration.service';
 import { ConfiguracionSistema } from '../models/configuracionSistema.model';
 import { AplicaAConfiguracion, CategoriaConfiguracion } from '../constants/Configurations';
 import { RuatRequestsService } from './ruatRequest.service';
-import { LoginResponse } from '../models/user/login-response.model';
-import { GlobalComponent } from 'src/app/global-component';
 import { MenuItem } from '../models/menu.model';
 import { MENU_BASE } from '../data/menu';
+import { environment } from 'src/environments/environment';
+import Swal from 'sweetalert2';
+
+interface DeportesLoginResponse {
+  token: string;
+  user: any;
+  menu: MenuItem[];
+  staff: any;
+  admin: boolean;
+  userType: 'STAFF' | 'TAXPAYER';
+}
 
 export interface LoginResult {
   success: boolean;
@@ -39,8 +44,6 @@ export interface RuatAvailabilityResult {
 
 @Injectable({ providedIn: 'root' })
 export class AuthenticationService {
-  APP_NAME = GlobalComponent.NAME_APP;
-  adminPermission = GlobalComponent.ADMIN_MENU;  
   userRole!: 'Contribuyente' | 'Admin' | 'Encargado';
   private currentUserSubject: any;
   private loginEventSubject = new Subject<LoginEvent>();
@@ -48,6 +51,8 @@ export class AuthenticationService {
   loginEvent$ = this.loginEventSubject.asObservable();
   private systemConfigList: { [key: string]: ConfiguracionSistema } = {};
   private readonly ruatLoginTimeoutMs = 8000;
+  private expirationTimer: ReturnType<typeof setTimeout> | null = null;
+  private expirationNoticeOpen = false;
   public systemStatus = {
     backend: false,
     configurations: false,
@@ -58,16 +63,13 @@ export class AuthenticationService {
   constructor(
     private http: HttpClient, 
     private router: Router,
-    private authUserService: UserService,
-    private authContribuyente: ContribuyentesService,
-    private staffService: EncargadoService,
-    private permissionService: PermissionUserService,
-    private systemConfigsService: ConfiguracionSistemaService,
+    private systemConfigsService: SystemConfigurationService,
     private ruatService: RuatRequestsService,
     private storageService: TokenStorageService,
   ) {
     this.currentUserSubject = storageService.getUser()
     this.systemConfigList = this.storageService.getConfigs() || {};
+    this.scheduleExpiration();
   }
 
   initializeSession(){
@@ -85,41 +87,20 @@ export class AuthenticationService {
   }
 
   async login(username: string, password: string, rememberMe: boolean): Promise<LoginResult> {
-    let staffResult: any = null;
     try {
-      staffResult = await this.loginStaffUser(username, password);
-    } catch (e) {
-      staffResult = null;
-    }
-    if (staffResult?.token) {
-        const modulos: string[] = staffResult.modulos || [];
-        if (!modulos.includes(this.APP_NAME)) {
-          return {
-          success: false,
-          errorType: 'NO_MODULE',
-          message: 'No tiene acceso a este módulo'
-        };
+      const loginResponse = await firstValueFrom(this.http.post<DeportesLoginResponse>(
+        `${environment.backendUrl}/auth/login`, { username, password }
+      ));
+      const taxpayer = loginResponse.userType === 'TAXPAYER';
+      const user = {
+        ...loginResponse.user,
+        userType: loginResponse.userType,
+        admin: loginResponse.admin
       };
-      const permissionResult = await this.userHasPermission(staffResult);
-      if(permissionResult.status !=='ADMIN' && permissionResult.status!== 'STAFF'){
-        switch (permissionResult.status) {
-          case 'NO_ADMIN_PERMISSION':
-          case 'NO_PERMISSIONS':
-            return {
-              success: false,
-              errorType: 'NO_PERMISSIONS',
-              message: 'No tiene permisos para acceder a este módulo'
-            };
-          case 'NO_ASSIGNATION':
-            return {
-              success: false,
-              errorType: 'NO_ASSIGNATION',
-              message: 'No tiene asignación como encargado o staff'
-            };
-        }
-      }
-      const configResult = await this.loadSystemConfigs(false);
+      const menu = this.sortMenuItemsRecursive(taxpayer ? MENU_BASE : loginResponse.menu);
+      const configResult = await this.loadSystemConfigs(taxpayer, loginResponse.token);
       if (!configResult.configsStatus) {
+        this.storageService.signOut();
         return {
           success: false,
           errorType: 'CONFIG_ERROR',
@@ -127,130 +108,36 @@ export class AuthenticationService {
         };
       }
       this.storageService.saveAuthData({
-        menu: this.sortMenuItemsRecursive(permissionResult.permissions),
+        menu,
         configs: configResult.configs || {},
-        user: staffResult,
-        staff: permissionResult.assignations,
-        token: staffResult.token
-      }, rememberMe);
+        user,
+        staff: loginResponse.staff,
+        token: loginResponse.token
+      });
+      this.currentUserSubject = user;
+      this.scheduleExpiration();
+      this.storageService.saveRememberedLogin(username, rememberMe);
       this.emitLoginEvent({
-        message: permissionResult.status ==='ADMIN' ? 'welcome_admin' : 'welcome_staff',
+        message: taxpayer ? 'welcome_contribuyente' : loginResponse.admin ? 'welcome_admin' : 'welcome_staff',
         configsLoaded: Object.keys(this.getAllConfigs() || {}).length,
         ruatStatus: configResult.ruatStatus
       });
-      return { success: true,
-        redirect: permissionResult.status === 'ADMIN' ? '/inicio' : '/inicio/employee',
+      return {
+        success: true,
+        redirect: taxpayer ? '/inicio/taxpayer' : loginResponse.admin ? '/inicio' : '/inicio/employee'
       };
-    }
-    let contribuyenteResult: any = null;
-    try {
-      contribuyenteResult = await this.loginContribuyente(username, password);
-    } catch (e) {
-      contribuyenteResult = null;
-    }
-    if (!contribuyenteResult?.uuid) {
+    } catch (error: any) {
+      const code = error?.error?.code;
       return {
         success: false,
-        errorType: 'BAD_CREDENTIALS',
-        message: 'Usuario o contraseña incorrectos'
+        errorType: code || (error?.status === 0 ? 'BACKEND' : 'BAD_CREDENTIALS'),
+        message: error?.error?.message || 'Usuario o contraseña incorrectos'
       };
-    }
-    const configResult = await this.loadSystemConfigs(true);
-    if (!configResult.configsStatus) {
-      return {
-        success: false,
-        errorType: 'CONFIG_ERROR',
-        message: configResult.errorMessage
-      };
-    }
-    this.storageService.saveAuthData({
-      menu: this.sortMenuItemsRecursive(MENU_BASE),
-      configs: configResult.configs || {},
-      user: contribuyenteResult,
-      staff: null,
-      token: 'CONTRIBUYENTE_SESSION'
-    }, rememberMe);
-    this.emitLoginEvent({
-      message: 'welcome_contribuyente',
-      configsLoaded: Object.keys(this.getAllConfigs() || {}).length,
-      ruatStatus: configResult.ruatStatus
-    });
-    return { success: true, redirect: '/inicio/taxpayer',};
-  }
-
-  async loginStaffUser(username: string, password: string): Promise<LoginResponse> {
-    try {
-      const response = await firstValueFrom(
-        this.authUserService.loginByUsername(username, password)
-      );
-      if (!response?.token) throw 'badCredentials';
-      this.currentUserSubject = response;
-      return response;
-    } catch (error: any) {
-      if (this.isBackendError(error)) throw { backendError: true };
-      if (error.status === 401) throw 'badCredentials';
-      throw 'serverError';
-    }
-  }
-  async loginContribuyente(username: string, password: string): Promise<any> {
-    try {
-      const response = await firstValueFrom(
-        this.authContribuyente.loginByUsername(username, password)
-      );
-      if (!response?.uuid) throw 'badCredentials';      
-      this.currentUserSubject = response;
-      return response;
-    } catch (error: any) {
-      if (this.isBackendError(error)) throw { backendError: true };
-      if (error.status === 401) throw 'badCredentials';
-      throw 'serverError';
-    }
-  }
-
-  async userHasPermission(user: any): Promise<{
-    status: 'ADMIN' | 'STAFF' | 'NO_ADMIN_PERMISSION' | 'NO_ASSIGNATION' | 'NO_PERMISSIONS';
-    permissions: MenuItem[];
-    assignations?: any;
-  }> {
-    try {
-      const [userPermissions, userAssignations] = await Promise.all([
-        firstValueFrom(this.permissionService.getPermissionsUser(user)),
-        firstValueFrom(this.staffService.getByUserUuid(user.uuid))
-          .then((res: any) => res || null)
-          .catch(() => null),
-      ]);
-      if (!Array.isArray(userPermissions) || userPermissions.length === 0) {
-        return { status: 'NO_PERMISSIONS',permissions:[] };
-      }
-      const isAdmin = userPermissions.some(
-        (p: any) => p.nombreMenu === this.adminPermission
-      );
-      if (isAdmin) {
-        userPermissions.forEach((menu: any) => {
-          if (!menu.permisoPadreDto) menu.isCollapsed = true;
-        });
-        return {
-          status: 'ADMIN',
-          permissions: userPermissions
-        };
-      }
-      if (userAssignations && userAssignations.complejoDto) {
-        userPermissions.forEach((menu: any) => {
-          if (!menu.permisoPadreDto) menu.isCollapsed = true;
-        });
-        return {
-          status: 'STAFF',
-          permissions: userPermissions,
-          assignations: userAssignations
-        };
-      }
-      return { status: 'NO_ASSIGNATION' , permissions:[]};
-    } catch (error) {
-      throw new Error('Ocurrió un error al verificar los permisos');
     }
   }
   public async loadSystemConfigs(
-    isContribuyente: boolean
+    isContribuyente: boolean,
+    token?: string
   ): Promise<{
     configsStatus: boolean;
     configs?: { [key: string]: ConfiguracionSistema };
@@ -266,7 +153,7 @@ export class AuthenticationService {
     };
     try {
       const configResponse = await firstValueFrom(
-        this.systemConfigsService.getAll()
+        this.systemConfigsService.getAll(token)
       );
       if (!configResponse) {
         this.systemStatus.message = 'No response from backend';
@@ -374,6 +261,7 @@ export class AuthenticationService {
    * Logout the user
    */
   logout() {
+    if (this.expirationTimer) clearTimeout(this.expirationTimer);
     this.storageService.signOut();
     this.currentUserSubject = null;
     this.router.navigate(['/auth/login']);
@@ -423,13 +311,10 @@ export class AuthenticationService {
 
 
   isAdmin(): boolean {
-    const menu = this.storageService.getMenu();
-    return menu.some(permission => permission.nombreMenu === this.adminPermission)
+    return this.storageService.getUser()?.admin === true;
   }
   getUserRole(): 'Contribuyente' | 'Admin' | 'Encargado' {
-    const token =  this.storageService.getToken()?.trim();
-    const menu =this.storageService.getMenu();
-      if(token==='CONTRIBUYENTE_SESSION'){
+    if (this.isTaxpayer()) {
       return 'Contribuyente';
     } else { 
       if (this.isAdmin()) {
@@ -446,7 +331,7 @@ export class AuthenticationService {
   }
   getUserFullName(): string {
     if (!this.currentUserSubject) return '';    
-    if (this.storageService.getToken() === 'CONTRIBUYENTE_SESSION') {
+    if (this.isTaxpayer()) {
       return this.currentUserSubject.nombreCompleto || 
              (this.currentUserSubject.nombre + ' ' + this.currentUserSubject.primerApellido + 
               (this.currentUserSubject.segundoApellido ? ' ' + this.currentUserSubject.segundoApellido : '')) || 
@@ -462,21 +347,19 @@ export class AuthenticationService {
   }
   
   public getAvatar(): string{    
-    const token = this.storageService.getToken(); 
     const user =  this.storageService.getUser(); 
-    const menu = this.storageService.getMenu();
     let avatar="default-profile1.png";
     let role;
-    if(token==='CONTRIBUYENTE_SESSION'){
+    if(this.isTaxpayer()){
       role = UserRol.find(item => item.tipo == 2);//CLIENT
-    }else if (menu.some((permission:any) => permission.nombreMenu === this.adminPermission)) {
+    }else if (this.isAdmin()) {
       role = UserRol.find(item => item.tipo === 0);//ADMINISTRADOR
     } else {
       role = UserRol.find(item => item.tipo == 1);//STAFF
     }
     if (role !== undefined) {
       avatar = role.avatarF;
-      const gender = token === 'CONTRIBUYENTE_SESSION'
+      const gender = this.isTaxpayer()
         ? (user as any)?.genero
         : user?.designacion?.personaDto?.sexo;
       if (String(gender || '').toUpperCase() === 'M') {
@@ -484,6 +367,64 @@ export class AuthenticationService {
       }
     }  
     return avatar
+  }
+
+  isTaxpayer(): boolean {
+    return this.storageService.getUser()?.userType === 'TAXPAYER';
+  }
+
+  canCurrentUserCreateReservations(): boolean {
+    if (!this.isTaxpayer()) {
+      return true;
+    }
+
+    const user: any = this.storageService.getUser() ?? this.currentUserSubject;
+    return user?.estadoUsuario === 'ACTIVO' && user?.estaSancionado !== true;
+  }
+
+  getReservationRestrictionMessage(): string {
+    const user: any = this.storageService.getUser() ?? this.currentUserSubject;
+    if (user?.estaSancionado === true || user?.estadoUsuario === 'SANCIONADO') {
+      return 'No puede realizar nuevas reservas mientras su cuenta esté sancionada.';
+    }
+    if (user?.estadoUsuario === 'BLOQUEADO') {
+      return 'No puede realizar nuevas reservas mientras su cuenta esté bloqueada.';
+    }
+    if (user?.estadoUsuario === 'PENDIENTE_VERIFICACION') {
+      return 'Debe completar la verificación de su cuenta antes de realizar reservas.';
+    }
+    return 'Su cuenta debe estar activa para realizar nuevas reservas.';
+  }
+
+  async handleExpiredSession(): Promise<void> {
+    if (this.expirationNoticeOpen || !this.isLoggedIn()) return;
+    this.expirationNoticeOpen = true;
+    await Swal.fire({
+      icon: 'warning',
+      title: 'Sesión expirada',
+      text: 'Su sesión ha expirado. Inicie sesión nuevamente para continuar.',
+      confirmButtonText: 'Ir al inicio de sesión',
+      allowOutsideClick: false
+    });
+    this.expirationNoticeOpen = false;
+    this.logout();
+  }
+
+  private scheduleExpiration(): void {
+    if (this.expirationTimer) clearTimeout(this.expirationTimer);
+    const token = this.storageService.getToken();
+    if (!token) return;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      const delay = payload.exp * 1000 - Date.now();
+      if (delay <= 0) {
+        void this.handleExpiredSession();
+        return;
+      }
+      this.expirationTimer = setTimeout(() => void this.handleExpiredSession(), Math.min(delay, 2147483647));
+    } catch {
+      void this.handleExpiredSession();
+    }
   }
 
   private sortMenuItemsRecursive(menuItems: MenuItem[]): MenuItem[] {

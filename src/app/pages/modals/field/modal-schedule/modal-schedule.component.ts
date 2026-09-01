@@ -55,7 +55,7 @@ export class ModalScheduleComponent implements OnInit {
   constructor(
     private modalService: NgbModal,
     private horarioFijoService: HorarioFijoService,
-    private horarioExcepcionService: HorarioExcepcionService,
+    private scheduleExceptionService: HorarioExcepcionService,
     private formBuilder: UntypedFormBuilder,
   ) { }
   
@@ -570,7 +570,7 @@ export class ModalScheduleComponent implements OnInit {
   }
 
   private addExcepcion(datos: HorarioExcepcion): Observable<any> {
-    return this.horarioExcepcionService.save(datos).pipe(
+    return this.scheduleExceptionService.save(datos).pipe(
       catchError((error) => {
         throw new Error(error);
       })
@@ -578,7 +578,7 @@ export class ModalScheduleComponent implements OnInit {
   }
 
   private updateExcepcion(datos: HorarioExcepcion): Observable<any> {
-    return this.horarioExcepcionService.update(datos).pipe(
+    return this.scheduleExceptionService.update(datos).pipe(
       catchError((error) => {
         throw new Error(error);
       })
@@ -586,7 +586,7 @@ export class ModalScheduleComponent implements OnInit {
   }
 
   private deleteExcepcion(uuid: string): Observable<any> {
-    return this.horarioExcepcionService.delete(uuid).pipe(
+    return this.scheduleExceptionService.delete(uuid).pipe(
       catchError((error) => {
         throw new Error(error);
       })

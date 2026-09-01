@@ -17,7 +17,7 @@ import { UserRol } from 'src/app/core/constants/UserData';
 import { EncargadoService } from 'src/app/core/services/api/encargado.service';
 // import { ModalImportComponent } from './modal-import/modal-import.component';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
-import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
 import { ModalEmployeeComponent } from '../../modals/employee/modal-employee/modal-employee.component';
 import { ModalImportComponent } from '../../modals/employee/modal-import/modal-import.component';
 import { CsvColumn } from 'src/app/shared/data-header/data-header.component';
@@ -63,7 +63,7 @@ export class EmployeesComponent implements OnInit {
     private authService: AuthenticationService,
     private usersService: UserService,
     private employeesService: EncargadoService,
-    private complejosService: ComplejosService,
+    private complejosService: FacilitiesService,
     private datePipe: DatePipe
   ) {
     this.canActivate = this.authService.hasPermission('Encargado');
@@ -94,7 +94,7 @@ export class EmployeesComponent implements OnInit {
   loading: boolean = true;
   private async loadData() {
     await this.getUsers();
-    await this.getComplejos();
+    await this.getFacilities();
     await this.getEmployees();
   }
 
@@ -250,7 +250,7 @@ export class EmployeesComponent implements OnInit {
     });
   }
 
-  private getComplejos() {
+  private getFacilities() {
     this.complejosService.getAll().subscribe({
       next: (data: any) => {
         this.complejosList = data;

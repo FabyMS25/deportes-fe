@@ -13,7 +13,7 @@ import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 @Injectable({
   providedIn: 'root'
 })
-export class ComplejosService {
+export class FacilitiesService {
     apiUrl = environment.backendUrl + '/complejos';
 
 

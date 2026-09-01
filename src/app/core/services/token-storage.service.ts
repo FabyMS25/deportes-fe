@@ -17,59 +17,40 @@ export class TokenStorageService {
     user: any;
     staff?: any;
     token: string;
-  }, rememberMe: boolean = false): void {
-
+  }): void {
     sessionStorage.setItem(STORAGE_KEYS.TOKEN, data.token);
-    if (rememberMe) {
-      localStorage.setItem(STORAGE_KEYS.REMEMBER_ME, 'true');
-      localStorage.setItem(STORAGE_KEYS.CONFIGS, JSON.stringify(data.configs));
-      localStorage.setItem(STORAGE_KEYS.MENU, 
-        typeof data.menu === 'string' ? data.menu : JSON.stringify(data.menu));
-      localStorage.setItem(STORAGE_KEYS.USER, 
-        typeof data.user === 'string' ? data.user : JSON.stringify(data.user));
-      if (data.staff) {
-        localStorage.setItem(STORAGE_KEYS.STAFF, 
-          typeof data.staff === 'string' ? data.staff : JSON.stringify(data.staff));
-      }
-    } else {
-      localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
-      localStorage.removeItem(STORAGE_KEYS.CONFIGS);
-      localStorage.removeItem(STORAGE_KEYS.MENU);
-      localStorage.removeItem(STORAGE_KEYS.USER);
-      localStorage.removeItem(STORAGE_KEYS.STAFF);
-      sessionStorage.setItem(STORAGE_KEYS.CONFIGS, JSON.stringify(data.configs));
-      sessionStorage.setItem(STORAGE_KEYS.MENU,
-        typeof data.menu === 'string' ? data.menu : JSON.stringify(data.menu));
-      sessionStorage.setItem(STORAGE_KEYS.USER, 
-        typeof data.user === 'string' ? data.user : JSON.stringify(data.user));
-      if (data.staff) {
-        sessionStorage.setItem(STORAGE_KEYS.STAFF, 
-          typeof data.staff === 'string' ? data.staff : JSON.stringify(data.staff)
-        );
-      }
+    sessionStorage.setItem(STORAGE_KEYS.CONFIGS, JSON.stringify(data.configs));
+    sessionStorage.setItem(STORAGE_KEYS.MENU,
+      typeof data.menu === 'string' ? data.menu : JSON.stringify(data.menu));
+    sessionStorage.setItem(STORAGE_KEYS.USER,
+      typeof data.user === 'string' ? data.user : JSON.stringify(data.user));
+    if (data.staff) {
+      sessionStorage.setItem(STORAGE_KEYS.STAFF,
+        typeof data.staff === 'string' ? data.staff : JSON.stringify(data.staff)
+      );
     }
+
+    // Remove authenticated state persisted by older versions of the application.
+    localStorage.removeItem(STORAGE_KEYS.CONFIGS);
+    localStorage.removeItem(STORAGE_KEYS.MENU);
+    localStorage.removeItem(STORAGE_KEYS.USER);
+    localStorage.removeItem(STORAGE_KEYS.STAFF);
   }
 
   signOut(): void {
     sessionStorage.clear();
-    if (!this.isRememberMe()) {
-      localStorage.removeItem(STORAGE_KEYS.MENU);
-      localStorage.removeItem(STORAGE_KEYS.USER);
-      localStorage.removeItem(STORAGE_KEYS.STAFF);
-      localStorage.removeItem(STORAGE_KEYS.CONFIGS);
-    }
-    localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
-  }
-
-  private get primaryStorage(): Storage {
-    return this.isRememberMe() ? localStorage : sessionStorage;
+    // Always clean legacy authenticated state. Keep only the remembered username.
+    localStorage.removeItem(STORAGE_KEYS.MENU);
+    localStorage.removeItem(STORAGE_KEYS.USER);
+    localStorage.removeItem(STORAGE_KEYS.STAFF);
+    localStorage.removeItem(STORAGE_KEYS.CONFIGS);
   }
 
   /**
    * setters 
    */
   public saveUserData(user: LoginResponse): void {
-    this.primaryStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+    sessionStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
   }
   public saveToken(token: string): void {
     sessionStorage.setItem(STORAGE_KEYS.TOKEN, token);
@@ -82,7 +63,17 @@ export class TokenStorageService {
     return sessionStorage.getItem(STORAGE_KEYS.TOKEN);
   }
   public isRememberMe(): boolean {
-    return localStorage.getItem(STORAGE_KEYS.REMEMBER_ME) === 'true';
+    return this.getRememberedUsername() !== '';
+  }
+  public saveRememberedLogin(username: string, rememberMe: boolean): void {
+    if (rememberMe) {
+      localStorage.setItem(STORAGE_KEYS.REMEMBERED_USERNAME, username);
+      return;
+    }
+    localStorage.removeItem(STORAGE_KEYS.REMEMBERED_USERNAME);
+  }
+  public getRememberedUsername(): string {
+    return localStorage.getItem(STORAGE_KEYS.REMEMBERED_USERNAME) ?? '';
   }
   public getMenu(): MenuItem[] {
     return this.read(STORAGE_KEYS.MENU) ?? [];
@@ -103,8 +94,7 @@ export class TokenStorageService {
     return !!this.getStaff();
   }
   private read(key: string): any {
-    return this.getFrom(sessionStorage, key) ??
-          this.getFrom(localStorage, key);
+    return this.getFrom(sessionStorage, key);
   }
   private getFrom(storage: Storage, key: string): any {
     const item = storage.getItem(key);

@@ -153,13 +153,7 @@ export class PassCreateComponent implements OnInit {
   private async validateToken(token: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
       this.passResetService.validateToken(token).subscribe({
-        next: (data:any) => {         
-          if(data.status === 'OK' ){
-            resolve(true);
-          }else{
-            resolve(false);
-          }
-        },
+        next: () => resolve(true),
         error: (error) => {
           resolve(false);
         }
@@ -169,13 +163,11 @@ export class PassCreateComponent implements OnInit {
 
   private resetPassword(data: Contribuyente) {   
     this.userService.update(data).subscribe({
-      next: (response:any) => {
-        if(response.status === 'OK'){        
+      next: () => {
           this.notify("Su contraseña se ha restablecido correctamente. Por favor inicie sesión con su nueva", 'success');
           this.router.navigate(['/auth/login']).then(() => {
             this.notify("Su contraseña se ha restablecido correctamente. Por favor inicie sesión con su nueva", 'success');
           });
-        }
       },
       error: (err) => {
         this.notify("Ocurrio un error al restablecer su contraseña. ", 'error');
@@ -186,13 +178,7 @@ export class PassCreateComponent implements OnInit {
   private async getUser(token: string): Promise<any> {
     return new Promise((resolve, reject) => {
       this.passResetService.getUserByToken(token).subscribe({
-        next: (data:any) => {          
-          if(data.status === 'OK' ){
-            resolve(data.payload);
-          }else{
-            resolve(null);
-          }
-        },
+        next: (data:any) => resolve(data),
         error: (error) => {
           resolve(null);
         }

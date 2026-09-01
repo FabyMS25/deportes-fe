@@ -3,7 +3,7 @@ import { NgbModal, NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
+import { SystemConfigurationService } from 'src/app/core/services/api/system-configuration.service';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { CsvColumn } from 'src/app/shared/data-header/data-header.component';
 import { SystemConfigurationModalComponent } from '../../modals/modal-system-configuration/modal-system-configuration.component';
@@ -51,7 +51,7 @@ export class SystemConfigurationsComponent implements OnInit {
   constructor(
     private modalService: NgbModal, 
     private authService: AuthenticationService,
-    private configuracionSistemaService: ConfiguracionSistemaService,
+    private configuracionSistemaService: SystemConfigurationService,
   ) {
     this.canActivate = this.authService.hasPermission('Configuraciones de Sistema');
   }
@@ -81,8 +81,8 @@ export class SystemConfigurationsComponent implements OnInit {
       { name: 'Fecha Creación', prop: 'fechaCreacion', visible: false, date: true },
     ];
     
-    this.getConfiguraciones();
-    this.getCategorias();
+    this.getConfigurations();
+    this.getCategories();
   }
 
   getSelectedItems(items: any) {
@@ -154,15 +154,15 @@ export class SystemConfigurationsComponent implements OnInit {
     modalRef.componentInstance.categoriasList = this.categoriasList;
     modalRef.componentInstance.permissions = this.canActivate;
     modalRef.componentInstance.emitList.subscribe(() => {
-      this.getConfiguraciones();
-      this.getCategorias();
+      this.getConfigurations();
+      this.getCategories();
     });
   }
 
   /* API Services */
   loading: boolean = true;
   
-  private getConfiguraciones() {
+  private getConfigurations() {
     this.configuracionSistemaService.getAll().subscribe({
       next: (data: any) => {
         this.loading = false;
@@ -176,8 +176,8 @@ export class SystemConfigurationsComponent implements OnInit {
     });
   }
 
-  private getCategorias() {
-    this.configuracionSistemaService.getCategorias().subscribe({
+  private getCategories() {
+    this.configuracionSistemaService.getCategories().subscribe({
       next: (data: any) => {
         this.categoriasList = data;
       },

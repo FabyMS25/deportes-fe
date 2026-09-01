@@ -51,7 +51,7 @@ export class ReservaRecurrenteService {
     return apiGet<any>(this.http, `${this.apiUrl}/${uuid}`, `obtener reserva recurrente (${uuid})`);
   }
 
-  getByReservaUuid(reservaUuid: string): Observable<any> {
+  getByReservationUuid(reservaUuid: string): Observable<any> {
     return apiGet<any>(this.http, `${this.apiUrl}/reserva/${reservaUuid}`, `obtener reserva recurrente por reserva (${reservaUuid})`);
   }
 
@@ -63,7 +63,7 @@ export class ReservaRecurrenteService {
     return apiGet<any[]>(this.http, `${this.apiUrl}/activas/vigentes`, 'obtener reservas recurrentes activas');
   }
 
-  getActivasByCampoYFecha(uuidCampo: string, fecha: Date): Observable<any[]> {
+  getActiveByFieldAndDate(uuidCampo: string, fecha: Date): Observable<any[]> {
     return apiGet<any[]>(
       this.http,
       `${this.apiUrl}/activas/campo/${uuidCampo}/fecha/${this.formatDateLocal(fecha)}`,

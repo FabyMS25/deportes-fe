@@ -67,7 +67,7 @@ export class SettingsComponent implements OnInit {
     
     if (this.userRole === 'Contribuyente') {
       this.userContribuyente = dataSaved;
-      this.loadContribuyenteData(this.userContribuyente);
+      this.loadTaxpayerData(this.userContribuyente);
     } else if (this.userRole === 'Admin') {
       this.userData = dataSaved.designacion.personaDto;
       this.loadContactoData(this.userData);
@@ -78,7 +78,7 @@ export class SettingsComponent implements OnInit {
     }
   }
 
-  private loadContribuyenteData(contribuyente: Contribuyente) {
+  private loadTaxpayerData(contribuyente: Contribuyente) {
     if (contribuyente) {
       this.personaForm.patchValue({
         uuid: contribuyente.uuid,
@@ -267,13 +267,7 @@ export class SettingsComponent implements OnInit {
   private updateUser(persona: any): Promise<boolean> {
     return new Promise((resolve, reject) => {
       this.userService.update(persona).subscribe({
-        next: (data: any) => {
-          if (data.status === 'OK') {
-            resolve(true);
-          } else {
-            resolve(false);
-          }
-        },
+        next: () => resolve(true),
         error: (error) => {
           this.notify('error', 'No se pudo actualizar el Registro');
           reject(error);
@@ -284,13 +278,9 @@ export class SettingsComponent implements OnInit {
 
   private deleteUser(uuid: string) {
     this.userService.delete(uuid).subscribe({
-      next: (data: any) => {
-        if (data.status === 'OK') {
+      next: () => {
           this.notify('success', 'Se elimino su cuenta con exito');
           this.authService.logout()
-        } else {
-          this.notify('error', 'No se puedo eliminar el Registro');
-        }
       },
       error: (error) => {
         this.notify('error', 'No se puedo actualizar el Registro');

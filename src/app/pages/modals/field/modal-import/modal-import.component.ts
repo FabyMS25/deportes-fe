@@ -7,8 +7,8 @@ import { catchError, forkJoin, from, map, mergeMap, Observable, of, switchMap } 
 import Swal from 'sweetalert2';
 import { SharedModule } from 'src/app/shared/shared.module';
 
-import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
-import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
+import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
+import { SportsFieldsService } from 'src/app/core/services/api/sports-fields.service';
 import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { ClasificadorRuatService } from 'src/app/core/services/api/clasificadorRuat.service';
@@ -36,8 +36,8 @@ export class ModalImportComponent {
 
   constructor(
     private activeModal: NgbActiveModal,
-    private fieldService: CamposDeportivoService,
-    private complejoService: ComplejosService,
+    private fieldService: SportsFieldsService,
+    private complejoService: FacilitiesService,
     private superficieService: SuperficiesService,
     private categoriesService: CategoriasService,
     private clasificadorService: ClasificadorRuatService,
@@ -226,10 +226,7 @@ export class ModalImportComponent {
         horariosExcepcionesDtoList: this.prepareHorariosExcepciones(firstRow['Lista de Excepciones']),
         tarifasDtoList: this.prepareTarifas(rows)
       };
-      const campoCreado: any = await this.fieldService.save(campoData).toPromise();      
-      if (campoCreado.status !== 'OK') {
-        throw new Error('Error al crear campo deportivo: ' + (campoCreado.message || 'Unknown error'));
-      }
+      await this.fieldService.save(campoData).toPromise();
     } catch (error) {
       console.error('Error in createCampoDeportivo:', error);
       throw error;

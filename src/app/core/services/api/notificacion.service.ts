@@ -154,7 +154,17 @@ export class NotificacionService {
     this.stompClient = new Client({
       webSocketFactory: () => new SockJS(this.socketUrl),
       reconnectDelay: 5000,
-      connectHeaders: token && token !== 'CONTRIBUYENTE_SESSION' ? { Authorization: `Bearer ${token}` } : {},
+      connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+      beforeConnect: async () => {
+        const currentToken = this.storageService.getToken();
+        if (!currentToken && this.stompClient) {
+          this.stompClient.reconnectDelay = 0;
+          throw new Error('No authenticated Deportes session');
+        }
+        if (this.stompClient && currentToken) {
+          this.stompClient.connectHeaders = { Authorization: `Bearer ${currentToken}` };
+        }
+      },
       onConnect: () => this.zone.run(() => {
         this.connectionStateSubject.next(true);
         this.notificationSubscription = this.stompClient?.subscribe(
@@ -167,7 +177,12 @@ export class NotificacionService {
         );
       }),
       onStompError: () => this.zone.run(() => this.connectionStateSubject.next(false)),
-      onWebSocketClose: () => this.zone.run(() => this.connectionStateSubject.next(false))
+      onWebSocketClose: () => this.zone.run(() => {
+        if (!this.storageService.getToken() && this.stompClient) {
+          this.stompClient.reconnectDelay = 0;
+        }
+        this.connectionStateSubject.next(false);
+      })
     });
 
     this.stompClient.activate();

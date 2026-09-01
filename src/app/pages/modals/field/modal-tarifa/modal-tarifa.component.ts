@@ -66,8 +66,8 @@ export class ModalTarifaComponent implements OnInit {
   ) { }
 
   ngOnInit() {    
-    this.getClasificadoresRuat();
-    this.getCategorias();
+    this.getRuatClassifiers();
+    this.getCategories();
     
     this.form = this.formBuilder.group({
       tarifasDtoList: this.formBuilder.array([])
@@ -511,7 +511,7 @@ export class ModalTarifaComponent implements OnInit {
   }
 
   /* API requests */
-  private getClasificadoresRuat() {
+  private getRuatClassifiers() {
     this.clasificadoresRuatService.getAll().subscribe({
       next: (data: any) => {
         this.clasificadoresRuatList = data;
@@ -522,7 +522,7 @@ export class ModalTarifaComponent implements OnInit {
     });
   }
 
-  private getCategorias() {
+  private getCategories() {
     this.categoriaService.getAll().subscribe({
       next: (data: any) => {
         this.categoriasList = data;

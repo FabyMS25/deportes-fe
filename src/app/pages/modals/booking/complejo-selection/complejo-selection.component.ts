@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EstadoActual, StatusUtils } from 'src/app/core/constants/Estados';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
-import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
 
 @Component({
   selector: 'app-complejo-selection',
@@ -28,13 +28,13 @@ export class ComplejoSelectionComponent implements OnInit {
   filterByTipoEstructura?: string;  
   viewMode: 'list' | 'grid' = 'grid';
 
-  constructor(private complejoService: ComplejosService) {}
+  constructor(private complejoService: FacilitiesService) {}
 
   ngOnInit(): void {
-    this.loadComplejos();
+    this.loadFacilities();
   }
   
-  private loadComplejos(): void {
+  private loadFacilities(): void {
     this.isLoading = true;
     this.loadError = false;
     
@@ -54,7 +54,7 @@ export class ComplejoSelectionComponent implements OnInit {
   }
 
   retryLoad(): void {
-    this.loadComplejos();
+    this.loadFacilities();
   }
   
   applyFilters(): void {

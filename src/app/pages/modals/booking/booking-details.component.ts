@@ -17,10 +17,10 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { BookingType } from 'src/app/core/constants/Features';
 import { ScheduleStateService } from './schedule-state.service';
 import { EstadoActual } from 'src/app/core/constants/Estados';
-import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { ReservationConflictService } from './reservation-conflict.service';
-import { ConfiguracionSistemaService } from 'src/app/core/services/api/configuracionSistema.service';
+import { SystemConfigurationService } from 'src/app/core/services/api/system-configuration.service';
 import { obtenerDescripcionTipoCobro } from 'src/app/core/constants/TipoCobro';
 import {
   obtenerHorasValidacionPago,
@@ -186,18 +186,30 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   constructor(
     private authenticationService: AuthenticationService,
     private modalService: NgbModal,
-    private complejoService: ComplejosService,
+    private complejoService: FacilitiesService,
     private reservaService: ReservaService,
     private router: Router,
     private cdRef: ChangeDetectorRef,
     private scheduleState: ScheduleStateService,
     private conflictService: ReservationConflictService,
-    private configuracionSistemaService: ConfiguracionSistemaService,
+    private configuracionSistemaService: SystemConfigurationService,
   ) {
     this.userRole = this.authenticationService.getUserRole()
   }
 
   async ngOnInit(): Promise<void> {
+    if (!this.authenticationService.canCurrentUserCreateReservations()) {
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Reserva no disponible',
+        text: this.authenticationService.getReservationRestrictionMessage(),
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#299cdb'
+      });
+      await this.router.navigate(['/reservations/one-time']);
+      return;
+    }
+
     this.breadCrumbItems = [
       { label: 'Complejo' },
       { label: 'Reserva', active: true }
@@ -247,7 +259,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
       this.updatePermissionsForBookingType();
       this.bookingStep = BookingStep.CAMPO_SELECTION;
     } else if (navigationData.tipoReserva) {
-      await this.loadComplejos();
+      await this.loadFacilities();
       this.setBookingType(navigationData.tipoReserva);
       this.bookingStep = BookingStep.COMPLEJO_SELECTION;
     } else {
@@ -480,7 +492,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
       throw new Error('UUID del campo es requerido');
     }    
     return new Promise((resolve, reject) => {
-      this.reservaService.getByCampoDeportivo(fieldUuid)
+      this.reservaService.getBySportField(fieldUuid)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response: any) => {
@@ -497,7 +509,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
         });
     });
   }
-  private async loadComplejos(): Promise<void> {    
+  private async loadFacilities(): Promise<void> {
     return new Promise((resolve, reject) => {
     this.isLoading = true;    
     this.complejoService.getAll()

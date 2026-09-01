@@ -64,11 +64,11 @@ export class ReservaService {
     return apiGet<Reserva>(this.http, `${this.apiUrl}/${uuid}`, `obtener reserva (${uuid})`);
   }
 
-  getByNumeroReserva(numeroReserva: string): Observable<Reserva> {
+  getByReservationNumber(numeroReserva: string): Observable<Reserva> {
     return apiGet<Reserva>(this.http, `${this.apiUrl}/numero/${numeroReserva}`, `obtener reserva por número (${numeroReserva})`);
   }
 
-  getByFechaReserva(fechaIni: Date, fechaFin: Date, page: number = 0, size: number = 20): Observable<PageResponse<Reserva>> {
+  getByReservationDate(fechaIni: Date, fechaFin: Date, page: number = 0, size: number = 20): Observable<PageResponse<Reserva>> {
     let params = new HttpParams()
       .set('fechaIni', this.formatDateTime(fechaIni))
       .set('fechaFin', this.formatDateTime(fechaFin))
@@ -78,11 +78,11 @@ export class ReservaService {
     return apiGet<PageResponse<Reserva>>(this.http, `${this.apiUrl}/fechas`, 'obtener reservas por fecha', { params });
   }
 
-  getByCampoDeportivo(uuidCampo: string): Observable<Reserva[]> {
+  getBySportField(uuidCampo: string): Observable<Reserva[]> {
     return apiGet<Reserva[]>(this.http, `${this.apiUrl}/campo/${uuidCampo}`, `obtener reservas por campo (${uuidCampo})`);
   }
 
-  getByContribuyente(uuidContribuyente: string): Observable<any[]> {
+  getByTaxpayer(uuidContribuyente: string): Observable<any[]> {
     return apiGet<Reserva[]>(this.http, `${this.apiUrl}/contribuyente/${uuidContribuyente}`, `obtener reservas por contribuyente (${uuidContribuyente})`);
   }
 
@@ -94,7 +94,7 @@ export class ReservaService {
     return apiGet<Reserva[]>(this.http, `${this.apiUrl}/tipo/${tipoReserva}`, `obtener reservas por tipo (${tipoReserva})`);
   }
 
-  getActivasByCampoYFecha(uuidCampo: string, fechaIni: Date, fechaFin: Date): Observable<Reserva[]> {
+  getActiveByFieldAndDate(uuidCampo: string, fechaIni: Date, fechaFin: Date): Observable<Reserva[]> {
     let params = new HttpParams()
       .set('fechaIni', this.formatDateTime(fechaIni))
       .set('fechaFin', this.formatDateTime(fechaFin));
@@ -102,12 +102,12 @@ export class ReservaService {
     return apiGet<Reserva[]>(this.http, `${this.apiUrl}/activas/campo/${uuidCampo}`, `obtener reservas activas por campo (${uuidCampo})`, { params });
   }
 
-  aprobarReserva(uuid: String, aprobadoPor: string): Observable<Reserva> {
+  approveReservation(uuid: String, aprobadoPor: string): Observable<Reserva> {
     let params = new HttpParams().set('aprobadoPor', this.currentUserUuid() || aprobadoPor);
     return apiPut<Reserva>(this.http, `${this.apiUrl}/${uuid}/aprobar`, null, `aprobar reserva (${uuid})`, { params });
   }
 
-  rechazarReserva(uuid: String, motivoRechazo: string, aprobadoPor: string): Observable<Reserva> {
+  rejectReservation(uuid: String, motivoRechazo: string, aprobadoPor: string): Observable<Reserva> {
     let params = new HttpParams()
       .set('motivoRechazo', motivoRechazo)
       .set('aprobadoPor', this.currentUserUuid() || aprobadoPor);
@@ -115,7 +115,7 @@ export class ReservaService {
     return apiPut<Reserva>(this.http, `${this.apiUrl}/${uuid}/rechazar`, null, `rechazar reserva (${uuid})`, { params });
   }
 
-  cancelarReserva(uuid: string, motivo: string): Observable<Reserva> {
+  cancelReservation(uuid: string, motivo: string): Observable<Reserva> {
     let params = new HttpParams().set('motivo', motivo);
     const anuladoPor = this.currentUserUuid();
     if (anuladoPor) {
@@ -154,16 +154,16 @@ export class ReservaService {
     return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar reserva (${uuid})`);
   }
 
-  previewNumeroReserva(tipoReserva: BookingType): Observable<any> {
+  previewReservationNumber(tipoReserva: BookingType): Observable<any> {
     return apiGet<any>(this.http, `${this.apiUrl}/numero-reserva/preview?tipo=${tipoReserva}`, `previsualizar número de reserva (${tipoReserva})`);
   }
 
-  generateNumeroReserva(tipoReserva: BookingType): Observable<string> {
+  generateReservationNumber(tipoReserva: BookingType): Observable<string> {
     const params = new HttpParams().set('tipo', tipoReserva);
     return apiGet<string>(this.http, `${this.apiUrl}/numero-reserva/generar`, `generar número de reserva (${tipoReserva})`, { params });
   }
 
-  validateNumeroReserva(numeroReserva: string, tipoReserva: BookingType): Observable<any> {
+  validateReservationNumber(numeroReserva: string, tipoReserva: BookingType): Observable<any> {
     return apiPost<any>(
       this.http,
       `${this.apiUrl}/numero-reserva/validar`,
@@ -181,7 +181,7 @@ export class ReservaService {
       || '';
   }
 
-  verificarDisponibilidadNumeroReserva(numeroReserva: string): Observable<any> {
+  checkReservationNumberAvailability(numeroReserva: string): Observable<any> {
     return apiGet<any>(this.http, `${this.apiUrl}/numero-reserva/verificar/${numeroReserva}`, `verificar disponibilidad de número (${numeroReserva})`);
   }
 

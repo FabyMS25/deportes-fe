@@ -140,7 +140,7 @@ export const LabelsConfiguracion = {
   [EstadoControlConfiguracion.REQUIERE_APROBACION]: 'Requiere Aprobación'
 };
 
-export function obtenerLabelConfiguracion(valor: string, tipo: 'categoria' | 'aplicaA' | 'unidadMedida' | 'tipoValor' | 'estadoControl'): string {
+export function getConfigurationLabel(valor: string, tipo: 'categoria' | 'aplicaA' | 'unidadMedida' | 'tipoValor' | 'estadoControl'): string {
   const mapeos = {
     categoria: CategoriaConfiguracion,
     aplicaA: AplicaAConfiguracion,

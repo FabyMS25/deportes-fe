@@ -347,9 +347,9 @@
                 <h6 class="mb-0">
                   <i class="ri-group-line me-2"></i>Detalle por estudiante y período
                 </h6>
-                <span class="badge bg-primary">{{ getReservaDetalles().length || 0 }}</span>
+                <span class="badge bg-primary">{{ getReservationDetails().length || 0 }}</span>
               </div>
-              <div class="table-responsive" *ngIf="getReservaDetalles().length; else noReservationDetails">
+              <div class="table-responsive" *ngIf="getReservationDetails().length; else noReservationDetails">
                 <table class="table table-sm align-middle mb-0">
                   <thead class="table-light">
                     <tr>
@@ -363,7 +363,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr *ngFor="let detalle of getReservaDetalles()">
+                    <tr *ngFor="let detalle of getReservationDetails()">
                       <td class="px-3">{{ detalle.estudianteEscuelaDto.nombreCompleto || 'N/A' }}</td>
                       <td>{{ detalle.estudianteEscuelaDto.matricula || detalle.matricula || 'N/A' }}</td>
                       <td>{{ formatPeriodoDetalle(detalle) }}</td>

@@ -3,7 +3,6 @@ export const environment = {
   subscriberId: "66acdd37aa4218d126588112",
   applicationIdentifier: "uo-XSwSEFlyM",
   
-  apiLoginUrl: '/auth-api', 
   backendUrl: '/api',
   backendRuat: '/api',
   assetsUrl: '', 

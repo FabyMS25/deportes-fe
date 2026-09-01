@@ -120,7 +120,7 @@ export class ModalTaxpayerComponent implements OnInit {
   ngOnInit(): void {
     this.getConfigsSystem();
     this.getOrganizations();
-    this.getEstudiantes();
+    this.getStudents();
     this.canSanction = this.userPermissions.includes('SANCIONAR');
     this.initForms();
     this.formDataSet();
@@ -686,7 +686,7 @@ export class ModalTaxpayerComponent implements OnInit {
         await this.updateData(datos, this.buildUpdateSuccessMessage());
       } else {
         if (!datos.verificadoRuat) {
-          const ruatResponse = await this.registerContribuyenteInRuat(datos);
+          const ruatResponse = await this.registerTaxpayerInRuat(datos);
           if (this.ruatService.canContinue(ruatResponse)) {
             datos.codigoContribuyente = this.ruatService.getResponseData(ruatResponse).codigoContribuyente;
             datos.verificadoRuat = true;
@@ -742,7 +742,7 @@ export class ModalTaxpayerComponent implements OnInit {
 
   // ─── RUAT Integration ─────────────────────────────────────────────────────
 
-  private async registerContribuyenteInRuat(datos: Contribuyente): Promise<any> {
+  private async registerTaxpayerInRuat(datos: Contribuyente): Promise<any> {
     const ruatData = {
       tipoDocumento: datos.tipoDocumento,
       numeroDocumento: datos.numeroDocumento,
@@ -759,7 +759,7 @@ export class ModalTaxpayerComponent implements OnInit {
       nroNit: datos.nroNit,
     };
     this.notify('Registrando contribuyente en RUAT...', 'info');
-    const ruatResp = await this.registerContribuyente(ruatData);
+    const ruatResp = await this.registerTaxpayer(ruatData);
     if (this.ruatService.canContinue(ruatResp)) {
       this.notify('Contribuyente registrado exitosamente en RUAT', 'success');
       return ruatResp;
@@ -774,7 +774,7 @@ export class ModalTaxpayerComponent implements OnInit {
     }
     this.searchingRuat = true;
     try {
-      const ruatResp = await this.searchContribuyenteInRuat(this.searchRuatForm.value);
+      const ruatResp = await this.searchTaxpayerInRuat(this.searchRuatForm.value);
       if (this.ruatService.canContinue(ruatResp)) {
         this.ruatDataFound = ruatResp;
         this.fillFormFromRuat(ruatResp);
@@ -845,7 +845,7 @@ export class ModalTaxpayerComponent implements OnInit {
     const formData = this.editForm.getRawValue();
     const ruatData = { ...formData, fechaNacimiento: formData.fechaNacimiento ? this.formatDateForRuat(formData.fechaNacimiento) : '' };
     try {
-      const ruatResp = await this.registerContribuyente(ruatData);
+      const ruatResp = await this.registerTaxpayer(ruatData);
       if (this.ruatService.canContinue(ruatResp)) {
         const datos = this.ruatService.getResponseData(ruatResp);
         const nuevoEstado =
@@ -1065,7 +1065,7 @@ export class ModalTaxpayerComponent implements OnInit {
     });
   }
 
-  private getEstudiantes(): void {
+  private getStudents(): void {
     this.estudianteEscuelaService.getAll().subscribe({
       next: (data: any) => { this.estudiantesList = data; },
     });
@@ -1125,24 +1125,21 @@ export class ModalTaxpayerComponent implements OnInit {
     });
   }
 
-  private searchContribuyenteInRuat(data: any): Promise<any> {
+  private searchTaxpayerInRuat(data: any): Promise<any> {
     return new Promise((resolve, reject) => {
       this.ruatService
-        .getContribuyentePorCi(data.numeroDocumento, data.tipoDocumento, data.expedido)
+        .getTaxpayerByIdentityNumber(data.numeroDocumento, data.tipoDocumento, data.expedido)
         .subscribe({
-          next: (resp: any) => resolve(resp?.payload ?? null),
+          next: (resp: any) => resolve(resp),
           error: (err) => reject(err),
         });
     });
   }
 
-  private registerContribuyente(data: any): Promise<any> {
+  private registerTaxpayer(data: any): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.ruatService.registerContribuyente(data).subscribe({
-        next: (resp: any) => {
-          if (resp['status'] === 'OK') resolve(resp.payload);
-          else { this.notify(this.ruatService.getResponseMessage(resp, 'No se pudo registrar en RUAT'), 'error'); resolve(null); }
-        },
+      this.ruatService.registerTaxpayer(data).subscribe({
+        next: (resp: any) => resolve(resp),
         error: (err) => reject(err),
       });
     });

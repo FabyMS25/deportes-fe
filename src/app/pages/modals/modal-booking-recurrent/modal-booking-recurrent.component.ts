@@ -87,7 +87,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.userData = this.authService.currentUser();
-    if (this.authService.tokenUser() !== 'CONTRIBUYENTE_SESSION') {
+    if (!this.authService.isTaxpayer()) {
       this.userData = this.userData.designacion.personaDto;
     }
     this.getConfigsSystem();
@@ -330,12 +330,12 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
     this.consultationResult = undefined;
 
     try {
-      const resp: any = await this.ruatService.consultaPagoTasa(reserva.numeroTasa).toPromise();
+      const resp: any = await this.ruatService.checkFeePayment(reserva.numeroTasa).toPromise();
       const persistedPayment = reserva.pagosDtoList?.find(
         pago => pago.estadoPago === EstadoPago.PAGADO
       ) || reserva.pagosDtoList?.[0];
 
-      if (resp?.status !== 'OK') {
+      if (!this.ruatService.hasBusinessResponse(resp)) {
         if (persistedPayment) {
           this.consultationResult = this.buildPersistedPaymentResult(resp, persistedPayment);
           return;
@@ -426,13 +426,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
   private updateReservaRecurrente(data: ReservaRecurrente): Promise<ReservaRecurrente> {
     return new Promise((resolve, reject) => {
       this.reservaRecurrenteService.update(data).subscribe({
-        next: (resp: any) => {
-          if (resp['status'] === 'OK') {
-            resolve(resp.payload);
-          } else {
-            reject(resp.payload);
-          }
-        },
+        next: (resp: any) => resolve(resp),
         error: (error) => {
           console.error("Error updating reserva recurrente:", error);
           reject(error);
@@ -443,13 +437,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
   private updateReserva(data: Reserva): Promise<Reserva> {
     return new Promise((resolve, reject) => {
       this.reservaService.update(data).subscribe({
-        next: (resp: any) => {
-          if (resp['status'] === 'OK') {
-            resolve(resp.payload);
-          } else {
-            reject(resp.payload);
-          }
-        },
+        next: (resp: any) => resolve(resp),
         error: (error) => {
           console.error("Error updating reserva:", error);
           reject(error);
@@ -460,7 +448,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
   
   private rejectReserva(reservaUuid: any, motivoRechazo: string = '') {
     const aprobadoPor = this.userData.nombreCompleto || this.userData.fullName; 
-    this.reservaService.rechazarReserva(reservaUuid, motivoRechazo, aprobadoPor).subscribe({
+    this.reservaService.rejectReservation(reservaUuid, motivoRechazo, aprobadoPor).subscribe({
       next: async (data: any) => {
         try {
           this.showLoading = false;
@@ -542,13 +530,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
   private getReservaByUuid(uuid: string): Promise<Reserva> {
     return new Promise((resolve, reject) => {
       this.reservaService.getByUuid(uuid).subscribe({
-        next: (resp: any) => {
-          if (resp?.status === 'OK') {
-            resolve(resp.payload);
-          } else {
-            reject(new Error(resp?.payload || 'No se pudo obtener la reserva'));
-          }
-        },
+        next: (resp: any) => resolve(resp),
         error: (error) => {
           reject(new Error(error?.error?.message || error?.message || 'Error al obtener la reserva'));
         }
@@ -558,14 +540,8 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
 
   private approveReservaAfterRuat(reservaUuid: string, aprobadoPor: string): Promise<Reserva> {
     return new Promise((resolve, reject) => {
-      this.reservaService.aprobarReserva(reservaUuid, aprobadoPor).subscribe({
-        next: (resp: any) => {
-          if (resp?.status === 'OK') {
-            resolve(resp.payload);
-          } else {
-            reject(new Error(resp?.payload || 'No se pudo aprobar la reserva'));
-          }
-        },
+      this.reservaService.approveReservation(reservaUuid, aprobadoPor).subscribe({
+        next: (resp: any) => resolve(resp),
         error: (error) => {
           reject(new Error(error?.error?.message || error?.message || 'Error al aprobar la reserva'));
         }
@@ -575,7 +551,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
 
   private cancelGratuitousReservation(reserva: Reserva, formValues: any) {
     this.showLoading = true;
-    this.reservaService.cancelarReserva(reserva.uuid!, formValues.motivo).subscribe({
+    this.reservaService.cancelReservation(reserva.uuid!, formValues.motivo).subscribe({
       next: () => {
         this.showLoading = false;
         Swal.fire({
@@ -608,9 +584,9 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
     this.showLoading = true;
     this.ruatService.cancelTasa(requestData).subscribe({
       next: (resp: any) => {
-        if (resp['status'] === 'OK') {
+        if (this.ruatService.canContinue(resp)) {
           const text = this.ruatService.getResponseMessage(resp, 'Tasa anulada correctamente.');
-          this.reservaService.cancelarReserva(reserva.uuid!, formValues.motivo).subscribe({
+          this.reservaService.cancelReservation(reserva.uuid!, formValues.motivo).subscribe({
             next: () => {
               this.showLoading = false;
               Swal.fire({
@@ -1034,7 +1010,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
     
   //   try {
   //     const nroTasa = item.reservaDto.numeroTasa;
-  //     const resp: any = await this.ruatService.consultaPagoTasa(nroTasa).toPromise();
+  //     const resp: any = await this.ruatService.checkFeePayment(nroTasa).toPromise();
 
   //     if (resp['status'] !== 'OK') {
   //       return { item, text: "La Tasa y Otro Ingreso no tiene pagos", type: 'warning' };

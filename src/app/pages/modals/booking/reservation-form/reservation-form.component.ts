@@ -414,7 +414,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   }
 
   private generateReservationNumber(): void {
-    this.reservaService.previewNumeroReserva(this.bookingType).subscribe({
+    this.reservaService.previewReservationNumber(this.bookingType).subscribe({
       next: (response: any) => {
         this.numeroReserva = response;        
         if (this.reservationForm) {
@@ -480,7 +480,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    this.reservaService.validateNumeroReserva(customNumber, this.bookingType).subscribe({
+    this.reservaService.validateReservationNumber(customNumber, this.bookingType).subscribe({
       next: (response: any) => {
         if (response.valid) {
           this.numeroReserva = customNumber;
@@ -2181,7 +2181,7 @@ getPaidReservationDescription(): string {
     this.calculateValidationRequirement();
   }
 
-  searchContribuyente(event: Event): void {
+  searchTaxpayer(event: Event): void {
     const searchTerm = (event.target as HTMLInputElement).value;
     this.performContribuyenteSearch(searchTerm);
   }

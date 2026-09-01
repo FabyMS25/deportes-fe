@@ -53,7 +53,7 @@ export class TicketComponent implements OnChanges {
     
   async ngOnInit(): Promise<void> { 
     this.currentTime = (new Date()).toLocaleTimeString();   
-    if (this.authService.tokenUser() !== 'CONTRIBUYENTE_SESSION') {
+    if (!this.authService.isTaxpayer()) {
         this.contribuyente = this.authService.currentUser();
     } else {    
       this.contribuyente = null;
@@ -77,14 +77,14 @@ export class TicketComponent implements OnChanges {
     this.showLoading = true;
     this.errorMessage = '';
     try {
-      await this.generarReportePDF(this.reservationData);
+      await this.generatePdfReport(this.reservationData);
     } catch (error) {
       this.errorMessage = 'Error al cargar el ticket. Por favor, intente nuevamente.';
       this.showLoading = false;
     }
   }
 
-  private async generarReportePDF(reserva: any) {
+  private async generatePdfReport(reserva: any) {
     let observable;
     if (reserva.tipoReserva === 'periodo') {
           observable = this.reportsService.getTicketByPeriodo(reserva.uuid);

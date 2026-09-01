@@ -10,8 +10,8 @@ import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 @Injectable({
   providedIn: 'root'
 })
-export class CamposDeportivoService {
-    apiUrl = environment.backendUrl + '/campoDeportivo';
+export class SportsFieldsService {
+    apiUrl = environment.backendUrl + '/sports-fields';
 
 
   constructor(private http: HttpClient) { }
@@ -24,7 +24,7 @@ export class CamposDeportivoService {
     return apiGet<CampoDeportivo>(this.http, `${this.apiUrl}/${uuid}`, `obtener campo deportivo (${uuid})`);
   }
 
-  getByComplejo(data:any): Observable<CampoDeportivo[]> {
+  getByFacility(data:any): Observable<CampoDeportivo[]> {
     return apiGet<CampoDeportivo[]>(this.http, `${this.apiUrl}/complejo/${data.uuid}`, `obtener campos por complejo (${data.uuid})`);
   }
 

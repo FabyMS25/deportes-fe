@@ -8,8 +8,8 @@ import { catchError, Subscription, forkJoin, Observable, of, tap, map } from 'rx
 
 import { Categoria } from 'src/app/core/models/categoria.model';
 import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
-import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
-import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { SportsFieldsService } from 'src/app/core/services/api/sports-fields.service';
+import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
 import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
 import { TarifaService } from 'src/app/core/services/api/tarifa.service';
 import { CategoriaCampo, TipoExcepcion } from 'src/app/core/constants/Features';
@@ -83,8 +83,8 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   constructor(
     private modalService: NgbModal,
     private formBuilder: UntypedFormBuilder,
-    private complejoService: ComplejosService,
-    private fieldService: CamposDeportivoService,
+    private complejoService: FacilitiesService,
+    private fieldService: SportsFieldsService,
     private surfaceService: SuperficiesService,
     private tarifaService: TarifaService,
     private clasificadoresRuatService: ClasificadorRuatService,
@@ -94,8 +94,8 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.getFacilities();
     this.getSurfaces();
-    this.getCategorias();
-    this.getClasificadoresRuat();  
+    this.getCategories();
+    this.getRuatClassifiers();
     this.initForm();
     this.formDataSet();
     if (this.accion !== 'edit') {
@@ -870,7 +870,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
       }
     });
   }
-  private getClasificadoresRuat() {
+  private getRuatClassifiers() {
     this.clasificadoresRuatService.getAll().subscribe({
       next: (data: any) => {
         this.clasificadoresRuatList = data;
@@ -880,7 +880,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
       }
     });
   }
-  private getCategorias() {
+  private getCategories() {
     this.categoriaService.getAll().subscribe({
       next: (data: any) => {
         this.categoriasList = data;

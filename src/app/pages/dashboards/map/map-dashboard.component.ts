@@ -6,15 +6,15 @@ import * as L from 'leaflet'
 import 'leaflet.markercluster';
 import * as GeoSearch from 'leaflet-geosearch';
 import { ToastService } from '../admin/toast-service';
-import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
-import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
+import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
+import { SportsFieldsService } from 'src/app/core/services/api/sports-fields.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
-import { EstadoActual, EstadoUsuario, StatusUtils } from 'src/app/core/constants/Estados';
+import { EstadoActual, StatusUtils } from 'src/app/core/constants/Estados';
 import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
@@ -79,8 +79,8 @@ export class MapDashboardComponent implements OnInit {
         public toastService: ToastService,
         private authService: AuthenticationService,
         private categoriesService: CategoriasService,
-        private complexService: ComplejosService,
-        private fieldService: CamposDeportivoService,
+        private complexService: FacilitiesService,
+        private fieldService: SportsFieldsService,
         private surfacesService: SuperficiesService,
         private offcanvasService: NgbOffcanvas,
     ) {}
@@ -723,12 +723,12 @@ export class MapDashboardComponent implements OnInit {
                         <small class="text-muted"><i class="ri-information-line"></i> ${element.observaciones}</small>
                     </div>
                 ` : ''}
-                ${element.estadoActual.toLowerCase() === 'activo' ? `
+                ${element.estadoActual.toLowerCase() === 'activo' && this.authService.canCurrentUserCreateReservations() ? `
                     <div class="mt-3 d-flex gap-1">
                         <button class="btn btn-primary btn-sm w-100 mb-2 btn-reserva-puntual">
                             <i class="ri-calendar-check-line"></i>Reserva Puntual
                         </button>                        
-                        ${this.userRole !== 'Contribuyente' || (this.userRole === 'Contribuyente' && this.userData.estadoUsuario === EstadoUsuario.ACTIVO && (this.enableRecurrentBooking || this.enableSolicitudRecurrentBooking)) ? `
+                        ${this.userRole !== 'Contribuyente' || (this.enableRecurrentBooking || this.enableSolicitudRecurrentBooking) ? `
                             <button class="btn btn-success btn-sm w-100 mb-2 btn-reserva-recurrente">
                                 <i class="ri-repeat-line"></i>Reserva Recurrente
                             </button>
@@ -1014,15 +1014,30 @@ export class MapDashboardComponent implements OnInit {
     }
     
     handleButtonClick(data: any): void {
+        if (!this.ensureReservationAllowed()) return;
         this.router.navigate(['/reservations/details'], { state: { data: data } });
     }
     public goToReservation(complejo: ComplejoDeportivo | null, bookingType: string) {
+        if (!this.ensureReservationAllowed()) return;
         this.router.navigate(['/reservations/details'], { 
             state: { 
                 data: complejo,
                 tipoReserva: bookingType
             } 
         });
+    }
+
+    private ensureReservationAllowed(): boolean {
+        if (this.authService.canCurrentUserCreateReservations()) return true;
+
+        void Swal.fire({
+            icon: 'warning',
+            title: 'Reserva no disponible',
+            text: this.authService.getReservationRestrictionMessage(),
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#299cdb'
+        });
+        return false;
     }
     openEnd(content: TemplateRef<any>) {
         this.offcanvasService.open(content, { position: 'end' });

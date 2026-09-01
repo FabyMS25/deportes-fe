@@ -315,10 +315,16 @@
     "TAXPAYER":"Panel de Control"
   },
   "ADMINISTRATION1": {
-      "TEXT": "Administration",
+      "TEXT": "Administración",
       "FIELDS": "Canchas",
-      "EMPLOYEES": "Employees",
-      "CATEGORIES": "Categorias"
+      "EMPLOYEES": "Empleados",
+      "CATEGORIES": "Categorías"
+  },
+  "ADMINISTRATION": {
+      "TEXT": "Administración",
+      "FIELDS": "Canchas",
+      "EMPLOYEES": "Empleados",
+      "CATEGORIES": "Categorías"
   },
   "MENUITEMS": {
     "MENU": {
@@ -610,5 +616,44 @@
         }
       }
     }
-  }
+  },
+  "Actualizar notificaciones": "Actualizar notificaciones",
+  "Al confirmar se generará la tasa municipal de la reserva": "Al confirmar se generará la tasa municipal de la reserva",
+  "Anticipación:": "Anticipación:",
+  "Anulación automática por falta de pago": "Anulación automática por falta de pago",
+  "Baja": "Baja",
+  "Cargando": "Cargando",
+  "Describa la autorización para no anular automáticamente...": "Describa la autorización para no anular automáticamente...",
+  "Duración:": "Duración:",
+  "El pago debe realizarse dentro de": "El pago debe realizarse dentro de",
+  "Eliminar notificación": "Eliminar notificación",
+  "La anulación automática por falta de pago quedará desactivada; el pago deberá tener seguimiento administrativo": "La anulación automática por falta de pago quedará desactivada; el pago deberá tener seguimiento administrativo",
+  "Limpiar": "Limpiar",
+  "Marcar todo como leído": "Marcar todo como leído",
+  "Motivo para no anular automáticamente": "Motivo para no anular automáticamente",
+  "No verificado": "No verificado",
+  "Notificación Masiva": "Notificación Masiva",
+  "Reserva directa:": "Reserva directa:",
+  "Se generará la tasa municipal al confirmar la reserva.": "Se generará la tasa municipal al confirmar la reserva.",
+  "Seleccionar notificación": "Seleccionar notificación",
+  "Será revisada por el administrador del complejo antes de generar la tasa municipal.": "Será revisada por el administrador del complejo antes de generar la tasa municipal.",
+  "Sin NIT": "Sin NIT",
+  "Sin Personería Jurídica": "Sin Personería Jurídica",
+  "Solicitud de reserva:": "Solicitud de reserva:",
+  "Toda personería jurídica": "Toda personería jurídica",
+  "Todas": "Todas",
+  "Todos los estados": "Todos los estados",
+  "Todos los estados RUAT": "Todos los estados RUAT",
+  "Todos: NIT": "Todos: NIT",
+  "Vence aprox.:": "Vence aprox.:",
+  "Vencimiento estimado del plazo:": "Vencimiento estimado del plazo:",
+  "Verificación RUAT": "Verificación RUAT",
+  "Verificado": "Verificado",
+  "categorías": "categorías",
+  "como mínimo.": "como mínimo.",
+  "máx.": "máx.",
+  "mín.": "mín.",
+  "para confirmar su reserva.": "para confirmar su reserva.",
+  "para evitar la anulación automática": "para evitar la anulación automática",
+  "reserva con": "reserva con"
 }

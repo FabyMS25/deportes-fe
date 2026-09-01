@@ -9,7 +9,7 @@
         [newShow]="canActivate.includes('CREAR')"
         [consultShow]="false"
         [exportShow]="canActivate.includes('VER')"
-        (createEmitter)="generarNuevaMensualidad()"
+        (createEmitter)="createNewMonthlyPayment()"
     ></app-data-header>
     <div class="card rounded-2">
         <div class="card-header border border-dashed border-end-0 border-start-0">

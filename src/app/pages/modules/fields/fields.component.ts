@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { ModalFieldsComponent } from '../../modals/field/modal-field/modal-field.component';
 import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
-import { CamposDeportivoService } from 'src/app/core/services/api/camposDeportivos.service';
+import { SportsFieldsService } from 'src/app/core/services/api/sports-fields.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { ModalScheduleComponent } from '../../modals/field/modal-schedule/modal-schedule.component';
 import { ModalTarifaComponent } from '../../modals/field/modal-tarifa/modal-tarifa.component';
@@ -16,7 +16,7 @@ import { EstadoActual, StatusUtils } from 'src/app/core/constants/Estados';
 import { HorarioExcepcion } from 'src/app/core/models/horarioExcepcion.model';
 import { TarifaConcepto } from 'src/app/core/models/tarifaConcepto.model';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
-import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
 import { SuperficiesService } from 'src/app/core/services/api/superficies.service';
 import { CategoriaCampo } from 'src/app/core/constants/Features';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
@@ -56,8 +56,8 @@ export class FieldsComponent {
   constructor(
     private modalService: NgbModal,
     private authService: AuthenticationService,
-    private fieldsService: CamposDeportivoService,
-    private complejoService: ComplejosService,
+    private fieldsService: SportsFieldsService,
+    private complejoService: FacilitiesService,
     private superficieService: SuperficiesService,
   ) {
     this.canActivate = this.authService.hasPermission('Campos Deportivos');
@@ -87,8 +87,8 @@ export class FieldsComponent {
       { name: 'Observaciones', prop: 'observaciones', visible: false },
       { name: 'Fecha Creación', prop: 'fechaCreacion', date: true, visible: false },
     ];
-    this.getComplejos();
-    this.getSuperficies();
+    this.getFacilities();
+    this.getSurfaces();
     this.getFields();
   }
   getSelectedItems(items: CampoDeportivo[]): void {
@@ -482,14 +482,14 @@ private normalizeExportText(
   }
 
   /* API Services */
-  private getComplejos() {
+  private getFacilities() {
     this.complejoService.getAll().subscribe({
       next: (data: any) => {
         this.complejosList = data;
       }
     });
   }
-  private getSuperficies() {
+  private getSurfaces() {
     this.superficieService.getAll().subscribe({
       next: (data: any) => {
         this.superficiesList = data;

@@ -15,7 +15,7 @@ import { GlobalComponent } from 'src/app/global-component';
 
 export class LoginComponent implements OnInit {
   year: number = new Date().getFullYear();
-  APP_NAME = GlobalComponent.NAME_APP;
+  APP_NAME = GlobalComponent.DISPLAY_NAME;
 
   submitted = false;
   loginForm!: UntypedFormGroup;
@@ -41,15 +41,10 @@ export class LoginComponent implements OnInit {
       this.router.navigate(['/']);
     }
     this.loginForm = this.formBuilder.group({
-      username: ["", Validators.required],
+      username: [this.storageService.getRememberedUsername(), Validators.required],
       password: ["", Validators.required],
       rememberMe: [this.storageService.isRememberMe()]
     });
-    if (this.storageService.isRememberMe()) {
-      this.loginForm.patchValue({
-        username: this.storageService.getUser()?.username
-      });
-    }
   }
 
   async onSubmit() {

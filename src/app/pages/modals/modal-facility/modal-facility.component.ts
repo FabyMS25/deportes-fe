@@ -6,7 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import Swal from 'sweetalert2';
 
 import { LeafletComponent } from 'src/app/shared/map/leaflet.component';
-import { ComplejosService } from 'src/app/core/services/api/conplejos.service';
+import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
 import { Districts } from 'src/app/core/constants/Places';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { TipoEstructura } from 'src/app/core/constants/Features';
@@ -42,7 +42,7 @@ export class ModalFacilitiesComponent {
   
   constructor(
     private modalService: NgbModal,
-    private complejosService: ComplejosService,
+    private complejosService: FacilitiesService,
     private formBuilder: UntypedFormBuilder,
   ) { }
 
