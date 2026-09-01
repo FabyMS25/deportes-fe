@@ -51,13 +51,13 @@ export class PassCreateComponent implements OnInit {
         try {
           const valid = await this.validateToken(this.token); 
           if (!valid) {
-            this.router.navigate(['/pages/404-basic']);
+            this.router.navigate(['/public/404-basic']);
           }
         } catch (error) {
-          this.router.navigate(['/pages/404-basic']);
+          this.router.navigate(['/public/404-basic']);
         }
       }else{
-        this.router.navigate(['/pages/404-basic']);
+        this.router.navigate(['/public/404-basic']);
       } 
 
       // Password Validation set

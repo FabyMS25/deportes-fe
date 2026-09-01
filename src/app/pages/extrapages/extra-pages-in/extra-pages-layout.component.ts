@@ -1,4 +1,3 @@
-import { Location } from '@angular/common';
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
@@ -13,16 +12,14 @@ export class ExtraPagesComponent implements OnInit {
   year: number = new Date().getFullYear();
   title: string = '';
   pageType: string = '';
-  @Input() faqs!: boolean ;
-  @Input() TermsConditions!: boolean ; 
-  @Input() PrivacyPolicy!: boolean ; 
+  @Input() TermsConditions!: boolean;
+  @Input() PrivacyPolicy!: boolean;
 
   @Input() buttons: boolean = true; 
 
   constructor(private route: ActivatedRoute) {}
 
   ngOnInit(): void {
-    // Accessing route data
     this.route.data.subscribe(data => {
       this.pageType = data['pageType'];
       this.title = data['title'];
@@ -35,8 +32,4 @@ export class ExtraPagesComponent implements OnInit {
       { label: this.title, active: true }
     ];
   }
-
-  // goBack() {
-  //   this.location.back();
-  // }
 }

@@ -44,13 +44,74 @@ export enum EstadoActual {
   EVENTO_MUNICIPAL = 'EVENTO_MUNICIPAL'   // Reservado para evento prioritario
 }
 
+const RESERVATION_STATUS_LABELS: Record<EstadoReserva, string> = {
+  [EstadoReserva.SOLICITADA]: 'Solicitada',
+  [EstadoReserva.PENDIENTE]: 'Pendiente',
+  [EstadoReserva.PAGADA]: 'Pagada',
+  [EstadoReserva.EN_CURSO]: 'En curso',
+  [EstadoReserva.COMPLETADA]: 'Completada',
+  [EstadoReserva.CANCELADA]: 'Cancelada',
+  [EstadoReserva.EXPIRADA]: 'Expirada',
+  [EstadoReserva.NO_SHOW]: 'No show'
+};
+
+const RESERVATION_STATUS_PLURAL_LABELS: Record<EstadoReserva, string> = {
+  [EstadoReserva.SOLICITADA]: 'Solicitadas',
+  [EstadoReserva.PENDIENTE]: 'Pendientes',
+  [EstadoReserva.PAGADA]: 'Pagadas',
+  [EstadoReserva.EN_CURSO]: 'En curso',
+  [EstadoReserva.COMPLETADA]: 'Completadas',
+  [EstadoReserva.CANCELADA]: 'Canceladas',
+  [EstadoReserva.EXPIRADA]: 'Expiradas',
+  [EstadoReserva.NO_SHOW]: 'No show'
+};
+
+const RESERVATION_STATUS_DESCRIPTIONS: Record<EstadoReserva, string> = {
+  [EstadoReserva.SOLICITADA]: 'Esperando validación administrativa',
+  [EstadoReserva.PENDIENTE]: 'Reserva aprobada, pendiente de pago',
+  [EstadoReserva.PAGADA]: 'Pago confirmado, reserva activa',
+  [EstadoReserva.EN_CURSO]: 'Reserva en curso',
+  [EstadoReserva.COMPLETADA]: 'Reserva finalizada exitosamente',
+  [EstadoReserva.CANCELADA]: 'Reserva cancelada',
+  [EstadoReserva.EXPIRADA]: 'Tiempo de pago expirado',
+  [EstadoReserva.NO_SHOW]: 'El usuario no se presentó'
+};
+
+const VALIDATION_STATUS_DESCRIPTIONS: Record<EstadoValidacion, string> = {
+  [EstadoValidacion.PENDIENTE]: 'Esperando validación administrativa',
+  [EstadoValidacion.APROBADA]: 'Reserva validada y aprobada',
+  [EstadoValidacion.RECHAZADA]: 'Reserva rechazada durante la validación',
+  [EstadoValidacion.VENCIDA]: 'El plazo de validación venció'
+};
+
 
 export const StatusUtils = {
   getReservationStatusOptions(): { value: string; label: string }[] {
-    return Object.keys(EstadoReserva).map(key => ({
-      value: EstadoReserva[key as keyof typeof EstadoReserva],
-      label: this.formatEnumLabel(key)
+    return Object.values(EstadoReserva).map(status => ({
+      value: status,
+      label: RESERVATION_STATUS_LABELS[status]
     }));
+  },
+  getReservationStatusLabel(status: EstadoReserva | string, plural = false): string {
+    const labels = plural ? RESERVATION_STATUS_PLURAL_LABELS : RESERVATION_STATUS_LABELS;
+    return labels[status as EstadoReserva] || this.formatEnumLabel(status);
+  },
+  getReservationStatusDescription(status?: EstadoReserva | string): string {
+    return status
+      ? RESERVATION_STATUS_DESCRIPTIONS[status as EstadoReserva] || 'Estado desconocido'
+      : 'Estado desconocido';
+  },
+  getValidationStatusDescription(status?: EstadoValidacion | string): string {
+    return status
+      ? VALIDATION_STATUS_DESCRIPTIONS[status as EstadoValidacion] || 'Estado de validación desconocido'
+      : 'Estado de validación desconocido';
+  },
+  isCriticalReservationStatus(status?: EstadoReserva | string): boolean {
+    return !!status && [
+      EstadoReserva.CANCELADA,
+      EstadoReserva.EXPIRADA,
+      EstadoReserva.NO_SHOW
+    ].includes(status as EstadoReserva);
   },
   getEstadoValidacionOptions(): { value: string; label: string }[] {
     return Object.keys(EstadoValidacion).map(key => ({
@@ -93,8 +154,6 @@ export const StatusUtils = {
       CANCELADA: 'danger',
       EXPIRADA: 'secondary',
       NO_SHOW: 'danger',
-      BORRADOR: 'secondary',
-
       // EstadoValidacion
       APROBADA: 'success',
       RECHAZADA: 'danger',

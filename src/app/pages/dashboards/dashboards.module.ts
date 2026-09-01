@@ -31,6 +31,7 @@ import { NgPipesModule } from 'ngx-pipes';
 import { DashboardComponent } from './admin/dashboard.component';
 import { ToastsContainer } from './admin/toasts-container.component';
 import { ListComponent } from './cards-row/list.component';
+import { DashboardsRoutingModule } from './dashboards-routing.module';
 
 @NgModule({
   declarations: [
@@ -63,6 +64,7 @@ import { ListComponent } from './cards-row/list.component';
     NgbProgressbarModule,
     NgbCollapseModule,
     NgPipesModule,
+    DashboardsRoutingModule,
     // JobsModule,
   ]
 })

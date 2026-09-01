@@ -4,7 +4,7 @@ import { Spanish } from 'flatpickr/dist/l10n/es.js';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
 import { ReportsService } from 'src/app/core/services/api/reportes.service';
-import { EstadoReserva } from 'src/app/core/constants/Estados';
+import { StatusUtils } from 'src/app/core/constants/Estados';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
 import { EstudianteEscuelaService } from 'src/app/core/services/api/estudianteEscuela.service';
 import { Organizacion } from 'src/app/core/models/organizacion.model';
@@ -39,15 +39,7 @@ export class ListReportComponent implements OnInit {
   
   statusOptions = [
     { value: 'TODO', label: 'Todos los estados' },
-    { value: EstadoReserva.SOLICITADA, label: 'Solicitada' },
-    { value: EstadoReserva.PENDIENTE, label: 'Pendiente' },
-    { value: EstadoReserva.PAGADA, label: 'Pagada' },
-    { value: EstadoReserva.EN_CURSO, label: 'En Curso' },
-    { value: EstadoReserva.COMPLETADA, label: 'Completada' },
-    { value: EstadoReserva.CANCELADA, label: 'Cancelada' },
-    // { value: EstadoReserva.RECHAZADA, label: 'Rechazada' },
-    { value: EstadoReserva.EXPIRADA, label: 'Expirada' },
-    { value: EstadoReserva.NO_SHOW, label: 'No Show' }
+    ...StatusUtils.getReservationStatusOptions()
   ];
   reportTypeOptions = [
     { value: 'mensual', label: 'Reservas Mensuales' },
@@ -246,6 +238,12 @@ export class ListReportComponent implements OnInit {
   getReportTypeLabel(): string {
     const option = this.reportTypeOptions.find(opt => opt.value === this.reportType);
     return option ? option.label : this.reportType;
+  }
+
+  getDateRangeLabel(): string {
+    return this.reportType === 'puntual'
+      ? 'Intervalo de fechas de uso'
+      : 'Intervalo de fechas de reserva';
   }
 
   getCanchaLabel(canchaValue: string): string {

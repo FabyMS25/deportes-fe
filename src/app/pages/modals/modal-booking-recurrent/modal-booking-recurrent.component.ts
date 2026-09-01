@@ -61,6 +61,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
   systemConfigList: ConfiguracionSistema[] = [];
   EstadoReserva = EstadoReserva;
   EstadoPago = EstadoPago;
+  EstadoValidacion = EstadoValidacion;
   CityAcronym = CityAcronym;
 
   userData!: any;
@@ -673,7 +674,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
   canValidateReservation(): boolean {
     const estadoValidacion = this.row?.reservaDto?.estadoValidacion;
     const estadoReserva = this.row?.reservaDto?.estadoReserva;
-    return (estadoValidacion === 'PENDIENTE' && 
+    return (estadoValidacion === EstadoValidacion.PENDIENTE && 
             estadoReserva === EstadoReserva.SOLICITADA && 
             this.canActivate.includes('VALIDAR'));
   }
@@ -961,17 +962,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
   }
 
   getStatusDescription(estado: any): string {
-    const descriptions: { [key: string]: string } = {
-      [EstadoReserva.SOLICITADA]: 'Esperando validación administrativa',
-      [EstadoReserva.PENDIENTE]: 'Reserva aprobada, pendiente de pago',
-      [EstadoReserva.PAGADA]: 'Pago confirmado, reserva activa',
-      [EstadoReserva.EN_CURSO]: 'Reserva en curso',
-      [EstadoReserva.COMPLETADA]: 'Reserva finalizada exitosamente',
-      [EstadoReserva.CANCELADA]: 'Reserva cancelada por el usuario',
-      [EstadoReserva.EXPIRADA]: 'Tiempo de pago expirado',
-      [EstadoReserva.NO_SHOW]: 'Usuario no se presentó'
-    };
-    return descriptions[estado] || 'Estado desconocido';
+    return StatusUtils.getReservationStatusDescription(estado);
   }
   
   // selectedItems: any[] = [];

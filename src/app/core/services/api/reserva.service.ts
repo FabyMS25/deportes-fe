@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Reserva } from '../../models/reserva.model';
 import { BookingType } from '../../constants/Features';
+import { EstadoReserva } from '../../constants/Estados';
 import { PageResponse, apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 import { AuthenticationService } from '../auth.service';
 
@@ -144,7 +145,7 @@ export class ReservaService {
 
   update(data: Reserva): Observable<Reserva> {
     const updatedData: Reserva = { ...data };
-    if (updatedData.estadoReserva === 'EXPIRADA') {
+    if (updatedData.estadoReserva === EstadoReserva.EXPIRADA) {
       updatedData.anuladoPor = null;
     }
     return apiPut<Reserva>(this.http, this.apiUrl, updatedData, 'actualizar reserva');

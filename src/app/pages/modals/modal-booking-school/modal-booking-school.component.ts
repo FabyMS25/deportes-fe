@@ -171,6 +171,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
 
   EstadoReserva = EstadoReserva;
   EstadoPago = EstadoPago;
+  EstadoValidacion = EstadoValidacion;
 
   constructor(
     private modalService: NgbModal,
@@ -1196,17 +1197,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
   }
 
   getStatusDescription(estado: string | undefined): string {
-    const descriptions: Record<string, string> = {
-      [EstadoReserva.SOLICITADA]: 'Esperando validación administrativa',
-      [EstadoReserva.PENDIENTE]: 'Mensualidad aprobada, pendiente de pago',
-      [EstadoReserva.PAGADA]: 'Pago confirmado',
-      [EstadoReserva.EN_CURSO]: 'Mensualidad en curso',
-      [EstadoReserva.COMPLETADA]: 'Mensualidad completada',
-      [EstadoReserva.CANCELADA]: 'Mensualidad cancelada',
-      [EstadoReserva.NO_SHOW]: 'Sin uso registrado'
-    };
-
-    return descriptions[estado || ''] || 'Estado desconocido';
+    return StatusUtils.getReservationStatusDescription(estado);
   }
 
   getValidationBadgeClass(estado: string): string {
@@ -1214,13 +1205,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
   }
 
   getValidationDescription(estado: string): string {
-    const descriptions: { [key: string]: string } = {
-      PENDIENTE: 'Esperando validación administrativa',
-      APROBADA: 'Mensualidad validada y aprobada',
-      RECHAZADA: 'Mensualidad rechazada por validación'
-    };
-
-    return descriptions[estado] || 'Estado de validación desconocido';
+    return StatusUtils.getValidationStatusDescription(estado);
   }
 
   /* =========================

@@ -63,6 +63,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   systemConfigList: ConfiguracionSistema[] = [];
   EstadoReserva = EstadoReserva;
   EstadoPago = EstadoPago;
+  EstadoValidacion = EstadoValidacion;
   CityAcronym = CityAcronym;
 
   userData!: any;
@@ -942,26 +943,11 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   }
 
   getStatusDescription(estado: any): string {
-    const descriptions: { [key: string]: string } = {
-      [EstadoReserva.SOLICITADA]: 'Esperando validación administrativa',
-      [EstadoReserva.PENDIENTE]: 'Reserva aprobada, pendiente de pago',
-      [EstadoReserva.PAGADA]: 'Pago confirmado, reserva activa',
-      [EstadoReserva.EN_CURSO]: 'Reserva en curso',
-      [EstadoReserva.COMPLETADA]: 'Reserva finalizada exitosamente',
-      [EstadoReserva.CANCELADA]: 'Reserva cancelada por el usuario',
-      [EstadoReserva.EXPIRADA]: 'Tiempo de pago expirado',
-      [EstadoReserva.NO_SHOW]: 'Usuario no se presentó'
-    };
-    return descriptions[estado] || 'Estado desconocido';
+    return StatusUtils.getReservationStatusDescription(estado);
   }
 
   getValidationDescription(estado: string): string {
-    const descriptions: { [key: string]: string } = {
-      'PENDIENTE': 'Esperando validación administrativa',
-      'APROBADA': 'Reserva validada y aprobada',
-      'RECHAZADA': 'Reserva rechazada por validación'
-    };
-    return descriptions[estado] || 'Estado de validación desconocido';
+    return StatusUtils.getValidationStatusDescription(estado);
   }
 
   getCityDescription(cityId: string | undefined): string {
@@ -972,7 +958,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
 
   isCriticalStatus(estado?: string): boolean {
     if (!estado) return false;
-    return ['EXPIRADA', 'RECHAZADA', 'ANULADA'].includes(estado);
+    return StatusUtils.isCriticalReservationStatus(estado);
   }
 
   formatTipoCobro(tipo?: string): string {
@@ -1007,7 +993,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
       return reserva.numeroTasa ? 'Sin pagos registrados' : 'Sin tasa registrada';
     }
 
-    const pagados = pagos.filter(p => p.estadoPago === 'PAGADO').length;
+    const pagados = pagos.filter(p => p.estadoPago === EstadoPago.PAGADO).length;
     if (pagados === pagos.length) return 'Pagado';
     if (pagados > 0) return `${pagados}/${pagos.length} pagos confirmados`;
 

@@ -8,6 +8,8 @@ import { EstadoReserva, EstadoValidacion, StatusUtils } from 'src/app/core/const
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { take } from 'rxjs';
+import { Pago } from 'src/app/core/models/pago.model';
+import { PagoService } from 'src/app/core/services/api/pago.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -49,6 +51,7 @@ export class DashboardComponent implements OnInit {
     private router: Router,
     public toastService: ToastService,
     private reservasService: ReservaService,
+    private pagosService: PagoService,
     private authService: AuthenticationService
   ) {}
 
@@ -65,7 +68,7 @@ export class DashboardComponent implements OnInit {
       });
     }
     try {
-      await this.getReservations();
+      await Promise.all([this.getReservations(), this.getPayments()]);
       this.setRevenueValue(this.selectedRevenueRange);
       this.filteredReservations = this.processReservations('Year');
       this._GestionActualCharts();
@@ -128,10 +131,6 @@ export class DashboardComponent implements OnInit {
   processReservations(filter: string): any[] {
     const now = new Date();
 
-    const filteredReservations = this.reservationsList.filter(
-      reservation => this.isRevenueReservation(reservation)
-    );
-
     let startDate: Date;
     let endDate: Date;
 
@@ -173,22 +172,23 @@ export class DashboardComponent implements OnInit {
         endDate.setHours(23, 59, 59, 999);
     }
 
-    const groupedByComplex: Record<string, any> = filteredReservations.reduce((acc, reservation) => {
-      const reservationDate = new Date(reservation.fechaReserva);
+    const groupedByComplex: Record<string, any> = this.paymentsList.reduce((acc, payment) => {
+      const paymentDate = this.getPaymentDate(payment);
 
-      if (reservationDate >= startDate && reservationDate <= endDate) {
-        const complexId = reservation.campoDeportivoDto?.complejoDto?.uuid;
+      if (paymentDate && paymentDate >= startDate && paymentDate <= endDate) {
+        const reservation = payment.reservaDto;
+        const complexId = reservation?.campoDeportivoDto?.complejoDto?.uuid;
 
         if (complexId) {
           if (!acc[complexId]) {
             acc[complexId] = {
-              complexName: reservation.campoDeportivoDto.complejoDto.nombre,
+              complexName: reservation.campoDeportivoDto!.complejoDto!.nombre,
               total: 0,
               totalIncome: 0
             };
           }
 
-          acc[complexId].totalIncome += reservation.montoTotal || 0;
+          acc[complexId].totalIncome += this.getPaymentAmount(payment);
           acc[complexId].total += 1;
         }
       }
@@ -211,6 +211,7 @@ export class DashboardComponent implements OnInit {
    * Reservations Analytics Chart
    */
   reservationsList: Reserva[] = [];
+  paymentsList: Pago[] = [];
   totalReservations: number = 0;
   totalCancellations: number = 0;
   totalIncome: number = 0;
@@ -233,33 +234,39 @@ export class DashboardComponent implements OnInit {
     this.selectedRevenueRange = value;
     const currentDate = new Date();
     let temp: Reserva[] = [];
+    let tempPayments: Pago[] = [];
     let startDate: Date;
     let endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
     switch (value) {
       case 'all':
         temp = this.reservationsList;
+        tempPayments = this.paymentsList;
         break;
 
       case '1M':
         startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
         temp = this.filterReservations(startDate, endDate);
+        tempPayments = this.filterPayments(startDate, endDate);
         break;
 
       case '6M':
         startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 5, 1);
         temp = this.filterReservations(startDate, endDate);
+        tempPayments = this.filterPayments(startDate, endDate);
         break;
 
       case '1A':
         startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 11, 1);
         temp = this.filterReservations(startDate, endDate);
+        tempPayments = this.filterPayments(startDate, endDate);
         break;
 
       default:
         temp = this.reservationsList;
+        tempPayments = this.paymentsList;
     }
-    this.initChart(value, temp);
+    this.initChart(value, temp, tempPayments);
   }
 
   private filterReservations(startDate: Date, endDate: Date): Reserva[] {
@@ -271,7 +278,15 @@ export class DashboardComponent implements OnInit {
       return reservaDate >= startDate && reservaDate <= endDate;
     });
   }
-private processMonthlyData(reservas: Reserva[], labels: string[]) {
+
+  private filterPayments(startDate: Date, endDate: Date): Pago[] {
+    return this.paymentsList.filter(payment => {
+      const paymentDate = this.getPaymentDate(payment);
+      return !!paymentDate && paymentDate >= startDate && paymentDate <= endDate;
+    });
+  }
+
+private processMonthlyData(reservas: Reserva[], labels: string[], payments: Pago[]) {
   const monthlyData = {
     totalReservas: new Array(12).fill(0),
     pagadas: new Array(12).fill(0),
@@ -297,17 +312,14 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
     switch (reserva.estadoReserva) {
       case EstadoReserva.PAGADA:
         monthlyData.pagadas[month]++;
-        monthlyData.ingresos[month] += reserva.montoTotal || 0;
         break;
 
       case EstadoReserva.COMPLETADA:
         monthlyData.completadas[month]++;
-        monthlyData.ingresos[month] += reserva.montoTotal || 0;
         break;
 
       case EstadoReserva.EN_CURSO:
         monthlyData.enCurso[month]++;
-        monthlyData.ingresos[month] += reserva.montoTotal || 0;
         break;
 
       case EstadoReserva.SOLICITADA:
@@ -328,8 +340,14 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
 
       case EstadoReserva.NO_SHOW:
         monthlyData.noShow[month]++;
-        monthlyData.ingresos[month] += reserva.montoTotal || 0;
         break;
+    }
+  });
+
+  payments.forEach(payment => {
+    const paymentDate = this.getPaymentDate(payment);
+    if (paymentDate) {
+      monthlyData.ingresos[paymentDate.getMonth()] += this.getPaymentAmount(payment);
     }
   });
 
@@ -428,7 +446,7 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
     return labels;
   }
 
-  private initChart(value: string, list: any[]) {
+  private initChart(value: string, list: any[], payments: Pago[]) {
     const colors = [
       this.getThemeColor('primary'),
       this.getStatusThemeColor(EstadoReserva.COMPLETADA),
@@ -438,7 +456,7 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
       this.getStatusThemeColor(EstadoReserva.NO_SHOW)
     ];
     const labels = this.getLabels(value);
-    const monthlyData = this.processMonthlyData(list, labels);
+    const monthlyData = this.processMonthlyData(list, labels, payments);
 
     this.analyticsChart = {
       series: [
@@ -584,10 +602,10 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
 
   private _GestionActualCharts(): void {
     const gestionReservas = this.getGestionActualReservations();
+    const gestionPayments = this.getGestionActualPayments();
     const monthLabels = this.getGestionActualLabels();
-    const monthlyData = this.processGestionMonthlyData(gestionReservas, monthLabels);
+    const monthlyData = this.processGestionMonthlyData(gestionReservas, monthLabels, gestionPayments);
     const statusData = this.processGestionStatusData(gestionReservas);
-    const revenueReservations = gestionReservas.filter(reserva => this.isRevenueReservation(reserva));
     const successfulReservations = gestionReservas.filter(reserva => this.isSuccessfulReservation(reserva));
     const processedReservations = gestionReservas.filter(reserva =>
       [
@@ -603,7 +621,7 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
     this.gestionRangeLabel = this.getGestionRangeLabel();
     this.gestionTotalReservations = gestionReservas.length;
     this.gestionSuccessfulReservations = successfulReservations.length;
-    this.gestionTotalIncome = revenueReservations.reduce((sum, reserva) => sum + (reserva.montoTotal || 0), 0);
+    this.gestionTotalIncome = gestionPayments.reduce((sum, payment) => sum + this.getPaymentAmount(payment), 0);
     this.gestionPendingReservations = gestionReservas.filter(reserva =>
       [EstadoReserva.SOLICITADA, EstadoReserva.PENDIENTE].includes(reserva.estadoReserva)
     ).length;
@@ -782,13 +800,38 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
     });
   }
 
+  private getGestionActualPayments(): Pago[] {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), 0, 1);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(now);
+    endDate.setHours(23, 59, 59, 999);
+    return this.filterPayments(startDate, endDate);
+  }
+
+  private getPaymentDate(payment: Pago): Date | null {
+    if (!payment?.fechaPago) return null;
+    const raw = String(payment.fechaPago);
+    const isoDate = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoDate) {
+      return new Date(Number(isoDate[1]), Number(isoDate[2]) - 1, Number(isoDate[3]));
+    }
+    const parsed = new Date(payment.fechaPago);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  private getPaymentAmount(payment: Pago): number {
+    const amount = Number(payment?.montoPagado);
+    return Number.isFinite(amount) ? amount : 0;
+  }
+
   private getGestionActualLabels(): string[] {
     const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
     const currentMonth = new Date().getMonth();
     return monthNames.slice(0, currentMonth + 1);
   }
 
-  private processGestionMonthlyData(reservas: Reserva[], labels: string[]) {
+  private processGestionMonthlyData(reservas: Reserva[], labels: string[], payments: Pago[]) {
     const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
     const totalReservas = new Array(labels.length).fill(0);
     const reservasExitosas = new Array(labels.length).fill(0);
@@ -808,8 +851,14 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
         reservasExitosas[labelIndex]++;
       }
 
-      if (this.isRevenueReservation(reserva)) {
-        ingresos[labelIndex] += reserva.montoTotal || 0;
+    });
+
+    payments.forEach(payment => {
+      const paymentDate = this.getPaymentDate(payment);
+      if (!paymentDate) return;
+      const labelIndex = labels.indexOf(monthNames[paymentDate.getMonth()]);
+      if (labelIndex !== -1) {
+        ingresos[labelIndex] += this.getPaymentAmount(payment);
       }
     });
 
@@ -821,16 +870,6 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
   }
 
   private processGestionStatusData(reservas: Reserva[]) {
-    const statusLabels: Record<string, string> = {
-      [EstadoReserva.SOLICITADA]: "Solicitadas",
-      [EstadoReserva.PENDIENTE]: "Pendientes",
-      [EstadoReserva.PAGADA]: "Pagadas",
-      [EstadoReserva.EN_CURSO]: "En Curso",
-      [EstadoReserva.COMPLETADA]: "Completadas",
-      [EstadoReserva.CANCELADA]: "Canceladas",
-      [EstadoReserva.EXPIRADA]: "Expiradas",
-      [EstadoReserva.NO_SHOW]: "No Show"
-    };
     const statusOrder = [
       EstadoReserva.SOLICITADA,
       EstadoReserva.PENDIENTE,
@@ -855,7 +894,9 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
     const activeStatuses = statusOrder.filter(estado => statusCounts[estado] > 0);
 
     return {
-      labels: activeStatuses.length > 0 ? activeStatuses.map(estado => statusLabels[estado]) : ["Sin datos"],
+      labels: activeStatuses.length > 0
+        ? activeStatuses.map(estado => StatusUtils.getReservationStatusLabel(estado, true))
+        : ["Sin datos"],
       series: activeStatuses.length > 0 ? activeStatuses.map(estado => statusCounts[estado]) : [0],
       colors: activeStatuses.length > 0 ? activeStatuses.map(estado => this.getStatusThemeColor(estado)) : [this.getThemeColor('secondary')]
     };
@@ -1032,6 +1073,19 @@ private processMonthlyData(reservas: Reserva[], labels: string[]) {
   }
 
   /* API Services */
+  private async getPayments() {
+    try {
+      this.paymentsList = await this.pagosService.getAll().toPromise() || [];
+    } catch (error) {
+      Swal.fire({
+        text: 'Error al obtener los pagos para calcular los ingresos',
+        icon: 'error',
+        confirmButtonColor: '#299cdb'
+      });
+      throw error;
+    }
+  }
+
   private async getReservations() {
     try {
       this.loading = true;

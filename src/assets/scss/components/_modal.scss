@@ -6,17 +6,153 @@
     font-weight: $font-weight-semibold;
 }
 
+// GAMQ modal design system. Keep the visual shell centralized so feature
+// modals only own their content and actions.
+.modal-dialog {
+    > .modal-content {
+        overflow: hidden;
+        border: 0;
+        border-radius: .75rem;
+        background: var(--#{$prefix}secondary-bg);
+        box-shadow: 0 1rem 3rem rgba(15, 23, 42, .2);
+    }
+
+    .modal-content > .modal-content {
+        border: 0;
+        border-radius: inherit;
+        box-shadow: none;
+    }
+
+    .modal-header {
+        position: relative;
+        min-height: 4.5rem;
+        padding: .875rem 1rem;
+        gap: .75rem;
+        align-items: center;
+        border-bottom: 1px solid var(--#{$prefix}border-color) !important;
+        background-color: var(--#{$prefix}secondary-bg) !important;
+        background-image: none !important;
+
+        // Reservation headers already render the crest in their richer title.
+        // Every other modal receives the same crest without duplicating markup.
+        &:not(:has(img[alt="Logo"])) {
+            padding-left: 4.5rem !important;
+            background-image: url("../../icons/logos/logo-sm.png") !important;
+            background-repeat: no-repeat !important;
+            background-position: 1rem center !important;
+            background-size: 2.75rem 2.75rem !important;
+        }
+
+        .modal-title {
+            margin: 0;
+            color: var(--#{$prefix}body-color);
+            line-height: 1.3;
+        }
+
+        .btn-close {
+            flex: 0 0 auto;
+            margin: 0 0 0 auto !important;
+            padding: .625rem;
+        }
+    }
+
+    .modal-body {
+        padding: 1rem;
+    }
+
+    .modal-footer {
+        min-height: 4rem;
+        padding: .75rem 1rem !important;
+        gap: .5rem;
+        border-top: 1px solid var(--#{$prefix}border-color) !important;
+        background-color: var(--#{$prefix}secondary-bg) !important;
+    }
+}
+
+// Reservation detail headers contain more controls than ordinary modals.
+// Keep them on a single, aligned row and let only the title consume flexible
+// space. This prevents the rate/actions from dropping under the title.
+.gamq-reservation-header-layout {
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    min-width: 0;
+
+    .gamq-reservation-heading {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .gamq-reservation-heading-copy {
+        min-width: 0;
+    }
+
+    .gamq-reservation-title-row {
+        flex-wrap: nowrap !important;
+        min-width: 0;
+
+        .modal-title {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .badge {
+            flex: 0 0 auto;
+        }
+    }
+
+    .gamq-reservation-actions {
+        flex: 0 0 auto;
+        flex-wrap: nowrap !important;
+        white-space: nowrap;
+
+        .btn-group,
+        .btn-close {
+            flex: 0 0 auto;
+        }
+    }
+}
+
+@media (max-width: 767.98px) {
+    .gamq-reservation-header-layout {
+        flex-wrap: wrap !important;
+        align-items: flex-start !important;
+
+        .gamq-reservation-heading,
+        .gamq-reservation-actions {
+            width: 100%;
+        }
+
+        .gamq-reservation-actions {
+            justify-content: flex-end !important;
+        }
+    }
+}
+
+@media (max-width: 575.98px) {
+    .modal-dialog .modal-header {
+        align-items: flex-start;
+
+        &:not(:has(img[alt="Logo"])) {
+            padding-left: 4rem !important;
+            background-position: .75rem .75rem !important;
+            background-size: 2.5rem 2.5rem !important;
+        }
+
+        > .d-flex.w-100 {
+            gap: .5rem !important;
+        }
+    }
+}
+
 .modal-dialog:not(.modal-dialog-scrollable) {
     .modal-header {
-        padding-bottom: 0;
-    
-        .btn-close {
-            margin-top: -$modal-header-padding;
-        }
+        padding-bottom: .875rem;
     }
     
     .modal-footer {
-        padding-top: 0;
+        padding-top: .75rem;
     }
 }
 

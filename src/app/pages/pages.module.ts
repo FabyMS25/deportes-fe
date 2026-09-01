@@ -48,6 +48,7 @@ import { ScheduleSelectionComponent } from './modals/booking/schedule-selection/
 import { ReservationFormComponent } from './modals/booking/reservation-form/reservation-form.component';
 ;
 import { TicketComponent } from './modules/reports/ticket/ticket.component';
+import { PagesRoutingModule } from './pages-routing.module';
 // import { BookingPeriodoModalComponent } from './booking-schools/modal/modal.component';
 
 @NgModule({
@@ -107,6 +108,7 @@ import { TicketComponent } from './modules/reports/ticket/ticket.component';
     ScheduleSelectionComponent,
     ReservationFormComponent,
     TicketComponent,
+    PagesRoutingModule,
     
     // BookingPeriodoModalComponent,
   ],

@@ -249,7 +249,7 @@ export class TicketComponent implements OnChanges {
       ticket_url: ticketUrl,
       ticket_download_text: 'Descargar Ticket PDF',
       logo_url: `${environment.assetsUrl}/assets/icons/logos/logo-sm.png`,
-      regulations_url: `${environment.assetsUrl}/pages/terms-condition`,
+      regulations_url: `${environment.assetsUrl}/public/terms-condition`,
     };
   }
 

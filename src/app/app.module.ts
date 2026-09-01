@@ -1,17 +1,13 @@
 import { CUSTOM_ELEMENTS_SCHEMA, LOCALE_ID, NgModule, isDevMode } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { ServiceWorkerModule } from '@angular/service-worker';
-// search module
-import { NgPipesModule } from 'ngx-pipes';
-
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 
 import { LayoutsModule} from "./layouts/layouts.module";
-import { PagesModule } from "./pages/pages.module";
 
 // Auth
-import { HttpClientModule, HttpClient, HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpClient, HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { environment } from '../environments/environment';
 import { ErrorInterceptor } from './core/helpers/error.interceptor';
@@ -27,7 +23,6 @@ import { AuthInterceptor } from './core/helpers/auth.interceptor';
 
 import localeEs from '@angular/common/locales/es';
 import { registerLocaleData } from '@angular/common';
-import { DashboardsModule } from './pages/dashboards/dashboards.module';
 // import { NotificationCenterModule } from '@novu/notification-center-angular';
 
 registerLocaleData(localeEs, 'es');
@@ -49,12 +44,8 @@ export function createTranslateLoader(http: HttpClient): any {
     }),
     BrowserAnimationsModule,
     BrowserModule,
-    HttpClientModule,
     AppRoutingModule,
-    NgPipesModule,
     LayoutsModule,
-    PagesModule,
-    DashboardsModule,
     StoreModule.forRoot(rootReducer),
     StoreDevtoolsModule.instrument({
       maxAge: 25, 

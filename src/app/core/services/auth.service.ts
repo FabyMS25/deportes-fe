@@ -11,7 +11,7 @@ import { ConfiguracionSistema } from '../models/configuracionSistema.model';
 import { AplicaAConfiguracion, CategoriaConfiguracion } from '../constants/Configurations';
 import { RuatRequestsService } from './ruatRequest.service';
 import { MenuItem } from '../models/menu.model';
-import { MENU_BASE } from '../data/menu';
+import { MENU_BASE } from '../constants/menu';
 import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';
 

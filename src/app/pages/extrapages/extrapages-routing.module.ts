@@ -1,11 +1,10 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 
-// Component pages
-import { SitemapComponent } from "./sitemap/sitemap.component";
-import { SearchResultsComponent } from "./search-results/search-results.component";
 import { FaqsComponent } from 'src/app/shared/extraspages/faqs/faqs.component';
 import { ExtraPagesComponent } from './extra-pages-in/extra-pages-layout.component';
+import { SearchResultsComponent } from './search-results/search-results.component';
+import { SitemapComponent } from './sitemap/sitemap.component';
 
 const routes: Routes = [
   {
@@ -29,7 +28,7 @@ const routes: Routes = [
   {
     path: 'search-results',
     component: SearchResultsComponent
-  },
+  }
 ];
 
 @NgModule({

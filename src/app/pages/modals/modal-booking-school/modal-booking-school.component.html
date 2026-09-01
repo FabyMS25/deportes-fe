@@ -119,16 +119,16 @@
   </div>
 
   <div class="modal-header border-bottom py-2 px-3">
-    <div class="d-flex w-100 align-items-start justify-content-between gap-3 flex-wrap">
-      <div class="d-flex align-items-start gap-2">
+    <div class="d-flex w-100 align-items-start justify-content-between gap-3 gamq-reservation-header-layout">
+      <div class="d-flex align-items-start gap-2 gamq-reservation-heading">
         <div class="flex-shrink-0 avatar-sm">
           <span class="avatar-title rounded-circle bg-success-subtle text-success">
             <img src="assets/icons/logos/logo-sm.png" class="img-fluid" alt="Logo">
           </span>
         </div>
 
-        <div>
-          <div class="d-flex align-items-center flex-wrap gap-2">
+        <div class="gamq-reservation-heading-copy">
+          <div class="d-flex align-items-center gap-2 gamq-reservation-title-row">
             <h5 class="modal-title mb-0">
               {{ accion === '' ? 'Registrar Mensualidad' : 'Detalle de Mensualidad' }}
             </h5>
@@ -150,7 +150,7 @@
         </div>
       </div>
 
-      <div class="d-flex align-items-start gap-2 flex-wrap justify-content-end" *ngIf="accion === 'show'">
+      <div class="d-flex align-items-center gap-2 justify-content-end gamq-reservation-actions" *ngIf="accion === 'show'">
         <div class="text-end" *ngIf="row.numeroTasa">
           <small class="text-muted d-block text-uppercase">Tasa</small>
           <div class="fw-semibold">{{ row.numeroTasa || 'N/A' }}</div>
@@ -451,7 +451,7 @@
                       <td>{{ pago.formaPago || 'N/A' }}</td>
                       <td>
                         <span class="badge"
-                              [ngClass]="pago.estadoPago === 'PAGADO'
+                              [ngClass]="pago.estadoPago === EstadoPago.PAGADO
                                 ? 'bg-success-subtle text-success'
                                 : 'bg-warning-subtle text-warning'">
                           {{ pago.estadoPago }}
