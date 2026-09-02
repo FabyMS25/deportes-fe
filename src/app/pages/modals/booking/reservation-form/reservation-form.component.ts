@@ -895,7 +895,8 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }  
     const scheduleCalculation = this.getScheduleCalculation();
     if (scheduleCalculation) {
-      this.calculatedPrice = scheduleCalculation.total;
+      const tarifaDetalles = this.buildReservaTarifaDetalles(false);
+      this.calculatedPrice = this.calculateTotalFromTarifaDetalles(tarifaDetalles);
       this.priceDetails = scheduleCalculation.details;
       this.reservationForm.patchValue({
         montoTotal: this.calculatedPrice,
@@ -1621,6 +1622,8 @@ private prepareReservationData(): Reserva {
     estadoReserva = EstadoReserva.SOLICITADA;
   }
   
+  const tarifaDetalles = this.buildReservaTarifaDetalles(isFreeReservation);
+  const montoTotal = isFreeReservation ? 0 : this.calculateTotalFromTarifaDetalles(tarifaDetalles);
   const reserva: Reserva = {
     esReservaGratuita: isFreeReservation,
     motivoGratuidad: isFreeReservation ? this.freeReservationReason : undefined,
@@ -1635,12 +1638,12 @@ private prepareReservationData(): Reserva {
     numeroReserva: formValue.numeroReserva,
     estadoValidacion: estadoValidacion,
     estadoReserva: estadoReserva,
-    montoTotal: isFreeReservation ? 0 : this.calculatedPrice,
+    montoTotal,
     clasificadorRuatId: this.selectedTariff.clasificadorRuatDto?.uuid || '',
     contribuyenteDto: formValue.contribuyenteDto,
     campoDeportivoDto: this.dataField,
     tarifaDto: this.selectedTariff,
-    tarifaDetallesDtoList: this.buildReservaTarifaDetalles(isFreeReservation),
+    tarifaDetallesDtoList: tarifaDetalles,
   };    
   
   if (formValue.esParaOrganizacion && formValue.organizacionDto) {
@@ -1751,6 +1754,12 @@ private prepareReservationData(): Reserva {
     });
 
     return detalles;
+  }
+
+  private calculateTotalFromTarifaDetalles(detalles: ReservaTarifaDetalle[]): number {
+    return Number(detalles
+      .reduce((total, detalle) => total + Number(detalle.subtotal || 0), 0)
+      .toFixed(2));
   }
 
   private getBaseQuantityValue(formValue: any): number {
