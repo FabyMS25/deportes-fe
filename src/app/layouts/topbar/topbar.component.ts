@@ -332,6 +332,16 @@ export class TopbarComponent implements OnInit, OnDestroy {
     }
   }
 
+  getPriorityLabel(priority: PrioridadNotificacion): string {
+    switch (priority) {
+      case 'SUCCESS': return 'Confirmada';
+      case 'WARNING': return 'Atención';
+      case 'ERROR': return 'Error';
+      case 'INFO':
+      default: return 'Información';
+    }
+  }
+
   getReadStateLabel(notification: Notificacion): string {
     return notification.estadoLectura === 'LEIDA' ? 'Leída' : 'No leída';
   }

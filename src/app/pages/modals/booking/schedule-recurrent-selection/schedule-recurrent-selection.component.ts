@@ -1061,11 +1061,33 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
       return null;
     }
 
-    const startDate = this.parseDateFromInput(this.fechaInicio);
+    const startDate = this.getFirstSessionStart();
+    if (!startDate) {
+      return null;
+    }
     const minDate = new Date(Date.now() + anticipationHours * 60 * 60 * 1000);
     return startDate < minDate
       ? `La reserva recurrente debe realizarse con al menos ${this.formatAnticipation(anticipationHours)} de anticipación`
       : null;
+  }
+
+  private getFirstSessionStart(): Date | null {
+    if (!this.fechaInicio || !this.fechaFin) return null;
+    const current = this.parseDateFromInput(this.fechaInicio);
+    const end = this.parseDateFromInput(this.fechaFin);
+    while (current <= end) {
+      const slots = this.getSlotsForDate(current)
+        .filter(slot => slot.horaInicio)
+        .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+      if (slots.length) {
+        const [hours, minutes] = slots[0].horaInicio.split(':').map(Number);
+        const result = new Date(current);
+        result.setHours(hours, minutes, 0, 0);
+        return result;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+    return null;
   }
 
   private formatAnticipation(hours: number): string {
@@ -1087,7 +1109,7 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     }
 
     const maxDate = new Date(startDate);
-    maxDate.setDate(maxDate.getDate() + maxDays);
+    maxDate.setDate(maxDate.getDate() + Math.max(0, Math.floor(maxDays) - 1));
     return maxDate;
   }
 

@@ -173,13 +173,7 @@ export class AuthenticationService {
           errorMessage: this.systemStatus.message
         };
       }
-      const configsMap: { [key: string]: ConfiguracionSistema } = {};
-      for (const config of configResponse) {
-        if (!config.activo) continue;
-        if (config.categoria === CategoriaConfiguracion.RUAT) continue;
-        if (!isContribuyente && config.aplicaA === AplicaAConfiguracion.CONTRIBUYENTE) continue;
-        configsMap[config.clave] = config;
-      }
+      const configsMap = this.resolveAudienceConfigurations(configResponse, isContribuyente);
       this.systemConfigList = configsMap;
       this.systemStatus.backend = true;
       this.systemStatus.configurations = true;
@@ -213,6 +207,32 @@ export class AuthenticationService {
         errorMessage: this.systemStatus.message
       };
     }
+  }
+
+  /**
+   * Resolves only audience-level settings during login. Entity scopes need the
+   * selected reservation context and must never overwrite a global setting here.
+   */
+  private resolveAudienceConfigurations(
+    configs: ConfiguracionSistema[],
+    isContribuyente: boolean
+  ): { [key: string]: ConfiguracionSistema } {
+    const resolved: { [key: string]: ConfiguracionSistema } = {};
+    const priority = (config: ConfiguracionSistema): number => {
+      if (isContribuyente && config.aplicaA === AplicaAConfiguracion.CONTRIBUYENTE) return 2;
+      if (!config.aplicaA || config.aplicaA === AplicaAConfiguracion.GLOBAL) return 1;
+      return 0;
+    };
+
+    configs
+      .filter(config => config.activo === true && config.categoria !== CategoriaConfiguracion.RUAT)
+      .filter(config => priority(config) > 0)
+      .sort((a, b) => priority(a) - priority(b))
+      .forEach(config => {
+        resolved[config.clave] = config;
+      });
+
+    return resolved;
   }
 
   private async checkRuatAvailability(): Promise<{ success: boolean; error?: any }> {

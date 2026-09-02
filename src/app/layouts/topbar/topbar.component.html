@@ -171,10 +171,10 @@
                                                                         <h6 class="mt-0 mb-0 fs-13 fw-semibold text-truncate">{{ item.titulo }}</h6>
                                                                         <span class="badge text-uppercase"
                                                                             [ngClass]="'bg-' + getPriorityClass(item.prioridad) + '-subtle text-' + getPriorityClass(item.prioridad)">
-                                                                            {{ item.prioridad }}
+                                                                            {{ getPriorityLabel(item.prioridad) }}
                                                                         </span>
                                                                     </div>
-                                                                    <p class="mb-1 fs-13 text-muted notification-message">{{ item.mensaje }}</p>
+                                                                    <p class="mb-1 fs-13 text-muted notification-message" [title]="item.mensaje">{{ item.mensaje }}</p>
                                                                     <div class="d-flex align-items-center gap-2 fs-11 fw-medium text-uppercase text-muted">
                                                                         <span><i class="mdi mdi-clock-outline"></i> {{ item.fechaCreacion | date:'short' }}</span>
                                                                         <span>{{ getReadStateLabel(item) }}</span>
@@ -243,7 +243,7 @@
                                                                     <button type="button" class="notification-content flex-grow-1 text-start p-0 border-0 bg-transparent"
                                                                         (click)="onNotificationClick(item, $event)">
                                                                         <h6 class="mt-0 mb-1 fs-13 fw-semibold">{{ item.titulo }}</h6>
-                                                                        <p class="mb-1 fs-13 text-muted notification-message">{{ item.mensaje }}</p>
+                                                                        <p class="mb-1 fs-13 text-muted notification-message" [title]="item.mensaje">{{ item.mensaje }}</p>
                                                                         <p class="mb-0 fs-11 fw-medium text-uppercase text-muted">
                                                                             <span><i class="mdi mdi-clock-outline"></i> {{ item.fechaCreacion | date:'short' }}</span>
                                                                         </p>

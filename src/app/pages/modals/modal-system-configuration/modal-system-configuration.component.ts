@@ -33,9 +33,16 @@ export class SystemConfigurationModalComponent implements OnInit {
   submitted = false;
   showLoading = false;
   hasEditableFields = true;
+  permissionMessage = '';
 
   categorias = Object.values(CategoriaConfiguracion);
-  ambitosAplicacion = Object.values(AplicaAConfiguracion);
+  get ambitosAplicacion(): AplicaAConfiguracion[] {
+    const categoria = this.contentForm?.get('categoria')?.value;
+    if (categoria === CategoriaConfiguracion.NOTIFICACIONES) {
+      return [AplicaAConfiguracion.GLOBAL, AplicaAConfiguracion.CONTRIBUYENTE];
+    }
+    return Object.values(AplicaAConfiguracion);
+  }
   unidadesMedida = Object.values(UnidadMedida);
   tiposValor = Object.values(TipoValorConfiguracion);
   clavesDisponibles = Object.values(ClaveConfiguracion);
@@ -45,7 +52,6 @@ export class SystemConfigurationModalComponent implements OnInit {
   private readonly ambitosConReferencia: AplicaAConfiguracion[] = [
     AplicaAConfiguracion.CAMPO_DEPORTIVO,
     AplicaAConfiguracion.COMPLEJO,
-    AplicaAConfiguracion.TARIFA,
     AplicaAConfiguracion.ORGANIZACION
   ];
 
@@ -84,6 +90,11 @@ export class SystemConfigurationModalComponent implements OnInit {
       (this.row?.modificablePorUsuario === true && this.permissions.includes('ACTUALIZAR'));
     const canUpdateControl = this.permissions.includes('ACTUALIZAR_CONTROL');
     this.hasEditableFields = canUpdateValue || canUpdateControl;
+    if (!this.hasEditableFields) {
+      this.permissionMessage = this.row?.modificablePorUsuario === true
+        ? 'No tiene el permiso ACTUALIZAR para modificar esta configuración.'
+        : 'Esta configuración está protegida. Se requiere el permiso ACTUALIZAR_PROTEGIDA.';
+    }
     this.contentForm.get('uuid')?.disable({ emitEvent: false });
 
     const valueControls = [
@@ -507,6 +518,11 @@ export class SystemConfigurationModalComponent implements OnInit {
    */
   saveData() {
     this.submitted = true;
+
+    if (this.accion === 'edit' && !this.hasEditableFields) {
+      this.notify(this.permissionMessage || 'No tiene permiso para actualizar esta configuración', 'warning');
+      return;
+    }
     
     if (this.contentForm.valid) {
       this.showLoading = true;
