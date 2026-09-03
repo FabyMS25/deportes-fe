@@ -265,13 +265,15 @@ export class ModalTaxpayerComponent implements OnInit {
 
     this.estudianteForm = this.formBuilder.group({
       uuid: [null],
+      estudianteUuid: [null],
       nombreCompleto: ['', [Validators.required, Validators.maxLength(250)]],
-      fechaNacimiento: ['', [Validators.required]],
+      fechaNacimiento: [''],
       genero: [''],
       numeroDocumento: [''],
       telefono: [''],
       email: ['', [Validators.email]],
-      matricula: ['', [Validators.required, Validators.maxLength(50)]],
+      matricula: [{ value: '', disabled: true }],
+      organizacionUuid: ['', [Validators.required]],
       fechaInscripcion: [new Date().toISOString().split('T')[0], [Validators.required]],
       activo: [true],
     });
@@ -443,9 +445,8 @@ export class ModalTaxpayerComponent implements OnInit {
 
   private updatePuedeReservarGratis(): void {
     const esElite = this.editForm.get('esDeportistaElite')?.value;
-    const tieneEstudiantes = this.estudiantesTemporales.length > 0;
     const tieneOrgGratis = this.organizacionesTemporales.some((o) => o.permiteReservarGratis);
-    this.editForm.patchValue({ puedeReservarGratis: esElite || tieneEstudiantes || tieneOrgGratis });
+    this.editForm.patchValue({ puedeReservarGratis: esElite || tieneOrgGratis });
   }
 
   // ─── Estudiantes CRUD ─────────────────────────────────────────────────────
@@ -458,17 +459,59 @@ export class ModalTaxpayerComponent implements OnInit {
     }
   }
 
-  addOrUpdateEstudiante(): void {
+  async addOrUpdateEstudiante(): Promise<void> {
     if (this.estudianteForm.invalid) {
       this.markAllFieldsAsTouched(this.estudianteForm);
       this.notify('Complete todos los campos requeridos del estudiante', 'warning');
       return;
     }
     const data = this.estudianteForm.getRawValue();
-    if (this.editingEstudianteIndex >= 0) {
-      this.estudiantesTemporales[this.editingEstudianteIndex] = data;
+    const escuela = this.organizacionesTemporales.find(
+      org => org.uuid === data.organizacionUuid
+    );
+    data.organizacionDto = escuela || { uuid: data.organizacionUuid };
+
+    const contribuyenteUuid = this.row?.uuid || this.editForm.get('uuid')?.value;
+    if (contribuyenteUuid) {
+      data.contribuyenteDto = { uuid: contribuyenteUuid } as Contribuyente;
+    }
+
+    // Existing contributors + persisted schools can save the enrollment now.
+    // A new contributor/school must remain staged until the parent save creates
+    // those foreign-key records.
+    const escuelaPersistida = !!this.row?.organizacionesRepresentadas?.some(
+      org => org.uuid === data.organizacionUuid
+    );
+    const guardarAhora = !!contribuyenteUuid && escuelaPersistida;
+
+    if (guardarAhora) {
+      try {
+        const guardado = await new Promise<EstudianteEscuela>((resolve, reject) => {
+          const request = data.uuid
+            ? this.estudianteEscuelaService.update(data as EstudianteEscuela)
+            : this.estudianteEscuelaService.save(data as EstudianteEscuela);
+          request.subscribe({ next: resolve, error: reject });
+        });
+        if (this.editingEstudianteIndex >= 0) {
+          this.estudiantesTemporales[this.editingEstudianteIndex] = guardado;
+        } else {
+          this.estudiantesTemporales.push(guardado);
+        }
+        this.notify(
+          data.uuid ? 'Inscripción actualizada correctamente' : 'Estudiante e inscripción registrados correctamente',
+          'success'
+        );
+      } catch (error: any) {
+        this.notify(error?.message || 'No se pudo guardar la inscripción del estudiante', 'error');
+        return;
+      }
     } else {
-      this.estudiantesTemporales.push(data);
+      if (this.editingEstudianteIndex >= 0) {
+        this.estudiantesTemporales[this.editingEstudianteIndex] = data;
+      } else {
+        this.estudiantesTemporales.push(data);
+      }
+      this.notify('Inscripción agregada a la lista. Guarde el contribuyente para registrarla.', 'info');
     }
     this.updatePuedeReservarGratis();
     this.toggleEstudianteForm();
@@ -478,6 +521,7 @@ export class ModalTaxpayerComponent implements OnInit {
     const est = this.estudiantesTemporales[index];
     this.estudianteForm.patchValue({
       ...est,
+      organizacionUuid: est.organizacionDto?.uuid || '',
       fechaNacimiento: this.toDateInputValue(est.fechaNacimiento),
       fechaInscripcion: this.toDateInputValue(est.fechaInscripcion),
     });
@@ -487,19 +531,19 @@ export class ModalTaxpayerComponent implements OnInit {
 
   removeEstudiante(index: number): void {
     Swal.fire({
-      title: '¿Eliminar estudiante?',
-      text: 'Esta acción no se puede deshacer',
+      title: '¿Quitar responsabilidad?',
+      text: 'El estudiante y su inscripción se conservarán. Solo se quitará la relación con este contribuyente.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#f06548',
       cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Sí, eliminar',
+      confirmButtonText: 'Sí, quitar relación',
       cancelButtonText: 'Cancelar',
     }).then((result) => {
       if (result.isConfirmed) {
         this.estudiantesTemporales.splice(index, 1);
         this.updatePuedeReservarGratis();
-        this.notify('Estudiante eliminado', 'info');
+        this.notify('Relación removida; no se eliminó al estudiante', 'info');
       }
     });
   }
@@ -526,6 +570,9 @@ export class ModalTaxpayerComponent implements OnInit {
       return;
     }
     const data = this.organizacionForm.getRawValue();
+    if (!data.uuid) {
+      data.uuid = this.generateUuid();
+    }
     if (this.editingOrganizacionIndex >= 0) {
       this.organizacionesTemporales[this.editingOrganizacionIndex] = data;
     } else {
@@ -567,6 +614,17 @@ export class ModalTaxpayerComponent implements OnInit {
   get estudiante() { return this.estudianteForm.controls; }
   get sanction() { return this.sanctionForm.controls; }
   get searchForm() { return this.searchRuatForm.controls; }
+
+  private generateUuid(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+      const random = Math.floor(Math.random() * 16);
+      const value = char === 'x' ? random : (random & 0x3) | 0x8;
+      return value.toString(16);
+    });
+  }
 
   // ─── RUAT Field Locking ───────────────────────────────────────────────────
 
@@ -643,10 +701,14 @@ export class ModalTaxpayerComponent implements OnInit {
       ? ({ uuid: contribuyenteUuid } as Contribuyente)
       : undefined;
 
-    const estudiantesPreparados = this.estudiantesTemporales.map((est) => ({
-      ...est,
-      ...(contribuyenteRef ? { contribuyenteDto: contribuyenteRef } : {}),
-    }));
+    const estudiantesPreparados = this.estudiantesTemporales.map((est) => {
+      const organizacionUuid = est.organizacionUuid || est.organizacionDto?.uuid;
+      return {
+        ...est,
+        organizacionDto: { uuid: organizacionUuid },
+        ...(contribuyenteRef ? { contribuyenteDto: contribuyenteRef } : {}),
+      };
+    });
     const organizacionesPreparadas = this.organizacionesTemporales.map((org) => ({
       ...org,
       ...(contribuyenteRef ? { representanteDto: contribuyenteRef } : {}),
@@ -654,7 +716,6 @@ export class ModalTaxpayerComponent implements OnInit {
 
     const puedeReservarGratis =
       formData.esDeportistaElite ||
-      estudiantesPreparados.length > 0 ||
       organizacionesPreparadas.some((o: any) => o.permiteReservasGratuitas);
 
     const datos: Contribuyente = {

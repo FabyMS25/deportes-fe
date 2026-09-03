@@ -1,0 +1,7 @@
+:host {
+  display: block;
+}
+
+ng-select.is-invalid ::ng-deep .ng-select-container {
+  border-color: var(--vz-form-invalid-border-color);
+}

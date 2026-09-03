@@ -1,0 +1,122 @@
+<div class="modal-header bg-info-subtle p-3">
+  <h5 class="modal-title">
+    <i class="ri-parent-line me-2"></i>
+    {{ accion === 'show' ? 'Detalle del estudiante' : accion === 'edit' ? 'Editar estudiante' : 'Inscribir estudiante' }}
+  </h5>
+  <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="showLoading" (click)="close()"></button>
+</div>
+
+<form [formGroup]="form" (ngSubmit)="save()">
+  <div class="modal-body">
+    <div *ngIf="showLoading" class="text-center py-3">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="text-muted mt-2 mb-0">Guardando estudiante...</p>
+    </div>
+
+    <div class="alert alert-info py-2" *ngIf="accion === ''">
+      <i class="ri-information-line me-1"></i>
+      Para inscribir una persona que ya estuvo en otra escuela, selecciónela abajo y evite duplicar su registro.
+    </div>
+    <div class="alert alert-warning py-2" *ngIf="accion === 'edit'">
+      <i class="ri-information-line me-1"></i>
+      Los datos personales pertenecen al estudiante y sus cambios se verán en todas sus escuelas. La escuela de esta inscripción no se puede cambiar.
+    </div>
+
+    <div class="row g-3" [class.opacity-50]="showLoading">
+      <div class="col-12" *ngIf="accion === ''">
+        <label class="form-label">Estudiante existente <span class="text-muted">(opcional)</span></label>
+        <ng-select formControlName="existingStudentUuid"
+          [items]="studentSearchResults"
+          bindValue="estudianteUuid"
+          [searchable]="true"
+          [clearable]="true"
+          [typeahead]="studentTypeahead"
+          [minTermLength]="3"
+          typeToSearchText="Escriba al menos 3 caracteres"
+          notFoundText="No se encontraron estudiantes"
+          placeholder="Buscar estudiante existente..."
+          (change)="onExistingStudentChange($event?.estudianteUuid || null)">
+          <ng-template ng-label-tmp let-item="item">{{ existingStudentLabel(item) }}</ng-template>
+          <ng-template ng-option-tmp let-item="item">{{ existingStudentLabel(item) }}</ng-template>
+        </ng-select>
+      </div>
+
+      <div class="col-md-8">
+        <label class="form-label">Nombre completo <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" formControlName="nombreCompleto" placeholder="Nombre completo"
+          [ngClass]="{'is-invalid': submitted && form.controls.nombreCompleto.errors}">
+        <div class="invalid-feedback">El nombre es requerido.</div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Fecha de nacimiento</label>
+        <input type="date" class="form-control" formControlName="fechaNacimiento">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Género</label>
+        <select class="form-select" formControlName="genero">
+          <option value="">Sin especificar</option>
+          <option value="F">Femenino</option>
+          <option value="M">Masculino</option>
+          <option value="O">Otro</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Documento</label>
+        <input type="text" class="form-control" formControlName="numeroDocumento" placeholder="Opcional">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Teléfono</label>
+        <input type="text" class="form-control" formControlName="telefono" placeholder="Opcional">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" formControlName="email" placeholder="Opcional"
+          [ngClass]="{'is-invalid': submitted && form.controls.email.errors}">
+        <div class="invalid-feedback">Ingrese un email válido.</div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Fecha de inscripción <span class="text-danger">*</span></label>
+        <input type="date" class="form-control" formControlName="fechaInscripcion"
+          [ngClass]="{'is-invalid': submitted && form.controls.fechaInscripcion.errors}">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Escuela <span class="text-danger">*</span></label>
+        <ng-select formControlName="organizacionUuid" [items]="escuelas" bindLabel="nombre" bindValue="uuid"
+          placeholder="Seleccione una escuela" [clearable]="false"
+          [ngClass]="{'is-invalid': submitted && form.controls.organizacionUuid.errors}">
+        </ng-select>
+        <div class="text-danger small mt-1" *ngIf="submitted && form.controls.organizacionUuid.errors">
+          La escuela es requerida.
+        </div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Tutor / responsable <span class="text-muted">(opcional)</span></label>
+        <ng-select formControlName="contribuyenteUuid" [items]="tutores" bindValue="uuid"
+          [searchable]="true" [clearable]="true" placeholder="Sin tutor asignado">
+          <ng-template ng-label-tmp let-item="item">{{ tutorLabel(item) }}</ng-template>
+          <ng-template ng-option-tmp let-item="item">{{ tutorLabel(item) }}</ng-template>
+        </ng-select>
+        <small class="text-muted">El tutor gestiona esta inscripción; no es propietario del estudiante.</small>
+      </div>
+
+      <div class="col-12" *ngIf="row?.matricula">
+        <div class="border rounded p-2 bg-light">
+          <span class="text-muted me-2">Matrícula:</span><strong>{{ row?.matricula }}</strong>
+          <span class="badge ms-3" [ngClass]="row?.activo ? 'bg-success' : 'bg-secondary'">
+            {{ row?.activo ? 'Activa' : 'Inactiva' }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-light" [disabled]="showLoading" (click)="close()">
+      {{ accion === 'show' ? 'Cerrar' : 'Cancelar' }}
+    </button>
+    <button type="submit" class="btn btn-primary" *ngIf="accion !== 'show'" [disabled]="showLoading">
+      <i class="ri-save-line me-1"></i>{{ accion === 'edit' ? 'Guardar cambios' : 'Inscribir estudiante' }}
+    </button>
+  </div>
+</form>

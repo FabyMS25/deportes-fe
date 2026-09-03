@@ -273,7 +273,7 @@ export class ListReportComponent implements OnInit {
     if (this.estudiante !== 'TODO') {
       const selectedEstudiante = this.estudiantesList.find(e => e.nombreCompleto === this.estudiante);
       if (selectedEstudiante) {
-        this.matricula = selectedEstudiante.matricula;
+        this.matricula = selectedEstudiante.matricula ?? '';
       }
     } else {
       this.matricula = '';

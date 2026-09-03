@@ -16,6 +16,7 @@ import { OrganizationsComponent } from './modules/organizations/organizations.co
 import { SurfacesComponent } from './modules/surfaces/surfaces.component';
 import { SystemConfigurationsComponent } from './modules/system-configurations/system-configurations.component';
 import { TaxpayersComponent } from './modules/taxpayers/taxpayers.component';
+import { StudentsComponent } from './modules/students/students.component';
 import { TicketComponent } from './modules/reports/ticket/ticket.component';
 
 const routes: Routes = [
@@ -34,6 +35,7 @@ const routes: Routes = [
   { path: 'reservations/details', component: BookingDetailsComponent },
   { path: 'reservations/ticket', component: TicketComponent },
   { path: 'taxpayers', component: TaxpayersComponent },
+  { path: 'students', component: StudentsComponent },
   { path: 'organizations', component: OrganizationsComponent }
 ];
 

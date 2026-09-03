@@ -36,6 +36,7 @@ import { SurfacesComponent } from './modules/surfaces/surfaces.component';
 import { EmployeesComponent } from './modules/employees/employees.component';
 import { OrganizationsComponent } from './modules/organizations/organizations.component';
 import { TaxpayersComponent } from './modules/taxpayers/taxpayers.component';
+import { StudentsComponent } from './modules/students/students.component';
 
 import { BookingOneTimeComponent } from './modules/booking-one-time/booking-one-time.component';
 import { BookingRecurrentComponent } from './modules/booking-recurrent/booking-recurrent.component';
@@ -66,6 +67,7 @@ import { PagesRoutingModule } from './pages-routing.module';
     EmployeesComponent,
     OrganizationsComponent,
     TaxpayersComponent,
+    StudentsComponent,
     
     BookingOneTimeComponent,
     BookingRecurrentComponent,

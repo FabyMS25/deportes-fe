@@ -150,7 +150,11 @@ export class DataTableComponent implements OnChanges {
       ...((actions.check && this.canShow(actions.check,data,)) ? [{ tooltip: actions.check, icon: 'ri-checkbox-circle-line', handler: () => this.checkItem(data), buttonClass: 'text-success' }] : []),
       ...((actions.process && this.canShow(actions.process, data)) ? [{
         tooltip: actions.process,
-        icon: actions.process === 'No Show' ? 'ri-user-unfollow-line' : 'ri-auction-line',
+        icon: actions.process === 'No Show'
+          ? 'ri-user-unfollow-line'
+          : actions.process === 'Desvincular tutor'
+            ? 'ri-user-unfollow-line'
+            : 'ri-auction-line',
         handler: () => this.processItem(data),
         buttonClass: 'text-warning'
       }] : []),
@@ -162,7 +166,9 @@ export class DataTableComponent implements OnChanges {
     const reserva = data?.reservaDto || data;
     switch(action){
       case 'Editar':
-        return reserva?.estadoReserva ? reserva.estadoReserva === statusData.EstadoReserva.PENDIENTE : true
+        return data?.puedeGestionar === false
+          ? false
+          : reserva?.estadoReserva ? reserva.estadoReserva === statusData.EstadoReserva.PENDIENTE : true
       case 'validate':
         return reserva?.estadoValidacion === statusData.EstadoValidacion.PENDIENTE;
       case 'Anular':
@@ -177,6 +183,13 @@ export class DataTableComponent implements OnChanges {
         return data.estadoUsuario === statusData.EstadoUsuario.ACTIVO;
       case 'Desbloquear':
         return data.estadoUsuario === statusData.EstadoUsuario.BLOQUEADO;
+      case 'Dar de baja':
+        return data?.puedeGestionar !== false && data?.activo === true;
+      case 'Habilitar':
+        return data?.puedeGestionar !== false
+          && data?.activo === false && data?.reactivacionBloqueada !== true;
+      case 'Desvincular tutor':
+        return data?.puedeGestionar !== false && data?.activo === true && !!data?.contribuyenteDto;
       default:
         return true;
     }
@@ -337,6 +350,7 @@ export class DataTableComponent implements OnChanges {
       'ENTREGADA': 'success', 'NO_ENTREGADO': 'danger',
       'VALIDO': 'success', 'INVALIDO': 'danger',
       'SI': 'success',     'NO': 'danger',
+      'ACTIVA': 'success', 'INACTIVA': 'secondary',
     };
     if (customMappings.hasOwnProperty(value)) {
       return customMappings[value];

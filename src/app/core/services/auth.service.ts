@@ -97,7 +97,11 @@ export class AuthenticationService {
         userType: loginResponse.userType,
         admin: loginResponse.admin
       };
-      const menu = this.sortMenuItemsRecursive(taxpayer ? MENU_BASE : loginResponse.menu);
+      const menu = this.sortMenuItemsRecursive(
+        taxpayer
+          ? this.buildTaxpayerMenu(loginResponse.user)
+          : loginResponse.menu
+      );
       const configResult = await this.loadSystemConfigs(taxpayer, loginResponse.token);
       if (!configResult.configsStatus) {
         this.storageService.signOut();
@@ -463,6 +467,32 @@ export class AuthenticationService {
       const bPriority = this.getActionPriority(b.accion);
       return aPriority - bPriority;
     });
+  }
+
+  /**
+   * Every contributor may view their scoped students. Management actions are
+   * available only when the contributor represents an organization.
+   * Staff/admin menus are supplied by Usuarios and do not pass through here.
+   */
+  private buildTaxpayerMenu(user: any): MenuItem[] {
+    const organizations = Array.isArray(user?.organizacionesRepresentadas)
+      ? user.organizacionesRepresentadas
+      : [];
+    const managesOrganization = organizations.length > 0;
+    const organizationOnlyStudentActions = new Set([
+      'CREAR', 'EDITAR', 'DAR DE BAJA', 'HABILITAR'
+    ]);
+
+    const filterItems = (items: MenuItem[]): MenuItem[] => items
+      .filter(item => managesOrganization
+        || item.nombreMenu !== 'Estudiantes'
+        || !organizationOnlyStudentActions.has(String(item.accion || '').toUpperCase()))
+      .map(item => ({
+        ...item,
+        permisoHijoListDto: filterItems(item.permisoHijoListDto || [])
+      }));
+
+    return filterItems(MENU_BASE);
   }
   private sortMenuItems(menuItems: MenuItem[]): any[] {
     return menuItems.sort((a, b) => {

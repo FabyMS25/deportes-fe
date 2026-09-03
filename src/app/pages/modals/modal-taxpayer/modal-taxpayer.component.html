@@ -271,8 +271,7 @@
         <div *ngIf="activeTab === 'estudiantes'">
           <div class="alert alert-info">
             <i class="ri-information-line me-2"></i>
-            <strong>Estudiantes a cargo:</strong> Si este contribuyente es tutor/padre de estudiantes en escuelas municipales, agrégalos aquí.
-            Los contribuyentes con estudiantes pueden realizar reservas gratuitas.
+            <strong>Inscripciones bajo responsabilidad:</strong> el estudiante es independiente. Aquí se registra su escuela y se asigna este contribuyente como responsable operativo de la inscripción.
           </div>
           <div class="mb-3">
             <button type="button" class="btn btn-primary btn-sm" (click)="toggleEstudianteForm()"
@@ -296,14 +295,19 @@
                   </div>
                   
                   <div class="col-md-6">
-                    <label class="form-label">Matrícula <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" formControlName="matricula"
-                      placeholder="Número de matrícula"
-                      [ngClass]="{'is-invalid': estudiante['matricula'].touched && estudiante['matricula'].errors}">
+                    <label class="form-label">Escuela <span class="text-danger">*</span></label>
+                    <select class="form-select" formControlName="organizacionUuid"
+                      [ngClass]="{'is-invalid': estudiante['organizacionUuid'].touched && estudiante['organizacionUuid'].errors}">
+                      <option value="">Seleccionar escuela</option>
+                      <option *ngFor="let org of organizacionesTemporales" [value]="org.uuid">
+                        {{org.nombre}}
+                      </option>
+                    </select>
+                    <small class="text-muted">La matrícula se genera automáticamente al guardar.</small>
                   </div>
 
                   <div class="col-md-4">
-                    <label class="form-label">Fecha Nacimiento <span class="text-danger">*</span></label>
+                    <label class="form-label">Fecha Nacimiento</label>
                     <input type="date" class="form-control" formControlName="fechaNacimiento"
                       [ngClass]="{'is-invalid': estudiante['fechaNacimiento'].touched && estudiante['fechaNacimiento'].errors}">
                   </div>
@@ -367,6 +371,7 @@
                   <tr>
                     <th>Nombre</th>
                     <th>Matrícula</th>
+                    <th>Escuela</th>
                     <th>Fecha Nac.</th>
                     <th>Estado</th>
                     <th style="width: 100px;">Acciones</th>
@@ -376,6 +381,7 @@
                   <tr *ngFor="let est of estudiantesTemporales; let i = index">
                     <td>{{est.nombreCompleto}}</td>
                     <td>{{est.matricula}}</td>
+                    <td>{{est.organizacionDto?.nombre || '-'}}</td>
                     <td>{{est.fechaNacimiento | date:'dd/MM/yyyy'}}</td>
                     <td>
                       <span class="badge" [ngClass]="est.activo ? 'bg-success' : 'bg-secondary'">
@@ -388,8 +394,8 @@
                         <i class="ri-edit-line"></i>
                       </button>
                       <button type="button" class="btn btn-sm btn-soft-danger" 
-                        (click)="removeEstudiante(i)" title="Eliminar">
-                        <i class="ri-delete-bin-line"></i>
+                        (click)="removeEstudiante(i)" title="Quitar responsabilidad">
+                        <i class="ri-link-unlink-m"></i>
                       </button>
                     </td>
                   </tr>

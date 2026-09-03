@@ -100,7 +100,6 @@ export enum EstadoControlConfiguracion {
 
 // Mapeo de labels para mostrar en la interfaz
 export const LabelsConfiguracion = {
-  // Categorías
   [CategoriaConfiguracion.PAGOS]: 'Pagos',
   [CategoriaConfiguracion.ANTICIPACION]: 'Anticipación',
   [CategoriaConfiguracion.DURACION]: 'Duración',

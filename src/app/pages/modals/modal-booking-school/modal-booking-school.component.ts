@@ -275,6 +275,8 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
     const term = this.selection.studentSearch.trim().toLowerCase();
     return this.estudiantes
       .filter(estudiante => estudiante.activo !== false)
+      .filter(estudiante => !this.selection.school?.uuid ||
+        estudiante.organizacionDto?.uuid === this.selection.school.uuid)
       .filter(estudiante => !term ||
         `${estudiante.nombreCompleto || ''} ${estudiante.matricula || ''} ${estudiante.numeroDocumento || ''}`
           .toLowerCase()
