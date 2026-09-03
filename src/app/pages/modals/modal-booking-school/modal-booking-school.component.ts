@@ -1118,7 +1118,6 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
     const tarifa = this.selection.baseReservation?.tarifaDto;
     const clasificadorRuat = tarifa?.clasificadorRuatDto;
     const monthlyAmount = this.getMonthlyAmount();
-    const tariffBaseAmount = Number(tarifa?.precioBase || 0);
 
     if (!tarifa?.uuid) {
       errors.push('La reserva recurrente base no tiene una tarifa configurada.');
@@ -1142,20 +1141,6 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
 
     if (!Number.isFinite(monthlyAmount) || monthlyAmount <= 0) {
       errors.push('La escuela debe tener una tarifa mensual mayor a cero.');
-    }
-
-    if (!Number.isFinite(tariffBaseAmount) || tariffBaseAmount <= 0) {
-      errors.push('La tarifa base mensual debe ser mayor a cero.');
-    }
-
-    if (
-      Number.isFinite(monthlyAmount) &&
-      Number.isFinite(tariffBaseAmount) &&
-      monthlyAmount > 0 &&
-      tariffBaseAmount > 0 &&
-      monthlyAmount !== tariffBaseAmount
-    ) {
-      errors.push(`La tarifa mensual de la escuela (${monthlyAmount.toFixed(2)} Bs.) no coincide con la tarifa base mensual seleccionada (${tariffBaseAmount.toFixed(2)} Bs.).`);
     }
 
     return errors;

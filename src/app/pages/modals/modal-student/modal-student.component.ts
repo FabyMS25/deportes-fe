@@ -73,6 +73,15 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
       });
       this.form.controls.existingStudentUuid.disable({ emitEvent: false });
       this.form.controls.organizacionUuid.disable({ emitEvent: false });
+    } else {
+      // A contributor with one managed school can register directly there.
+      if (this.escuelas.length === 1) {
+        this.form.controls.organizacionUuid.setValue(this.escuelas[0].uuid ?? '', { emitEvent: false });
+      }
+      // For contributors the only available tutor is the authenticated contributor.
+      if (this.tutores.length === 1) {
+        this.form.controls.contribuyenteUuid.setValue(this.tutores[0].uuid ?? '', { emitEvent: false });
+      }
     }
     if (this.accion === 'show') this.form.disable({ emitEvent: false });
   }
@@ -102,7 +111,9 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
         telefono: selected.telefono ?? '',
         email: selected.email ?? ''
       });
-      personalControls.forEach(control => control.disable({ emitEvent: false }));
+      // Selecting an existing student reuses the identity, but does not lock it.
+      // Personal-data changes intentionally apply to all of that student's enrollments.
+      personalControls.forEach(control => control.enable({ emitEvent: false }));
     } else {
       this.form.patchValue({
         nombreCompleto: '', fechaNacimiento: '', genero: '',

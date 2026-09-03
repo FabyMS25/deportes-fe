@@ -142,6 +142,14 @@
                     </div>
                   }
 
+                  @if (event.extendedProps?.type === 'reserva-escuela') {
+                    <div class="mt-2">
+                      <span class="badge bg-warning-subtle text-warning">
+                        <i class="ri-school-line"></i> Escuela
+                      </span>
+                    </div>
+                  }
+
                   @if (event.extendedProps?.type === 'excepcion') {
                     <div class="mt-2">
                       <span class="badge" [style.background-color]="event.backgroundColor" style="color: white;">

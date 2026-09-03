@@ -56,12 +56,13 @@ export class CalendarDashboardComponent implements OnInit {
   upcomingEvents: any[] = [];
   direction: any = 'ltr';
   selectedLocale: any = 'es';
-  masterSelected: any = true;
+  masterSelected: any = false;
   showFilters: boolean = false;
   filterArray: any = [
-    { name: 'reserva-puntual', label: 'Reservas Puntuales', checked: true, color: '#10b981' },
-    { name: 'reserva-recurrente', label: 'Reservas Recurrentes', checked: true, color: '#3b82f6' },
-    { name: 'excepcion', label: 'Excepciones (Cerrado/Mantenimiento/Eventos)', checked: true, color: '#ef4444' }
+    { name: 'reserva-puntual', label: 'Puntuales', checked: true, color: '#10b981' },
+    { name: 'reserva-recurrente', label: 'Recurrentes', checked: true, color: '#3b82f6' },
+    { name: 'reserva-escuela', label: 'Escuelas', checked: false, color: '#f59e0b' },
+    { name: 'excepcion', label: 'Excepciones', checked: true, color: '#ef4444' }
   ];
   filterEvents: any = [];
   @ViewChild('confirmModal') confirmModal!: TemplateRef<any>; 
@@ -352,10 +353,7 @@ export class CalendarDashboardComponent implements OnInit {
       }
 
       this.allcalendarEvents = allEvents;
-      this.calendarEvents = allEvents;
-      this.updateUpcomingEvents();
-      
-      this.calendarOptions.events = this.calendarEvents;
+      this.onCheckboxChange();
       
     } catch (error) {
       Swal.fire({
@@ -444,7 +442,7 @@ export class CalendarDashboardComponent implements OnInit {
               borderColor: statusColor,
               textColor: '#fff',
               extendedProps: {
-                type: 'reserva-recurrente',
+                type: this.isSchoolReservation(reserva) ? 'reserva-escuela' : 'reserva-recurrente',
                 row: reserva,
                 description: contribuyenteNombre,
                 complejo: complejoNombre,
@@ -655,6 +653,13 @@ export class CalendarDashboardComponent implements OnInit {
     this.applyResponsiveCalendarOptions();
   }
 
+  private isSchoolReservation(reserva: any): boolean {
+    return !!(
+      reserva?.organizacionDto?.uuid ||
+      reserva?.organizacionDto?.idOrganizacion
+    );
+  }
+
   private applyResponsiveCalendarOptions(): void {
     const isMobile = typeof window !== 'undefined' && window.innerWidth <= 576;
     this.calendarOptions = {
@@ -749,6 +754,7 @@ export class CalendarDashboardComponent implements OnInit {
   }
 
   onCheckboxChange() {
+    this.masterSelected = this.filterArray.every((item: any) => item.checked);
     const checkedTypes = this.filterArray
       .filter((item: any) => item.checked)
       .map((item: any) => item.name);
@@ -797,6 +803,7 @@ export class CalendarDashboardComponent implements OnInit {
 
   getEventIcon(type: string): string {
     if (type.includes('puntual')) return '📅';
+    if (type.includes('escuela')) return '🏫';
     if (type.includes('recurrente')) return '🔄';
     if (type.includes('cerrado')) return '🔒';
     if (type.includes('mantenimiento')) return '🔧';
