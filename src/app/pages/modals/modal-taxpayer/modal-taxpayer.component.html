@@ -271,7 +271,7 @@
         <div *ngIf="activeTab === 'estudiantes'">
           <div class="alert alert-info">
             <i class="ri-information-line me-2"></i>
-            <strong>Inscripciones bajo responsabilidad:</strong> el estudiante es independiente. Aquí se registra su escuela y se asigna este contribuyente como responsable operativo de la inscripción.
+            <strong>Inscripciones bajo responsabilidad:</strong> aquí se inscribe el estudiante a una escuela y se asigna este contribuyente como tutor/responsable de pago preferente.
           </div>
           <div class="mb-3">
             <button type="button" class="btn btn-primary btn-sm" (click)="toggleEstudianteForm()"
@@ -299,11 +299,11 @@
                     <select class="form-select" formControlName="organizacionUuid"
                       [ngClass]="{'is-invalid': estudiante['organizacionUuid'].touched && estudiante['organizacionUuid'].errors}">
                       <option value="">Seleccionar escuela</option>
-                      <option *ngFor="let org of organizacionesTemporales" [value]="org.uuid">
-                        {{org.nombre}}
+                      <option *ngFor="let org of escuelasDisponiblesParaInscripcion" [value]="org.uuid">
+                        {{org.nombre}}{{org.disciplina ? ' · ' + org.disciplina : ''}}
                       </option>
                     </select>
-                    <small class="text-muted">La matrícula se genera automáticamente al guardar.</small>
+                    <small class="text-muted">Esta relación crea una inscripción a escuela; no convierte al contribuyente en representante.</small>
                   </div>
 
                   <div class="col-md-4">
@@ -409,180 +409,26 @@
           </div>
         </div>
         <div *ngIf="activeTab === 'organizaciones'">
-          <div class="alert alert-info">
-            <i class="ri-information-line me-2"></i>
-            <strong>Organizaciones representadas:</strong> Si este contribuyente representa o es encargado de organizaciones deportivas, regístrelas aquí.
-          </div>
-          <div class="mb-3">
-            <button type="button" class="btn btn-success btn-sm" (click)="toggleOrganizacionForm()"
-              *ngIf="!showOrganizacionForm">
-              <i class="ri-add-line me-1"></i>Agregar Organización
+          <div class="alert alert-info">Busque organizaciones existentes y asigne al contribuyente como representante.</div>
+          <label for="buscar-organizacion" class="form-label">Buscar organización</label>
+          <input id="buscar-organizacion" class="form-control mb-2" placeholder="Nombre, código o disciplina"
+            [(ngModel)]="organizacionBusqueda" [ngModelOptions]="{standalone: true}">
+          <div class="list-group mb-3" style="max-height: 180px; overflow-y: auto" *ngIf="organizacionBusqueda.trim()">
+            <button type="button" class="list-group-item list-group-item-action" *ngFor="let org of organizacionesDisponibles" (click)="vincularOrganizacion(org)">
+              <i class="ri-add-line me-2"></i>{{org.nombre}} <small class="text-muted">{{org.codigoEscuela}} · {{org.disciplina}}</small>
             </button>
+            <div class="list-group-item text-muted" *ngIf="!organizacionesDisponibles.length">No hay organizaciones disponibles para esta búsqueda.</div>
           </div>
-          <div class="card border mb-3" *ngIf="showOrganizacionForm">
-            <div class="card-body">
-              <h6 class="card-title">
-                {{ editingOrganizacionIndex >= 0 ? 'Editar' : 'Nueva' }} Organización
-              </h6>              
-              <form [formGroup]="organizacionForm">
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label class="form-label">Nombre <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" formControlName="nombre"
-                      placeholder="Nombre de la organización"
-                      [ngClass]="{'is-invalid': organizacion['nombre'].touched && organizacion['nombre'].errors}">
-                  </div>
-
-                  <div class="col-md-6">
-                    <label class="form-label">Tipo <span class="text-danger">*</span></label>
-                    <select class="form-select" formControlName="tipoOrganizacion"
-                      [ngClass]="{'is-invalid': organizacion['tipoOrganizacion'].touched && organizacion['tipoOrganizacion'].errors}">
-                      <option *ngFor="let tipo of tiposOrganizacion" [value]="tipo">
-                        {{getTipoOrganizacionLabel(tipo)}}
-                      </option>
-                    </select>
-                  </div>
-
-                  <div class="col-md-6">
-                    <label class="form-label">Personería Jurídica</label>
-                    <input type="text" class="form-control" formControlName="personeriaJuridica"
-                      placeholder="Número de personería">
-                  </div>
-
-                  <div class="col-md-6">
-                    <label class="form-label">NIT</label>
-                    <input type="text" class="form-control" formControlName="nroNit"
-                      placeholder="NIT">
-                  </div>
-
-                  <div class="col-md-6">
-                    <label class="form-label">Teléfono</label>
-                    <input type="text" class="form-control" formControlName="telefono"
-                      placeholder="Teléfono">
-                  </div>
-
-                  <div class="col-md-6">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-control" formControlName="email"
-                      placeholder="Email">
-                  </div>
-                  <div class="col-12" *ngIf="organizacionForm.get('tipoOrganizacion')?.value === 'ESCUELA_MUNICIPAL'">
-                    <div class="alert alert-warning">
-                      <i class="ri-information-line me-2"></i>
-                      Las escuelas municipales requieren información adicional
-                    </div>
-                  </div>
-
-                  <div class="col-md-4" *ngIf="organizacionForm.get('tipoOrganizacion')?.value === 'ESCUELA_MUNICIPAL'">
-                    <label class="form-label">Código Escuela <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" formControlName="codigoEscuela"
-                      placeholder="Código único"
-                      [ngClass]="{'is-invalid': organizacion['codigoEscuela'].touched && organizacion['codigoEscuela'].errors}">
-                  </div>
-
-                  <div class="col-md-4" *ngIf="organizacionForm.get('tipoOrganizacion')?.value === 'ESCUELA_MUNICIPAL'">
-                    <label class="form-label">Disciplina <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" formControlName="disciplina"
-                      placeholder="Fútbol, Básquet, etc."
-                      [ngClass]="{'is-invalid': organizacion['disciplina'].touched && organizacion['disciplina'].errors}">
-                  </div>
-
-                  <div class="col-md-4" *ngIf="organizacionForm.get('tipoOrganizacion')?.value === 'ESCUELA_MUNICIPAL'">
-                    <label class="form-label">Entrenador</label>
-                    <input type="text" class="form-control" formControlName="entrenador"
-                      placeholder="Nombre del entrenador">
-                  </div>
-
-                  <div class="col-md-4" *ngIf="organizacionForm.get('tipoOrganizacion')?.value === 'ESCUELA_MUNICIPAL'">
-                    <label class="form-label">Tarifa Mensual (Bs)</label>
-                    <input type="number" class="form-control" formControlName="tarifaMensual"
-                      placeholder="0.00" min="0" step="0.01">
-                  </div>
-
-                  <div class="col-12">
-                    <label class="form-label">Dirección</label>
-                    <textarea class="form-control" formControlName="direccion" rows="2"
-                      placeholder="Dirección de la organización"></textarea>
-                  </div>
-
-                  <div class="col-md-4">
-                    <div class="form-check mt-3">
-                      <input class="form-check-input" type="checkbox" id="orgActivo" formControlName="activo">
-                      <label class="form-check-label" for="orgActivo">Organización Activa</label>
-                    </div>
-                  </div>
-
-                  <div class="col-md-4" *ngIf="organizacionForm.get('tipoOrganizacion')?.value === 'ESCUELA_MUNICIPAL'">
-                    <div class="form-check mt-3">
-                      <input class="form-check-input" type="checkbox" id="requierePago" formControlName="requierePagoMensualidad">
-                      <label class="form-check-label" for="requierePago">Requiere Pago Mensual</label>
-                    </div>
-                  </div>
-
-                  <div class="col-md-4">
-                    <div class="form-check mt-3">
-                      <input class="form-check-input" type="checkbox" id="reservasGratis" formControlName="permiteReservasGratuitas">
-                      <label class="form-check-label" for="reservasGratis">Reservas Gratuitas</label>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mt-3 d-flex gap-2">
-                  <button type="button" class="btn btn-success btn-sm" (click)="addOrUpdateOrganizacion()">
-                    <i class="ri-save-line me-1"></i>
-                    {{ editingOrganizacionIndex >= 0 ? 'Actualizar' : 'Agregar' }}
-                  </button>
-                  <button type="button" class="btn btn-light btn-sm" (click)="toggleOrganizacionForm()">
-                    Cancelar
-                  </button>
-                </div>
-              </form>
-            </div>
+          <div class="table-responsive" *ngIf="organizacionesTemporales.length; else sinVinculos">
+            <table class="table align-middle"><thead><tr><th>Organización</th><th></th></tr></thead>
+              <tbody><tr *ngFor="let org of organizacionesTemporales; let i = index">
+                <td>{{org.nombre}} <span class="badge bg-primary" *ngIf="esPrincipal(org)">Principal</span></td>
+                <td><button type="button" class="btn btn-sm btn-outline-danger" [disabled]="esPrincipal(org)" (click)="desvincularOrganizacion(i)">Desvincular</button></td>
+              </tr></tbody>
+            </table>
+            <small class="text-muted">Para desvincular al representante principal, primero seleccione otro desde la organización.</small>
           </div>
-          <div *ngIf="organizacionesTemporales.length > 0">
-            <h6 class="mb-2">Organizaciones Registradas ({{organizacionesTemporales.length}})</h6>
-            <div class="table-responsive">
-              <table class="table table-sm table-bordered">
-                <thead class="table-light">
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Tipo</th>
-                    <th>Disciplina</th>
-                    <th>Estado</th>
-                    <th style="width: 100px;">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let org of organizacionesTemporales; let i = index">
-                    <td>{{org.nombre}}</td>
-                    <td>
-                      <span class="badge bg-primary">{{getTipoOrganizacionLabel(org.tipoOrganizacion)}}</span>
-                    </td>
-                    <td>{{org.disciplina || '-'}}</td>
-                    <td>
-                      <span class="badge" [ngClass]="org.activo ? 'bg-success' : 'bg-secondary'">
-                        {{org.activo ? 'Activa' : 'Inactiva'}}
-                      </span>
-                    </td>
-                    <td>
-                      <button type="button" class="btn btn-sm btn-soft-primary me-1" 
-                        (click)="editOrganizacion(i)" title="Editar">
-                        <i class="ri-edit-line"></i>
-                      </button>
-                      <button type="button" class="btn btn-sm btn-soft-danger" 
-                        (click)="removeOrganizacion(i)" title="Eliminar">
-                        <i class="ri-delete-bin-line"></i>
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div *ngIf="organizacionesTemporales.length === 0 && !showOrganizacionForm" class="text-center text-muted py-4">
-            <i class="ri-building-4-line fs-1"></i>
-            <p>No hay organizaciones registradas</p>
-          </div>
+          <ng-template #sinVinculos><p class="text-muted text-center py-4">No hay organizaciones vinculadas.</p></ng-template>
         </div>
         <div *ngIf="activeTab === 'deportivo'">
           <div class="alert alert-info">
@@ -856,6 +702,7 @@
               <tr *ngFor="let org of row.organizacionesRepresentadas">
                 <td>
                   <strong>{{org.nombre}}</strong>
+                  <div><span class="badge bg-primary me-1" *ngIf="esPrincipal(org)">Principal</span><span class="badge bg-primary me-1" *ngIf="vinculoOrganizacion(org.uuid!)">Representante</span></div>
                   <div *ngIf="org.personeriaJuridica" class="text-muted small">
                     Personería: {{org.personeriaJuridica}}
                   </div>

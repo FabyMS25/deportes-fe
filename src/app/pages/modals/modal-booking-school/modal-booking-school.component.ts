@@ -196,13 +196,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
     this.getOrganizations();
     this.loadAllPeriodRegistrations();
 
-    if (this.userRole === 'Contribuyente') {
-      this.estudiantes = (this.estudiantes || []).filter(
-        estudiante => estudiante.contribuyenteDto?.uuid === this.userData?.uuid
-      );
-    }
-
-    if (!this.estudiantes.length) {
+    if (this.userRole === 'Contribuyente' || !this.estudiantes.length) {
       this.getStudents();
     }
 
@@ -284,19 +278,26 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
   }
 
   get contribuyentesDisponibles(): Contribuyente[] {
+    const currentUser = this.userData as Contribuyente | undefined;
     if (this.userRole === 'Contribuyente') {
-      return this.userData?.uuid ? [this.userData as Contribuyente] : [];
+      const candidates: (Contribuyente | undefined)[] = [currentUser];
+      if (this.currentUserRepresentsSelectedSchool()) {
+        candidates.push(
+          this.selection.baseReservation?.contribuyenteDto,
+          this.selection.school?.representanteDto,
+          ...(this.selection.school?.representantesDto || []).map(r => r.contribuyenteDto),
+          ...this.selection.students.map(estudiante => estudiante.contribuyenteDto)
+        );
+      }
+      return this.uniqueContribuyentes(candidates);
     }
     const candidates: (Contribuyente | undefined)[] = [
       this.selection.baseReservation?.contribuyenteDto,
       this.selection.school?.representanteDto,
+      ...(this.selection.school?.representantesDto || []).map(r => r.contribuyenteDto),
       ...this.selection.students.map(estudiante => estudiante.contribuyenteDto)
     ];
-    const unique = new Map<string, Contribuyente>();
-    candidates.forEach(candidate => {
-      if (candidate?.uuid) unique.set(candidate.uuid, candidate);
-    });
-    return Array.from(unique.values());
+    return this.uniqueContribuyentes(candidates);
   }
 
   get selectedDetailsCount(): number {
@@ -305,8 +306,12 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
 
   get payerSectionTitle(): string {
     return this.userRole === 'Contribuyente'
-      ? '2. Responsable de la tasa'
-      : '2. Tutor responsable de la tasa';
+      ? '2. Responsable de pago de la tasa'
+      : '2. Responsable de pago de la tasa';
+  }
+
+  get canChoosePayer(): boolean {
+    return this.userRole !== 'Contribuyente' || this.contribuyentesDisponibles.length > 1;
   }
 
   get mensualidadesFiltradas(): ReservaPeriodo[] {
@@ -722,15 +727,10 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
       return;
     }
 
-    if (this.userRole === 'Contribuyente' && (
-      this.selection.payer.uuid !== this.userData?.uuid ||
-      this.selection.students.some(
-        estudiante => estudiante.contribuyenteDto?.uuid !== this.userData?.uuid
-      )
-    )) {
+    if (this.userRole === 'Contribuyente' && !this.canCurrentContributorRegisterSelection()) {
       this.handleError(
         'Operación no permitida',
-        'Un contribuyente solo puede generar tasas a su nombre para estudiantes que estén a su cargo.'
+        'Solo puede registrar mensualidades de estudiantes a su cargo o de escuelas que representa.'
       );
       return;
     }
@@ -1589,7 +1589,61 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
   private getConfigsSystem(): void {
     this.systemConfigList = this.authService.getAllConfigs() || {};
   }
+
+  private uniqueContribuyentes(candidates: (Contribuyente | undefined)[]): Contribuyente[] {
+    const unique = new Map<string, Contribuyente>();
+    candidates.forEach(candidate => {
+      if (candidate?.uuid) unique.set(candidate.uuid, candidate);
+    });
+    return Array.from(unique.values());
+  }
+
+  private currentUserRepresentsSelectedSchool(): boolean {
+    const userUuid = this.userData?.uuid;
+    const school = this.selection.school;
+    if (!userUuid || !school) {
+      return false;
+    }
+    return school.representanteDto?.uuid === userUuid ||
+      (school.representantesDto || []).some(rep => rep.contribuyenteDto?.uuid === userUuid) ||
+      (this.userData?.organizacionesRepresentadas || []).some((org: Organizacion) => org.uuid === school.uuid);
+  }
+
+  private currentContributorCanManageStudent(estudiante: EstudianteEscuela): boolean {
+    const userUuid = this.userData?.uuid;
+    if (!userUuid) {
+      return false;
+    }
+    return estudiante.contribuyenteDto?.uuid === userUuid || this.currentUserRepresentsSelectedSchool();
+  }
+
+  private canCurrentContributorRegisterSelection(): boolean {
+    const userUuid = this.userData?.uuid;
+    const payerUuid = this.selection.payer?.uuid;
+    if (!userUuid || !payerUuid || !this.selection.students.length) {
+      return false;
+    }
+    const canManageStudents = this.selection.students.every(estudiante =>
+      this.currentContributorCanManageStudent(estudiante)
+    );
+    if (!canManageStudents) {
+      return false;
+    }
+    if (payerUuid === userUuid) {
+      return true;
+    }
+    return this.currentUserRepresentsSelectedSchool() &&
+      this.contribuyentesDisponibles.some(contribuyente => contribuyente.uuid === payerUuid);
+  }
+
   private getOrganizations(): void {
+    if (this.userRole === 'Contribuyente') {
+      this.catalogs.organizations = this.userData?.organizacionesRepresentadas || [];
+      this.catalogs.schools = this.catalogs.organizations.filter(
+        org => org.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL && org.activo
+      );
+      return;
+    }
     this.organizationService.getAll().subscribe({
       next: (response: any) => {
         this.catalogs.organizations = response?.content || response || [];
@@ -1604,10 +1658,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
   }
 
   private getStudents(): void {
-    const request = this.userRole === 'Contribuyente' && this.userData?.uuid
-      ? this.estudianteService.getByTaxpayer(this.userData.uuid)
-      : this.estudianteService.getAll();
-    request.subscribe({
+    this.estudianteService.getAll().subscribe({
       next: (response: any) => {
         this.estudiantes = response?.content || response || [];
       },

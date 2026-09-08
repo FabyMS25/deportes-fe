@@ -3,6 +3,7 @@ import { Contribuyente } from "./contribuyente.model";
 import { Reserva } from "./reserva.model";
 
 export interface Organizacion {
+  representantesDto?: import('./organizacion-representante.model').OrganizacionRepresentante[];
   uuid?: string;
   estado?: boolean;
   fechaCreacion?: Date;

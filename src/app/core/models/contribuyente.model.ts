@@ -5,6 +5,7 @@ import { Reserva } from "./reserva.model";
 export interface Contribuyente {
   uuid?: string;
   estado?: boolean;
+  estaActivo?: boolean;
   fechaCreacion?: Date;
   fechaActualizacion?:Date;
 
@@ -47,6 +48,7 @@ export interface Contribuyente {
   puedeReservarGratis?:boolean;
 
   reservasList?: Reserva[];
+  organizacionesVinculadas?: import('./organizacion-representante.model').OrganizacionRepresentante[];
   organizacionesRepresentadas?: Organizacion[];
   estudianteEnEscuelas?: EstudianteEscuela[];
 

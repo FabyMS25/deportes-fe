@@ -15,7 +15,7 @@ export class OrganizacionService {
   constructor(private http: HttpClient) { }
 
   getAll(): Observable<any[]> {
-    return apiGet<any[]>(this.http, this.apiUrl, 'obtener organizaciones');
+    return apiGet<any[]>(this.http, `${this.apiUrl}?page=-1&size=0`, 'obtener organizaciones');
   }
 
   getByUuid(uuid: String): Observable<any> {

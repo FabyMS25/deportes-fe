@@ -5,6 +5,8 @@ import Swal from 'sweetalert2';
 import { Organizacion } from 'src/app/core/models/organizacion.model';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
+import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
+import { OrganizacionRepresentante } from 'src/app/core/models/organizacion-representante.model';
 import { CommonModule } from '@angular/common';
 import { TipoOrganizacion } from 'src/app/core/constants/Features';
 
@@ -27,6 +29,25 @@ export class ModalOrganizationComponent implements OnInit {
   @Output() emitList = new EventEmitter();
 
   contentForm!: UntypedFormGroup;
+  activeTab: 'datos' | 'representantes' = 'datos';
+  representantes: OrganizacionRepresentante[] = [];
+  personaBusqueda = '';
+  get personasDisponibles(): Contribuyente[] {
+    const q = this.personaBusqueda.trim().toLocaleLowerCase();
+    const principalUuid = this.contentForm?.get('representanteDto')?.value?.uuid;
+    return this.contribuyentesList.filter(p => p.estaActivo !== false &&
+      p.uuid !== principalUuid &&
+      !this.representantes.some(r => r.contribuyenteDto?.uuid === p.uuid) &&
+      `${p.nombreCompleto || p.nombre + ' ' + p.primerApellido} ${p.numeroDocumento}`.toLocaleLowerCase().includes(q));
+  }
+  agregarRepresentante(persona: Contribuyente): void {
+    this.representantes.push({ contribuyenteDto: persona });
+    if (!this.contentForm.get('representanteDto')?.value) this.contentForm.patchValue({representanteDto: persona});
+    this.personaBusqueda = '';
+  }
+  quitarRepresentante(index: number): void {
+    this.representantes.splice(index, 1);
+  }
   submitted = false;
   showLoading = false;
 
@@ -41,6 +62,7 @@ export class ModalOrganizationComponent implements OnInit {
   constructor(
     private modalService: NgbModal,
     private organizacionesService: OrganizacionService,
+    private contribuyentesService: ContribuyentesService,
     private formBuilder: UntypedFormBuilder,
   ) {}
 
@@ -48,6 +70,14 @@ export class ModalOrganizationComponent implements OnInit {
     this.initializeForm();
     this.formDataSet();
     this.setupFormListeners();
+    const principalUuid = this.row?.representanteDto?.uuid;
+    this.representantes = (this.row?.representantesDto || [])
+      .filter(r => r.contribuyenteDto?.uuid !== principalUuid)
+      .map(r => ({...r}));
+    this.contribuyentesService.getAll().subscribe({
+      next: (data: any) => this.contribuyentesList = data?.content || data || [],
+      error: () => this.notify('No se pudo cargar la lista de contribuyentes', 'error')
+    });
   }
 
   private initializeForm(): void {
@@ -201,7 +231,6 @@ export class ModalOrganizationComponent implements OnInit {
    */
   saveData() {
     this.submitted = true;
-    
     if (this.contentForm.valid) {
       this.showLoading = true;
       const formData = this.contentForm.value;
@@ -227,6 +256,8 @@ export class ModalOrganizationComponent implements OnInit {
         permiteReservasGratuitas: formData.permiteReservasGratuitas,
         
         representanteDto: formData.representanteDto,
+        representantesDto: this.representantes.filter(r =>
+          r.contribuyenteDto?.uuid !== formData.representanteDto?.uuid),
       };
 
       if (formData.uuid) {
@@ -237,6 +268,7 @@ export class ModalOrganizationComponent implements OnInit {
       }
     } else {
       this.notify('Por favor, complete todos los campos requeridos correctamente', 'error');
+      this.activeTab = this.contentForm.get('representanteDto')?.invalid ? 'representantes' : 'datos';
       this.markFormGroupTouched();
     }
   }

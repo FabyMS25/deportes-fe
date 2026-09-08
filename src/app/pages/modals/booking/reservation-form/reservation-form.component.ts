@@ -2240,7 +2240,10 @@ getPaidReservationDescription(): string {
       esParaOrganizacion: true
     });
     this.showOrganizationSearch = false;    
-    if (organizacion.representanteDto) {
+    const personUuid = this.selectedContribuyente?.uuid;
+    const alreadyResponsible = personUuid && (organizacion.representanteDto?.uuid === personUuid ||
+      organizacion.representantesDto?.some(r => r.contribuyenteDto?.uuid === personUuid));
+    if (organizacion.representanteDto && !alreadyResponsible) {
       this.selectedContribuyente = organizacion.representanteDto;
       this.reservationForm.patchValue({
         contribuyenteDto: organizacion.representanteDto

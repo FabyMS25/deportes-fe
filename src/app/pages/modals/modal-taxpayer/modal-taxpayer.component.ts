@@ -96,6 +96,47 @@ export class ModalTaxpayerComponent implements OnInit {
   showEstudianteForm = false;
 
   organizacionesTemporales: any[] = [];
+  organizacionBusqueda = '';
+  organizacionesVinculadas: import('src/app/core/models/organizacion-representante.model').OrganizacionRepresentante[] = [];
+
+  get organizacionesDisponibles(): Organizacion[] {
+    const q = this.organizacionBusqueda.trim().toLocaleLowerCase();
+    return this.organizationsList.filter(o => o.activo &&
+      !this.organizacionesTemporales.some(x => x.uuid === o.uuid) &&
+      `${o.nombre} ${o.codigoEscuela || ''} ${o.disciplina || ''}`.toLocaleLowerCase().includes(q));
+  }
+
+  get escuelasDisponiblesParaInscripcion(): Organizacion[] {
+    const schools = new Map<string, Organizacion>();
+    [...this.organizationsList, ...this.organizacionesTemporales].forEach((org) => {
+      if (org.uuid && org.activo !== false && org.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL) {
+        schools.set(org.uuid, org);
+      }
+    });
+    return Array.from(schools.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }
+
+  vincularOrganizacion(org: Organizacion): void {
+    this.organizacionesTemporales.push(org);
+    this.organizacionesVinculadas.push({ organizacionDto: org });
+    this.organizacionBusqueda = '';
+  }
+
+  vinculoOrganizacion(uuid: string): any {
+    return this.organizacionesVinculadas.find(v => v.organizacionDto?.uuid === uuid);
+  }
+
+  esPrincipal(org: Organizacion): boolean {
+    return !!this.row?.uuid && org.representanteDto?.uuid === this.row.uuid;
+  }
+
+  desvincularOrganizacion(index: number): void {
+    const org = this.organizacionesTemporales[index];
+    if (this.esPrincipal(org)) return;
+    this.organizacionesVinculadas = this.organizacionesVinculadas.filter(v => v.organizacionDto?.uuid !== org.uuid);
+    this.organizacionesTemporales.splice(index, 1);
+  }
+
   editingOrganizacionIndex = -1;
   showOrganizacionForm = false;
 
@@ -377,6 +418,7 @@ export class ModalTaxpayerComponent implements OnInit {
       }
       if (this.row.organizacionesRepresentadas?.length) {
         this.organizacionesTemporales = [...this.row.organizacionesRepresentadas];
+        this.organizacionesVinculadas = (this.row.organizacionesVinculadas || []).map(v => ({ ...v }));
       }
 
       this.sanctionForm.patchValue({
@@ -466,9 +508,7 @@ export class ModalTaxpayerComponent implements OnInit {
       return;
     }
     const data = this.estudianteForm.getRawValue();
-    const escuela = this.organizacionesTemporales.find(
-      org => org.uuid === data.organizacionUuid
-    );
+    const escuela = this.findEscuelaDisponible(data.organizacionUuid);
     data.organizacionDto = escuela || { uuid: data.organizacionUuid };
 
     const contribuyenteUuid = this.row?.uuid || this.editForm.get('uuid')?.value;
@@ -479,9 +519,8 @@ export class ModalTaxpayerComponent implements OnInit {
     // Existing contributors + persisted schools can save the enrollment now.
     // A new contributor/school must remain staged until the parent save creates
     // those foreign-key records.
-    const escuelaPersistida = !!this.row?.organizacionesRepresentadas?.some(
-      org => org.uuid === data.organizacionUuid
-    );
+    const escuelaPersistida = !!data.organizacionUuid &&
+      this.organizationsList.some(org => org.uuid === data.organizacionUuid);
     const guardarAhora = !!contribuyenteUuid && escuelaPersistida;
 
     if (guardarAhora) {
@@ -493,9 +532,9 @@ export class ModalTaxpayerComponent implements OnInit {
           request.subscribe({ next: resolve, error: reject });
         });
         if (this.editingEstudianteIndex >= 0) {
-          this.estudiantesTemporales[this.editingEstudianteIndex] = guardado;
+          this.estudiantesTemporales[this.editingEstudianteIndex] = this.withEscuelaDisplay(guardado, escuela);
         } else {
-          this.estudiantesTemporales.push(guardado);
+          this.estudiantesTemporales.push(this.withEscuelaDisplay(guardado, escuela));
         }
         this.notify(
           data.uuid ? 'Inscripción actualizada correctamente' : 'Estudiante e inscripción registrados correctamente',
@@ -527,6 +566,24 @@ export class ModalTaxpayerComponent implements OnInit {
     });
     this.editingEstudianteIndex = index;
     this.showEstudianteForm = true;
+  }
+
+  private findEscuelaDisponible(uuid?: string): Organizacion | undefined {
+    if (!uuid) return undefined;
+    return this.escuelasDisponiblesParaInscripcion.find(org => org.uuid === uuid);
+  }
+
+  private withEscuelaDisplay(estudiante: EstudianteEscuela, escuela?: Organizacion): EstudianteEscuela {
+    if (!escuela || estudiante.organizacionDto?.nombre) {
+      return estudiante;
+    }
+    return {
+      ...estudiante,
+      organizacionDto: {
+        ...estudiante.organizacionDto,
+        ...escuela
+      }
+    };
   }
 
   removeEstudiante(index: number): void {
@@ -739,7 +796,8 @@ export class ModalTaxpayerComponent implements OnInit {
       motivoSancion: this.row?.motivoSancion,
       // Always send arrays (even empty) so the backend can clear removed records
       estudianteEnEscuelas: estudiantesPreparados,
-      organizacionesRepresentadas: organizacionesPreparadas,
+      organizacionesRepresentadas: organizacionesPreparadas.filter(o => !o.uuid),
+      organizacionesVinculadas: this.organizacionesVinculadas,
     };
 
     try {

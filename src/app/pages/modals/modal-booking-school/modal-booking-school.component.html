@@ -534,7 +534,7 @@
         <div class="card mb-2" *ngIf="selection.school">
           <div class="card-header bg-light py-2 px-3"><h6 class="mb-0">{{ payerSectionTitle }}</h6></div>
           <div class="card-body py-2 px-3">
-            <select *ngIf="userRole !== 'Contribuyente'; else fixedContribuyente"
+            <select *ngIf="canChoosePayer; else fixedContribuyente"
                     class="form-select" formControlName="contribuyente" (change)="onContribuyenteChange($event)">
               <option value="">Seleccione al contribuyente pagador</option>
               <option *ngFor="let contribuyente of contribuyentesDisponibles" [value]="contribuyente.uuid">

@@ -247,7 +247,7 @@ export class OrganizationsComponent implements OnInit {
         if (this.contribuyente) {
           organizations = organizations.filter(item =>
             item.representanteDto?.uuid ===
-            this.contribuyente.uuid
+            this.contribuyente.uuid || item.representantesDto?.some(r => r.contribuyenteDto?.uuid === this.contribuyente.uuid)
           );
         }
 
