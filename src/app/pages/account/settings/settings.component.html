@@ -258,10 +258,10 @@
                                 [buttons]="userRole !== 'Contribuyente'"
                             ></app-terms-conditions>
                             <div class="px-4" *ngIf="userRole === 'Contribuyente'">
-                                <h5 class="card-title text-decoration-underline mb-3">Eliminar esta cuenta:</h5>
+                                <h5 class="card-title text-decoration-underline mb-3">Anular esta cuenta:</h5>
                                 <p class="text-muted">
-                                    Una vez elimine su cuenta no podrá recuperar sus Datos.
-                                    Ingrese su contraseña para eliminar su cuenta
+                                    Una vez anule su cuenta no podrá recuperar sus Datos.
+                                    Ingrese su contraseña para anular su cuenta
                                 </p>
                                 <div>
                                     <input type="password" class="form-control" id="passwordInput"
@@ -271,7 +271,7 @@
                                 </div>
                                 <div class="hstack gap-2 mt-3 justify-end">
                                     <a (click)="deleteAccount()" class="btn btn-soft-danger">
-                                        Cerrar & Eliminar esta cuenta
+                                        Cerrar & Anular esta cuenta
                                     </a>
                                     <a (click)="goBack()" class="btn btn-light">Volver</a>
                                 </div>

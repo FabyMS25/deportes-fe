@@ -36,7 +36,7 @@ export class EstudianteEscuelaService {
   }
 
   delete(uuid: string): Observable<EstudianteEscuela> {
-    return apiDelete<EstudianteEscuela>(this.http, `${this.apiUrl}/${uuid}`, `eliminar estudiante escuela (${uuid})`);
+    return apiDelete<EstudianteEscuela>(this.http, `${this.apiUrl}/${uuid}`, `anular estudiante escuela (${uuid})`);
   }
 
   // Business Operations

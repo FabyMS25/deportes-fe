@@ -69,7 +69,7 @@ export class SystemConfigurationService {
   }
 
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar configuración (${uuid})`);
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular configuración (${uuid})`);
   }
 
   desactivar(uuid: string): Observable<ConfiguracionSistema> {

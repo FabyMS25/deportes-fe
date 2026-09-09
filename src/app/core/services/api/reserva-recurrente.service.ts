@@ -99,6 +99,6 @@ export class ReservaRecurrenteService {
   }
 
   delete(uuid: string): Observable<any> {
-    return apiDelete<any>(this.http, `${this.apiUrl}/${uuid}`, `eliminar reserva recurrente (${uuid})`);
+    return apiDelete<any>(this.http, `${this.apiUrl}/${uuid}`, `anular reserva recurrente (${uuid})`);
   }
 }

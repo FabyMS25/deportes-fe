@@ -34,6 +34,6 @@ export class TarifaCategoriesService {
     return apiPut<TarifaCategoria>(this.http, this.apiUrl, data, 'actualizar categoría de tarifa');
   }
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar categoría de tarifa (${uuid})`);
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular categoría de tarifa (${uuid})`);
   }
 }

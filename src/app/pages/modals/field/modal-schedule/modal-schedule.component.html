@@ -11,7 +11,7 @@
                 <i class="ri-calendar-line me-2"></i>
                 <h5 class="modal-title mb-0">
                     <span *ngIf="accion === 'show'">Horarios de Atención</span>
-                    <span *ngIf="accion === 'edit'">Editar Horarios de Atención</span>
+                    <span *ngIf="accion === 'edit'">Actualizar Horarios de Atención</span>
                 </h5>
             </div>
         </div>    
@@ -256,7 +256,7 @@
                                       <td class="text-center">
                                           <button type="button" class="btn btn-sm btn-danger" 
                                                   (click)="removeHorarioExcepcion(i)" [disabled]="submitted || isPastException(i)"
-                                                  [title]="isPastException(i) ? 'No se pueden eliminar excepciones pasadas' : 'Eliminar'">
+                                                  [title]="isPastException(i) ? 'No se pueden anular excepciones pasadas' : 'Anular'">
                                               <i class="ri-delete-bin-line"></i>
                                           </button>
                                       </td>

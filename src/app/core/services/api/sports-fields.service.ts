@@ -36,6 +36,6 @@ export class SportsFieldsService {
     return apiPut<CampoDeportivo>(this.http, this.apiUrl, data, 'actualizar campo deportivo');
   }
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar campo deportivo (${uuid})`);
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular campo deportivo (${uuid})`);
   }
 }

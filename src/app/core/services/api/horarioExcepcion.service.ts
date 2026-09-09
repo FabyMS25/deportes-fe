@@ -30,6 +30,6 @@ export class HorarioExcepcionService {
     return apiPut<HorarioExcepcion>(this.http, this.apiUrl, data, 'actualizar excepción de horario');
   }
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar excepción de horario (${uuid})`);
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular excepción de horario (${uuid})`);
   }
 }

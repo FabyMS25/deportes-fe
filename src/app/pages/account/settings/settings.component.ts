@@ -224,7 +224,7 @@ export class SettingsComponent implements OnInit {
 
     // For demo purposes - in real app, you should verify password with backend
     if (this.password === this.userContribuyente.password) {
-      if (window.confirm("¿Está seguro de que desea cerrar y eliminar la cuenta?")) {
+      if (window.confirm("¿Está seguro de que desea cerrar y anular la cuenta?")) {
         const updatedUser = { ...this.userContribuyente, estadoUsuario: 'Anulado' };
         await this.updateUser(updatedUser);
         this.notify('success', 'Su cuenta fue anulada, usted ya no podrá realizar operaciones en el sistema');

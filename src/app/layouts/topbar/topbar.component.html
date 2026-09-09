@@ -187,7 +187,7 @@
                                                                         [attr.aria-label]="'Seleccionar notificación' | translate">
                                                                     <button type="button" class="btn btn-sm btn-icon btn-ghost-danger"
                                                                         (click)="deleteNotification(item, $event)"
-                                                                        [attr.aria-label]="'Eliminar notificación' | translate">
+                                                                        [attr.aria-label]="'Anular notificación' | translate">
                                                                         <i class="ri-delete-bin-line"></i>
                                                                     </button>
                                                                 </div>
@@ -363,7 +363,7 @@
             </div>
             <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
                 <button type="button" class="btn w-sm btn-light" data-bs-dismiss="modal" (click)="modal.dismiss('Cross click')">{{ 'Cancelar' | translate }}</button>
-                <button type="button" class="btn w-sm btn-danger" id="delete-notification" (click)="notificationDelete()">{{ 'Sí, eliminar' | translate }}</button>
+                <button type="button" class="btn w-sm btn-danger" id="delete-notification" (click)="notificationDelete()">{{ 'Sí, anular' | translate }}</button>
             </div>
         </div>
     </div>

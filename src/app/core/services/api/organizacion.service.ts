@@ -30,7 +30,7 @@ export class OrganizacionService {
     return apiPut<any>(this.http, this.apiUrl, data, 'actualizar organización');
   }
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar organización (${uuid})`);
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular organización (${uuid})`);
   }
   
   getByRepresentante(contribuyenteUuid: string): Observable<any> {

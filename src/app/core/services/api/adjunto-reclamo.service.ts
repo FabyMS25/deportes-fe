@@ -55,7 +55,7 @@ createAdjunto(adjuntoReclamoDto: any, file: File): Observable<any> {
     return apiPut<any>(this.http, `${this.apiUrl}/update`, data, 'actualizar adjunto de reclamo');
   }
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/delete/${uuid}`, `eliminar adjunto de reclamo (${uuid})`);
+    return apiDelete<string>(this.http, `${this.apiUrl}/delete/${uuid}`, `anular adjunto de reclamo (${uuid})`);
   }
   getAdjuntosByUuidReclamo(uuid:String):Observable<any>{
     return apiGet<any>(this.http, `${this.apiUrl}/por-uuidreclamo/${uuid}`, `obtener adjuntos por reclamo (${uuid})`);

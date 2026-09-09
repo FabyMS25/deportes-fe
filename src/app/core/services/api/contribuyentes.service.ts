@@ -85,7 +85,7 @@ export class ContribuyentesService {
     return apiPut<Contribuyente>(this.http, this.apiUrl, data, 'actualizar contribuyente');
   }
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar contribuyente (${uuid})`);
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular contribuyente (${uuid})`);
   }
 }
 

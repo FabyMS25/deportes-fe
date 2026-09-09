@@ -31,6 +31,6 @@ export class ClasificadorRuatService {
     return apiPut<ClasificadorRuat>(this.http, this.apiUrl, data, 'actualizar clasificador RUAT');
   }
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar clasificador RUAT (${uuid})`);
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular clasificador RUAT (${uuid})`);
   }
 }

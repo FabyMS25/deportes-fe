@@ -60,10 +60,10 @@
         [allcontent]="inscripcionesFiltradas"
         [actions]="{
           show: canActivate.includes('VER'),
-          edit: canActivate.includes('EDITAR'),
+          edit: canActivate.includes('ACTUALIZAR'),
           close: canActivate.includes('DAR DE BAJA') ? 'Dar de baja' : '',
           check: canActivate.includes('HABILITAR') ? 'Habilitar' : '',
-          process: canActivate.includes('EDITAR') ? 'Desvincular tutor' : ''
+          process: canActivate.includes('ACTUALIZAR') ? 'Desvincular tutor' : ''
         }"
         (showItemEmitter)="openModal($event, 'show')"
         (editItemEmitter)="openModal($event, 'edit')"

@@ -31,7 +31,7 @@ export class AlertService {
   }
 
   delete(uuid: string): Observable<any> {
-    return apiDelete<any>(this.http, `${url}/${uuid}`, `eliminar Alerta por UUID (${uuid})`);
+    return apiDelete<any>(this.http, `${url}/${uuid}`, `anular Alerta por UUID (${uuid})`);
   }
 
   getByFechaActual(fechaActual: Date): Observable<Alert[]> {

@@ -287,7 +287,7 @@ export class FacilitiesComponent {
             this.modalService.dismissAll();
        },
       error: err => {
-        this.notify('No se pudo eliminar el registro!','error')
+        this.notify('No se pudo anular el registro!','error')
       }
     });
   }

@@ -34,6 +34,6 @@ export class TarifaService {
     return apiPut<Tarifa>(this.http, this.apiUrl, data, 'actualizar tarifa');
   }
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar tarifa (${uuid})`);
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular tarifa (${uuid})`);
   }
 }

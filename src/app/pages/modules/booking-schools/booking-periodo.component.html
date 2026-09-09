@@ -164,7 +164,7 @@
                 [actions]="{
                     show: canActivate.includes('VER'),
                     consult: canActivate.includes('ACTUALIZAR'),
-                    records: true,
+                    records: canActivate.includes('GENERAR TICKET'),
                     close: canActivate.includes('ANULAR')?'Anular':'',}"
                 (showItemEmitter)="openModal($event,'show','lg')"
                 (consultItemEmitter)="openModal($event,'consult','md')"

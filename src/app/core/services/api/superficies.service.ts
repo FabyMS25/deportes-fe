@@ -34,6 +34,6 @@ export class SuperficiesService {
     return apiPut<Superficie>(this.http, this.apiUrl, data, 'actualizar superficie');
   }
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar superficie (${uuid})`);
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular superficie (${uuid})`);
   }
 }

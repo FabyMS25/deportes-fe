@@ -126,7 +126,7 @@
           [actions]="{
             show: canActivate.includes('VER'),
             edit: canActivate.includes('ACTUALIZAR') || canActivate.includes('ACTUALIZAR_PROTEGIDA') || canActivate.includes('ACTUALIZAR_CONTROL'),
-            close: canActivate.includes('ANULAR')?'Anular':'',}"
+            close: canActivate.includes('ANULAR')?'Eliminar':'',}"
           (showItemEmitter)="openModal($event,'show','md')"
           (editItemEmitter)="openModal($event,'edit','lg')"
           (closeItemEmitter)="openModal($event,'delete','md')"

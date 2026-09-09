@@ -66,7 +66,7 @@ export class EmployeesComponent implements OnInit {
     private complejosService: FacilitiesService,
     private datePipe: DatePipe
   ) {
-    this.canActivate = this.authService.hasPermission('Encargado');
+    this.canActivate = this.authService.hasPermission('Encargados');
   }
 
   ngOnInit(): void {
@@ -288,7 +288,7 @@ export class EmployeesComponent implements OnInit {
       },
       error: err => {
         this.submitted = false;
-        this.notify('No se pudo eliminar el registro!', 'error');
+        this.notify('No se pudo anular el registro!', 'error');
       }
     });
   }

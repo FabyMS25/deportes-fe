@@ -173,7 +173,7 @@
                     edit: canActivate.includes('CAMBIAR-HORARIO'),
                     validate: canActivate.includes('VALIDAR'),
                     consult: canActivate.includes('ACTUALIZAR'),
-                    records: true,
+                    records: canActivate.includes('GENERAR TICKET'),
                     process: canActivate.includes('ACTUALIZAR') ? 'No Show' : '',
                     close: canActivate.includes('ANULAR')?'Anular':'',}"
                 (showItemEmitter)="openModal($event,'show','lg')"

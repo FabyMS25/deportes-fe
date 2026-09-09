@@ -35,6 +35,6 @@ export class FacilitiesService {
     return apiPut<ComplejoDeportivo>(this.http, this.apiUrl, data, 'actualizar complejo');
   }
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar complejo (${uuid})`);
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular complejo (${uuid})`);
   }
 }

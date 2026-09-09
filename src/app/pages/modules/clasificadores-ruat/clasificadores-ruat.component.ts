@@ -278,7 +278,7 @@ export class ClasificadoresRuatComponent {
       },
       error: err => {
         this.submitted = false;
-        this.notify('No se pudo eliminar el registro!', 'error')
+        this.notify('No se pudo anular el registro!', 'error')
       }
     });
   }

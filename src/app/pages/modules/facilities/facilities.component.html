@@ -65,7 +65,7 @@
                 [actions]="{
                   show: canActivate.includes('VER'),
                   edit: canActivate.includes('ACTUALIZAR'),
-                  close: canActivate.includes('ELIMINAR')?'Eliminar':'',}"
+                  close: canActivate.includes('ANULAR')?'Eliminar':'',}"
                 (showItemEmitter)="viewDataGet($event)"
                 (editItemEmitter)="openModal($event,'edit','lg')"
                 (closeItemEmitter)="openModal($event,'delete','md')" 

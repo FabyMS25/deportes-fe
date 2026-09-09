@@ -1,7 +1,7 @@
 <div class="modal-header bg-info-subtle p-3">
   <h5 class="modal-title">
     <i class="ri-parent-line me-2"></i>
-    {{ accion === 'show' ? 'Detalle del estudiante' : accion === 'edit' ? 'Editar estudiante' : 'Registrar estudiante' }}
+    {{ accion === 'show' ? 'Detalle del estudiante' : accion === 'edit' ? 'Actualizar estudiante' : 'Registrar estudiante' }}
   </h5>
   <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="showLoading" (click)="close()"></button>
 </div>
@@ -163,7 +163,7 @@
       {{ accion === 'show' ? 'Cerrar' : 'Cancelar' }}
     </button>
     <button type="button" class="btn btn-outline-primary" *ngIf="accion === 'show'" (click)="enableEdit()">
-      <i class="ri-edit-line me-1"></i>Editar
+      <i class="ri-edit-line me-1"></i>Actualizar
     </button>
     <button type="button" class="btn btn-outline-primary" *ngIf="accion === 'edit'" [disabled]="showLoading" (click)="registrarOtraRelacion()">
       <i class="ri-add-line me-1"></i>Registrar en otra escuela

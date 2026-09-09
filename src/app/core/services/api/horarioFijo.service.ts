@@ -29,6 +29,6 @@ export class HorarioFijoService {
     return apiPut<HorarioFijo>(this.http, this.apiUrl, data, 'actualizar horario fijo');
   }
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar horario fijo (${uuid})`);
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular horario fijo (${uuid})`);
   }
 }

@@ -707,19 +707,19 @@ export class ModalTaxpayerComponent implements OnInit {
 
   removeOrganizacion(index: number): void {
     Swal.fire({
-      title: '¿Eliminar organización?',
+      title: '¿Anular organización?',
       text: 'Esta acción no se puede deshacer',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#f06548',
       cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Sí, eliminar',
+      confirmButtonText: 'Sí, anular',
       cancelButtonText: 'Cancelar',
     }).then((result) => {
       if (result.isConfirmed) {
         this.organizacionesTemporales.splice(index, 1);
         this.updatePuedeReservarGratis();
-        this.notify('Organización eliminada', 'info');
+        this.notify('Organización anulada', 'info');
       }
     });
   }
@@ -1307,7 +1307,7 @@ export class ModalTaxpayerComponent implements OnInit {
       },
       error: () => {
         this.submitted = false;
-        this.notify('No se pudo eliminar el registro!', 'error');
+        this.notify('No se pudo anular el registro!', 'error');
       },
     });
   }

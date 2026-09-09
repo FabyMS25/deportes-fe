@@ -152,7 +152,7 @@ export class ReservaService {
   }
 
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar reserva (${uuid})`);
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular reserva (${uuid})`);
   }
 
   previewReservationNumber(tipoReserva: BookingType): Observable<any> {

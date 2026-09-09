@@ -916,7 +916,7 @@ export class ModalFieldsComponent implements OnInit, OnDestroy {
       },
       error: err => {
         this.submitted = false;
-        this.notify(err.message || 'No se pudo eliminar el registro!', 'error');
+        this.notify(err.message || 'No se pudo anular el registro!', 'error');
       }
     });
   }

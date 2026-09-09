@@ -11,7 +11,7 @@ import { ConfiguracionSistema } from '../models/configuracionSistema.model';
 import { AplicaAConfiguracion, CategoriaConfiguracion } from '../constants/Configurations';
 import { RuatRequestsService } from './ruatRequest.service';
 import { MenuItem } from '../models/menu.model';
-import { MENU_BASE } from '../constants/menu';
+import { permissionActions, hasMenuRoute } from '../helpers/menu-permissions';
 import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';
 
@@ -97,11 +97,7 @@ export class AuthenticationService {
         userType: loginResponse.userType,
         admin: loginResponse.admin
       };
-      const menu = this.sortMenuItemsRecursive(
-        taxpayer
-          ? this.buildTaxpayerMenu(loginResponse.user)
-          : loginResponse.menu
-      );
+      const menu = this.sortMenuItemsRecursive(loginResponse.menu || []);
       const configResult = await this.loadSystemConfigs(taxpayer, loginResponse.token);
       if (!configResult.configsStatus) {
         this.storageService.signOut();
@@ -296,14 +292,10 @@ export class AuthenticationService {
    * GETTERS
    */
   hasPermission(modulo: string): string[] {
-    const menu = this.storageService.getMenu();
-    return menu
-      .filter(permission => permission.nombreMenu === modulo)
-      .map(permission => permission.accion) as string[];
+    return permissionActions(this.storageService.getMenu(), modulo);
   }
   hasRoutePermission(route: string): boolean {
-    const menu = this.storageService.getMenu();
-    return menu.some(permission => permission.ruta === route);
+    return hasMenuRoute(this.storageService.getMenu(), route);
   }
 
   public tokenUser(): any {
@@ -469,31 +461,6 @@ export class AuthenticationService {
     });
   }
 
-  /**
-   * Every contributor may view their scoped students. Management actions are
-   * available only when the contributor represents an organization.
-   * Staff/admin menus are supplied by Usuarios and do not pass through here.
-   */
-  private buildTaxpayerMenu(user: any): MenuItem[] {
-    const organizations = Array.isArray(user?.organizacionesRepresentadas)
-      ? user.organizacionesRepresentadas
-      : [];
-    const managesOrganization = organizations.length > 0;
-    const organizationOnlyStudentActions = new Set([
-      'CREAR', 'EDITAR', 'DAR DE BAJA', 'HABILITAR'
-    ]);
-
-    const filterItems = (items: MenuItem[]): MenuItem[] => items
-      .filter(item => managesOrganization
-        || item.nombreMenu !== 'Estudiantes'
-        || !organizationOnlyStudentActions.has(String(item.accion || '').toUpperCase()))
-      .map(item => ({
-        ...item,
-        permisoHijoListDto: filterItems(item.permisoHijoListDto || [])
-      }));
-
-    return filterItems(MENU_BASE);
-  }
   private sortMenuItems(menuItems: MenuItem[]): any[] {
     return menuItems.sort((a, b) => {
       const orderCompare = (a.orden || 0) - (b.orden || 0);
@@ -504,7 +471,7 @@ export class AuthenticationService {
     });
   }
   private getActionPriority(accion: any): number {
-    const actionOrder = ['LISTAR','VER', 'CREAR', 'EDITAR', 'ACTUALIZAR', 'VALIDAR', 'ANULAR', 'GENERAR TICKET', 'CAMBIAR-HORARIO', 'EXPORTAR', 'BLOQUEAR', 'ELIMINAR'];
+    const actionOrder = ['LISTAR','VER', 'CREAR', 'ACTUALIZAR', 'VALIDAR', 'ANULAR', 'GENERAR TICKET', 'CAMBIAR-HORARIO', 'EXPORTAR', 'BLOQUEAR'];
     const index = actionOrder.indexOf(accion);
     return index !== -1 ? index : actionOrder.length;
   }

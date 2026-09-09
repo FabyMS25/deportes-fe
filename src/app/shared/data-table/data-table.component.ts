@@ -147,7 +147,7 @@ export class DataTableComponent implements OnChanges {
       ...(actions.records ? [{ tooltip: 'Historial', icon: 'ri-file-list-3-line', handler: () => this.recordsItem(data), buttonClass: '' }] : []),
       ...(actions.consult ? [{ tooltip: 'Consultar', icon: 'ri-restart-fill', handler: () => this.consultItem(data), buttonClass: 'text-primary d-inline-block edit-item-btn' }] : []),
       ...(actions.validate && this.canShow('validate',data)? [{ tooltip: 'Validar', icon: 'ri-toggle-fill', handler: () => this.validateItem(data), buttonClass: 'text-primary d-inline-block edit-item-btn' }] : []),
-      ...(actions.edit && this.canShow('Editar',data)? [{ tooltip: 'Editar', icon: 'ri-pencil-fill', handler: () => this.editItem(data), buttonClass: 'text-primary edit-item-btn' }] : []),
+      ...(actions.edit && this.canShow('Actualizar',data)? [{ tooltip: 'Actualizar', icon: 'ri-pencil-fill', handler: () => this.editItem(data), buttonClass: 'text-primary edit-item-btn' }] : []),
       ...((actions.close && this.canShow(actions.close,data,)) ? [{ tooltip: actions.close, icon: 'ri-close-circle-line', handler: () => this.closeItem(data), buttonClass: 'text-danger remove-item-btn' }] : []),
       ...((actions.check && this.canShow(actions.check,data,)) ? [{ tooltip: actions.check, icon: 'ri-checkbox-circle-line', handler: () => this.checkItem(data), buttonClass: 'text-success' }] : []),
       ...((actions.process && this.canShow(actions.process, data)) ? [{
@@ -167,7 +167,7 @@ export class DataTableComponent implements OnChanges {
   canShow(action:string,data: any): boolean {
     const reserva = data?.reservaDto || data;
     switch(action){
-      case 'Editar':
+      case 'Actualizar':
         return data?.puedeGestionar === false
           ? false
           : reserva?.estadoReserva ? reserva.estadoReserva === statusData.EstadoReserva.PENDIENTE : true

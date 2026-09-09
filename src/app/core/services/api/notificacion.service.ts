@@ -105,7 +105,7 @@ export class NotificacionService {
   }
 
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar notificación (${uuid})`)
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular notificación (${uuid})`)
       .pipe(tap(() => {
         const removed = this.notificationsSubject.value.find(item => item.uuid === uuid);
         this.notificationsSubject.next(this.notificationsSubject.value.filter(item => item.uuid !== uuid));

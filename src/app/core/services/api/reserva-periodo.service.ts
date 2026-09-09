@@ -79,6 +79,6 @@ export class ReservaPeriodoService {
   }
 
   delete(uuid: string): Observable<ReservaPeriodo> {
-    return apiDelete<ReservaPeriodo>(this.http, `${this.apiUrl}/${uuid}`, `eliminar reserva periodo (${uuid})`);
+    return apiDelete<ReservaPeriodo>(this.http, `${this.apiUrl}/${uuid}`, `anular reserva periodo (${uuid})`);
   }
 }

@@ -31,6 +31,6 @@ export class TableroService {
   }
 
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar tablero (${uuid})`);
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular tablero (${uuid})`);
   }
 }

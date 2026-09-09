@@ -10,7 +10,7 @@
       <i class="ri-account-circle-line me-2"></i>Agregar Contribuyente
     </h5>
     <h5 class="modal-title" *ngIf="accion === 'edit'" ngbAutofocus>
-      <i class="ri-account-circle-fill me-2"></i>Editar Datos de Contribuyente
+      <i class="ri-account-circle-fill me-2"></i>Actualizar Datos de Contribuyente
     </h5>
     <h5 class="modal-title" *ngIf="accion === 'show'" ngbAutofocus>
       <i class="ri-eye-line me-2"></i>Ver Contribuyente
@@ -283,7 +283,7 @@
           <div class="card border mb-3" *ngIf="showEstudianteForm">
             <div class="card-body">
               <h6 class="card-title">
-                {{ editingEstudianteIndex >= 0 ? 'Editar' : 'Nuevo' }} Estudiante
+                {{ editingEstudianteIndex >= 0 ? 'Actualizar' : 'Nuevo' }} Estudiante
               </h6>              
               <form [formGroup]="estudianteForm">
                 <div class="row g-3">
@@ -410,7 +410,7 @@
                     </td>
                     <td>
                       <button type="button" class="btn btn-sm btn-soft-primary me-1" 
-                        (click)="editEstudiante(i)" title="Editar">
+                        (click)="editEstudiante(i)" title="Actualizar">
                         <i class="ri-edit-line"></i>
                       </button>
                       <button type="button" class="btn btn-sm btn-soft-danger" 

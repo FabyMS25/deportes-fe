@@ -34,6 +34,6 @@ export class ReservaTarifaDetalleService {
   }
 
   delete(uuid: string): Observable<any> {
-    return apiDelete<any>(this.http, `${this.apiUrl}/${uuid}`, `eliminar detalle de tarifa (${uuid})`);
+    return apiDelete<any>(this.http, `${this.apiUrl}/${uuid}`, `anular detalle de tarifa (${uuid})`);
   }
 }

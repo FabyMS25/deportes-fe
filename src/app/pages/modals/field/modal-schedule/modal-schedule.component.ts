@@ -343,7 +343,7 @@ export class ModalScheduleComponent implements OnInit {
   removeHorarioExcepcion(index: number) {
     const excepcion = this.horariosExcepciones.at(index);
     if (this.isPastException(index)) {
-      this.notify('No se pueden eliminar excepciones pasadas', 'warning');
+      this.notify('No se pueden anular excepciones pasadas', 'warning');
       return;
     }
     const uuid = excepcion.get('uuid')?.value;

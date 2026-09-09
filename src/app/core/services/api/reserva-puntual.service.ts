@@ -126,6 +126,6 @@ export class ReservaPuntualService {
   }
 
   delete(uuid: string): Observable<any> {
-    return apiDelete<any>(this.http, `${this.apiUrl}/${uuid}`, `eliminar reserva puntual (${uuid})`);
+    return apiDelete<any>(this.http, `${this.apiUrl}/${uuid}`, `anular reserva puntual (${uuid})`);
   }
 }

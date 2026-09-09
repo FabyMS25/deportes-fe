@@ -47,6 +47,6 @@ export class PassResetsService {
   }
 
   delete(uuid: string): Observable<string> {
-    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `eliminar recuperación de contraseña (${uuid})`);
+    return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular recuperación de contraseña (${uuid})`);
   }
 }
