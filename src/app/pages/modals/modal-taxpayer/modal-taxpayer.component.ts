@@ -63,6 +63,7 @@ export class ModalTaxpayerComponent implements OnInit {
   systemConfigList: ConfiguracionSistema[] = [];
   organizationsList: Organizacion[] = [];
   estudiantesList: EstudianteEscuela[] = [];
+  estudianteBusqueda = '';
 
   civilStatus = UserCivilStatus;
   identityTypes = UserDocType;
@@ -108,12 +109,32 @@ export class ModalTaxpayerComponent implements OnInit {
 
   get escuelasDisponiblesParaInscripcion(): Organizacion[] {
     const schools = new Map<string, Organizacion>();
-    [...this.organizationsList, ...this.organizacionesTemporales].forEach((org) => {
-      if (org.uuid && org.activo !== false && org.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL) {
+    const currentOrg = this.editingEstudianteIndex >= 0
+      ? this.estudiantesTemporales[this.editingEstudianteIndex]?.organizacionDto
+      : null;
+    [...this.organizacionesTemporales, currentOrg].forEach((org) => {
+      if (org?.uuid && org.activo !== false && org.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL) {
         schools.set(org.uuid, org);
       }
     });
     return Array.from(schools.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }
+
+  get estudiantesDisponiblesParaRelacion(): EstudianteEscuela[] {
+    const q = this.normalizeText(this.estudianteBusqueda);
+    const byStudent = new Map<string, EstudianteEscuela>();
+    this.estudiantesList.forEach((student) => {
+      const key = student.estudianteUuid || student.uuid;
+      if (!key || byStudent.has(key)) return;
+      byStudent.set(key, student);
+    });
+    return Array.from(byStudent.values())
+      .filter((student) => !q || [
+        student.nombreCompleto,
+        student.numeroDocumento,
+        student.matricula
+      ].some(value => this.normalizeText(value).includes(q)))
+      .slice(0, 25);
   }
 
   vincularOrganizacion(org: Organizacion): void {
@@ -126,13 +147,8 @@ export class ModalTaxpayerComponent implements OnInit {
     return this.organizacionesVinculadas.find(v => v.organizacionDto?.uuid === uuid);
   }
 
-  esPrincipal(org: Organizacion): boolean {
-    return !!this.row?.uuid && org.representanteDto?.uuid === this.row.uuid;
-  }
-
   desvincularOrganizacion(index: number): void {
     const org = this.organizacionesTemporales[index];
-    if (this.esPrincipal(org)) return;
     this.organizacionesVinculadas = this.organizacionesVinculadas.filter(v => v.organizacionDto?.uuid !== org.uuid);
     this.organizacionesTemporales.splice(index, 1);
   }
@@ -307,6 +323,7 @@ export class ModalTaxpayerComponent implements OnInit {
     this.estudianteForm = this.formBuilder.group({
       uuid: [null],
       estudianteUuid: [null],
+      existingStudentUuid: [''],
       nombreCompleto: ['', [Validators.required, Validators.maxLength(250)]],
       fechaNacimiento: [''],
       genero: [''],
@@ -496,18 +513,31 @@ export class ModalTaxpayerComponent implements OnInit {
   toggleEstudianteForm(): void {
     this.showEstudianteForm = !this.showEstudianteForm;
     if (!this.showEstudianteForm) {
-      this.estudianteForm.reset({ activo: true, fechaInscripcion: new Date().toISOString().split('T')[0] });
+      this.estudianteForm.reset({
+        activo: true,
+        fechaInscripcion: new Date().toISOString().split('T')[0],
+        existingStudentUuid: ''
+      });
+      this.estudianteBusqueda = '';
       this.editingEstudianteIndex = -1;
     }
   }
 
-  async addOrUpdateEstudiante(): Promise<void> {
+  async addOrUpdateEstudiante(): Promise<boolean> {
     if (this.estudianteForm.invalid) {
       this.markAllFieldsAsTouched(this.estudianteForm);
       this.notify('Complete todos los campos requeridos del estudiante', 'warning');
-      return;
+      return false;
     }
     const data = this.estudianteForm.getRawValue();
+    if (this.yaExisteRelacionEstudianteEscuela(data.estudianteUuid || data.existingStudentUuid, data.organizacionUuid)) {
+      this.notify('Este estudiante ya está registrado bajo esa escuela en esta lista', 'warning');
+      return false;
+    }
+    if (data.existingStudentUuid && !data.estudianteUuid) {
+      data.estudianteUuid = data.existingStudentUuid;
+    }
+    delete data.existingStudentUuid;
     const escuela = this.findEscuelaDisponible(data.organizacionUuid);
     data.organizacionDto = escuela || { uuid: data.organizacionUuid };
 
@@ -541,8 +571,8 @@ export class ModalTaxpayerComponent implements OnInit {
           'success'
         );
       } catch (error: any) {
-        this.notify(error?.message || 'No se pudo guardar la inscripción del estudiante', 'error');
-        return;
+        this.notify(error?.message || 'No se pudo guardar la relación estudiante-escuela', 'error');
+        return false;
       }
     } else {
       if (this.editingEstudianteIndex >= 0) {
@@ -554,18 +584,48 @@ export class ModalTaxpayerComponent implements OnInit {
     }
     this.updatePuedeReservarGratis();
     this.toggleEstudianteForm();
+    return true;
   }
 
   editEstudiante(index: number): void {
     const est = this.estudiantesTemporales[index];
     this.estudianteForm.patchValue({
       ...est,
+      existingStudentUuid: est.estudianteUuid || '',
       organizacionUuid: est.organizacionDto?.uuid || '',
       fechaNacimiento: this.toDateInputValue(est.fechaNacimiento),
       fechaInscripcion: this.toDateInputValue(est.fechaInscripcion),
     });
     this.editingEstudianteIndex = index;
     this.showEstudianteForm = true;
+  }
+
+  onExistingStudentChange(estudianteUuid: string): void {
+    const selected = this.estudiantesDisponiblesParaRelacion.find(item =>
+      (item.estudianteUuid || item.uuid) === estudianteUuid);
+    if (!selected) return;
+    this.estudianteForm.patchValue({
+      estudianteUuid: selected.estudianteUuid || selected.uuid,
+      nombreCompleto: selected.nombreCompleto || '',
+      fechaNacimiento: this.toDateInputValue(selected.fechaNacimiento),
+      genero: selected.genero || '',
+      numeroDocumento: selected.numeroDocumento || '',
+      telefono: selected.telefono || '',
+      email: selected.email || ''
+    });
+    this.estudianteBusqueda = '';
+  }
+
+  estudianteLabel(estudiante: EstudianteEscuela): string {
+    const documento = estudiante.numeroDocumento ? ` — ${estudiante.numeroDocumento}` : '';
+    return `${estudiante.nombreCompleto || 'Sin nombre'}${documento}`;
+  }
+
+  private yaExisteRelacionEstudianteEscuela(estudianteUuid?: string, organizacionUuid?: string): boolean {
+    if (!estudianteUuid || !organizacionUuid || this.editingEstudianteIndex >= 0) return false;
+    return this.estudiantesTemporales.some((est) =>
+      (est.estudianteUuid || est.uuid) === estudianteUuid
+      && (est.organizacionUuid || est.organizacionDto?.uuid) === organizacionUuid);
   }
 
   private findEscuelaDisponible(uuid?: string): Organizacion | undefined {
@@ -744,6 +804,14 @@ export class ModalTaxpayerComponent implements OnInit {
       this.setActiveTab('basic');
       this.submitted = false;
       return;
+    }
+
+    if (this.showEstudianteForm && this.estudianteForm.dirty) {
+      const agregado = await this.addOrUpdateEstudiante();
+      if (!agregado) {
+        this.submitted = false;
+        return;
+      }
     }
 
     // ── Final user status ───────────────────────────────────────────────────
@@ -1186,7 +1254,7 @@ export class ModalTaxpayerComponent implements OnInit {
 
   private getStudents(): void {
     this.estudianteEscuelaService.getAll().subscribe({
-      next: (data: any) => { this.estudiantesList = data; },
+      next: (data: any) => { this.estudiantesList = data?.content || data || []; },
     });
   }
 
@@ -1370,6 +1438,14 @@ export class ModalTaxpayerComponent implements OnInit {
     }
 
     return rawMessage || 'No se pudo guardar los datos del contribuyente. Intente nuevamente.';
+  }
+
+  private normalizeText(value: unknown): string {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
   }
 
   private extractApiPayload(error: any): any {

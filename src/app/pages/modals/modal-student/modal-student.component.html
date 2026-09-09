@@ -1,10 +1,19 @@
 <div class="modal-header bg-info-subtle p-3">
   <h5 class="modal-title">
     <i class="ri-parent-line me-2"></i>
-    {{ accion === 'show' ? 'Detalle del estudiante' : accion === 'edit' ? 'Editar estudiante' : 'Inscribir estudiante' }}
+    {{ accion === 'show' ? 'Detalle del estudiante' : accion === 'edit' ? 'Editar estudiante' : 'Registrar estudiante' }}
   </h5>
   <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="showLoading" (click)="close()"></button>
 </div>
+
+<nav class="nav nav-tabs px-3 pt-3" aria-label="Estudiante">
+  <button type="button" class="nav-link" [class.active]="activeTab === 'personal'" (click)="activeTab = 'personal'">
+    Información personal
+  </button>
+  <button type="button" class="nav-link" [class.active]="activeTab === 'relacion'" (click)="activeTab = 'relacion'">
+    Escuela y responsable
+  </button>
+</nav>
 
 <form [formGroup]="form" (ngSubmit)="save()">
   <div class="modal-body">
@@ -15,97 +24,135 @@
 
     <div class="alert alert-info py-2" *ngIf="accion === ''">
       <i class="ri-information-line me-1"></i>
-      Seleccione un estudiante existente para reutilizar su identidad. Puede corregir sus datos; la nueva escuela y el tutor se guardarán como una inscripción independiente.
+      Puede crear un estudiante nuevo o buscar uno existente para registrarlo bajo una escuela y un responsable.
     </div>
     <div class="alert alert-warning py-2" *ngIf="accion === 'edit'">
       <i class="ri-information-line me-1"></i>
-      Los datos personales pertenecen al estudiante y sus cambios se verán en todas sus escuelas. La escuela de esta inscripción no se puede cambiar.
+      Los datos personales pertenecen al estudiante. Para registrarlo en otra escuela, cree otra relación con el mismo estudiante.
     </div>
 
-    <div class="row g-3" [class.opacity-50]="showLoading">
-      <div class="col-12" *ngIf="accion === ''">
-        <label class="form-label">Estudiante existente <span class="text-muted">(opcional)</span></label>
-        <ng-select formControlName="existingStudentUuid"
-          [items]="studentSearchResults"
-          bindValue="estudianteUuid"
-          [searchable]="true"
-          [clearable]="true"
-          [typeahead]="studentTypeahead"
-          [minTermLength]="3"
-          typeToSearchText="Escriba al menos 3 caracteres"
-          notFoundText="No se encontraron estudiantes"
-          placeholder="Buscar estudiante existente..."
-          (change)="onExistingStudentChange($event?.estudianteUuid || null)">
-          <ng-template ng-label-tmp let-item="item">{{ existingStudentLabel(item) }}</ng-template>
-          <ng-template ng-option-tmp let-item="item">{{ existingStudentLabel(item) }}</ng-template>
-        </ng-select>
-      </div>
-
-      <div class="col-md-8">
-        <label class="form-label">Nombre completo <span class="text-danger">*</span></label>
-        <input type="text" class="form-control" formControlName="nombreCompleto" placeholder="Nombre completo"
-          [ngClass]="{'is-invalid': submitted && form.controls.nombreCompleto.errors}">
-        <div class="invalid-feedback">El nombre es requerido.</div>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Fecha de nacimiento</label>
-        <input type="date" class="form-control" formControlName="fechaNacimiento">
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Género</label>
-        <select class="form-select" formControlName="genero">
-          <option value="">Sin especificar</option>
-          <option value="F">Femenino</option>
-          <option value="M">Masculino</option>
-          <option value="O">Otro</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Documento</label>
-        <input type="text" class="form-control" formControlName="numeroDocumento" placeholder="Opcional">
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Teléfono</label>
-        <input type="text" class="form-control" formControlName="telefono" placeholder="Opcional">
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Email</label>
-        <input type="email" class="form-control" formControlName="email" placeholder="Opcional"
-          [ngClass]="{'is-invalid': submitted && form.controls.email.errors}">
-        <div class="invalid-feedback">Ingrese un email válido.</div>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Fecha de inscripción <span class="text-danger">*</span></label>
-        <input type="date" class="form-control" formControlName="fechaInscripcion"
-          [ngClass]="{'is-invalid': submitted && form.controls.fechaInscripcion.errors}">
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">Escuela <span class="text-danger">*</span></label>
-        <ng-select formControlName="organizacionUuid" [items]="escuelas" bindLabel="nombre" bindValue="uuid"
-          placeholder="Seleccione una escuela" [clearable]="false"
-          [ngClass]="{'is-invalid': submitted && form.controls.organizacionUuid.errors}">
-        </ng-select>
-        <div class="text-danger small mt-1" *ngIf="submitted && form.controls.organizacionUuid.errors">
-          La escuela es requerida.
+    <div [class.opacity-50]="showLoading">
+      <div class="row g-3" [hidden]="activeTab !== 'personal'">
+        <div class="col-md-8">
+          <label class="form-label">Nombre completo <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" formControlName="nombreCompleto" placeholder="Nombre completo"
+            [ngClass]="{'is-invalid': submitted && form.controls.nombreCompleto.errors}">
+          <div class="invalid-feedback">El nombre es requerido.</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Fecha de nacimiento</label>
+          <input type="date" class="form-control" formControlName="fechaNacimiento">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Género</label>
+          <select class="form-select" formControlName="genero">
+            <option value="">Sin especificar</option>
+            <option value="F">Femenino</option>
+            <option value="M">Masculino</option>
+            <option value="O">Otro</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Documento</label>
+          <input type="text" class="form-control" formControlName="numeroDocumento" placeholder="Opcional">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Teléfono</label>
+          <input type="text" class="form-control" formControlName="telefono" placeholder="Opcional">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" formControlName="email" placeholder="Opcional"
+            [ngClass]="{'is-invalid': submitted && form.controls.email.errors}">
+          <div class="invalid-feedback">Ingrese un email válido.</div>
         </div>
       </div>
-      <div class="col-md-6">
-        <label class="form-label">Tutor / responsable <span class="text-muted">(opcional)</span></label>
-        <ng-select formControlName="contribuyenteUuid" [items]="tutores" bindValue="uuid"
-          [searchable]="true" [clearable]="true" placeholder="Sin tutor asignado">
-          <ng-template ng-label-tmp let-item="item">{{ tutorLabel(item) }}</ng-template>
-          <ng-template ng-option-tmp let-item="item">{{ tutorLabel(item) }}</ng-template>
-        </ng-select>
-        <small class="text-muted">El tutor gestiona esta inscripción; no es propietario del estudiante.</small>
-      </div>
 
-      <div class="col-12" *ngIf="row?.matricula">
-        <div class="border rounded p-2 bg-light">
-          <span class="text-muted me-2">Matrícula:</span><strong>{{ row?.matricula }}</strong>
-          <span class="badge ms-3" [ngClass]="row?.activo ? 'bg-success' : 'bg-secondary'">
-            {{ row?.activo ? 'Activa' : 'Inactiva' }}
-          </span>
+      <div class="row g-3" [hidden]="activeTab !== 'relacion'">
+        <div class="col-12" *ngIf="accion === ''">
+          <label class="form-label">Estudiante existente <span class="text-muted">(opcional)</span></label>
+          <ng-select formControlName="existingStudentUuid"
+            [items]="studentSearchResults"
+            bindValue="estudianteUuid"
+            [searchable]="true"
+            [clearable]="true"
+            [typeahead]="studentTypeahead"
+            [minTermLength]="3"
+            typeToSearchText="Escriba al menos 3 caracteres"
+            notFoundText="No se encontraron estudiantes"
+            placeholder="Buscar estudiante existente..."
+            (change)="onExistingStudentChange($event?.estudianteUuid || null)">
+            <ng-template ng-label-tmp let-item="item">{{ existingStudentLabel(item) }}</ng-template>
+            <ng-template ng-option-tmp let-item="item">{{ existingStudentLabel(item) }}</ng-template>
+          </ng-select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Escuela <span class="text-danger">*</span></label>
+          <ng-select formControlName="organizacionUuid" [items]="escuelas" bindLabel="nombre" bindValue="uuid"
+            placeholder="Seleccione una escuela" [clearable]="false"
+            [ngClass]="{'is-invalid': submitted && form.controls.organizacionUuid.errors}"
+            (change)="onEscuelaChange()">
+          </ng-select>
+          <div class="text-danger small mt-1" *ngIf="submitted && form.controls.organizacionUuid.errors">
+            La escuela es requerida.
+          </div>
+          <small class="text-muted" *ngIf="row">
+            Esta escuela pertenece a la relación actual. Para otra escuela registre una nueva relación del mismo estudiante.
+          </small>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Tutor / responsable <span class="text-muted">(opcional)</span></label>
+          <ng-select formControlName="contribuyenteUuid" [items]="tutoresDisponibles" bindValue="uuid"
+            [searchable]="true" [clearable]="true" placeholder="Sin tutor asignado">
+            <ng-template ng-label-tmp let-item="item">{{ tutorLabel(item) }}</ng-template>
+            <ng-template ng-option-tmp let-item="item">{{ tutorLabel(item) }}</ng-template>
+          </ng-select>
+          <small class="text-muted">Al seleccionar una escuela, se muestran sus representantes disponibles.</small>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Fecha de registro <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" formControlName="fechaInscripcion"
+            [ngClass]="{'is-invalid': submitted && form.controls.fechaInscripcion.errors}">
+        </div>
+        <div class="col-12" *ngIf="row?.matricula">
+          <div class="border rounded p-2 bg-light">
+            <span class="text-muted me-2">Matrícula actual:</span><strong>{{ row?.matricula }}</strong>
+            <span class="badge ms-3" [ngClass]="row?.activo ? 'bg-success' : 'bg-secondary'">
+              {{ row?.activo ? 'Activa' : 'Inactiva' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="col-12" *ngIf="relacionesEstudiante.length > 0">
+          <div class="border rounded">
+            <div class="px-3 py-2 bg-light fw-semibold">Relaciones del estudiante</div>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Escuela / organización</th>
+                    <th>Matrícula</th>
+                    <th>Tutor / responsable</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let relacion of relacionesEstudiante">
+                    <td>{{ relacion.organizacionDto.nombre || 'Sin escuela' }}</td>
+                    <td>{{ relacion.matricula || '-' }}</td>
+                    <td>{{ relationshipTutorLabel(relacion) }}</td>
+                    <td>{{ relacion.fechaInscripcion || '-' }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="relacion.activo ? 'bg-success' : 'bg-secondary'">
+                        {{ relacion.activo ? 'Activa' : 'Inactiva' }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -115,8 +162,14 @@
     <button type="button" class="btn btn-light" [disabled]="showLoading" (click)="close()">
       {{ accion === 'show' ? 'Cerrar' : 'Cancelar' }}
     </button>
+    <button type="button" class="btn btn-outline-primary" *ngIf="accion === 'show'" (click)="enableEdit()">
+      <i class="ri-edit-line me-1"></i>Editar
+    </button>
+    <button type="button" class="btn btn-outline-primary" *ngIf="accion === 'edit'" [disabled]="showLoading" (click)="registrarOtraRelacion()">
+      <i class="ri-add-line me-1"></i>Registrar en otra escuela
+    </button>
     <button type="submit" class="btn btn-primary" *ngIf="accion !== 'show'" [disabled]="showLoading">
-      <i class="ri-save-line me-1"></i>{{ accion === 'edit' ? 'Guardar cambios' : 'Inscribir estudiante' }}
+      <i class="ri-save-line me-1"></i>{{ accion === 'edit' ? 'Guardar cambios' : 'Registrar estudiante' }}
     </button>
   </div>
 </form>

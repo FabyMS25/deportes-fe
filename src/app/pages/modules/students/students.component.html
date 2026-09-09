@@ -45,7 +45,7 @@
     <div class="card-header d-flex justify-content-between align-items-center">
       <div class="text-muted small">
         <i class="ri-information-line me-1"></i>
-        La baja afecta una escuela; el estado general queda inactivo sólo cuando no existen inscripciones activas.
+        Cada fila resume un estudiante; las escuelas y tutores se administran en sus relaciones.
       </div>
       <button class="btn btn-soft-secondary btn-sm ms-2" (click)="toggleViewMode()">
         <i [class]="viewMode === 'table' ? 'ri-grid-fill me-1' : 'ri-list-check me-1'"></i>
@@ -74,7 +74,7 @@
         (selectedItemEmitter)="getSelectedItems($event)"
         [viewMode]="viewMode"
         emptyMessage="No hay estudiantes para mostrar"
-        emptyDescription="Cambie los filtros o registre una nueva inscripción.">
+        emptyDescription="Cambie los filtros o registre una nueva relación estudiante-escuela.">
       </app-data-table>
     </div>
   </div>

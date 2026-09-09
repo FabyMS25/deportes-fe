@@ -30,6 +30,7 @@ export class StudentsComponent implements OnInit {
   escuelaUuid = '';
 
   inscripciones: EstudianteEscuela[] = [];
+  todasLasInscripciones: EstudianteEscuela[] = [];
   inscripcionesFiltradas: EstudianteEscuela[] = [];
   escuelas: Organizacion[] = [];
   tutores: Contribuyente[] = [];
@@ -39,27 +40,21 @@ export class StudentsComponent implements OnInit {
 
   readonly itemsList = [
     { name: 'Nombre', prop: 'nombreCompleto', visible: true, primary: true },
-    { name: 'Matrícula', prop: 'matricula', visible: true },
-    { name: 'Escuela', prop: 'organizacionDto.nombre', visible: true },
-    { name: 'Tutor / responsable', prop: 'contribuyenteDto.nombreCompleto', visible: true, emptyText: 'Sin tutor' },
-    { name: 'Fecha de inscripción', prop: 'fechaInscripcion', visible: true, date: true },
-    { name: 'Estado en escuela', prop: 'estadoInscripcion', visible: true, tag: true },
-    { name: 'Estado del estudiante', prop: 'estadoEstudiante', visible: true, tag: true },
-    { name: 'Fecha de baja', prop: 'fechaBaja', visible: false, date: true },
-    { name: 'Motivo de baja', prop: 'motivoBaja', visible: false }
+    { name: 'Matrículas', prop: 'matriculasTexto', visible: true },
+    { name: 'Escuelas / organizaciones', prop: 'escuelasTexto', visible: true },
+    { name: 'Tutores / responsables', prop: 'responsablesTexto', visible: true },
+    { name: 'Estado en escuelas', prop: 'estadoInscripcion', visible: true, tag: true },
+    { name: 'Estado del estudiante', prop: 'estadoEstudiante', visible: true, tag: true }
   ];
 
   readonly CSV_COLUMNS: CsvColumn<EstudianteEscuela>[] = [
     { header: 'Nombre', value: item => item.nombreCompleto ?? '' },
-    { header: 'Matrícula', value: item => item.matricula ?? '' },
-    { header: 'Escuela', value: item => item.organizacionDto?.nombre ?? '' },
-    { header: 'Tutor / responsable', value: item => String(item.contribuyenteDto?.nombreCompleto ?? '') },
+    { header: 'Matrículas', value: item => item.matriculasTexto ?? item.matricula ?? '' },
+    { header: 'Escuelas / organizaciones', value: item => item.escuelasTexto ?? item.organizacionDto?.nombre ?? '' },
+    { header: 'Tutores / responsables', value: item => item.responsablesTexto ?? item.contribuyenteDto?.nombreCompleto ?? '' },
     { header: 'Documento', value: item => item.numeroDocumento ?? '' },
-    { header: 'Fecha inscripción', value: item => String(item.fechaInscripcion ?? '') },
-    { header: 'Estado inscripción', value: item => item.estadoInscripcion ?? '' },
-    { header: 'Estado estudiante', value: item => item.estadoEstudiante ?? '' },
-    { header: 'Fecha baja', value: item => String(item.fechaBaja ?? '') },
-    { header: 'Motivo baja', value: item => item.motivoBaja ?? '' }
+    { header: 'Estado en escuelas', value: item => item.estadoInscripcion ?? '' },
+    { header: 'Estado estudiante', value: item => item.estadoEstudiante ?? '' }
   ];
 
   constructor(
@@ -106,9 +101,10 @@ export class StudentsComponent implements OnInit {
           item.activo !== false && item.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL
         );
         const escuelasGestionadas = new Set(this.escuelas.map(item => item.uuid));
-        this.inscripciones = this.addCalculatedStatuses(inscripcionesList, escuelasGestionadas);
+        this.todasLasInscripciones = this.addCalculatedStatuses(inscripcionesList, escuelasGestionadas);
+        this.inscripciones = this.groupStudentsForList(this.todasLasInscripciones);
         this.tutores = this.extractList<Contribuyente>(tutores);
-        this.estudiantesExistentes = this.uniqueStudents(this.inscripciones);
+        this.estudiantesExistentes = this.uniqueStudents(this.todasLasInscripciones);
         this.applyFilters();
         this.loading = false;
       },
@@ -124,7 +120,9 @@ export class StudentsComponent implements OnInit {
       backdrop: 'static',
       size: 'lg'
     });
-    modalRef.componentInstance.row = row;
+    const relaciones = row?.relacionesEstudiante?.length ? row.relacionesEstudiante : (row ? [row] : []);
+    modalRef.componentInstance.row = relaciones[0] || row;
+    modalRef.componentInstance.relacionesEstudiante = relaciones;
     modalRef.componentInstance.accion = accion;
     modalRef.componentInstance.escuelas = this.escuelas;
     modalRef.componentInstance.tutores = this.tutores;
@@ -133,10 +131,11 @@ export class StudentsComponent implements OnInit {
   }
 
   async darDeBaja(row: EstudianteEscuela): Promise<void> {
-    if (!row.uuid || !row.activo) return;
+    const target = await this.pickRelationship(row, 'Seleccione la escuela que desea dar de baja', item => !!item.uuid && item.activo);
+    if (!target?.uuid) return;
     const result = await Swal.fire({
       title: 'Dar de baja de la escuela',
-      html: `<p class="mb-2"><strong>${this.escapeHtml(row.nombreCompleto)}</strong> dejará de estar activo en <strong>${this.escapeHtml(row.organizacionDto?.nombre)}</strong>.</p><small>El estudiante, la matrícula y el historial no se eliminarán.</small>`,
+      html: `<p class="mb-2"><strong>${this.escapeHtml(target.nombreCompleto)}</strong> dejará de estar activo en <strong>${this.escapeHtml(target.organizacionDto?.nombre)}</strong>.</p><small>El estudiante, la matrícula y el historial no se eliminarán.</small>`,
       input: 'textarea',
       inputLabel: 'Motivo de baja (opcional)',
       inputPlaceholder: 'Escriba el motivo...',
@@ -147,7 +146,7 @@ export class StudentsComponent implements OnInit {
       confirmButtonColor: '#d33'
     });
     if (!result.isConfirmed) return;
-    this.estudiantesService.darDeBaja(row.uuid, String(result.value ?? '')).subscribe({
+    this.estudiantesService.darDeBaja(target.uuid, String(result.value ?? '')).subscribe({
       next: () => {
         Swal.fire('Inscripción inactiva', 'La baja fue registrada y el historial se conservó.', 'success');
         this.loadData();
@@ -157,17 +156,18 @@ export class StudentsComponent implements OnInit {
   }
 
   async desvincularTutor(row: EstudianteEscuela): Promise<void> {
-    if (!row.uuid || !row.contribuyenteDto) return;
+    const target = await this.pickRelationship(row, 'Seleccione la relación donde desea quitar el tutor', item => !!item.uuid && !!item.contribuyenteDto);
+    if (!target?.uuid || !target.contribuyenteDto) return;
     const result = await Swal.fire({
       title: 'Desvincular tutor',
-      text: `Se quitará a ${row.contribuyenteDto.nombreCompleto ?? 'este tutor'} como responsable de esta inscripción. El estudiante seguirá activo en la escuela.`,
+      text: `Se quitará a ${target.contribuyenteDto.nombreCompleto ?? 'este tutor'} como responsable de esta inscripción. El estudiante seguirá activo en la escuela.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Desvincular',
       cancelButtonText: 'Cancelar'
     });
     if (!result.isConfirmed) return;
-    this.estudiantesService.quitarResponsable(row.uuid).subscribe({
+    this.estudiantesService.quitarResponsable(target.uuid).subscribe({
       next: () => {
         Swal.fire('Tutor desvinculado', 'La inscripción continúa activa y ahora no tiene tutor asignado.', 'success');
         this.loadData();
@@ -177,7 +177,8 @@ export class StudentsComponent implements OnInit {
   }
 
   async habilitar(row: EstudianteEscuela): Promise<void> {
-    if (!row.uuid || row.activo || row.reactivacionBloqueada) return;
+    const target = await this.pickRelationship(row, 'Seleccione la inscripción que desea habilitar', item => !!item.uuid && !item.activo && !item.reactivacionBloqueada);
+    if (!target?.uuid) return;
     const result = await Swal.fire({
       title: 'Habilitar estudiante',
       text: 'Se creará una nueva inscripción activa y una nueva matrícula. La inscripción anterior permanecerá en el historial.',
@@ -187,7 +188,7 @@ export class StudentsComponent implements OnInit {
       cancelButtonText: 'Cancelar'
     });
     if (!result.isConfirmed) return;
-    this.estudiantesService.reactivar(row.uuid).subscribe({
+    this.estudiantesService.reactivar(target.uuid).subscribe({
       next: () => {
         Swal.fire('Estudiante habilitado', 'La nueva inscripción fue creada correctamente.', 'success');
         this.loadData();
@@ -202,12 +203,15 @@ export class StudentsComponent implements OnInit {
       const matchesSearch = !term || [
         item.nombreCompleto,
         item.matricula,
+        item.matriculasTexto,
         item.numeroDocumento,
         item.organizacionDto?.nombre,
-        item.contribuyenteDto?.nombreCompleto
+        item.escuelasTexto,
+        item.contribuyenteDto?.nombreCompleto,
+        item.responsablesTexto
       ].some(value => this.normalize(value).includes(term));
       const matchesStatus = !this.estado || item.estadoInscripcion === this.estado;
-      const matchesSchool = !this.escuelaUuid || item.organizacionDto?.uuid === this.escuelaUuid;
+      const matchesSchool = !this.escuelaUuid || item.escuelaUuids?.includes(this.escuelaUuid) || item.organizacionDto?.uuid === this.escuelaUuid;
       return matchesSearch && matchesStatus && matchesSchool;
     });
     this.selectedItems = this.selectedItems.filter(selected =>
@@ -252,6 +256,40 @@ export class StudentsComponent implements OnInit {
     }));
   }
 
+  private groupStudentsForList(items: EstudianteEscuela[]): EstudianteEscuela[] {
+    const groups = new Map<string, EstudianteEscuela[]>();
+    items.forEach(item => {
+      const key = item.estudianteUuid || item.uuid || `${item.nombreCompleto}|${item.numeroDocumento}`;
+      const list = groups.get(key) || [];
+      list.push(item);
+      groups.set(key, list);
+    });
+
+    return [...groups.values()].map(relaciones => {
+      const ordered = [...relaciones].sort((a, b) => Number(b.activo) - Number(a.activo));
+      const base = ordered[0];
+      const escuelas = this.uniqueText(ordered.map(item => {
+        const nombre = item.organizacionDto?.nombre;
+        if (!nombre) return '';
+        return `${nombre} (${item.activo ? 'Activa' : 'Inactiva'})`;
+      }));
+      const responsables = this.uniqueText(ordered.map(item => String(item.contribuyenteDto?.nombreCompleto || 'Sin tutor asignado')));
+      const matriculas = this.uniqueText(ordered.map(item => item.matricula));
+      const hasActive = ordered.some(item => item.activo);
+      return {
+        ...base,
+        relacionesEstudiante: ordered,
+        escuelasTexto: escuelas.join(', '),
+        responsablesTexto: responsables.join(', '),
+        matriculasTexto: matriculas.join(', '),
+        escuelaUuids: this.uniqueText(ordered.map(item => item.organizacionDto?.uuid)),
+        estadoInscripcion: (hasActive ? 'ACTIVA' : 'INACTIVA') as 'ACTIVA' | 'INACTIVA',
+        estadoEstudiante: (hasActive ? 'ACTIVO' : 'INACTIVO') as 'ACTIVO' | 'INACTIVO',
+        puedeGestionar: ordered.some(item => item.puedeGestionar)
+      };
+    }).sort((a, b) => String(a.nombreCompleto ?? '').localeCompare(String(b.nombreCompleto ?? ''), 'es'));
+  }
+
   private uniqueStudents(items: EstudianteEscuela[]): EstudianteEscuela[] {
     const unique = new Map<string, EstudianteEscuela>();
     items.forEach(item => {
@@ -259,6 +297,44 @@ export class StudentsComponent implements OnInit {
     });
     return [...unique.values()].sort((a, b) =>
       String(a.nombreCompleto ?? '').localeCompare(String(b.nombreCompleto ?? ''), 'es'));
+  }
+
+  private uniqueText(values: Array<string | undefined | null>): string[] {
+    return [...new Set(values.map(value => String(value ?? '').trim()).filter(Boolean))];
+  }
+
+  private relationshipsFor(row: EstudianteEscuela): EstudianteEscuela[] {
+    return row.relacionesEstudiante?.length ? row.relacionesEstudiante : [row];
+  }
+
+  private async pickRelationship(
+    row: EstudianteEscuela,
+    title: string,
+    predicate: (item: EstudianteEscuela) => boolean
+  ): Promise<EstudianteEscuela | undefined> {
+    const relaciones = this.relationshipsFor(row).filter(predicate);
+    if (relaciones.length === 0) {
+      await Swal.fire('Sin relación disponible', 'No hay una relación que pueda procesarse con esta acción.', 'info');
+      return undefined;
+    }
+    if (relaciones.length === 1) return relaciones[0];
+    const inputOptions = relaciones.reduce((options, item) => {
+      if (item.uuid) {
+        options[item.uuid] = `${item.organizacionDto?.nombre ?? 'Escuela'} - ${item.matricula ?? 'sin matrícula'} - ${item.activo ? 'Activa' : 'Inactiva'}`;
+      }
+      return options;
+    }, {} as Record<string, string>);
+    const result = await Swal.fire({
+      title,
+      input: 'select',
+      inputOptions,
+      inputPlaceholder: 'Seleccione una relación',
+      showCancelButton: true,
+      confirmButtonText: 'Continuar',
+      cancelButtonText: 'Cancelar'
+    });
+    if (!result.isConfirmed || !result.value) return undefined;
+    return relaciones.find(item => item.uuid === result.value);
   }
 
   private extractList<T>(value: unknown): T[] {

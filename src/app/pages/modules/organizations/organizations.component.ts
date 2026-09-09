@@ -45,10 +45,10 @@ export class OrganizationsComponent implements OnInit {
     { header: 'Personería Jurídica', value: item => item.personeriaJuridica ?? '' },
     { header: 'NIT', value: item => item.nroNit ?? '' },
     { header: 'Estado', value: item => item.activo ? 'Activo' : 'Inactivo' },
-    { header: 'Representante', value: item => item.representanteDto?.nombreCompleto ?? ''},
-    { header: 'Documento Representante', value: item => item.representanteDto?.numeroDocumento ?? ''},
-    { header: 'Email Representante', value: item => item.representanteDto?.email ?? ''},
-    { header: 'Teléfono Representante', value: item => item.representanteDto?.telefono ?? ''},
+    { header: 'Representantes', value: item => item.representantesTexto ?? ''},
+    { header: 'Documentos Representantes', value: item => item.representantesDocumentos ?? ''},
+    { header: 'Emails Representantes', value: item => item.representantesEmails ?? ''},
+    { header: 'Teléfonos Representantes', value: item => item.representantesTelefonos ?? ''},
     { header: 'Fecha Creación', value: item =>    item.fechaCreacion
           ? new Date(item.fechaCreacion).toLocaleDateString('es-BO') : '' }
   ];
@@ -84,10 +84,10 @@ export class OrganizationsComponent implements OnInit {
       { name: 'Personería Jurídica', prop: 'personeriaJuridica', visible: false },
       { name: 'NIT', prop: 'nroNit', visible: false },
       { name: 'Estado', prop: 'activo', tag: true, visible: true },
-      { name: 'Representante', prop: 'representanteDto.nombreCompleto', visible: true },
-      { name: 'Documento Representante', prop: 'representanteDto.numeroDocumento', visible: false },
-      { name: 'Email Representante', prop: 'representanteDto.email', visible: false },
-      { name: 'Teléfono Representante', prop: 'representanteDto.telefono', visible: false },
+      { name: 'Representantes', prop: 'representantesTexto', visible: true },
+      { name: 'Documentos Representantes', prop: 'representantesDocumentos', visible: false },
+      { name: 'Emails Representantes', prop: 'representantesEmails', visible: false },
+      { name: 'Teléfonos Representantes', prop: 'representantesTelefonos', visible: false },
       { name: 'Fecha Creación', prop: 'fechaCreacion', visible: false, date: true },
     ];
     this.getOrganizations();
@@ -154,10 +154,10 @@ export class OrganizationsComponent implements OnInit {
         item.direccion,
         item.personeriaJuridica,
         item.nroNit,
-        item.representanteDto?.nombreCompleto,
-        item.representanteDto?.numeroDocumento,
-        item.representanteDto?.email,
-        item.representanteDto?.telefono
+        item.representantesTexto,
+        item.representantesDocumentos,
+        item.representantesEmails,
+        item.representantesTelefonos
       ].some(value =>
         this.normalizeFilterText(value).includes(search)
       );
@@ -195,6 +195,18 @@ export class OrganizationsComponent implements OnInit {
       matchesOrganizationType
     );
   }
+  private withRepresentativeSummary(item: Organizacion): Organizacion {
+    const reps = item.representantesDto?.map(value => value.contribuyenteDto).filter(Boolean) || [];
+    const unique = (values: Array<string | undefined>) => [...new Set(values.map(value => String(value ?? '').trim()).filter(Boolean))].join(', ');
+    return {
+      ...item,
+      representantesTexto: unique(reps.map(rep => String(rep?.nombreCompleto || [rep?.nombre, rep?.primerApellido, rep?.segundoApellido].filter(Boolean).join(' ')))),
+      representantesDocumentos: unique(reps.map(rep => rep?.numeroDocumento)),
+      representantesEmails: unique(reps.map(rep => rep?.email)),
+      representantesTelefonos: unique(reps.map(rep => rep?.telefono))
+    };
+  }
+
   private normalizeFilterText(value: unknown): string {
     return String(value ?? '')
       .normalize('NFD')
@@ -214,10 +226,10 @@ export class OrganizationsComponent implements OnInit {
       item.direccion?.toLowerCase().includes(term) ||
       item.personeriaJuridica?.toLowerCase().includes(term) ||
       item.nroNit?.toLowerCase().includes(term) ||
-      item.representanteNombre?.toLowerCase().includes(term) ||
-      item.representanteDocumento?.toLowerCase().includes(term) ||
-      item.representanteEmail?.toLowerCase().includes(term) ||
-      item.representanteTelefono?.toLowerCase().includes(term)
+      item.representantesTexto?.toLowerCase().includes(term) ||
+      item.representantesDocumentos?.toLowerCase().includes(term) ||
+      item.representantesEmails?.toLowerCase().includes(term) ||
+      item.representantesTelefonos?.toLowerCase().includes(term)
     );
   }
 
@@ -244,10 +256,11 @@ export class OrganizationsComponent implements OnInit {
         let organizations: Organizacion[] =
           data?.content ?? data ?? [];
 
+        organizations = organizations.map(item => this.withRepresentativeSummary(item));
+
         if (this.contribuyente) {
           organizations = organizations.filter(item =>
-            item.representanteDto?.uuid ===
-            this.contribuyente.uuid || item.representantesDto?.some(r => r.contribuyenteDto?.uuid === this.contribuyente.uuid)
+            item.representantesDto?.some(r => r.contribuyenteDto?.uuid === this.contribuyente.uuid)
           );
         }
 

@@ -21,6 +21,7 @@ import { EstudianteEscuelaService } from 'src/app/core/services/api/estudianteEs
 export class ModalStudentComponent implements OnInit, OnDestroy {
   @Input() accion: '' | 'edit' | 'show' = '';
   @Input() row?: EstudianteEscuela;
+  @Input() relacionesEstudiante: EstudianteEscuela[] = [];
   @Input() escuelas: Organizacion[] = [];
   @Input() tutores: Contribuyente[] = [];
   @Input() estudiantesExistentes: EstudianteEscuela[] = [];
@@ -29,6 +30,7 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
   submitted = false;
   showLoading = false;
   selectedExistingStudent = false;
+  activeTab: 'personal' | 'relacion' = 'personal';
   studentSearchResults: EstudianteEscuela[] = [];
   readonly studentTypeahead = new Subject<string>();
   private readonly destroy$ = new Subject<void>();
@@ -59,6 +61,10 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(term => this.searchExistingStudents(term));
 
+    if (!this.relacionesEstudiante.length && this.row) {
+      this.relacionesEstudiante = this.row.relacionesEstudiante?.length ? this.row.relacionesEstudiante : [this.row];
+    }
+
     if (this.row) {
       this.form.patchValue({
         nombreCompleto: this.row.nombreCompleto ?? '',
@@ -74,11 +80,10 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
       this.form.controls.existingStudentUuid.disable({ emitEvent: false });
       this.form.controls.organizacionUuid.disable({ emitEvent: false });
     } else {
-      // A contributor with one managed school can register directly there.
       if (this.escuelas.length === 1) {
         this.form.controls.organizacionUuid.setValue(this.escuelas[0].uuid ?? '', { emitEvent: false });
+        this.onEscuelaChange();
       }
-      // For contributors the only available tutor is the authenticated contributor.
       if (this.tutores.length === 1) {
         this.form.controls.contribuyenteUuid.setValue(this.tutores[0].uuid ?? '', { emitEvent: false });
       }
@@ -86,9 +91,60 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
     if (this.accion === 'show') this.form.disable({ emitEvent: false });
   }
 
+  get tutoresDisponibles(): Contribuyente[] {
+    const escuelaUuid = this.form.controls.organizacionUuid.value;
+    const escuela = this.escuelas.find(item => item.uuid === escuelaUuid);
+    const representantes = (escuela?.representantesDto || [])
+      .map(value => value.contribuyenteDto)
+      .filter((value): value is Contribuyente => !!value);
+    if (!representantes.length && escuela?.representanteDto) {
+      representantes.push(escuela.representanteDto);
+    }
+    return representantes.length ? representantes : this.tutores;
+  }
+
+  onEscuelaChange(): void {
+    const selectedTutor = this.form.controls.contribuyenteUuid.value;
+    if (selectedTutor && !this.tutoresDisponibles.some(tutor => tutor.uuid === selectedTutor)) {
+      this.form.controls.contribuyenteUuid.setValue('', { emitEvent: false });
+    }
+    if (!this.form.controls.contribuyenteUuid.value && this.tutoresDisponibles.length === 1) {
+      this.form.controls.contribuyenteUuid.setValue(this.tutoresDisponibles[0].uuid ?? '', { emitEvent: false });
+    }
+  }
+
+  registrarOtraRelacion(): void {
+    const value = this.form.getRawValue();
+    const estudianteUuid = this.row?.estudianteUuid || value.existingStudentUuid;
+    this.row = undefined;
+    this.accion = '';
+    this.form.enable({ emitEvent: false });
+    this.form.patchValue({
+      existingStudentUuid: estudianteUuid || '',
+      nombreCompleto: value.nombreCompleto || '',
+      fechaNacimiento: value.fechaNacimiento || '',
+      genero: value.genero || '',
+      numeroDocumento: value.numeroDocumento || '',
+      telefono: value.telefono || '',
+      email: value.email || '',
+      organizacionUuid: '',
+      contribuyenteUuid: '',
+      fechaInscripcion: this.today()
+    });
+    this.form.controls.existingStudentUuid.disable({ emitEvent: false });
+    this.activeTab = 'relacion';
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  enableEdit(): void {
+    this.accion = 'edit';
+    this.form.enable({ emitEvent: false });
+    this.form.controls.existingStudentUuid.disable({ emitEvent: false });
+    if (this.row) this.form.controls.organizacionUuid.disable({ emitEvent: false });
   }
 
   onExistingStudentChange(estudianteUuid: string | null): void {
@@ -111,8 +167,6 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
         telefono: selected.telefono ?? '',
         email: selected.email ?? ''
       });
-      // Selecting an existing student reuses the identity, but does not lock it.
-      // Personal-data changes intentionally apply to all of that student's enrollments.
       personalControls.forEach(control => control.enable({ emitEvent: false }));
     } else {
       this.form.patchValue({
@@ -127,6 +181,8 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
     this.submitted = true;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.activeTab = this.form.controls.organizacionUuid.invalid || this.form.controls.fechaInscripcion.invalid
+        ? 'relacion' : 'personal';
       return;
     }
     const value = this.form.getRawValue();
@@ -162,8 +218,8 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
         this.activeModal.close(saved);
         Swal.fire({
           text: this.accion === 'edit'
-            ? 'Estudiante e inscripción actualizados correctamente.'
-            : `Estudiante inscrito correctamente. Matrícula: ${saved.matricula ?? 'generada'}`,
+            ? 'Estudiante y relación con escuela actualizados correctamente.'
+            : `Estudiante registrado correctamente. Matrícula: ${saved.matricula ?? 'generada'}`,
           icon: 'success',
           confirmButtonColor: '#299cdb'
         });
@@ -183,6 +239,10 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
     const name = String(tutor.nombreCompleto ||
       [tutor.nombre, tutor.primerApellido, tutor.segundoApellido].filter(Boolean).join(' '));
     return tutor.numeroDocumento ? `${name} — ${tutor.numeroDocumento}` : name;
+  }
+
+  relationshipTutorLabel(relacion: EstudianteEscuela): string {
+    return String(relacion.contribuyenteDto?.nombreCompleto || 'Sin tutor asignado');
   }
 
   existingStudentLabel(student: EstudianteEscuela): string {

@@ -27,7 +27,13 @@ export interface Organizacion {
   tarifaMensual?: number;
   permiteReservasGratuitas: boolean;
 
-  representanteDto: Contribuyente;
+  representanteDto?: Contribuyente;
   reservasDtoList?: Reserva[];
+
+  // Values calculated by list views; they are not persisted.
+  representantesTexto?: string;
+  representantesDocumentos?: string;
+  representantesEmails?: string;
+  representantesTelefonos?: string;
   // estudiantesDtoList?: EstudianteEscuela[];
 }

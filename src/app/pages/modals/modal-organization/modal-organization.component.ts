@@ -7,6 +7,9 @@ import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
 import { OrganizacionRepresentante } from 'src/app/core/models/organizacion-representante.model';
+import { EstudianteEscuela } from 'src/app/core/models/EstudianteEscuela.model';
+import { EstudianteEscuelaService } from 'src/app/core/services/api/estudianteEscuela.service';
+import { ModalStudentComponent } from '../modal-student/modal-student.component';
 import { CommonModule } from '@angular/common';
 import { TipoOrganizacion } from 'src/app/core/constants/Features';
 
@@ -29,20 +32,21 @@ export class ModalOrganizationComponent implements OnInit {
   @Output() emitList = new EventEmitter();
 
   contentForm!: UntypedFormGroup;
-  activeTab: 'datos' | 'representantes' = 'datos';
+  activeTab: 'datos' | 'representantes' | 'estudiantes' = 'datos';
   representantes: OrganizacionRepresentante[] = [];
+  estudiantesInscritos: EstudianteEscuela[] = [];
+  estudiantesExistentes: EstudianteEscuela[] = [];
+  cargandoEstudiantes = false;
   personaBusqueda = '';
   get personasDisponibles(): Contribuyente[] {
     const q = this.personaBusqueda.trim().toLocaleLowerCase();
-    const principalUuid = this.contentForm?.get('representanteDto')?.value?.uuid;
     return this.contribuyentesList.filter(p => p.estaActivo !== false &&
-      p.uuid !== principalUuid &&
       !this.representantes.some(r => r.contribuyenteDto?.uuid === p.uuid) &&
       `${p.nombreCompleto || p.nombre + ' ' + p.primerApellido} ${p.numeroDocumento}`.toLocaleLowerCase().includes(q));
   }
   agregarRepresentante(persona: Contribuyente): void {
+    if (this.representantes.some(r => r.contribuyenteDto?.uuid === persona.uuid)) return;
     this.representantes.push({ contribuyenteDto: persona });
-    if (!this.contentForm.get('representanteDto')?.value) this.contentForm.patchValue({representanteDto: persona});
     this.personaBusqueda = '';
   }
   quitarRepresentante(index: number): void {
@@ -63,6 +67,7 @@ export class ModalOrganizationComponent implements OnInit {
     private modalService: NgbModal,
     private organizacionesService: OrganizacionService,
     private contribuyentesService: ContribuyentesService,
+    private estudiantesService: EstudianteEscuelaService,
     private formBuilder: UntypedFormBuilder,
   ) {}
 
@@ -70,14 +75,18 @@ export class ModalOrganizationComponent implements OnInit {
     this.initializeForm();
     this.formDataSet();
     this.setupFormListeners();
-    const principalUuid = this.row?.representanteDto?.uuid;
-    this.representantes = (this.row?.representantesDto || [])
-      .filter(r => r.contribuyenteDto?.uuid !== principalUuid)
+    this.representantes = (this.row?.representantesDto?.length
+      ? this.row.representantesDto
+      : this.row?.representanteDto ? [{ contribuyenteDto: this.row.representanteDto }] : [])
       .map(r => ({...r}));
     this.contribuyentesService.getAll().subscribe({
       next: (data: any) => this.contribuyentesList = data?.content || data || [],
       error: () => this.notify('No se pudo cargar la lista de contribuyentes', 'error')
     });
+    if (this.row?.uuid && this.row?.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL) {
+      this.loadEstudiantesInscritos();
+      this.loadEstudiantesExistentes();
+    }
   }
 
   private initializeForm(): void {
@@ -102,7 +111,7 @@ export class ModalOrganizationComponent implements OnInit {
       tarifaMensual: [0, [Validators.min(0)]],
       permiteReservasGratuitas: [false],
       
-      representanteDto: [null, [Validators.required]]
+      representanteDto: [null]
     });
   }
 
@@ -173,6 +182,10 @@ export class ModalOrganizationComponent implements OnInit {
     return this.contentForm.get('tipoOrganizacion')?.value === TipoOrganizacion.ESCUELA_MUNICIPAL;
   }
 
+  get mostrarTabEstudiantes(): boolean {
+    return this.isEscuelaMunicipal || this.row?.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL;
+  }
+
   // Helper getter to check if current type is Asociacion or Club
   get isAsociacionOrClub(): boolean {
     const tipo = this.contentForm.get('tipoOrganizacion')?.value;
@@ -235,6 +248,14 @@ export class ModalOrganizationComponent implements OnInit {
       this.showLoading = true;
       const formData = this.contentForm.value;
       
+      if (!this.representantes.length) {
+        this.notify('Agregue al menos un representante', 'warning');
+        this.activeTab = 'representantes';
+        this.showLoading = false;
+        return;
+      }
+      const representanteCompatibilidad = this.representantes[0]?.contribuyenteDto;
+
       let datos: Organizacion = {
         tipoOrganizacion: formData.tipoOrganizacion,
         nombre: formData.nombre.trim(),
@@ -255,9 +276,8 @@ export class ModalOrganizationComponent implements OnInit {
         tarifaMensual: formData.requierePagoMensualidad ? formData.tarifaMensual : undefined,
         permiteReservasGratuitas: formData.permiteReservasGratuitas,
         
-        representanteDto: formData.representanteDto,
-        representantesDto: this.representantes.filter(r =>
-          r.contribuyenteDto?.uuid !== formData.representanteDto?.uuid),
+        representanteDto: representanteCompatibilidad,
+        representantesDto: this.representantes,
       };
 
       if (formData.uuid) {
@@ -268,7 +288,7 @@ export class ModalOrganizationComponent implements OnInit {
       }
     } else {
       this.notify('Por favor, complete todos los campos requeridos correctamente', 'error');
-      this.activeTab = this.contentForm.get('representanteDto')?.invalid ? 'representantes' : 'datos';
+      this.activeTab = 'datos';
       this.markFormGroupTouched();
     }
   }
@@ -314,6 +334,50 @@ export class ModalOrganizationComponent implements OnInit {
         this.notify(`Error al actualizar la organización: ${errorMessage}`, 'error');
       }
     });
+  }
+
+  loadEstudiantesInscritos(): void {
+    if (!this.row?.uuid) return;
+    this.cargandoEstudiantes = true;
+    this.estudiantesService.getBySchool(this.row.uuid, false).subscribe({
+      next: (data: any) => {
+        this.estudiantesInscritos = data?.content || data || [];
+        this.cargandoEstudiantes = false;
+      },
+      error: () => {
+        this.estudiantesInscritos = [];
+        this.cargandoEstudiantes = false;
+        this.notify('No se pudo cargar los estudiantes inscritos', 'error');
+      }
+    });
+  }
+
+  loadEstudiantesExistentes(): void {
+    this.estudiantesService.getAll().subscribe({
+      next: (data: any) => this.estudiantesExistentes = data?.content || data || [],
+      error: () => this.estudiantesExistentes = []
+    });
+  }
+
+  abrirInscripcionEstudiante(): void {
+    if (!this.row?.uuid) return;
+    const modalRef = this.modalService.open(ModalStudentComponent, {
+      backdrop: 'static',
+      size: 'lg'
+    });
+    modalRef.componentInstance.accion = '';
+    modalRef.componentInstance.escuelas = [this.row];
+    modalRef.componentInstance.tutores = this.contribuyentesList;
+    modalRef.componentInstance.estudiantesExistentes = this.estudiantesExistentes;
+    modalRef.componentInstance.emitList.subscribe(() => {
+      this.loadEstudiantesInscritos();
+      this.loadEstudiantesExistentes();
+      this.emitList.emit();
+    });
+  }
+
+  estudianteTutorLabel(estudiante: EstudianteEscuela): string {
+    return String(estudiante.contribuyenteDto?.nombreCompleto || 'Sin responsable');
   }
 
   deleteData(uuid: string) {
@@ -375,3 +439,4 @@ export class ModalOrganizationComponent implements OnInit {
     });
   }
 }
+

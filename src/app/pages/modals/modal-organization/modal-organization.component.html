@@ -28,6 +28,9 @@
     <nav class="nav nav-tabs px-3 pt-3" aria-label="Organización">
       <button type="button" class="nav-link" [class.active]="activeTab === 'datos'" (click)="activeTab = 'datos'">Información básica</button>
       <button type="button" class="nav-link" [class.active]="activeTab === 'representantes'" (click)="activeTab = 'representantes'">Representantes</button>
+      <button type="button" class="nav-link" *ngIf="mostrarTabEstudiantes" [class.active]="activeTab === 'estudiantes'" (click)="activeTab = 'estudiantes'">
+        Estudiantes inscritos <span class="badge bg-success ms-1" *ngIf="estudiantesInscritos.length">{{estudiantesInscritos.length}}</span>
+      </button>
     </nav>
     <form (ngSubmit)="saveData()" class="tablelist-form" autocomplete="off" [formGroup]="contentForm" *ngIf="accion !== 'show'">
         <div class="modal-body">
@@ -307,49 +310,54 @@
 
             </div>
             <div [hidden]="activeTab !== 'representantes'">
-                <div class="col-lg-12">
-                    <label for="representanteDto" class="form-label mb-0">
-                        <i class="ri-user-star-line me-2"></i>Representante principal <span class="text-danger">*</span>
-                    </label>
-                    <select class="form-select" 
-                            id="representanteDto" 
-                            formControlName="representanteDto" 
-                            required
-                            [compareWith]="compareContribuyente"
-                            [ngClass]="{ 'is-invalid': submitted && form['representanteDto'].errors }"
-                            [disabled]="accion === 'show'">
-                        <option value="" disabled>Seleccione un representante...</option>
-                        <option [ngValue]="contribuyente" *ngFor="let contribuyente of contribuyentesList">
-                            {{ contribuyente.nombreCompleto || (contribuyente.nombre + ' ' + contribuyente.primerApellido + ' ' + (contribuyente.segundoApellido || '')) }} 
-                            - {{ contribuyente.numeroDocumento }}
-                            <span *ngIf="contribuyente.nroNit">(NIT: {{ contribuyente.nroNit }})</span>
-                        </option>
-                    </select>
-                    <div *ngIf="submitted && form['representanteDto'].errors" class="invalid-feedback">
-                        <div *ngIf="form['representanteDto'].errors['required']">
-                            <i class="ri-error-warning-line me-1"></i>Debe seleccionar un representante
-                        </div>
-                    </div>
-                    <small class="form-text text-muted" *ngIf="accion !== 'show'">
-                        <i class="ri-information-line me-1"></i>
-                        El representante debe ser un contribuyente registrado en el sistema
-                    </small>
-                </div>
-              <p class="text-muted mt-2">El principal sigue siendo el contacto de referencia. Agregue otros representantes a continuación.</p>
+              <div class="alert alert-info py-2" *ngIf="accion !== 'show'">
+                <i class="ri-information-line me-1"></i>
+                Busque y agregue uno o más contribuyentes como representantes de esta organización.
+              </div>
               <label for="buscar-responsable" class="form-label">Buscar contribuyente</label>
               <input id="buscar-responsable" class="form-control mb-2" placeholder="Nombre o documento" [(ngModel)]="personaBusqueda" [ngModelOptions]="{standalone: true}">
               <div class="list-group mb-3" style="max-height: 180px; overflow-y: auto" *ngIf="personaBusqueda.trim()">
-                <button type="button" class="list-group-item list-group-item-action" *ngFor="let p of personasDisponibles" (click)="agregarRepresentante(p)">{{p.nombreCompleto || p.nombre + ' ' + p.primerApellido}} · {{p.numeroDocumento}}</button>
+                <button type="button" class="list-group-item list-group-item-action" *ngFor="let p of personasDisponibles" (click)="agregarRepresentante(p)">
+                  {{p.nombreCompleto || p.nombre + ' ' + p.primerApellido}} · {{p.numeroDocumento}}
+                </button>
                 <div class="list-group-item text-muted" *ngIf="!personasDisponibles.length">No hay contribuyentes disponibles para esta búsqueda.</div>
               </div>
               <div class="table-responsive"><table class="table align-middle" *ngIf="representantes.length">
-                <thead><tr><th>Persona</th><th></th></tr></thead>
+                <thead><tr><th>Representante</th><th class="text-end">Acciones</th></tr></thead>
                 <tbody><tr *ngFor="let r of representantes; let i = index">
                   <td>{{r.contribuyenteDto?.nombreCompleto}}<small class="d-block text-muted">{{r.contribuyenteDto?.numeroDocumento}}</small></td>
-                  <td><button type="button" class="btn btn-sm btn-outline-danger" (click)="quitarRepresentante(i)">Desvincular</button></td>
+                  <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger" (click)="quitarRepresentante(i)">Desvincular</button></td>
                 </tr></tbody>
               </table></div>
-              <p class="text-muted" *ngIf="!representantes.length">No hay representantes adicionales.</p>
+              <p class="text-muted" *ngIf="!representantes.length">No hay representantes asignados.</p>
+            </div>
+            <div [hidden]="activeTab !== 'estudiantes'" *ngIf="mostrarTabEstudiantes">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h6 class="mb-1">Estudiantes inscritos</h6>
+                  <p class="text-muted mb-0">Inscripciones activas e históricas de esta escuela municipal.</p>
+                </div>
+                <button type="button" class="btn btn-sm btn-primary" (click)="abrirInscripcionEstudiante()">
+                  <i class="ri-user-add-line me-1"></i>Inscribir estudiante
+                </button>
+              </div>
+              <div class="text-center py-3" *ngIf="cargandoEstudiantes">
+                <div class="spinner-border text-primary" role="status"></div>
+              </div>
+              <div class="table-responsive" *ngIf="!cargandoEstudiantes && estudiantesInscritos.length">
+                <table class="table align-middle">
+                  <thead><tr><th>Estudiante</th><th>Matrícula</th><th>Responsable asignado</th><th>Estado</th></tr></thead>
+                  <tbody>
+                    <tr *ngFor="let estudiante of estudiantesInscritos">
+                      <td>{{estudiante.nombreCompleto}}<small class="d-block text-muted">{{estudiante.numeroDocumento || estudiante.email}}</small></td>
+                      <td>{{estudiante.matricula || 'Pendiente'}}</td>
+                      <td>{{estudianteTutorLabel(estudiante)}}</td>
+                      <td><span class="badge" [ngClass]="estudiante.activo ? 'bg-success' : 'bg-secondary'">{{estudiante.activo ? 'Activa' : 'Inactiva'}}</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="text-muted text-center py-4" *ngIf="!cargandoEstudiantes && !estudiantesInscritos.length">No hay estudiantes inscritos en esta escuela.</p>
             </div>
         </div>
         <div class="modal-footer bg-light py-2">
@@ -483,46 +491,6 @@
                 <div class="fw-medium">{{ row.email || 'No registrado' }}</div>
             </div>
         </div>
-        <hr *ngIf="row.representanteDto">
-        <div *ngIf="row.representanteDto">
-            <div class="d-flex align-items-center">
-                <div class="flex-shrink-0 me-3">
-                    <i class="ri-user-star-line text-muted fs-5"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h6 class="fw-semibold mb-1">Representante Legal</h6>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-sm-6 mb-2">
-                    <small class="text-muted d-block">Nombre Completo:</small>
-                    <div class="fw-medium">
-                        {{ row.representanteDto.nombreCompleto || 
-                          (row.representanteDto.nombre + ' ' + row.representanteDto.primerApellido + ' ' + (row.representanteDto.segundoApellido || '')) }}
-                    </div>
-                </div>
-                <div class="col-sm-6 mb-2">
-                    <small class="text-muted d-block">Documento:</small>
-                    <div class="fw-medium">
-                        {{ row.representanteDto.numeroDocumento }}
-                        <span *ngIf="row.representanteDto.expedido"> - {{ row.representanteDto.expedido }}</span>
-                    </div>
-                </div>
-                <div class="col-sm-6 mb-2" *ngIf="row.representanteDto.nroNit">
-                    <small class="text-muted d-block">NIT:</small>
-                    <div class="fw-medium">{{ row.representanteDto.nroNit }}</div>
-                </div>
-                <div class="col-sm-6 mb-2">
-                    <small class="text-muted d-block">Email:</small>
-                    <div class="fw-medium">{{ row.representanteDto.email || 'No registrado' }}</div>
-                </div>
-                <div class="col-sm-6 mb-2">
-                    <small class="text-muted d-block">Teléfono:</small>
-                    <div class="fw-medium">{{ row.representanteDto.telefono || 'No registrado' }}</div>
-                </div>
-            </div>
-        </div>
         <hr>
         <div class="d-flex align-items-center">
             <div class="flex-shrink-0 me-3">
@@ -540,12 +508,35 @@
         </div>
     </div>
 
+    <div class="modal-body" *ngIf="accion === 'show' && activeTab === 'estudiantes' && mostrarTabEstudiantes">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h6 class="mb-1">Estudiantes inscritos</h6>
+          <p class="text-muted mb-0">Inscripciones activas e históricas de esta escuela municipal.</p>
+        </div>
+      </div>
+      <div class="text-center py-3" *ngIf="cargandoEstudiantes"><div class="spinner-border text-primary" role="status"></div></div>
+      <div class="table-responsive" *ngIf="!cargandoEstudiantes && estudiantesInscritos.length">
+        <table class="table align-middle"><thead><tr><th>Estudiante</th><th>Matrícula</th><th>Responsable asignado</th><th>Estado</th></tr></thead>
+          <tbody><tr *ngFor="let estudiante of estudiantesInscritos"><td>{{estudiante.nombreCompleto}}<small class="d-block text-muted">{{estudiante.numeroDocumento || estudiante.email}}</small></td><td>{{estudiante.matricula || 'Pendiente'}}</td><td>{{estudianteTutorLabel(estudiante)}}</td><td><span class="badge" [ngClass]="estudiante.activo ? 'bg-success' : 'bg-secondary'">{{estudiante.activo ? 'Activa' : 'Inactiva'}}</span></td></tr></tbody>
+        </table>
+      </div>
+      <p class="text-muted text-center py-4" *ngIf="!cargandoEstudiantes && !estudiantesInscritos.length">No hay estudiantes inscritos en esta escuela.</p>
+    </div>
+
     <div class="modal-body" *ngIf="accion === 'show' && activeTab === 'representantes'">
-      <p><strong>Representante principal:</strong> {{row.representanteDto.nombreCompleto}}</p>
-      <div class="table-responsive"><table class="table"><thead><tr><th>Persona</th><th>Documento</th><th>Relación</th></tr></thead>
-        <tbody><tr *ngFor="let r of representantes"><td>{{r.contribuyenteDto?.nombreCompleto}}</td><td>{{r.contribuyenteDto?.numeroDocumento}}</td><td><span class="badge bg-primary">Representante adicional</span></td></tr></tbody>
-      </table></div>
-      <p class="text-muted" *ngIf="!representantes.length">No hay representantes adicionales.</p>
+      <div class="table-responsive" *ngIf="representantes.length">
+        <table class="table align-middle">
+          <thead><tr><th>Representante</th><th>Documento</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let r of representantes">
+              <td>{{r.contribuyenteDto?.nombreCompleto}}</td>
+              <td>{{r.contribuyenteDto?.numeroDocumento}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-muted text-center py-4" *ngIf="!representantes.length">No hay representantes asignados.</p>
     </div>
     <div class="modal-footer bg-light py-2" *ngIf="accion === 'show'">
         <button type="button" 

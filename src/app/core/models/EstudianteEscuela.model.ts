@@ -32,4 +32,11 @@ export interface EstudianteEscuela {
   estadoEstudiante?: 'ACTIVO' | 'INACTIVO';
   reactivacionBloqueada?: boolean;
   puedeGestionar?: boolean;
+
+  // Values calculated by list views; they are not persisted.
+  escuelasTexto?: string;
+  responsablesTexto?: string;
+  matriculasTexto?: string;
+  escuelaUuids?: string[];
+  relacionesEstudiante?: EstudianteEscuela[];
 }

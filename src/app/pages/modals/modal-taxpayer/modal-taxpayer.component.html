@@ -271,7 +271,7 @@
         <div *ngIf="activeTab === 'estudiantes'">
           <div class="alert alert-info">
             <i class="ri-information-line me-2"></i>
-            <strong>Inscripciones bajo responsabilidad:</strong> aquí se inscribe el estudiante a una escuela y se asigna este contribuyente como tutor/responsable de pago preferente.
+            <strong>Relaciones estudiante-escuela:</strong> registre un estudiante bajo una escuela y este contribuyente quedará como responsable de esa relación.
           </div>
           <div class="mb-3">
             <button type="button" class="btn btn-primary btn-sm" (click)="toggleEstudianteForm()"
@@ -287,6 +287,23 @@
               </h6>              
               <form [formGroup]="estudianteForm">
                 <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label">Buscar estudiante existente <span class="text-muted">(opcional)</span></label>
+                    <input type="text" class="form-control mb-2" placeholder="Nombre, documento o matrícula"
+                      [(ngModel)]="estudianteBusqueda" [ngModelOptions]="{standalone: true}">
+                    <div class="list-group mb-2" style="max-height: 160px; overflow-y: auto" *ngIf="estudianteBusqueda.trim()">
+                      <button type="button" class="list-group-item list-group-item-action"
+                        *ngFor="let item of estudiantesDisponiblesParaRelacion"
+                        (click)="onExistingStudentChange(item.estudianteUuid || item.uuid!)">
+                        {{estudianteLabel(item)}}
+                        <small class="d-block text-muted">{{item.organizacionDto.nombre || item.matricula}}</small>
+                      </button>
+                      <div class="list-group-item text-muted" *ngIf="!estudiantesDisponiblesParaRelacion.length">
+                        No hay estudiantes para esta búsqueda.
+                      </div>
+                    </div>
+                    <small class="text-muted">Use esto cuando el estudiante ya existe y solo necesita otra relación con escuela/responsable.</small>
+                  </div>
                   <div class="col-md-6">
                     <label class="form-label">Nombre Completo <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" formControlName="nombreCompleto"
@@ -303,7 +320,10 @@
                         {{org.nombre}}{{org.disciplina ? ' · ' + org.disciplina : ''}}
                       </option>
                     </select>
-                    <small class="text-muted">Esta relación crea una inscripción a escuela; no convierte al contribuyente en representante.</small>
+                    <small class="text-muted">Se muestran las escuelas municipales que este contribuyente representa.</small>
+                    <small class="text-warning d-block" *ngIf="!escuelasDisponiblesParaInscripcion.length">
+                      Este contribuyente todavía no representa ninguna escuela municipal.
+                    </small>
                   </div>
 
                   <div class="col-md-4">
@@ -364,7 +384,7 @@
             </div>
           </div>
           <div *ngIf="estudiantesTemporales.length > 0">
-            <h6 class="mb-2">Estudiantes Registrados ({{estudiantesTemporales.length}})</h6>
+            <h6 class="mb-2">Relaciones estudiante-escuela ({{estudiantesTemporales.length}})</h6>
             <div class="table-responsive">
               <table class="table table-sm table-bordered">
                 <thead class="table-light">
@@ -405,7 +425,7 @@
           </div>
           <div *ngIf="estudiantesTemporales.length === 0 && !showEstudianteForm" class="text-center text-muted py-4">
             <i class="ri-user-line fs-1"></i>
-            <p>No hay estudiantes registrados</p>
+            <p>No hay relaciones estudiante-escuela registradas para este contribuyente</p>
           </div>
         </div>
         <div *ngIf="activeTab === 'organizaciones'">
@@ -422,11 +442,10 @@
           <div class="table-responsive" *ngIf="organizacionesTemporales.length; else sinVinculos">
             <table class="table align-middle"><thead><tr><th>Organización</th><th></th></tr></thead>
               <tbody><tr *ngFor="let org of organizacionesTemporales; let i = index">
-                <td>{{org.nombre}} <span class="badge bg-primary" *ngIf="esPrincipal(org)">Principal</span></td>
-                <td><button type="button" class="btn btn-sm btn-outline-danger" [disabled]="esPrincipal(org)" (click)="desvincularOrganizacion(i)">Desvincular</button></td>
+                <td>{{org.nombre}}</td>
+                <td><button type="button" class="btn btn-sm btn-outline-danger" (click)="desvincularOrganizacion(i)">Desvincular</button></td>
               </tr></tbody>
             </table>
-            <small class="text-muted">Para desvincular al representante principal, primero seleccione otro desde la organización.</small>
           </div>
           <ng-template #sinVinculos><p class="text-muted text-center py-4">No hay organizaciones vinculadas.</p></ng-template>
         </div>
@@ -702,7 +721,7 @@
               <tr *ngFor="let org of row.organizacionesRepresentadas">
                 <td>
                   <strong>{{org.nombre}}</strong>
-                  <div><span class="badge bg-primary me-1" *ngIf="esPrincipal(org)">Principal</span><span class="badge bg-primary me-1" *ngIf="vinculoOrganizacion(org.uuid!)">Representante</span></div>
+                  <div><span class="badge bg-primary me-1" *ngIf="vinculoOrganizacion(org.uuid!)">Representante</span></div>
                   <div *ngIf="org.personeriaJuridica" class="text-muted small">
                     Personería: {{org.personeriaJuridica}}
                   </div>
