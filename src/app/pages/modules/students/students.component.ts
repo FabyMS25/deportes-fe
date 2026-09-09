@@ -41,8 +41,8 @@ export class StudentsComponent implements OnInit {
   readonly itemsList = [
     { name: 'Nombre', prop: 'nombreCompleto', visible: true, primary: true },
     { name: 'Matrículas', prop: 'matriculasTexto', visible: true },
-    { name: 'Escuelas / organizaciones', prop: 'escuelasTexto', visible: true },
-    { name: 'Tutores / responsables', prop: 'responsablesTexto', visible: true },
+    { name: 'Escuelas / organizaciones', prop: 'escuelasTexto', visible: true, truncate: 85 },
+    { name: 'Tutores / responsables', prop: 'responsablesTexto', visible: true, truncate: 85 },
     { name: 'Estado en escuelas', prop: 'estadoInscripcion', visible: true, tag: true },
     { name: 'Estado del estudiante', prop: 'estadoEstudiante', visible: true, tag: true }
   ];

@@ -1,10 +1,6 @@
 import { MenuItem } from "../models/menu.model";
 
-/*
- * Base registry of every DEPORTESAPP permission currently defined in the
- * permissions service. Keep this commented: MENU_BASE below is the active
- * fallback used for contribuyente sessions.
- *
+/* *
  * DASHBOARDS
  * - Calendario | VER | /inicio/employee
  * - Mapa | VER, RESERVAR | /inicio/taxpayer
@@ -92,7 +88,7 @@ export const MENU_BASE: MenuItem[] = [
   // {"uuid":"d8bac92f-22b1-4acf-9b7b-80885a079df6","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Recurrentes","accion":"VALIDAR","ruta":"/reservations/recurrent","orden":2,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
   // {"uuid":"2442d951-ac63-4da9-aaba-c168a483ae69","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Reservas Recurrentes","accion":"ACTUALIZAR","ruta":"/reservations/recurrent","orden":2,"icono":"ri-profile-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
 
-  {"uuid":"a89b4238-1304-43ff-b89b-3d22d08f3cd1","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Escuelas Municipales","accion":"ANULAR","ruta":"/reservations/schools","orden":3,"icono":"ri-government-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
+  // {"uuid":"a89b4238-1304-43ff-b89b-3d22d08f3cd1","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Escuelas Municipales","accion":"ANULAR","ruta":"/reservations/schools","orden":3,"icono":"ri-government-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
   {"uuid":"e2957248-77b6-4aad-9fd7-17ad23bde135","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Escuelas Municipales","accion":"VER","ruta":"/reservations/schools","orden":3,"icono":"ri-government-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
   {"uuid":"6ba7f3f5-cc94-4df6-b73c-9afc26056dd3","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Escuelas Municipales","accion":"CREAR","ruta":"/reservations/schools","orden":3,"icono":"ri-government-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},
   // {"uuid":"7234a26e-8116-46e1-be5f-39d78e7e69ed","modulo":"DEPORTESAPP","codigo":"SIS-013","nombreMenu":"Escuelas Municipales","accion":"ACTUALIZAR","ruta":"/reservations/schools","orden":3,"icono":"ri-government-line","estado":false,"permisoPadreDto":{"uuid":"fccd8b9e-baa9-42c8-baac-a08d42e52aac","modulo":"DEPORTESAPP","nombreMenu":"Reservas","accion":"","ruta":"","orden":6,"icono":"ri-profile-line","estado":false,"permisoHijoListDto":[],"subNivel":false},"permisoHijoListDto":[],"subNivel":false},

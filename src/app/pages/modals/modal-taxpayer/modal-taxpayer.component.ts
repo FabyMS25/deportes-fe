@@ -836,7 +836,7 @@ export class ModalTaxpayerComponent implements OnInit {
     });
     const organizacionesPreparadas = this.organizacionesTemporales.map((org) => ({
       ...org,
-      ...(contribuyenteRef ? { representanteDto: contribuyenteRef } : {}),
+      ...(contribuyenteRef ? { representantesDto: [{ contribuyenteDto: contribuyenteRef }] } : {}),
     }));
 
     const puedeReservarGratis =
@@ -864,7 +864,7 @@ export class ModalTaxpayerComponent implements OnInit {
       motivoSancion: this.row?.motivoSancion,
       // Always send arrays (even empty) so the backend can clear removed records
       estudianteEnEscuelas: estudiantesPreparados,
-      organizacionesRepresentadas: organizacionesPreparadas.filter(o => !o.uuid),
+      organizacionesRepresentadas: organizacionesPreparadas.filter(o => this.isNewOrganization(o)),
       organizacionesVinculadas: this.organizacionesVinculadas,
     };
 
@@ -1621,6 +1621,10 @@ export class ModalTaxpayerComponent implements OnInit {
   }
 
   // ─── Notify ───────────────────────────────────────────────────────────────
+
+  private isNewOrganization(org: any): boolean {
+    return !org?.uuid || !this.organizationsList.some(existing => existing.uuid === org.uuid);
+  }
 
   private notify(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
     Swal.fire({ text: message, icon: type, timer: 5000, timerProgressBar: true });

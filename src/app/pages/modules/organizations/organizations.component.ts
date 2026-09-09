@@ -76,17 +76,17 @@ export class OrganizationsComponent implements OnInit {
       this.contribuyente =currentUser;
     }    
     this.itemsList = [
-      { name: 'Nombre', prop: 'nombre', visible: true },
+      { name: 'Nombre', prop: 'nombre', visible: true, truncate: 70 },
       { name: 'Tipo Organización', prop: 'tipoOrganizacion', visible: true },
-      { name: 'Teléfono', prop: 'telefono', visible: true },
+      { name: 'Teléfono', prop: 'telefono', visible: false },
       { name: 'Email', prop: 'email', visible: false },
-      { name: 'Dirección', prop: 'direccion', visible: false },
+      { name: 'Dirección', prop: 'direccion', visible: false, truncate: 90 },
       { name: 'Personería Jurídica', prop: 'personeriaJuridica', visible: false },
       { name: 'NIT', prop: 'nroNit', visible: false },
       { name: 'Estado', prop: 'activo', tag: true, visible: true },
-      { name: 'Representantes', prop: 'representantesTexto', visible: true },
+      { name: 'Representantes', prop: 'representantesTexto', visible: true, truncate: 85 },
       { name: 'Documentos Representantes', prop: 'representantesDocumentos', visible: false },
-      { name: 'Emails Representantes', prop: 'representantesEmails', visible: false },
+      { name: 'Emails Representantes', prop: 'representantesEmails', visible: false, truncate: 85 },
       { name: 'Teléfonos Representantes', prop: 'representantesTelefonos', visible: false },
       { name: 'Fecha Creación', prop: 'fechaCreacion', visible: false, date: true },
     ];

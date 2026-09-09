@@ -4,6 +4,7 @@
     <app-data-header
         [breadcrumbItems]="breadCrumbItems"
         [csvItems]="csvExportItems"
+        [loadExportItems]="loadExportItems"
         [csvColumns]="CSV_COLUMNS"
         [SelectedItems]="selectedItems"
         [newShow]="canActivate.includes('CREAR')"
@@ -22,7 +23,7 @@
                     <div class="search-box">
                         <input type="text" class="form-control search" name="searchTerm"
                             placeholder="Buscar estudiante, matrícula, período..."
-                            [(ngModel)]="filters.searchTerm" (ngModelChange)="applyFilters()">
+                            [(ngModel)]="filters.searchTerm" (ngModelChange)="onSearchChange()">
                             <i class="ri-search-line search-icon"></i>
                     </div>
                 </div>

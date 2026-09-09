@@ -278,6 +278,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     if (!this.selectedContribuyente && !this.selectedOrganization) {
       this.showFreeReservationOption = false;
       this.isFreeReservation = false;
+      this.refreshPaymentPolicyControls();
       return;
     }
     const formValue = this.reservationForm?.getRawValue();
@@ -302,6 +303,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       this.isFreeReservation = false;
       this.freeReservationReason = '';
     }
+    this.refreshPaymentPolicyControls();
     this.calculatePrice();
   }
 
@@ -606,6 +608,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(isFree => {
       this.isFreeReservation = isFree;
+      this.refreshPaymentPolicyControls();
       this.calculatePrice();
     });
     this.reservationForm.get('organizacionDto')?.valueChanges.pipe(
@@ -644,6 +647,41 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     if (!this.reservationForm) return;
 
     this.reservationForm.get('fechaLimitePago')?.disable({ emitEvent: false });
+    this.refreshPaymentPolicyControls();
+
+    if (!this.canEditAutomaticCancellation) {
+      return;
+    }
+
+    this.reservationForm.get('cancelacionAutomatica')?.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.refreshPaymentPolicyControls();
+    });
+  }
+
+  private refreshPaymentPolicyControls(): void {
+    if (!this.reservationForm) return;
+
+    const fechaControl = this.reservationForm.get('fechaLimitePago');
+    const cancelacionControl = this.reservationForm.get('cancelacionAutomatica');
+    const motivoControl = this.reservationForm.get('motivoCancelacionAutomatica');
+    const isFreeReservation = this.isFreeReservation && this.showFreeReservationOption;
+
+    fechaControl?.disable({ emitEvent: false });
+
+    if (isFreeReservation) {
+      this.reservationForm.patchValue({
+        fechaLimitePago: '',
+        cancelacionAutomatica: false,
+        motivoCancelacionAutomatica: this.getFreeReservationPaymentPolicyReason()
+      }, { emitEvent: false });
+      cancelacionControl?.disable({ emitEvent: false });
+      motivoControl?.disable({ emitEvent: false });
+      motivoControl?.clearValidators();
+      motivoControl?.updateValueAndValidity({ emitEvent: false });
+      return;
+    }
 
     if (!this.canEditAutomaticCancellation) {
       this.reservationForm.patchValue({
@@ -651,34 +689,36 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
         cancelacionAutomatica: true,
         motivoCancelacionAutomatica: ''
       }, { emitEvent: false });
-      this.reservationForm.get('cancelacionAutomatica')?.disable({ emitEvent: false });
-      this.reservationForm.get('motivoCancelacionAutomatica')?.disable({ emitEvent: false });
-      this.reservationForm.get('motivoCancelacionAutomatica')?.clearValidators();
-      this.reservationForm.get('motivoCancelacionAutomatica')?.updateValueAndValidity({ emitEvent: false });
+      cancelacionControl?.disable({ emitEvent: false });
+      motivoControl?.disable({ emitEvent: false });
+      motivoControl?.clearValidators();
+      motivoControl?.updateValueAndValidity({ emitEvent: false });
       return;
     }
 
-    this.reservationForm.get('cancelacionAutomatica')?.enable({ emitEvent: false });
-    this.reservationForm.get('cancelacionAutomatica')?.valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((cancelacionAutomatica: boolean) => {
-      const motivoControl = this.reservationForm.get('motivoCancelacionAutomatica');
-      if (cancelacionAutomatica === false) {
-        this.reservationForm.patchValue({
-          fechaLimitePago: ''
-        }, { emitEvent: false });
-        motivoControl?.enable({ emitEvent: false });
-        motivoControl?.setValidators([Validators.required, Validators.minLength(10), Validators.maxLength(500)]);
-      } else {
-        this.reservationForm.patchValue({
-          fechaLimitePago: this.formatDateTimeLocal(this.getDefaultPaymentDeadline()),
-          motivoCancelacionAutomatica: ''
-        }, { emitEvent: false });
-        motivoControl?.disable({ emitEvent: false });
-        motivoControl?.clearValidators();
-      }
-      motivoControl?.updateValueAndValidity({ emitEvent: false });
-    });
+    cancelacionControl?.enable({ emitEvent: false });
+    const cancelacionAutomatica = cancelacionControl?.value !== false;
+
+    if (cancelacionAutomatica) {
+      this.reservationForm.patchValue({
+        fechaLimitePago: this.formatDateTimeLocal(this.getDefaultPaymentDeadline()),
+        motivoCancelacionAutomatica: ''
+      }, { emitEvent: false });
+      motivoControl?.disable({ emitEvent: false });
+      motivoControl?.clearValidators();
+    } else {
+      this.reservationForm.patchValue({
+        fechaLimitePago: ''
+      }, { emitEvent: false });
+      motivoControl?.enable({ emitEvent: false });
+      motivoControl?.setValidators([Validators.required, Validators.minLength(10), Validators.maxLength(500)]);
+    }
+
+    motivoControl?.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private getFreeReservationPaymentPolicyReason(): string {
+    return 'Reserva gratuita: no requiere pago ni cancelación automática por falta de pago.';
   }
 
   private updateDuration(): void {
@@ -1607,12 +1647,16 @@ private prepareReservationData(): Reserva {
   let estadoValidacion: EstadoValidacion;
   let estadoReserva: EstadoReserva;    
   const isFreeReservation = this.isFreeReservation && this.showFreeReservationOption;
-  const cancelacionAutomatica = this.canEditAutomaticCancellation
-    ? formValue.cancelacionAutomatica !== false
-    : true;
-  const fechaLimitePago = cancelacionAutomatica
-    ? this.getDefaultPaymentDeadline()
-    : undefined;
+  const cancelacionAutomatica = isFreeReservation
+    ? false
+    : this.canEditAutomaticCancellation
+      ? formValue.cancelacionAutomatica !== false
+      : true;
+  const fechaLimitePago = isFreeReservation
+    ? undefined
+    : cancelacionAutomatica
+      ? this.getDefaultPaymentDeadline()
+      : undefined;
   
   if (isFreeReservation || !this.requiresValidation || this.userRole === 'Admin' || this.userRole === 'Encargado') {
     estadoValidacion = EstadoValidacion.APROBADA;
@@ -1631,7 +1675,7 @@ private prepareReservationData(): Reserva {
     fechaActualizacion: new Date(),
     fechaLimitePago,
     cancelacionAutomatica,
-    motivoCancelacionAutomatica: cancelacionAutomatica ? undefined : formValue.motivoCancelacionAutomatica,
+    motivoCancelacionAutomatica: cancelacionAutomatica ? undefined : (isFreeReservation ? this.getFreeReservationPaymentPolicyReason() : formValue.motivoCancelacionAutomatica),
     autorizadoPor: cancelacionAutomatica ? undefined : this.getCurrentUserUuid(),
     tipoReserva: this.bookingType,
     fechaReserva: new Date(),
@@ -2240,17 +2284,29 @@ getPaidReservationDescription(): string {
       esParaOrganizacion: true
     });
     this.showOrganizationSearch = false;    
+    const representantes = this.getOrganizacionRepresentantes(organizacion);
     const personUuid = this.selectedContribuyente?.uuid;
-    const alreadyResponsible = personUuid && (organizacion.representanteDto?.uuid === personUuid ||
-      organizacion.representantesDto?.some(r => r.contribuyenteDto?.uuid === personUuid));
-    if (organizacion.representanteDto && !alreadyResponsible) {
-      this.selectedContribuyente = organizacion.representanteDto;
+    const selectedIsRepresentative = !!personUuid && representantes.some(rep => rep.uuid === personUuid);
+    if (!selectedIsRepresentative && representantes.length === 1) {
+      this.selectedContribuyente = representantes[0];
       this.reservationForm.patchValue({
-        contribuyenteDto: organizacion.representanteDto
+        contribuyenteDto: representantes[0]
+      });
+    } else if (!selectedIsRepresentative && representantes.length > 1) {
+      this.selectedContribuyente = undefined as any;
+      this.reservationForm.patchValue({
+        contribuyenteDto: null
       });
     }
     this.checkFreeReservationEligibility();
     this.calculatePrice();
+  }
+
+  private getOrganizacionRepresentantes(organizacion: Organizacion): Contribuyente[] {
+    const representantes = (organizacion.representantesDto || [])
+      .map(rep => rep.contribuyenteDto)
+      .filter((rep): rep is Contribuyente => !!rep?.uuid);
+    return representantes;
   }
 
   searchOrganization(event: Event): void {
@@ -2286,6 +2342,7 @@ getPaidReservationDescription(): string {
         esReservaGratuita: this.isFreeReservation,
         motivoGratuidad: this.isFreeReservation ? 'DEPORTISTA_ELITE' : ''
       });
+      this.refreshPaymentPolicyControls();
       this.calculatePrice();
     }
   }
@@ -2678,4 +2735,6 @@ getPaidReservationDescription(): string {
     return this.reservationForm ? this.reservationForm.hasError('anticipationRequired') : false;
   }
 }
+
+
 

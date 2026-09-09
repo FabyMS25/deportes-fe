@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Subject, firstValueFrom, takeUntil } from 'rxjs';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { UntypedFormBuilder } from '@angular/forms';
 import { NgbModal, NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
@@ -28,7 +29,12 @@ import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component
   templateUrl: './booking-periodo.component.html',
   styleUrl: './booking-periodo.component.scss'
 })
-export class BookingPeriodoComponent implements OnInit {
+export class BookingPeriodoComponent implements OnInit, OnDestroy {
+  private readonly cancelListRequest = new Subject<void>();
+  private requestVersion = 0;
+  private refreshTimer?: ReturnType<typeof setInterval>;
+  private searchTimer?: ReturnType<typeof setTimeout>;
+  private readonly statusChecks = new Map<string, Promise<Reserva>>();
   breadCrumbItems: BreadCrumbItem[] =[];
   viewMode: 'table' | 'cards' = 'table';
   canActivate: string[];
@@ -173,19 +179,19 @@ export class BookingPeriodoComponent implements OnInit {
       { label: 'Mensualidades de Escuelas Municipales', active: true }
     ];
     this.itemsList = [
-      { name: 'Número Reserva', prop: 'numeroReserva', visible: true, fallbackProp: 'numeroReserva' },
+      { name: 'Número Reserva', prop: 'numeroReserva', nowrap: true, visible: true},
       { name: 'Contribuyente', prop: 'contribuyenteDto.nombreCompleto', visible: !this.contribuyente },
-      { name: 'Complejo', prop: 'campoDeportivoDto.complejoDto.nombre', visible: false, fallbackProp: 'complejo' },
-      { name: 'Campo Deportivo', prop: 'campoDeportivoDto.nombre', visible: false, fallbackProp: 'campoDeportivo' },
-      { name: 'Disciplina', prop: 'organizacionDto.disciplina', visible: false, fallbackProp: 'disciplina' },
-      { name: 'Escuela', prop: 'organizacionDto.nombre', visible: true, fallbackProp: 'nombre' },
-      { name: 'Entrenador', prop: 'organizacionDto.entrenador', visible: false, fallbackProp: 'entrenador' },
-      { name: 'Monto', prop: 'montoTotal', currency: true, visible: true, fallbackProp: 'montoTotal' },
-      { name: 'Número Tasa', prop: 'numeroTasa', visible: true, fallbackProp: 'numeroTasa' },
-      { name: 'Estado Mensualidad', prop: 'estadoReserva', tag: true, visible: true, fallbackProp: 'estadoReserva' },
+      { name: 'Complejo', prop: 'campoDeportivoDto.complejoDto.nombre', visible: false, },
+      { name: 'Campo Deportivo', prop: 'campoDeportivoDto.nombre', visible: false },
+      { name: 'Disciplina', prop: 'organizacionDto.disciplina', visible: false },
+      { name: 'Escuela', prop: 'organizacionDto.nombre', visible: true },
+      { name: 'Entrenador', prop: 'organizacionDto.entrenador', visible: false },
+      { name: 'Monto', prop: 'montoTotal', currency: true, visible: true },
+      { name: 'Número Tasa', prop: 'numeroTasa', nowrap: true, visible: true},
+      { name: 'Estado Mensualidad', prop: 'estadoReserva', tag: true, visible: true },
       { name: 'Estado Pago', prop: 'pagosDtoList[0].estadoPago', tag: true, visible: true },
-      { name: 'Observaciones', prop: 'observaciones', visible: false, fallbackProp: 'observaciones' },
-      { name: 'Fecha Creación', prop: 'fechaCreacion', date: true, visible: false, fallbackProp: 'fechaCreacion' },
+      { name: 'Observaciones', prop: 'observaciones', visible: false },
+      { name: 'Fecha Creación', prop: 'fechaCreacion', date: true, visible: false },
     ];
 
     const savedViewMode = localStorage.getItem('dataTableViewMode');
@@ -202,17 +208,25 @@ export class BookingPeriodoComponent implements OnInit {
     } else {
       this.userData = currentUser.designacion.personaDto;
     }
-    if (!this.authService.isRuatAuthenticated()) {
-      await this.delay(1000);
-    }
     this.generatePeriodYears();
     this.loadSchools();
     this.loadStudents();
-    await this.getReservations();
-    setInterval(() => this.getReservations(), 5 * 60 * 1000);
+    void this.getReservations();
+    this.refreshTimer = setInterval(() => {
+      if (!this.loading) void this.getReservations();
+    }, 5 * 60 * 1000);
   }
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  ngOnDestroy(): void {
+    ++this.requestVersion;
+    this.cancelListRequest.next();
+    this.cancelListRequest.complete();
+    clearInterval(this.refreshTimer);
+    clearTimeout(this.searchTimer);
+  }
+
+  onSearchChange(): void {
+    clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => this.applyFilters(), 300);
   }
 
   getSelectedItems(items: any) {
@@ -522,16 +536,29 @@ export class BookingPeriodoComponent implements OnInit {
     });
   }
   /* BUSINESS LOGIC */
-  private async checkAndUpdateReservationStatuses(
-    list: Reserva[]
-  ): Promise<Reserva[]> {
-
-    const updatedList: Reserva[] = [];
-
+  private async refreshReservationStatuses(list: Reserva[], version: number): Promise<void> {
     for (const reserva of list) {
-      updatedList.push(await this.checkAndUpdateSingleReservationStatus(reserva));
+      if (version !== this.requestVersion) return;
+      const key = reserva.uuid;
+      if (!key) continue;
+      let check = this.statusChecks.get(key);
+      if (!check) {
+        check = this.checkAndUpdateSingleReservationStatus(reserva);
+        this.statusChecks.set(key, check);
+      }
+      let updated: Reserva;
+      try {
+        updated = await check;
+      } finally {
+        if (this.statusChecks.get(key) === check) this.statusChecks.delete(key);
+      }
+      if (version !== this.requestVersion) return;
+      const content = this.reservasList.content.map((item: Reserva) =>
+        item.uuid === key ? updated : item);
+      this.reservasList = { ...this.reservasList, content: this.enrichReservationsForDisplay(content) };
+      this.temp = this.reservasList.content;
+      this.csvExportItems = this.reservasList.content;
     }
-    return updatedList;
   }
   private async checkAndUpdateSingleReservationStatus(
     reserva: Reserva
@@ -726,84 +753,50 @@ export class BookingPeriodoComponent implements OnInit {
   /* API Services */
   
   private async getReservations() {
+    clearTimeout(this.searchTimer);
+    const version = ++this.requestVersion;
+    this.cancelListRequest.next();
+    this.loading = true;
     try {
-      this.loading = true;
-      const data: any = await this.reservaService.getAll(
-        this.currentPage - 1,
-        this.pageSize,
-        this.filters
-      ).toPromise();
-      if (!data) throw new Error('Respuesta inválida del servidor');
-      let list: Reserva[] = [];
-      if (Array.isArray(data.content)) {
-        list = data.content;
-      } else if (Array.isArray(data)) {
-        list = data;
-      }
-      const employee = this.authService.staff();
-      if (employee?.complejoDto) {
-        list = list.filter(item =>
-          item.campoDeportivoDto?.complejoDto?.uuid === employee.complejoDto.uuid
-        );
-      }
-      if (this.contribuyente) {
-        list = list.filter(item =>
-          item.contribuyenteDto?.uuid === this.contribuyente.uuid
-        );
-      }
-      const updatedList = this.enrichReservationsForDisplay(
-        await this.checkAndUpdateReservationStatuses(list)
-      );
-      this.reservasList = {
-        ...data,
-        content: updatedList
-      };
-      this.temp = updatedList;
-      await this.loadReservationsForExport(data, updatedList);
-    } catch (error: any) {
+      const data = await firstValueFrom(this.reservaService.getAll(
+        this.currentPage - 1, this.pageSize, this.filters
+      ).pipe(takeUntil(this.cancelListRequest)));
+      if (version !== this.requestVersion) return;
+      const list = this.enrichReservationsForDisplay(this.filterReservationsByUserScope(
+        Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : []
+      ));
+      this.reservasList = { ...data, content: list };
+      this.temp = list;
+      this.csvExportItems = list;
       this.loading = false;
+      // External payment checks must not delay displaying the saved reservations.
+      void this.refreshReservationStatuses(list, version);
+    } catch (error: any) {
+      if (version !== this.requestVersion) return;
       this.handleError(error, 'Error al obtener las mensualidades');
       this.reservasList = {
-        content: [],
-        totalElements: 0,
-        pageable: {
-          pageNumber: 0,
-          pageSize: 20
-        }
+        content: [], totalElements: 0, totalPages: 0, first: true, last: true,
+        pageable: { pageNumber: 0, pageSize: this.pageSize }
       };
       this.temp = [];
       this.csvExportItems = [];
     } finally {
-      this.loading = false;
+      if (version === this.requestVersion) this.loading = false;
     }
   }
 
-  private async loadReservationsForExport(
-    pageData: any,
-    currentPageList: Reserva[]
-  ): Promise<void> {
-    const totalElements = Number(pageData?.totalElements || currentPageList.length);
-    if (totalElements <= currentPageList.length) {
-      this.csvExportItems = currentPageList;
-      return;
-    }
+  readonly loadExportItems = async (): Promise<Reserva[]> => {
     try {
-      const data = await this.reservaService.getAll(
-        0,
-        totalElements,
-        this.filters
-      ).toPromise();
-      let list: Reserva[] = Array.isArray(data?.content)
-        ? data.content
-        : Array.isArray(data)
-          ? data
-          : [];
-      list = this.filterReservationsByUserScope(list);
-      this.csvExportItems = this.enrichReservationsForDisplay(list);
-    } catch {
-      this.csvExportItems = currentPageList;
+      const data = await firstValueFrom(this.reservaService.getAll(
+        0, Math.max(1, this.reservasList.totalElements), this.filters
+      ));
+      const list = Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
+      return this.enrichReservationsForDisplay(this.filterReservationsByUserScope(list));
+    } catch (error) {
+      this.handleError(error, 'Error al obtener las mensualidades para exportar');
+      return [];
     }
-  }
+  };
 
   private filterReservationsByUserScope(list: Reserva[]): Reserva[] {
     const employee = this.authService.staff();
@@ -846,11 +839,9 @@ export class BookingPeriodoComponent implements OnInit {
   private loadSchools() {
     this.organizacionesService.getAll().subscribe({
       next: (data: any) => {
-        this.loading = false;
         this.escuelasList = data.content || data;
       },
       error: (error) => {
-        this.loading = false;
         console.error('Error loading organizations:', error);
         Swal.fire({ text: 'Error al obtener las organizaciones', icon: 'error', confirmButtonColor: '#299cdb' });
       }

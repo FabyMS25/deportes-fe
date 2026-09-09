@@ -42,6 +42,8 @@ export class DataHeaderComponent {
   // @Input() title=''
   @Input() csvColumns: CsvColumn[] = [];
   @Input() csvItems: any[] = [];
+  @Input() loadExportItems?: () => Promise<any[]>;
+  exporting = false;
   @Input() SelectedItems: any[] = [];
 
   get title() { return this.breadcrumbItems[0]?.label || '';}
@@ -81,28 +83,34 @@ export class DataHeaderComponent {
     FileSaver.saveAs(blob, fileName);
   }
 
-  public csvFileExport(){
-    const itemsToExport = this.SelectedItems.length > 0
-      ? this.SelectedItems
-      : this.csvItems;
-    if (!itemsToExport.length || !this.csvColumns.length) return;
+  public async csvFileExport(){
+    if (this.exporting) return;
+    this.exporting = true;
+    try {
+      const itemsToExport = this.SelectedItems.length > 0
+        ? this.SelectedItems
+        : this.loadExportItems ? await this.loadExportItems() : this.csvItems;
+      if (!itemsToExport.length || !this.csvColumns.length) return;
 
-    const rows = itemsToExport.map(item =>
-      Object.fromEntries(this.csvColumns.map(col => [col.header, col.value(item)]))
-    );
-    // const rows = this.buildExportRows(this.itemsToExport);
-    const fileSuffix = this.SelectedItems.length > 0 ? 'seleccionados' : 'lista';
-    new ngxCsv(rows, `${this.subtitle || 'Lista'}_${fileSuffix}`, {
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalseparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Lista de ' + (this.subtitle || ''),
-      useBom: true,
-      noDownload: false,
-      headers: this.csvColumns.map(column => column.header),
-    });
+      const rows = itemsToExport.map(item =>
+        Object.fromEntries(this.csvColumns.map(col => [col.header, col.value(item)]))
+      );
+      // const rows = this.buildExportRows(this.itemsToExport);
+      const fileSuffix = this.SelectedItems.length > 0 ? 'seleccionados' : 'lista';
+      new ngxCsv(rows, `${this.subtitle || 'Lista'}_${fileSuffix}`, {
+        fieldSeparator: ',',
+        quoteStrings: '"',
+        decimalseparator: '.',
+        showLabels: true,
+        showTitle: true,
+        title: 'Lista de ' + (this.subtitle || ''),
+        useBom: true,
+        noDownload: false,
+        headers: this.csvColumns.map(column => column.header),
+      });
+    } finally {
+      this.exporting = false;
+    }
   }
 
   private buildExportRows(items: any[]): Array<Record<string, string | number>> {

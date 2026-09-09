@@ -525,8 +525,8 @@
                   </div>
 
                   <div class="col-md-4">
-                    <small class="text-muted d-block">Representante</small>
-                    <div class="fw-semibold">{{ row.reservaDto?.organizacionDto?.representanteDto?.nombreCompleto || 'N/A' }}</div>
+                    <small class="text-muted d-block">Representantes</small>
+                    <div class="fw-semibold">{{ representantesOrganizacionLabel(row.reservaDto?.organizacionDto) }}</div>
                   </div>
 
                   <div class="col-md-4" *ngIf="row.reservaDto?.organizacionDto?.telefono">

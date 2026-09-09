@@ -999,4 +999,16 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
 
     return 'Pendiente de verificación';
   }
+  representantesOrganizacionLabel(organizacion: any): string {
+    const reps = organizacion?.representantesDto
+      ?.map((item: any) => item?.contribuyenteDto?.nombreCompleto || [
+        item?.contribuyenteDto?.nombre,
+        item?.contribuyenteDto?.primerApellido,
+        item?.contribuyenteDto?.segundoApellido
+      ].filter(Boolean).join(' '))
+      .map((value: string) => String(value || '').trim())
+      .filter(Boolean);
+    return reps?.length ? [...new Set(reps)].join(', ') : 'N/A';
+  }
+
 }

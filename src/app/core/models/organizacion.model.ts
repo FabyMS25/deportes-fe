@@ -27,7 +27,6 @@ export interface Organizacion {
   tarifaMensual?: number;
   permiteReservasGratuitas: boolean;
 
-  representanteDto?: Contribuyente;
   reservasDtoList?: Reserva[];
 
   // Values calculated by list views; they are not persisted.

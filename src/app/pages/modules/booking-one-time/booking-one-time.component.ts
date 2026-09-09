@@ -121,7 +121,7 @@ export class BookingOneTimeComponent implements OnInit {
       { label: 'Reservas Puntuales', active: true }
     ];
     this.itemsList = [
-      { name: 'Número Reserva', prop: 'reservaDto.numeroReserva', visible: false },
+      { name: 'Número Reserva', prop: 'reservaDto.numeroReserva', nowrap: true, visible: false },
       { name: 'Contribuyente', prop: 'reservaDto.contribuyenteDto.nombreCompleto', visible: !this.contribuyente },
       { name: 'Complejo', prop: 'reservaDto.campoDeportivoDto.complejoDto.nombre', visible: true },
       { name: 'Campo Deportivo', prop: 'reservaDto.campoDeportivoDto.nombre', visible: true },
@@ -129,7 +129,7 @@ export class BookingOneTimeComponent implements OnInit {
       { name: 'Categoría', prop: 'categoria', visible: false, tag: true },
 
       { name: 'Clasificador RUAT', prop: 'reservaDto.tarifaDto.clasificadorRuatDto.nombre', visible: false },
-      { name: 'Tipo Cobro', prop: 'reservaDto.tarifaDto.tipoCobro', visible: true },
+      { name: 'Tipo Cobro', prop: 'reservaDto.tarifaDto.tipoCobro', nowrap: true, visible: true },
 
       { name: 'Fecha Uso', prop: 'fechaUso', date: true, visible: true },
       { name: 'Hora Inicio', prop: 'horaInicio', visible: false },
@@ -137,12 +137,12 @@ export class BookingOneTimeComponent implements OnInit {
       { name: 'Duración', prop: 'duracionHoras', visible: false },
       { name: 'Cant. Personas', prop: 'cantidadPersonas', visible: false },
       { name: 'Precio Base Aplicado', prop: 'precioBaseAplicado', visible: false },
-      { name: 'Monto Total', prop: 'reservaDto.montoTotal', visible: true },
-      { name: 'Tasa', prop: 'reservaDto.numeroTasa', visible: true },
+      { name: 'Monto Total', prop: 'reservaDto.montoTotal', visible: true, currency: true },
+      { name: 'Tasa', prop: 'reservaDto.numeroTasa', nowrap: true, visible: true },
       { name: 'Fecha Límite Pago', prop: 'reservaDto.fechaLimitePago', date: true, visible: false },
       { name: 'Anulación Automática', prop: 'reservaDto.cancelacionAutomatica', visible: false, tag: true },
 
-      { name: 'Gratuita', prop: 'reservaDto.esReservaGratuita', visible: true, tag: true },
+      { name: 'Gratuita', prop: 'reservaDto.esReservaGratuita', visible: false, tag: true },
       { name: 'Motivo Gratuidad', prop: 'reservaDto.motivoGratuidad', visible: false },
 
       { name: 'Organización', prop: 'reservaDto.organizacionDto.nombre', visible: false },

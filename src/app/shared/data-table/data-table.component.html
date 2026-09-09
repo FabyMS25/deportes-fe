@@ -65,13 +65,20 @@
                                 @if (column.avatar && data.avatar) {
                                     <img [src]="'assets/icons/users/'+data.avatar" alt="" class="avatar-xs rounded-circle">
                                 }
-                                <a class="table-cell-link"
-                                   [class.text-truncate]="column.truncate"
-                                   [style.max-width.px]="column.truncate ? 220 : null"
-                                   [title]="getCellTitle(data, column)"
-                                   (click)="showItem(data)">
-                                    {{ getDisplayText(data, column) | slice:0:column.truncate }}{{ column.truncate && getDisplayText(data, column).length > column.truncate ? '...' : '' }}
-                                </a>
+                                <div class="table-cell-content" [class.table-cell-content-expanded]="isExpanded(data, column)">
+                                    <a class="table-cell-link"
+                                       [class.table-cell-clamped]="isCellTruncated(data, column) && !isExpanded(data, column)"
+                                       [title]="getCellTitle(data, column)"
+                                       (click)="showItem(data)">
+                                        {{ getVisibleCellText(data, column) }}
+                                    </a>
+                                    <button type="button"
+                                            class="btn btn-link btn-sm p-0 ms-1 align-baseline table-cell-more"
+                                            *ngIf="isCellTruncated(data, column)"
+                                            (click)="toggleExpand(data, column, $event)">
+                                        {{ getExpandLabel(data, column) }}
+                                    </button>
+                                </div>
                             }
                         </ng-container>
                         <ng-template #emptyValue>
@@ -166,7 +173,15 @@
                                 } @else if (column.link) {
                                     <a class="table-cell-link" [href]="getLinkValue(data, column)" target="_blank" rel="noopener">{{ getDisplayText(data, column) }}</a>
                                 } @else {
-                                    <div class="fw-medium text-break">{{ getDisplayText(data, column) }}</div>
+                                    <div class="fw-medium text-break">
+                                      {{ getVisibleCellText(data, column) }}
+                                      <button type="button"
+                                              class="btn btn-link btn-sm p-0 ms-1 align-baseline table-cell-more"
+                                              *ngIf="isCellTruncated(data, column)"
+                                              (click)="toggleExpand(data, column, $event)">
+                                        {{ getExpandLabel(data, column) }}
+                                      </button>
+                                    </div>
                                 }
                             </ng-container>
                             <ng-template #emptyValue>

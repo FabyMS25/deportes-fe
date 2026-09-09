@@ -97,9 +97,6 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
     const representantes = (escuela?.representantesDto || [])
       .map(value => value.contribuyenteDto)
       .filter((value): value is Contribuyente => !!value);
-    if (!representantes.length && escuela?.representanteDto) {
-      representantes.push(escuela.representanteDto);
-    }
     return representantes.length ? representantes : this.tutores;
   }
 

@@ -284,8 +284,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
       if (this.currentUserRepresentsSelectedSchool()) {
         candidates.push(
           this.selection.baseReservation?.contribuyenteDto,
-          this.selection.school?.representanteDto,
-          ...(this.selection.school?.representantesDto || []).map(r => r.contribuyenteDto),
+          ...this.getSchoolRepresentatives(this.selection.school),
           ...this.selection.students.map(estudiante => estudiante.contribuyenteDto)
         );
       }
@@ -293,8 +292,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
     }
     const candidates: (Contribuyente | undefined)[] = [
       this.selection.baseReservation?.contribuyenteDto,
-      this.selection.school?.representanteDto,
-      ...(this.selection.school?.representantesDto || []).map(r => r.contribuyenteDto),
+      ...this.getSchoolRepresentatives(this.selection.school),
       ...this.selection.students.map(estudiante => estudiante.contribuyenteDto)
     ];
     return this.uniqueContribuyentes(candidates);
@@ -533,6 +531,7 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
         list = list.filter(
           r =>
             r.estadoReserva !== EstadoReserva.CANCELADA &&
+            r.estadoReserva !== EstadoReserva.EXPIRADA &&
             r.estadoReserva !== EstadoReserva.NO_SHOW
         );
         break;
@@ -1598,14 +1597,20 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
     return Array.from(unique.values());
   }
 
+  private getSchoolRepresentatives(school?: Organizacion): Contribuyente[] {
+    const representatives = (school?.representantesDto || [])
+      .map(rep => rep.contribuyenteDto)
+      .filter((rep): rep is Contribuyente => !!rep?.uuid);
+    return representatives;
+  }
+
   private currentUserRepresentsSelectedSchool(): boolean {
     const userUuid = this.userData?.uuid;
     const school = this.selection.school;
     if (!userUuid || !school) {
       return false;
     }
-    return school.representanteDto?.uuid === userUuid ||
-      (school.representantesDto || []).some(rep => rep.contribuyenteDto?.uuid === userUuid) ||
+    return this.getSchoolRepresentatives(school).some(rep => rep.uuid === userUuid) ||
       (this.userData?.organizacionesRepresentadas || []).some((org: Organizacion) => org.uuid === school.uuid);
   }
 
@@ -1754,3 +1759,4 @@ export class BookingPeriodoModalComponent implements OnInit, OnChanges, AfterVie
     });
   }
 }
+

@@ -43,7 +43,7 @@
                     <span class="d-none d-md-inline-block ms-1">{{"Notificación Masiva" | translate}}</span>
                 </button>
                 <button *ngIf="exportShow && csvColumns.length > 0 && (csvItems.length > 0 || SelectedItems.length > 0)"
-                    (click)="csvFileExport()"
+                    (click)="csvFileExport()" [disabled]="exporting"
                     class="btn btn-soft-info" data-bs-placement="top"
                     data-bs-toggle="tooltip" title="{{'Exportar' | translate}}">
                     <i class="ri-file-download-line align-bottom"></i>

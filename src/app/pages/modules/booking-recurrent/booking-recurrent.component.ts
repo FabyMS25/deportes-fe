@@ -79,7 +79,7 @@ export class BookingRecurrentComponent implements OnInit {
     { header: 'Es Para Organización', value: i => i.reservaDto?.organizacionDto ? 'SI' : 'NO' },
     { header: 'Nombre Organización', value: i => i.reservaDto?.organizacionDto?.nombre || '-' },
     { header: 'Tipo Organización', value: i => i.reservaDto?.organizacionDto?.tipoOrganizacion || '-' },
-    { header: 'Representante Organización', value: i => i.reservaDto?.organizacionDto?.representanteDto?.nombreCompleto || '-' },
+    { header: 'Representantes Organización', value: i => this.representantesOrganizacionLabel(i.reservaDto?.organizacionDto) },
     { header: 'Estudiante', value: () => '-' },
     { header: 'Matrícula', value: () => '-' },
     { header: 'Tipo Contribuyente', value: i => i.reservaDto?.contribuyenteDto?.tipoContribuyente || '-' },
@@ -131,7 +131,7 @@ export class BookingRecurrentComponent implements OnInit {
       { label: 'Reservas Recurrentes', active: true }
     ];
     this.itemsList = [
-      { name: 'Número Reserva', prop: 'reservaDto.numeroReserva', visible: false },
+      { name: 'Número Reserva', prop: 'reservaDto.numeroReserva', nowrap: true, visible: false },
       { name: 'Contribuyente', prop: 'reservaDto.contribuyenteDto.nombreCompleto', visible: !this.contribuyente },
       { name: 'Complejo', prop: 'reservaDto.campoDeportivoDto.complejoDto.nombre', visible: true },
       { name: 'Campo Deportivo', prop: 'reservaDto.campoDeportivoDto.nombre', visible: true },
@@ -139,7 +139,7 @@ export class BookingRecurrentComponent implements OnInit {
       { name: 'Categoría', prop: 'categoria', visible: false, tag: true },
       
       { name: 'Clasificador RUAT', prop: 'reservaDto.tarifaDto.clasificadorRuatDto.nombre', visible: false },
-      { name: 'Tipo Cobro', prop: 'reservaDto.tarifaDto.tipoCobro', visible: true },
+      { name: 'Tipo Cobro', prop: 'reservaDto.tarifaDto.tipoCobro', nowrap: true, visible: false },
 
       { name: 'Fecha Inicio', prop: 'fechaInicio', date: true, visible: false },
       { name: 'Fecha Fin', prop: 'fechaFin', date: true, visible: false },
@@ -148,12 +148,12 @@ export class BookingRecurrentComponent implements OnInit {
       { name: 'Duración Sesión', prop: 'duracionSesionHoras', visible: false },
       { name: 'Personas', prop: 'cantidadPersonas', visible: false },
       { name: 'Precio Base Aplicado', prop: 'precioBaseAplicado', visible: false },
-      { name: 'Monto Total', prop: 'reservaDto.montoTotal', visible: true },
-      { name: 'Tasa', prop: 'reservaDto.numeroTasa', visible: true },
+      { name: 'Monto Total', prop: 'reservaDto.montoTotal', visible: true, currency: true },
+      { name: 'Tasa', prop: 'reservaDto.numeroTasa', nowrap: true, visible: true },
       { name: 'Fecha Límite Pago', prop: 'reservaDto.fechaLimitePago', date: true, visible: false },
-      { name: 'Anulación Automática', prop: 'reservaDto.cancelacionAutomatica', visible: true, tag: true },
+      { name: 'Anulación Automática', prop: 'reservaDto.cancelacionAutomatica', visible: false, tag: true },
 
-      { name: 'Gratuita', prop: 'reservaDto.esReservaGratuita', visible: true, tag: true },
+      { name: 'Gratuita', prop: 'reservaDto.esReservaGratuita', visible: false, tag: true },
       { name: 'Motivo Gratuidad', prop: 'reservaDto.motivoGratuidad', visible: false },
 
       { name: 'Organización', prop: 'reservaDto.organizacionDto.nombre', visible: false },
@@ -921,4 +921,16 @@ export class BookingRecurrentComponent implements OnInit {
         confirmButtonColor: '#299cdb' 
     });
   }
+  representantesOrganizacionLabel(organizacion: any): string {
+    const reps = organizacion?.representantesDto
+      ?.map((item: any) => item?.contribuyenteDto?.nombreCompleto || [
+        item?.contribuyenteDto?.nombre,
+        item?.contribuyenteDto?.primerApellido,
+        item?.contribuyenteDto?.segundoApellido
+      ].filter(Boolean).join(' '))
+      .map((value: string) => String(value || '').trim())
+      .filter(Boolean);
+    return reps?.length ? [...new Set(reps)].join(', ') : '-';
+  }
+
 }

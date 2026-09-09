@@ -17,7 +17,6 @@ export interface ColumnDefinition {
   name: string;
   prop: string;
   value?: (row: unknown) => unknown;
-  fallbackProp?: string;
   visible: boolean;
   scope?: string | string[];
   sortable?: boolean;
@@ -30,7 +29,10 @@ export interface ColumnDefinition {
   avatar?: boolean;
   currency?: string | boolean;
   number?: boolean;
+  /** Character limit for the expandable Ver más / Ver menos preview. */
   truncate?: number;
+  /** Keep identifiers on one line; defaults to true for currency, numbers, dates and phones. */
+  nowrap?: boolean;
   phone?: boolean;
   link?: boolean;
   primary?: boolean;
@@ -184,12 +186,13 @@ export class DataTableComponent implements OnChanges {
       case 'Desbloquear':
         return data.estadoUsuario === statusData.EstadoUsuario.BLOQUEADO;
       case 'Dar de baja':
-        return data?.puedeGestionar !== false && data?.activo === true;
+        return data?.puedeGestionar !== false && this.getRowRelationships(data).some(item => item?.activo === true);
       case 'Habilitar':
         return data?.puedeGestionar !== false
-          && data?.activo === false && data?.reactivacionBloqueada !== true;
+          && this.getRowRelationships(data).some(item => item?.activo === false && item?.reactivacionBloqueada !== true);
       case 'Desvincular tutor':
-        return data?.puedeGestionar !== false && data?.activo === true && !!data?.contribuyenteDto;
+        return data?.puedeGestionar !== false
+          && this.getRowRelationships(data).some(item => item?.activo === true && !!item?.contribuyenteDto);
       default:
         return true;
     }
@@ -246,11 +249,7 @@ export class DataTableComponent implements OnChanges {
   }
 
   getRawCellValue(row: any, column: ColumnDefinition): any {
-    let value = column.value ? column.value(row) : this.getPropertyValue(row, column.prop);
-    if (this.isEmptyValue(value) && column.fallbackProp) {
-      value = this.getPropertyValue(row, column.fallbackProp);
-    }
-    return value;
+    return column.value ? column.value(row) : this.getPropertyValue(row, column.prop);
   }
 
   getCategoryOption(row: any, column: ColumnDefinition): CategoryOption | undefined {
@@ -274,7 +273,25 @@ export class DataTableComponent implements OnChanges {
 
   getCellTitle(row: any, column: ColumnDefinition): string | null {
     const value = this.getDisplayText(row, column);
-    return column.truncate && value.length > column.truncate ? value : null;
+    return this.isCellTruncated(row, column) ? value : null;
+  }
+
+  getVisibleCellText(row: any, column: ColumnDefinition): string {
+    const value = this.getDisplayText(row, column);
+    const limit = this.getTruncateLimit(column);
+    if (!limit || value.length <= limit || this.isExpanded(row, column)) {
+      return value;
+    }
+    return `${value.slice(0, limit).trimEnd()}...`;
+  }
+
+  isCellTruncated(row: any, column: ColumnDefinition): boolean {
+    const limit = this.getTruncateLimit(column);
+    return !!limit && this.getDisplayText(row, column).length > limit;
+  }
+
+  getExpandLabel(row: any, column: ColumnDefinition): string {
+    return this.isExpanded(row, column) ? 'Ver menos' : 'Ver más';
   }
 
   isEmptyValue(value: any): boolean {
@@ -288,6 +305,7 @@ export class DataTableComponent implements OnChanges {
   getColumnClass(column: ColumnDefinition): string {
     return [
       column.cssClass || '',
+      (column.nowrap ?? !!(column.currency || column.number || column.date || column.phone)) ? 'table-column-nowrap' : '',
       column.number || column.currency ? 'text-end' : '',
       column.primary ? 'table-column-primary' : ''
     ].filter(Boolean).join(' ');
@@ -530,6 +548,16 @@ export class DataTableComponent implements OnChanges {
     return scopes.includes(this.activeScope);
   }
 
+  private getTruncateLimit(column: ColumnDefinition): number | null {
+    return column.truncate && column.truncate > 0 ? column.truncate : null;
+  }
+
+  private getRowRelationships(data: any): any[] {
+    return Array.isArray(data?.relacionesEstudiante) && data.relacionesEstudiante.length
+      ? data.relacionesEstudiante
+      : [data];
+  }
+
   isSelected(item: any): boolean {
     return this.checkedValGet.some(selected => this.sameItem(selected, item));
   }
@@ -538,13 +566,19 @@ export class DataTableComponent implements OnChanges {
     return !!left && !!right && left.uuid && right.uuid ? left.uuid === right.uuid : left === right;
   }
 
-  toggleExpand(data: any, prop: string): void {
-    const key = `${data?.uuid || data?.id || ''}_${prop}`;
+  toggleExpand(data: any, column: ColumnDefinition, event?: Event): void {
+    event?.stopPropagation();
+    event?.preventDefault();
+    const key = this.getCellKey(data, column);
     this.expandedItems.has(key) ? this.expandedItems.delete(key) : this.expandedItems.add(key);
   }
 
-  isExpanded(data: any, prop: string): boolean {
-    return this.expandedItems.has(`${data?.uuid || data?.id || ''}_${prop}`);
+  isExpanded(data: any, column: ColumnDefinition): boolean {
+    return this.expandedItems.has(this.getCellKey(data, column));
+  }
+
+  private getCellKey(data: any, column: ColumnDefinition): string {
+    return `${data?.uuid || data?.estudianteUuid || data?.id || ''}_${column.prop || column.name}`;
   }
 
   toggleColumn(column: ColumnDefinition): void {

@@ -75,9 +75,7 @@ export class ModalOrganizationComponent implements OnInit {
     this.initializeForm();
     this.formDataSet();
     this.setupFormListeners();
-    this.representantes = (this.row?.representantesDto?.length
-      ? this.row.representantesDto
-      : this.row?.representanteDto ? [{ contribuyenteDto: this.row.representanteDto }] : [])
+    this.representantes = (this.row?.representantesDto || [])
       .map(r => ({...r}));
     this.contribuyentesService.getAll().subscribe({
       next: (data: any) => this.contribuyentesList = data?.content || data || [],
@@ -109,9 +107,7 @@ export class ModalOrganizationComponent implements OnInit {
       // Payment and reservation fields
       requierePagoMensualidad: [false],
       tarifaMensual: [0, [Validators.min(0)]],
-      permiteReservasGratuitas: [false],
-      
-      representanteDto: [null]
+      permiteReservasGratuitas: [false]
     });
   }
 
@@ -218,9 +214,7 @@ export class ModalOrganizationComponent implements OnInit {
         // Payment and reservation fields
         requierePagoMensualidad: this.row.requierePagoMensualidad || false,
         tarifaMensual: this.row.tarifaMensual || 0,
-        permiteReservasGratuitas: this.row.permiteReservasGratuitas || false,
-        
-        representanteDto: this.row.representanteDto
+        permiteReservasGratuitas: this.row.permiteReservasGratuitas || false
       });
 
       if (this.accion === 'show') {
@@ -254,8 +248,6 @@ export class ModalOrganizationComponent implements OnInit {
         this.showLoading = false;
         return;
       }
-      const representanteCompatibilidad = this.representantes[0]?.contribuyenteDto;
-
       let datos: Organizacion = {
         tipoOrganizacion: formData.tipoOrganizacion,
         nombre: formData.nombre.trim(),
@@ -275,8 +267,6 @@ export class ModalOrganizationComponent implements OnInit {
         requierePagoMensualidad: formData.requierePagoMensualidad,
         tarifaMensual: formData.requierePagoMensualidad ? formData.tarifaMensual : undefined,
         permiteReservasGratuitas: formData.permiteReservasGratuitas,
-        
-        representanteDto: representanteCompatibilidad,
         representantesDto: this.representantes,
       };
 

@@ -290,7 +290,6 @@
 //   tarifaMensual?: number;
 //   permiteReservasGratuitas: boolean;
 
-//   representanteDto: Contribuyente;
 //   reservasDtoList?: Reserva[];
 //   // estudiantesDtoList?: EstudianteEscuela[];
 // }

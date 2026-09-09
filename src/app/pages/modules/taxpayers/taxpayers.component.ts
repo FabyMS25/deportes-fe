@@ -104,7 +104,7 @@ export class TaxpayersComponent implements OnInit {
       { label: 'Contribuyentes', active: true }
     ];    
     this.itemsList = [
-      { name: 'Nombre Completo', prop: 'nombreCompleto', visible: true },
+      { name: 'Nombre Completo', prop: 'nombreCompleto', visible: true, truncate: 70 },
       { name: 'Nombre', prop: 'nombre', visible: false },
       { name: 'Primer Apellido', prop: 'primerApellido', visible: false },
       { name: 'Segundo Apellido', prop: 'segundoApellido', visible: false },
@@ -118,21 +118,21 @@ export class TaxpayersComponent implements OnInit {
       { name: 'Fecha Nacimiento', prop: 'fechaNacimiento', visible: false },
       { name: 'Teléfono', prop: 'telefono', visible: true },
       { name: 'Email', prop: 'email', visible: false },
-      { name: 'Dirección', prop: 'direccion', visible: false },
+      { name: 'Dirección', prop: 'direccion', visible: false, truncate: 90 },
       { name: 'Estado Usuario', prop: 'estadoUsuario', tag: true, visible: true },
       { name: 'Estado Ruat', prop: 'estadoRuat', visible: false, tag: true },
       { name: 'Es Deportista Elite', prop: 'esDeportistaElite', visible: false, tag: true },
       { name: 'Puede Reservar Gratis', prop: 'puedeReservarGratis', visible: false, tag: true },
       { name: 'Pertenece Escuela Municipal', prop: 'perteneceEscuelaMunicipal', visible: false, tag:true},
-      { name: 'Registro Único Deportivo', prop: 'registroUnicoDeportivo', visible: false },
+      { name: 'Registro Único Deportivo', prop: 'registroUnicoDeportivo', visible: false, truncate: 90 },
       { name: 'Fecha Último Uso Gratuito', prop: 'fechaUltimoUsoGratuito', visible: false, date: true },
-      { name: 'Observaciones Municipales', prop: 'observacionesMunicipales', visible: false },
+      { name: 'Observaciones Municipales', prop: 'observacionesMunicipales', visible: false, truncate: 90 },
       { name: 'Descuento Aplicable', prop: 'descuentoAplicable', visible: false },
       { name: 'Fecha Creacion', prop: 'fechaCreacion', visible: false, date: true },
       { name: 'Fecha Actualización', prop: 'fechaActualizacion', visible: false, date: true },
       { name: 'Estado Sancionado', prop: 'estaSancionado', visible: false, tag: true },
       { name: 'Fecha fin Sancion', prop: 'fechaFinSancion', visible: false, date: false },
-      { name: 'Motivo', prop: 'motivoSancion', visible: false },
+      { name: 'Motivo', prop: 'motivoSancion', visible: false, truncate: 90 },
     ];    
     this.getTaxpayers();
   }
