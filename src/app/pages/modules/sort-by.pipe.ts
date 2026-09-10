@@ -9,12 +9,12 @@ import { orderBy,sortBy } from 'lodash';
 export class SortByPipe implements PipeTransform {
 
   transform(value: any[], order:any = '', column: string = ''): any[] {
-    if (!value || order === '' || !order) { return value; } // no array
+    if (!value || order === '' || !order) { return value; } 
     if (!column || column === '') {
       if(order==='asc'){return value.sort()}
       else{return value.sort().reverse();}
-    } // sort 1d array
-    if (value.length <= 1) { return value; } // array with only one item
+    }
+    if (value.length <= 1) { return value; } 
     return orderBy(value, [column], [order]);
   }
 }

@@ -9,6 +9,7 @@ export interface MenuItem {
   accion?:string;
   icono?: string;
   ruta?: string;
+  permissionRoute?: string;
   permisoHijoListDto: MenuItem[];
   permisoPadreDto?: any;
   subNivel?:boolean;

@@ -66,6 +66,10 @@ export class ReservaPeriodoService {
     return apiGet<ReservaPeriodo[]>(this.http, `${this.apiUrl}/organizacion/${organizacionUuid}`, `obtener reservas periodo por organización (${organizacionUuid})`);
   }
 
+  getStudentHistory(estudianteUuid: string): Observable<ReservaPeriodo[]> {
+    return apiGet<ReservaPeriodo[]>(this.http, this.apiUrl + '/estudiante/' + estudianteUuid + '/historial', 'obtener historial de mensualidades');
+  }
+
   getByStudent(estudianteUuid: string): Observable<ReservaPeriodo[]> {
     return apiGet<ReservaPeriodo[]>(this.http, `${this.apiUrl}/estudiante/${estudianteUuid}`, `obtener reservas periodo por estudiante (${estudianteUuid})`);
   }

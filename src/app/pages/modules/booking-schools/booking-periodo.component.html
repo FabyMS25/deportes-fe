@@ -49,7 +49,7 @@
                 </div>
                 <div class="col-6 col-sm-3 col-lg-2">
                     <select class="form-control" data-choices data-choices-search-false name="estadoReserva" id="idEstadoReserva"
-                        [(ngModel)]="filters.estadoReserva" (ngModelChange)="applyFilters()">
+                        [(ngModel)]="filters.estadoReserva" (ngModelChange)="onReservationStatusChange()">
                         <option value="" selected>Estado Reserva</option>
                         <option *ngFor="let option of estadoReservaOptions" [value]="option.value">
                             {{option.label}}
@@ -68,7 +68,7 @@
                 </div>
                 <div class="col-6 col-sm-3 col-lg-1">
                     <button class="btn btn-outline-secondary w-100" 
-                        title="Limpiar" (click)="clearFilters()">
+                        type="button" title="Limpiar todos los filtros" aria-label="Limpiar todos los filtros" (click)="clearFilters()">
                         <i class="ri-refresh-line align-bottom"></i>
                     </button>
                 </div>
@@ -83,7 +83,7 @@
                         role="tablist">
                         <li [ngbNavItem]="0" class="nav-item">
                             <a ngbNavLink class="nav-link All py-3" data-bs-toggle="tab" id="All" href="javascript:void(0);" role="tab" aria-selected="true">
-                            Todo<span class="badge bg-danger align-middle ms-1">{{temp.length || 0}}</span>
+                            Todo
                             </a>
                         </li>
                         <li [ngbNavItem]="1" class="nav-item">

@@ -4,7 +4,7 @@ export const environment = {
   applicationIdentifier: "uo-XSwSEFlyM",
   
   backendUrl: "http://localhost:8085/api",
-  backendRuat:'http://localhost:8085/api',
+  // backendRuat:'http://localhost:8085/api',
   assetsUrl: "http://deportes.quillacollo.gob.bo",
 
   EmailJS:{

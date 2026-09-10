@@ -20,6 +20,7 @@ export class NotificacionService {
   private counterSubscription?: StompSubscription;
   private fallbackSubscription?: Subscription;
   private activeUsuarioUuid = '';
+  private sessionVersion = 0;
 
   private notificationsSubject = new BehaviorSubject<Notificacion[]>([]);
   private unreadCountSubject = new BehaviorSubject<number>(0);
@@ -116,20 +117,25 @@ export class NotificacionService {
   }
 
   loadLatest(usuarioUuid: string): Observable<Notificacion[]> {
+    const version = this.sessionVersion;
     return this.getByUsuario(usuarioUuid).pipe(
-      tap(notifications => this.notificationsSubject.next(notifications)),
+      tap(notifications => { if (usuarioUuid === this.activeUsuarioUuid && version === this.sessionVersion) this.notificationsSubject.next(notifications.filter(item => item.usuarioUuid === usuarioUuid)); }),
       catchError(() => of([]))
     );
   }
 
   refreshCounter(usuarioUuid: string): Observable<number> {
+    const version = this.sessionVersion;
     return this.getUnreadCount(usuarioUuid).pipe(
-      tap(count => this.unreadCountSubject.next(count)),
+      tap(count => { if (usuarioUuid === this.activeUsuarioUuid && version === this.sessionVersion) this.unreadCountSubject.next(count); }),
       catchError(() => of(this.unreadCountSubject.value))
     );
   }
 
   disconnect(): void {
+    this.sessionVersion++;
+    this.notificationsSubject.next([]);
+    this.unreadCountSubject.next(0);
     this.activeUsuarioUuid = '';
     this.notificationSubscription?.unsubscribe();
     this.counterSubscription?.unsubscribe();
@@ -149,6 +155,7 @@ export class NotificacionService {
   }
 
   private connect(usuarioUuid: string): void {
+    const version = this.sessionVersion;
     const token = this.storageService.getToken();
 
     this.stompClient = new Client({
@@ -166,14 +173,15 @@ export class NotificacionService {
         }
       },
       onConnect: () => this.zone.run(() => {
+        if (version !== this.sessionVersion) return;
         this.connectionStateSubject.next(true);
         this.notificationSubscription = this.stompClient?.subscribe(
           `/topic/notificaciones/${usuarioUuid}`,
-          message => this.handleNotificationMessage(message)
+          message => this.zone.run(() => { if (version === this.sessionVersion) this.handleNotificationMessage(message); })
         );
         this.counterSubscription = this.stompClient?.subscribe(
           `/topic/notificaciones/${usuarioUuid}/contador`,
-          message => this.handleCounterMessage(message)
+          message => this.zone.run(() => { if (version === this.sessionVersion) this.handleCounterMessage(message); })
         );
       }),
       onStompError: () => this.zone.run(() => this.connectionStateSubject.next(false)),
@@ -196,11 +204,12 @@ export class NotificacionService {
 
   private handleNotificationMessage(message: IMessage): void {
     const notification = this.parseBody<Notificacion>(message.body);
-    if (!notification?.uuid) return;
+    if (!notification?.uuid || notification.usuarioUuid !== this.activeUsuarioUuid) return;
 
+    const previous = this.notificationsSubject.value.find(item => item.uuid === notification.uuid);
     const existing = this.notificationsSubject.value.filter(item => item.uuid !== notification.uuid);
     this.notificationsSubject.next([notification, ...existing].slice(0, 20));
-    if (notification.estadoLectura === 'NO_LEIDA') {
+    if (notification.estadoLectura === 'NO_LEIDA' && previous?.estadoLectura !== 'NO_LEIDA') {
       this.unreadCountSubject.next(this.unreadCountSubject.value + 1);
       this.incomingNotificationSubject.next(notification);
     }
@@ -212,6 +221,7 @@ export class NotificacionService {
   }
 
   private patchLocalReadState(uuid: string, notification?: Notificacion): void {
+    const wasUnread = this.notificationsSubject.value.some(item => item.uuid === uuid && item.estadoLectura === 'NO_LEIDA');
     const notifications = this.notificationsSubject.value.map(item => {
       if (item.uuid !== uuid) return item;
       return {
@@ -221,7 +231,7 @@ export class NotificacionService {
       };
     });
     this.notificationsSubject.next(notifications);
-    this.unreadCountSubject.next(notifications.filter(item => item.estadoLectura === 'NO_LEIDA').length);
+    if (wasUnread) this.unreadCountSubject.next(Math.max(0, this.unreadCountSubject.value - 1));
   }
 
   private parseBody<T>(body: string): T {

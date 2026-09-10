@@ -36,7 +36,7 @@ export class CategoriesComponent {
   deporteData!: Categoria;
   checkedList: any;
   searchResults: any;
-  searchTerm: any;
+  searchTerm = '';
   selectedItems: any[] = [];
 
   constructor(private modalService: NgbModal,
@@ -44,7 +44,7 @@ export class CategoriesComponent {
     public translate: TranslateService,
     private categoriesService: CategoriasService,
     private formBuilder: UntypedFormBuilder,) {
-      this.canActivate = this.authService.hasPermission('Categorias');
+      this.canActivate = this.authService.hasPermission('/admin/categories');
   }
 
   ngOnInit(): void {
@@ -114,14 +114,10 @@ export class CategoriesComponent {
 
   // Search Data
   performSearch(): void {
-    this.categoryList = this.temp.filter((item: any) => {
-      return (
-        item.nombre?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.codigo?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.descripcion?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.tipo?.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
-    });
+    const normalize = (value: unknown) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const term = normalize(this.searchTerm);
+    this.categoryList = this.temp.filter((item: any) =>
+      !term || [item.nombre, item.codigo, item.descripcion, item.tipo].some(value => normalize(value).includes(term)));
   }
 
   /**

@@ -293,8 +293,8 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   }
 
   private updatePermissionsForBookingType(): void {
-    const title = this.bookingType === 'recurrente' ? 'Reservas Recurrentes' : 'Reservas Puntuales';
-    this.canActivate = this.authenticationService.hasPermission(title);
+    const permissionRoute = this.bookingType === 'recurrente' ? '/reservations/recurrent' : '/reservations/one-time';
+    this.canActivate = this.authenticationService.hasPermission(permissionRoute);
   }
 
   private canProceedToNextStep(): boolean {

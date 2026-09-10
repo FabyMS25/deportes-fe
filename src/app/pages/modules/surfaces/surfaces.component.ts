@@ -33,7 +33,7 @@ export class SurfacesComponent {
     private authService: AuthenticationService,
     private superficiesService: SuperficiesService,
     private formBuilder: UntypedFormBuilder) {
-      this.canActivate = this.authService.hasPermission('Superficies');
+      this.canActivate = this.authService.hasPermission('/admin/area');
   }
 
   ngOnInit(): void {
@@ -81,13 +81,12 @@ export class SurfacesComponent {
 
   // Search Data
   searchResults: any;
-  searchTerm: any;
+  searchTerm = '';
   performSearch(): void {
-    this.superficiesList = this.temp.filter((item: any) => {
-      return (
-        item.descripcion.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
-    });
+    const normalize = (value: unknown) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const term = normalize(this.searchTerm);
+    this.superficiesList = this.temp.filter((item: any) =>
+      !term || [item.descripcion].some(value => normalize(value).includes(term)));
   }
 
   /**

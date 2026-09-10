@@ -66,7 +66,7 @@ export class EmployeesComponent implements OnInit {
     private complejosService: FacilitiesService,
     private datePipe: DatePipe
   ) {
-    this.canActivate = this.authService.hasPermission('Encargados');
+    this.canActivate = this.authService.hasPermission('/admin/employees');
   }
 
   ngOnInit(): void {
@@ -110,17 +110,12 @@ export class EmployeesComponent implements OnInit {
   }
   
   // Search Data
-  searchTerm: any;
+  searchTerm = '';
   performSearch(): void {
-    this.employeesList = this.temp.filter((item: any) => {
-      const searchTermLower = this.searchTerm.toLowerCase();
-      return (
-        item.nombre?.toLowerCase().includes(searchTermLower) ||
-        item.telefono?.toLowerCase().includes(searchTermLower) ||
-        (item.complejoDto?.nombre?.toLowerCase().includes(searchTermLower)) ||
-        (item.activo !== undefined && (item.activo ? 'activo' : 'inactivo').includes(searchTermLower))
-      );
-    });
+    const normalize = (value: unknown) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const term = normalize(this.searchTerm);
+    this.employeesList = this.temp.filter((item: any) => ['activo', 'inactivo'].includes(term) ? item.activo === (term === 'activo') :
+      !term || [item.nombre, item.telefono, item.complejoDto?.nombre].some(value => normalize(value).includes(term)));
   }
 
   /**

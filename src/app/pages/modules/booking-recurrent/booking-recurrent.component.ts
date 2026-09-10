@@ -30,6 +30,9 @@ import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component
   styleUrls: ['./booking-recurrent.component.scss']
 })
 export class BookingRecurrentComponent implements OnInit {
+  private searchTimer?: ReturnType<typeof setTimeout>;
+  private refreshTimer?: ReturnType<typeof setInterval>;
+  private listRequestVersion = 0;
   breadCrumbItems: BreadCrumbItem[] =[];
   viewMode: 'table' | 'cards' = 'table';
   canActivate: string[];
@@ -122,7 +125,7 @@ export class BookingRecurrentComponent implements OnInit {
       private ruatService: RuatRequestsService,
       private pagoService: PagoService,
   ) {
-      this.canActivate = this.authService.hasPermission('Reservas Recurrentes');
+      this.canActivate = this.authService.hasPermission('/reservations/recurrent');
   }
 
   async ngOnInit() {
@@ -192,7 +195,7 @@ export class BookingRecurrentComponent implements OnInit {
     }    
     await this.getRecurrentReservations();
     await this.getCategories();
-    setInterval(() => this.getRecurrentReservations(), 5 * 60 * 1000);
+    this.refreshTimer = setInterval(() => this.getRecurrentReservations(), 5 * 60 * 1000);
   }
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -219,9 +222,26 @@ export class BookingRecurrentComponent implements OnInit {
   }
 
   onNavChange(changeEvent: NgbNavChangeEvent) {
+    this.filters.estadoReserva = '';
     this.filters.tab = changeEvent.nextId;
     this.currentPage = 1;
     this.getRecurrentReservations();
+  }
+
+  ngOnDestroy(): void {
+    clearTimeout(this.searchTimer);
+    clearInterval(this.refreshTimer);
+    ++this.listRequestVersion;
+  }
+
+  onSearchChange(): void {
+    clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => this.applyFilters(), 300);
+  }
+
+  onReservationStatusChange(): void {
+    this.filters.tab = 0;
+    this.applyFilters();
   }
 
   applyFilters() {
@@ -230,6 +250,7 @@ export class BookingRecurrentComponent implements OnInit {
   }
 
   clearFilters() {
+    clearTimeout(this.searchTimer);
     this.filters = {
       searchTerm: '',
       estadoReserva: '',
@@ -750,6 +771,7 @@ export class BookingRecurrentComponent implements OnInit {
     });
   }
   private async getRecurrentReservations() {
+    const requestVersion = ++this.listRequestVersion;
     try {
       this.loading = true;
       const data: any = await this.reservaRecurrenteService.getAll(
@@ -757,6 +779,7 @@ export class BookingRecurrentComponent implements OnInit {
         this.pageSize,
         this.getRecurrentReservationFilters()
       ).toPromise();
+      if (requestVersion !== this.listRequestVersion) return;
       if (!data) throw new Error('Respuesta inválida del servidor');
       let list: ReservaRecurrente[] = [];
       if (data.content && Array.isArray(data.content)) {
@@ -764,33 +787,25 @@ export class BookingRecurrentComponent implements OnInit {
       } else if (Array.isArray(data)) {
         list = data;
       }
-      const employee = this.authService.staff();
-      if(employee?.complejoDto){
-          list = list.filter((item: any) => 
-            item.reservaDto?.campoDeportivoDto?.complejoDto?.uuid === employee.complejoDto?.uuid
-          );
-      }
-      if (this.contribuyente) {
-        list = list.filter((item: any) => 
-          item.reservaDto?.contribuyenteDto?.uuid === this.contribuyente.uuid
-        );
-      }
+      // Ownership and counts are scoped by the server before pagination.
       const updatedList = await this.checkAndUpdateReservationsStatuses(list);
+      if (requestVersion !== this.listRequestVersion) return;
       this.notifyAboutExpiredReservations(list, updatedList);
       this.reservasList ={
         ...data,
         content: updatedList
       } ;
       this.temp = this.reservasList;
-      await this.loadRecurrentReservationsForExport(data, updatedList);
+      await this.loadRecurrentReservationsForExport(data, updatedList, requestVersion);
     } catch (error:any) {
+      if (requestVersion !== this.listRequestVersion) return;
       this.loading = false;
       this.handleError(error, 'Error al obtener las reservas');
       this.reservasList = { content: [], totalElements: 0, pageable: { pageNumber: 0, pageSize: 20 } };
       this.temp = [];
       this.csvExportItems = [];
     } finally {
-      this.loading = false;
+      if (requestVersion === this.listRequestVersion) this.loading = false;
     }
   }
 
@@ -809,7 +824,8 @@ export class BookingRecurrentComponent implements OnInit {
 
   private async loadRecurrentReservationsForExport(
     pageData: any,
-    currentPageList: ReservaRecurrente[]
+    currentPageList: ReservaRecurrente[],
+    requestVersion: number
   ): Promise<void> {
     const totalElements = Number(pageData?.totalElements || currentPageList.length);
     if (totalElements <= currentPageList.length) {
@@ -828,24 +844,13 @@ export class BookingRecurrentComponent implements OnInit {
           ? data
           : [];
       list = this.filterRecurrentReservationsByUserScope(list);
-      this.csvExportItems = list;
+      if (requestVersion === this.listRequestVersion) this.csvExportItems = list;
     } catch {
-      this.csvExportItems = currentPageList;
+      if (requestVersion === this.listRequestVersion) this.csvExportItems = currentPageList;
     }
   }
 
   private filterRecurrentReservationsByUserScope(list: ReservaRecurrente[]): ReservaRecurrente[] {
-    const employee = this.authService.staff();
-    if (employee?.complejoDto) {
-      list = list.filter((item: any) =>
-        item.reservaDto?.campoDeportivoDto?.complejoDto?.uuid === employee.complejoDto?.uuid
-      );
-    }
-    if (this.contribuyente) {
-      list = list.filter((item: any) =>
-        item.reservaDto?.contribuyenteDto?.uuid === this.contribuyente.uuid
-      );
-    }
     return list;
   }
   private getCategories() {

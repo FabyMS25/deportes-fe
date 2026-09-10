@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, inject, OnDestroy, OnInit, Output } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbPaginationModule, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { Subject, debounceTime, distinctUntilChanged, switchMap, takeUntil } from 'rxjs';
+import { forkJoin, Subject, debounceTime, distinctUntilChanged, switchMap, takeUntil } from 'rxjs';
 import Swal from 'sweetalert2';
 
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
@@ -11,10 +11,14 @@ import { EstudianteEscuela } from 'src/app/core/models/EstudianteEscuela.model';
 import { Organizacion } from 'src/app/core/models/organizacion.model';
 import { EstudianteEscuelaService } from 'src/app/core/services/api/estudianteEscuela.service';
 
+import { ReservaPeriodoService } from 'src/app/core/services/api/reserva-periodo.service';
+import { ReservaPeriodo } from 'src/app/core/models/reservaPeriodo.model';
+import { TicketComponent } from '../../modules/reports/ticket/ticket.component';
+
 @Component({
   selector: 'app-modal-student',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, NgSelectModule, NgbPaginationModule],
   templateUrl: './modal-student.component.html',
   styleUrl: './modal-student.component.scss'
 })
@@ -27,10 +31,56 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
   @Input() estudiantesExistentes: EstudianteEscuela[] = [];
   @Output() emitList = new EventEmitter<void>();
 
+  private readonly monthlyService = inject(ReservaPeriodoService);
+  private readonly modalService = inject(NgbModal);
+  monthlyHistory: ReservaPeriodo[] = [];
+  monthlyLoading = false;
+  monthlyError = '';
+  monthlyLoaded = false;
+  monthlyPage = 1;
+  readonly monthlyPageSize = 8;
+
+  openMonthlyHistory(): void {
+    if (this.accion !== 'show') return;
+    this.activeTab = 'mensualidades';
+    if (this.monthlyLoaded || this.monthlyLoading) return;
+    const uuids = [...new Set([this.row, ...this.relacionesEstudiante].map(item => item?.uuid).filter((uuid): uuid is string => !!uuid))];
+    if (!uuids.length) { this.monthlyLoaded = true; return; }
+    this.monthlyLoading = true;
+    this.monthlyError = '';
+    forkJoin(uuids.map(uuid => this.monthlyService.getStudentHistory(uuid))).pipe(takeUntil(this.destroy$)).subscribe({
+      next: results => {
+        const unique = new Map<string, ReservaPeriodo>();
+        results.flat().forEach(item => unique.set(item.uuid || [item.reservaDto?.uuid, item.estudianteEscuelaDto?.uuid, item.año, item.mes].join('|'), item));
+        this.monthlyHistory = [...unique.values()].sort((a, b) => b.año - a.año || b.mes - a.mes);
+        this.monthlyPage = 1;
+        this.monthlyLoaded = true;
+        this.monthlyLoading = false;
+      },
+      error: error => {
+        this.monthlyLoading = false;
+        this.monthlyError = error?.message || 'No se pudieron cargar las mensualidades. Intente nuevamente.';
+      }
+    });
+  }
+
+  get visibleMonthlyHistory(): ReservaPeriodo[] {
+    return this.monthlyHistory.slice((this.monthlyPage - 1) * this.monthlyPageSize, this.monthlyPage * this.monthlyPageSize);
+  }
+
+  openMonthlyTicket(item: ReservaPeriodo): void {
+    if (this.accion !== 'show' || !item.reservaDto?.uuid) return;
+    const modalRef = this.modalService.open(TicketComponent, { size: 'lg', windowClass: 'ticket-modal' });
+    modalRef.componentInstance.reservationData = item.reservaDto;
+    modalRef.componentInstance.bookingType = 'periodo';
+    modalRef.componentInstance.autoLoad = true;
+    modalRef.componentInstance.showAsModal = true;
+  }
+
   submitted = false;
   showLoading = false;
   selectedExistingStudent = false;
-  activeTab: 'personal' | 'relacion' = 'personal';
+  activeTab: 'personal' | 'relacion' | 'mensualidades' = 'personal';
   studentSearchResults: EstudianteEscuela[] = [];
   readonly studentTypeahead = new Subject<string>();
   private readonly destroy$ = new Subject<void>();
@@ -138,6 +188,7 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
   }
 
   enableEdit(): void {
+    if (this.activeTab === 'mensualidades') this.activeTab = 'personal';
     this.accion = 'edit';
     this.form.enable({ emitEvent: false });
     this.form.controls.existingStudentUuid.disable({ emitEvent: false });

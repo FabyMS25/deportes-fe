@@ -182,10 +182,6 @@ export class RuatRequestsService {
   removeToken(): void {
   }
 
-  /**
-   * RUAT's HTTP status and continuarFlujo describe different things. Deportes
-   * unwraps only its transport envelope and preserves RUAT's business body.
-   */
   private ruatPost(url: string, body: unknown): Observable<any> {
     return this.http.post<any>(url, body).pipe(
       map(response => response?.payload ?? response),

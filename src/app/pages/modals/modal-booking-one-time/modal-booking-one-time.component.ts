@@ -54,7 +54,6 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   };
 
   @ViewChild('validationModal') validationModel!: TemplateRef<any>;
-  @ViewChild('ticketModal') ticketModal!: TemplateRef<any>;
   @ViewChild('annularModal') annularModal!: TemplateRef<any>;
 
   activeTab = 1;
@@ -120,7 +119,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
           if (this.annularModal) this.openDeleteModal(this.annularModal);
           break;
         case 'ticketModal':
-          this.openTicketModal(this.ticketModal);
+          this.openTicketModal();
           break;
         case 'consult':
           void this.consultPaymentInModal();
@@ -413,8 +412,12 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
     this.observation = '';
   }
 
-  openTicketModal(content: any) {
-    this.modalService.open(content, { centered: true, size: 'md' });
+  openTicketModal() {
+    const modalRef = this.modalService.open(TicketComponent, { size: 'lg', windowClass: 'ticket-modal' });
+    modalRef.componentInstance.reservationData = this.row.reservaDto;
+    modalRef.componentInstance.bookingType = 'puntual';
+    modalRef.componentInstance.autoLoad = true;
+    modalRef.componentInstance.showAsModal = true;
     this.emitList.emit();
   }
 
@@ -724,7 +727,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
     this.reservaService.rejectReservation(reservaUuid, motivoRechazo, aprobadoPor).subscribe({
       next: async () => {
         this.showLoading = false;
-        this.openTicketModal(this.ticketModal);
+        this.openTicketModal();
         this.notify('Reserva rechazada exitosamente y notificación enviada al contribuyente', 'success');
       },
       error: (error) => {
@@ -747,7 +750,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
       const reservaAprobada = await this.approveReservaAfterRuat(reservaConTasa.uuid!, aprobadoPor);
 
       this.showLoading = false;
-      this.openTicketModal(this.ticketModal);
+      this.openTicketModal();
       this.notify('Reserva aprobada exitosamente y registrada en RUAT', 'success');
       this.emitList.emit();
     } catch (error: any) {

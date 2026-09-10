@@ -60,7 +60,7 @@ export class FieldsComponent {
     private complejoService: FacilitiesService,
     private superficieService: SuperficiesService,
   ) {
-    this.canActivate = this.authService.hasPermission('Campos Deportivos');
+    this.canActivate = this.authService.hasPermission('/settings/fields');
   }
 
   ngOnInit(): void {

@@ -154,6 +154,7 @@
           },
           "test": {
             "builder": "@angular-devkit/build-angular:karma",
+            "configurations": { "list-ux": { "polyfills": ["src/polyfills.ts", "zone.js/testing"], "tsConfig": "tsconfig.list-ux.spec.json", "include": ["src/testing/regression.spec.ts"] } },
             "options": {
               "polyfills": [
                 "zone.js",

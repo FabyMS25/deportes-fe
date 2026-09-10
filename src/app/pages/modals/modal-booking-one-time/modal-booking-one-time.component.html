@@ -175,7 +175,7 @@
 
           <button
             class="btn btn-soft-info btn-sm"
-            (click)="openTicketModal(ticketModal)">
+            (click)="openTicketModal()">
             <i class="ri-file-list-3-line me-1"></i>Ticket
           </button>
         </div>
@@ -761,14 +761,7 @@
   </div>
 </div>
 
-<ng-template #ticketModal>
-  <app-ticket *ngIf="row.reservaDto"
-    [bookingType]="row.reservaDto.tipoReserva || 'puntual'"
-    [reservationData]="row.reservaDto"
-    [autoLoad]="true"
-    [showAsModal]="true">
-  </app-ticket>
-</ng-template>
+
 
 <ng-container *ngIf="accion === 'annularModal'">
   <div class="modal-content">

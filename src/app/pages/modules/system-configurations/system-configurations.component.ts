@@ -52,7 +52,7 @@ export class SystemConfigurationsComponent implements OnInit {
     private authService: AuthenticationService,
     private configuracionSistemaService: SystemConfigurationService,
   ) {
-    this.canActivate = this.authService.hasPermission('Configuraciones de Sistema');
+    this.canActivate = this.authService.hasPermission('/admin/config');
   }
 
   ngOnInit(): void {

@@ -107,7 +107,21 @@ export class DataTableComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['allcontent'] || changes['serverSidePagination'] || changes['itemsPerPage']) {
+      if (changes['allcontent'] && !this.serverSidePagination && Array.isArray(this.allcontent)) {
+        const oldRows = changes['allcontent'].previousValue;
+        if (!Array.isArray(oldRows) || oldRows.length !== this.allcontent.length ||
+            oldRows.some((row: any, index: number) => row.uuid !== this.allcontent[index]?.uuid)) {
+          this.service.page = 1;
+        }
+      }
       this.processContent();
+      const visibleSelected = this.checkedValGet.filter(selected => this.content.some(row =>
+        selected.uuid ? row.uuid === selected.uuid : row === selected));
+      if (visibleSelected.length !== this.checkedValGet.length) {
+        this.checkedValGet = visibleSelected;
+        this.selectedItemEmitter.emit(visibleSelected);
+        this.updateMasterCheckbox();
+      }
     }
   }
   private processContent(): void {

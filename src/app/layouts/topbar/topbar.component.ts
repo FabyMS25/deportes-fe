@@ -71,7 +71,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
     this.userFullName = this.authService.getUserFullName();
     this.usuarioUuid = this.resolveUsuarioUuid();
     this.canReceiveAdminNotifications = this.authService
-      .hasPermission('Configuraciones de Sistema')
+      .hasPermission('/admin/config')
       .includes('NOTIFICACIONES_ADMIN');
     this.startNotifications();
 

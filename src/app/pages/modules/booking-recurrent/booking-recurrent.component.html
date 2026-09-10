@@ -23,8 +23,8 @@
                     <div class="col-6 col-sm-3 col-lg-3">
                         <div class="search-box">
                             <input type="text" class="form-control search" name="searchTerm"
-                                placeholder="Buscar reservas ..."
-                                [(ngModel)]="filters.searchTerm" (ngModelChange)="applyFilters()">
+                                placeholder="Nº reserva, contribuyente o cancha" aria-label="Buscar reservas"
+                                [(ngModel)]="filters.searchTerm" (ngModelChange)="onSearchChange()">
                                 <i class="ri-search-line search-icon"></i>
                         </div>
                     </div>
@@ -34,7 +34,7 @@
                             mwlFlatpickr 
                             name="dateRange" 
                             mode="range"
-                            placeholder="Fecha Inicio - Fecha Fin"
+                            placeholder="Fecha de inicio de la reserva" aria-label="Rango de fechas de inicio de la reserva"
                             [convertModelValue]="true"
                             [ngModel]="dateRange"
                             (ngModelChange)="onDateRangeChange($event)"
@@ -53,7 +53,7 @@
                     </div>
                     <div class="col-6 col-sm-3 col-lg-2">
                         <select class="form-control" data-choices data-choices-search-false name="estadoReserva" id="idEstadoReserva"
-                            [(ngModel)]="filters.estadoReserva" (ngModelChange)="applyFilters()">
+                            [(ngModel)]="filters.estadoReserva" (ngModelChange)="onReservationStatusChange()">
                             <option value="" selected>Estado Reserva</option>
                             <option *ngFor="let option of estadoReservaOptions" [value]="option.value">
                                 {{option.label}}
@@ -81,12 +81,12 @@
                     </div>
                     <div class="col-6 col-sm-3 col-lg-1">
                         <button class="btn btn-outline-secondary w-100" 
-                            title="Filtrar" (click)="clearFilters()">
+                            type="button" title="Limpiar todos los filtros" aria-label="Limpiar todos los filtros" (click)="clearFilters()">
                             <i class="ri-refresh-line align-bottom"></i>
                         </button>
                     </div>
                 </div>
-            </form>
+            <p class="small text-muted mt-2 mb-0">Los filtros se combinan. Al elegir un estado se muestra la pestaña Todo; al cambiar de pestaña se limpia ese estado.</p></form>
         </div>
         <div class="card-header p-0">
             <div class="row g-2">
@@ -98,7 +98,7 @@
                         <li [ngbNavItem]="0" class="nav-item">
                             <a ngbNavLink class="nav-link All py-3" data-bs-toggle="tab" id="All" 
                             href="javascript:void(0);" role="tab" aria-selected="true">
-                                Todas las Reservas<span class="badge bg-danger align-middle ms-1">{{temp.length || 0}}</span>
+                                Todas las Reservas
                             </a>
                         </li>
                         <li [ngbNavItem]="1" class="nav-item">

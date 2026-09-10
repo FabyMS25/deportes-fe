@@ -291,8 +291,8 @@ export class AuthenticationService {
   /**
    * GETTERS
    */
-  hasPermission(modulo: string): string[] {
-    return permissionActions(this.storageService.getMenu(), modulo);
+  hasPermission(resourceRoute: string): string[] {
+    return permissionActions(this.storageService.getMenu(), resourceRoute);
   }
   hasRoutePermission(route: string): boolean {
     return hasMenuRoute(this.storageService.getMenu(), route);
@@ -432,6 +432,10 @@ export class AuthenticationService {
     if (!token) return;
     try {
       const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      if (payload.permissionVersion !== 2) {
+        void this.handleExpiredSession();
+        return;
+      }
       const delay = payload.exp * 1000 - Date.now();
       if (delay <= 0) {
         void this.handleExpiredSession();

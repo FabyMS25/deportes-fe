@@ -41,7 +41,7 @@ import { ListReportComponent } from './lists/reports.component';
     NgSelectModule,
     NgbNavModule,
     NgbPaginationModule,
-    FlatpickrModule,    
+    FlatpickrModule.forRoot(),    
     FeatherModule.pick(allIcons),
     ScrollToModule.forRoot(),
     ReportsRoutingModule,

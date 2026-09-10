@@ -59,7 +59,7 @@ export class OrganizationsComponent implements OnInit {
     private organizacionesService: OrganizacionService,
     private contribuyentesService: ContribuyentesService,
   ) {
-    this.canActivate = this.authService.hasPermission('Organizaciones');
+    this.canActivate = this.authService.hasPermission('/organizations');
   }
 
   ngOnInit(): void {

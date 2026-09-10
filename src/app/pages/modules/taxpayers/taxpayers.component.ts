@@ -91,7 +91,7 @@ export class TaxpayersComponent implements OnInit {
     private authService: AuthenticationService,
     private contribuyentesService: ContribuyentesService,
   ) {
-    this.canActivate = this.authService.hasPermission('Contribuyentes');
+    this.canActivate = this.authService.hasPermission('/taxpayers');
   }
 
   ngOnInit(): void {

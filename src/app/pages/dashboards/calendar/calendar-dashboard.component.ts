@@ -1,5 +1,5 @@
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import {  Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CalendarOptions, EventApi, EventClickArg } from '@fullcalendar/core';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -8,7 +8,6 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import multiMonthPlugin from '@fullcalendar/multimonth'
 import esLocale from '@fullcalendar/core/locales/es';
-import { CookieService } from 'ngx-cookie-service';
 import Swal from 'sweetalert2';
 import { take } from 'rxjs';
 
@@ -68,7 +67,6 @@ export class CalendarDashboardComponent implements OnInit {
   @ViewChild('confirmModal') confirmModal!: TemplateRef<any>; 
 
   constructor( 
-    private route: ActivatedRoute,
     private router: Router,
     public toastService: ToastService,
     private modalService: NgbModal,
@@ -77,7 +75,7 @@ export class CalendarDashboardComponent implements OnInit {
     private reservasService: ReservaService,
     private authService: AuthenticationService
   ) { 
-    this.canActivate = this.authService.hasPermission('Reservas');
+    this.canActivate = this.authService.hasPermission('/inicio/employee');
   }
 
   async ngOnInit(): Promise<void> {

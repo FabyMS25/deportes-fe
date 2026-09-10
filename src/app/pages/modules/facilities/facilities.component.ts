@@ -45,7 +45,7 @@ export class FacilitiesComponent {
     private categoriasService: CategoriasService,
     private authService: AuthenticationService,
     private datePipe: DatePipe,) {
-      this.canActivate = this.authService.hasPermission('Complejos Deportivos');
+      this.canActivate = this.authService.hasPermission('/admin/facilities');
   }
 
   ngOnInit(): void {
@@ -84,17 +84,13 @@ export class FacilitiesComponent {
   }
 
   // Search Data
-  searchTerm: any;
+  searchTerm = '';
   applyFilters(): void {
-    this.facilitiesList = this.temp.filter((item: any) => {
-      return (
-        item.nombre?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.tipoEstructura?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.distrito?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.estadoActual?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        item.telefonoPrincipal?.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
-    });
+    const normalize = (value: unknown) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const term = normalize(this.searchTerm);
+    this.facilitiesList = this.temp.filter((item: any) => !term ||
+      [item.nombre, item.tipoEstructura, item.distrito, item.estadoActual, item.telefonoPrincipal]
+        .some(value => normalize(value).includes(term)));
   }
 
   // Filtering

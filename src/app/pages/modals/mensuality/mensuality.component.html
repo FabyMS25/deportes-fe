@@ -1,0 +1,157 @@
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+      <div>
+        <h4 class="mb-1">Registrar mensualidades</h4>
+        <p class="text-muted mb-0">Seleccione la escuela, los estudiantes y sus meses. Revise el responsable de pago y el total antes de generar la tasa.</p>
+      </div>
+      <button type="button" class="btn btn-light" [disabled]="isLoading" (click)="backToList()">
+        <i class="ri-arrow-left-line me-1"></i>Volver a mensualidades
+      </button>
+    </div>
+    <div class="card monthly-registration-page">
+  <form *ngIf="reservationForm" [formGroup]="reservationForm" class="card-body">
+<div class="card mb-2">
+          <div class="card-header bg-light py-2 px-3"><h6 class="mb-0">Escuela y reserva base</h6></div>
+          <div class="card-body py-2 px-3">
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label mb-1">Escuela Municipal *</label>
+                <select class="form-select" formControlName="escuela" (change)="onEscuelaChange($event)">
+                  <option value="">Seleccione una escuela</option>
+                  <option *ngFor="let escuela of catalogs.schools" [value]="escuela.uuid">
+                    {{ escuela.nombre }} · {{ escuela.disciplina }} · {{ escuela.tarifaMensual || 0 }} Bs.
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label mb-1">Reserva recurrente base *</label>
+                <select class="form-select" formControlName="reservaRecurrente"
+                        [disabled]="!selection.school" (change)="onReservaRecurrenteChange($event)">
+                  <option value="">Seleccione una reserva</option>
+                  <option *ngFor="let reserva of catalogs.filteredRecurrentReservations" [value]="reserva.uuid">
+                    {{ getReservaDisplayInfo(reserva) }}
+                  </option>
+                </select>
+              </div>
+            </div>
+            <div class="form-text mt-2" *ngIf="selection.baseReservation?.reservaRecurrenteDto">
+              Los períodos disponibles están limitados del
+              <strong>{{ formatLocalDate(selection.baseReservation?.reservaRecurrenteDto?.fechaInicio) }}</strong> al
+              <strong>{{ formatLocalDate(selection.baseReservation?.reservaRecurrenteDto?.fechaFin) }}</strong>.
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-2" *ngIf="selection.school">
+          <div class="card-header bg-light py-2 px-3"><h6 class="mb-0">{{ payerSectionTitle }}</h6></div>
+          <div class="card-body py-2 px-3">
+            <select *ngIf="canChoosePayer; else fixedContribuyente"
+                    class="form-select" formControlName="contribuyente" (change)="onContribuyenteChange($event)">
+              <option value="">Seleccione al contribuyente pagador</option>
+              <option *ngFor="let contribuyente of contribuyentesDisponibles" [value]="contribuyente.uuid">
+                {{ contribuyente.nombreCompleto }} · {{ contribuyente.numeroDocumento || contribuyente.codigoContribuyente }}
+              </option>
+            </select>
+            <ng-template #fixedContribuyente>
+              <div class="form-control bg-light">
+                {{ selection.payer?.nombreCompleto || userData?.nombreCompleto || 'Contribuyente actual' }}
+                · {{ selection.payer?.numeroDocumento || selection.payer?.codigoContribuyente || '' }}
+              </div>
+            </ng-template>
+            <small class="text-muted">Esta persona será titular de la única tasa generada para todo el registro.</small>
+          </div>
+        </div>
+
+<div class="card mb-2" *ngIf="selection.baseReservation">
+          <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">Estudiantes</h6>
+            <span class="badge bg-primary">{{ selection.students.length }} seleccionado(s)</span>
+          </div>
+          <div class="card-body py-2 px-3">
+            <div class="student-selection-toolbar mb-2">
+            <input class="form-control form-control-sm student-selection-search" type="search"
+                   [(ngModel)]="selection.studentSearch" [ngModelOptions]="{standalone: true}"
+                   placeholder="Buscar por nombre, matrícula o documento" aria-label="Buscar estudiantes por nombre, matrícula o documento">
+              <button type="button" class="btn btn-outline-primary btn-sm"
+                      [disabled]="isLoading || !estudiantesFiltrados.length || allVisibleStudentsSelected"
+                      (click)="selectAllVisibleStudents()">
+                {{ selection.studentSearch.trim() ? 'Seleccionar resultados' : 'Seleccionar todos' }} ({{ estudiantesFiltrados.length }})
+              </button>
+              <button type="button" class="btn btn-link btn-sm" [disabled]="isLoading || !selection.students.length"
+                      (click)="clearAllStudents()">Quitar toda la selección</button>
+              <span class="small text-muted" role="status" aria-live="polite">{{ selection.students.length }} estudiante(s) seleccionado(s)</span>
+            </div>
+            <p class="small text-muted mb-2">La búsqueda solo cambia los estudiantes visibles; conserva los seleccionados.</p>
+            <div class="border rounded p-2" style="max-height: 210px; overflow-y: auto;">
+              <p class="text-muted small mb-2">Estudiantes del responsable de la reserva base: <strong>{{ selection.baseReservation.contribuyenteDto.nombreCompleto || 'Seleccione una reserva base' }}</strong>.</p>
+              <div class="form-check py-1" *ngFor="let estudiante of estudiantesFiltrados">
+                <input class="form-check-input" type="checkbox" [id]="'student-' + estudiante.uuid"
+                       [checked]="isEstudianteSelected(estudiante)"
+                       (change)="toggleEstudiante(estudiante, $event)">
+                <label class="form-check-label w-100" [for]="'student-' + estudiante.uuid">
+                  <span class="fw-semibold">{{ estudiante.nombreCompleto }}</span>
+                  <small class="text-muted ms-2">{{ estudiante.matricula }}</small>
+                </label>
+              </div>
+              <div class="text-muted text-center py-2" *ngIf="!estudiantesFiltrados.length">No se encontraron estudiantes.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-2" *ngIf="selection.students.length && catalogs.periods.length">
+          <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">Mensualidades por estudiante</h6>
+            <span class="badge bg-success">{{ selectedDetailsCount }} mensualidad(es)</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                  <tr><th class="px-3">Estudiante</th><th *ngFor="let periodo of catalogs.periods">{{ periodo.label }}</th><th></th></tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let estudiante of selection.students">
+                    <td class="px-3"><div class="fw-semibold">{{ estudiante.nombreCompleto }}</div><small class="text-muted">{{ estudiante.matricula }}</small></td>
+                    <td *ngFor="let periodo of catalogs.periods" class="text-center">
+                      <input class="form-check-input" type="checkbox"
+                             [checked]="isPeriodoSelected(estudiante, periodo)"
+                             [disabled]="isPeriodoRegistrado(estudiante, periodo)"
+                             [title]="isPeriodoRegistrado(estudiante, periodo) ? 'Mensualidad ya registrada' : periodo.label"
+                             (change)="togglePeriodo(estudiante, periodo, $event)">
+                    </td>
+                    <td class="text-nowrap pe-3">
+                      <button type="button" class="btn btn-link btn-sm p-0 me-2" (click)="selectAvailablePeriods(estudiante)">Todos</button>
+                      <button type="button" class="btn btn-link text-danger btn-sm p-0" (click)="clearStudentPeriods(estudiante)">Limpiar</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="px-3 py-2 border-top text-muted small">Las casillas deshabilitadas ya cuentan con una mensualidad registrada.</div>
+          </div>
+        </div>
+
+<div class="card mb-2" *ngIf="selection.school">
+          <div class="card-header bg-light py-2 px-3"><h6 class="mb-0">Resumen del registro</h6></div>
+          <div class="card-body py-2 px-3">
+            <div class="row g-2">
+              <div class="col-md-3"><small class="text-muted d-block">Escuela</small><strong>{{ selection.school.nombre }}</strong></div>
+              <div class="col-md-3"><small class="text-muted d-block">Estudiantes</small><strong>{{ selection.students.length }}</strong></div>
+              <div class="col-md-3"><small class="text-muted d-block">Mensualidades</small><strong>{{ selectedDetailsCount }}</strong></div>
+              <div class="col-md-3"><small class="text-muted d-block">Total de la tasa</small><strong>{{ getTotalAmount() }} Bs.</strong></div>
+            </div>
+          </div>
+        </div>
+        <label class="form-label mb-1">Observaciones</label>
+        <textarea class="form-control" formControlName="observaciones" rows="2" placeholder="Observaciones adicionales..."></textarea>
+  </form>
+  <div class="registration-footer d-flex flex-wrap align-items-center p-3 border-top">
+    <div class="me-auto" aria-live="polite">
+      <strong>{{ selection.students.length }} estudiante(s) · {{ selectedDetailsCount }} mensualidad(es) · {{ getTotalAmount() }} Bs.</strong>
+      <div class="small text-muted">Responsable: {{ selection.payer?.nombreCompleto || 'Sin seleccionar' }}</div>
+    </div>
+    <button type="button" class="btn btn-light" [disabled]="isLoading" (click)="onCloseModal()">Cancelar</button>
+    <button type="button" class="btn btn-primary" [disabled]="isLoading || !reservationForm || reservationForm.invalid || !selection.school || !selection.baseReservation || !selection.payer || !selectedDetailsCount" (click)="onSubmit()">
+      {{ isLoading ? 'Registrando...' : 'Generar tasa por ' + selectedDetailsCount + ' mensualidad(es)' }}
+    </button>
+  </div>
+</div>

@@ -1,3 +1,4 @@
+import { Router } from '@angular/router';
 import { Subject, firstValueFrom, takeUntil } from 'rxjs';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { UntypedFormBuilder } from '@angular/forms';
@@ -161,6 +162,7 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
   }
 
   constructor(
+    private router: Router,
     private authService: AuthenticationService,
     public paginationService: PaginationService,
     public modalService: NgbModal,
@@ -171,7 +173,7 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
     private organizacionesService: OrganizacionService,
     private estuduanteService: EstudianteEscuelaService,
   ) {
-    this.canActivate = this.authService.hasPermission('Escuelas Municipales');
+    this.canActivate = this.authService.hasPermission('/reservations/schools');
   }
 
   async ngOnInit() {
@@ -250,10 +252,16 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
     this.getReservations();
   }
   onNavChange(changeEvent: NgbNavChangeEvent) {
+    this.filters.estadoReserva = '';
     this.filters.tab = changeEvent.nextId;
     this.currentPage = 1;
     this.getReservations();
   }
+  onReservationStatusChange(): void {
+    this.filters.tab = 0;
+    this.applyFilters();
+  }
+
   applyFilters() {
     this.currentPage = 1;
     this.getReservations();
@@ -272,6 +280,7 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
   }
   
   clearFilters() {
+    clearTimeout(this.searchTimer);
     this.selectedMesFiltro = undefined;
     this.selectedAnioFiltro = undefined;
     this.filters = {
@@ -435,41 +444,13 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    const modalRef = this.modalService.open(BookingPeriodoModalComponent, {
-      size: 'lg',
-      centered: true,
-      backdrop: 'static'
-    });
-    modalRef.componentInstance.accion = '';
-    modalRef.componentInstance.canActivate = this.canActivate;
-    modalRef.componentInstance.estudiantes = this.estudiantesList;
-    modalRef.componentInstance.defaultPeriodo = this.filters.periodoFiltro;
-    modalRef.componentInstance.reservaGenerada.subscribe((reserva: Reserva) => {
-      this.processCreatedReservation(reserva);
-    });
-  }
-
-  private async processCreatedReservation(reserva: Reserva): Promise<void> {
-    try {
-      this.loading = true;
-      if (reserva?.uuid) {
-        await this.getReservations();
-        return;
+    void this.router.navigate(['/reservations/schools/new'], {
+      queryParams: {
+        mes: this.filters.periodoFiltro?.mesFiltro,
+        anio: this.filters.periodoFiltro?.anioFiltro
       }
-      const response: any = await this.reservaService.create(reserva).toPromise();
-      await this.getReservations();
-    } catch (error: any) {
-      Swal.fire({
-        title: 'Error',
-        text: error?.message || 'No se pudo generar la mensualidad. Por favor, intente nuevamente.',
-        icon: 'error',
-        confirmButtonText: 'Entendido'
-      });
-    } finally {
-      this.loading = false;
-    }
+    });
   }
-
 
   private isRuatConnectionError(payload: any): boolean {
     const rawPayload = typeof payload === 'string'
@@ -494,22 +475,6 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
     const [day, month, year] = fechaPago.split('/').map(Number);
     return new Date(year, month - 1, day, 12, 0, 0, 0);
   }
-  private extractRuatBusinessPayload(payload: any): any | null {
-    if (!payload) return null;
-    if (typeof payload === 'object') {
-      return payload;
-    }
-    if (typeof payload !== 'string') {
-      return null;
-    }
-    try {
-      const jsonMatch = payload.match(/\{.*\}/s);
-      if (!jsonMatch) return null;
-      return JSON.parse(jsonMatch[0]);
-    } catch {
-      return null;
-    }
-  }
 
   /* NAVIGATIONS & MODALS */
   public showTicket(data: any) {
@@ -524,6 +489,7 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
   }
   
   public openModal(data: any | undefined, accion: string, size: string) {
+    if (!accion) { this.createNewMonthlyPayment(); return; }
     const modalRef = this.modalService.open(BookingPeriodoModalComponent, {
       backdrop: 'static',
       size: size

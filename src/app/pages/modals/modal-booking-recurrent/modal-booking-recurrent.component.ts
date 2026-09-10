@@ -42,7 +42,6 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
   };
 
   @ViewChild('validationModal') validationModel!: TemplateRef<any>;
-  @ViewChild('ticketModal') ticketModal!: TemplateRef<any>;
   @ViewChild('annularModal') annularModal!: TemplateRef<any>;
 
   diasSemanaOptions = [
@@ -112,7 +111,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
           }
           break;
         case 'ticketModal': 
-          this.openTicketModal(this.ticketModal);
+          this.openTicketModal();
           break;
         case 'consult':
           void this.consultPaymentInModal();
@@ -208,8 +207,12 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
     this.observation = '';
   }
 
-  openTicketModal(content: any) {
-    this.modalService.open(content, { centered: true, size: 'md' });
+  openTicketModal() {
+    const modalRef = this.modalService.open(TicketComponent, { size: 'lg', windowClass: 'ticket-modal' });
+    modalRef.componentInstance.reservationData = this.row.reservaDto;
+    modalRef.componentInstance.bookingType = 'recurrente';
+    modalRef.componentInstance.autoLoad = true;
+    modalRef.componentInstance.showAsModal = true;
     this.emitList.emit();
   }
 
@@ -453,7 +456,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
       next: async (data: any) => {
         try {
           this.showLoading = false;
-          this.openTicketModal(this.ticketModal);
+          this.openTicketModal();
           this.notify('Reserva recurrente rechazada exitosamente', 'success');
         } catch (error) {
           this.showLoading = false;
@@ -480,7 +483,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
       await this.approveReservaAfterRuat(reservaConTasa.uuid!, aprobadoPor);
 
       this.showLoading = false;
-      this.openTicketModal(this.ticketModal);
+      this.openTicketModal();
       this.notify('Reserva recurrente aprobada exitosamente y registrada en RUAT', 'success');
       this.emitList.emit();
     } catch (error: any) {

@@ -28,6 +28,8 @@ export class TokenStorageService {
       sessionStorage.setItem(STORAGE_KEYS.STAFF,
         typeof data.staff === 'string' ? data.staff : JSON.stringify(data.staff)
       );
+    } else {
+      sessionStorage.removeItem(STORAGE_KEYS.STAFF);
     }
 
     // Remove authenticated state persisted by older versions of the application.

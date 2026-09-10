@@ -1,0 +1,49 @@
+
+.student-selection-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+
+  .student-selection-search {
+    flex: 1 1 12rem;
+    width: auto;
+    min-width: min(100%, 12rem);
+  }
+
+  > button,
+  > [role='status'] {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .student-selection-toolbar .student-selection-search {
+    flex-basis: 100%;
+    width: 100%;
+  }
+}
+
+.monthly-registration-page {
+  border: 0;
+  border-radius: 0.5rem;
+  .modal-body { overflow: visible; max-height: none; padding: 1rem !important; }
+  .modal-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    background: var(--vz-secondary-bg, #fff);
+    box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.06);
+    gap: 0.75rem;
+  }
+  .table-responsive { max-height: 65vh; }
+  thead { position: sticky; top: 0; z-index: 1; }
+  @media (max-width: 575.98px) {
+    .modal-footer > div { flex-basis: 100%; }
+    .modal-footer > button { flex: 1 1 auto; }
+  }
+}
+
+.monthly-students-table { max-height: 45vh; overflow: auto; }
+.monthly-students-table thead { position: sticky; top: 0; background: var(--vz-secondary-bg, #fff); z-index: 1; }

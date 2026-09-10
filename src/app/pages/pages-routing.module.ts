@@ -19,7 +19,12 @@ import { TaxpayersComponent } from './modules/taxpayers/taxpayers.component';
 import { StudentsComponent } from './modules/students/students.component';
 import { TicketComponent } from './modules/reports/ticket/ticket.component';
 
+import { MensualityComponent } from './modals/mensuality/mensuality.component';
+import { monthlyRegistrationAccess, leaveMonthlyRegistration } from './modals/mensuality/mensuality.guards';
+
 const routes: Routes = [
+  { path: 'reservations/schools/new', component: MensualityComponent,
+    canActivate: [monthlyRegistrationAccess], canDeactivate: [leaveMonthlyRegistration] },
   { path: 'profile/profile', component: ProfileComponent, data: { requiredPermission: 'CAN_ACCESS' } },
   { path: 'profile/profile-setting', component: SettingsComponent, data: { requiredPermission: 'CAN_ACCESS' } },
   { path: 'admin/facilities', component: FacilitiesComponent },

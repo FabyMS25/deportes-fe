@@ -1,8 +1,8 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, ElementRef, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ElementRef, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { NgbDropdownModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownModule, NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { FlatpickrModule } from 'angularx-flatpickr';
 import Swal from 'sweetalert2';
@@ -31,6 +31,7 @@ import { obtenerLabelTipoCobro } from 'src/app/core/constants/TipoCobro';
   styleUrls: ['./ticket.component.scss']
 })
 export class TicketComponent implements OnChanges {
+  private readonly activeModal = inject(NgbActiveModal, { optional: true });
   @Input() bookingType: BookingType = 'puntual';
   @Input() reservationData!: Reserva;
   @Input() autoLoad: boolean = false;
@@ -433,7 +434,7 @@ export class TicketComponent implements OnChanges {
 
   closeModal(): void {
     if (this.showAsModal) {
-      this.modalService.dismissAll()
+      this.activeModal?.dismiss()
     }
   }
 }

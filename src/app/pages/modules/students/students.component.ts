@@ -66,7 +66,7 @@ export class StudentsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.canActivate = this.authService.hasPermission('Estudiantes');
+    this.canActivate = this.authService.hasPermission('/students');
     this.isContributor = this.authService.getUserRole() === 'Contribuyente';
     this.breadCrumbItems = [
       { label: '' },

@@ -110,7 +110,7 @@
   </div>
 </div>
 
-<div class="modal-content" *ngIf="accion === 'show' || accion === ''">
+<div class="modal-content" [class.monthly-registration-page]="pageMode" *ngIf="accion === 'show' || accion === ''">
   <div id="elmLoader" *ngIf="isLoading" class="text-center py-2">
     <div class="spinner-border text-primary avatar-sm" role="status">
       <span class="visually-hidden">Cargando...</span>
@@ -118,7 +118,7 @@
     <p class="text-muted mt-2 mb-0">Procesando...</p>
   </div>
 
-  <div class="modal-header border-bottom py-2 px-3">
+  <div class="modal-header border-bottom py-2 px-3" *ngIf="!pageMode || accion !== ''">
     <div class="d-flex w-100 align-items-start justify-content-between gap-3 gamq-reservation-header-layout">
       <div class="d-flex align-items-start gap-2 gamq-reservation-heading">
         <div class="flex-shrink-0 avatar-sm">
@@ -165,7 +165,7 @@
             <i *ngIf="!isConsultingRuat" class="ri-search-eye-line me-1"></i>Consultar RUAT
           </button>
 
-          <button class="btn btn-soft-info btn-sm" (click)="openTicketModal(ticketModal)">
+          <button class="btn btn-soft-info btn-sm" (click)="openTicketModal()">
             <i class="ri-file-list-3-line me-1"></i>Ticket
           </button>
 
@@ -219,6 +219,7 @@
             </span>
           </a>
         </li>
+        <li class="nav-item"><button type="button" class="nav-link" [class.active]="activeTab === 3" (click)="setActiveTab(3)">Estudiantes / meses <span class="badge bg-primary ms-1">{{ getReservationDetails().length }}</span></button></li>
       </ul>
 
       <div *ngIf="activeTab === 1">
@@ -341,7 +342,11 @@
             </div>
           </div>
 
-          <div class="col-12">
+                  </div>
+      </div>
+
+      <div *ngIf="activeTab === 3">
+<div class="col-12">
             <div class="card border mb-0">
               <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">
@@ -349,7 +354,7 @@
                 </h6>
                 <span class="badge bg-primary">{{ getReservationDetails().length || 0 }}</span>
               </div>
-              <div class="table-responsive" *ngIf="getReservationDetails().length; else noReservationDetails">
+              <div class="table-responsive monthly-students-table" *ngIf="getReservationDetails().length; else noReservationDetails">
                 <table class="table table-sm align-middle mb-0">
                   <thead class="table-light">
                     <tr>
@@ -383,9 +388,8 @@
               </ng-template>
             </div>
           </div>
-        </div>
-      </div>
 
+      </div>
       <div *ngIf="activeTab === 2">
         <div class="card border mb-2">
           <div class="card-header bg-light py-2 px-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
@@ -497,136 +501,14 @@
       </div>
     </ng-container>
 
-    <ng-container *ngIf="accion === ''">
-      <form [formGroup]="reservationForm">
-        <div class="card mb-2">
-          <div class="card-header bg-light py-2 px-3"><h6 class="mb-0">1. Escuela y reserva base</h6></div>
-          <div class="card-body py-2 px-3">
-            <div class="row g-2">
-              <div class="col-md-6">
-                <label class="form-label mb-1">Escuela Municipal *</label>
-                <select class="form-select" formControlName="escuela" (change)="onEscuelaChange($event)">
-                  <option value="">Seleccione una escuela</option>
-                  <option *ngFor="let escuela of catalogs.schools" [value]="escuela.uuid">
-                    {{ escuela.nombre }} · {{ escuela.disciplina }} · {{ escuela.tarifaMensual || 0 }} Bs.
-                  </option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label mb-1">Reserva recurrente base *</label>
-                <select class="form-select" formControlName="reservaRecurrente"
-                        [disabled]="!selection.school" (change)="onReservaRecurrenteChange($event)">
-                  <option value="">Seleccione una reserva</option>
-                  <option *ngFor="let reserva of catalogs.filteredRecurrentReservations" [value]="reserva.uuid">
-                    {{ getReservaDisplayInfo(reserva) }}
-                  </option>
-                </select>
-              </div>
-            </div>
-            <div class="form-text mt-2" *ngIf="selection.baseReservation?.reservaRecurrenteDto">
-              Los períodos disponibles están limitados del
-              <strong>{{ formatLocalDate(selection.baseReservation?.reservaRecurrenteDto?.fechaInicio) }}</strong> al
-              <strong>{{ formatLocalDate(selection.baseReservation?.reservaRecurrenteDto?.fechaFin) }}</strong>.
-            </div>
-          </div>
-        </div>
 
-        <div class="card mb-2" *ngIf="selection.school">
-          <div class="card-header bg-light py-2 px-3"><h6 class="mb-0">{{ payerSectionTitle }}</h6></div>
-          <div class="card-body py-2 px-3">
-            <select *ngIf="canChoosePayer; else fixedContribuyente"
-                    class="form-select" formControlName="contribuyente" (change)="onContribuyenteChange($event)">
-              <option value="">Seleccione al contribuyente pagador</option>
-              <option *ngFor="let contribuyente of contribuyentesDisponibles" [value]="contribuyente.uuid">
-                {{ contribuyente.nombreCompleto }} · {{ contribuyente.numeroDocumento || contribuyente.codigoContribuyente }}
-              </option>
-            </select>
-            <ng-template #fixedContribuyente>
-              <div class="form-control bg-light">
-                {{ selection.payer?.nombreCompleto || userData?.nombreCompleto || 'Contribuyente actual' }}
-                · {{ selection.payer?.numeroDocumento || selection.payer?.codigoContribuyente || '' }}
-              </div>
-            </ng-template>
-            <small class="text-muted">Esta persona será titular de la única tasa generada para todo el registro.</small>
-          </div>
-        </div>
-
-        <div class="card mb-2" *ngIf="selection.baseReservation">
-          <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">3. Estudiantes</h6>
-            <span class="badge bg-primary">{{ selection.students.length }} seleccionado(s)</span>
-          </div>
-          <div class="card-body py-2 px-3">
-            <input class="form-control form-control-sm mb-2" type="search"
-                   [(ngModel)]="selection.studentSearch" [ngModelOptions]="{standalone: true}"
-                   placeholder="Buscar por nombre, matrícula o documento">
-            <div class="border rounded p-2" style="max-height: 210px; overflow-y: auto;">
-              <div class="form-check py-1" *ngFor="let estudiante of estudiantesFiltrados">
-                <input class="form-check-input" type="checkbox" [id]="'student-' + estudiante.uuid"
-                       [checked]="isEstudianteSelected(estudiante)"
-                       (change)="toggleEstudiante(estudiante, $event)">
-                <label class="form-check-label w-100" [for]="'student-' + estudiante.uuid">
-                  <span class="fw-semibold">{{ estudiante.nombreCompleto }}</span>
-                  <small class="text-muted ms-2">{{ estudiante.matricula }}</small>
-                </label>
-              </div>
-              <div class="text-muted text-center py-2" *ngIf="!estudiantesFiltrados.length">No se encontraron estudiantes.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card mb-2" *ngIf="selection.students.length && catalogs.periods.length">
-          <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">4. Mensualidades por estudiante</h6>
-            <span class="badge bg-success">{{ selectedDetailsCount }} mensualidad(es)</span>
-          </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-sm align-middle mb-0">
-                <thead class="table-light">
-                  <tr><th class="px-3">Estudiante</th><th *ngFor="let periodo of catalogs.periods">{{ periodo.label }}</th><th></th></tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let estudiante of selection.students">
-                    <td class="px-3"><div class="fw-semibold">{{ estudiante.nombreCompleto }}</div><small class="text-muted">{{ estudiante.matricula }}</small></td>
-                    <td *ngFor="let periodo of catalogs.periods" class="text-center">
-                      <input class="form-check-input" type="checkbox"
-                             [checked]="isPeriodoSelected(estudiante, periodo)"
-                             [disabled]="isPeriodoRegistrado(estudiante, periodo)"
-                             [title]="isPeriodoRegistrado(estudiante, periodo) ? 'Mensualidad ya registrada' : periodo.label"
-                             (change)="togglePeriodo(estudiante, periodo, $event)">
-                    </td>
-                    <td class="text-nowrap pe-3">
-                      <button type="button" class="btn btn-link btn-sm p-0 me-2" (click)="selectAvailablePeriods(estudiante)">Todos</button>
-                      <button type="button" class="btn btn-link text-danger btn-sm p-0" (click)="clearStudentPeriods(estudiante)">Limpiar</button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="px-3 py-2 border-top text-muted small">Las casillas deshabilitadas ya cuentan con una mensualidad registrada.</div>
-          </div>
-        </div>
-
-        <div class="card mb-2" *ngIf="selection.school">
-          <div class="card-header bg-light py-2 px-3"><h6 class="mb-0">5. Resumen</h6></div>
-          <div class="card-body py-2 px-3">
-            <div class="row g-2">
-              <div class="col-md-3"><small class="text-muted d-block">Escuela</small><strong>{{ selection.school.nombre }}</strong></div>
-              <div class="col-md-3"><small class="text-muted d-block">Estudiantes</small><strong>{{ selection.students.length }}</strong></div>
-              <div class="col-md-3"><small class="text-muted d-block">Mensualidades</small><strong>{{ selectedDetailsCount }}</strong></div>
-              <div class="col-md-3"><small class="text-muted d-block">Total de la tasa</small><strong>{{ getTotalAmount() }} Bs.</strong></div>
-            </div>
-          </div>
-        </div>
-
-        <label class="form-label mb-1">Observaciones</label>
-        <textarea class="form-control" formControlName="observaciones" rows="2" placeholder="Observaciones adicionales..."></textarea>
-      </form>
-    </ng-container>
   </div>
 
   <div class="modal-footer py-2 px-3 border-top">
+    <div *ngIf="pageMode && accion === ''" class="me-auto" aria-live="polite">
+      <strong>{{ selection.students.length }} estudiante(s) · {{ selectedDetailsCount }} mensualidad(es) · {{ getTotalAmount() }} Bs.</strong>
+      <div class="small text-muted">Responsable de pago: {{ selection.payer?.nombreCompleto || 'Sin seleccionar' }}</div>
+    </div>
     <button *ngIf="detailReturn.active"
             type="button"
             class="btn btn-light"
@@ -634,7 +516,7 @@
       <i class="ri-arrow-left-line me-1"></i>Volver al registro
     </button>
 
-    <button type="button" class="btn btn-light" (click)="onCloseModal()">
+    <button type="button" class="btn btn-light" [disabled]="isLoading" (click)="onCloseModal()">
       <i class="ri-close-line me-1"></i>Cancelar
     </button>
 
@@ -649,14 +531,7 @@
   </div>
 </div>
 
-<ng-template #ticketModal>
-  <app-ticket *ngIf="row"
-    [bookingType]="row.tipoReserva"
-    [reservationData]="row"
-    [autoLoad]="true"
-    [showAsModal]="true">
-  </app-ticket>
-</ng-template>
+
 
 <ng-template #annularModal>
   <div class="modal-content">

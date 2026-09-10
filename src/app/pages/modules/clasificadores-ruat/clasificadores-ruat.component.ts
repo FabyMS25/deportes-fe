@@ -39,7 +39,7 @@ export class ClasificadoresRuatComponent {
     public translate: TranslateService,
     private clasificadoresService: ClasificadorRuatService,
     private formBuilder: UntypedFormBuilder,) {
-      this.canActivate = this.authService.hasPermission('Clasificadores Ruat');
+      this.canActivate = this.authService.hasPermission('/admin/classifiers');
   }
 
   ngOnInit(): void {
