@@ -36,14 +36,12 @@ export class BookingDetailModalComponent {
     return this.reserva?.tipoReserva === 'puntual';
   }
 
-  // The specific occurrence time shown on the calendar
   get occurrenceDate(): Date | undefined {
     return this.clickedDate;
   }
 
   get occurrenceHoraInicio(): string {
     if (this.isRecurrente) {
-      // Extract from the clicked date's time
       return this.clickedDate
         ? this.clickedDate.toTimeString().substring(0, 5)
         : '';
@@ -54,8 +52,6 @@ export class BookingDetailModalComponent {
   get occurrenceHoraFin(): string {
     if (this.isRecurrente) {
       return this.reserva?.reservaRecurrenteDto?.tableroDto ? '' : '';
-      // horaFin isn't directly on the event click for recurrente
-      // It comes from extendedProps — pass it as an input instead
     }
     return this.reserva?.reservaPuntualDto?.horaFin || '';
   }

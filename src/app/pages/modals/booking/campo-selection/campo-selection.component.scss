@@ -24,7 +24,6 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        // gap: 1rem;
         
         .tarifa-price {
           display: flex;
@@ -64,10 +63,6 @@
         transition: all 0.2s ease;
         border-radius: 0 0 6px 6px;
       }
-      
-      // &:hover .tarifa-action i {
-      //   transform: translateX(4px);
-      // }
 
       &.can-book .tarifa-action {
         border-top: 3px solid #198754;
@@ -90,26 +85,13 @@
       
       &:hover {
         .tarifa-action {
-          background-color: #0d6efd; /* Blue on hover overrides everything */
+          background-color: #0d6efd;
           color: white;
-          border-top-color: #0d6efd; /* Also change border color on hover */
+          border-top-color: #0d6efd;
           
-          // i {
-          //   transform: translateX(4px);
-          // }
         }
       }
     }
-
-
-
-    
-// .info-grid {
-//   display: grid;
-//   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-//   gap: 0.75rem;
-// }
-
 
   .info-icon {
     font-size: 1.25rem;
@@ -117,14 +99,6 @@
     margin-top: 2px;
   }
 
-  // small {
-  //   font-size: 0.75rem;
-  //   line-height: 1;
-  // }
-
-
-
-// Schedule section
 .schedule-section {
   border-radius: 8px;
   padding: 0.5rem;

@@ -22,12 +22,8 @@ export class ComingSoonComponent implements OnInit {
 
   ngOnInit(): void {
     document.documentElement.setAttribute('data-sidebar-size', 'lg');
-    // Date Set
     this._trialEndsAt = "2023-12-31";
 
-    /**
-     * Count date set
-     */
     interval(1000).pipe(map((x) => {
         this._diff = Date.parse(this._trialEndsAt) - Date.parse(new Date().toString());
     })).subscribe((x) => {

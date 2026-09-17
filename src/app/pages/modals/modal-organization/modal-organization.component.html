@@ -337,7 +337,7 @@
                   <h6 class="mb-1">Estudiantes inscritos</h6>
                   <p class="text-muted mb-0">Inscripciones activas e históricas de esta escuela municipal.</p>
                 </div>
-                <button type="button" class="btn btn-sm btn-primary" (click)="abrirInscripcionEstudiante()">
+                <button type="button" class="btn btn-sm btn-primary" *ngIf="canRegisterStudent" (click)="abrirInscripcionEstudiante()">
                   <i class="ri-user-add-line me-1"></i>Inscribir estudiante
                 </button>
               </div>

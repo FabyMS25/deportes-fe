@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import Swal from 'sweetalert2';
+import { TranslateService } from '@ngx-translate/core';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { TokenStorageService } from 'src/app/core/services/token-storage.service';
@@ -27,6 +27,7 @@ export class LoginComponent implements OnInit {
 
   constructor(
     private router: Router,
+    private translate: TranslateService,
     private formBuilder: UntypedFormBuilder,
     private authService: AuthenticationService,
     private storageService: TokenStorageService,
@@ -58,19 +59,12 @@ export class LoginComponent implements OnInit {
     const result = await this.authService.login(username, password, rememberMe);
     this.isCheckingConnection = false;
     if (!result.success) {
-      this.errorMessage = result.message || 'Error';
+      this.errorMessage = result.message || this.translate.instant('LOGIN_UI.FAILED');
       this.errorType = result.errorType;
       this.loginForm.patchValue({ password: '' });
       return;
     }
     this.errorMessage = '';
-    if (result.ruatStatus === false) {
-      Swal.fire({
-        icon:'warning',
-        title:'RUAT no disponible',
-        text:'Algunas funciones estarán limitadas'
-      });
-    }
     this.router.navigate([result.redirect!]);
   }
 

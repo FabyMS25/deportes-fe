@@ -48,6 +48,7 @@ type MensualitySelection = {
   detailKeys: Set<string>;
   studentSearch: string;
   school?: Organizacion;
+  entrenador?: string;
   baseReservation?: Reserva;
   existingReservationPeriod?: ReservaPeriodo;
   month?: number;
@@ -108,6 +109,7 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
     detailKeys: new Set<string>(),
     studentSearch: '',
     school: undefined,
+    entrenador: undefined,
     baseReservation: undefined,
     existingReservationPeriod: undefined,
     month: undefined,
@@ -263,10 +265,9 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
   }
 
   private studentBelongsToBaseReservation(estudiante: EstudianteEscuela): boolean {
-    const responsableUuid = this.selection.baseReservation?.contribuyenteDto?.uuid;
-    return !!responsableUuid && !!this.selection.school?.uuid && estudiante.activo !== false &&
+    return !!this.selection.baseReservation && !!this.selection.school?.uuid && estudiante.activo !== false &&
       estudiante.organizacionDto?.uuid === this.selection.school.uuid &&
-      estudiante.contribuyenteDto?.uuid === responsableUuid;
+      (this.userRole !== 'Contribuyente' || this.currentContributorCanManageStudent(estudiante));
   }
 
   get contribuyentesDisponibles(): Contribuyente[] {
@@ -288,6 +289,21 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
       ...this.selection.students.map(estudiante => estudiante.contribuyenteDto)
     ];
     return this.uniqueContribuyentes(candidates);
+  }
+
+  get entrenadoresDisponibles(): string[] {
+    const representatives = this.getSchoolRepresentatives(this.selection.school)
+      .map(representative => this.getRepresentativeDisplayName(representative))
+      .filter((nombre): nombre is string => !!nombre.trim());
+
+    return representatives.length
+      ? Array.from(new Set(representatives))
+      : (this.getConfiguredEntrenador() ? [this.getConfiguredEntrenador()!] : []);
+  }
+
+  get entrenadorFijado(): boolean {
+    const representatives = this.getSchoolRepresentatives(this.selection.school);
+    return representatives.length === 1 && this.singleRepresentativeMatchesTrainer(representatives[0]);
   }
 
   get selectedDetailsCount(): number {
@@ -425,6 +441,7 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
 
   onEscuelaSelected(escuela: Organizacion): void {
     this.selection.school = escuela;
+    this.selection.entrenador = this.getDefaultEntrenador();
     this.reservationForm.patchValue({ escuela: escuela.uuid });
     this.selection.baseReservation = undefined;
     this.selection.existingReservationPeriod = undefined;
@@ -434,6 +451,11 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
     this.reservationForm.patchValue({ reservaRecurrente: '' });
     this.syncDefaultContribuyente();
     this.loadReservationsFromSchool(escuela);
+  }
+
+  onEntrenadorChange(event: Event): void {
+    const nombre = (event.target as HTMLSelectElement).value;
+    this.selection.entrenador = this.entrenadoresDisponibles.includes(nombre) ? nombre : undefined;
   }
 
   onReservaRecurrenteChange(event: Event): void {
@@ -480,23 +502,47 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
   }
 
   private loadReservationsFromSchool(escuela: Organizacion): void {
-    const allReservas = escuela.reservasDtoList || [];
+    const schoolUuid = escuela.uuid;
+    const setReservations = (response: any): void => {
+      if (this.selection.school?.uuid !== schoolUuid) return;
 
-    this.catalogs.recurrentReservations = allReservas.filter(
-      reserva =>
-        reserva.tipoReserva === 'recurrente' &&
-        reserva.estadoValidacion === EstadoValidacion.APROBADA &&
-        reserva.reservaRecurrenteDto?.activo === true &&
-        !!reserva.reservaRecurrenteDto?.fechaInicio &&
-        !!reserva.reservaRecurrenteDto?.fechaFin
-    );
+      const embeddedReservations = escuela.reservasDtoList || [];
+      const responseReservations = Array.isArray(response)
+        ? response
+        : (response?.content || []);
+      const reservations = [...new Map<string, Reserva>(
+        [...embeddedReservations, ...responseReservations].map((reserva: Reserva) => [reserva.uuid!, reserva])
+      ).values()];
 
-    this.applyReservaBaseFilters();
+      this.catalogs.recurrentReservations = reservations.filter(
+        (reserva: Reserva) =>
+          reserva.tipoReserva === 'recurrente' &&
+          reserva.estadoValidacion === EstadoValidacion.APROBADA &&
+          reserva.reservaRecurrenteDto?.activo === true &&
+          !!reserva.reservaRecurrenteDto?.fechaInicio &&
+          !!reserva.reservaRecurrenteDto?.fechaFin
+      );
+
+      this.applyReservaBaseFilters();
+      this.autoSelectBestReservaBase();
+    };
 
     this.selection.baseReservation = undefined;
     this.reservationForm.patchValue({ reservaRecurrente: '' });
 
-    this.autoSelectBestReservaBase();
+    if (!schoolUuid) {
+      setReservations([]);
+      return;
+    }
+
+    this.reservaService.getAll(0, 1000, {
+      typeReserva: 'recurrente',
+      estadoValidacion: EstadoValidacion.APROBADA,
+      organization: schoolUuid
+    }).subscribe({
+      next: response => setReservations(response),
+      error: () => setReservations([])
+    });
   }
 
   applyReservaBaseFilters(): void {
@@ -547,6 +593,19 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
   private autoSelectBestReservaBase(): void {
     if (!this.catalogs.filteredRecurrentReservations.length) return;
 
+    if (this.userRole === 'Contribuyente') {
+      const userUuid = this.userData?.uuid;
+      const ownReservations = this.catalogs.filteredRecurrentReservations.filter(reserva =>
+        !!userUuid && reserva.contribuyenteDto?.uuid === userUuid
+      );
+
+      const latestOwnReservation = [...(ownReservations.length ? ownReservations : this.catalogs.filteredRecurrentReservations)].sort((first, second) =>
+        this.getReservationSortTime(second) - this.getReservationSortTime(first)
+      )[0];
+      this.selectReservaRecurrente(latestOwnReservation);
+      return;
+    }
+
     const referenceDate = this.getReferenceDateForReservationFilter();
     const matchingReserva = this.catalogs.filteredRecurrentReservations.find(r =>
       this.isDateWithinReserva(referenceDate, r)
@@ -560,8 +619,15 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
     this.selectReservaRecurrente(this.catalogs.filteredRecurrentReservations[0]);
   }
 
+  private getReservationSortTime(reserva: Reserva): number {
+    const dateValue = reserva.fechaCreacion || reserva.fechaReserva;
+    const timestamp = dateValue ? new Date(dateValue).getTime() : 0;
+    return Number.isNaN(timestamp) ? 0 : timestamp;
+  }
+
   private selectReservaRecurrente(reserva: Reserva): void {
     this.selection.baseReservation = reserva;
+    this.selection.entrenador = this.getDefaultEntrenador();
     this.reservationForm.patchValue({ reservaRecurrente: reserva.uuid });
     this.generateAvailablePeriods();
     this.applyDefaultPeriodoSelection();
@@ -659,7 +725,6 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
         createTab: this.createTab
       };
     }
-    // show the parent Reserva (modal expects a Reserva of tipo 'periodo')
     this.row = this.selection.existingReservationPeriod.reservaDto as Reserva;
     this.accion = 'show';
     this.activeTab = 1;
@@ -703,6 +768,16 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
         title: 'Datos incompletos',
         text: 'Seleccione escuela, reserva recurrente y responsable de la tasa.',
         icon: 'error',
+        confirmButtonText: 'Entendido'
+      });
+      return;
+    }
+
+    if (!this.selection.entrenador) {
+      Swal.fire({
+        title: 'Entrenador requerido',
+        text: 'Seleccione el responsable que corresponde a esta mensualidad.',
+        icon: 'warning',
         confirmButtonText: 'Entendido'
       });
       return;
@@ -857,29 +932,11 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
           return;
         }
 
-        if (this.isRuatAlreadyAnnulmentRegistered(resp)) {
-          this.cancelReservaLocal(
-            reserva,
-            requestData.motivo,
-            this.ruatService.getResponseMessage(resp, 'La tasa ya tiene registrado un trámite de anulación. Se actualizó la mensualidad localmente.'),
-            'warning'
-          );
-          return;
-        }
 
         this.isLoading = false;
         this.notify(this.ruatService.getResponseMessage(resp, 'Error al anular en RUAT.'), 'error');
       },
       error: (error) => {
-        if (this.isRuatAlreadyAnnulmentRegistered(error)) {
-          this.cancelReservaLocal(
-            reserva,
-            requestData.motivo,
-            this.ruatService.getResponseMessage(error, 'La tasa ya tiene registrado un trámite de anulación. Se actualizó la mensualidad localmente.'),
-            'warning'
-          );
-          return;
-        }
 
         this.isLoading = false;
         this.notify(this.ruatService.getResponseMessage(error, 'Error al realizar la anulación en RUAT.'), 'error');
@@ -887,12 +944,6 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
     });
   }
 
-  private isRuatAlreadyAnnulmentRegistered(response: any): boolean {
-    const message = this.ruatService.getResponseMessage(response, '').toLowerCase();
-    const payload = JSON.stringify(this.ruatService.getResponsePayload(response) || {}).toLowerCase();
-    return `${message} ${payload}`.includes('trámite de anulación') ||
-      `${message} ${payload}`.includes('tramite de anulacion');
-  }
 
   private cancelReservaLocal(
     reserva: Reserva,
@@ -958,35 +1009,14 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
       const resp: any = await this.ruatService
         .checkFeePayment(this.row.numeroTasa)
         .toPromise();
-      const persistedPayment = this.row.pagosDtoList?.find(
-        pago => pago.estadoPago === EstadoPago.PAGADO
-      ) || this.row.pagosDtoList?.[0];
-
-      if (!this.ruatService.hasBusinessResponse(resp)) {
-        if (persistedPayment) {
-          this.consultationResult = this.buildPersistedPaymentResult(resp, persistedPayment);
-          return;
-        }
-        this.consultationResult = {
-          type: resp?.status === 'NOT_FOUND' ? 'info' : 'warning',
-          text: this.ruatService.getResponseMessage(resp, 'No se encontraron pagos realizados para esta tasa.')
-        };
-        return;
-      }
-
-      const pagoTasa = this.ruatService.getResponseData(resp)?.pagoTasa;
-      if (!pagoTasa && persistedPayment) {
-        this.consultationResult = this.buildPersistedPaymentResult(resp, persistedPayment);
-        return;
-      }
-      if (!pagoTasa && !this.ruatService.canContinue(resp)) {
+      if (!this.ruatService.hasBusinessResponse(resp) || !this.ruatService.canContinue(resp)) {
         this.consultationResult = {
           type: 'warning',
-          text: this.ruatService.getResponseMessage(resp, 'No se puede continuar con el flujo.')
+          text: this.ruatService.getResponseMessage(resp, 'No se pudo confirmar el pago en RUAT.')
         };
         return;
       }
-
+      const pagoTasa = this.ruatService.getResponseData(resp)?.pagoTasa;
       if (!pagoTasa) {
         this.consultationResult = {
           type: 'info',
@@ -1038,24 +1068,6 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
     return new Date(parts[2], parts[1] - 1, parts[0], 12, 0, 0, 0);
   }
 
-  private buildPersistedPaymentResult(resp: any, pago: Pago): any {
-    return {
-      type: 'success',
-      text: `${this.ruatService.getResponseMessage(resp, 'La tasa se encuentra pagada')} - Pago verificado`,
-      pagoData: {
-        ...pago,
-        montoPago: pago.montoPagado,
-        fechaPago: this.formatPersistedPaymentDate(pago.fechaPago)
-      }
-    };
-  }
-
-  private formatPersistedPaymentDate(value: Date | string): string {
-    if (typeof value === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(value)) return value;
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'N/A';
-    return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
-  }
 
   formatPeriodoDetalle(detalle?: ReservaPeriodo): string {
     if (!detalle?.mes || !detalle?.año) {
@@ -1368,7 +1380,7 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
             año: periodo.año,
             matricula: estudiante.matricula,
             disciplina: this.selection.school?.disciplina,
-            entrenador: this.selection.school?.entrenador,
+            entrenador: this.selection.entrenador,
             estudianteEscuelaDto: { uuid: estudiante.uuid }
           });
         }
@@ -1410,7 +1422,6 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
         codigoContribuyente: contribuyente.codigoContribuyente,
         datosConcepto: [
           {
-            numero: '1',
             codigoClasificador: clasificadorRuat.codigo,
             tipoArancel: clasificadorRuat.tipoArancel,
             monto: totalAmount.toFixed(2)
@@ -1486,9 +1497,6 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
       const item = `Concepto ${index + 1}`;
       const amount = Number(String(concepto?.monto ?? '').replace(',', '.'));
 
-      if (!concepto?.numero) {
-        errors.push(`${item}: falta el número secuencial.`);
-      }
 
       if (!concepto?.codigoClasificador) {
         errors.push(`${item}: falta el clasificador RUAT.`);
@@ -1606,6 +1614,63 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
     this.systemConfigList = this.authService.getAllConfigs() || {};
   }
 
+  private getConfiguredEntrenador(): string | undefined {
+    return this.selection.baseReservation?.organizacionDto?.entrenador?.trim() ||
+      this.selection.school?.entrenador?.trim();
+  }
+
+  private getDefaultEntrenador(): string | undefined {
+    const representatives = this.getSchoolRepresentatives(this.selection.school);
+
+    const reservationContributor = this.selection.baseReservation?.contribuyenteDto;
+    const reservationRepresentative = representatives.find(representative =>
+      this.samePerson(representative, reservationContributor)
+    );
+    if (reservationRepresentative) {
+      return this.getRepresentativeDisplayName(reservationRepresentative);
+    }
+
+    if (representatives.length === 1 && this.singleRepresentativeMatchesTrainer(representatives[0])) {
+      return this.getRepresentativeDisplayName(representatives[0]);
+    }
+    if (!representatives.length) {
+      return this.getConfiguredEntrenador();
+    }
+    return undefined;
+  }
+
+  private singleRepresentativeMatchesTrainer(representative?: Contribuyente): boolean {
+    const trainerTokens = this.normalizePersonName(this.getConfiguredEntrenador()).split(' ');
+    const representativeTokens = this.normalizePersonName(this.getRepresentativeDisplayName(representative)).split(' ');
+
+    return trainerTokens.length >= 2 && representativeTokens.length >= 2 &&
+      trainerTokens[0] === representativeTokens[0] && trainerTokens[1] === representativeTokens[1];
+  }
+
+  private getRepresentativeDisplayName(representative?: Contribuyente): string {
+    return String(representative?.nombreCompleto ||
+      `${representative?.nombre || ''} ${representative?.primerApellido || ''} ${representative?.segundoApellido || ''}`)
+      .trim()
+      .replace(/\s+/g, ' ');
+  }
+
+  private samePerson(first?: Contribuyente, second?: Contribuyente): boolean {
+    if (!first || !second) return false;
+    if (first.uuid && second.uuid) return first.uuid === second.uuid;
+
+    return this.normalizePersonName(this.getRepresentativeDisplayName(first)) ===
+      this.normalizePersonName(this.getRepresentativeDisplayName(second));
+  }
+
+  private normalizePersonName(value?: string): string {
+    return (value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, ' ');
+  }
+
   private uniqueContribuyentes(candidates: (Contribuyente | undefined)[]): Contribuyente[] {
     const unique = new Map<string, Contribuyente>();
     candidates.forEach(candidate => {
@@ -1659,13 +1724,6 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
   }
 
   private getOrganizations(): void {
-    if (this.userRole === 'Contribuyente') {
-      this.catalogs.organizations = this.userData?.organizacionesRepresentadas || [];
-      this.catalogs.schools = this.catalogs.organizations.filter(
-        org => org.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL && org.activo
-      );
-      return;
-    }
     this.organizationService.getAll().subscribe({
       next: (response: any) => {
         this.catalogs.organizations = response?.content || response || [];
@@ -1683,6 +1741,10 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
     this.estudianteService.getAll().subscribe({
       next: (response: any) => {
         this.estudiantes = response?.content || response || [];
+        if (this.userRole === 'Contribuyente' && !this.row && !this.estudiantes.some(student => student.activo !== false)) {
+          this.handleError('No puede registrar mensualidades',
+            'Su usuario no tiene estudiantes a cargo, por lo que no puede registrar mensualidades.');
+        }
       },
       error: () => {
         this.estudiantes = [];
@@ -1753,10 +1815,6 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
       this.reservationForm.enable();
       this.reservationForm.reset();
     }
-    // if (this.validationForm) {
-    //   this.validationForm.enable();
-    //   this.validationForm.reset();
-    // }
     this.modalService.dismissAll();
   }
 

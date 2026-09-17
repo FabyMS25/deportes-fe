@@ -6,12 +6,7 @@ import { Component, OnInit, Input } from '@angular/core';
   styleUrls: ['./deals-status.component.scss']
 })
 
-/**
- * Deals Status Component
- */
 export class DealsStatusComponent implements OnInit {
-
-  // Deals Status
   @Input() DealsStatus: Array<{
     name?: string;
     date?: string;

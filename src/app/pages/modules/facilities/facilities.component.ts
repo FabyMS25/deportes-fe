@@ -7,7 +7,6 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { Districts } from 'src/app/core/constants/Places';
-// import { ModalFacilitiesComponent } from '../modal/modal.component';
 import { ModalImportComponent } from 'src/app/shared/modal-import/modal-import.component';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { TipoEstructura } from 'src/app/core/constants/Features';
@@ -83,7 +82,6 @@ export class FacilitiesComponent {
     localStorage.setItem('dataTableViewMode', this.viewMode);
   }
 
-  // Search Data
   searchTerm = '';
   applyFilters(): void {
     const normalize = (value: unknown) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
@@ -93,7 +91,6 @@ export class FacilitiesComponent {
         .some(value => normalize(value).includes(term)));
   }
 
-  // Filtering
   isstatus?: any
   leads:any
   SearchData() {

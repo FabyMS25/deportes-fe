@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, catchError, of, throwError } from 'rxjs';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
@@ -17,21 +17,40 @@ export class RuatRequestsService {
     private http: HttpClient,
   ) { }
 
-  isTokenAvailable(): boolean {
-    return true;
-  }
-
   getResponsePayload(response: any): any {
-    const payload = response?.payload ?? response?.error?.payload ?? response?.error ?? response;
-    if (typeof payload !== 'string') {
-      return payload;
+    const candidates = [response instanceof HttpErrorResponse ? response.error : response];
+
+    for (const candidate of candidates) {
+      if (candidate === null || candidate === undefined) {
+        continue;
+      }
+
+      if (typeof candidate === 'string') {
+        const trimmed = candidate.trim();
+        if (!trimmed) {
+          return candidate;
+        }
+
+        const looksLikeJson = (trimmed.startsWith('{') && trimmed.endsWith('}'))
+          || (trimmed.startsWith('[') && trimmed.endsWith(']'));
+
+        if (!looksLikeJson) {
+          return candidate;
+        }
+
+        try {
+          return JSON.parse(trimmed);
+        } catch {
+          return candidate;
+        }
+      }
+
+      if (typeof candidate === 'object') {
+        return candidate;
+      }
     }
 
-    try {
-      return JSON.parse(payload);
-    } catch {
-      return { mensaje: payload };
-    }
+    return response;
   }
 
   getResponseData(response: any): any {
@@ -46,15 +65,29 @@ export class RuatRequestsService {
 
   hasBusinessResponse(response: any): boolean {
     const payload = this.getResponsePayload(response);
-    const value = String(payload?.continuarFlujo).toLowerCase();
-    return value === 'true' || value === 'false';
+    if (!payload || typeof payload !== 'object') {
+      return false;
+    }
+
+    return Object.prototype.hasOwnProperty.call(payload, 'continuarFlujo')
+      || Object.prototype.hasOwnProperty.call(payload, 'mensaje')
+      || Object.prototype.hasOwnProperty.call(payload, 'mensajeConfirmacion');
   }
 
   getResponseMessage(response: any, fallback: string = 'Respuesta inesperada de RUAT'): string {
     const payload = this.getResponsePayload(response);
+
+    if (typeof payload === 'string' && payload.trim()) {
+            // Decode entities for plain-text presentation only; never render upstream HTML.
+      return payload.replace(/&(?:quot|apos|amp|lt|gt|#39|#34);/g, entity => ({
+        '&quot;': '"', '&apos;': "'", '&amp;': '&', '&lt;': '<', '&gt;': '>', '&#39;': "'", '&#34;': '"'
+      }[entity] ?? entity));
+    }
+
     const data = payload?.datos ?? {};
     return this.firstText(
       payload?.mensaje,
+      payload?.mensajeConfirmacion,
       data?.mensajeConfirmacion,
       data?.observacion,
       payload?.observacion,
@@ -62,18 +95,6 @@ export class RuatRequestsService {
       response?.message,
       fallback
     );
-  }
-
-  getOperationalErrorMessage(
-    response: any,
-    fallback: string = 'RUAT devolvió una respuesta inválida.'
-  ): string {
-    const message = this.getResponseMessage(response, fallback);
-    const validation = this.getResponsePayload(response)?.detalle?.validacion;
-    if (validation?.campo) {
-      return `RUAT rechazó la solicitud: ${message}`;
-    }
-    return message;
   }
 
   private firstText(...values: any[]): string {
@@ -95,10 +116,6 @@ export class RuatRequestsService {
       }
     }
     return '';
-  }
-
-  authenticate(): Observable<any> {
-    return this.ruatPost(`${apiUrl}/login`, {});
   }
 
   getTaxpayerByIdentityNumber(numeroDocumento: string, tipoDocumento: string, expedido: string): Observable<any> {
@@ -132,24 +149,15 @@ export class RuatRequestsService {
     return this.ruatPost(`${apiUrl}/registro`, requestData);
   }
 
-  getTaxpayerDebts(tipoConsulta: string, nroDocumento: string, tipoDocumento: string): Observable<any> {
-    const requestData = {
-      'tipoConsulta': tipoConsulta,
-      'numeroDocumento': nroDocumento,
-      'tipoDocumento': tipoDocumento
-    };
-
-    return this.ruatPost(
-      `${apiUrl}/RuatServiciosWebTasasOI/tasasOI/consultaDeudaTasaContrib`,
-      requestData
-    );
-  }
-
   createTasa(data: any, codigoContribuyente: string): Observable<any> {
     const requestData = {
       'tasa': {
         codigoContribuyente: codigoContribuyente,
-        datosConcepto: data.datosConcepto,
+        datosConcepto: data.datosConcepto.map((concept: any) => ({
+          codigoClasificador: concept.codigoClasificador,
+          tipoArancel: concept.tipoArancel,
+          monto: concept.monto
+        })),
         observacion: data.observacion
       }
     };
@@ -176,23 +184,10 @@ export class RuatRequestsService {
     return this.ruatPost(`${apiUrl}/pago`, requestData);
   }
 
-  setToken(_token: string): void {
-  }
-
-  removeToken(): void {
-  }
-
   private ruatPost(url: string, body: unknown): Observable<any> {
-    return this.http.post<any>(url, body).pipe(
-      map(response => response?.payload ?? response),
-      catchError(error => this.isRuatBusinessError(error)
-        ? of(this.getResponsePayload(error))
-        : throwError(() => error))
+    return this.http.post(url, body, { responseType: 'text' }).pipe(
+      map(response => this.getResponsePayload(response))
     );
   }
 
-  private isRuatBusinessError(error: any): boolean {
-    const status = Number(error?.status);
-    return status >= 400 && status < 500 && this.hasBusinessResponse(error);
-  }
 }

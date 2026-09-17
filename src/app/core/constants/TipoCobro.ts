@@ -54,7 +54,6 @@ export function obtenerDescripcionTipoCobro(tipo?: string, fallback = 'Tarifa'):
   return tipo ? (TipoCobroDescriptions[tipo] || fallback) : fallback;
 }
 
-// En constants/TipoCobro.ts
 export const frecuencia = [
   { 
     value: 'lunes_a_viernes', 

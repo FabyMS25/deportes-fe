@@ -103,8 +103,7 @@ export class ReportsService {
       params
     });
   }
-
-  // Ticket Reports
+  
   getTicketReservaPuntual(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);

@@ -19,20 +19,4 @@ export const GlobalComponent = {
         address: 'Mercado Martín Cárdenas, Planta Baja, Quillacollo'
     },
 
-    /* RUAT CREDENTIALS PRODUCTION */
-    // apiRuatUrl: "https://aplicaciones.ruat.gob.bo",
-    // RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
-    // RUAT_clave: "Gam#1209",
-    // RUAT_codigoUsuario: "ERODRIGUEZ2.QUI",
-    /* RUAT CREDENTIALS TEST */
-    // apiRuatUrl: "https://consolidacionjboss.ruat.gob.bo", 
-    // RUAT_usuario: "SWTRAMITESURKUPINIAQUI",
-    // RUAT_clave: "Pass_123",
-    // RUAT_codigoUsuario: "PRUEBAS_1.QUI", 
-    // RUAT_passwordUsuario: "Ruat_123$",
-      
-    // RUAT_codigoAlcaldia: "QUI",
-    // RUAT_motivo: "REGISTRO TASAS Y OTROS INGRESOS",
-    // RUAT_servicioMunicipal: "2174", 
-    // RUAT_tipoTasa: "TO", 
 }

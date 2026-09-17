@@ -113,7 +113,6 @@ export class TwoColumnSidebarComponent implements OnInit {
     this.activateParentDropdown(event.target);
   }
 
-  // Click wise Parent active class add
   toggleParentItem(event: any) {
     let isCurrentMenuId = event.target.getAttribute('permisoHijoListDto');
     let isMenu = document.getElementById(isCurrentMenuId) as any;
@@ -122,7 +121,6 @@ export class TwoColumnSidebarComponent implements OnInit {
       node.classList.remove('show');
     });
     (isMenu) ? isMenu.classList.add('show') : null;
-
     const ul = document.getElementById("two-column-menu");
     if (ul) {
       const iconItems = Array.from(ul.getElementsByTagName("a"));
@@ -135,7 +133,7 @@ export class TwoColumnSidebarComponent implements OnInit {
     document.body.classList.add('twocolumn-panel')
   }
 
-  toggleItem(event: any) { // show navbar-nav menu on click of icon sidebar menu    
+  toggleItem(event: any) { 
     let isCurrentMenuId = event.target.getAttribute('permisoHijoListDto');
     let isMenu = document.getElementById(isCurrentMenuId) as any;
     let dropDowns = Array.from(document.querySelectorAll('#navbar-nav .show'));
@@ -156,7 +154,6 @@ export class TwoColumnSidebarComponent implements OnInit {
     document.body.classList.remove('twocolumn-panel')
   }
 
-  // remove active items of two-column-menu
   removeActivation(items: any) {
     items.forEach((item: any) => {
       if (item.classList.contains("menu-link")) {
@@ -185,11 +182,10 @@ export class TwoColumnSidebarComponent implements OnInit {
     }
   }
 
-  activateParentDropdown(item: any) { // navbar-nav menu add active
+  activateParentDropdown(item: any) { 
     item.classList.add("active");
     let parentCollapseDiv = item.closest(".collapsed.menu-dropdown");
     if (parentCollapseDiv) {
-      // to set aria expand true remaining
       parentCollapseDiv.classList.add("show");
       parentCollapseDiv.parentElement.children[0].classList.add("active");
       parentCollapseDiv.parentElement.children[0].setAttribute("aria-expanded", "true");
@@ -206,8 +202,6 @@ export class TwoColumnSidebarComponent implements OnInit {
 
   initActiveMenu() {
     const pathName = window.location.pathname;
-
-    // Active Main Single Menu
     const mainItems = Array.from(document.querySelectorAll(".twocolumn-iconview li a"));
     let matchingMainMenuItem = mainItems.find((x: any) => {
       return x.pathname === pathName;

@@ -32,6 +32,20 @@
                   </option>
                 </select>
               </div>
+              <div class="col-md-6" *ngIf="selection.school">
+                <label class="form-label mb-1">Entrenador *</label>
+                <select *ngIf="!entrenadorFijado; else entrenadorFijo"
+                        class="form-select" [value]="selection.entrenador || ''"
+                        (change)="onEntrenadorChange($event)" [disabled]="isLoading">
+                  <option value="">Seleccione un entrenador</option>
+                  <option *ngFor="let entrenador of entrenadoresDisponibles" [value]="entrenador">
+                    {{ entrenador }}
+                  </option>
+                </select>
+                <ng-template #entrenadorFijo>
+                  <div class="form-control bg-light">{{ selection.entrenador }}</div>
+                </ng-template>
+              </div>
             </div>
             <div class="form-text mt-2" *ngIf="selection.baseReservation?.reservaRecurrenteDto">
               Los períodos disponibles están limitados del
@@ -150,7 +164,7 @@
       <div class="small text-muted">Responsable: {{ selection.payer?.nombreCompleto || 'Sin seleccionar' }}</div>
     </div>
     <button type="button" class="btn btn-light" [disabled]="isLoading" (click)="onCloseModal()">Cancelar</button>
-    <button type="button" class="btn btn-primary" [disabled]="isLoading || !reservationForm || reservationForm.invalid || !selection.school || !selection.baseReservation || !selection.payer || !selectedDetailsCount" (click)="onSubmit()">
+    <button type="button" class="btn btn-primary" [disabled]="isLoading || !reservationForm || reservationForm.invalid || !selection.school || !selection.baseReservation || !selection.payer || !selection.entrenador || !selectedDetailsCount" (click)="onSubmit()">
       {{ isLoading ? 'Registrando...' : 'Generar tasa por ' + selectedDetailsCount + ' mensualidad(es)' }}
     </button>
   </div>

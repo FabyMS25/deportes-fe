@@ -1,21 +1,12 @@
 import { Component, QueryList, ViewChildren, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
-import { Observable } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { UntypedFormBuilder, UntypedFormGroup, UntypedFormArray, UntypedFormControl, Validators } from '@angular/forms';
-
-// Date Format
 import { DatePipe } from '@angular/common';
-
-// Sweet Alert
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-// import { ModalEmployeeComponent } from './modal-employee/modal-employee.component';
 import { UserService } from 'src/app/core/services/api-users/users.service';
 import { UserRol } from 'src/app/core/constants/UserData';
 import { EncargadoService } from 'src/app/core/services/api/encargado.service';
-// import { ModalImportComponent } from './modal-import/modal-import.component';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
 import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
 import { ModalEmployeeComponent } from '../../modals/employee/modal-employee/modal-employee.component';
@@ -109,7 +100,6 @@ export class EmployeesComponent implements OnInit {
     localStorage.setItem('dataTableViewMode', this.viewMode);
   }
   
-  // Search Data
   searchTerm = '';
   performSearch(): void {
     const normalize = (value: unknown) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
@@ -175,63 +165,7 @@ export class EmployeesComponent implements OnInit {
         this.getEmployees();
     });
   }
-  // public openModalImport() {
-  //   const modalRef = this.modalService.open(ModalImportComponent, {
-  //     size: 'lg',
-  //     backdrop: 'static'
-  //   });
-  //   modalRef.componentInstance.titles = this.headersImport.map(header => 
-  //     ({ prop: header, name: header, visible: true }));
-  //   modalRef.componentInstance.itemsList = this.temp;
-  //   modalRef.componentInstance.lookupData = {
-  //     complejosList: this.complejosList
-  //   };
-  //   modalRef.componentInstance.checkExistsFn = (registro: EncargadoComplejo) =>
-  //     this.temp.some(item =>
-  //       item.nombre === registro.nombre && 
-  //       item.complejoDto?.uuid === registro.complejoDto?.uuid
-  //     );
-  //   modalRef.componentInstance.mapRowFn = (row: any, lookupData: any): EncargadoComplejo => {
-  //     const complejoNombre = (row['Complejo'] || '').trim();
-  //     const complejo = lookupData.complejosList.find(
-  //       (c: any) => c.nombre?.trim() === complejoNombre
-  //     );
 
-  //     const missingFields = [];
-  //     if (!complejo) missingFields.push('Complejo');
-  //     if (missingFields.length > 0) {
-  //       throw { missingFields };
-  //     }
-
-  //     return {
-  //       nombre: '' + row['Nombre'],
-  //       avatar:'multi-user.jpg',
-  //       telefono: '' + row['Telefono'],
-  //       activo: this.parseBoolean(row['Activo']),
-  //       fechaAsignacion: row['Fecha Asignación'] ? new Date(row['Fecha Asignación']).toISOString() : new Date().toISOString(),
-  //       fechaFinAsignacion: row['Fecha Fin'] ? new Date(row['Fecha Fin']).toISOString() : undefined,
-  //       horaEntrada: row['Hora Entrada'] || '08:00:00',
-  //       horaSalida: row['Hora Salida'] || '17:00:00',
-  //       complejoDto: complejo
-  //     };
-  //   };
-  //   modalRef.componentInstance.createRecordFn = (record: EncargadoComplejo) =>
-  //     this.employeesService.save(record).toPromise();
-  //   modalRef.componentInstance.actionCompleted.subscribe(() => {
-  //     this.getEmployees();
-  //   });
-  // }
-
-  private parseBoolean(value: any): boolean {
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'string') {
-      return value.toLowerCase() === 'true' || value.toLowerCase() === 'si' || 
-             value.toLowerCase() === 'sí' || value === '1' || value.toLowerCase() === 'activo';
-    }
-    return true; // Default to active
-  }
-
-  // Csv File Export
   formatDate(date: any): string {
     if (!date) return '';
     const dateObj = new Date(date);
@@ -271,7 +205,6 @@ export class EmployeesComponent implements OnInit {
     });
   }
 
-  // Delete Data
   deleteData() {
     let uuid = this.deleteId;
     this.employeesService.delete(uuid).subscribe({

@@ -14,7 +14,6 @@ export class EstudianteEscuelaService {
 
   constructor(private http: HttpClient) { }
 
-  // Basic CRUD Operations
   getAll(): Observable<EstudianteEscuela[]> {
     return apiGet<EstudianteEscuela[]>(this.http, this.apiUrl, 'obtener estudiantes escuela');
   }
@@ -39,7 +38,6 @@ export class EstudianteEscuelaService {
     return apiDelete<EstudianteEscuela>(this.http, `${this.apiUrl}/${uuid}`, `anular estudiante escuela (${uuid})`);
   }
 
-  // Business Operations
   getByTaxpayer(contribuyenteUuid: string): Observable<EstudianteEscuela[]> {
     return apiGet<EstudianteEscuela[]>(this.http, `${this.apiUrl}/contribuyente/${contribuyenteUuid}`, `obtener estudiantes por contribuyente (${contribuyenteUuid})`);
   }

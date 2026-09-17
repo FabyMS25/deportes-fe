@@ -88,12 +88,12 @@ export class MapDashboardComponent implements OnInit {
     ngOnInit(): void {
         const pendingLoginEvent = this.authService.consumeLoginEvent();
         if (pendingLoginEvent) {
-            this.showConsolidatedSystemStatus(pendingLoginEvent);
+            this.toastService.showLoginStatus(pendingLoginEvent);
         } else {
             this.authService.loginEvent$
                 .pipe(take(1))
                 .subscribe(event => {
-                this.showConsolidatedSystemStatus(event);
+                this.toastService.showLoginStatus(event);
             });
         }
         this.systemConfigList = this.authService.getAllConfigs()
@@ -110,57 +110,6 @@ export class MapDashboardComponent implements OnInit {
         this.initializeData();
     }
     
-  private showConsolidatedSystemStatus(event: any): void {
-    const configsLoaded = event.configsLoaded || 0;
-    const finalRuatConnected = event.ruatStatus;
-    let welcomeTitle = '';
-    let welcomeMessage = '';
-    switch(event.message) {
-      case 'welcome_admin':
-        welcomeTitle = '🎉 ¡Bienvenido Administrador!';
-        welcomeMessage = 'Inicio de sesión exitoso con privilegios de administrador.';
-        break;
-      case 'welcome_staff':
-        welcomeTitle = '👤 ¡Bienvenido Encargado!';
-        welcomeMessage = 'Inicio de sesión exitoso.';
-        break;
-      case 'welcome_contribuyente':
-        welcomeTitle = '¡Bienvenido!';
-        welcomeMessage = 'Inicio de sesión exitoso.';
-        break;
-      default:
-        welcomeTitle = '¡Bienvenido!';
-        welcomeMessage = 'Inicio de sesión exitoso.';
-    }    
-    const isContribuyente = event.message === 'welcome_contribuyente' || this.userRole === 'Contribuyente';
-    let statusMessage = 'Estado: ';
-    if (configsLoaded > 0) {
-      statusMessage += `Sistema conectado · Configuraciones: ${configsLoaded}\n`;
-    } else {
-      statusMessage += 'Sistema con conexión limitada · Configuraciones: 0\n';
-    }
-    if (finalRuatConnected) {
-      statusMessage += 'RUAT: conectado · Todas las funciones disponibles.';
-    } else {
-      statusMessage += 'RUAT: no disponible.\n';
-      if (isContribuyente) {
-        statusMessage += 'Puede revisar complejos y reservas existentes.\n';
-        statusMessage += 'No podrá crear reservas con cobro hasta que RUAT responda.\n';
-        statusMessage += 'Si continúa, contacte a soporte o administración.';
-      } else {
-        statusMessage += 'Bloqueado: crear/anular tasas y consultar pagos RUAT.\n';
-        statusMessage += 'Disponible: revisar reservas y datos ya registrados.\n';
-        statusMessage += 'Si continúa, contacte al administrador o al ingeniero de sistemas.';
-      }
-    }
-    const fullMessage = `${welcomeMessage}\n${statusMessage}`;
-    this.toastService.show(fullMessage, {
-      classname: finalRuatConnected ? 'bg-success text-light' : 'bg-warning text-dark',
-      header: welcomeTitle,
-      delay: finalRuatConnected ? 18000 : 26000,
-      replaceKey: 'system-status'
-    });
-  }
 
 
     async initializeData() {

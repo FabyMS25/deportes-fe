@@ -611,36 +611,16 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
 
     try {
       const resp: any = await this.ruatService.checkFeePayment(reserva.numeroTasa).toPromise();
-      const persistedPayment = reserva.pagosDtoList?.find(
-        pago => pago.estadoPago === EstadoPago.PAGADO
-      ) || reserva.pagosDtoList?.[0];
-
-      if (!this.ruatService.hasBusinessResponse(resp)) {
-        if (persistedPayment) {
-          this.consultationResult = this.buildPersistedPaymentResult(resp, persistedPayment);
-          return;
-        }
+      if (!this.ruatService.hasBusinessResponse(resp) || !this.ruatService.canContinue(resp)) {
         this.consultationResult = {
-          type: resp?.status === 'NOT_FOUND' ? 'info' : 'warning',
-          text: this.ruatService.getResponseMessage(resp, 'No se encontraron pagos realizados para esta tasa.')
+          type: 'warning',
+          text: this.ruatService.getResponseMessage(resp, 'No se pudo confirmar el pago en RUAT.')
         };
         return;
       }
       const pagoTasa = this.ruatService.getResponseData(resp)?.pagoTasa;
-      if (!pagoTasa && persistedPayment) {
-        this.consultationResult = this.buildPersistedPaymentResult(resp, persistedPayment);
-        return;
-      }
-      if (!pagoTasa && !this.ruatService.canContinue(resp)) {
-        this.consultationResult = {
-          type: 'warning',
-          text: this.ruatService.getResponseMessage(resp, 'No se puede continuar con el flujo.')
-        };
-        return;
-      }
-
       if (!pagoTasa) {
-        this.consultationResult = { type: 'info', text: 'No se encontraron datos de pago.' };
+        this.consultationResult = { type: 'info', text: this.ruatService.getResponseMessage(resp, 'No se encontraron datos de pago.') };
         return;
       }
 
@@ -665,7 +645,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
 
       this.consultationResult = {
         type: 'success',
-        text: `${this.ruatService.getResponseMessage(resp, 'La tasa se encuentra pagada')} - Pago verificado`,
+        text: this.ruatService.getResponseMessage(resp, 'La tasa se encuentra pagada'),
         pagoData: pagoTasa
       };
       this.emitList.emit();
@@ -685,24 +665,6 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
     return new Date(year, month - 1, day, 12, 0, 0, 0);
   }
 
-  private buildPersistedPaymentResult(resp: any, pago: Pago): any {
-    return {
-      type: 'success',
-      text: `${this.ruatService.getResponseMessage(resp, 'La tasa se encuentra pagada')} - Pago verificado`,
-      pagoData: {
-        ...pago,
-        montoPago: pago.montoPagado,
-        fechaPago: this.formatPersistedPaymentDate(pago.fechaPago)
-      }
-    };
-  }
-
-  private formatPersistedPaymentDate(value: Date | string): string {
-    if (typeof value === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(value)) return value;
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'N/A';
-    return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
-  }
 
   private updateReservaPuntual(data: any): Promise<ReservaPuntual> {
     return new Promise((resolve, reject) => {

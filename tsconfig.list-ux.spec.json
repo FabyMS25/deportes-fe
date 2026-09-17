@@ -1,8 +1,0 @@
-{
-  "extends": "./tsconfig.spec.json",
-  "include": [
-    "src/testing/regression.spec.ts", "src/polyfills.ts",
-    
-    "src/**/*.d.ts"
-  ]
-}

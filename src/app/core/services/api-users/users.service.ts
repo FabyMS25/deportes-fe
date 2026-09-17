@@ -18,10 +18,6 @@ export class UserService {
       return apiPost<LoginResponse>(this.http, `${environment.backendUrl}/auth/login`, {username, password}, 'loguear usuario');
     }
 
-    // loginByUsername(username: String, password: String) {
-    //     return this.http.post<any>(`${usersUrl}/auth/signin`, {username, password});
-    // }
-
     getAllUsers(): Observable<any[]> {
         return apiGet<any[]>(this.http, usersUrl, 'obtener usuarios');
     } 

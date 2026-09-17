@@ -1542,12 +1542,6 @@ private getDurationForConcepto(concepto: any, formValue: any): number {
     if (isFreeReservation) {
       this.saveReservation(reservaData);
     } else if (!this.requiresValidation) {
-      const ruatAvailability = await this.authenticationService.ensureRuatAuthenticated();
-      if (!ruatAvailability.available) {
-        this.isSubmitting = false;
-        this.showRuatUnavailableMessage(ruatAvailability.message);
-        return;
-      }
       this.registerReservationInRuat(reservaData);
     } else {
       this.saveReservation(reservaData);
@@ -1708,7 +1702,6 @@ private prepareReservationData(): Reserva {
       observaciones: formValue.observaciones
     };
   } else if (this.bookingType === 'recurrente' && this.recurrentSchedule) {
-    // IMPORTANT: The tablero is already in the correct format from the schedule component
     reserva.reservaRecurrenteDto = {
       tipoRecurrencia: this.recurrentSchedule.tipoRecurrencia || '',
       fechaInicio: this.recurrentSchedule.fechaInicio,
@@ -1882,7 +1875,6 @@ private prepareReservationData(): Reserva {
     const ruatData = {
       codigoContribuyente: reservaData.contribuyenteDto.codigoContribuyente,
       datosConcepto: [{
-        numero: '1',
         codigoClasificador: this.selectedTariff.clasificadorRuatDto.codigo,
         tipoArancel: this.selectedTariff.clasificadorRuatDto.tipoArancel || "DI",
         monto: this.calculatedPrice.toFixed(2)
@@ -1904,13 +1896,12 @@ private prepareReservationData(): Reserva {
           this.saveReservation(reservaData);
         } else {
           this.isSubmitting = false;
-          this.handleError('Error en RUAT', this.getRuatErrorMessage(response, 'RUAT no permitió registrar la tasa.'));
+          this.handleError('Error en RUAT', this.ruatService.getResponseMessage(response, 'RUAT no permitió registrar la tasa.'));
         }
       },
       error: (error) => {
         this.isSubmitting = false;
-        this.authenticationService.ensureRuatAuthenticated(true);
-        this.showRuatUnavailableMessage(this.getRuatErrorMessage(error, 'No se pudo conectar con RUAT.'));
+        this.handleError(error?.status ? 'Respuesta al registro de tasa' : 'Error de conexión', this.ruatService.getResponseMessage(error, 'No se recibió una respuesta del servidor.'));
       }
     });
   }
@@ -1930,9 +1921,6 @@ private prepareReservationData(): Reserva {
       const item = `Concepto ${index + 1}`;
       const amount = Number(String(concepto?.monto ?? '').replace(',', '.'));
 
-      if (!concepto?.numero) {
-        errors.push(`${item}: falta el número secuencial.`);
-      }
       if (!concepto?.codigoClasificador) {
         errors.push(`${item}: falta el clasificador RUAT.`);
       }
@@ -1953,56 +1941,6 @@ private prepareReservationData(): Reserva {
 
   private getRuatResponsePayload(response: any): any {
     return this.ruatService.getResponsePayload(response);
-  }
-
-  private getRuatErrorMessage(response: any, fallback: string): string {
-    const message = this.ruatService.getResponseMessage(response, fallback);
-
-    return this.getFriendlyRuatMessage(message);
-  }
-
-  private getFriendlyRuatMessage(message: any): string {
-    const rawMessage = typeof message === 'string' ? message : this.extractErrorText(message);
-    const normalized = rawMessage.toLowerCase();
-    if (normalized.includes('valor enviado:')) {
-      return rawMessage;
-    }
-
-    if (normalized.includes('token') || normalized.includes('autoriz')) {
-      return 'La sesión de RUAT no está disponible o expiró. Vuelva a intentar para reautenticar el servicio.';
-    }
-    if (normalized.includes('codigoalcaldia') || normalized.includes('alcald')) {
-      return 'La configuración de alcaldía RUAT del servidor no es válida.';
-    }
-    if (normalized.includes('codigousuario') || normalized.includes('usuario')) {
-      return 'El usuario RUAT configurado no es válido o no tiene el rol para registrar Tasas y Otros Ingresos.';
-    }
-    if (normalized.includes('codigocontribuyente') || normalized.includes('contribuyente')) {
-      return 'El contribuyente no tiene un código RUAT válido. Verifique o vuelva a registrar sus datos de contribuyente.';
-    }
-    if (normalized.includes('serviciomunicipal') || normalized.includes('servicio municipal')) {
-      return 'El servicio municipal RUAT no corresponde o no está configurado correctamente.';
-    }
-    if (normalized.includes('clasificador')) {
-      return 'El clasificador RUAT de la tarifa no es válido para registrar esta tasa.';
-    }
-    if (normalized.includes('arancel')) {
-      return 'El tipo de arancel de la tarifa no corresponde al clasificador RUAT.';
-    }
-    if (normalized.includes('monto')) {
-      return 'El monto enviado a RUAT debe ser mayor a cero y estar expresado en bolivianos.';
-    }
-    if (normalized.includes('observacion')) {
-      return 'La observación enviada a RUAT es obligatoria. Agregue una descripción de la reserva.';
-    }
-    if (normalized.includes('numero') && normalized.includes('tasa')) {
-      return 'El número de tasa RUAT no existe, no corresponde al GAMQ o no puede procesarse.';
-    }
-    if (normalized.includes('anulaci')) {
-      return 'RUAT indica que la tasa ya tiene un trámite de anulación o no puede anularse nuevamente.';
-    }
-
-    return rawMessage || 'Por favor, intente nuevamente.';
   }
 
   private showRuatUnavailableMessage(message?: string): void {

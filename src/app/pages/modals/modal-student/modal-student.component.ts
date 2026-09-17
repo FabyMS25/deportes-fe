@@ -13,6 +13,7 @@ import { EstudianteEscuelaService } from 'src/app/core/services/api/estudianteEs
 
 import { ReservaPeriodoService } from 'src/app/core/services/api/reserva-periodo.service';
 import { ReservaPeriodo } from 'src/app/core/models/reservaPeriodo.model';
+import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { TicketComponent } from '../../modules/reports/ticket/ticket.component';
 
 @Component({
@@ -29,9 +30,13 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
   @Input() escuelas: Organizacion[] = [];
   @Input() tutores: Contribuyente[] = [];
   @Input() estudiantesExistentes: EstudianteEscuela[] = [];
+  @Input() restrictContributorRelation = false;
+  @Input() currentContributorUuid?: string;
   @Output() emitList = new EventEmitter<void>();
 
   private readonly monthlyService = inject(ReservaPeriodoService);
+  private readonly authService = inject(AuthenticationService);
+  canCreateStudent = false;
   private readonly modalService = inject(NgbModal);
   monthlyHistory: ReservaPeriodo[] = [];
   monthlyLoading = false;
@@ -105,6 +110,16 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.canCreateStudent = this.authService.hasPermission('/students').includes('CREAR');
+    if (this.authService.getUserRole() === 'Contribuyente') {
+      const currentUser = this.authService.currentUser();
+      this.restrictContributorRelation = true;
+      this.currentContributorUuid = currentUser?.uuid;
+      this.tutores = currentUser ? [currentUser] : [];
+      this.escuelas = this.escuelas.filter(school =>
+        school.representantesDto?.some(rep => rep.contribuyenteDto?.uuid === this.currentContributorUuid) ||
+        currentUser?.organizacionesRepresentadas?.some((org: Organizacion) => org.uuid === school.uuid));
+    }
     this.studentTypeahead.pipe(
       debounceTime(250),
       distinctUntilChanged(),
@@ -138,19 +153,27 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
         this.form.controls.contribuyenteUuid.setValue(this.tutores[0].uuid ?? '', { emitEvent: false });
       }
     }
+    if (!this.row && this.restrictContributorRelation) this.onEscuelaChange();
     if (this.accion === 'show') this.form.disable({ emitEvent: false });
   }
 
   get tutoresDisponibles(): Contribuyente[] {
-    const escuelaUuid = this.form.controls.organizacionUuid.value;
-    const escuela = this.escuelas.find(item => item.uuid === escuelaUuid);
-    const representantes = (escuela?.representantesDto || [])
-      .map(value => value.contribuyenteDto)
-      .filter((value): value is Contribuyente => !!value);
-    return representantes.length ? representantes : this.tutores;
+    if (this.restrictContributorRelation) {
+      return this.tutores.filter(tutor => tutor.uuid === this.currentContributorUuid);
+    }
+
+    return this.tutores;
+  }
+
+  get tutorFijado(): boolean {
+    return this.restrictContributorRelation;
   }
 
   onEscuelaChange(): void {
+    if (this.restrictContributorRelation) {
+      this.form.controls.contribuyenteUuid.setValue(this.currentContributorUuid || '', { emitEvent: false });
+      return;
+    }
     const selectedTutor = this.form.controls.contribuyenteUuid.value;
     if (selectedTutor && !this.tutoresDisponibles.some(tutor => tutor.uuid === selectedTutor)) {
       this.form.controls.contribuyenteUuid.setValue('', { emitEvent: false });
@@ -161,6 +184,7 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
   }
 
   registrarOtraRelacion(): void {
+    if (!this.canCreateStudent) return;
     const value = this.form.getRawValue();
     const estudianteUuid = this.row?.estudianteUuid || value.existingStudentUuid;
     this.row = undefined;
@@ -175,11 +199,15 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
       telefono: value.telefono || '',
       email: value.email || '',
       organizacionUuid: '',
-      contribuyenteUuid: '',
+      contribuyenteUuid: this.restrictContributorRelation ? this.currentContributorUuid || '' : '',
       fechaInscripcion: this.today()
     });
     this.form.controls.existingStudentUuid.disable({ emitEvent: false });
     this.activeTab = 'relacion';
+    if (this.escuelas.length === 1) {
+      this.form.controls.organizacionUuid.setValue(this.escuelas[0].uuid || '');
+      this.onEscuelaChange();
+    }
   }
 
   ngOnDestroy(): void {
@@ -234,7 +262,8 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
       return;
     }
     const value = this.form.getRawValue();
-    const tutorUuid = value.contribuyenteUuid?.trim();
+    const tutorUuid = this.restrictContributorRelation && !this.row
+      ? this.currentContributorUuid : value.contribuyenteUuid?.trim();
     const payload: EstudianteEscuela = {
       uuid: this.row?.uuid,
       estudianteUuid: this.row?.estudianteUuid || value.existingStudentUuid || undefined,

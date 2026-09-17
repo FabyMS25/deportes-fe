@@ -23,8 +23,7 @@ export class VerticalComponent implements OnInit {
     this.router.events.subscribe((event: any) => {
       if (document.documentElement.getAttribute('data-preloader') == 'enable') {
         if (event instanceof NavigationEnd) {
-          // Update the attribute state based on the current route or any other conditions
-          if (event.url !== '/disabled-route') {
+           if (event.url !== '/disabled-route') {
             (document.getElementById("preloader") as HTMLElement).style.opacity = "1";
             (document.getElementById("preloader") as HTMLElement).style.visibility = "";
             setTimeout(() => {

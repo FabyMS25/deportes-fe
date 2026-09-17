@@ -60,7 +60,6 @@ export class SignupComponent implements OnInit {
   
   private initializeForm() {
     this.SignupForm = this.formBuilder.group({
-      // uuid: [''],
       userName: ['', [Validators.required, Validators.minLength(5),Validators.maxLength(150),this.usernameFormatValidator]],
       password: ['', [Validators.required, Validators.minLength(5),Validators.maxLength(150)]], 
       cpassword: ['', [Validators.required, Validators.minLength(5),Validators.maxLength(150)]], 
@@ -78,7 +77,6 @@ export class SignupComponent implements OnInit {
       nombre: ['', [Validators.required,Validators.minLength(1),Validators.maxLength(250)]],
       primerApellido: ['', [Validators.required,Validators.minLength(1),Validators.maxLength(100)]],
       segundoApellido: ['', [Validators.minLength(1),Validators.maxLength(100)]],      
-      // apellidoEsposo: ['', [Validators.maxLength(100)]],
       estadoCivil: [''],
       fechaNacimiento: ['', [Validators.required]],
       genero: ['', [Validators.required]],
@@ -87,7 +85,6 @@ export class SignupComponent implements OnInit {
       email: ['', [Validators.required, Validators.email, Validators.maxLength(255)],
                    [this.emailValidator.bind(this)]],
       direccion: ['', [Validators.maxLength(250)]],
-      // Administrative fields 
       esDeportistaElite: [false],
       perteneceEscuelaMunicipal: [false],
       registroUnicoDeportivo: ['', [Validators.maxLength(50)]],
@@ -107,9 +104,6 @@ export class SignupComponent implements OnInit {
       const client = data.contribuyente;
       let fechaNacimientoValue = '';
       if (client.fechaNacimiento) {
-      //   const [day, month, year] = client.fechaNacimiento.split('/').map(Number);
-      //   const date = new Date(year, month - 1, day);
-      //   fechaNacimientoValue = date.toISOString().split('T')[0];
       if (client.fechaNacimiento.includes('/')) {
         const [day, month, year] = client.fechaNacimiento.split('/').map(Number);
         const date = new Date(year, month - 1, day);
@@ -214,7 +208,6 @@ export class SignupComponent implements OnInit {
       from_name: "GAMQ-DEPORTES",
       to_name: name,
       message: codigo,
-      // message: `Puedes ingresar al siguiente Link: ${link}`,
       reply_to: email,
     },environment.EmailJS.publicKey)
       .then((response: EmailJSResponseStatus) => {
@@ -280,12 +273,9 @@ export class SignupComponent implements OnInit {
     var number = document.getElementById("pass-number");
     var length = document.getElementById("pass-length");
     let input = document.getElementById("password-contain") as HTMLElement;
-    // myInput.onfocus = function () {
       input.style.display = "block"
-    // };
     myInput.onkeyup = function () {
       let isValid = true;
-      // Validate lowercase letters
       var lowerCaseLetters = /[a-z]/g;
       if (myInput.value.match(lowerCaseLetters)) {
           letter?.classList.remove("invalid");
@@ -295,7 +285,6 @@ export class SignupComponent implements OnInit {
           letter?.classList.add("invalid");
           isValid = false
       }
-      // Validate capital letters
       var upperCaseLetters = /[A-Z]/g;
       if (myInput.value.match(upperCaseLetters)) {
           capital?.classList.remove("invalid");
@@ -305,7 +294,6 @@ export class SignupComponent implements OnInit {
           capital?.classList.add("invalid");
           isValid = false
       }
-      // Validate numbers
       var numbers = /[0-9]/g;
       if (myInput.value.match(numbers)) {
           number?.classList.remove("invalid");
@@ -315,7 +303,6 @@ export class SignupComponent implements OnInit {
           number?.classList.add("invalid");
           isValid = false
       }
-      // Validate length
       if (myInput.value.length >= 8) {
           length?.classList.remove("invalid");
           length?.classList.add("valid");
@@ -343,9 +330,7 @@ export class SignupComponent implements OnInit {
     var pattern = document.getElementById("user-pattern");
     var uLength = document.getElementById("user-length");
     let inputMsg = document.getElementById("username-contain") as HTMLElement;
-      // inputUser.onfocus = function () {
         inputMsg.style.display = "block"
-      // };
       inputUser.onkeyup = () => {        
         var patternValue = /^[a-z0-9.]+$/;
         if (inputUser.value.match(patternValue)) {

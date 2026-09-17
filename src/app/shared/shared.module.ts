@@ -5,9 +5,7 @@ import { FlatpickrModule } from 'angularx-flatpickr';
 import { NgbNavModule, NgbAccordionModule, NgbDropdownModule, NgbPaginationModule, NgbTooltipModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
-// Swiper Slider
 import { SlickCarouselModule } from 'ngx-slick-carousel';
-// Counter
 import { CountUpModule } from 'ngx-countup';
 import { defineElement } from '@lordicon/element';
 import Lottie from 'lottie-web';
@@ -23,9 +21,6 @@ import { DataHeaderComponent } from './data-header/data-header.component';
 @NgModule({
   declarations: [
     BreadcrumbsComponent,
-    // ScrollspyDirective,
-    // LandingScrollspyDirective,
-
     DataHeaderComponent,
     DataTableComponent,
     LeafletComponent,
@@ -46,14 +41,6 @@ import { DataHeaderComponent } from './data-header/data-header.component';
     FlatpickrModule,
     NgSelectModule,
     TranslateModule,
-
-    // NgbToastModule,
-    // NgbProgressbarModule,
-    // FlatpickrModule.forRoot(),
-    // NgApexchartsModule,
-    // SimplebarAngularModule,
-    // LightboxModule,
-    // FeatherModule.pick(allIcons),
     
     TermsConditionsComponent,
     PrivacyPolicyComponent

@@ -6,12 +6,8 @@ import { Component, OnInit, Input } from '@angular/core';
   styleUrls: ['./news-feed.component.scss']
 })
 
-/**
- * News Feed Component
- */
 export class NewsFeedComponent implements OnInit {
 
-   // News Feed
    @Input() NewsFeed: Array<{
     image?: string;
     content?: string;

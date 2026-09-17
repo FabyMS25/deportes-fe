@@ -76,7 +76,6 @@ export class SystemConfigurationService {
     return apiPut<ConfiguracionSistema>(this.http, `${this.apiUrl}/desactivar/${uuid}`, {}, `desactivar configuración (${uuid})`);
   }
 
-  // Métodos utilitarios para obtener valores específicos
   getValorTexto(clave: string, valorPorDefecto: string = ''): Observable<string> {
     return this.getByClave(clave).pipe(
       map(config => config?.valorTexto || valorPorDefecto),

@@ -15,7 +15,7 @@ export interface ReservaFilters {
   estadoReserva?: string;
   estadoValidacion?: string;
   esReservaGratuita?:boolean;
-  organization?: string;//  escuelaFiltro?: string;
+  organization?: string;
   periodoFiltro?:  {
     mesFiltro?: number;
     anioFiltro?: number;

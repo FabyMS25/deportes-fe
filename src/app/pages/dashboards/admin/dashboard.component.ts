@@ -59,12 +59,12 @@ export class DashboardComponent implements OnInit {
     this.userData = this.authService.currentUser();
     const pendingLoginEvent = this.authService.consumeLoginEvent();
     if (pendingLoginEvent) {
-      this.showConsolidatedSystemStatus(pendingLoginEvent);
+      this.toastService.showLoginStatus(pendingLoginEvent);
     } else {
       this.authService.loginEvent$
       .pipe(take(1))
       .subscribe(event => {
-        this.showConsolidatedSystemStatus(event);
+        this.toastService.showLoginStatus(event);
       });
     }
     try {
@@ -78,46 +78,6 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  private showConsolidatedSystemStatus(event: any): void {
-    const configsLoaded = event.configsLoaded || 0;
-    const finalRuatConnected = event.ruatStatus;
-    let welcomeTitle = '';
-    let welcomeMessage = '';
-    switch(event.message) {
-      case 'welcome_admin':
-        welcomeTitle = '🎉 ¡Bienvenido Administrador!';
-        welcomeMessage = 'Inicio de sesión exitoso con privilegios de administrador.';
-        break;
-      case 'welcome_staff':
-        welcomeTitle = '👤 ¡Bienvenido Encargado!';
-        welcomeMessage = 'Inicio de sesión exitoso.';
-        break;
-      default:
-        welcomeTitle = '🎉 ¡Bienvenido!';
-        welcomeMessage = 'Inicio de sesión exitoso.';
-    }    
-    let statusMessage = 'Estado: ';
-    if (configsLoaded > 0) {
-      statusMessage += `Sistema conectado · Configuraciones: ${configsLoaded}\n`;
-    } else {
-      statusMessage += 'Sistema con conexión limitada · Configuraciones: 0\n';
-    }
-    if (finalRuatConnected) {
-      statusMessage += 'RUAT: conectado · Todas las funciones disponibles.';
-    } else {
-      statusMessage += 'RUAT: no disponible.\n';
-      statusMessage += 'Bloqueado: aprobar reservas con cobro, crear/anular tasas y consultar pagos RUAT.\n';
-      statusMessage += 'Disponible: revisar reservas y datos ya registrados.\n';
-      statusMessage += 'Si continúa, contacte al administrador o al ingeniero de sistemas.';
-    }
-    const fullMessage = `${welcomeMessage}\n${statusMessage}`;
-    this.toastService.show(fullMessage, {
-      classname: finalRuatConnected ? 'bg-success text-light' : 'bg-warning text-dark',
-      header: welcomeTitle,
-      delay: finalRuatConnected ? 18000 : 30000,
-      replaceKey: 'system-status'
-    });
-  }
 
   /**
    * Incomes By Complex Chart

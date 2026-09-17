@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-// Sweet Alert
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
@@ -79,7 +78,6 @@ export class SurfacesComponent {
     return this.contentForm.controls;
   }
 
-  // Search Data
   searchResults: any;
   searchTerm = '';
   performSearch(): void {
@@ -195,7 +193,6 @@ export class SurfacesComponent {
             this.submitted = false;
             this.closeModal();
             this.getSurfaces();
-            // this.itemsList.emit();
             this.notify('Datos Actualizados exitosamente!', 'success');
           },
           error: (error) => {
@@ -203,7 +200,7 @@ export class SurfacesComponent {
           }
       })
   }
-  // Delete Data
+  
   deleteData() {
     let uuid = this.deleteId;
     this.superficiesService.delete(uuid).subscribe({

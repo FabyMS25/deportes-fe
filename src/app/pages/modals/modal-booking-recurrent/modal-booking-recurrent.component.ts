@@ -309,7 +309,6 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // ==================== API REQUESTS ====================
   private getConfigsSystem() {
     this.systemConfigList = Object.values(this.authService.getAllConfigs() || {});
   }
@@ -335,36 +334,16 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
 
     try {
       const resp: any = await this.ruatService.checkFeePayment(reserva.numeroTasa).toPromise();
-      const persistedPayment = reserva.pagosDtoList?.find(
-        pago => pago.estadoPago === EstadoPago.PAGADO
-      ) || reserva.pagosDtoList?.[0];
-
-      if (!this.ruatService.hasBusinessResponse(resp)) {
-        if (persistedPayment) {
-          this.consultationResult = this.buildPersistedPaymentResult(resp, persistedPayment);
-          return;
-        }
+      if (!this.ruatService.hasBusinessResponse(resp) || !this.ruatService.canContinue(resp)) {
         this.consultationResult = {
-          type: resp?.status === 'NOT_FOUND' ? 'info' : 'warning',
-          text: this.ruatService.getResponseMessage(resp, 'No se encontraron pagos realizados para esta tasa.')
+          type: 'warning',
+          text: this.ruatService.getResponseMessage(resp, 'No se pudo confirmar el pago en RUAT.')
         };
         return;
       }
       const pagoTasa = this.ruatService.getResponseData(resp)?.pagoTasa;
-      if (!pagoTasa && persistedPayment) {
-        this.consultationResult = this.buildPersistedPaymentResult(resp, persistedPayment);
-        return;
-      }
-      if (!pagoTasa && !this.ruatService.canContinue(resp)) {
-        this.consultationResult = {
-          type: 'warning',
-          text: this.ruatService.getResponseMessage(resp, 'No se puede continuar con el flujo.')
-        };
-        return;
-      }
-
       if (!pagoTasa) {
-        this.consultationResult = { type: 'info', text: 'No se encontraron datos de pago.' };
+        this.consultationResult = { type: 'info', text: this.ruatService.getResponseMessage(resp, 'No se encontraron datos de pago.') };
         return;
       }
 
@@ -409,24 +388,6 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
     return new Date(year, month - 1, day, 12, 0, 0, 0);
   }
 
-  private buildPersistedPaymentResult(resp: any, pago: Pago): any {
-    return {
-      type: 'success',
-      text: `${this.ruatService.getResponseMessage(resp, 'La tasa se encuentra pagada')} - Pago verificado`,
-      pagoData: {
-        ...pago,
-        montoPago: pago.montoPagado,
-        fechaPago: this.formatPersistedPaymentDate(pago.fechaPago)
-      }
-    };
-  }
-
-  private formatPersistedPaymentDate(value: Date | string): string {
-    if (typeof value === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(value)) return value;
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'N/A';
-    return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
-  }
   private updateReservaRecurrente(data: ReservaRecurrente): Promise<ReservaRecurrente> {
     return new Promise((resolve, reject) => {
       this.reservaRecurrenteService.update(data).subscribe({
@@ -663,7 +624,6 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // ==================== UTILIDADES ====================
   isCriticalStatus(estado?: string): boolean {
     if (!estado) return false;
     const criticalStates = [
@@ -711,7 +671,6 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
     };
     return frecuencia ? (map[frecuencia] || frecuencia) : 'N/A';
   }
-  // ==================== CALENDARIO - FUNCIONES PRINCIPALES ====================
   getScheduledDates(): { date: Date; slots: string[] }[] {
     const result: { date: Date; slots: string[] }[] = [];
     const horario3D = this.row?.tableroDto?.horario;
@@ -968,112 +927,6 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
     return StatusUtils.getReservationStatusDescription(estado);
   }
   
-  // selectedItems: any[] = [];
-  // consultResults: any[] = [];
-  // async consultModal(content: any, data: any) {
-  //   if (this.selectedItems.length === 0) {
-  //     this.selectedItems.push(this.row); 
-  //   }
-  //   this.consultResults = [];
-  //   for (const item of this.selectedItems) {
-  //     this.showLoading = true;      
-  //     try {
-  //       const result = await this.consultData(codigoAlcaldia, item); 
-  //       this.consultResults.push(result);
-  //     } catch (error) {
-  //       console.error("Error during consultation:", error);
-  //       this.consultResults.push({ 
-  //         item, 
-  //         text: 'Error al realizar la consulta', 
-  //         type: 'error' 
-  //       });
-  //     } finally {
-  //       this.showLoading = false;
-  //     }
-  //   }
-    
-  //   this.modalService.open(content, { centered: true, size: 'lg' });
-  //   this.selectedItems = [];
-  //   this.emitList.emit();
-  // }
-
-  // async consultData(codigoAlcaldia: string, item: any): Promise<any> {
-  //   if (!item || !item.reservaDto?.numeroTasa) {
-  //     return { item, text: 'No se pudo obtener el dato seleccionado', type: 'warning' };
-  //   }  
-    
-  //   try {
-  //     const nroTasa = item.reservaDto.numeroTasa;
-  //     const resp: any = await this.ruatService.checkFeePayment(nroTasa).toPromise();
-
-  //     if (resp['status'] !== 'OK') {
-  //       return { item, text: "La Tasa y Otro Ingreso no tiene pagos", type: 'warning' };
-  //     }
-      
-  //     if (!resp.payload.continuarFlujo) {
-  //       return { item, text: resp.payload.observacion, type: 'warning' };
-  //     }
-
-  //     const text = resp.payload.observacion;  
-  //     if (item.reservaDto?.estadoReserva === EstadoReserva.SOLICITADA || 
-  //         item.reservaDto?.estadoReserva === EstadoReserva.PENDIENTE) {
-  //       const pagoData = resp.payload.pagoTasa;
-        
-  //       try {
-  //         const [day, month, year] = pagoData.fechaPago.split('/');
-  //         const formattedDate = `${year}-${month}-${day}`;
-          
-  //         const nuevoPago: Pago = {
-  //           numeroTasa: pagoData.numeroTasa,
-  //           tipoTasa: "TO",
-  //           folio: pagoData.folio,
-  //           formaPago: pagoData.formaPago,
-  //           fechaPago: new Date(formattedDate),
-  //           entidadFinanciera: pagoData.entidadFinanciera,
-  //           montoPagado: parseFloat(pagoData.montoPago) || 0,
-  //           observaciones: pagoData.observacion,
-  //           estadoPago: EstadoPago.PAGADO,
-  //           ultimaConsulta: new Date(),
-  //           respuestaCompletaRuat: JSON.stringify(resp),
-  //           reservaDto: item.reservaDto
-  //         };
-          
-  //         const pagoResp: any = await this.pagoService.save(nuevoPago).toPromise();
-          
-  //         if (pagoResp.status === 'OK') {
-  //           const updatedReservaRecurrente = {
-  //             ...item,
-  //             reservaDto: {
-  //               ...item.reservaDto,
-  //               estadoReserva: EstadoReserva.PAGADA
-  //             }
-  //           };
-  //           await this.updateReservaRecurrente(updatedReservaRecurrente);
-  //           return { 
-  //             item: updatedReservaRecurrente, 
-  //             text, 
-  //             type: 'success',
-  //             hasPayment: true,
-  //             pagoData: pagoResp.payload
-  //           };
-  //         }
-  //       } catch (error) {
-  //         console.error('Error saving pago:', error);
-  //         return { item, text: 'Error al guardar el pago', type: 'error', hasPayment: true };
-  //       }
-  //     }
-  //     return { 
-  //       item, 
-  //       text, 
-  //       type: 'info',
-  //       hasPayment: true,
-  //       pagoData: item.reservaDto?.pagosDtoList?.[0] || resp.payload.pagoTasa
-  //     };
-  //   } catch (error) {
-  //     console.error('Error:', error);
-  //     return { item, text: 'Error al realizar la consulta en RUAT', type: 'error', hasPayment: false };
-  //   }
-  // }
   representantesOrganizacionLabel(organizacion: any): string {
     const reps = organizacion?.representantesDto
       ?.map((item: any) => item?.contribuyenteDto?.nombreCompleto || [

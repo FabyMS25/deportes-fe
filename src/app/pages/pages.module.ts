@@ -26,7 +26,6 @@ import { ProfileComponent } from './account/profile/profile.component';
 import { SettingsComponent } from './account/settings/settings.component';
 import { PassResetComponent } from './account/password-reset/pass-reset.component';
 
-//compoments
 import { SystemConfigurationsComponent } from './modules/system-configurations/system-configurations.component';
 import { ClasificadoresRuatComponent } from './modules/clasificadores-ruat/clasificadores-ruat.component';
 import { FacilitiesComponent } from './modules/facilities/facilities.component';
@@ -50,7 +49,6 @@ import { ReservationFormComponent } from './modals/booking/reservation-form/rese
 ;
 import { TicketComponent } from './modules/reports/ticket/ticket.component';
 import { PagesRoutingModule } from './pages-routing.module';
-// import { BookingPeriodoModalComponent } from './booking-schools/modal/modal.component';
 
 @NgModule({
   declarations: [
@@ -73,14 +71,6 @@ import { PagesRoutingModule } from './pages-routing.module';
     BookingRecurrentComponent,
     BookingPeriodoComponent,
     BookingDetailsComponent,
-
-        
-    // ModalComponent,
-    //     ModalFacilitiesComponent,
-    //     ModalFieldsComponent,
-    //     ModalEmployeeComponent,
-    //     ModalScheduleComponent,
-    //     ModalTarifaComponent
   ],
   imports: [
     CommonModule,
@@ -111,8 +101,6 @@ import { PagesRoutingModule } from './pages-routing.module';
     ReservationFormComponent,
     TicketComponent,
     PagesRoutingModule,
-    
-    // BookingPeriodoModalComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

@@ -159,7 +159,6 @@ export class ClasificadoresRuatComponent {
       }
       let codigo = row['Código'];
       if (codigo !== null && codigo !== undefined) {
-        // codigo = codigo.toString().trim();
         codigo = codigo.toString().replace(/[^\d]/g, '');
       } else {
         codigo = '';
@@ -266,8 +265,6 @@ export class ClasificadoresRuatComponent {
     });
   }
 
-
-  // Delete Data
   deleteData() {
     let uuid = this.deleteId;
     this.clasificadoresService.delete(uuid).subscribe({

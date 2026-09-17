@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, CUSTOM_ELEMENTS_SCHEMA, inject } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, UntypedFormBuilder, UntypedFormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
@@ -12,6 +12,7 @@ import { EstudianteEscuelaService } from 'src/app/core/services/api/estudianteEs
 import { ModalStudentComponent } from '../modal-student/modal-student.component';
 import { CommonModule } from '@angular/common';
 import { TipoOrganizacion } from 'src/app/core/constants/Features';
+import { AuthenticationService } from 'src/app/core/services/auth.service';
 
 @Component({
   selector: 'app-modal-organization-modal',
@@ -26,6 +27,13 @@ import { TipoOrganizacion } from 'src/app/core/constants/Features';
   styleUrl: './modal-organization.component.scss'
 })
 export class ModalOrganizationComponent implements OnInit {
+  private readonly authService = inject(AuthenticationService);
+  get canRegisterStudent(): boolean {
+    if (!this.authService.hasPermission('/students').includes('CREAR')) return false;
+    if (this.authService.getUserRole() !== 'Contribuyente') return true;
+    return !!this.row?.representantesDto?.some(rep =>
+      rep.contribuyenteDto?.uuid === this.authService.currentUser()?.uuid);
+  }
   @Input() accion!: string;
   @Input() row!: Organizacion;
   @Input() contribuyentesList: Contribuyente[] = [];
@@ -55,7 +63,6 @@ export class ModalOrganizationComponent implements OnInit {
   submitted = false;
   showLoading = false;
 
-  // Updated organization types according to the enum
   tiposOrganizacion = [
     { value: TipoOrganizacion.ASOCIACION, label: 'Asociación' },
     { value: TipoOrganizacion.CLUB, label: 'Club' },
@@ -99,12 +106,10 @@ export class ModalOrganizationComponent implements OnInit {
       nroNit: ['', [Validators.maxLength(20)]],
       activo: [true],
       
-      // Escuela Municipal fields
       entrenador: [''],
       disciplina: [''],
       codigoEscuela: [''],
       
-      // Payment and reservation fields
       requierePagoMensualidad: [false],
       tarifaMensual: [0, [Validators.min(0)]],
       permiteReservasGratuitas: [false]
@@ -112,12 +117,9 @@ export class ModalOrganizationComponent implements OnInit {
   }
 
   private setupFormListeners(): void {
-    // Listen for organization type changes to show/hide fields
     this.contentForm.get('tipoOrganizacion')?.valueChanges.subscribe(tipo => {
       this.handleTipoOrganizacionChange(tipo);
     });
-
-    // Listen for payment requirement changes
     this.contentForm.get('requierePagoMensualidad')?.valueChanges.subscribe(requierePago => {
       this.handlePagoMensualidadChange(requierePago);
     });
@@ -127,29 +129,23 @@ export class ModalOrganizationComponent implements OnInit {
     const escuelaMunicipalFields = ['entrenador', 'disciplina', 'codigoEscuela'];
     const paymentFields = ['requierePagoMensualidad', 'tarifaMensual', 'permiteReservasGratuitas'];
     
-    // Reset fields when type changes
     escuelaMunicipalFields.forEach(field => {
       this.contentForm.get(field)?.setValue('');
     });
     
     if (tipo === TipoOrganizacion.ESCUELA_MUNICIPAL) {
-      // Escuela Municipal specific logic
       this.contentForm.get('requierePagoMensualidad')?.setValue(true);
       this.contentForm.get('permiteReservasGratuitas')?.setValue(true);
       
-      // Add validators for escuela municipal fields
       escuelaMunicipalFields.forEach(field => {
         this.contentForm.get(field)?.setValidators([Validators.required]);
         this.contentForm.get(field)?.updateValueAndValidity();
       });
     } else {
-      // For other types, remove required validators from escuela municipal fields
       escuelaMunicipalFields.forEach(field => {
         this.contentForm.get(field)?.clearValidators();
         this.contentForm.get(field)?.updateValueAndValidity();
       });
-      
-      // For asociacion and club, set default values
       if (tipo === TipoOrganizacion.ASOCIACION || tipo === TipoOrganizacion.CLUB) {
         this.contentForm.get('permiteReservasGratuitas')?.setValue(true);
       }
@@ -166,14 +162,10 @@ export class ModalOrganizationComponent implements OnInit {
     this.contentForm.get('tarifaMensual')?.updateValueAndValidity();
   }
 
-  /**
-   * Form data get
-   */
   get form() {
     return this.contentForm.controls;
   }
 
-  // Helper getter to check if current type is Escuela Municipal
   get isEscuelaMunicipal(): boolean {
     return this.contentForm.get('tipoOrganizacion')?.value === TipoOrganizacion.ESCUELA_MUNICIPAL;
   }
@@ -182,13 +174,11 @@ export class ModalOrganizationComponent implements OnInit {
     return this.isEscuelaMunicipal || this.row?.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL;
   }
 
-  // Helper getter to check if current type is Asociacion or Club
   get isAsociacionOrClub(): boolean {
     const tipo = this.contentForm.get('tipoOrganizacion')?.value;
     return tipo === TipoOrganizacion.ASOCIACION || tipo === TipoOrganizacion.CLUB;
   }
 
-  // Helper getter to check if requires monthly payment
   get requierePagoMensualidad(): boolean {
     return this.contentForm.get('requierePagoMensualidad')?.value;
   }
@@ -206,12 +196,10 @@ export class ModalOrganizationComponent implements OnInit {
         nroNit: this.row.nroNit || '',
         activo: this.row.activo !== undefined ? this.row.activo : true,
         
-        // Escuela Municipal fields
         entrenador: this.row.entrenador || '',
         disciplina: this.row.disciplina || '',
         codigoEscuela: this.row.codigoEscuela || '',
         
-        // Payment and reservation fields
         requierePagoMensualidad: this.row.requierePagoMensualidad || false,
         tarifaMensual: this.row.tarifaMensual || 0,
         permiteReservasGratuitas: this.row.permiteReservasGratuitas || false
@@ -233,9 +221,6 @@ export class ModalOrganizationComponent implements OnInit {
     return c1.numeroDocumento === c2.numeroDocumento;
   }
 
-  /**
-   * Save organization
-   */
   saveData() {
     this.submitted = true;
     if (this.contentForm.valid) {
@@ -258,12 +243,10 @@ export class ModalOrganizationComponent implements OnInit {
         nroNit: formData.nroNit?.trim() || undefined,
         activo: formData.activo,
         
-        // Escuela Municipal fields
         entrenador: formData.entrenador?.trim() || undefined,
         disciplina: formData.disciplina?.trim() || undefined,
         codigoEscuela: formData.codigoEscuela?.trim() || undefined,
         
-        // Payment and reservation fields
         requierePagoMensualidad: formData.requierePagoMensualidad,
         tarifaMensual: formData.requierePagoMensualidad ? formData.tarifaMensual : undefined,
         permiteReservasGratuitas: formData.permiteReservasGratuitas,
@@ -350,7 +333,7 @@ export class ModalOrganizationComponent implements OnInit {
   }
 
   abrirInscripcionEstudiante(): void {
-    if (!this.row?.uuid) return;
+    if (!this.row?.uuid || !this.canRegisterStudent) return;
     const modalRef = this.modalService.open(ModalStudentComponent, {
       backdrop: 'static',
       size: 'lg'

@@ -6,7 +6,6 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
     "ionic:build": "npm run build",
     "ionic:serve": "npm run start"
   },
@@ -55,7 +54,6 @@
     "@popperjs/core": "^2.11.8",
     "@stomp/stompjs": "^7.3.0",
     "@types/google.maps": "^3.54.9",
-    "@types/jasmine": "^5.1.4",
     "@types/leaflet.markercluster": "^1.5.6",
     "@types/prismjs": "^1.26.3",
     "@types/react": "^18.3.3",
@@ -79,11 +77,7 @@
     "flatpickr": "^4.6.13",
     "fuzzy-search": "^3.2.1",
     "intersection-observer": "^0.12.2",
-    "jasmine-core": "^5.1.1",
     "jquery": "^3.7.1",
-    "karma": "^6.4.2",
-    "karma-chrome-launcher": "^3.2.0",
-    "karma-coverage": "^2.2.1",
     "leaflet": "^1.9.4",
     "leaflet-filelayer": "^1.2.0",
     "leaflet-fullscreen": "^1.0.2",
@@ -140,8 +134,6 @@
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.10.0",
     "@types/quill": "^2.0.14",
-    "karma-jasmine": "^5.1.0",
-    "karma-jasmine-html-reporter": "^2.1.0",
     "typescript": "^5.4.5"
   },
   "browserslist": [

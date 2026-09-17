@@ -124,12 +124,15 @@
         </div>
         <div class="col-md-6">
           <label class="form-label">Tutor / responsable <span class="text-muted">(opcional)</span></label>
-          <ng-select formControlName="contribuyenteUuid" [items]="tutoresDisponibles" bindValue="uuid"
+          <ng-select *ngIf="!tutorFijado; else tutorFijo" formControlName="contribuyenteUuid" [items]="tutoresDisponibles" bindValue="uuid"
             [searchable]="true" [clearable]="true" placeholder="Sin tutor asignado">
             <ng-template ng-label-tmp let-item="item">{{ tutorLabel(item) }}</ng-template>
             <ng-template ng-option-tmp let-item="item">{{ tutorLabel(item) }}</ng-template>
           </ng-select>
-          <small class="text-muted">Al seleccionar una escuela, se muestran sus representantes disponibles.</small>
+          <ng-template #tutorFijo>
+            <div class="form-control bg-light">{{ tutorLabel(tutoresDisponibles[0]) }}</div>
+          </ng-template>
+          <small class="text-muted" *ngIf="!tutorFijado">Puede asignar cualquier contribuyente como tutor o responsable, aunque no represente a la escuela.</small>
         </div>
         <div class="col-md-6">
           <label class="form-label">Fecha de registro <span class="text-danger">*</span></label>
@@ -187,7 +190,7 @@
     <button type="button" class="btn btn-outline-primary" *ngIf="accion === 'show'" (click)="enableEdit()">
       <i class="ri-edit-line me-1"></i>Actualizar
     </button>
-    <button type="button" class="btn btn-outline-primary" *ngIf="accion === 'edit'" [disabled]="showLoading" (click)="registrarOtraRelacion()">
+    <button type="button" class="btn btn-outline-primary" *ngIf="accion === 'edit' && canCreateStudent" [disabled]="showLoading" (click)="registrarOtraRelacion()">
       <i class="ri-add-line me-1"></i>Registrar en otra escuela
     </button>
     <button type="submit" class="btn btn-primary" *ngIf="accion !== 'show'" [disabled]="showLoading">

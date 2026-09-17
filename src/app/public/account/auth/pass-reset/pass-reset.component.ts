@@ -38,9 +38,7 @@ export class PassResetComponent implements OnInit {
   
   generateToken(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
-  }
-    // return bin2hex(random_bytes($length));
-  
+  }  
     
    onSubmit() {
     this.submitted = true;
@@ -54,22 +52,16 @@ export class PassResetComponent implements OnInit {
           this.notify(error.error.message, 'error');
         }
       );
-
-      // this.sendEmail(this.passresetForm.value.email,'')
     }
   }
 
   sendEmail(email:string, token:string){
-    const reply_to = email;  
-    // const to_name = name;    
-    // const token = this.generateToken();
-    //storeToken($email, $token);
+    const reply_to = email;
     const resetLink = this.link+"?token="+token;
     
     emailjs.send("service_auth","template_m93u8sa",{
         from_name: "GAMQ-DEPORTES",
         to_name: email,
-        // message: "Un cambio de contraseña fue solicitado para el email: " + codigo,
         message: resetLink,
         reply_to: reply_to,
       },'X9362U1QpUzthcHGT')

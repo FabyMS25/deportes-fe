@@ -190,9 +190,6 @@ export class BookingRecurrentComponent implements OnInit {
     } else {
       this.userData = currentUser.designacion.personaDto;
     }
-    if (!this.authService.isRuatAuthenticated()) {
-      await this.delay(1000);
-    }    
     await this.getRecurrentReservations();
     await this.getCategories();
     this.refreshTimer = setInterval(() => this.getRecurrentReservations(), 5 * 60 * 1000);
@@ -277,44 +274,12 @@ export class BookingRecurrentComponent implements OnInit {
       this.applyFilters();
   }
 
-  private isRuatConnectionError(payload: any): boolean {
-    const rawPayload = typeof payload === 'string'
-      ? payload
-      : JSON.stringify(payload || '');
-    return [
-      'Connection timed out',
-      'ConnectException',
-      'I/O error',
-      'Read timed out',
-      'SocketTimeoutException',
-      '503',
-      '502',
-      '504',
-      'Service Unavailable'
-    ].some(term => rawPayload.includes(term));
-  }
   private parseRuatPaymentDate(fechaPago: string): Date | null {
     if (!fechaPago || !/^\d{2}\/\d{2}\/\d{4}$/.test(fechaPago)) {
       return null;
     }
     const [day, month, year] = fechaPago.split('/').map(Number);
     return new Date(year, month - 1, day, 12, 0, 0, 0);
-  }
-  private extractRuatBusinessPayload(payload: any): any | null {
-    if (!payload) return null;
-    if (typeof payload === 'object') {
-      return payload;
-    }
-    if (typeof payload !== 'string') {
-      return null;
-    }
-    try {
-      const jsonMatch = payload.match(/\{.*\}/s);
-      if (!jsonMatch) return null;
-      return JSON.parse(jsonMatch[0]);
-    } catch {
-      return null;
-    }
   }
 
   /* NAVIGATIONS & MODALS */
@@ -507,22 +472,6 @@ export class BookingRecurrentComponent implements OnInit {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
-    // // Parse fechaInicio
-    // if (reserva.fechaInicio instanceof Date) {
-    //   startDate = new Date(reserva.fechaInicio);
-    // } else {
-    //   const fechaInicioStr = String(reserva.fechaInicio);
-    //   const [startYear, startMonth, startDay] = fechaInicioStr.split('-').map(Number);
-    //   startDate = new Date(startYear, startMonth - 1, startDay);
-    // }
-    // // Parse fechaFin
-    // if (reserva.fechaFin instanceof Date) {
-    //   endDate = new Date(reserva.fechaFin);
-    // } else {
-    //   const fechaFinStr = String(reserva.fechaFin);
-    //   const [endYear, endMonth, endDay] = fechaFinStr.split('-').map(Number);
-    //   endDate = new Date(endYear, endMonth - 1, endDay);
-    // }
     const startDate = new Date(reserva.fechaInicio);
     startDate.setHours(0, 0, 0, 0);
     const endDate = new Date(reserva.fechaFin);
@@ -533,22 +482,6 @@ export class BookingRecurrentComponent implements OnInit {
     const dayNames = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     const todayDayName = dayNames[now.getDay()];    
     return reservedDays.includes(todayDayName);
-    // Check if ALL sessions for today have ended
-    // const allSessionsCompleted = todaysSessions.every(session => 
-    //   currentDate > session.endTime
-    // );
-    // if (!allSessionsCompleted && todaysSessions.length > 1) {
-    //   const sortedSessions = todaysSessions.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
-    //   const currentTime = new Date();
-    //   for (let i = 0; i < sortedSessions.length - 1; i++) {
-    //     const currentSession = sortedSessions[i];
-    //     const nextSession = sortedSessions[i + 1];
-    //     if (currentTime > currentSession.endTime && currentTime < nextSession.startTime) {
-    //       return true;
-    //     }
-    //   }
-    // }    
-    // return allSessionsCompleted;
   } 
   private isPeriodCompleted(reserva: ReservaRecurrente): boolean {
     const now = new Date();
@@ -556,13 +489,6 @@ export class BookingRecurrentComponent implements OnInit {
     const endDate = new Date(reserva.fechaFin);
     endDate.setHours(23, 59, 59, 999);
     return today > endDate;
-    // if (reserva.fechaFin instanceof Date) {
-    //   endDate = new Date(reserva.fechaFin);
-    // } else {
-    //   const fechaFinStr = String(reserva.fechaFin);
-    //   const [year, month, day] = fechaFinStr.split('-').map(Number);
-    //   endDate = new Date(year, month - 1, day);
-    // }
   } 
   private isPeriodExpired(reserva: ReservaRecurrente): boolean {
     if(!reserva.reservaDto) return false;
@@ -690,7 +616,7 @@ export class BookingRecurrentComponent implements OnInit {
 
         return {
           item,
-          text: `${text} - Pago verificado`,
+          text,
           type: 'success',
           pagoData: pagoTasa,
           hasPayment: true,
@@ -711,7 +637,7 @@ export class BookingRecurrentComponent implements OnInit {
     } catch (error) {
       return {
         item,
-        text: 'Error al realizar la consulta al RUAT',
+        text: this.ruatService.getResponseMessage(error, 'Error al realizar la consulta al RUAT'),
         type: 'error',
         hasPayment: false,
         consultationSuccessful: false,
@@ -787,7 +713,6 @@ export class BookingRecurrentComponent implements OnInit {
       } else if (Array.isArray(data)) {
         list = data;
       }
-      // Ownership and counts are scoped by the server before pagination.
       const updatedList = await this.checkAndUpdateReservationsStatuses(list);
       if (requestVersion !== this.listRequestVersion) return;
       this.notifyAboutExpiredReservations(list, updatedList);

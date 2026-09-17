@@ -50,7 +50,6 @@ export interface TableActions {
   consult?:boolean;
   validate?:boolean;
   records?: boolean;
-  // [key: string]: boolean | undefined;
 }
 export interface PaginationInfo {
   pageNumber: number;

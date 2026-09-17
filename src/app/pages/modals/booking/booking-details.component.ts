@@ -84,7 +84,6 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
   canActivate: string[] = [];
   isLoading = false;
-  isRuatAuthenticated = false;
   reservationsList: Reserva[] = [];
   complejosList: ComplejoDeportivo[] = [];
 

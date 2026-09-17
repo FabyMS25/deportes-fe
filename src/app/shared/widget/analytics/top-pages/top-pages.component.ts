@@ -6,12 +6,8 @@ import { Component, OnInit, Input } from '@angular/core';
   styleUrls: ['./top-pages.component.scss']
 })
 
-/**
- * Top Pages Component
- */
 export class TopPagesComponent implements OnInit {
 
-  // Top Selling data
   @Input() List: Array<{
     complexName?: string;
     total?: string;

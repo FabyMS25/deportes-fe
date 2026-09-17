@@ -1,11 +1,8 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-// Load Icons
 import { defineElement } from "@lordicon/element";
 import lottie from 'lottie-web';
 
-// Component
 import { Error404RoutingModule } from "./errors-routing.module";
 import { BasicComponent } from './basic/basic.component';
 import { CoverComponent } from './cover/cover.component';

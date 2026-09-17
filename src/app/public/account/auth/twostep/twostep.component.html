@@ -18,7 +18,7 @@
                                 <img src="assets/icons/logos/LOGO-COMPUESTO-LARGO.png " alt="" height="90">
                             </a>
                         </div>
-                        <p class="mt-2 fs-15 fw-medium">Sistema de Reserva de Canchas Deportivas de GAMQ</p>
+                        <p class="mt-2 fs-15 fw-medium">{{ 'LOGIN_UI.BRAND' | translate }}</p>
                     </div>
                 </div>
             </div>
@@ -38,8 +38,8 @@
   
                             <div class="p-2 mt-4">
                                 <div class="text-muted text-center mb-4 mx-lg-3">
-                                    <h4 class="">Verifica tu Email</h4>
-                                    <p>Por favor ingresa los 4 digitos enviados a 
+                                    <h4 class="">{{ 'TWO_STEP.TITLE' | translate }}</h4>
+                                    <p>{{ 'TWO_STEP.PROMPT' | translate }}
                                         <span class="fw-semibold">{{userData.correo}}</span>
                                     </p>
                                 </div>
@@ -51,15 +51,15 @@
                                 </form>
                                 
                                 <div class="mt-3">
-                                    <button type="button" class="btn btn-secondary w-100" (click)="confirmar()">Confirmar</button>
+                                    <button type="button" class="btn btn-secondary w-100" (click)="confirmar()">{{ 'TWO_STEP.CONFIRM' | translate }}</button>
                                 </div>
                             </div>
                         </div>
                     </div>
   
                     <div class="mt-4 text-center">
-                        <p class="mb-0">No recibiste el codigo ? <a (click)="resendEmail()" class="fw-semibold text-primary text-decoration-underline">Reenviar</a> </p>
-                        <p class="mb-0"> o <a routerLink="/auth/signup" class="fw-semibold text-primary text-decoration-underline">Volver a Registro</a> </p>
+                        <p class="mb-0">{{ 'TWO_STEP.CODE_NOT_RECEIVED' | translate }} <a (click)="resendEmail()" class="fw-semibold text-primary text-decoration-underline">{{ 'TWO_STEP.RESEND' | translate }}</a></p>
+                        <p class="mb-0">{{ 'TWO_STEP.OR' | translate }} <a routerLink="/auth/signup" class="fw-semibold text-primary text-decoration-underline">{{ 'TWO_STEP.BACK_TO_SIGNUP' | translate }}</a></p>
                     </div>
   
                 </div>

@@ -6,12 +6,8 @@ import { Component, OnInit, Input } from '@angular/core';
   styleUrls: ['./closing-deals.component.scss']
 })
 
-/**
- * Closing Deals Component
- */
 export class ClosingDealsComponent implements OnInit {
 
-  // Closing Deals
   @Input() ClosingDeals: Array<{
     name?: string;
     profile?: string;

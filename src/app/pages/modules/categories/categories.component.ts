@@ -1,8 +1,6 @@
 import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NgbModal} from '@ng-bootstrap/ng-bootstrap';
-
-// Sweet Alert
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
@@ -112,7 +110,6 @@ export class CategoriesComponent {
     });
   }
 
-  // Search Data
   performSearch(): void {
     const normalize = (value: unknown) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
     const term = normalize(this.searchTerm);
@@ -121,8 +118,7 @@ export class CategoriesComponent {
   }
 
   /**
-   * Open modal
-   * @param content modal content
+   * modals
    */
   accion='';
   openModal(data: any, content: any, accion: string) {
@@ -133,7 +129,6 @@ export class CategoriesComponent {
         this.contentForm.disable()
       }
     } else {
-      // Reset form for new entry
       this.contentForm.patchValue({
         activo: true,
         forAsociacion: false
@@ -209,10 +204,6 @@ export class CategoriesComponent {
     });
   }
 
-  // Csv File Export
-  /**
-   * Delete model
-   */
   deleteId!: string;
   deleteModal(content: any, data: any) {
     this.deleteId = data.uuid;
@@ -287,7 +278,6 @@ export class CategoriesComponent {
     })
   }
 
-  // Delete Data
   deleteData() {
     let uuid = this.deleteId;
     this.categoriesService.delete(uuid).subscribe({

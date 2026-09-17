@@ -158,7 +158,6 @@ export class ModalTaxpayerComponent implements OnInit {
 
   private originalEmail = '';
 
-  // Arrow function so `this.today` is always in scope when used as a validator
   private futureDateValidator = (control: AbstractControl): ValidationErrors | null => {
     if (!control.value) return null;
     return control.value >= this.today ? null : { pastDate: true };
@@ -190,13 +189,6 @@ export class ModalTaxpayerComponent implements OnInit {
     }
   }
 
-  // ─── Date Utilities ───────────────────────────────────────────────────────
-
-  /**
-   * Converts any date value (ISO string, Date, undefined) into the YYYY-MM-DD
-   * format expected by <input type="date">. Uses UTC parts to prevent timezone
-   * shifts from moving the date one day backward.
-   */
   private toDateInputValue(dateStr: string | Date | undefined | null): string {
     if (!dateStr) return '';
     const d = new Date(dateStr as string);
@@ -207,13 +199,11 @@ export class ModalTaxpayerComponent implements OnInit {
     return `${y}-${m}-${day}`;
   }
 
-  /** Converts YYYY-MM-DD → ISO UTC midnight for the backend. */
   private formatDateForBackend(dateString: string): string | null {
     if (!dateString) return null;
     return `${dateString}T00:00:00.000Z`;
   }
 
-  /** Converts YYYY-MM-DD → DD/MM/YYYY for the RUAT API. */
   private formatDateForRuat(dateString: string): string {
     if (!dateString) return '';
     const d = new Date(dateString);
@@ -224,7 +214,6 @@ export class ModalTaxpayerComponent implements OnInit {
     ].join('/');
   }
 
-  /** Escapes HTML characters to prevent XSS in Swal HTML blocks. */
   private escapeHtml(text: string): string {
     return (text || '')
       .replace(/&/g, '&amp;')
@@ -234,8 +223,6 @@ export class ModalTaxpayerComponent implements OnInit {
       .replace(/'/g, '&#039;');
   }
 
-  // ─── Form Initialization ──────────────────────────────────────────────────
-
   private initForms(): void {
     this.searchRuatForm = this.formBuilder.group({
       tipoDocumento: ['CI', [Validators.required]],
@@ -243,8 +230,6 @@ export class ModalTaxpayerComponent implements OnInit {
       expedido: ['', [Validators.required]],
     });
 
-    // Async-validator controls use updateOn:'blur' so the duplicate-check fires
-    // only when the user leaves the field, not on every keystroke.
     const numeroDocumentoControl = this.formBuilder.control('', {
       validators: [Validators.required, Validators.maxLength(20)],
       asyncValidators: [this.identityNumberValidator.bind(this)],
@@ -307,7 +292,6 @@ export class ModalTaxpayerComponent implements OnInit {
       { validator: MustMatch('password', 'cpassword') }
     );
 
-    // Reactively toggle registroUnicoDeportivo requirement
     this.editForm.get('esDeportistaElite')?.valueChanges.subscribe((value) => {
       if (this.accion === 'show') return;
       const registroControl = this.editForm.get('registroUnicoDeportivo');
@@ -380,12 +364,9 @@ export class ModalTaxpayerComponent implements OnInit {
     });
   }
 
-  // ─── Form Data Population ─────────────────────────────────────────────────
-
   private formDataSet(): void {
     if (this.accion !== '' && this.row) {
       this.originalEmail = (this.row.email || '').toLowerCase().trim();
-      // Existing email is already verified
       this.emailVerified = true;
 
       this.editForm.patchValue({
@@ -418,14 +399,11 @@ export class ModalTaxpayerComponent implements OnInit {
         observacionesMunicipales: this.row.observacionesMunicipales,
       });
 
-      // Existing credentials are backend-only. An edit without a new password
-      // must preserve the stored credential instead of exposing or replacing it.
       this.editForm.get('password')?.clearValidators();
       this.editForm.get('cpassword')?.clearValidators();
       this.editForm.get('password')?.updateValueAndValidity({ emitEvent: false });
       this.editForm.get('cpassword')?.updateValueAndValidity({ emitEvent: false });
 
-      // Normalise child dates so date inputs display correctly
       if (this.row.estudianteEnEscuelas?.length) {
         this.estudiantesTemporales = this.row.estudianteEnEscuelas.map((est) => ({
           ...est,
@@ -454,8 +432,6 @@ export class ModalTaxpayerComponent implements OnInit {
     }
   }
 
-  // ─── Email Verification Watchers ──────────────────────────────────────────
-
   private initEmailChangeWatcher(): void {
     this.editForm.get('email')?.valueChanges.subscribe((value) => {
       if (this.accion === 'show') return;
@@ -469,7 +445,6 @@ export class ModalTaxpayerComponent implements OnInit {
           this.showVerificationCode = false;
           ctrl?.setErrors({ ...(ctrl.errors || {}), emailNotVerified: true });
         } else {
-          // User typed back the original email — it's already verified
           this.emailVerified = true;
           const errors = { ...(ctrl?.errors || {}) };
           delete errors['emailNotVerified'];
@@ -494,21 +469,15 @@ export class ModalTaxpayerComponent implements OnInit {
     return this.showVerificationCode && (this.accion === '' || this.accion === 'edit');
   }
 
-  // ─── Tab Navigation ───────────────────────────────────────────────────────
-
   setActiveTab(tab: 'basic' | 'estudiantes' | 'organizaciones' | 'deportivo'): void {
     this.activeTab = tab;
   }
-
-  // ─── puedeReservarGratis helper ───────────────────────────────────────────
 
   private updatePuedeReservarGratis(): void {
     const esElite = this.editForm.get('esDeportistaElite')?.value;
     const tieneOrgGratis = this.organizacionesTemporales.some((o) => o.permiteReservarGratis);
     this.editForm.patchValue({ puedeReservarGratis: esElite || tieneOrgGratis });
   }
-
-  // ─── Estudiantes CRUD ─────────────────────────────────────────────────────
 
   toggleEstudianteForm(): void {
     this.showEstudianteForm = !this.showEstudianteForm;
@@ -546,9 +515,6 @@ export class ModalTaxpayerComponent implements OnInit {
       data.contribuyenteDto = { uuid: contribuyenteUuid } as Contribuyente;
     }
 
-    // Existing contributors + persisted schools can save the enrollment now.
-    // A new contributor/school must remain staged until the parent save creates
-    // those foreign-key records.
     const escuelaPersistida = !!data.organizacionUuid &&
       this.organizationsList.some(org => org.uuid === data.organizacionUuid);
     const guardarAhora = !!contribuyenteUuid && escuelaPersistida;
@@ -665,8 +631,6 @@ export class ModalTaxpayerComponent implements OnInit {
     });
   }
 
-  // ─── Organizaciones CRUD ──────────────────────────────────────────────────
-
   toggleOrganizacionForm(): void {
     this.showOrganizacionForm = !this.showOrganizacionForm;
     if (!this.showOrganizacionForm) {
@@ -724,8 +688,6 @@ export class ModalTaxpayerComponent implements OnInit {
     });
   }
 
-  // ─── Accessors ────────────────────────────────────────────────────────────
-
   get form() { return this.editForm.controls; }
   get organizacion() { return this.organizacionForm.controls; }
   get estudiante() { return this.estudianteForm.controls; }
@@ -743,8 +705,6 @@ export class ModalTaxpayerComponent implements OnInit {
     });
   }
 
-  // ─── RUAT Field Locking ───────────────────────────────────────────────────
-
   private disableRuatVerifiedFields(): void {
     ['tipoContribuyente', 'nombre', 'primerApellido', 'segundoApellido',
      'tipoDocumento', 'numeroDocumento', 'expedido'].forEach((f) =>
@@ -752,13 +712,8 @@ export class ModalTaxpayerComponent implements OnInit {
     );
   }
 
-  // ─── Save ─────────────────────────────────────────────────────────────────
-
   async saveData(): Promise<void> {
     this.submitted = true;
-
-    // getRawValue() captures disabled fields — no need to enable the form,
-    // which would otherwise permanently unlock RUAT-verified fields on validation failure.
     const formData = this.editForm.getRawValue();
 
     const userName = (formData.userName || '').trim() || (formData.numeroDocumento || '').trim();
@@ -769,7 +724,6 @@ export class ModalTaxpayerComponent implements OnInit {
       this.editForm.patchValue({ userName, password, cpassword: password });
     }
 
-    // ── Email verification ──────────────────────────────────────────────────
     if (this.accion === '' && !this.emailVerified) {
       this.notify(
         this.verificationCodeSent
@@ -786,7 +740,6 @@ export class ModalTaxpayerComponent implements OnInit {
       return;
     }
 
-    // ── Deportista Elite ────────────────────────────────────────────────────
     if (formData.esDeportistaElite && !formData.registroUnicoDeportivo) {
       this.notify('Deportista Elite requiere Registro Único Deportivo', 'error');
       this.setActiveTab('deportivo');
@@ -794,7 +747,6 @@ export class ModalTaxpayerComponent implements OnInit {
       return;
     }
 
-    // ── Wait for any pending async validators ───────────────────────────────
     await this.waitForAsyncValidation(this.editForm);
 
     if (this.editForm.invalid) {
@@ -814,13 +766,11 @@ export class ModalTaxpayerComponent implements OnInit {
       }
     }
 
-    // ── Final user status ───────────────────────────────────────────────────
     let estadoFinal = formData.estadoUsuario;
     if (this.accion === '') {
       estadoFinal = formData.verificadoRuat ? EstadoUsuario.ACTIVO : EstadoUsuario.PENDIENTE_VERIFICACION;
     }
 
-    // ── Attach back-references so backend can link FK relationships ─────────
     const contribuyenteUuid = formData.uuid;
     const contribuyenteRef = contribuyenteUuid
       ? ({ uuid: contribuyenteUuid } as Contribuyente)
@@ -862,7 +812,6 @@ export class ModalTaxpayerComponent implements OnInit {
       estaSancionado: this.row?.estaSancionado || false,
       fechaFinSancion: this.row?.fechaFinSancion,
       motivoSancion: this.row?.motivoSancion,
-      // Always send arrays (even empty) so the backend can clear removed records
       estudianteEnEscuelas: estudiantesPreparados,
       organizacionesRepresentadas: organizacionesPreparadas.filter(o => this.isNewOrganization(o)),
       organizacionesVinculadas: this.organizacionesVinculadas,
@@ -926,8 +875,6 @@ export class ModalTaxpayerComponent implements OnInit {
       msg += `\n${this.organizacionesTemporales.length} organización(es) guardada(s)`;
     return msg;
   }
-
-  // ─── RUAT Integration ─────────────────────────────────────────────────────
 
   private async registerTaxpayerInRuat(datos: Contribuyente): Promise<any> {
     const ruatData = {
@@ -1057,8 +1004,6 @@ export class ModalTaxpayerComponent implements OnInit {
     }
   }
 
-  // ─── Email Verification ───────────────────────────────────────────────────
-
   async sendVerificationEmail(): Promise<void> {
     const emailCtrl = this.editForm.get('email');
     const emailValue = emailCtrl?.value;
@@ -1071,7 +1016,6 @@ export class ModalTaxpayerComponent implements OnInit {
       this.notify('El formato del email no es válido', 'warning');
       return;
     }
-    // Ensure async emailTaken check has settled before sending
     await this.waitForAsyncValidation(this.editForm);
     if (emailCtrl?.hasError('emailTaken')) {
       this.notify('Este email ya está registrado por otro contribuyente', 'warning');
@@ -1114,8 +1058,6 @@ export class ModalTaxpayerComponent implements OnInit {
       this.verificationForm.patchValue({ code: '' });
     }
   }
-
-  // ─── Sanctions ────────────────────────────────────────────────────────────
 
   async applySanction(): Promise<void> {
     this.submitted = true;
@@ -1205,8 +1147,6 @@ export class ModalTaxpayerComponent implements OnInit {
     }
   }
 
-  // ─── Block / Unblock ──────────────────────────────────────────────────────
-
   async blockUser(): Promise<void> {
     await this.updateData(
       { ...this.row, estadoUsuario: EstadoUsuario.BLOQUEADO, fechaActualizacion: new Date() },
@@ -1243,8 +1183,6 @@ export class ModalTaxpayerComponent implements OnInit {
       'Contribuyente activado'
     );
   }
-
-  // ─── API Calls ────────────────────────────────────────────────────────────
 
   private getOrganizations(): void {
     this.organizationService.getAll().subscribe({
@@ -1332,8 +1270,6 @@ export class ModalTaxpayerComponent implements OnInit {
     });
   }
 
-  // ─── Email Sending ────────────────────────────────────────────────────────
-
   private sendCredentialsEmail(userData: any, username: string, password: string): Promise<void> {
     return emailjs
       .send(
@@ -1361,8 +1297,6 @@ export class ModalTaxpayerComponent implements OnInit {
   generateCode(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
   }
-
-  // ─── Validators ───────────────────────────────────────────────────────────
 
   identityNumberValidator(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
     return new Promise((resolve) => {
@@ -1396,8 +1330,6 @@ export class ModalTaxpayerComponent implements OnInit {
     if (value !== lower) control.setValue(lower, { emitEvent: false });
     return null;
   }
-
-  // ─── Private Helpers ──────────────────────────────────────────────────────
 
   private markAllFieldsAsTouched(form: UntypedFormGroup): void {
     Object.keys(form.controls).forEach((key) => form.get(key)?.markAsTouched());
@@ -1520,8 +1452,6 @@ export class ModalTaxpayerComponent implements OnInit {
     return this.cityAcronym.find((i) => i.value === value)?.id.toString() ?? '3';
   }
 
-  // ─── Display Helpers ──────────────────────────────────────────────────────
-
   getTipoOrganizacionLabel(tipo: string): string {
     const labels: Record<string, string> = {
       [TipoOrganizacion.ASOCIACION]: 'Asociación',
@@ -1596,8 +1526,6 @@ export class ModalTaxpayerComponent implements OnInit {
   togglePasswordField(): void { this.passwordField = !this.passwordField; }
   toggleConfirmField(): void { this.confirmField = !this.confirmField; }
 
-  // ─── Modal Close ──────────────────────────────────────────────────────────
-
   public closeModal(): void {
     this.editForm.enable();
     this.editForm.reset();
@@ -1619,8 +1547,6 @@ export class ModalTaxpayerComponent implements OnInit {
     this.activeTab = 'basic';
     this.originalEmail = '';
   }
-
-  // ─── Notify ───────────────────────────────────────────────────────────────
 
   private isNewOrganization(org: any): boolean {
     return !org?.uuid || !this.organizationsList.some(existing => existing.uuid === org.uuid);

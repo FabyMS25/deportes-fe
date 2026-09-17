@@ -30,21 +30,5 @@ export class PagoService {
   update(data: any): Observable<any> {
     return apiPut<any>(this.http, this.apiUrl, data, 'actualizar pago');
   }
-  
-
-  // showReport(uuid:string): Observable<any>{
-  //   return this.http.get<any>(`${this.apiUrl}/nota-solicitud-reclamo?rUuid=${uuid}`,{
-  //           responseType: 'arraybuffer' as 'json'
-  //   });
-  // }
-  // getTotal(uuid:string):Observable<any>{
-  //   return this.http.get<any>(`${this.apiUrl}/total-porunidad?uuidunidad=${uuid}`);
-  // }
-  // getTotalByState(uuid:string,estado:number):Observable<any>{
-  //   return this.http.get<any>(`${this.apiUrl}/cantidad-porestado?uuidunidad=${uuid}&estadoreclamo=${estado}`);
-  // }
-  // getTotalAtendidos(uuid:string):Observable<any>{
-  //   return this.http.get<any>(`${this.apiUrl}/cantidad-atendidos?uuidunidad=${uuid}`);
-  // }
 
 }

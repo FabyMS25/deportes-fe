@@ -7,7 +7,7 @@
         [loadExportItems]="loadExportItems"
         [csvColumns]="CSV_COLUMNS"
         [SelectedItems]="selectedItems"
-        [newShow]="canActivate.includes('CREAR')"
+        [newShow]="canCreateMonthlyPayment"
         [consultShow]="false"
         [exportShow]="canActivate.includes('VER')"
         (createEmitter)="createNewMonthlyPayment()"
@@ -149,7 +149,7 @@
             <app-data-table
                 [loading]="loading"
                 [itemsList]="itemsList"
-                [allcontent]="reservasList.content"
+                [allcontent]="reservasList"
                 [serverSidePagination]="true"
                 [paginationInfo]="{
                     pageNumber: currentPage - 1,

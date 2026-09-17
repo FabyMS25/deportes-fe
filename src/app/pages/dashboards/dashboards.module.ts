@@ -9,21 +9,15 @@ import {
 import { NgbPaginationModule, NgbDropdownModule, NgbNavModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
-// Feather Icon
 import { FeatherModule } from 'angular-feather';
 import { allIcons } from 'angular-feather/icons';
 import { CountUpModule } from 'ngx-countup';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
-// Apex Chart Package
 import { NgApexchartsModule } from 'ng-apexcharts';
 
-
-//Module
 import { SharedModule } from '../../shared/shared.module';
 import { WidgetModule } from '../../shared/widget/widget.module';
 
-
-// Component
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { CalendarDashboardComponent } from './calendar/calendar-dashboard.component';
 import { MapDashboardComponent } from './map/map-dashboard.component';
@@ -65,7 +59,6 @@ import { DashboardsRoutingModule } from './dashboards-routing.module';
     NgbCollapseModule,
     NgPipesModule,
     DashboardsRoutingModule,
-    // JobsModule,
   ]
 })
 export class DashboardsModule { }

@@ -16,14 +16,12 @@ import Swal from 'sweetalert2';
 export class PassCreateComponent implements OnInit {
 
   token: string | null = null;
-   // Login Form
    passresetForm!: UntypedFormGroup;
    submitted = false;
    passwordField!: boolean;
    confirmField!: boolean;
    error = '';
    returnUrl!: string;
-   // set the current year
    year: number = new Date().getFullYear();
  
    constructor(
@@ -60,28 +58,23 @@ export class PassCreateComponent implements OnInit {
         this.router.navigate(['/public/404-basic']);
       } 
 
-      // Password Validation set
       var myInput = document.getElementById("password-input") as HTMLInputElement;
       var letter = document.getElementById("pass-lower");
       var capital = document.getElementById("pass-upper");
       var number = document.getElementById("pass-number");
       var length = document.getElementById("pass-length");
 
-      // When the user clicks on the password field, show the message box
       myInput.onfocus = function () {
         let input = document.getElementById("password-contain") as HTMLElement;
         input.style.display = "block"
       };
 
-      // When the user clicks outside of the password field, hide the password-contain box
       myInput.onblur = function () {
         let input = document.getElementById("password-contain") as HTMLElement;
         input.style.display = "none"
       };
 
-      // When the user starts to type something inside the password field
       myInput.onkeyup = function () {
-        // Validate lowercase letters
         var lowerCaseLetters = /[a-z]/g;
         if (myInput.value.match(lowerCaseLetters)) {
             letter?.classList.remove("invalid");
@@ -91,7 +84,6 @@ export class PassCreateComponent implements OnInit {
             letter?.classList.add("invalid");
         }
 
-        // Validate capital letters
         var upperCaseLetters = /[A-Z]/g;
         if (myInput.value.match(upperCaseLetters)) {
             capital?.classList.remove("invalid");
@@ -101,7 +93,6 @@ export class PassCreateComponent implements OnInit {
             capital?.classList.add("invalid");
         }
 
-        // Validate numbers
         var numbers = /[0-9]/g;
         if (myInput.value.match(numbers)) {
             number?.classList.remove("invalid");
@@ -111,7 +102,6 @@ export class PassCreateComponent implements OnInit {
             number?.classList.add("invalid");
         }
 
-        // Validate length
         if (myInput.value.length >= 8) {
             length?.classList.remove("invalid");
             length?.classList.add("valid");

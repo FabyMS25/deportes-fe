@@ -664,16 +664,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     }
     return slot.isAvailable;
   }
-  // canSelectSlot(slot: TimeSlot): boolean {
-  //   return (
-  //     slot.isAvailable &&
-  //     !slot.isReserved &&
-  //     !slot.isPast &&
-  //     slot.isWithinTariffTime &&
-  //     !slot.tariffConflict &&
-  //     !slot.isPartiallyReserved
-  //   );
-  // }
+  
   toggleSlotSelection(slot: TimeSlot): void {
     if (!this.canSelectSlot(slot)) {
       this.validationErrors = [
@@ -1077,7 +1068,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     }
   }
   getTimeSlotsForDay(date: Date): DaySlots {
-    const step = Math.max(1, this.minDuration ?? 1) * 60; // Ensure step is never 0
+    const step = Math.max(1, this.minDuration ?? 1) * 60; 
     const dateKey = `${this.toLocalDateString(date)}-${step}-${this.dataTariff?.uuid || 'no-tariff'}`;
     if (this.timeSlotsCache.has(dateKey)) {
       return this.timeSlotsCache.get(dateKey)!;
@@ -1097,18 +1088,15 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       daySchedule: daySchedule,
       exceptions: exceptions
     };
-    // Day is closed only if explicitly closed AND no exceptions
     if (!daySchedule?.abierto && (!exceptions || exceptions.length === 0)) {
       return result;
     }
     
     const operatingPeriods = this.getOperatingPeriodsForDay(date);
     if (operatingPeriods.length === 0) {
-      // No operating periods - day is closed
       return result;
     }
     
-    // Ensure we have valid inputs before generating slots
     if (!this.dataField || !this.dataTariff) {
       return result;
     }
@@ -1391,7 +1379,6 @@ private getRecurrentRangesForDate(
   private findApplicableTariffForTime(time: string): Tarifa | undefined {
     if (!this.dataField?.tarifasDtoList) return undefined;
     
-    // If selected tariff has no time range, it applies everywhere — no conflict possible
     if (!this.dataTariff?.desde || !this.dataTariff?.hasta) {
       return this.dataTariff;
     }
@@ -1421,7 +1408,6 @@ private getRecurrentRangesForDate(
 
     const PUNCTUAL_TYPES = ['por_hora', 'por_persona', 'por_evento'];
 
-    // Only compare against other punctual tariffs that have time ranges
     const activePunctualTariffs = this.dataField.tarifasDtoList.filter(tarifa =>
       tarifa.activo &&
       tarifa.desde &&
@@ -1471,19 +1457,15 @@ private getRecurrentRangesForDate(
     const dayNames = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     const currentDayName = dayNames[dayOfWeek];
     
-    // Find schedules that apply to this day
     const applicableSchedules = allSchedules.filter(schedule => {
-      // Must be open
       if (!schedule.abierto || !schedule.horaApertura || !schedule.horaCierre) {
         return false;
       }
       
-      // Check exact day match first
       if (schedule.dia === currentDayName) {
         return true;
       }
       
-      // Then check range patterns
       if (schedule.dia === 'lunes_viernes' && dayOfWeek >= 1 && dayOfWeek <= 5) {
         return true;
       }
@@ -1499,7 +1481,6 @@ private getRecurrentRangesForDate(
       return false;
     });
     
-    // Convert to periods and merge overlapping ones
     const periods: OperatingPeriod[] = applicableSchedules
       .map(schedule => ({ 
         start: schedule.horaApertura!, 
@@ -1507,7 +1488,6 @@ private getRecurrentRangesForDate(
       }))
       .sort((a, b) => this.timeToMinutes(a.start) - this.timeToMinutes(b.start));
     
-    // Merge overlapping/adjacent periods
     const mergedPeriods: OperatingPeriod[] = [];
     let currentPeriod: OperatingPeriod | null = null;
     
@@ -1518,14 +1498,12 @@ private getRecurrentRangesForDate(
         const currentEnd = this.timeToMinutes(currentPeriod.end);
         const nextStart = this.timeToMinutes(period.start);
         
-        // If periods overlap or are adjacent, merge them
         if (nextStart <= currentEnd) {
           const nextEnd = this.timeToMinutes(period.end);
           if (nextEnd > currentEnd) {
             currentPeriod.end = period.end;
           }
         } else {
-          // Gap between periods, save current and start new
           mergedPeriods.push(currentPeriod);
           currentPeriod = { ...period };
         }

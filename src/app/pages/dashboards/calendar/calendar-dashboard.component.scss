@@ -34,14 +34,11 @@
   }
 }
 
-// FullCalendar customizations
 ::ng-deep {
-  // Calendar container
   .fc {
     font-family: inherit;
   }
 
-  // Toolbar styling
   .fc-toolbar {
     padding: 1rem 0;
     
@@ -70,7 +67,6 @@
     }
   }
 
-  // Event styling
   .fc-event {
     border-radius: 4px;
     border: none;
@@ -100,7 +96,6 @@
     }
   }
 
-  // Time grid view
   .fc-timegrid-event {
     border-radius: 4px;
     padding: 4px 6px;
@@ -116,7 +111,6 @@
     }
   }
 
-  // List view styling
   .fc-list-event {
 
     .fc-list-event-dot {
@@ -135,8 +129,6 @@
     }
   }
 
-
-  // Popover styling
   .fc-popover {
     border: none;
     border-radius: 8px;
@@ -150,7 +142,6 @@
   }
 }
 
-// Mobile events list
 .mobile-events-list {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: none;
@@ -180,7 +171,6 @@
     max-height: 600px;
     overflow-y: auto;
 
-    // Scrollbar styling
     &::-webkit-scrollbar {
       width: 6px;
     }
@@ -237,7 +227,6 @@
       }
     }
 
-    // Empty state
     .text-center {
       i {
         opacity: 0.3;
@@ -246,8 +235,6 @@
   }
 }
 
-
-// Responsive adjustments
 @media (max-width: 768px) {
   .cel-card {
     margin-left: 0;
@@ -453,7 +440,6 @@
   }
 }
 
-// Print styles
 @media print {
   .card-header .btn,
   #filterCollapse,
@@ -466,7 +452,6 @@
   }
 }
 
-// Animation for event loading
 @keyframes fadeIn {
   from {
     opacity: 0;

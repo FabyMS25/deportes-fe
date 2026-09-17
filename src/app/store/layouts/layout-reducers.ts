@@ -19,7 +19,6 @@ export interface LayoutState {
     BACKGROUND_IMAGE: string
 }
 
-// IntialState
 export const initialState: LayoutState = {
     LAYOUT: LAYOUT_TYPES.VERTICAL,
     LAYOUT_THEME: LAYOUT_THEME.MODERN,
@@ -38,7 +37,6 @@ export const initialState: LayoutState = {
 
 }
 
-// Reducer
 export const layoutReducer = createReducer(
     initialState,
     on(changelayout, (state, action) => ({ ...state, LAYOUT: action.layout })),
@@ -57,7 +55,6 @@ export const layoutReducer = createReducer(
     on(changeSidebarVisibility, (state, action) => ({ ...state, SIDEBAR_VISIBILITY: action.sidebarvisibility }))
 );
 
-// Selector
 export function reducer(state: LayoutState | undefined, action: Action) {
     return layoutReducer(state, action);
 }

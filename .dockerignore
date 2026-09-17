@@ -1,0 +1,11 @@
+node_modules
+dist
+.angular
+.git
+.agents
+.vscode
+coverage
+*.log
+*.backup
+docs
+README.md

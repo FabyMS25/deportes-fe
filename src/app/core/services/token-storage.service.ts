@@ -32,7 +32,6 @@ export class TokenStorageService {
       sessionStorage.removeItem(STORAGE_KEYS.STAFF);
     }
 
-    // Remove authenticated state persisted by older versions of the application.
     localStorage.removeItem(STORAGE_KEYS.CONFIGS);
     localStorage.removeItem(STORAGE_KEYS.MENU);
     localStorage.removeItem(STORAGE_KEYS.USER);
@@ -41,7 +40,6 @@ export class TokenStorageService {
 
   signOut(): void {
     sessionStorage.clear();
-    // Always clean legacy authenticated state. Keep only the remembered username.
     localStorage.removeItem(STORAGE_KEYS.MENU);
     localStorage.removeItem(STORAGE_KEYS.USER);
     localStorage.removeItem(STORAGE_KEYS.STAFF);

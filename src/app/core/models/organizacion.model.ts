@@ -22,14 +22,13 @@ export interface Organizacion {
   disciplina?: string;
   codigoEscuela?: string;
   
-  // Payment configuration
-  requierePagoMensualidad: boolean;
+  
+  requierePagoMensualidad: boolean;// Payment configuration
   tarifaMensual?: number;
   permiteReservasGratuitas: boolean;
 
   reservasDtoList?: Reserva[];
 
-  // Values calculated by list views; they are not persisted.
   representantesTexto?: string;
   representantesDocumentos?: string;
   representantesEmails?: string;

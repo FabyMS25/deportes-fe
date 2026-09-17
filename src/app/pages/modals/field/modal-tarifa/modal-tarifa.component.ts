@@ -41,7 +41,6 @@ export class ModalTarifaComponent implements OnInit {
   clasificadoresRuatList: ClasificadorRuat[] = [];
   categoriasList: Categoria[] = [];
 
-  // Add the same mapping and days functionality
   clasificadorTipoCobroMap: { [key: string]: string[] } = {
     'hora': ['por_hora'],
     'mensualidad': ['mensualidad', 'por_sesion'],
@@ -86,7 +85,6 @@ export class ModalTarifaComponent implements OnInit {
       this.row.tarifasDtoList.forEach((tarifa: any, index: number) => {
         const tarifaGroup = this.createTarifaFormGroup(tarifa);
         
-        // Initialize personalized days if needed
         if (tarifa.frecuencia === 'personalizado' && tarifa.sesionesIncluidas) {
           this.inicializarDiasPersonalizadosDesdeSesiones(index, Number(tarifa.sesionesIncluidas));
         }
@@ -133,7 +131,6 @@ export class ModalTarifaComponent implements OnInit {
     });
   }
 
-  // Add conditional validator
   private conditionalValidator(dependentField: string, requiredValue: string) {
     return (control: AbstractControl): ValidationErrors | null => {
       if (!control.parent) return null;      
@@ -145,7 +142,6 @@ export class ModalTarifaComponent implements OnInit {
     };
   }
 
-  // Add the same methods from main modal
   getFilteredTipoCobroOptions(tarifaIndex: number): any[] {
     const tarifaGroup = this.tarifas.at(tarifaIndex);
     const clasificador = tarifaGroup.get('clasificadorRuatDto')?.value;    
@@ -213,7 +209,6 @@ export class ModalTarifaComponent implements OnInit {
     }
   }
 
-  // Days management methods
   inicializarDiasPersonalizadosParaTarifa(tarifaIndex: number) {
     if (!this.diasPersonalizados[tarifaIndex]) {
       this.diasPersonalizados[tarifaIndex] = {
@@ -268,7 +263,6 @@ export class ModalTarifaComponent implements OnInit {
     return sesiones.toString().split('').map(Number);
   }
 
-  // Display methods
   getDisplaySesionesFromNumber(sesiones: number): string {
     if (!sesiones || sesiones === 0) {
       return '❌ Ningún día seleccionado';
@@ -308,7 +302,6 @@ export class ModalTarifaComponent implements OnInit {
     return displayParts.join(' • ');
   }
 
-  // Rest of the existing methods remain the same...
   createConceptoFormGroup(concepto: any = {}): FormGroup {
     return this.formBuilder.group({
       uuid: [concepto.uuid || null],

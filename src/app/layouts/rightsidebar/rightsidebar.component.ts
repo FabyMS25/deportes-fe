@@ -66,10 +66,6 @@ export class RightsidebarComponent implements OnInit {
 
   ngAfterViewInit() { }
 
-  /**
-   * Change the layout onclick
-   * @param layout Change the layout
-   */
   changeLayout(layout: string) {
     this.attribute = layout;
     this.store.dispatch(changelayout({ layout }));
@@ -81,8 +77,6 @@ export class RightsidebarComponent implements OnInit {
     }, 100);
   }
 
-
-  // Add Active Class
   addActive(grdSidebar: any) {
     this.grd = grdSidebar;
     document.documentElement.setAttribute('data-sidebar', grdSidebar)
@@ -90,23 +84,19 @@ export class RightsidebarComponent implements OnInit {
     document.getElementById('collapseBgGradient1')?.classList.add('active');
   }
 
-  // Remove Active Class
   removeActive() {
     this.grd = '';
     document.getElementById('collapseBgGradient1')?.classList.remove('active');
     document.getElementById('collapseBgGradient')?.classList.remove('show');
   }
 
-  // When the user clicks on the button, scroll to the top of the document
   topFunction() {
     document.body.scrollTop = 0;
     document.documentElement.scrollTop = 0;
   }
 
-  //  Filter Offcanvas Set
   openEnd(content: TemplateRef<any>) {
     this.offcanvasService.open(content, { position: 'end' });
-
     setTimeout(() => {
       this.attribute = document.documentElement.getAttribute('data-layout')
       if (this.attribute == 'vertical') {
@@ -136,7 +126,6 @@ export class RightsidebarComponent implements OnInit {
     }, 100);
   }
 
-  // Show Profile Sidebar
   showSidebarProgile(event: any) {
     if (event.target.checked == true) {
       document.documentElement.setAttribute("data-sidebar-user-show", "")
@@ -145,14 +134,12 @@ export class RightsidebarComponent implements OnInit {
     }
   }
 
-  // Theme Change
   changelayoutTheme(theme: string) {
     this.theme = theme;
     this.store.dispatch(changeTheme({ theme }));
     this.store.select(getTheme).subscribe((theme) => {
       document.documentElement.setAttribute('data-theme', theme)
     })
-
     if (theme == 'saas') {
       const layout = 'horizontal';
       this.store.dispatch(changelayout({ layout }));
@@ -181,7 +168,6 @@ export class RightsidebarComponent implements OnInit {
     }, 100);
   }
 
-  // Change Theme Color
   changeColor(themecolor: string) {
     this.themecolor = themecolor;
     this.store.dispatch(changeThemeColor({ themecolor }));
@@ -190,17 +176,14 @@ export class RightsidebarComponent implements OnInit {
     })
   }
 
-  // Mode Change
   changeLayoutMode(mode: string) {
     this.mode = mode;
     this.store.dispatch(changeMode({ mode }));
     this.store.select(getLayoutMode).subscribe((mode) => {
       document.documentElement.setAttribute('data-bs-theme', mode)
     })
-    // document.documentElement.setAttribute('data-bs-theme', mode)
   }
 
-  // Visibility Change
   changeVisibility(sidebarvisibility: string) {
     this.sidebarVisibility = sidebarvisibility;
     this.store.dispatch(changeSidebarVisibility({ sidebarvisibility }));
@@ -209,7 +192,6 @@ export class RightsidebarComponent implements OnInit {
     })
   }
 
-  // Width Change
   changeWidth(layoutWidth: string, size: string) {
     this.width = layoutWidth;
     this.store.dispatch(changeLayoutWidth({ layoutWidth }));
@@ -223,7 +205,6 @@ export class RightsidebarComponent implements OnInit {
     }, 100);
   }
 
-  // Position Change
   changePosition(layoutPosition: string) {
     this.position = layoutPosition;
     this.store.dispatch(changeLayoutPosition({ layoutPosition }));
@@ -233,7 +214,6 @@ export class RightsidebarComponent implements OnInit {
 
   }
 
-  // Topbar Change
   changeTopColor(topbarColor: string) {
     this.topbar = topbarColor;
     this.store.dispatch(changeTopbar({ topbarColor }));
@@ -242,7 +222,6 @@ export class RightsidebarComponent implements OnInit {
     })
   }
 
-  // Sidebar Size Change
   changeSidebarSize(sidebarSize: string) {
     this.size = sidebarSize;
     this.store.dispatch(changeSidebarSize({ sidebarSize }));
@@ -251,7 +230,6 @@ export class RightsidebarComponent implements OnInit {
     })
   }
 
-  // Sidebar Size Change
   changeSidebar(sidebarView: string) {
     this.sidebarView = sidebarView;
     this.store.dispatch(changeSidebarView({ sidebarView }));
@@ -260,7 +238,6 @@ export class RightsidebarComponent implements OnInit {
     })
   }
 
-  // Sidebar Color Change
   changeSidebarColor(sidebarColor: string) {
     this.sidebar = sidebarColor;
     this.store.dispatch(changeSidebarColor({ sidebarColor }));
@@ -269,7 +246,6 @@ export class RightsidebarComponent implements OnInit {
     })
   }
 
-  // Sidebar Image Change
   changeSidebarImage(sidebarImage: string) {
     this.sidebarImage = sidebarImage;
     this.store.dispatch(changeSidebarImage({ sidebarImage }));
@@ -278,7 +254,6 @@ export class RightsidebarComponent implements OnInit {
     })
   }
 
-  // Sidebar Image Change
   changeBackgroundImage(backgroundImage: string) {
     this.backgroundImage = backgroundImage;
     this.store.dispatch(changeBackgrounImage({ backgroundImage }));
@@ -287,7 +262,6 @@ export class RightsidebarComponent implements OnInit {
     })
   }
 
-  // PreLoader Image Change
   changeLoader(Preloader: string) {
     this.preLoader = Preloader;
     this.store.dispatch(changeDataPreloader({ Preloader }));
@@ -303,5 +277,4 @@ export class RightsidebarComponent implements OnInit {
       }, 1000);
     }
   }
-
 }

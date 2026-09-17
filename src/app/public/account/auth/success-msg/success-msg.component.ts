@@ -6,12 +6,7 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./success-msg.component.scss']
 })
 
-/**
- * Success Msg Component
- */
 export class SuccessMsgComponent implements OnInit {
-
-  // set the current year
   year: number = new Date().getFullYear();
 
   constructor() { }

@@ -4,7 +4,6 @@ import { environment } from 'src/environments/environment';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
-// import { AdjuntoReclamo } from '../../models/adjunto-reclamo.models';
 @Injectable({
   providedIn: 'root'
 })
@@ -60,11 +59,6 @@ createAdjunto(adjuntoReclamoDto: any, file: File): Observable<any> {
   getAdjuntosByUuidReclamo(uuid:String):Observable<any>{
     return apiGet<any>(this.http, `${this.apiUrl}/por-uuidreclamo/${uuid}`, `obtener adjuntos por reclamo (${uuid})`);
   }
-  // descargarArchivo(nombre:string): Observable <any>{
-  //   return this.http.get<any>(`${this.apiUrl}/descargar/${nombre}`,{
-  //     responseType: 'arraybuffer' as 'json'
-  //     });
-  // }
   descargarArchivo(nombre: string): Observable<Blob> {
     return apiGet<Blob>(this.http, `${this.apiUrl}/descargar/${nombre}`, `descargar adjunto (${nombre})`, {
       responseType: 'blob'

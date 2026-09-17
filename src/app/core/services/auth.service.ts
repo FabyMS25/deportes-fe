@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { logout, logoutSuccess } from 'src/app/store/Authentication/authentication.actions';
 import { TokenStorageService } from './token-storage.service';
 
 import { UserRol } from 'src/app/core/constants/UserData';
-import { firstValueFrom, of, Subject, timeout } from 'rxjs';
+import { firstValueFrom, of, Subject } from 'rxjs';
 import { SystemConfigurationService } from './api/system-configuration.service';
 import { ConfiguracionSistema } from '../models/configuracionSistema.model';
 import { AplicaAConfiguracion, CategoriaConfiguracion } from '../constants/Configurations';
-import { RuatRequestsService } from './ruatRequest.service';
 import { MenuItem } from '../models/menu.model';
 import { permissionActions, hasMenuRoute } from '../helpers/menu-permissions';
 import { environment } from 'src/environments/environment';
@@ -22,6 +22,8 @@ interface DeportesLoginResponse {
   staff: any;
   admin: boolean;
   userType: 'STAFF' | 'TAXPAYER';
+  ruatStatus: boolean;
+  ruatMessage: string;
 }
 
 export interface LoginResult {
@@ -29,19 +31,14 @@ export interface LoginResult {
   errorType?: 'BAD_CREDENTIALS' |'NO_MODULE' | 'NO_PERMISSIONS' | 'NO_ASSIGNATION'|'BACKEND' | 'CONFIG_ERROR';
   message?: string;
   redirect?: string;
-  ruatStatus?: boolean;
   restrictions?: string;
 }
 export interface LoginEvent {
   message: 'welcome_admin' | 'welcome_staff' | 'welcome_contribuyente' | 'login_success';
   configsLoaded?: number;
   ruatStatus?: boolean;
+  ruatMessage?: string;
 }
-export interface RuatAvailabilityResult {
-  available: boolean;
-  message?: string;
-}
-
 @Injectable({ providedIn: 'root' })
 export class AuthenticationService {
   userRole!: 'Contribuyente' | 'Admin' | 'Encargado';
@@ -50,21 +47,19 @@ export class AuthenticationService {
   private pendingLoginEvent: LoginEvent | null = null;
   loginEvent$ = this.loginEventSubject.asObservable();
   private systemConfigList: { [key: string]: ConfiguracionSistema } = {};
-  private readonly ruatLoginTimeoutMs = 8000;
   private expirationTimer: ReturnType<typeof setTimeout> | null = null;
   private expirationNoticeOpen = false;
   public systemStatus = {
     backend: false,
     configurations: false,
-    ruat: false,
     message: ''
   };
 
   constructor(
+    private translate: TranslateService,
     private http: HttpClient, 
     private router: Router,
     private systemConfigsService: SystemConfigurationService,
-    private ruatService: RuatRequestsService,
     private storageService: TokenStorageService,
   ) {
     this.currentUserSubject = storageService.getUser()
@@ -120,7 +115,8 @@ export class AuthenticationService {
       this.emitLoginEvent({
         message: taxpayer ? 'welcome_contribuyente' : loginResponse.admin ? 'welcome_admin' : 'welcome_staff',
         configsLoaded: Object.keys(this.getAllConfigs() || {}).length,
-        ruatStatus: configResult.ruatStatus
+        ruatStatus: loginResponse.ruatStatus,
+        ruatMessage: loginResponse.ruatMessage,
       });
       return {
         success: true,
@@ -131,7 +127,7 @@ export class AuthenticationService {
       return {
         success: false,
         errorType: code || (error?.status === 0 ? 'BACKEND' : 'BAD_CREDENTIALS'),
-        message: error?.error?.message || 'Usuario o contraseña incorrectos'
+        message: error?.error?.message || this.translate.instant(error?.status === 0 ? 'LOGIN_UI.UNAVAILABLE' : 'LOGIN_UI.FAILED')
       };
     }
   }
@@ -141,14 +137,12 @@ export class AuthenticationService {
   ): Promise<{
     configsStatus: boolean;
     configs?: { [key: string]: ConfiguracionSistema };
-    ruatStatus: boolean;
-    errorType?: 'BACKEND' | 'CORS' | 'INVALID_RESPONSE' | 'RUAT' | 'UNKNOWN';
+    errorType?: 'BACKEND' | 'CORS' | 'INVALID_RESPONSE' | 'UNKNOWN';
     errorMessage?: string;
   }> {    
     this.systemStatus = {
       backend: false,
       configurations: false,
-      ruat: false,
       message: ''
     };
     try {
@@ -156,19 +150,17 @@ export class AuthenticationService {
         this.systemConfigsService.getAll(token)
       );
       if (!configResponse) {
-        this.systemStatus.message = 'No response from backend';
+        this.systemStatus.message = this.translate.instant('LOGIN_UI.CONFIG_UNAVAILABLE');
         return {
           configsStatus: false,
-          ruatStatus: false,
           errorType: 'BACKEND',
           errorMessage: this.systemStatus.message
         };
       }
       if (!Array.isArray(configResponse)) {
-        this.systemStatus.message = 'Invalid configuration response';
+        this.systemStatus.message = this.translate.instant('LOGIN_UI.CONFIG_INVALID');
         return {
           configsStatus: false,
-          ruatStatus: false,
           errorType: 'INVALID_RESPONSE',
           errorMessage: this.systemStatus.message
         };
@@ -177,32 +169,19 @@ export class AuthenticationService {
       this.systemConfigList = configsMap;
       this.systemStatus.backend = true;
       this.systemStatus.configurations = true;
-      const ruatResult = await this.checkRuatAvailability();
-      this.systemStatus.ruat = ruatResult.success;
-      if (!ruatResult.success) {
-        this.systemStatus.message = 'RUAT authentication failed';
-      }
-      return {
-        configsStatus: true,
-        configs: configsMap,
-        ruatStatus: ruatResult.success,
-        errorType: ruatResult.success ? undefined : 'RUAT',
-        errorMessage: ruatResult.error
-      };
+      return { configsStatus: true, configs: configsMap };
     } catch (error: any) {
       if (error?.status === 0) {
-        this.systemStatus.message = 'Backend unreachable or CORS blocked';
+        this.systemStatus.message = this.translate.instant('LOGIN_UI.UNAVAILABLE');
         return {
           configsStatus: false,
-          ruatStatus: false,
           errorType: 'CORS',
           errorMessage: this.systemStatus.message
         };
       }
-      this.systemStatus.message = error?.message || 'Unknown error';
+      this.systemStatus.message = error?.error?.message || this.translate.instant('LOGIN_UI.CONFIG_UNAVAILABLE');
       return {
         configsStatus: false,
-        ruatStatus: false,
         errorType: 'UNKNOWN',
         errorMessage: this.systemStatus.message
       };
@@ -235,34 +214,6 @@ export class AuthenticationService {
     return resolved;
   }
 
-  private async checkRuatAvailability(): Promise<{ success: boolean; error?: any }> {
-    try {
-      const response: any = await firstValueFrom(
-        this.ruatService.authenticate().pipe(timeout(this.ruatLoginTimeoutMs))
-      );
-      return { success: response?.available === true };
-    } catch (error) {
-      return { success: false, error };
-    }
-  }
-
-  async ensureRuatAuthenticated(forceRefresh: boolean = false): Promise<RuatAvailabilityResult> {
-    if (!forceRefresh && this.systemStatus.ruat) {
-      return { available: true };
-    }
-    const ruatResult = await this.checkRuatAvailability();
-    this.systemStatus.ruat = ruatResult.success;
-
-    if (ruatResult.success) {
-      return { available: true };
-    }
-
-    return {
-      available: false,
-      message: 'RUAT no está disponible. Vuelva a intentar en unos minutos.'
-    };
-  }
-  
   private isBackendError(error: any): boolean {
     return (
       error.status === 0 ||
@@ -315,9 +266,6 @@ export class AuthenticationService {
     return !!this.storageService.getToken();
   }
 
-  isRuatAuthenticated(): boolean {
-    return this.systemStatus.ruat;
-  }
   getSystemConfig(clave: string): ConfiguracionSistema | undefined {
     return this.systemConfigList[clave];
   }
@@ -401,15 +349,15 @@ export class AuthenticationService {
   getReservationRestrictionMessage(): string {
     const user: any = this.storageService.getUser() ?? this.currentUserSubject;
     if (user?.estaSancionado === true || user?.estadoUsuario === 'SANCIONADO') {
-      return 'No puede realizar nuevas reservas mientras su cuenta esté sancionada.';
+      return this.translate.instant('LOGIN_UI.SANCTIONED');
     }
     if (user?.estadoUsuario === 'BLOQUEADO') {
-      return 'No puede realizar nuevas reservas mientras su cuenta esté bloqueada.';
+      return this.translate.instant('LOGIN_UI.BLOCKED');
     }
     if (user?.estadoUsuario === 'PENDIENTE_VERIFICACION') {
-      return 'Debe completar la verificación de su cuenta antes de realizar reservas.';
+      return this.translate.instant('LOGIN_UI.VERIFY_ACCOUNT');
     }
-    return 'Su cuenta debe estar activa para realizar nuevas reservas.';
+    return this.translate.instant('LOGIN_UI.INACTIVE');
   }
 
   async handleExpiredSession(): Promise<void> {
@@ -417,9 +365,9 @@ export class AuthenticationService {
     this.expirationNoticeOpen = true;
     await Swal.fire({
       icon: 'warning',
-      title: 'Sesión expirada',
-      text: 'Su sesión ha expirado. Inicie sesión nuevamente para continuar.',
-      confirmButtonText: 'Ir al inicio de sesión',
+      title: this.translate.instant('LOGIN_UI.SESSION_EXPIRED'),
+      text: this.translate.instant('LOGIN_UI.SESSION_EXPIRED_BODY'),
+      confirmButtonText: this.translate.instant('LOGIN_UI.SIGN_IN'),
       allowOutsideClick: false
     });
     this.expirationNoticeOpen = false;

@@ -81,8 +81,8 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
         item.reservasPeriodoDtoList?.[0]?.disciplina ?? ''
     },
     { header: 'Entrenador',
-      value: item => item.organizacionDto?.entrenador ??
-        item.reservasPeriodoDtoList?.[0]?.entrenador ?? ''
+      value: item => item.reservasPeriodoDtoList?.[0]?.entrenador ??
+        item.organizacionDto?.entrenador ?? ''
     },
     { header: 'Mes',
       value: item => item.reservasPeriodoDtoList?.[0]?.mes ?? ''
@@ -427,6 +427,12 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
     return (this.reservasList?.content?.length || 0) > 0;
   }
 
+  get canCreateMonthlyPayment(): boolean {
+    return this.canActivate.includes('CREAR') ||
+      (this.authService.getUserRole() === 'Contribuyente' &&
+        this.contribuyente?.estadoUsuario === EstadoUsuario.ACTIVO);
+  }
+
   get emptyStateMessage(): string {
     if (!this.filters.periodoFiltro) {
       return 'No hay mensualidades registradas.';
@@ -435,6 +441,16 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
   }
 
   public createNewMonthlyPayment(): void {
+    if (this.authService.getUserRole() === 'Contribuyente' && !this.hasMonthlyRegistrationContext()) {
+      Swal.fire({
+        title: 'No puede registrar mensualidades',
+        text: 'Su usuario no tiene estudiantes a cargo, por lo que no puede registrar mensualidades.',
+        icon: 'info',
+        confirmButtonText: 'Entendido'
+      });
+      return;
+    }
+
     if (this.escuelasList.length === 0) {
       Swal.fire({
         title: 'No hay escuelas disponibles',
@@ -452,22 +468,16 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
     });
   }
 
-  private isRuatConnectionError(payload: any): boolean {
-    const rawPayload = typeof payload === 'string'
-      ? payload
-      : JSON.stringify(payload || '');
-    return [
-      'Connection timed out',
-      'ConnectException',
-      'I/O error',
-      'Read timed out',
-      'SocketTimeoutException',
-      '503',
-      '502',
-      '504',
-      'Service Unavailable'
-    ].some(term => rawPayload.includes(term));
+  private hasMonthlyRegistrationContext(): boolean {
+    const userUuid = this.contribuyente?.uuid;
+    return !!userUuid && this.estudiantesList.some(student =>
+      student.activo !== false && (student.contribuyenteDto?.uuid === userUuid ||
+        student.organizacionDto?.representantesDto?.some(rep => rep.contribuyenteDto?.uuid === userUuid) ||
+        (this.contribuyente?.organizacionesRepresentadas || []).some(org =>
+          org.uuid === student.organizacionDto?.uuid))
+    );
   }
+
   private parseRuatPaymentDate(fechaPago: string): Date | null {
     if (!fechaPago || !/^\d{2}\/\d{2}\/\d{4}$/.test(fechaPago)) {
       return null;
@@ -685,7 +695,7 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
         }
         return {
           item,
-          text: `${text} - Pago verificado`,
+          text,
           type: 'success',
           hasPayment: true,
           pagoData: pagoTasa,
@@ -706,7 +716,7 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
     } catch (error) {
       return {
         item,
-        text: 'Error al realizar la consulta al RUAT',
+        text: this.ruatService.getResponseMessage(error, 'Error al realizar la consulta al RUAT'),
         type: 'error',
         hasPayment: false,
         consultationSuccessful: false,
@@ -735,7 +745,6 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
       this.temp = list;
       this.csvExportItems = list;
       this.loading = false;
-      // External payment checks must not delay displaying the saved reservations.
       void this.refreshReservationStatuses(list, version);
     } catch (error: any) {
       if (version !== this.requestVersion) return;
@@ -792,10 +801,13 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
     try {
 
       const response: any = await this.reservaService.update(updatedReserva).toPromise();
-      return response || reserva;
+      if (!response || response.estadoReserva !== updates.estadoReserva) {
+        throw new Error('El backend no confirmó el cambio de estado de la reserva');
+      }
+      return response;
 
-    } catch {
-
+    } catch (error) {
+      console.error('No se pudo actualizar el estado de la mensualidad después de consultar RUAT', error);
       return reserva;
 
     }

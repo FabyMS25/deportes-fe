@@ -294,7 +294,6 @@
   }
 }
 
-// Day chips
 .day-chip {
   cursor: pointer;
   padding: 6px 12px;
@@ -324,7 +323,6 @@
   &__time  { display: block; font-size: 0.7rem; }
 }
 
-// Calendar day states
 .calendar-day {
   &.overridden {
     background: #fff3cd !important;

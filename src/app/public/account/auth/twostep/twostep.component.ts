@@ -11,6 +11,7 @@ import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
 import { environment } from 'src/environments/environment';
 import { EstadoRuat, EstadoUsuario } from 'src/app/core/constants/Estados';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-twostep',
@@ -35,8 +36,8 @@ export class TwoStepComponent implements OnInit {
     }
   };
 
-  private isAuthenticated = false;
-  private authenticationAttempted = false;
+
+
 
   constructor( 
     private router: Router, 
@@ -44,6 +45,7 @@ export class TwoStepComponent implements OnInit {
     private userDataService: UserDataService,
     private contribuyentesService: ContribuyentesService,
     private ruatService: RuatRequestsService,
+    private translate: TranslateService,
   ) { }
 
   ngOnInit(): void {
@@ -56,18 +58,17 @@ export class TwoStepComponent implements OnInit {
   async confirmar() {
     const enteredOtp = this.otpComponent?.currentVal;
     if (!enteredOtp || enteredOtp.length !== this.config.length) {
-      this.notify('Por favor, ingrese el código completo.', 'error');
+      this.notify(this.translate.instant('TWO_STEP.CODE_REQUIRED'), 'error');
       return;
     }
     if (enteredOtp !== this.userData.verificationCode) {
-      this.notify('Código incorrecto. Por favor, inténtelo de nuevo.', 'error');
+      this.notify(this.translate.instant('TWO_STEP.CODE_INVALID'), 'error');
       this.otpComponent?.setValue('');
       return;
     }
     try {
       if (!this.userData.verificadoRuat) {
-        // Ensure authentication before RUAT registration
-        await this.ensureAuthentication();
+
         
         const ruatData = { ...this.userData };
         if (ruatData.fechaNacimiento) {
@@ -79,7 +80,7 @@ export class TwoStepComponent implements OnInit {
         }        
         const ruatResp = await this.registerTaxpayer(ruatData);
         if (!ruatResp) {
-          this.notify('No se pudo registrar en el Ruat', 'error');
+          this.notify(this.translate.instant('TWO_STEP.RUAT_REGISTRATION_FAILED'), 'error');
           return;
         }
         this.userData.estadoUsuario = EstadoUsuario.ACTIVO;
@@ -93,43 +94,12 @@ export class TwoStepComponent implements OnInit {
       await this.sendEmail(this.userData.userName, this.userData.password);
 
       this.userDataService.setTemporaryUserData(null);
-      this.notify('Sus Datos fueron registrados!', 'success');
+      this.notify(this.translate.instant('TWO_STEP.REGISTRATION_COMPLETE'), 'success');
       this.router.navigate(['/auth/success-msg'], { queryParams: { username: this.userData.userName } });
 
     } catch (error) {
-      this.notify('Ocurrió un error inesperado durante el registro.', 'error');
+      this.notify(this.translate.instant('TWO_STEP.REGISTRATION_FAILED'), 'error');
     }
-  }
-
-  private async ensureAuthentication(): Promise<void> {
-    if (!this.isAuthenticated) {
-      try {
-        if (!this.authenticationAttempted) {
-          await this.authRuat();
-        } else {
-          await this.authRuat();
-        }
-      } catch (error) {
-        throw new Error('No se pudo autenticar con el servicio RUAT');
-      }
-    }
-  }
-
-  private authRuat(): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-      this.authenticationAttempted = true;
-      this.ruatService.authenticate().subscribe({
-        next: (response) => {          
-          this.isAuthenticated = response?.available === true;
-          this.isAuthenticated ? resolve(true) : reject(response);
-        },
-        error: (error) => {
-          this.isAuthenticated = false;
-          this.notify("Falla en la conexión con el RUAT, por favor intente más tarde", 'error');
-          reject(error);
-        }
-      });
-    });
   }
 
   private sendEmail(username: string, password: string): Promise<void> {
@@ -141,10 +111,10 @@ export class TwoStepComponent implements OnInit {
       reply_to: email,
     }, environment.EmailJS.publicKey)
       .then(() => {
-        this.notify(`Un email fue enviado a ${email} con su USUARIO y CONTRASEÑA`, 'success');
+        this.notify(this.translate.instant('TWO_STEP.CREDENTIALS_EMAIL_SENT', { email }), 'success');
       })
       .catch((error) => {
-        this.notify("No se pudo enviar correctamente el e-mail", 'error');
+        this.notify(this.translate.instant('TWO_STEP.EMAIL_FAILED'), 'error');
         throw error;
       });
   }
@@ -156,14 +126,14 @@ export class TwoStepComponent implements OnInit {
     return emailjs.send(environment.EmailJS.idService, environment.EmailJS.idTemplate, {
       from_name: "GAMQ-DEPORTES",
       to_name:  this.userData.nombre,
-      message: `Su código de verificación es: ${codigo}`,
+      message: `${this.translate.instant('TWO_STEP.VERIFICATION_CODE_EMAIL')} ${codigo}`,
       reply_to: email,
     }, environment.EmailJS.publicKey)
       .then(() => {
-        this.notify(`Un email fue enviado a ${email} con el código de confirmación`, 'success');
+        this.notify(this.translate.instant('TWO_STEP.CODE_EMAIL_SENT', { email }), 'success');
       })
       .catch((error) => {
-        this.notify("No se pudo enviar correctamente el e-mail", 'error');
+        this.notify(this.translate.instant('TWO_STEP.EMAIL_FAILED'), 'error');
         throw error;
       });
   }
@@ -174,7 +144,7 @@ export class TwoStepComponent implements OnInit {
       this.contribuyentesService.save(datos).subscribe({
         next: (data: Contribuyente) => resolve(data),
         error: (error) => {
-          this.notify('No se pudo guardar los datos: ' + error.message, 'error');
+          this.notify(`${this.translate.instant('TWO_STEP.SAVE_FAILED')}: ${error.message}`, 'error');
           reject(error);
         }
       });
@@ -190,40 +160,13 @@ private async registerTaxpayer(data: any): Promise<any> {
             this.userData.codigoContribuyente = this.ruatService.getResponseData(response).codigoContribuyente;
             resolve(response); 
           } else {
-            this.notify(this.ruatService.getResponseMessage(response, 'No se pudo registrar en RUAT'), 'error');
+            this.notify(this.ruatService.getResponseMessage(response, this.translate.instant('TWO_STEP.RUAT_REGISTRATION_FAILED')), 'error');
             resolve(null); 
           }
       },
-      error: async (error) => {
-        // If token might be expired, try to reauthenticate and retry once
-        if (error.status === 401 || error.status === 403) {
-          try {
-            this.isAuthenticated = false;
-            await this.authRuat();
-            // Retry the registration after reauthentication
-            this.ruatService.registerTaxpayer(data).subscribe({
-              next: (retryResp: any) => {
-                if (this.ruatService.canContinue(retryResp)) {
-                  this.userData.codigoContribuyente = this.ruatService.getResponseData(retryResp).codigoContribuyente;
-                  resolve(retryResp);
-                } else {
-                  this.notify(this.ruatService.getResponseMessage(retryResp, 'Error en reintento de registro RUAT'), 'error');
-                  resolve(null);
-                }
-              },
-              error: (retryError) => {
-                this.notify('Error al registrar en RUAT después de reintento: ' + retryError.message, 'error');
-                reject(retryError);
-              }
-            });
-          } catch (authError) {
-            this.notify('No se pudo reautenticar con RUAT', 'error');
-            reject(authError);
-          }
-        } else {
-          this.notify('Error al registrar en RUAT: ' + error.message, 'error');
-          reject(error);
-        }
+      error: (error) => {
+        this.notify(this.ruatService.getResponseMessage(error, this.translate.instant('TWO_STEP.RUAT_REGISTRATION_FAILED')), 'error');
+        reject(error);
       }
     });
   });

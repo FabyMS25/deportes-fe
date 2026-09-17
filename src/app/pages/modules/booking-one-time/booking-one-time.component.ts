@@ -11,7 +11,6 @@ import { ReservaPuntualFilters, ReservaPuntualService } from 'src/app/core/servi
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
 import { EstadoReserva, EstadoValidacion, EstadoPago, EstadoUsuario, EstadoRuat, EstadoActual, StatusUtils} from 'src/app/core/constants/Estados';
-import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { Categoria } from 'src/app/core/models/categoria.model';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
@@ -152,7 +151,7 @@ export class BookingOneTimeComponent implements OnInit {
       
       { name: 'Estado Validación', prop: 'reservaDto.estadoValidacion', tag: true, visible: this.canActivate.includes('VALIDAR') },
       { name: 'Estado Reserva', prop: 'reservaDto.estadoReserva', tag: true, visible: true },
-      { name: 'Estado Pago', prop: 'reservaDto.pagosDtoList[0].estadoPago', tag: true, visible: true },
+      { name: 'Estado Pago', prop: 'reservaDto.pagosDtoList[0].estadoPago', tag: true, visible: false },
       { name: 'Observaciones', prop: 'observaciones', visible: false },
 
       { name: 'Fecha Creación', prop: 'reservaDto.fechaCreacion', date: true, visible: false },
@@ -171,9 +170,6 @@ export class BookingOneTimeComponent implements OnInit {
       }
     } else {
       this.userData = currentUser.designacion.personaDto;
-    }
-    if (!this.authService.isRuatAuthenticated()) {
-      await this.delay(1000);
     }
     await this.getCategories();
     await this.getPuntualReservations();
@@ -453,44 +449,12 @@ export class BookingOneTimeComponent implements OnInit {
     }
     return new Date();
   }
-  private isRuatConnectionError(payload: any): boolean {
-    const rawPayload = typeof payload === 'string'
-      ? payload
-      : JSON.stringify(payload || '');
-    return [
-      'Connection timed out',
-      'ConnectException',
-      'I/O error',
-      'Read timed out',
-      'SocketTimeoutException',
-      '503',
-      '502',
-      '504',
-      'Service Unavailable'
-    ].some(term => rawPayload.includes(term));
-  }
   private parseRuatPaymentDate(fechaPago: string): Date | null {
     if (!fechaPago || !/^\d{2}\/\d{2}\/\d{4}$/.test(fechaPago)) {
       return null;
     }
     const [day, month, year] = fechaPago.split('/').map(Number);
     return new Date(year, month - 1, day, 12, 0, 0, 0);
-  }
-  private extractRuatBusinessPayload(payload: any): any | null {
-    if (!payload) return null;
-    if (typeof payload === 'object') {
-      return payload;
-    }
-    if (typeof payload !== 'string') {
-      return null;
-    }
-    try {
-      const jsonMatch = payload.match(/\{.*\}/s);
-      if (!jsonMatch) return null;
-      return JSON.parse(jsonMatch[0]);
-    } catch {
-      return null;
-    }
   }
 
   /* API RUAT Services */
@@ -536,7 +500,7 @@ export class BookingOneTimeComponent implements OnInit {
           errorCode: 'PAYMENT_NOT_FOUND'
         };
       }
-      let text = this.ruatService.getResponseMessage(resp, "La tasa se encuentra pagada");
+      const text = this.ruatService.getResponseMessage(resp, "La tasa se encuentra pagada");
       try {
         const fechaPagoLocal = this.parseRuatPaymentDate(pagoTasa.fechaPago);
         if (!fechaPagoLocal) {
@@ -572,7 +536,7 @@ export class BookingOneTimeComponent implements OnInit {
         }
         return { 
           item, 
-          text: `${text} - Pago verificado`, 
+          text,
           type: 'success',
           pagoData: pagoTasa,
           hasPayment: true,
@@ -589,18 +553,11 @@ export class BookingOneTimeComponent implements OnInit {
           ruatResponse: resp,
           errorCode: 'PAYMENT_SAVE_ERROR'
         };
-        // return { 
-        //   item, 
-        //   text: 'Error al procesar el pago', 
-        //   type: 'error',
-        //   hasPayment: true,
-        //   consultationSuccessful: true
-        // };
       }
     } catch (error) {
       return { 
         item, 
-        text: 'Error al realizar la consulta al RUAT', 
+        text: this.ruatService.getResponseMessage(error, 'Error al realizar la consulta al RUAT'),
         type: 'error',
         hasPayment: false,
         consultationSuccessful: false,
@@ -674,7 +631,6 @@ export class BookingOneTimeComponent implements OnInit {
       } else if (Array.isArray(data)) {
         list = data;
       }
-      // Ownership and counts are scoped by the server before pagination.
       const updatedList = await this.checkAndUpdateReservationStatuses(list);
       if (requestVersion !== this.listRequestVersion) return;
       this.notifyAboutExpiredReservations(list, updatedList);

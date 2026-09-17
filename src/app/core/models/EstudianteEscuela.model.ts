@@ -23,17 +23,13 @@ export interface EstudianteEscuela {
     
   contribuyenteDto?: Contribuyente;
   organizacionDto: Organizacion;
-
-  // Monthly payments
-  mensualidadesDtoList?: ReservaPeriodo[];
-
-  // Values calculated by the management view; they are not persisted.
+ 
+  mensualidadesDtoList?: ReservaPeriodo[]; // Monthly payments
   estadoInscripcion?: 'ACTIVA' | 'INACTIVA';
   estadoEstudiante?: 'ACTIVO' | 'INACTIVO';
   reactivacionBloqueada?: boolean;
   puedeGestionar?: boolean;
 
-  // Values calculated by list views; they are not persisted.
   escuelasTexto?: string;
   responsablesTexto?: string;
   matriculasTexto?: string;

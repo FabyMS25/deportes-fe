@@ -6,12 +6,7 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./logout.component.scss']
 })
 
-/**
- * Logout Component
- */
 export class LogoutComponent implements OnInit {
-
-  // set the current year
   year: number = new Date().getFullYear();
 
   constructor() { }

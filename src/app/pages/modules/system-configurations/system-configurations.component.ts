@@ -24,7 +24,6 @@ export class SystemConfigurationsComponent implements OnInit {
   configuracionesList: ConfiguracionSistema[] = [];
   categoriasList: string[] = [];
 
-  // Search filters
   searchTerm: string = '';
   estado: string = '';
   categoria: string = '';

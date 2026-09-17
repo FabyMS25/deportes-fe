@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 import Swal from 'sweetalert2';
 
 import { CityAcronym } from 'src/app/core/constants/Places';
@@ -29,7 +30,8 @@ export class SignupCheckComponent {
     private formBuilder: UntypedFormBuilder,
     private ruatService: RuatRequestsService,
     private userDataService: UserDataService,
-    private contribuyentesService: ContribuyentesService
+    private contribuyentesService: ContribuyentesService,
+    private translate: TranslateService
   ) { }
 
   ngOnInit(): void {
@@ -56,7 +58,7 @@ export class SignupCheckComponent {
       };
       await this.searchTaxpayer(datos);
     } else {
-      this.notify('Formulario Inválido!', 'error');
+      this.notify(this.translate.instant('SIGNUP_CHECK.INVALID_FORM'), 'error');
       Object.keys(this.SignupForm.controls).forEach(key => {
         const control = this.SignupForm.get(key);
         control?.markAsTouched();
@@ -100,10 +102,10 @@ export class SignupCheckComponent {
             this.searchUser(data.numeroDocumento)
               .then((exist) => {
                 if (exist) {
-                  this.notify("Usted ya cuenta con un registro en Deportes- GAMQ", 'error');
+                  this.notify(this.translate.instant('SIGNUP_CHECK.ALREADY_REGISTERED'), 'error');
                 } else {
                   this.userDataService.setTemporaryUserData(this.ruatData);
-                  this.notify("Usted tiene datos registrados en Ruat, Proceder con registro en Deportes-GAMQ", 'success');
+                  this.notify(this.translate.instant('SIGNUP_CHECK.RUAT_DATA_FOUND'), 'success');
                   this.router.navigate(['/auth/signup'], { queryParams: { userExist: true } });
                 }
               })
@@ -111,7 +113,7 @@ export class SignupCheckComponent {
                 console.error('Error in searchUsers:', error);
               });
           } else {
-            this.notify(this.ruatService.getResponseMessage(response, 'No se encontraron datos en RUAT') + " Puede proceder con su registro", 'success');
+            this.notify(`${this.ruatService.getResponseMessage(response, this.translate.instant('SIGNUP_CHECK.NO_RUAT_DATA'))} ${this.translate.instant('SIGNUP_CHECK.CONTINUE_REGISTRATION')}`, 'success');
             this.router.navigate(['/auth/signup'], { queryParams: { userExist: false } });          
           }
       },
@@ -119,7 +121,7 @@ export class SignupCheckComponent {
         this.notify(
           this.ruatService.getResponseMessage(
             error,
-            'No se pudo conectar con RUAT. Por favor, intente nuevamente más tarde.'
+            this.translate.instant('SIGNUP_CHECK.RUAT_UNAVAILABLE')
           ),
           'error'
         );

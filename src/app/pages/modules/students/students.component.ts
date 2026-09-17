@@ -127,6 +127,8 @@ export class StudentsComponent implements OnInit {
     modalRef.componentInstance.escuelas = this.escuelas;
     modalRef.componentInstance.tutores = this.tutores;
     modalRef.componentInstance.estudiantesExistentes = this.estudiantesExistentes;
+    modalRef.componentInstance.restrictContributorRelation = this.isContributor;
+    modalRef.componentInstance.currentContributorUuid = this.authService.currentUser()?.uuid;
     modalRef.componentInstance.emitList.subscribe(() => this.loadData());
   }
 

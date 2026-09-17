@@ -1,5 +1,4 @@
 ::ng-deep {
-  // Single select - match form-select-sm exactly
   .ng-select.ng-select-sm {
     .ng-select-container {
       min-height: 28px !important;
@@ -8,7 +7,6 @@
     }
   }
 
-  // Multiple select - match form-select-sm
   .ng-select.ng-select-multiple.ng-select-sm {
     .ng-select-container {
       min-height: 28px !important;

@@ -149,8 +149,6 @@ export class SettingsComponent implements OnInit {
     if (this.userRole === 'Contribuyente') {
       if (this.personaForm.valid) {
         const expedidoValue = this.personaForm.value.expedido;
-        // const expedidoAcronym = this.getAcronymFromId(expedidoValue);
-        
         const persona: Contribuyente = {
           ...this.userContribuyente,
           uuid: this.personaForm.value.uuid,
@@ -200,29 +198,12 @@ export class SettingsComponent implements OnInit {
     }
   }
 
-  // private getAcronymFromId(expedido: any,getBy:string = 'id'): string {
-  //   if(getBy ==='acronym'){
-  //     const cityByDescription = CityAcronym.find(c => c.acronym === expedido);
-  //     if (cityByDescription) {
-  //       return cityByDescription.acronym;
-  //     }  
-  //   }else{
-  //     const cityById = CityAcronym.find(c => c.id === expedido);  
-  //     if (cityById) {
-  //       return cityById.value;
-  //     }
-  //   }
-  //   return expedido;
-  // }
-
   password: string = '';
   async deleteAccount() {
     if (!this.password) {
       this.notify('error', 'Por favor, ingrese su contraseña.');
       return;
     }
-
-    // For demo purposes - in real app, you should verify password with backend
     if (this.password === this.userContribuyente.password) {
       if (window.confirm("¿Está seguro de que desea cerrar y anular la cuenta?")) {
         const updatedUser = { ...this.userContribuyente, estadoUsuario: 'Anulado' };
@@ -308,8 +289,6 @@ export class SettingsComponent implements OnInit {
   goBack() {
     this.location.back();
   }
-
-  // Helper method to get display name
   getDisplayName(): String {
     if (this.userRole === 'Contribuyente') {
       return this.userContribuyente?.nombreCompleto ||
@@ -321,7 +300,6 @@ export class SettingsComponent implements OnInit {
     }
   }
 
-  // Helper method to get email
   getEmail(): string {
     if (this.userRole === 'Contribuyente') {
       return this.userContribuyente.email;

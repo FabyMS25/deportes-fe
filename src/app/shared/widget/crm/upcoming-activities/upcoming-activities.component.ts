@@ -6,12 +6,7 @@ import { Component, OnInit, Input } from '@angular/core';
   styleUrls: ['./upcoming-activities.component.scss']
 })
 
-/**
- * Upcoming Activites Component
- */
 export class UpcomingActivitiesComponent implements OnInit {
-
-  // Upcoming Activities
   @Input() UpcomingActivities: Array<{
     date?: string;
     day?: string;
