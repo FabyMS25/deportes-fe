@@ -63,17 +63,6 @@ export class RuatRequestsService {
     return payload?.continuarFlujo === true || String(payload?.continuarFlujo).toLowerCase() === 'true';
   }
 
-  hasBusinessResponse(response: any): boolean {
-    const payload = this.getResponsePayload(response);
-    if (!payload || typeof payload !== 'object') {
-      return false;
-    }
-
-    return Object.prototype.hasOwnProperty.call(payload, 'continuarFlujo')
-      || Object.prototype.hasOwnProperty.call(payload, 'mensaje')
-      || Object.prototype.hasOwnProperty.call(payload, 'mensajeConfirmacion');
-  }
-
   getResponseMessage(response: any, fallback: string = 'Respuesta inesperada de RUAT'): string {
     const payload = this.getResponsePayload(response);
 

@@ -611,7 +611,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
 
     try {
       const resp: any = await this.ruatService.checkFeePayment(reserva.numeroTasa).toPromise();
-      if (!this.ruatService.hasBusinessResponse(resp) || !this.ruatService.canContinue(resp)) {
+      if (!this.ruatService.canContinue(resp)) {
         this.consultationResult = {
           type: 'warning',
           text: this.ruatService.getResponseMessage(resp, 'No se pudo confirmar el pago en RUAT.')

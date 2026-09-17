@@ -466,17 +466,6 @@ export class BookingOneTimeComponent implements OnInit {
           type: 'warning', hasPayment: false, consultationSuccessful: false };
       }
       const resp: any = await this.ruatService.checkFeePayment(nroTasa).toPromise();
-      if (!this.ruatService.hasBusinessResponse(resp)) {
-        return {
-          item,
-          text: 'RUAT devolvió una respuesta inválida. No se actualizó la reserva.',
-          type: 'warning',
-          hasPayment: false,
-          consultationSuccessful: false,
-          ruatResponse: resp,
-          errorCode: 'INVALID_RESPONSE'
-        };
-      }
       if (!this.ruatService.canContinue(resp)) {
         return { 
           item, 

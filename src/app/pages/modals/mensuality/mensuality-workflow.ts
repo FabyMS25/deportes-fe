@@ -265,8 +265,11 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
   }
 
   private studentBelongsToBaseReservation(estudiante: EstudianteEscuela): boolean {
-    return !!this.selection.baseReservation && !!this.selection.school?.uuid && estudiante.activo !== false &&
+    const reservationContributorUuid = this.selection.baseReservation?.contribuyenteDto?.uuid;
+    return !!this.selection.baseReservation && !!this.selection.school?.uuid &&
+      !!reservationContributorUuid && estudiante.activo !== false &&
       estudiante.organizacionDto?.uuid === this.selection.school.uuid &&
+      estudiante.contribuyenteDto?.uuid === reservationContributorUuid &&
       (this.userRole !== 'Contribuyente' || this.currentContributorCanManageStudent(estudiante));
   }
 
@@ -628,6 +631,14 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
   private selectReservaRecurrente(reserva: Reserva): void {
     this.selection.baseReservation = reserva;
     this.selection.entrenador = this.getDefaultEntrenador();
+    this.selection.students = this.selection.students.filter(student =>
+      this.studentBelongsToBaseReservation(student)
+    );
+    this.selection.detailKeys = new Set(
+      Array.from(this.selection.detailKeys).filter(key =>
+        this.selection.students.some(student => key.startsWith(`${student.uuid}|`))
+      )
+    );
     this.reservationForm.patchValue({ reservaRecurrente: reserva.uuid });
     this.generateAvailablePeriods();
     this.applyDefaultPeriodoSelection();
@@ -1009,7 +1020,7 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
       const resp: any = await this.ruatService
         .checkFeePayment(this.row.numeroTasa)
         .toPromise();
-      if (!this.ruatService.hasBusinessResponse(resp) || !this.ruatService.canContinue(resp)) {
+      if (!this.ruatService.canContinue(resp)) {
         this.consultationResult = {
           type: 'warning',
           text: this.ruatService.getResponseMessage(resp, 'No se pudo confirmar el pago en RUAT.')
@@ -1391,10 +1402,17 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
 
   private syncDefaultContribuyente(): void {
     const candidates = this.contribuyentesDisponibles;
-    if (!this.selection.payer || !candidates.some(item => item.uuid === this.selection.payer?.uuid)) {
+    const reservationContributor = this.selection.baseReservation?.contribuyenteDto;
+    const defaultPayer = reservationContributor?.uuid
+      ? candidates.find(item => item.uuid === reservationContributor.uuid)
+      : undefined;
+
+    if (defaultPayer) {
+      this.selection.payer = defaultPayer;
+    } else if (!this.selection.payer || !candidates.some(item => item.uuid === this.selection.payer?.uuid)) {
       this.selection.payer = candidates[0];
-      this.reservationForm.patchValue({ contribuyente: this.selection.payer?.uuid || '' });
     }
+    this.reservationForm.patchValue({ contribuyente: this.selection.payer?.uuid || '' });
   }
 
   private createTasaInRuat(reservaData: any): Promise<string> {
