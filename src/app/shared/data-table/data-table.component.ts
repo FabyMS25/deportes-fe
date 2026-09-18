@@ -90,6 +90,7 @@ export class DataTableComponent implements OnChanges {
   @Output() selectedItemEmitter = new EventEmitter<any[]>();
   @Output() pageChange = new EventEmitter<number>();
   @Output() pageSizeChange = new EventEmitter<number>(); 
+  @Output() sortChange = new EventEmitter<{ column: string; direction: 'asc' | 'desc' }>();
   
   content: any[] = [];
   totalElements: number = 0;
@@ -312,7 +313,7 @@ export class DataTableComponent implements OnChanges {
   }
 
   isSortable(column: ColumnDefinition): boolean {
-    return !this.serverSidePagination && column.sortable !== false;
+    return this.serverSidePagination ? column.sortable === true : column.sortable !== false;
   }
 
   getColumnClass(column: ColumnDefinition): string {
@@ -451,9 +452,6 @@ export class DataTableComponent implements OnChanges {
   isSortAscending: boolean = true;
 
   onSort(column: string): void {
-    if (this.serverSidePagination) {
-      return;
-    }
     const columnDef = this.itemsList?.find(item => item.prop === column);
     if (columnDef?.sortable === false) {
       return;
@@ -464,12 +462,18 @@ export class DataTableComponent implements OnChanges {
       this.currentSortColumn = column;
       this.isSortAscending = true;
     }
+    if (this.serverSidePagination) {
+      this.sortChange.emit({
+        column,
+        direction: this.isSortAscending ? 'asc' : 'desc'
+      });
+      return;
+    }
     this.allcontent = this.service.onSort(column, [...this.allcontent], this.isSortAscending);
     this.service.page = 1;
     this.changePage();
   }
   getSortDirection(column: string): string {
-    if (this.serverSidePagination) return 'none';
     if (this.currentSortColumn !== column) return 'none';
     return this.isSortAscending ? 'ascending' : 'descending';
   }

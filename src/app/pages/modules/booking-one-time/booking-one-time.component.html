@@ -51,15 +51,6 @@
                     </select>
                 </div>
                 <div class="col-6 col-sm-3 col-lg-2">
-                    <select class="form-control" data-choices data-choices-search-false name="estadoReserva" id="idEstadoReserva"
-                        [(ngModel)]="filters.estadoReserva" (ngModelChange)="onReservationStatusChange()">
-                        <option value="" selected>Estado Reserva</option>
-                        <option *ngFor="let option of estadoReservaOptions" [value]="option.value">
-                            {{option.label}}
-                        </option>
-                    </select>
-                </div>
-                <div class="col-6 col-sm-3 col-lg-2">
                     <select class="form-control" data-choices data-choices-search-false
                             name="categoria" id="idCategoria" 
                             [(ngModel)]="filters.categoria" (ngModelChange)="applyFilters()">
@@ -67,6 +58,24 @@
                         <option *ngFor="let category of categoryList" [value]="category.nombre">
                             {{category.nombre}}
                         </option>
+                    </select>
+                </div>
+                <div class="col-6 col-sm-3 col-lg-2">
+                    <select class="form-control" name="tipoBeneficiario" [(ngModel)]="filters.tipoBeneficiario" (ngModelChange)="applyFilters()">
+                        <option value="">Beneficiario</option>
+                        <option *ngFor="let option of tipoBeneficiarioOptions" [value]="option.value">{{ option.label }}</option>
+                    </select>
+                </div>
+                <div class="col-6 col-sm-3 col-lg-2">
+                    <select class="form-control" name="tipoContribuyente" [(ngModel)]="filters.tipoContribuyente" (ngModelChange)="applyFilters()">
+                        <option value="">Tipo contribuyente</option>
+                        <option *ngFor="let option of tipoContribuyenteOptions" [value]="option.value">{{ option.label }}</option>
+                    </select>
+                </div>
+                <div class="col-6 col-sm-3 col-lg-2">
+                    <select class="form-control" name="tipoOrganizacion" [(ngModel)]="filters.tipoOrganizacion" (ngModelChange)="applyFilters()">
+                        <option value="">Tipo organización</option>
+                        <option *ngFor="let option of tipoOrganizacionOptions" [value]="option.value">{{ option.label }}</option>
                     </select>
                 </div>
                 <div class="col-6 col-sm-3 col-lg-1">
@@ -168,6 +177,7 @@
                 }"
                 (pageChange)="onPageChange($event)"
                 (pageSizeChange)="onPageSizeChange($event)"
+                (sortChange)="onSortChange($event)"
                 [actions]="{
                     show: canActivate.includes('VER'),
                     edit: canActivate.includes('CAMBIAR-HORARIO'),

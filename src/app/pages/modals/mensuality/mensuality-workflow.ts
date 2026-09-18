@@ -276,15 +276,7 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
   get contribuyentesDisponibles(): Contribuyente[] {
     const currentUser = this.userData as Contribuyente | undefined;
     if (this.userRole === 'Contribuyente') {
-      const candidates: (Contribuyente | undefined)[] = [currentUser];
-      if (this.currentUserRepresentsSelectedSchool()) {
-        candidates.push(
-          this.selection.baseReservation?.contribuyenteDto,
-          ...this.getSchoolRepresentatives(this.selection.school),
-          ...this.selection.students.map(estudiante => estudiante.contribuyenteDto)
-        );
-      }
-      return this.uniqueContribuyentes(candidates);
+      return currentUser?.uuid ? [currentUser] : [];
     }
     const candidates: (Contribuyente | undefined)[] = [
       this.selection.baseReservation?.contribuyenteDto,
@@ -318,7 +310,7 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
   }
 
   get canChoosePayer(): boolean {
-    return this.userRole !== 'Contribuyente' || this.contribuyentesDisponibles.length > 1;
+    return this.userRole !== 'Contribuyente';
   }
 
   get mensualidadesFiltradas(): ReservaPeriodo[] {
@@ -1402,6 +1394,11 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
 
   private syncDefaultContribuyente(): void {
     const candidates = this.contribuyentesDisponibles;
+    if (this.userRole === 'Contribuyente') {
+      this.selection.payer = candidates[0];
+      this.reservationForm.patchValue({ contribuyente: this.selection.payer?.uuid || '' });
+      return;
+    }
     const reservationContributor = this.selection.baseReservation?.contribuyenteDto;
     const defaultPayer = reservationContributor?.uuid
       ? candidates.find(item => item.uuid === reservationContributor.uuid)
@@ -1734,11 +1731,7 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
     if (!canManageStudents) {
       return false;
     }
-    if (payerUuid === userUuid) {
-      return true;
-    }
-    return this.currentUserRepresentsSelectedSchool() &&
-      this.contribuyentesDisponibles.some(contribuyente => contribuyente.uuid === payerUuid);
+    return payerUuid === userUuid;
   }
 
   private getOrganizations(): void {
@@ -1856,4 +1849,3 @@ export abstract class MensualityWorkflow implements OnInit, OnChanges, AfterView
     });
   }
 }
-

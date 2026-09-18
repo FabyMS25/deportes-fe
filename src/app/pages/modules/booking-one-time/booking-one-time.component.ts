@@ -10,7 +10,7 @@ import { PagoService } from 'src/app/core/services/api/pago.service';
 import { ReservaPuntualFilters, ReservaPuntualService } from 'src/app/core/services/api/reserva-puntual.service';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
-import { EstadoReserva, EstadoValidacion, EstadoPago, EstadoUsuario, EstadoRuat, EstadoActual, StatusUtils} from 'src/app/core/constants/Estados';
+import { EstadoReserva, EstadoValidacion, EstadoPago, EstadoUsuario, EstadoRuat, EstadoActual, StatusUtils, TipoBeneficiarioReserva, TipoContribuyenteReserva} from 'src/app/core/constants/Estados';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { Categoria } from 'src/app/core/models/categoria.model';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
@@ -49,6 +49,23 @@ export class BookingOneTimeComponent implements OnInit {
   contribuyente!: Contribuyente;
   estadoReservaOptions = StatusUtils.getReservationStatusOptions();
   estadoValidacionOptions = StatusUtils.getEstadoValidacionOptions();
+  tipoBeneficiarioOptions = [
+    { value: TipoBeneficiarioReserva.CONTRIBUYENTE, label: 'Contribuyente' },
+    { value: TipoBeneficiarioReserva.ORGANIZACION, label: 'Organización' }
+  ];
+  tipoContribuyenteOptions = [
+    { value: TipoContribuyenteReserva.NATURAL, label: 'Persona natural' },
+    { value: TipoContribuyenteReserva.JURIDICA, label: 'Persona jurídica' }
+  ];
+  tipoOrganizacionOptions = [
+    { value: 'asociacion_deportiva', label: 'Asociación deportiva' },
+    { value: 'club_deportivo', label: 'Club deportivo' },
+    { value: 'unidad_educativa', label: 'Escuela / unidad educativa' },
+    { value: 'empresa_privada', label: 'Empresa privada' },
+    { value: 'institucion_publica', label: 'Institución pública' }
+  ];
+  sortBy = 'fechaUso';
+  sortDirection: 'asc' | 'desc' = 'desc';
 
   selectedItems: ReservaPuntual[] = [];
   readonly CSV_COLUMNS: CsvColumn<ReservaPuntual>[] = [
@@ -96,6 +113,9 @@ export class BookingOneTimeComponent implements OnInit {
     estadoReserva: '',
     estadoValidacion: '',
     categoria: '',
+    tipoBeneficiario: '',
+    tipoContribuyente: '',
+    tipoOrganizacion: '',
     fromDate: null as Date | null,
     toDate: null as Date | null,
     tab: 0
@@ -123,24 +143,24 @@ export class BookingOneTimeComponent implements OnInit {
       { label: 'Reservas Puntuales', active: true }
     ];
     this.itemsList = [
-      { name: 'Número Reserva', prop: 'reservaDto.numeroReserva', nowrap: true, visible: false },
-      { name: 'Contribuyente', prop: 'reservaDto.contribuyenteDto.nombreCompleto', visible: !this.contribuyente },
-      { name: 'Complejo', prop: 'reservaDto.campoDeportivoDto.complejoDto.nombre', visible: true },
-      { name: 'Campo Deportivo', prop: 'reservaDto.campoDeportivoDto.nombre', visible: true },
+      { name: 'Número Reserva', prop: 'reservaDto.numeroReserva', nowrap: true, visible: false, sortable: true },
+      { name: 'Contribuyente', prop: 'reservaDto.contribuyenteDto.nombreCompleto', visible: !this.contribuyente, sortable: true },
+      { name: 'Complejo', prop: 'reservaDto.campoDeportivoDto.complejoDto.nombre', visible: true, sortable: true },
+      { name: 'Campo Deportivo', prop: 'reservaDto.campoDeportivoDto.nombre', visible: true, sortable: true },
       { name: 'Superficie', prop: 'superficie', visible: false },
-      { name: 'Categoría', prop: 'categoria', visible: false, tag: true },
+      { name: 'Categoría', prop: 'categoria', visible: false, tag: true, sortable: true },
 
       { name: 'Clasificador RUAT', prop: 'reservaDto.tarifaDto.clasificadorRuatDto.nombre', visible: false },
-      { name: 'Tipo Cobro', prop: 'reservaDto.tarifaDto.tipoCobro', nowrap: true, visible: true },
+      { name: 'Tipo Cobro', prop: 'reservaDto.tarifaDto.tipoCobro', nowrap: true, visible: true, sortable: true },
 
-      { name: 'Fecha Uso', prop: 'fechaUso', date: true, visible: true },
+      { name: 'Fecha Uso', prop: 'fechaUso', date: true, visible: true, sortable: true },
       { name: 'Hora Inicio', prop: 'horaInicio', visible: false },
       { name: 'Hora Fin', prop: 'horaFin', visible: false },
       { name: 'Duración', prop: 'duracionHoras', visible: false },
       { name: 'Cant. Personas', prop: 'cantidadPersonas', visible: false },
       { name: 'Precio Base Aplicado', prop: 'precioBaseAplicado', visible: false },
-      { name: 'Monto Total', prop: 'reservaDto.montoTotal', visible: true, currency: true },
-      { name: 'Tasa', prop: 'reservaDto.numeroTasa', nowrap: true, visible: true },
+      { name: 'Monto Total', prop: 'reservaDto.montoTotal', visible: true, currency: true, sortable: true },
+      { name: 'Tasa', prop: 'reservaDto.numeroTasa', nowrap: true, visible: true, sortable: true },
       { name: 'Fecha Límite Pago', prop: 'reservaDto.fechaLimitePago', date: true, visible: false },
       { name: 'Anulación Automática', prop: 'reservaDto.cancelacionAutomatica', visible: false, tag: true },
 
@@ -150,7 +170,7 @@ export class BookingOneTimeComponent implements OnInit {
       { name: 'Organización', prop: 'reservaDto.organizacionDto.nombre', visible: false },
       
       { name: 'Estado Validación', prop: 'reservaDto.estadoValidacion', tag: true, visible: this.canActivate.includes('VALIDAR') },
-      { name: 'Estado Reserva', prop: 'reservaDto.estadoReserva', tag: true, visible: true },
+      { name: 'Estado Reserva', prop: 'reservaDto.estadoReserva', tag: true, visible: true, sortable: true },
       { name: 'Estado Pago', prop: 'reservaDto.pagosDtoList[0].estadoPago', tag: true, visible: false },
       { name: 'Observaciones', prop: 'observaciones', visible: false },
 
@@ -194,6 +214,27 @@ export class BookingOneTimeComponent implements OnInit {
     this.currentPage = page
     this.getPuntualReservations();
   }
+
+  onSortChange(sort: { column: string; direction: 'asc' | 'desc' }): void {
+    const sortMap: Record<string, string> = {
+      'fechaUso': 'fechaUso',
+      'categoria': 'categoria',
+      'reservaDto.numeroReserva': 'numeroReserva',
+      'reservaDto.contribuyenteDto.nombreCompleto': 'contribuyente',
+      'reservaDto.campoDeportivoDto.complejoDto.nombre': 'complejo',
+      'reservaDto.campoDeportivoDto.nombre': 'campoDeportivo',
+      'reservaDto.tarifaDto.tipoCobro': 'tipoCobro',
+      'reservaDto.montoTotal': 'montoTotal',
+      'reservaDto.numeroTasa': 'numeroTasa',
+      'reservaDto.estadoReserva': 'estadoReserva'
+    };
+    const mapped = sortMap[sort.column];
+    if (!mapped) return;
+    this.sortBy = mapped;
+    this.sortDirection = sort.direction;
+    this.currentPage = 1;
+    this.getPuntualReservations();
+  }
   onPageSizeChange(size: number): void {
     this.pageSize = size;
     this.currentPage = 1;
@@ -233,6 +274,9 @@ export class BookingOneTimeComponent implements OnInit {
       estadoReserva: '',
       estadoValidacion: '',
       categoria: '',
+      tipoBeneficiario: '',
+      tipoContribuyente: '',
+      tipoOrganizacion: '',
       fromDate: null,
       toDate: null,
       tab: 0
@@ -648,6 +692,11 @@ export class BookingOneTimeComponent implements OnInit {
       estadoReserva: this.filters.estadoReserva,
       estadoValidacion: this.filters.estadoValidacion,
       categoria: this.filters.categoria,
+      tipoBeneficiario: this.filters.tipoBeneficiario,
+      tipoContribuyente: this.filters.tipoContribuyente,
+      tipoOrganizacion: this.filters.tipoOrganizacion,
+      sortBy: this.sortBy,
+      sortDirection: this.sortDirection,
       fromDate: this.filters.fromDate?.toISOString(),
       toDate: this.filters.toDate?.toISOString(),
     };
@@ -674,16 +723,12 @@ export class BookingOneTimeComponent implements OnInit {
         : Array.isArray(data)
           ? data
           : [];
-      list = this.filterPuntualReservationsByUserScope(list);
       if (requestVersion === this.listRequestVersion) this.csvExportItems = list;
     } catch {
       if (requestVersion === this.listRequestVersion) this.csvExportItems = currentPageList;
     }
   }
 
-  private filterPuntualReservationsByUserScope(list: ReservaPuntual[]): ReservaPuntual[] {
-    return list;
-  }
   private getCategories() {
     this.categoriesService.getAll().subscribe({
       next: (data: any) => {

@@ -28,34 +28,11 @@
                                 <i class="ri-search-line search-icon"></i>
                         </div>
                     </div>
-                    <div class="col-6 col-sm-3 col-lg-3">
-                        <input type="text" 
-                            class="form-control" 
-                            mwlFlatpickr 
-                            name="dateRange" 
-                            mode="range"
-                            placeholder="Fecha de inicio de la reserva" aria-label="Rango de fechas de inicio de la reserva"
-                            [convertModelValue]="true"
-                            [ngModel]="dateRange"
-                            (ngModelChange)="onDateRangeChange($event)"
-                            [altInput]="true"
-                            [altFormat]="'F j, Y'"
-                            dateFormat="Y-m-d">
-                    </div>
                     <div class="col-6 col-sm-3 col-lg-2">
                         <select class="form-control" data-choices data-choices-search-false name="estadoValidacion" id="idEstadoValidacion"
                             [(ngModel)]="filters.estadoValidacion" (ngModelChange)="applyFilters()">
                             <option value="" selected>Estado Validación</option>
                             <option *ngFor="let option of estadoValidacionOptions" [value]="option.value">
-                                {{option.label}}
-                            </option>
-                        </select>
-                    </div>
-                    <div class="col-6 col-sm-3 col-lg-2">
-                        <select class="form-control" data-choices data-choices-search-false name="estadoReserva" id="idEstadoReserva"
-                            [(ngModel)]="filters.estadoReserva" (ngModelChange)="onReservationStatusChange()">
-                            <option value="" selected>Estado Reserva</option>
-                            <option *ngFor="let option of estadoReservaOptions" [value]="option.value">
                                 {{option.label}}
                             </option>
                         </select>
@@ -77,6 +54,24 @@
                             <option value="" selected>Estado Activo</option>
                             <option value="activo">Activo</option>
                             <option value="inactivo">Inactivo</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-sm-3 col-lg-2">
+                        <select class="form-control" name="tipoBeneficiario" [(ngModel)]="filters.tipoBeneficiario" (ngModelChange)="applyFilters()">
+                            <option value="">Beneficiario</option>
+                            <option *ngFor="let option of tipoBeneficiarioOptions" [value]="option.value">{{ option.label }}</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-sm-3 col-lg-2">
+                        <select class="form-control" name="tipoContribuyente" [(ngModel)]="filters.tipoContribuyente" (ngModelChange)="applyFilters()">
+                            <option value="">Tipo contribuyente</option>
+                            <option *ngFor="let option of tipoContribuyenteOptions" [value]="option.value">{{ option.label }}</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-sm-3 col-lg-2">
+                        <select class="form-control" name="tipoOrganizacion" [(ngModel)]="filters.tipoOrganizacion" (ngModelChange)="applyFilters()">
+                            <option value="">Tipo organización</option>
+                            <option *ngFor="let option of tipoOrganizacionOptions" [value]="option.value">{{ option.label }}</option>
                         </select>
                     </div>
                     <div class="col-6 col-sm-3 col-lg-1">
@@ -186,6 +181,7 @@
                 }"
                 (pageChange)="onPageChange($event)"
                 (pageSizeChange)="onPageSizeChange($event)"
+                (sortChange)="onSortChange($event)"
                 [actions]="{
                   show: canActivate.includes('VER'),
                   validate: canActivate.includes('VALIDAR'),

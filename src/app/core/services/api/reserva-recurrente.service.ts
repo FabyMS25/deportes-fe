@@ -11,6 +11,11 @@ export interface ReservaRecurrenteFilters {
   estadoReserva?: string;
   estadoValidacion?: string;
   categoria?: string;
+  tipoBeneficiario?: string;
+  tipoContribuyente?: string;
+  tipoOrganizacion?: string;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
   tipoRecurrencia?: string ,
   activo?: string ,
   fromDate?: string; // ISO

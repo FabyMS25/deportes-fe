@@ -19,7 +19,9 @@ export interface ReservaFilters {
   periodoFiltro?:  {
     mesFiltro?: number;
     anioFiltro?: number;
-  }
+  };
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
 }
 
 @Injectable({

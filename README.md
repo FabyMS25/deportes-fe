@@ -1,109 +1,324 @@
-# Deportes GAMQ — frontend
+# DeportesApp GAMQ — descripción operativa del sistema
 
-Aplicación web para gestionar espacios deportivos del Gobierno Autónomo Municipal de Quillacollo. Utiliza Angular 17, TypeScript, Bootstrap/ng-bootstrap, NgRx, Leaflet, FullCalendar y componentes compartidos de formularios y listados.
+DeportesApp es el sistema municipal utilizado para controlar el uso de complejos, campos deportivos, escuelas municipales, contribuyentes, reservas, tasas y pagos. Su operación se basa en tres componentes coordinados:
 
-## Funcionalidades
+1. **Frontend Angular**: muestra las vistas, solicita datos, guía los formularios, oculta acciones no permitidas y presenta los estados.
+2. **`deportes-be`**: autentica, autoriza, valida reglas de negocio, guarda la información y decide si una operación puede continuar.
+3. **RUAT**: consulta y registra contribuyentes, genera tasas, confirma pagos y anula tasas a través del backend.
 
-- Mapa y calendario de complejos/canchas; administración de superficies, categorías, encargados, horarios y tarifas.
-- Contribuyentes, organizaciones, escuelas y varios representantes por organización.
-- Estudiantes e inscripciones por escuela, tutor/responsable, matrículas, bajas, reactivaciones e historial de mensualidades.
-- Reservas puntuales y recurrentes: disponibilidad, tarifas, aprobación, pagos, cambios de horario y anulación según permisos.
-- Mensualidades para varios estudiantes y períodos, pagador, consulta de pagos y tickets.
-- Listados, exportación de datos disponibles, reportes de reservas y pagos.
-- Configuración del sistema, perfil, recuperación de acceso y notificaciones del usuario.
+El frontend nunca decide por sí solo si una operación es válida. Sus validaciones mejoran la experiencia y evitan envíos incompletos; la decisión definitiva se toma en el backend.
 
-La [documentación del backend](../deportes-be/README.md) explica los flujos completos. Las operaciones pasan por deportes-be, que utiliza Usuarios y ruat-be; el navegador no debe contener claves del gateway ni credenciales municipales RUAT.
-
-## Roles y flujo de trabajo
-
-| Usuario | Comportamiento |
-| --- | --- |
-| Administrador / personal autorizado | Gestiona registros según permisos y alcance. Puede asignar como tutor a un contribuyente que no represente una organización. |
-| Encargado | Acceso asociado a permisos de Usuarios y asignación de complejo. |
-| Contribuyente padre/tutor | Registra mensualidades de sus estudiantes sin representar una organización. Ser tutor solamente no permite crear inscripciones. |
-| Contribuyente representante | Inscribe estudiantes bajo su propia responsabilidad en escuelas que representa; gestiona mensualidades de esas escuelas. |
+## 1. Modelo de control del sistema
 
 ### Inicio de sesión
 
-El frontend realiza una solicitud al backend. Deportes comprueba el acceso al gateway RUAT, autentica al usuario y devuelve token, menú y estado RUAT. Se presenta ese estado sin otra llamada automática de autenticación. Una indisponibilidad municipal puede mostrarse como aviso; el rechazo del acceso al gateway bloquea el login.
+El usuario introduce sus credenciales. El frontend las envía a `deportes-be` mediante `/auth/login`. El backend valida:
 
-Las acciones visibles provienen del menú del backend. La autorización real se aplica en el servidor. Después de modificar permisos o representación, volver a iniciar sesión.
+- identidad y contraseña;
+- pertenencia al módulo DeportesApp;
+- rol y permisos;
+- estado del usuario;
+- asignación de complejo para personal interno;
+- disponibilidad de la integración RUAT.
 
-### Estudiantes y mensualidades
+La respuesta de login contiene token, usuario, tipo de usuario, indicador de administrador, información de personal, estado RUAT y menú autorizado.
 
-1. Registrar contribuyente, escuela y representantes cuando corresponda.
-2. El personal registra el estudiante, selecciona escuela y puede asignar cualquier contribuyente como responsable.
-3. Si registra un representante, el responsable es él mismo y solo se ofrecen sus escuelas; una única escuela se selecciona por defecto.
-4. En **Mensualidades → Agregar**, seleccionar escuela, reserva recurrente base aprobada/activa, estudiantes, períodos y pagador permitido.
-5. Un padre puede pagar sus estudiantes aunque la reserva base pertenezca a otra persona. Si no tiene estudiantes activos a cargo ni de una escuela que representa, se muestra: “Su usuario no tiene estudiantes a cargo, por lo que no puede registrar mensualidades.”
-6. Revisar importes, registrar tasa y mensualidad, y consultar posteriormente pago, ticket e historial. Si falla el guardado después de crear una tasa, verificar el resultado antes de repetir.
+El menú no es estático. Cada entrada recibida puede definir:
 
-La baja conserva el historial; reactivar genera una inscripción y matrícula nuevas. Para otra escuela se registra una nueva relación del estudiante.
+- una ruta;
+- un recurso protegido (`permissionRoute`);
+- una acción (`accion`);
+- un módulo;
+- hijos con acciones adicionales.
 
-## Desarrollo y compilación
+El frontend recorre todo el árbol de permisos y utiliza esas acciones para mostrar botones, abrir vistas y habilitar operaciones. Por ejemplo, tener acceso a **Reservas Puntuales** no implica tener automáticamente permiso para crear, validar, anular o cambiar horarios.
 
-Requisitos: Node.js 20 (usado por el Dockerfile), npm y backend configurado. Se usa el Angular CLI local del proyecto.
+La autorización real se vuelve a comprobar en cada solicitud del backend. Un usuario que intente abrir una ruta directamente o enviar una operación manualmente no obtiene permisos adicionales.
+
+Después de modificar roles, permisos, representación, asignación de complejo o estado RUAT, el usuario debe cerrar sesión e iniciar sesión nuevamente para recibir el menú actualizado.
+
+### Tipos de usuario y alcance
+
+#### Administrador
+
+Puede recibir permisos para administrar catálogos, usuarios internos, configuraciones, reservas, validaciones y reportes. No puede ignorar las reglas de disponibilidad, estados, pagos, RUAT o configuración del sistema.
+
+#### Encargado o personal interno
+
+Trabaja con las acciones asignadas por Usuarios y con el complejo que tenga asignado durante el período correspondiente. Puede consultar, crear o validar reservas solo si esas acciones forman parte de su menú.
+
+#### Contribuyente padre o tutor
+
+Puede realizar las operaciones que su menú permita y registrar mensualidades de estudiantes que estén efectivamente a su cargo. Ser tutor no lo convierte en representante de una organización o escuela.
+
+#### Contribuyente representante
+
+Puede trabajar con organizaciones, escuelas, estudiantes y mensualidades vinculadas a una representación activa. La relación de representación limita los datos que puede seleccionar y las operaciones que puede realizar.
+
+Los estados de usuario controlan el acceso:
+
+- `PENDIENTE_VERIFICACION`: todavía no cumple la verificación requerida.
+- `ACTIVO`: puede operar según sus permisos.
+- `INACTIVO`: no puede utilizar las operaciones habilitadas.
+- `SANCIONADO`: tiene una restricción vigente.
+- `BLOQUEADO`: no puede reservar y puede tener bloqueado el acceso.
+
+## 2. Interacción general de una operación
+
+Todas las operaciones importantes siguen este ciclo:
+
+```text
+Usuario
+  → selecciona una vista y una acción permitida
+Frontend
+  → valida campos, permisos y condiciones visibles
+Backend
+  → valida autorización, reglas, estados y duplicados
+RUAT (si aplica)
+  → consulta, registra tasa, confirma pago o anula
+Backend
+  → guarda el resultado y actualiza estados
+Frontend
+  → recarga la lista, muestra mensaje, ticket o error
+```
+
+Si una operación externa se completa pero el guardado local falla, el usuario no debe repetirla inmediatamente. Primero debe consultarse el resultado por número de tasa, folio o identificador de la operación para evitar duplicados.
+
+## 3. Menú Inicio: cómo se utiliza
+
+### Mapa — `/inicio/taxpayer`
+
+Con `VER`, el usuario consulta complejos, campos, horarios, tarifas y disponibilidad. Con `RESERVAR`, elige un campo y comienza el flujo de reserva.
+
+El mapa no habilita un campo por el solo hecho de mostrarlo. Antes de pasar al formulario se comprueba que el complejo y el campo estén operativos, que el encargado esté vigente cuando corresponda y que el horario seleccionado sea utilizable.
+
+### Calendario — `/inicio/employee`
+
+El personal consulta la ocupación y el estado de las reservas. El calendario sirve como vista operativa; la disponibilidad definitiva se vuelve a comprobar al guardar una reserva.
+
+### Panel administrativo — `/inicio`
+
+Presenta los indicadores y accesos que el menú del administrador permita. No concede operaciones por sí mismo.
+
+## 4. Registro y control de contribuyentes
+
+Ruta: `/taxpayers`.
+
+Acciones disponibles en el perfil administrativo de referencia: `VER`, `CREAR`, `ACTUALIZAR`, `BLOQUEAR` y `EXPORTAR`.
+
+### Registro de un contribuyente
+
+1. El operador selecciona **Crear**.
+2. El frontend solicita documento, tipo de documento y expedición.
+3. El backend consulta RUAT a través de `/ruat/buscar`.
+4. La interfaz muestra el resultado recibido y permite revisar los datos.
+5. Si el flujo continúa, se completan los datos locales, cuenta, tipo de contribuyente, organización, representante o relación con estudiantes.
+6. El backend valida duplicados y reglas de estado.
+7. Se guarda el contribuyente y se recarga el listado.
+
+El sistema controla duplicados por documento, NIT, correo y nombre de usuario. La validación del frontend solo anticipa el error; la unicidad definitiva pertenece al backend.
+
+Cuando se requiere alta en RUAT, el backend ejecuta `/ruat/registro`. La respuesta determina si la verificación fue exitosa. No se debe marcar manualmente como verificado a un contribuyente que no tenga confirmación válida.
+
+### Actualización, bloqueo y activación
+
+`ACTUALIZAR` permite modificar los datos autorizados y mantener relaciones. `BLOQUEAR` cambia el estado según la causa y la operación permitida. Para activar un contribuyente, la interfaz controla que exista verificación RUAT cuando esta sea obligatoria.
+
+La inactivación no borra reservas, pagos, estudiantes ni auditoría. Solo impide nuevas operaciones que requieran un usuario activo.
+
+## 5. Organizaciones y representantes
+
+Ruta: `/organizations`.
+
+Acciones: `VER`, `CREAR`, `ACTUALIZAR` y `ANULAR`.
+
+El operador registra la organización y después mantiene sus representantes. Una organización puede tener varios representantes. En una reserva o mensualidad, el sistema solo ofrece una organización o escuela si la relación del usuario es válida y está vigente.
+
+Anular una organización no debe eliminar su historial ni permitir que se utilice para nuevas operaciones. Las reservas y pagos existentes se conservan conforme a sus propios estados.
+
+## 6. Estudiantes, escuelas y responsables
+
+Ruta: `/students`.
+
+Acciones: `VER`, `CREAR`, `ACTUALIZAR`, `DAR DE BAJA` y `HABILITAR`.
+
+### Alta
+
+El personal registra al estudiante, selecciona una escuela, define el responsable y crea la relación estudiante–escuela. El responsable puede ser el propio contribuyente registrado o un contribuyente permitido por las reglas del sistema.
+
+### Baja y reactivación
+
+La baja desactiva la relación operativa, pero conserva la historia. La reactivación crea una nueva inscripción/matrícula. Si el estudiante cambia de escuela se crea otra relación, sin alterar las anteriores.
+
+Estas relaciones son la base de la autorización de mensualidades: el sistema no debe permitir que cualquier contribuyente pague por cualquier estudiante.
+
+## 7. Reserva puntual
+
+Lista: `/reservations/one-time`. Detalle de creación: `/reservations/details`.
+
+Acciones: `VER`, `CREAR`, `ACTUALIZAR`, `ANULAR`, `VALIDAR`, `CAMBIAR-HORARIO` y `GENERAR TICKET`.
+
+### Flujo completo
+
+1. El usuario entra desde el mapa, calendario o menú.
+2. Selecciona complejo, campo, fecha y horario.
+3. Selecciona beneficiario: contribuyente u organización.
+4. Elige una tarifa compatible con el campo y el tipo de reserva.
+5. El frontend calcula el detalle visible y comprueba campos obligatorios.
+6. El backend verifica disponibilidad real, estado del campo, horario fijo, excepciones, conflictos, duración y anticipación.
+7. Se crea la reserva.
+8. Si la operación requiere autorización, queda en validación; si no, queda pendiente de pago según corresponda.
+9. El personal con `VALIDAR` aprueba o rechaza.
+10. Si es aprobada, el backend puede crear la tasa en RUAT.
+11. El pago se confirma consultando RUAT.
+12. Con pago confirmado, se actualiza la reserva y se habilita el ticket.
+
+### Estados
+
+- `SOLICITADA`: espera validación administrativa.
+- `PENDIENTE`: creada o aprobada, pendiente de pago.
+- `PAGADA`: pago confirmado.
+- `EN_CURSO`: se encuentra dentro del horario de uso.
+- `COMPLETADA`: terminó correctamente.
+- `CANCELADA`: fue anulada por una acción autorizada o por una regla del sistema.
+- `EXPIRADA`: venció el plazo de pago.
+- `NO_SHOW`: el usuario no se presentó.
+
+### Cambio de horario
+
+`CAMBIAR-HORARIO` solo está disponible con el permiso correspondiente. El nuevo horario se valida como una reserva nueva: disponibilidad, conflictos, límites, tarifa y anticipación. Si se confirma, el backend actualiza la reserva y puede generar notificaciones.
+
+### Anulación
+
+`ANULAR` no es un borrado físico. El sistema revisa estado, pago, fecha, tasa asociada y motivo. Cuando existe una tasa RUAT, puede ser necesario anularla en RUAT antes de completar la operación local.
+
+## 8. Reserva recurrente
+
+Lista: `/reservations/recurrent`. Creación: `/reservations/details`.
+
+Acciones: `VER`, `CREAR`, `ACTUALIZAR`, `ANULAR`, `VALIDAR`, `GENERAR TICKET` y `CREAR-POSTPAGO`.
+
+El usuario define rango de fechas, días de uso, sesiones, duración, campo, beneficiario y tarifa. El sistema valida cada combinación de fecha y horario contra horarios fijos, excepciones y reservas existentes.
+
+El personal con `VALIDAR` aprueba o rechaza solicitudes. El personal con `CREAR-POSTPAGO` puede crear una reserva posterior al uso únicamente si las configuraciones y reglas del backend lo permiten.
+
+El pago recurrente tiene fecha límite. Si el pago no se confirma dentro del plazo, la reserva puede expirar y cancelarse automáticamente. El frontend informa el resultado y recarga la lista para no mostrar una reserva como activa cuando ya expiró.
+
+## 9. Escuelas municipales y mensualidades
+
+Lista: `/reservations/schools`. Registro: `/reservations/schools/new`.
+
+Acciones: `VER`, `CREAR`, `ACTUALIZAR`, `ANULAR` y `GENERAR TICKET`.
+
+### Flujo de registro
+
+1. El usuario entra a **Agregar mensualidad**.
+2. El frontend obtiene las reservas recurrentes disponibles para su alcance.
+3. Se selecciona una reserva base de escuela que esté activa/aprobada.
+4. La tarifa de la reserva base debe ser de tipo `mensualidad`.
+5. Se valida que las fechas de inicio y fin sean correctas.
+6. Se muestran solo estudiantes activos relacionados con la escuela y el usuario permitido.
+7. Se seleccionan los períodos mensuales.
+8. Se selecciona el pagador permitido.
+9. Se revisan importes, entrenador, estudiantes y períodos.
+10. El backend crea la tasa en RUAT.
+11. El sistema consulta el pago por número de tasa.
+12. Con pago confirmado, guarda la mensualidad y el pago local.
+13. Se puede aprobar, actualizar o emitir el ticket según la acción disponible.
+
+Un tutor sin estudiantes activos a cargo no puede registrar mensualidades. Un representante solo puede trabajar con escuelas que representa. La reserva base puede pertenecer a otra persona si la relación estudiante–escuela autoriza al pagador.
+
+## 10. RUAT y pagos
+
+RUAT nunca se consume directamente desde el navegador con credenciales municipales. El frontend llama a `deportes-be`, que expone una capa protegida para estas operaciones:
+
+| Operación | Endpoint interno | Resultado usado por DeportesApp |
+|---|---|---|
+| Buscar contribuyente | `/ruat/buscar` | Datos y estado de identificación. |
+| Registrar contribuyente | `/ruat/registro` | Confirmación/código de contribuyente. |
+| Crear tasa | `/ruat/creartasa` | Número de tasa y datos de cobro. |
+| Confirmar pago | `/ruat/pago` | Folio, monto, fecha, entidad y estado pagado. |
+| Anular tasa | `/ruat/anulartasa` | Confirmación de anulación. |
+
+El frontend acepta respuestas RUAT en texto o JSON y extrae mensaje, datos y `continuarFlujo`. Si RUAT devuelve una respuesta sin datos, una fecha inválida o un error, se detiene el flujo y se informa al usuario.
+
+Los pagos se identifican por número de tasa y folio. Antes de registrar un pago nuevo se comprueba que no exista ya. Esta protección evita duplicar pagos cuando el usuario reintenta después de un error de red.
+
+## 11. Reglas y validaciones que controlan las reservas
+
+Las reglas pueden variar por configuración, complejo, campo, contribuyente u organización. El sistema contempla:
+
+- usuario activo y autorizado;
+- RUAT disponible y contribuyente verificado cuando sea obligatorio;
+- complejo y campo activos;
+- ausencia de mantenimiento, cierre o evento municipal;
+- horario operativo, horario fijo y excepciones;
+- ausencia de conflicto con otra reserva;
+- fecha futura y horas/días de anticipación;
+- duración mínima y máxima;
+- rango válido de una reserva recurrente;
+- tarifa compatible y monto calculado;
+- fecha límite de pago;
+- permisos de crear, validar, actualizar, anular o cambiar horario;
+- relaciones activas entre contribuyente, organización, escuela y estudiante.
+
+La configuración del sistema puede habilitar o deshabilitar reservas de eventos, organizaciones y recurrentes, así como definir anticipación, duración, validación de pagos, notificaciones y controles protegidos.
+
+## 12. Paginación e interacción de listados
+
+Los listados operativos consultan al backend con página, tamaño, filtros y orden. La respuesta utiliza normalmente `content`, `totalElements`, `totalPages` y `pageable`.
+
+La interfaz muestra la página desde 1, mientras que la API usa índice desde 0. Al cambiar página, tamaño, filtro u orden, se ejecuta una nueva consulta y se actualiza el total. Reservas y escuelas comienzan con cinco filas por página.
+
+La paginación no cambia permisos: solo modifica qué parte del resultado autorizado se muestra. Las listas pequeñas cargadas completas para selectores son datos auxiliares y no sustituyen la consulta paginada.
+
+## 13. Reportes y tickets
+
+Los reportes se generan con la acción `GENERAR` y se filtran según el alcance autorizado:
+
+- ingresos: `/reports/payments`;
+- reservas puntuales: `/reports/list/puntual`;
+- reservas recurrentes: `/reports/list/recurrente`;
+- mensualidades: `/reports/list/mensual`.
+
+El ticket se habilita mediante `GENERAR TICKET` y representa el resultado registrado por el sistema. No debe generarse como comprobante de pago antes de la confirmación requerida.
+
+## 14. Administración y catálogos
+
+Los catálogos controlan qué puede seleccionarse en los flujos:
+
+- complejos: ubicación, estado y responsables;
+- encargados: personal, complejo y vigencia de asignación;
+- superficies y categorías: clasificación de campos;
+- campos: horarios, excepciones, tarifas y estado operativo;
+- clasificadores RUAT: conceptos utilizados en tasas;
+- configuraciones: anticipación, duración, pagos, funcionalidades, límites y notificaciones.
+
+Acciones administrativas disponibles según el menú: `VER`, `CREAR`, `ACTUALIZAR` y `ANULAR`. Anular un catálogo debe respetar dependencias e historial; no equivale a eliminar información utilizada por reservas anteriores.
+
+## 15. Estados de pago y validación
+
+- `PENDIENTE`: no existe confirmación de pago.
+- `PAGADO`: pago confirmado en RUAT y registrado localmente.
+- `PARCIAL`: se registró un pago incompleto cuando el flujo lo permite.
+- `REEMBOLSADO`: devolución asociada a una cancelación.
+- `FALLIDO`: intento de pago no confirmado.
+
+La aprobación administrativa y el pago son controles diferentes. Una reserva puede estar aprobada pero seguir pendiente de pago. Una mensualidad puede tener tasa creada pero no estar pagada. El frontend presenta ambos estados para evitar confundir autorización con cobro.
+
+## 16. Desarrollo y despliegue
+
+Requisitos: Node.js 20, npm y `deportes-be` configurado.
 
 ```powershell
 npm ci
 npm start
-# Compilación de desarrollo
 npm run build -- --configuration development
-# Compilación de producción
 npm run build -- --configuration production
 ```
 
-Abrir `http://localhost:4200`. `src/environments/environment.ts` usa por defecto `http://localhost:8085/api`. Producción usa `environment.prod.ts` y API relativa `/api`. Configurar las URLs e integraciones públicas para cada entorno. `.npmrc` conserva `legacy-peer-deps=true` para las dependencias existentes.
+Abrir `http://localhost:4200`. Desarrollo usa por defecto `http://localhost:8085/api`; producción usa `environment.prod.ts` y API relativa `/api`. El `Dockerfile` compila con Node 20 y sirve con Nginx. El proxy debe dirigir `/api` y `/ws-notificaciones` al backend.
 
-Resultado: `dist/deportes-gamq`. Con dependencias instaladas también puede compilarse mediante `node node_modules/@angular/cli/bin/ng.js build --configuration development`, si el comando global npm de Windows necesita reparación.
+No incluir tokens, contraseñas, credenciales RUAT ni respuestas completas de login en el repositorio, capturas, logs o documentación.
 
-## Organización
-
-```text
-src/app/
-  core/                Modelos, servicios API, autenticación, guards y helpers
-  layouts/             Navegación y disposición de la aplicación
-  pages/
-    dashboards/        Panel, mapa y calendario
-    modules/           Administración, reservas, estudiantes y reportes
-    modals/            Formularios y flujo de mensualidades
-    account/           Perfil y configuración de cuenta
-  public/              Acceso, registro, recuperación y páginas públicas
-  shared/              Tablas, encabezados, widgets y componentes reutilizables
-  store/               Estado NgRx
-src/assets/            Imágenes, traducciones, estilos y recursos
-src/environments/      Configuración por entorno
-```
-
-`pages/modals/mensuality` también contiene la página de registro `/reservations/schools/new`; no se utiliza exclusivamente como modal. Se conservan componentes y recursos del tema declarados o referenciados para mantener las vistas.
-
-## Rutas principales
-
-| Área | Ruta |
-| --- | --- |
-| Panel, calendario, mapa | `/inicio`, `/inicio/employee`, `/inicio/taxpayer` |
-| Complejos y encargados | `/admin/facilities`, `/admin/employees` |
-| Superficies y categorías | `/admin/area`, `/admin/categories` |
-| Clasificadores y configuración | `/admin/classifiers`, `/admin/config` |
-| Canchas | `/settings/fields` |
-| Contribuyentes, organizaciones, estudiantes | `/taxpayers`, `/organizations`, `/students` |
-| Puntuales / recurrentes | `/reservations/one-time`, `/reservations/recurrent` |
-| Mensualidades / registro | `/reservations/schools`, `/reservations/schools/new` |
-| Reserva / ticket | `/reservations/details`, `/reservations/ticket` |
-| Reportes | `/reports/payments`, `/reports/list/:tipoReporte` |
-
-El acceso depende de sesión y permisos; no todas las opciones aparecen para todos los usuarios.
-
-## Despliegue
-
-El Dockerfile compila con Node 20 y sirve con Nginx:
-
-```powershell
-docker build -t deportes-fe .
-```
-
-`.dockerignore` excluye dependencias locales, resultados y archivos de trabajo para no reemplazar las dependencias instaladas en la imagen. `default.conf` sirve los archivos y permite recargar rutas Angular. El proxy público debe dirigir `/api` y `/ws-notificaciones` al backend. `nginx.host.conf.backup` se conserva como referencia histórica, no lo usa el Dockerfile.
-
-## Autoría
-
-GAMQ · Fabiola Danny Morales Siles · moralessfaby.dev@gmail.com
+La documentación de `deportes-be` complementa este documento con contratos API, persistencia, autorización, configuraciones y la integración protegida con RUAT.

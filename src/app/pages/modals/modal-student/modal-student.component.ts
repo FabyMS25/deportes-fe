@@ -334,13 +334,13 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
       this.studentSearchResults = [];
       return;
     }
-    this.studentSearchResults = this.estudiantesExistentes
-      .filter(student => [
-        student.nombreCompleto,
-        student.numeroDocumento,
-        student.matricula
-      ].some(value => this.normalize(value).includes(search)))
-      .slice(0, 20);
+    this.estudiantesService.searchExisting(search).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (results: any) => {
+        const list = Array.isArray(results) ? results : (results?.content || []);
+        this.studentSearchResults = list.slice(0, 20);
+      },
+      error: () => this.studentSearchResults = []
+    });
   }
 
   private normalize(value: unknown): string {

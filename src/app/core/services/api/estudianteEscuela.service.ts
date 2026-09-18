@@ -53,6 +53,15 @@ export class EstudianteEscuelaService {
     return apiGet<EstudianteEscuela[]>(this.http, `${this.apiUrl}/activos`, 'obtener estudiantes activos');
   }
 
+  searchExisting(term: string): Observable<EstudianteEscuela[]> {
+    return apiGet<EstudianteEscuela[]>(
+      this.http,
+      `${this.apiUrl}/buscar-existente`,
+      'buscar estudiantes existentes',
+      { params: { term } }
+    );
+  }
+
   darDeBaja(uuid: string, motivoBaja?: string): Observable<EstudianteEscuela> {
     return apiPut<EstudianteEscuela>(this.http, `${this.apiUrl}/${uuid}/baja`,
       { motivoBaja: motivoBaja?.trim() || undefined }, `dar de baja estudiante (${uuid})`);

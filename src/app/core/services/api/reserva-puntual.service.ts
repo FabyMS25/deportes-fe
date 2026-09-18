@@ -11,6 +11,11 @@ export interface ReservaPuntualFilters {
   estadoReserva?: string;
   estadoValidacion?: string;
   categoria?: string;
+  tipoBeneficiario?: string;
+  tipoContribuyente?: string;
+  tipoOrganizacion?: string;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
   fromDate?: string; // ISO
   toDate?: string;   // ISO
 }

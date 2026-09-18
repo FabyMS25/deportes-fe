@@ -44,6 +44,16 @@ export enum EstadoActual {
   EVENTO_MUNICIPAL = 'EVENTO_MUNICIPAL'   // Reservado para evento prioritario
 }
 
+export enum TipoBeneficiarioReserva {
+  CONTRIBUYENTE = 'CONTRIBUYENTE',
+  ORGANIZACION = 'ORGANIZACION'
+}
+
+export enum TipoContribuyenteReserva {
+  NATURAL = 'NA',
+  JURIDICA = 'JU'
+}
+
 const RESERVATION_STATUS_LABELS: Record<EstadoReserva, string> = {
   [EstadoReserva.SOLICITADA]: 'Solicitada',
   [EstadoReserva.PENDIENTE]: 'Pendiente',

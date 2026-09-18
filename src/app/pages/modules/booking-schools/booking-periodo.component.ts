@@ -182,19 +182,27 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
     ];
     this.itemsList = [
       { name: 'Número Reserva', prop: 'numeroReserva', nowrap: true, visible: true},
-      { name: 'Contribuyente', prop: 'contribuyenteDto.nombreCompleto', visible: !this.contribuyente },
+      { name: 'Contribuyente', prop: 'contribuyenteDto.nombreCompleto', sortable: true, visible: !this.contribuyente },
       { name: 'Complejo', prop: 'campoDeportivoDto.complejoDto.nombre', visible: false, },
       { name: 'Campo Deportivo', prop: 'campoDeportivoDto.nombre', visible: false },
       { name: 'Disciplina', prop: 'organizacionDto.disciplina', visible: false },
-      { name: 'Escuela', prop: 'organizacionDto.nombre', visible: true },
+      { name: 'Escuela', prop: 'organizacionDto.nombre', sortable: true, visible: true },
       { name: 'Entrenador', prop: 'organizacionDto.entrenador', visible: false },
-      { name: 'Monto', prop: 'montoTotal', currency: true, visible: true },
+      { name: 'Monto', prop: 'montoTotal', sortable: true, currency: true, visible: true },
       { name: 'Número Tasa', prop: 'numeroTasa', nowrap: true, visible: true},
-      { name: 'Estado Mensualidad', prop: 'estadoReserva', tag: true, visible: true },
+      { name: 'Estado Mensualidad', prop: 'estadoReserva', sortable: true, tag: true, visible: true },
       { name: 'Estado Pago', prop: 'pagosDtoList[0].estadoPago', tag: true, visible: true },
       { name: 'Observaciones', prop: 'observaciones', visible: false },
       { name: 'Fecha Creación', prop: 'fechaCreacion', date: true, visible: false },
     ];
+    const sortableColumns = new Set([
+      'numeroReserva', 'contribuyenteDto.nombreCompleto', 'organizacionDto.nombre',
+      'montoTotal', 'numeroTasa', 'estadoReserva', 'fechaCreacion'
+    ]);
+    this.itemsList = this.itemsList.map(column => ({
+      ...column,
+      sortable: sortableColumns.has(column.prop)
+    }));
 
     const savedViewMode = localStorage.getItem('dataTableViewMode');
     if (savedViewMode === 'table' || savedViewMode === 'cards') {
@@ -250,6 +258,27 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
     this.pageSize = size;
     this.currentPage = 1;
     this.getReservations();
+  }
+
+  onSortChange(event: { column: string; direction: 'asc' | 'desc' }): void {
+    const sortBy: Record<string, string> = {
+      numeroReserva: 'numeroReserva',
+      'contribuyenteDto.nombreCompleto': 'contribuyente',
+      'organizacionDto.nombre': 'organizacion',
+      montoTotal: 'montoTotal',
+      numeroTasa: 'numeroTasa',
+      estadoReserva: 'estadoReserva',
+      fechaCreacion: 'fechaCreacion'
+    };
+    const resolvedSort = sortBy[event.column];
+    if (!resolvedSort) return;
+    this.filters = {
+      ...this.filters,
+      sortBy: resolvedSort,
+      sortDirection: event.direction
+    };
+    this.currentPage = 1;
+    void this.getReservations();
   }
   onNavChange(changeEvent: NgbNavChangeEvent) {
     this.filters.estadoReserva = '';
@@ -727,9 +756,9 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
         this.currentPage - 1, this.pageSize, this.filters
       ).pipe(takeUntil(this.cancelListRequest)));
       if (version !== this.requestVersion) return;
-      const list = this.enrichReservationsForDisplay(this.filterReservationsByUserScope(
+      const list = this.enrichReservationsForDisplay(
         Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : []
-      ));
+      );
       this.reservasList = { ...data, content: list };
       this.temp = list;
       this.csvExportItems = list;
@@ -755,27 +784,13 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
         0, Math.max(1, this.reservasList.totalElements), this.filters
       ));
       const list = Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
-      return this.enrichReservationsForDisplay(this.filterReservationsByUserScope(list));
+      return this.enrichReservationsForDisplay(list);
     } catch (error) {
       this.handleError(error, 'Error al obtener las mensualidades para exportar');
       return [];
     }
   };
 
-  private filterReservationsByUserScope(list: Reserva[]): Reserva[] {
-    const employee = this.authService.staff();
-    if (employee?.complejoDto) {
-      list = list.filter(item =>
-        item.campoDeportivoDto?.complejoDto?.uuid === employee.complejoDto.uuid
-      );
-    }
-    if (this.contribuyente) {
-      list = list.filter(item =>
-        item.contribuyenteDto?.uuid === this.contribuyente.uuid
-      );
-    }
-    return list;
-  }
   private async updateReservation(
     reserva: Reserva,
     updates: Partial<Reserva>

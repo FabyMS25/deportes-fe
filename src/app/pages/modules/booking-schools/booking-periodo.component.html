@@ -161,6 +161,7 @@
                 }"
                 (pageChange)="onPageChange($event)"
                 (pageSizeChange)="onPageSizeChange($event)"
+                (sortChange)="onSortChange($event)"
                 [actions]="{
                     show: canActivate.includes('VER'),
                     consult: canActivate.includes('ACTUALIZAR'),
