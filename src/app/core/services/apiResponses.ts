@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { Reserva } from '../models/reserva.model';
 
 export interface ApiResponse<T> {
   status: string;
@@ -8,7 +9,28 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+export interface ReservaRevision {
+  alcance: string;
+  revisadas: number;
+  actualizadas: number;
+  sinCambios: number;
+  fallidas: number;
+  omitidas: number;
+  completa: boolean;
+  resultados: Array<{
+    reservaDto: Reserva;
+    estadoAnterior?: string;
+    resultado: 'ACTUALIZADA' | 'SIN_CAMBIOS' | 'ERROR' | 'OMITIDA';
+    motivo?: string;
+    ruat: string;
+    respuestaRuat?: unknown;
+    estadoHttpRuat?: number;
+    detalleLocal?: string;
+  }>;
+}
+
 export interface PageResponse<T> {
+  revision?: ReservaRevision;
   content: T[];
   totalElements: number;
   totalPages: number;
@@ -61,7 +83,9 @@ export function emptyPaginatedResponse<T>(page = 1, perPage = 10): PaginatedResp
 export function handleError(operation = 'operación') {
   return (error: unknown): Observable<never> => {
     const message = extractMessage(error) || `Error en ${operation}`;
-    const normalizedError = new Error(message) as Error & {
+    // Keep technical identifiers in originalError, not in the user-facing message.
+    const displayMessage = message.replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '[identificador interno]');
+    const normalizedError = new Error(displayMessage) as Error & {
       status?: number;
       error?: unknown;
       originalError?: unknown;

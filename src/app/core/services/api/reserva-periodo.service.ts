@@ -6,6 +6,7 @@ import { ReservaPeriodo } from '../../models/reservaPeriodo.model';
 import { PageResponse, apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 export interface ReservaPeriodFilters {
+  revisarEstados?: boolean;
   tab?: number;
   searchTerm?: string;
   estadoReserva?: string;

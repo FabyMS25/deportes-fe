@@ -1,3 +1,5 @@
+import { TipoOrganizacion, FiltroOrganizacionReserva, OrganizacionReservaOptions } from 'src/app/core/constants/Features';
+import { UserRoleName, UserRoles } from 'src/app/core/constants/UserData';
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -9,7 +11,7 @@ import { PaginationService } from 'src/app/core/services/pagination.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { PagoService } from 'src/app/core/services/api/pago.service';
 import { ReservaRecurrenteFilters, ReservaRecurrenteService } from 'src/app/core/services/api/reserva-recurrente.service';
-import { ReservaService } from 'src/app/core/services/api/reserva.service';
+import { ReservaService, showReservationRevision } from 'src/app/core/services/api/reserva.service';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
 import { EstadoReserva, EstadoValidacion, EstadoPago, EstadoUsuario, EstadoRuat, EstadoActual, StatusUtils, TipoBeneficiarioReserva, TipoContribuyenteReserva} from 'src/app/core/constants/Estados';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
@@ -47,24 +49,14 @@ export class BookingRecurrentComponent implements OnInit {
   categoryList: Categoria[] = [];
   estadoReservaOptions = StatusUtils.getReservationStatusOptions();
   estadoValidacionOptions = StatusUtils.getEstadoValidacionOptions();
-  tipoBeneficiarioOptions = [
-    { value: TipoBeneficiarioReserva.CONTRIBUYENTE, label: 'Contribuyente' },
-    { value: TipoBeneficiarioReserva.ORGANIZACION, label: 'Organización' }
-  ];
   tipoContribuyenteOptions = [
     { value: TipoContribuyenteReserva.NATURAL, label: 'Persona natural' },
     { value: TipoContribuyenteReserva.JURIDICA, label: 'Persona jurídica' }
   ];
-  tipoOrganizacionOptions = [
-    { value: 'asociacion_deportiva', label: 'Asociación deportiva' },
-    { value: 'club_deportivo', label: 'Club deportivo' },
-    { value: 'unidad_educativa', label: 'Escuela / unidad educativa' },
-    { value: 'empresa_privada', label: 'Empresa privada' },
-    { value: 'institucion_publica', label: 'Institución pública' }
-  ];
+  tipoOrganizacionOptions = OrganizacionReservaOptions;
   sortBy = 'fechaInicio';
   sortDirection: 'asc' | 'desc' = 'desc';
-  userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
+  userRole: UserRoleName = UserRoles.CONTRIBUYENTE;
   userData!: any;
   contribuyente!: Contribuyente;
 
@@ -116,7 +108,6 @@ export class BookingRecurrentComponent implements OnInit {
     estadoReserva: '',
     estadoValidacion: '',
     categoria: '',
-    tipoBeneficiario: '',
     tipoContribuyente: '',
     tipoOrganizacion: '',
     activo: '',
@@ -190,6 +181,7 @@ export class BookingRecurrentComponent implements OnInit {
       { name: 'Fecha Creación', prop: 'reservaDto.fechaCreacion', date: true, visible: false },
       { name: 'Activo', prop: 'activo', tag: true, visible: false },
     ];
+    this.itemsList = this.itemsList.map(column => ({ ...column, sortable: true }));
     const savedViewMode = localStorage.getItem('dataTableViewMode');
     if (savedViewMode === 'table' || savedViewMode === 'cards') {
       this.viewMode = savedViewMode;
@@ -228,42 +220,29 @@ export class BookingRecurrentComponent implements OnInit {
     this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
     localStorage.setItem('dataTableViewMode', this.viewMode);
   }
-  onPageChange(page: number): void {
+onPageChange(page: number): void {
     this.currentPage = page;
-    this.getRecurrentReservations();
+    this.getRecurrentReservations(false);
   }
 
-  onSortChange(sort: { column: string; direction: 'asc' | 'desc' }): void {
-    const sortMap: Record<string, string> = {
-      'fechaInicio': 'fechaInicio',
-      'categoria': 'categoria',
-      'reservaDto.numeroReserva': 'numeroReserva',
-      'reservaDto.contribuyenteDto.nombreCompleto': 'contribuyente',
-      'reservaDto.campoDeportivoDto.complejoDto.nombre': 'complejo',
-      'reservaDto.campoDeportivoDto.nombre': 'campoDeportivo',
-      'reservaDto.tarifaDto.tipoCobro': 'tipoCobro',
-      'reservaDto.montoTotal': 'montoTotal',
-      'reservaDto.numeroTasa': 'numeroTasa',
-      'reservaDto.estadoReserva': 'estadoReserva'
-    };
-    const mapped = sortMap[sort.column];
-    if (!mapped) return;
-    this.sortBy = mapped;
+onSortChange(sort: { column: string; direction: 'asc' | 'desc' }): void {
+    if (!this.itemsList.some(column => column.prop === sort.column && column.sortable)) return;
+    this.sortBy = sort.column;
     this.sortDirection = sort.direction;
     this.currentPage = 1;
-    this.getRecurrentReservations();
+    this.getRecurrentReservations(false);
   }
-  onPageSizeChange(size: number): void {
+onPageSizeChange(size: number): void {
     this.pageSize = size;
     this.currentPage = 1;
-    this.getRecurrentReservations();
+    this.getRecurrentReservations(false);
   }
 
-  onNavChange(changeEvent: NgbNavChangeEvent) {
+onNavChange(changeEvent: NgbNavChangeEvent) {
     this.filters.estadoReserva = '';
     this.filters.tab = changeEvent.nextId;
     this.currentPage = 1;
-    this.getRecurrentReservations();
+    this.getRecurrentReservations(false);
   }
 
   ngOnDestroy(): void {
@@ -282,19 +261,18 @@ export class BookingRecurrentComponent implements OnInit {
     this.applyFilters();
   }
 
-  applyFilters() {
+applyFilters() {
     this.currentPage = 1;
-    this.getRecurrentReservations();
+    this.getRecurrentReservations(false);
   }
 
-  clearFilters() {
+clearFilters() {
     clearTimeout(this.searchTimer);
     this.filters = {
       searchTerm: '',
       estadoReserva: '',
       estadoValidacion: '',
       categoria: '',
-      tipoBeneficiario: '',
       tipoContribuyente: '',
       tipoOrganizacion: '',
       activo:'',
@@ -304,7 +282,7 @@ export class BookingRecurrentComponent implements OnInit {
     };
     this.dateRange = null
     this.currentPage = 1;
-    this.getRecurrentReservations();
+    this.getRecurrentReservations(true);
   }
   onDateRangeChange(value: { from: Date, to: Date } | null): void {
       this.dateRange = value;
@@ -349,7 +327,8 @@ export class BookingRecurrentComponent implements OnInit {
       backdrop: 'static',
       size: size
     });
-    modalRef.componentInstance.row = data;
+    modalRef.componentInstance.selectedRows = Array.isArray(data) ? [...data] : [data];
+    modalRef.componentInstance.row = Array.isArray(data) ? data[0] : data;
     modalRef.componentInstance.accion = accion;
     modalRef.componentInstance.canActivate = this.canActivate;
     modalRef.componentInstance.emitList.subscribe(() => {
@@ -372,12 +351,10 @@ export class BookingRecurrentComponent implements OnInit {
     if (dateValue instanceof Date) {
       return new Date(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate());
     }
-
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
       const [year, month, day] = dateValue.split('-').map(Number);
       return new Date(year, month - 1, day);
     }
-
     return new Date(dateValue);
   }
 
@@ -401,351 +378,398 @@ export class BookingRecurrentComponent implements OnInit {
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   }
   /* BUSINESS LOGIC */
-  private async checkAndUpdateReservationsStatuses(
-    list: ReservaRecurrente[]
-  ): Promise<ReservaRecurrente[]> {
-    const updatedList: ReservaRecurrente[] = [];
-    for (const reservaRec of list) {
-      updatedList.push(await this.checkAndUpdateSingleReservationStatus(reservaRec));
-    }
-    return updatedList;
-  }
-  private async checkAndUpdateSingleReservationStatus(
-    reservaRec: ReservaRecurrente
-  ): Promise<ReservaRecurrente> {
-    if (!reservaRec.reservaDto) return reservaRec;
-    const reservaDto: Reserva = reservaRec.reservaDto;
-    const terminalStates = [
-      EstadoReserva.COMPLETADA,
-      EstadoReserva.NO_SHOW,
-      EstadoReserva.CANCELADA,
-      EstadoReserva.EXPIRADA,
-    ];
-    if (terminalStates.includes(reservaDto.estadoReserva)) return reservaRec;
-    try {
-      if (reservaDto.estadoReserva === EstadoReserva.SOLICITADA) {
-        if (reservaDto.estadoValidacion === EstadoValidacion.RECHAZADA) {
-          return await this.updateReservationByRR(reservaRec, {
-            estadoReserva: EstadoReserva.CANCELADA,
-          });
-        }
+  // private async checkAndUpdateReservationsStatuses(
+  //   list: ReservaRecurrente[]
+  // ): Promise<ReservaRecurrente[]> {
+  //   const updatedList: ReservaRecurrente[] = [];
+  //   for (const reservaRec of list) {
+  //     updatedList.push(await this.checkAndUpdateSingleReservationStatus(reservaRec));
+  //   }
+  //   return updatedList;
+  // }
+  // private async checkAndUpdateSingleReservationStatus(
+  //   reservaRec: ReservaRecurrente
+  // ): Promise<ReservaRecurrente> {
+  //   if (!reservaRec.reservaDto) return reservaRec;
+  //   const reservaDto: Reserva = reservaRec.reservaDto;
+  //   const terminalStates = [
+  //     EstadoReserva.COMPLETADA,
+  //     EstadoReserva.NO_SHOW,
+  //     EstadoReserva.CANCELADA,
+  //     EstadoReserva.EXPIRADA,
+  //   ];
+  //   if (terminalStates.includes(reservaDto.estadoReserva)) {
+  //     // An expired state may have been written by the old backend scheduler
+  //     // before the RUAT payment was synchronized. Re-check RUAT so a payment
+  //     // made before the deadline can restore the reservation state.
+  //     if (
+  //       reservaDto.estadoReserva === EstadoReserva.EXPIRADA &&
+  //       !reservaDto.esReservaGratuita &&
+  //       reservaDto.numeroTasa
+  //     ) {
+  //       const consultResult = await this.consultData(reservaRec, { silent: true });
+  //       if (
+  //         consultResult.consultationSuccessful &&
+  //         consultResult.hasPayment &&
+  //         this.isPaymentWithinDeadline(reservaDto, consultResult.pagoData?.fechaPago)
+  //       ) {
+  //         if (this.isPeriodCompleted(reservaRec)) {
+  //           return await this.updateReservationByRR(reservaRec, {
+  //             estadoReserva: EstadoReserva.COMPLETADA,
+  //           });
+  //         }
+  //         if (this.isCurrentlyActive(reservaRec)) {
+  //           return await this.updateReservationByRR(reservaRec, {
+  //             estadoReserva: EstadoReserva.EN_CURSO,
+  //           });
+  //         }
+  //         return await this.updateReservationByRR(reservaRec, {
+  //           estadoReserva: EstadoReserva.PAGADA,
+  //         });
+  //       }
+  //     }
+  //     return reservaRec;
+  //   }
+  //   try {
+  //     if (reservaDto.estadoReserva === EstadoReserva.SOLICITADA) {
+  //       if (reservaDto.estadoValidacion === EstadoValidacion.RECHAZADA) {
+  //         return await this.updateReservationByRR(reservaRec, {
+  //           estadoReserva: EstadoReserva.CANCELADA,
+  //         });
+  //       }
 
-        return reservaRec;
-      }
+  //       return reservaRec;
+  //     }
 
-      if (reservaDto.estadoReserva === EstadoReserva.PENDIENTE) {
-        if (reservaDto.esReservaGratuita) {
-          if (reservaDto.estadoValidacion === EstadoValidacion.APROBADA) {
-            if (this.isPeriodCompleted(reservaRec)) {
-              return await this.updateReservationByRR(reservaRec, {
-                estadoReserva: EstadoReserva.COMPLETADA,
-              });
-            }
+  //     if (reservaDto.estadoReserva === EstadoReserva.PENDIENTE) {
+  //       if (reservaDto.esReservaGratuita) {
+  //         if (reservaDto.estadoValidacion === EstadoValidacion.APROBADA) {
+  //           if (this.isPeriodCompleted(reservaRec)) {
+  //             return await this.updateReservationByRR(reservaRec, {
+  //               estadoReserva: EstadoReserva.COMPLETADA,
+  //             });
+  //           }
 
-            if (this.isCurrentlyActive(reservaRec)) {
-              return await this.updateReservationByRR(reservaRec, {
-                estadoReserva: EstadoReserva.EN_CURSO,
-              });
-            }
-          }
+  //           if (this.isCurrentlyActive(reservaRec)) {
+  //             return await this.updateReservationByRR(reservaRec, {
+  //               estadoReserva: EstadoReserva.EN_CURSO,
+  //             });
+  //           }
+  //         }
 
-          return reservaRec;
-        }
+  //         return reservaRec;
+  //       }
 
-        const consultResult = await this.consultData(reservaRec, { silent: true });
+  //       const consultResult = await this.consultData(reservaRec, { silent: true });
 
-        if (consultResult.consultationSuccessful) {
-          if (consultResult.hasPayment) {
-            if (this.isPeriodCompleted(reservaRec)) {
-              return await this.updateReservationByRR(reservaRec, {
-                estadoReserva: EstadoReserva.COMPLETADA,
-              });
-            }
+  //       if (consultResult.consultationSuccessful) {
+  //         if (consultResult.hasPayment) {
+  //           if (this.isPeriodCompleted(reservaRec)) {
+  //             return await this.updateReservationByRR(reservaRec, {
+  //               estadoReserva: EstadoReserva.COMPLETADA,
+  //             });
+  //           }
 
-            if (this.isCurrentlyActive(reservaRec)) {
-              return await this.updateReservationByRR(reservaRec, {
-                estadoReserva: EstadoReserva.EN_CURSO,
-              });
-            }
+  //           if (this.isCurrentlyActive(reservaRec)) {
+  //             return await this.updateReservationByRR(reservaRec, {
+  //               estadoReserva: EstadoReserva.EN_CURSO,
+  //             });
+  //           }
 
-            return await this.updateReservationByRR(reservaRec, {
-              estadoReserva: EstadoReserva.PAGADA,
-            });
-          }
+  //           return await this.updateReservationByRR(reservaRec, {
+  //             estadoReserva: EstadoReserva.PAGADA,
+  //           });
+  //         }
 
-          if (this.isPeriodExpired(reservaRec)) {
-            return await this.handleExpiredgReservation(reservaRec);
-          }
-        }
+  //         if (this.isPeriodExpired(reservaRec)) {
+  //           return await this.handleExpiredgReservation(reservaRec);
+  //         }
+  //       }
 
-        return reservaRec;
-      }
+  //       return reservaRec;
+  //     }
 
-      if (
-        reservaDto.estadoReserva === EstadoReserva.PAGADA ||
-        reservaDto.estadoReserva === EstadoReserva.EN_CURSO
-      ) {
-        if (this.isPeriodCompleted(reservaRec)) {
-          return await this.updateReservationByRR(reservaRec, {
-            estadoReserva: EstadoReserva.COMPLETADA,
-          });
-        }
+  //     if (
+  //       reservaDto.estadoReserva === EstadoReserva.PAGADA ||
+  //       reservaDto.estadoReserva === EstadoReserva.EN_CURSO
+  //     ) {
+  //       if (this.isPeriodCompleted(reservaRec)) {
+  //         return await this.updateReservationByRR(reservaRec, {
+  //           estadoReserva: EstadoReserva.COMPLETADA,
+  //         });
+  //       }
 
-        if (
-          this.isCurrentlyActive(reservaRec) &&
-          reservaDto.estadoReserva !== EstadoReserva.EN_CURSO
-        ) {
-          return await this.updateReservationByRR(reservaRec, {
-            estadoReserva: EstadoReserva.EN_CURSO,
-          });
-        }
-      }
+  //       if (
+  //         this.isCurrentlyActive(reservaRec) &&
+  //         reservaDto.estadoReserva !== EstadoReserva.EN_CURSO
+  //       ) {
+  //         return await this.updateReservationByRR(reservaRec, {
+  //           estadoReserva: EstadoReserva.EN_CURSO,
+  //         });
+  //       }
+  //     }
 
-      return reservaRec;
-    } catch {
-      return reservaRec;
-    }
-  }
-  private isCurrentlyActive(reserva: ReservaRecurrente): boolean {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  //     return reservaRec;
+  //   } catch {
+  //     return reservaRec;
+  //   }
+  // }
+  // private isCurrentlyActive(reserva: ReservaRecurrente): boolean {
+  //   const now = new Date();
+  //   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
-    const startDate = new Date(reserva.fechaInicio);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(reserva.fechaFin);
-    endDate.setHours(23, 59, 59, 999);
-    const isWithinPeriod = today >= startDate && today <= endDate;
-    if (!isWithinPeriod) return false;
-    const reservedDays = reserva.diasSemana?.split(',') || [];
-    const dayNames = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
-    const todayDayName = dayNames[now.getDay()];    
-    return reservedDays.includes(todayDayName);
-  } 
-  private isPeriodCompleted(reserva: ReservaRecurrente): boolean {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const endDate = new Date(reserva.fechaFin);
-    endDate.setHours(23, 59, 59, 999);
-    return today > endDate;
-  } 
-  private isPeriodExpired(reserva: ReservaRecurrente): boolean {
-    if(!reserva.reservaDto) return false;
-    if(reserva.reservaDto.esReservaGratuita){
-      return false;
-    }
-    if (reserva.reservaDto.cancelacionAutomatica === false) {
-      return false;
-    }
-    if (!reserva.reservaDto.fechaLimitePago) {
-      return false;
-    }
-    const fechaExpiracion = new Date(reserva.reservaDto.fechaLimitePago);
-    const now = new Date();
-    return now > fechaExpiracion;
-  }
+  //   const startDate = new Date(reserva.fechaInicio);
+  //   startDate.setHours(0, 0, 0, 0);
+  //   const endDate = new Date(reserva.fechaFin);
+  //   endDate.setHours(23, 59, 59, 999);
+  //   const isWithinPeriod = today >= startDate && today <= endDate;
+  //   if (!isWithinPeriod) return false;
+  //   const reservedDays = reserva.diasSemana?.split(',') || [];
+  //   const dayNames = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+  //   const todayDayName = dayNames[now.getDay()];    
+  //   return reservedDays.includes(todayDayName);
+  // } 
+  // private isPeriodCompleted(reserva: ReservaRecurrente): boolean {
+  //   const now = new Date();
+  //   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  //   const endDate = new Date(reserva.fechaFin);
+  //   endDate.setHours(23, 59, 59, 999);
+  //   return today > endDate;
+  // } 
+  // private isPeriodExpired(reserva: ReservaRecurrente): boolean {
+  //   if(!reserva.reservaDto) return false;
+  //   if(reserva.reservaDto.esReservaGratuita){
+  //     return false;
+  //   }
+  //   if (reserva.reservaDto.cancelacionAutomatica === false) {
+  //     return false;
+  //   }
+  //   if (!reserva.reservaDto.fechaLimitePago) {
+  //     return false;
+  //   }
+  //   const fechaExpiracion = new Date(reserva.reservaDto.fechaLimitePago);
+  //   const now = new Date();
+  //   return now > fechaExpiracion;
+  // }
+  // private isPaymentWithinDeadline(reserva: Reserva, fechaPago: string | undefined): boolean {
+  //   if (!reserva.fechaLimitePago || !fechaPago) return false;
+  //   const paymentDate = this.parseRuatPaymentDate(fechaPago);
+  //   if (!paymentDate) return false;
+  //   const deadline = new Date(reserva.fechaLimitePago);
+  //   deadline.setHours(23, 59, 59, 999);
+  //   return paymentDate <= deadline;
+  // }
 
   /* API RUAT Services */
-  private async consultData(
-    item: ReservaRecurrente,
-    options: { silent?: boolean } = {}
-  ): Promise<any> {
-    try {
-      const nroTasa = item.reservaDto?.numeroTasa;
+  // private async consultData(
+  //   item: ReservaRecurrente,
+  //   options: { silent?: boolean } = {}
+  // ): Promise<any> {
+  //   try {
+  //     const nroTasa = item.reservaDto?.numeroTasa;
 
-      if (!nroTasa) {
-        return {
-          item,
-          text: 'No hay número de tasa asociado',
-          type: 'warning',
-          hasPayment: false,
-          consultationSuccessful: false,
-          errorCode: 'NO_TASA'
-        };
-      }
-      const resp: any = await this.ruatService.checkFeePayment(nroTasa).toPromise();
-      if (!this.ruatService.canContinue(resp)) {
-        return {
-          item,
-          text: this.ruatService.getResponseMessage(resp, 'No se puede continuar con el flujo'),
-          type: 'warning',
-          hasPayment: false,
-          consultationSuccessful: true,
-          ruatResponse: resp,
-          errorCode: 'RUAT_FLOW_STOPPED'
-        };
-      }
+  //     if (!nroTasa) {
+  //       return {
+  //         item,
+  //         text: 'No hay número de tasa asociado',
+  //         type: 'warning',
+  //         hasPayment: false,
+  //         consultationSuccessful: false,
+  //         errorCode: 'NO_TASA'
+  //       };
+  //     }
+  //     const resp: any = await this.ruatService.checkFeePayment(nroTasa).toPromise();
+  //     if (!this.ruatService.canContinue(resp)) {
+  //       return {
+  //         item,
+  //         text: this.ruatService.getResponseMessage(resp, 'No se puede continuar con el flujo'),
+  //         type: 'warning',
+  //         hasPayment: false,
+  //         consultationSuccessful: true,
+  //         ruatResponse: resp,
+  //         errorCode: 'RUAT_FLOW_STOPPED'
+  //       };
+  //     }
 
-      const pagoTasa = this.ruatService.getResponseData(resp)?.pagoTasa;
+  //     const pagoTasa = this.ruatService.getResponseData(resp)?.pagoTasa;
 
-      if (!pagoTasa) {
-        return {
-          item,
-          text: this.ruatService.getResponseMessage(resp, 'No se encontraron datos de pago'),
-          type: 'info',
-          hasPayment: false,
-          consultationSuccessful: true,
-          ruatResponse: resp,
-          errorCode: 'PAYMENT_NOT_FOUND'
-        };
-      }
+  //     if (!pagoTasa) {
+  //       return {
+  //         item,
+  //         text: this.ruatService.getResponseMessage(resp, 'No se encontraron datos de pago'),
+  //         type: 'info',
+  //         hasPayment: false,
+  //         consultationSuccessful: true,
+  //         ruatResponse: resp,
+  //         errorCode: 'PAYMENT_NOT_FOUND'
+  //       };
+  //     }
 
-      const text = this.ruatService.getResponseMessage(resp, 'La tasa se encuentra pagada');
+  //     const text = this.ruatService.getResponseMessage(resp, 'La tasa se encuentra pagada');
 
-      try {
-        const fechaPagoLocal = this.parseRuatPaymentDate(pagoTasa.fechaPago);
+  //     try {
+  //       const fechaPagoLocal = this.parseRuatPaymentDate(pagoTasa.fechaPago);
 
-        if (!fechaPagoLocal) {
-          return {
-            item,
-            text: 'RUAT devolvió una fecha de pago inválida. No se registró el pago.',
-            type: 'error',
-            hasPayment: false,
-            consultationSuccessful: false,
-            ruatResponse: resp,
-            errorCode: 'INVALID_RESPONSE'
-          };
-        }
+  //       if (!fechaPagoLocal) {
+  //         return {
+  //           item,
+  //           text: 'RUAT devolvió una fecha de pago inválida. No se registró el pago.',
+  //           type: 'error',
+  //           hasPayment: false,
+  //           consultationSuccessful: false,
+  //           ruatResponse: resp,
+  //           errorCode: 'INVALID_RESPONSE'
+  //         };
+  //       }
 
-        const existingPayment = item.reservaDto?.pagosDtoList?.find(pago =>
-          pago.folio === pagoTasa.folio && pago.numeroTasa === pagoTasa.numeroTasa
-        );
+  //       const existingPayment = item.reservaDto?.pagosDtoList?.find(pago =>
+  //         pago.folio === pagoTasa.folio && pago.numeroTasa === pagoTasa.numeroTasa
+  //       );
 
-        if (!existingPayment && item.reservaDto) {
-          const nuevoPago: Pago = {
-            numeroTasa: pagoTasa.numeroTasa,
-            tipoTasa: 'TO',
-            folio: pagoTasa.folio,
-            formaPago: pagoTasa.formaPago,
-            fechaPago: fechaPagoLocal,
-            entidadFinanciera: pagoTasa.entidadFinanciera,
-            montoPagado: parseFloat(pagoTasa.montoPago) || 0,
-            observaciones: pagoTasa.observacion,
-            estadoPago: EstadoPago.PAGADO,
-            ultimaConsulta: new Date(),
-            respuestaCompletaRuat: JSON.stringify(resp),
-            reservaDto: item.reservaDto
-          };
+  //       if (!existingPayment && item.reservaDto) {
+  //         const nuevoPago: Pago = {
+  //           numeroTasa: pagoTasa.numeroTasa,
+  //           tipoTasa: 'TO',
+  //           folio: pagoTasa.folio,
+  //           formaPago: pagoTasa.formaPago,
+  //           fechaPago: fechaPagoLocal,
+  //           entidadFinanciera: pagoTasa.entidadFinanciera,
+  //           montoPagado: parseFloat(pagoTasa.montoPago) || 0,
+  //           observaciones: pagoTasa.observacion,
+  //           estadoPago: EstadoPago.PAGADO,
+  //           ultimaConsulta: new Date(),
+  //           respuestaCompletaRuat: JSON.stringify(resp),
+  //           reservaDto: item.reservaDto
+  //         };
 
-          await this.pagoService.save(nuevoPago).toPromise();
-        }
+  //         await this.pagoService.save(nuevoPago).toPromise();
+  //       }
 
-        return {
-          item,
-          text,
-          type: 'success',
-          pagoData: pagoTasa,
-          hasPayment: true,
-          consultationSuccessful: true,
-          ruatResponse: resp
-        };
-      } catch (error) {
-        return {
-          item,
-          text: 'El pago fue encontrado en RUAT, pero no pudo registrarse en el sistema.',
-          type: 'error',
-          hasPayment: false,
-          consultationSuccessful: false,
-          ruatResponse: resp,
-          errorCode: 'PAYMENT_SAVE_ERROR'
-        };
-      }
-    } catch (error) {
-      return {
-        item,
-        text: this.ruatService.getResponseMessage(error, 'Error al realizar la consulta al RUAT'),
-        type: 'error',
-        hasPayment: false,
-        consultationSuccessful: false,
-        ruatResponse: error,
-        errorCode: 'RUAT_EXCEPTION'
-      };
-    }
-  }
-  private async handleExpiredgReservation(reserva: ReservaRecurrente): Promise<ReservaRecurrente> {
-    if (reserva.reservaDto?.numeroTasa) {
-      try {
-        const requestData = {
-          numeroTasa: reserva.reservaDto.numeroTasa,
-          motivo: "NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO",
-          observacion: "ANULADO AUTOMATICO, VENCIDO PLAZO DE RESERVA"
-        };
-        const ruatResponse = await this.ruatService.cancelTasa(requestData).toPromise();
-        if (!this.ruatService.canContinue(ruatResponse)) {
-          console.warn('RUAT did not authorize automatic fee cancellation:', ruatResponse);
-          return reserva;
-        }
-      } catch (error) {
-        console.warn('Failed to cancel tasa in RUAT for expired reservation:', error);
-        return reserva;
-      }
-    }
-    return await this.updateReservationByRR(reserva, {
-      estadoReserva: EstadoReserva.EXPIRADA,
-      motivoRechazo: "NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO",
-      fechaRechazo: new Date()
-    });
-  }
-
+  //       return {
+  //         item,
+  //         text,
+  //         type: 'success',
+  //         pagoData: pagoTasa,
+  //         hasPayment: true,
+  //         consultationSuccessful: true,
+  //         ruatResponse: resp
+  //       };
+  //     } catch (error) {
+  //       return {
+  //         item,
+  //         text: 'El pago fue encontrado en RUAT, pero no pudo registrarse en el sistema.',
+  //         type: 'error',
+  //         hasPayment: false,
+  //         consultationSuccessful: false,
+  //         ruatResponse: resp,
+  //         errorCode: 'PAYMENT_SAVE_ERROR'
+  //       };
+  //     }
+  //   } catch (error) {
+  //     return {
+  //       item,
+  //       text: this.ruatService.getResponseMessage(error, 'Error al realizar la consulta al RUAT'),
+  //       type: 'error',
+  //       hasPayment: false,
+  //       consultationSuccessful: false,
+  //       ruatResponse: error,
+  //       errorCode: 'RUAT_EXCEPTION'
+  //     };
+  //   }
+  // }
+  // private async handleExpiredgReservation(reserva: ReservaRecurrente): Promise<ReservaRecurrente> {
+  //   if (reserva.reservaDto?.numeroTasa) {
+  //     try {
+  //       const requestData = {
+  //         numeroTasa: reserva.reservaDto.numeroTasa,
+  //         motivo: "NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO",
+  //         observacion: "ANULADO AUTOMATICO, VENCIDO PLAZO DE RESERVA"
+  //       };
+  //       const ruatResponse = await this.ruatService.cancelTasa(requestData).toPromise();
+  //       if (!this.ruatService.canContinue(ruatResponse)) {
+  //         console.warn('RUAT did not authorize automatic fee cancellation:', ruatResponse);
+  //         return reserva;
+  //       }
+  //     } catch (error) {
+  //       console.warn('Failed to cancel tasa in RUAT for expired reservation:', error);
+  //       return reserva;
+  //     }
+  //   }
+  //   return await this.updateReservationByRR(reserva, {
+  //     estadoReserva: EstadoReserva.EXPIRADA,
+  //     motivoRechazo: "NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO",
+  //     fechaRechazo: new Date()
+  //   });
+  // }
   /* API Services */
-  private async updateReservationByRR(reserva: ReservaRecurrente, updates: any): Promise<ReservaRecurrente> {
-    if (!reserva.reservaDto) return reserva;    
-    const updatedReservaDto: Reserva = {
-      ...reserva.reservaDto,
-      ...updates,
-      fechaActualizacion: new Date(),
-    };
+  // private async updateReservationByRR(reserva: ReservaRecurrente, updates: any): Promise<ReservaRecurrente> {
+  //   if (!reserva.reservaDto) return reserva;    
+  //   const updatedReservaDto: Reserva = {
+  //     ...reserva.reservaDto,
+  //     ...updates,
+  //     fechaActualizacion: new Date(),
+  //   };
+  //   try {
+  //     const response: any = await this.reservaService.update(updatedReservaDto).toPromise();
+  //     reserva.reservaDto = response;
+  //     return reserva;
+  //   } catch (error) { return reserva;}
+  // }
+  // private updateReservation(data: Reserva): Promise<Reserva> {
+  //   return new Promise((resolve, reject) => {
+  //     this.reservaService.update(data).subscribe({
+  //       next: (resp: any) => resolve(resp),
+  //       error: (error) => {
+  //         console.error("Error updating reserva:", error);
+  //         reject(error);
+  //       }
+  //     });
+  //   });
+  // }
+  private revisionEnCurso?: Promise<any>;
+  private revisionesPendientes: any[] = [];
+
+  private async getRecurrentReservations(revisarEstados = true) {
+    clearTimeout(this.searchTimer);
+    const version = ++this.listRequestVersion;
+    this.loading = true;
     try {
-      const response: any = await this.reservaService.update(updatedReservaDto).toPromise();
-      reserva.reservaDto = response;
-      return reserva;
-    } catch (error) { return reserva;}
-  }
-  private updateReservation(data: Reserva): Promise<Reserva> {
-    return new Promise((resolve, reject) => {
-      this.reservaService.update(data).subscribe({
-        next: (resp: any) => resolve(resp),
-        error: (error) => {
-          console.error("Error updating reserva:", error);
-          reject(error);
-        }
-      });
-    });
-  }
-  private async getRecurrentReservations() {
-    const requestVersion = ++this.listRequestVersion;
-    try {
-      this.loading = true;
-      const data: any = await this.reservaRecurrenteService.getAll(
-        this.currentPage - 1,
-        this.pageSize,
-        this.getRecurrentReservationFilters()
-      ).toPromise();
-      if (requestVersion !== this.listRequestVersion) return;
-      if (!data) throw new Error('Respuesta inválida del servidor');
-      let list: ReservaRecurrente[] = [];
-      if (data.content && Array.isArray(data.content)) {
-        list = data.content;
-      } else if (Array.isArray(data)) {
-        list = data;
+      // Do not cancel/repeat a full review when the user pages or filters while it runs.
+      if (this.revisionEnCurso) {
+        await this.revisionEnCurso;
+        if (version !== this.listRequestVersion) return;
+        revisarEstados = false;
       }
-      const updatedList = await this.checkAndUpdateReservationsStatuses(list);
-      if (requestVersion !== this.listRequestVersion) return;
-      this.notifyAboutExpiredReservations(list, updatedList);
-      this.reservasList ={
-        ...data,
-        content: updatedList
-      } ;
-      this.temp = this.reservasList;
-      await this.loadRecurrentReservationsForExport(data, updatedList, requestVersion);
-    } catch (error:any) {
-      if (requestVersion !== this.listRequestVersion) return;
+      const request = this.reservaRecurrenteService.getAll(this.currentPage - 1, this.pageSize,
+        { ...this.getRecurrentReservationFilters(), revisarEstados }).toPromise();
+      if (revisarEstados) this.revisionEnCurso = request;
+      let data: any;
+      try {
+        data = await request;
+        // Keep the review even if a newer page/filter request supersedes these rows.
+        // A later read-only request must not discard changes already committed by the server.
+        if (data?.revision) this.revisionesPendientes.push(data.revision);
+      }
+      finally { if (this.revisionEnCurso === request) this.revisionEnCurso = undefined; }
+      if (version !== this.listRequestVersion) return;
+      if (!data) throw new Error('Respuesta inválida del servidor');
+      const list = Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
+      this.reservasList = { ...data, content: list };
+      this.temp = list;
+      this.csvExportItems = list;
       this.loading = false;
+      for (const revision of this.revisionesPendientes.splice(0)) {
+        await showReservationRevision(revision);
+      }
+    } catch (error: any) {
+      if (version !== this.listRequestVersion) return;
       this.handleError(error, 'Error al obtener las reservas');
-      this.reservasList = { content: [], totalElements: 0, pageable: { pageNumber: 0, pageSize: 20 } };
+      this.reservasList = { content: [], totalElements: 0, totalPages: 0, first: true, last: true,
+        pageable: { pageNumber: 0, pageSize: this.pageSize } };
       this.temp = [];
       this.csvExportItems = [];
     } finally {
-      if (requestVersion === this.listRequestVersion) this.loading = false;
+      if (version === this.listRequestVersion) this.loading = false;
     }
   }
 
@@ -756,9 +780,11 @@ export class BookingRecurrentComponent implements OnInit {
       estadoReserva: this.filters.estadoReserva,
       estadoValidacion: this.filters.estadoValidacion,
       categoria: this.filters.categoria,
-      tipoBeneficiario: this.filters.tipoBeneficiario,
       tipoContribuyente: this.filters.tipoContribuyente,
-      tipoOrganizacion: this.filters.tipoOrganizacion,
+      conOrganizacion: this.filters.tipoOrganizacion === FiltroOrganizacionReserva.CON_ORGANIZACION ? true
+        : this.filters.tipoOrganizacion === FiltroOrganizacionReserva.SIN_ORGANIZACION ? false : undefined,
+      tipoOrganizacion: Object.values(TipoOrganizacion).includes(this.filters.tipoOrganizacion as TipoOrganizacion)
+        ? this.filters.tipoOrganizacion : undefined,
       sortBy: this.sortBy,
       sortDirection: this.sortDirection,
       activo: this.filters.activo,
@@ -766,6 +792,11 @@ export class BookingRecurrentComponent implements OnInit {
       toDate: this.filters.toDate?.toISOString(),
     };
   }
+
+  readonly loadExportItems = async (): Promise<ReservaRecurrente[]> => {
+    await this.loadRecurrentReservationsForExport(this.reservasList, this.reservasList.content, this.listRequestVersion);
+    return this.csvExportItems;
+  };
 
   private async loadRecurrentReservationsForExport(
     pageData: any,
@@ -781,7 +812,7 @@ export class BookingRecurrentComponent implements OnInit {
       const data: any = await this.reservaRecurrenteService.getAll(
         0,
         totalElements,
-        this.getRecurrentReservationFilters()
+        { ...this.getRecurrentReservationFilters(), revisarEstados: false }
       ).toPromise();
       let list: ReservaRecurrente[] = Array.isArray(data?.content)
         ? data.content

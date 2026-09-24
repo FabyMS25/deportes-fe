@@ -29,10 +29,8 @@ export interface ColumnDefinition {
   avatar?: boolean;
   currency?: string | boolean;
   number?: boolean;
-  /** Character limit for the expandable Ver más / Ver menos preview. */
-  truncate?: number;
-  /** Keep identifiers on one line; defaults to true for currency, numbers, dates and phones. */
-  nowrap?: boolean;
+  truncate?: number;/** Character limit for the expandable Ver más / Ver menos preview. */
+  nowrap?: boolean;/** Keep identifiers on one line; defaults to true for currency, numbers, dates and phones. */
   phone?: boolean;
   link?: boolean;
   primary?: boolean;
@@ -184,14 +182,16 @@ export class DataTableComponent implements OnChanges {
       case 'Actualizar':
         return data?.puedeGestionar === false
           ? false
-          : reserva?.estadoReserva ? reserva.estadoReserva === statusData.EstadoReserva.PENDIENTE : true
+          : reserva?.estadoReserva ? (reserva.estadoReserva === statusData.EstadoReserva.PENDIENTE) : true
+      case 'Completar':
+        return statusData.StatusUtils.puedeCompletarReservaEscuela(reserva);
       case 'validate':
         return reserva?.estadoValidacion === statusData.EstadoValidacion.PENDIENTE;
       case 'Anular':
         return reserva?.estadoReserva === statusData.EstadoReserva.SOLICITADA ||
           reserva?.estadoReserva === statusData.EstadoReserva.PENDIENTE;
       case 'No Show':
-        return !!reserva && (
+        return !!reserva && !statusData.StatusUtils.esRecurrenteGratuitaDeEscuela(reserva) && (
           reserva.estadoReserva === statusData.EstadoReserva.PAGADA ||
           reserva.estadoReserva === statusData.EstadoReserva.EN_CURSO
         );

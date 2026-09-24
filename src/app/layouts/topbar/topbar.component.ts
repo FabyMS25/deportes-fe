@@ -23,7 +23,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   menuItems: any[] = [];
   userData: any;
   avatar = "default-profile1.png";
-  userRole!: 'Contribuyente' | 'Admin' | 'Encargado';
+  userRole!: import('src/app/core/constants/UserData').UserRoleName;
   userFullName = '';
   
   messages: any;

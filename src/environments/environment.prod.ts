@@ -4,7 +4,6 @@ export const environment = {
   applicationIdentifier: "uo-XSwSEFlyM",
   
   backendUrl: '/api',
-  backendRuat: '/api',
   assetsUrl: '', 
 
   EmailJS:{

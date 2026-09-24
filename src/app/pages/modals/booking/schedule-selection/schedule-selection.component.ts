@@ -1,3 +1,4 @@
+import { UserRoleName, UserRoles } from 'src/app/core/constants/UserData';
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { Tarifa } from 'src/app/core/models/tarifa.model';
 import { CommonModule } from '@angular/common';
@@ -98,7 +99,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
   @Input() dataTariff!: Tarifa;
   @Input() reservationsList: Reserva[] = []; 
   @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
-  @Input() userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
+  @Input() userRole: UserRoleName = UserRoles.CONTRIBUYENTE;
   @Output() horarioSelected = new EventEmitter<{
     date: Date;
     start: string;

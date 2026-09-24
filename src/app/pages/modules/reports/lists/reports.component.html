@@ -50,8 +50,34 @@
                                 </div>
                             </div>
                             
+<!-- Vista del reporte mensual -->
+<div
+    class="col-xxl-2 col-sm-4"
+    *ngIf="this.reportType === 'mensual'">
+
+    <div>
+        <select
+            class="form-control"
+            name="vistaMensual"
+            [(ngModel)]="vistaMensual">
+
+            <option
+                *ngFor="let option of vistaMensualOptions"
+                [value]="option.value">
+
+                {{ option.label }}
+
+            </option>
+
+        </select>
+    </div>
+</div>
                             <!-- Escuelita Field (only for mensual) -->
-                            <div class="col-xxl-2 col-sm-4" *ngIf="this.reportType === 'mensual'">
+                            <div class="col-xxl-2 col-sm-4"
+                                *ngIf="this.reportType === 'mensual'
+                                && (vistaMensual === 'detalle'
+                                || vistaMensual === 'resumen')">
+                                
                                 <div>
                                     <select class="form-control" name="escuelita" [(ngModel)]="escuelita">
                                         <option [value]="'TODO'">Todas las Escuelas</option>
@@ -61,36 +87,77 @@
                                     </select>
                                 </div>
                             </div>
+                            <!-- Contribuyente - solo reporte resumen -->
+<div
+    class="col-xxl-2 col-sm-4"
+    *ngIf="this.reportType === 'mensual'
+        && vistaMensual === 'resumen'">
 
+    <div>
+        <input
+            type="text"
+            class="form-control"
+            name="contribuyente"
+            [(ngModel)]="contribuyente"
+            placeholder="Contribuyente">
+    </div>
+</div>
                             <!-- Student Name Field (only for mensual) -->
-                            <div class="col-xxl-2 col-sm-4" *ngIf="this.reportType === 'mensual'">
-                                <div>
-                                    <select class="form-control" name="estudiante" [(ngModel)]="estudiante" (change)="onStudentChange()">
-                                        <option [value]="'TODO'">Todos los estudiantes</option>
-                                        <option *ngFor="let option of estudiantesList" [value]="option.nombreCompleto">
-                                            {{option.nombreCompleto}}
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
+<div
+    class="col-xxl-2 col-sm-4"
+    *ngIf="this.reportType === 'mensual'
+        && vistaMensual === 'estudiante'">
 
+    <div>
+        <select
+            class="form-control"
+            name="estudiante"
+            [(ngModel)]="estudiante"
+            (change)="onStudentChange()">
+
+            <option [value]="'TODO'">
+                Todos los estudiantes
+            </option>
+
+            <option
+                *ngFor="let option of estudiantesList"
+                [value]="option.nombreCompleto">
+
+                {{ option.nombreCompleto }}
+
+            </option>
+
+        </select>
+    </div>
+</div>
                             <!-- Matricula Field as Input (only for mensual) -->
-                            <div class="col-xxl-2 col-sm-4" *ngIf="this.reportType === 'mensual'">
-                                <div class="input-group">
-                                    <input type="text" 
-                                           class="form-control" 
-                                           name="matricula" 
-                                           [(ngModel)]="matricula" 
-                                           (input)="onMatriculaInput()"
-                                           placeholder="Matrícula">
-                                    <button type="button" 
-                                            class="btn btn-outline-secondary" 
-                                            (click)="clearMatricula()"
-                                            title="Limpiar matrícula">
-                                        <i class="ri-close-line"></i>
-                                    </button>
-                                </div>
-                            </div>
+<div
+    class="col-xxl-2 col-sm-4"
+    *ngIf="this.reportType === 'mensual'
+        && vistaMensual === 'estudiante'">
+
+    <div class="input-group">
+
+        <input
+            type="text"
+            class="form-control"
+            name="matricula"
+            [(ngModel)]="matricula"
+            (input)="onMatriculaInput()"
+            placeholder="Matrícula">
+
+        <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="clearMatricula()"
+            title="Limpiar matrícula">
+
+            <i class="ri-close-line"></i>
+
+        </button>
+
+    </div>
+</div>
                             
                             <!-- Status Field (for all report types) -->
                             <div class="col-xxl-2 col-sm-4">

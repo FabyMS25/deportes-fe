@@ -104,6 +104,33 @@ export class ReportsService {
     });
   }
   
+  getMensualResumen(
+    fecha_ini: string,
+    fecha_fin: string,
+    estado: string = 'TODO',
+    escuela: string = 'TODO',
+    contribuyente: string = 'TODO'
+  ): Observable<ArrayBuffer> {
+
+    let params = new HttpParams();
+
+    params = params.append('fecha_ini', fecha_ini);
+    params = params.append('fecha_fin', fecha_fin);
+    params = params.append('estado', estado);
+    params = params.append('escuela', escuela);
+    params = params.append('contribuyente', contribuyente);
+
+    return apiGet<ArrayBuffer>(
+      this.http,
+      `${this.apiUrl}/lista-mensuales-resumen`,
+      'generar reporte simple de mensualidades',
+      {
+        responseType: 'arraybuffer',
+        params
+      }
+    );
+  }
+
   getTicketReservaPuntual(uuid: string): Observable<ArrayBuffer> {
     let params = new HttpParams();
     params = params.append('uuid', uuid);

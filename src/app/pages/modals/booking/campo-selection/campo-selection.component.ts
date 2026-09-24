@@ -1,3 +1,4 @@
+import { UserRoleName, UserRoles } from 'src/app/core/constants/UserData';
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
 import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
@@ -41,7 +42,7 @@ export class CampoSelectionComponent implements OnInit {
   viewMode: 'list' | 'grid' = 'grid';
   @Input() dataComplejo?: ComplejoDeportivo;
   @Input() bookingType!: BookingType;
-  @Input() userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente'; 
+  @Input() userRole: UserRoleName = UserRoles.CONTRIBUYENTE; 
   @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
   get enableSolicitudEventsBooking(): boolean {
     return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_EVENTOS]?.valorBoolean ?? false;

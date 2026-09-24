@@ -70,6 +70,11 @@ export class AuthGuard implements CanActivate, CanActivateChild {
       );
     }
 
+    if (currentRoute.params && Object.keys(currentRoute.params).length > 0) {
+      const urlWithoutQuery = state.url.split("?")[0];
+      return this.authenticationService.hasRoutePermission(urlWithoutQuery);
+    }
+
     const baseUrl = state.url.split("?")[0].split("/").slice(0, 3).join("/");
     return this.authenticationService.hasRoutePermission(baseUrl);
   }

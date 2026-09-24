@@ -23,25 +23,28 @@ import { MensualityComponent } from './modals/mensuality/mensuality.component';
 import { monthlyRegistrationAccess, leaveMonthlyRegistration } from './modals/mensuality/mensuality.guards';
 
 const routes: Routes = [
-  { path: 'reservations/schools/new', component: MensualityComponent,
-    canActivate: [monthlyRegistrationAccess], canDeactivate: [leaveMonthlyRegistration] },
   { path: 'profile/profile', component: ProfileComponent, data: { requiredPermission: 'CAN_ACCESS' } },
   { path: 'profile/profile-setting', component: SettingsComponent, data: { requiredPermission: 'CAN_ACCESS' } },
+    
+    { path: 'taxpayers', component: TaxpayersComponent },
+    { path: 'students', component: StudentsComponent },
+    { path: 'organizations', component: OrganizationsComponent },
   { path: 'admin/facilities', component: FacilitiesComponent },
   { path: 'admin/employees', component: EmployeesComponent },
   { path: 'admin/area', component: SurfacesComponent },
   { path: 'admin/categories', component: CategoriesComponent },
   { path: 'admin/classifiers', component: ClasificadoresRuatComponent },
-  { path: 'admin/config', component: SystemConfigurationsComponent },
+  { path: 'admin/config', component: SystemConfigurationsComponent },  
   { path: 'settings/fields', component: FieldsComponent },
+  
   { path: 'reservations/one-time', component: BookingOneTimeComponent },
   { path: 'reservations/recurrent', component: BookingRecurrentComponent },
   { path: 'reservations/schools', component: BookingPeriodoComponent },
   { path: 'reservations/details', component: BookingDetailsComponent },
-  { path: 'reservations/ticket', component: TicketComponent },
-  { path: 'taxpayers', component: TaxpayersComponent },
-  { path: 'students', component: StudentsComponent },
-  { path: 'organizations', component: OrganizationsComponent }
+  { path: 'reservations/schools/new', component: MensualityComponent,
+    canActivate: [monthlyRegistrationAccess], canDeactivate: [leaveMonthlyRegistration] },
+  { path: 'reservations/ticket', component: TicketComponent }
+
 ];
 
 @NgModule({

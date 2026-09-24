@@ -5,10 +5,12 @@ import { environment } from 'src/environments/environment';
 import { Reserva } from '../../models/reserva.model';
 import { BookingType } from '../../constants/Features';
 import { EstadoReserva } from '../../constants/Estados';
-import { PageResponse, apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
+import Swal from 'sweetalert2';
+import { ReservaRevision, PageResponse, apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 import { AuthenticationService } from '../auth.service';
 
 export interface ReservaFilters {
+  revisarEstados?: boolean;
   tab?: number;
   searchTerm?: string; // to search on nombre of Contribuyente, nombre of Organization, nombre Campo deportivo, nro tasa, nro de reserva, motivo de rechazo , motivo de gratuitidad como ESCUELA_MUNICIPAL , 
   typeReserva?:string;//periodo|puntual|recurrente
@@ -110,6 +112,23 @@ export class ReservaService {
     return apiPut<Reserva>(this.http, `${this.apiUrl}/${uuid}/aprobar`, null, `aprobar reserva (${uuid})`, { params });
   }
 
+  markNoShow(uuid: string, observacion = ''): Observable<Reserva> {
+    return apiPut<Reserva>(this.http, `${this.apiUrl}/update-not-show`, null, 'registrar No Show', {
+      params: new HttpParams().set('uuid', uuid).set('observacion', observacion)
+    });
+  }
+
+  completeUsage(uuid: string): Observable<Reserva> {
+    return apiPut<Reserva>(this.http, `${this.apiUrl}/completar`, null, 'confirmar uso completo', {
+      params: new HttpParams().set('uuid', uuid)
+    });
+  }
+
+  completeSchoolReservation(uuid: string): Observable<Reserva> {
+    return apiPut<Reserva>(this.http, `${this.apiUrl}/completar-escuela`, null,
+      'completar reserva base de escuela', { params: new HttpParams().set('uuid', uuid) });
+  }
+
   rejectReservation(uuid: String, motivoRechazo: string, aprobadoPor: string): Observable<Reserva> {
     let params = new HttpParams()
       .set('motivoRechazo', motivoRechazo)
@@ -118,13 +137,14 @@ export class ReservaService {
     return apiPut<Reserva>(this.http, `${this.apiUrl}/${uuid}/rechazar`, null, `rechazar reserva (${uuid})`, { params });
   }
 
-  cancelReservation(uuid: string, motivo: string): Observable<Reserva> {
+  cancelReservation(uuid: string, motivo: string, observacion?: string): Observable<ReservaRevision['resultados'][number]> {
     let params = new HttpParams().set('motivo', motivo);
+    if (observacion != null) params = params.set('observacion', observacion);
     const anuladoPor = this.currentUserUuid();
     if (anuladoPor) {
       params = params.set('anuladoPor', anuladoPor);
     }
-    return apiPut<Reserva>(this.http, `${this.apiUrl}/${uuid}/cancelar`, null, `cancelar reserva (${uuid})`, { params });
+    return apiPut<ReservaRevision['resultados'][number]>(this.http, `${this.apiUrl}/${uuid}/cancelar`, null, `cancelar reserva (${uuid})`, { params });
   }
 
   verificarConflictos(uuidCampo: string, fechaIni: Date, fechaFin: Date, excludeReservaUuid?: string): Observable<boolean> {
@@ -194,4 +214,43 @@ export class ReservaService {
       + `${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
 
+}
+
+export function reservationRevisionText(revision: ReservaRevision): string {
+  const counts = [
+    `Revisadas: ${revision.revisadas}`, `Actualizadas: ${revision.actualizadas}`,
+    `Sin cambios: ${revision.sinCambios}`, `Fallidas: ${revision.fallidas}`,
+    `Pendientes de revisión: ${revision.omitidas}`
+  ].join(' · ');
+  const details = revision.resultados.filter(item => item.resultado !== 'SIN_CAMBIOS').map(item => {
+    const reserva = item.reservaDto;
+    const id = reserva?.numeroReserva || 'Reserva sin número registrado';
+    const tasa = reserva?.numeroTasa ? ` · Tasa ${reserva.numeroTasa}` : '';
+    const state = item.estadoAnterior && reserva?.estadoReserva && item.estadoAnterior !== reserva.estadoReserva
+      ? ` · ${item.estadoAnterior} → ${reserva.estadoReserva}` : '';
+    const original = item.motivo ?? (item.respuestaRuat == null ? '' :
+      typeof item.respuestaRuat === 'string' ? item.respuestaRuat : JSON.stringify(item.respuestaRuat));
+    return [`${id}${tasa}: ${item.resultado}${state}`, original,
+      item.detalleLocal ? `Sistema local: ${item.detalleLocal}` : ''].filter(Boolean).join('\n');
+  });
+  return ['Revisión de todas las reservas que requieren revisión dentro de su acceso.', counts, ...details].join('\n\n');
+}
+
+export async function showReservationRevision(revision?: ReservaRevision): Promise<void> {
+  if (!revision) return;
+  const tieneResultados = revision.resultados?.some(item =>
+    ['ACTUALIZADA', 'ERROR', 'OMITIDA'].includes(item.resultado));
+  if (!tieneResultados && !revision.actualizadas && !revision.fallidas && !revision.omitidas) return;
+  const details = document.createElement('pre');
+  details.textContent = reservationRevisionText(revision);
+  details.style.cssText = 'white-space:pre-wrap;text-align:left;font:inherit;max-height:50vh;overflow:auto';
+  await Swal.fire({
+    title: revision.completa ? 'Revisión de reservas' : 'Revisión de reservas incompleta',
+    icon: revision.completa ? 'info' : 'warning',
+    html: details,
+    confirmButtonText: 'Entendido',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    width: 480
+  });
 }

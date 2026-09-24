@@ -17,7 +17,7 @@ import { NgbModal, NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
+import { RuatRequestsService, ReservationPaymentConsultation } from 'src/app/core/services/ruatRequest.service';
 import { ReservaPuntualService } from 'src/app/core/services/api/reserva-puntual.service';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { PagoService } from 'src/app/core/services/api/pago.service';
@@ -34,7 +34,7 @@ import { obtenerLabelTipoCobro } from 'src/app/core/constants/TipoCobro';
 @Component({
   selector: 'app-booking-one-time-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgbNavModule, FormsModule, TicketComponent],
+  imports: [CommonModule, ReactiveFormsModule, NgbNavModule, FormsModule],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './modal-booking-one-time.component.html',
   styleUrls: ['./modal-booking-one-time.component.scss'],
@@ -75,7 +75,9 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   validationSubmitted = false;
   showLoading = false;
   isConsultingRuat = false;
-  consultationResult?: any;
+  @Input() selectedRows: ReservaPuntual[] = [];
+  consultationResults: ReservationPaymentConsultation[] = [];
+  consultationResult?: ReservationPaymentConsultation;
   originalDurationMinutes = 0;
 
   constructor(
@@ -491,6 +493,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   }
 
   annularData(formValues: any) {
+    if (this.showLoading || !this.canActivate?.includes('ANULAR')) return;
     if (!formValues || !this.row?.reservaDto) {
       this.notify('No se pudo obtener los datos de la reserva', 'error');
       return;
@@ -498,6 +501,10 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
 
     const reserva = this.row.reservaDto;
     if (reserva.esReservaGratuita && (!reserva.numeroTasa || reserva.numeroTasa.trim() === '')) {
+      if (reserva.estadoReserva === EstadoReserva.SOLICITADA) {
+        this.notify('Una solicitud no se anula: requiere rechazo administrativo.', 'warning');
+        return;
+      }
       this.cancelGratuitousReservation(reserva, formValues);
     } else {
       this.cancelPaidReservation(reserva, formValues);
@@ -527,19 +534,14 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
       return;
     }
 
-    const updatedReserva: ReservaPuntual = {
-      ...this.row,
-      reservaDto: {
-        ...this.row.reservaDto,
-        estadoReserva: EstadoReserva.NO_SHOW,
-        fechaActualizacion: new Date(),
-        motivoRechazo: formValues?.observation || 'No Show registrado por administracion'
-      }
-    };
-
+    if (this.showLoading || !this.row.reservaDto.uuid) return;
     this.showLoading = true;
-    this.updateReservaPuntual(updatedReserva)
-      .then(() => {
+    this.reservaService.markNoShow(this.row.reservaDto.uuid, formValues?.observation || '').toPromise()
+      .then(updated => {
+        if (!updated || updated.uuid !== this.row.reservaDto?.uuid || updated.estadoReserva !== EstadoReserva.NO_SHOW) {
+          throw new Error('El servidor no confirmó el estado No Show.');
+        }
+        this.row = { ...this.row, reservaDto: updated };
         this.showLoading = false;
         this.notify('Reserva marcada como No Show exitosamente.', 'success');
         this.emitList.emit();
@@ -562,17 +564,13 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
       confirmButtonColor: '#299cdb',
       cancelButtonColor: '#6c757d'
     }).then((result) => {
-      if (result.isConfirmed) {
+      if (result.isConfirmed && !this.showLoading && this.canActivate.includes('ACTUALIZAR')) {
         this.showLoading = true;
-        const updatedReserva: any = {
-          ...this.row,
-          reservaDto: {
-            ...this.row.reservaDto,
-            estadoReserva: EstadoReserva.COMPLETADA,
+        this.reservaService.completeUsage(this.row.reservaDto!.uuid!).toPromise().then(updated => {
+          if (!updated || updated.uuid !== this.row.reservaDto?.uuid || updated.estadoReserva !== EstadoReserva.COMPLETADA) {
+            throw new Error('El servidor no confirmó el uso completo.');
           }
-        };
-
-        this.updateReservaPuntual(updatedReserva).then(() => {
+          this.row = { ...this.row, reservaDto: updated };
           this.showLoading = false;
           this.notify('Reserva marcada como completada exitosamente', 'success');
           this.emitList.emit();
@@ -596,64 +594,19 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   }
 
   async consultPaymentInModal(): Promise<void> {
-    const reserva = this.row?.reservaDto;
-    if (!reserva?.numeroTasa) {
-      this.consultationResult = {
-        type: 'warning',
-        text: 'La reserva no tiene número de tasa para consultar.'
-      };
-      return;
-    }
-
+    if (this.isConsultingRuat) return;
+    const rows = this.accion === 'consult' && this.selectedRows.length ? [...this.selectedRows] : [this.row];
     this.isConsultingRuat = true;
+    this.consultationResults = [];
     this.consultationResult = undefined;
     this.activeTab = 2;
-
     try {
-      const resp: any = await this.ruatService.checkFeePayment(reserva.numeroTasa).toPromise();
-      if (!this.ruatService.canContinue(resp)) {
-        this.consultationResult = {
-          type: 'warning',
-          text: this.ruatService.getResponseMessage(resp, 'No se pudo confirmar el pago en RUAT.')
-        };
-        return;
+      for (const item of rows) {
+        const result = await this.ruatService.consultReservationPayment(item.reservaDto);
+        this.consultationResults.push(result);
       }
-      const pagoTasa = this.ruatService.getResponseData(resp)?.pagoTasa;
-      if (!pagoTasa) {
-        this.consultationResult = { type: 'info', text: this.ruatService.getResponseMessage(resp, 'No se encontraron datos de pago.') };
-        return;
-      }
-
-      if (!reserva.pagosDtoList?.some(pago =>
-        pago.folio === pagoTasa.folio && pago.numeroTasa === pagoTasa.numeroTasa
-      )) {
-        await this.pagoService.save({
-          numeroTasa: pagoTasa.numeroTasa,
-          tipoTasa: 'TO',
-          folio: pagoTasa.folio,
-          formaPago: pagoTasa.formaPago,
-          fechaPago: this.parseRuatPaymentDate(pagoTasa.fechaPago),
-          entidadFinanciera: pagoTasa.entidadFinanciera,
-          montoPagado: parseFloat(pagoTasa.montoPago) || 0,
-          observaciones: pagoTasa.observacion,
-          estadoPago: EstadoPago.PAGADO,
-          ultimaConsulta: new Date(),
-          respuestaCompletaRuat: JSON.stringify(resp),
-          reservaDto: { uuid: reserva.uuid }
-        }).toPromise();
-      }
-
-      this.consultationResult = {
-        type: 'success',
-        text: this.ruatService.getResponseMessage(resp, 'La tasa se encuentra pagada'),
-        pagoData: pagoTasa
-      };
-      this.emitList.emit();
-    } catch (error) {
-      this.consultationResult = {
-        type: 'error',
-        text: this.ruatService.getResponseMessage(error, 'Error al realizar la consulta al RUAT.')
-      };
+      this.consultationResult = this.consultationResults[0];
+      if (this.consultationResults.some(result => result.type === 'success')) this.emitList.emit();
     } finally {
       this.isConsultingRuat = false;
     }
@@ -704,16 +657,27 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
       this.showLoading = true;
 
       const reservaCompleta = await this.getReservaByUuid(reservaUuid);
+      if (!this.canActivate?.includes('VALIDAR')) {
+        throw new Error('No tiene el permiso VALIDAR requerido para aprobar esta reserva.');
+      }
+      if (!reservaCompleta.esReservaGratuita && !reservaCompleta.numeroTasa?.trim()
+          && !this.canActivate?.includes('CREAR')) {
+        throw new Error('No tiene el permiso CREAR requerido para registrar la tasa en RUAT y completar la aprobación.');
+      }
 
-      const reservaConTasa = await this.registerReservationInRuat(reservaCompleta);
+      const reservaConTasa = reservaCompleta.esReservaGratuita || reservaCompleta.numeroTasa?.trim()
+        ? reservaCompleta
+        : await this.registerReservationInRuat(reservaCompleta);
 
       const aprobadoPor = this.userData.nombreCompleto || this.userData.fullName;
 
       const reservaAprobada = await this.approveReservaAfterRuat(reservaConTasa.uuid!, aprobadoPor);
+      this.row = { ...this.row, reservaDto: reservaAprobada };
 
       this.showLoading = false;
       this.openTicketModal();
-      this.notify('Reserva aprobada exitosamente y registrada en RUAT', 'success');
+      this.notify(reservaAprobada.esReservaGratuita ? 'Reserva gratuita aprobada exitosamente'
+        : 'Reserva aprobada exitosamente y registrada en RUAT', 'success');
       this.emitList.emit();
     } catch (error: any) {
       this.showLoading = false;
@@ -784,8 +748,15 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   private cancelGratuitousReservation(reserva: Reserva, formValues: any) {
     this.showLoading = true;
     this.reservaService.cancelReservation(reserva.uuid!, formValues.motivo).subscribe({
-      next: () => {
+      next: (resultado) => {
         this.showLoading = false;
+        if (resultado.reservaDto?.uuid !== reserva.uuid
+            || resultado.reservaDto?.estadoReserva !== EstadoReserva.CANCELADA) {
+          this.notify(this.ruatService.getResponseMessage(resultado.respuestaRuat, '')
+            || resultado.detalleLocal || 'No se confirmó la cancelación local.', 'error');
+          return;
+        }
+        this.row = { ...this.row, reservaDto: resultado.reservaDto };
         Swal.fire({
           title: 'Reserva Anulada!',
           text: 'La reserva gratuita ha sido anulada exitosamente.',
@@ -805,50 +776,31 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   }
 
   private cancelPaidReservation(reserva: Reserva, formValues: any) {
-    if (!reserva.numeroTasa) {
-      this.notify('No se pudo obtener el número de tasa para la anulación en RUAT', 'error');
+    if (this.showLoading || !this.canActivate?.includes('ANULAR')) return;
+    if (!reserva.numeroTasa?.trim() || reserva.estadoReserva === EstadoReserva.SOLICITADA) {
+      this.notify('No corresponde anular una solicitud o reserva sin tasa. La solicitud requiere rechazo administrativo.', 'warning');
       return;
     }
-
-    const requestData = {
-      numeroTasa: reserva.numeroTasa,
-      motivo: formValues.motivo,
-      observacion: formValues.observation
-    };
-
     this.showLoading = true;
-    this.ruatService.cancelTasa(requestData).subscribe({
-      next: (resp: any) => {
-        if (this.ruatService.canContinue(resp)) {
-          const text = this.ruatService.getResponseMessage(resp, 'Tasa anulada correctamente.');
-          this.reservaService.cancelReservation(reserva.uuid!, formValues.motivo).subscribe({
-            next: () => {
-              this.showLoading = false;
-              Swal.fire({
-                title: 'Anulado!',
-                text: text,
-                icon: 'success',
-                confirmButtonColor: '#299cdb',
-                timer: 5000,
-                timerProgressBar: true,
-              });
-              this.emitList.emit();
-              this.modalService.dismissAll('close click');
-            },
-            error: () => {
-              this.showLoading = false;
-              this.notify('Reserva anulada en RUAT pero error al actualizar localmente', 'warning');
-            }
-          });
-        } else {
-          this.showLoading = false;
-          this.notify(this.ruatService.getResponseMessage(resp, 'Error al anular en RUAT'), 'error');
+    this.reservaService.cancelReservation(reserva.uuid!, formValues.motivo, formValues.observation).subscribe({
+      next: (resultado) => {
+        this.showLoading = false;
+        const confirmada = resultado.reservaDto?.uuid === reserva.uuid
+          && resultado.reservaDto?.estadoReserva === EstadoReserva.CANCELADA;
+        const mensaje = this.ruatService.getResponseMessage(resultado.respuestaRuat, '');
+        if (!confirmada) {
+          this.notify(mensaje || resultado.detalleLocal || 'No se confirmó la cancelación local.', 'error');
+          return;
         }
+        this.row = { ...this.row, reservaDto: resultado.reservaDto };
+        this.notify(mensaje || 'La reserva ya está cancelada.', 'success');
+        this.emitList.emit();
+        this.modalService.dismissAll('close click');
       },
       error: (error) => {
         this.showLoading = false;
-        this.notify(this.ruatService.getResponseMessage(error, 'Error al realizar la anulación en RUAT'), 'error');
-      },
+        this.notify(error.message || 'No se confirmó la cancelación. Verifique el resultado antes de reintentar.', 'error');
+      }
     });
   }
 

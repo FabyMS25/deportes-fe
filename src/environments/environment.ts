@@ -1,10 +1,7 @@
 export const environment = {
   production: false,
-  subscriberId: "66acdd389313f20322afd3bb",
-  applicationIdentifier: "uo-XSwSEFlyM",
   
   backendUrl: "http://localhost:8085/api",
-  backendRuat:'http://localhost:8080/api',
   assetsUrl: "http://deportes.quillacollo.gob.bo",
 
   EmailJS:{

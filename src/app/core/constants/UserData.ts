@@ -1,7 +1,16 @@
-const UserRol = [
+export const UserRoles = {
+    CONTRIBUYENTE: 'Contribuyente',
+    REPRESENTANTE: 'Representante',
+    ENCARGADO: 'Encargado',
+    ADMIN: 'Admin'
+} as const;
+export type UserRoleName = typeof UserRoles[keyof typeof UserRoles];
+
+const UserRole = [
     {
         "tipo":0,
         "id": "ADMINISTRADOR",
+        "name": UserRoles.ADMIN,
         "institucion":"GAMQ DEPORTES",
         "avatarF":"avatar-super-w.png",
         "avatarM":"avatar-super-m.png"
@@ -9,6 +18,7 @@ const UserRol = [
     {
         "tipo": 1,
         "id": "ENCARGADO",
+        "name": UserRoles.ENCARGADO,
         "institucion":"GAMQ DEPORTES",
         "avatarF":"avatar-admin-w.png",
         "avatarM":"avatar-admin-m.png"
@@ -16,6 +26,15 @@ const UserRol = [
     {
         "tipo": 2,
         "id": "CONTRIBUYENTE",
+        "name": UserRoles.CONTRIBUYENTE,
+        "institucion":"GAMQ DEPORTES",
+        "avatarF":"avatar-op-w.png",
+        "avatarM":"avatar-op-m.png"
+    },
+    {
+        "tipo": 3,
+        "id": "REPRESENTANTE",
+        "name": UserRoles.REPRESENTANTE,
         "institucion":"GAMQ DEPORTES",
         "avatarF":"avatar-op-w.png",
         "avatarM":"avatar-op-m.png"
@@ -45,7 +64,7 @@ const UserStatus = [
     },
     {
         "id": 6,
-        "state": "Locked",//The account is temporarily locked due to multiple failed login attempts. 
+        "state": "Locked",//account is temporarily locked due to multiple failed login attempts. 
     }
 ]
 
@@ -91,4 +110,4 @@ const UserDocType = [
     }
 ]
 
-export{ UserRol , UserStatus , UserGender, UserCivilStatus, UserDocType};
+export{ UserRole , UserStatus , UserGender, UserCivilStatus, UserDocType};

@@ -6,12 +6,13 @@ import { ReservaPuntual } from '../../models/reservaPuntual.model';
 import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 export interface ReservaPuntualFilters {
+  revisarEstados?: boolean;
   tab?: number;
   searchTerm?: string;
   estadoReserva?: string;
   estadoValidacion?: string;
   categoria?: string;
-  tipoBeneficiario?: string;
+  conOrganizacion?: boolean;
   tipoContribuyente?: string;
   tipoOrganizacion?: string;
   sortBy?: string;
@@ -61,7 +62,6 @@ export class ReservaPuntualService {
       typeof fechaUso === 'string'
         ? fechaUso
         : this.formatDateLocal(fechaUso);
-
     let params = new HttpParams()
       .set('campoUuid', uuidCampo)
       .set('fechaUso', fecha)
@@ -81,7 +81,6 @@ export class ReservaPuntualService {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
-
 
   getByUuid(uuid: string): Observable<any> {
     return apiGet<any>(this.http, `${this.apiUrl}/${uuid}`, `obtener reserva puntual (${uuid})`);
@@ -122,7 +121,9 @@ export class ReservaPuntualService {
   }
 
   update(data: any): Observable<any> {
-    return apiPut<any>(this.http, this.apiUrl, data, 'actualizar reserva puntual');
+    return apiPut<any>(this.http, `${this.apiUrl}/cambiar-horario`,
+      { fechaUso: data.fechaUso, horaInicio: data.horaInicio, horaFin: data.horaFin, observaciones: data.observaciones },
+      'cambiar horario de reserva puntual', { params: new HttpParams().set('uuid', data.uuid) });
   }
 
   registrarUsoReal(uuid: string, fechaUsoReal: Date): Observable<any> {

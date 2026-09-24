@@ -24,7 +24,7 @@ import { Person } from 'src/app/core/models/user/person.model';
 export class SettingsComponent implements OnInit {
 
   CityAcronym = CityAcronym;
-  userRole!: 'Contribuyente' | 'Admin' | 'Encargado';
+  userRole!: import('src/app/core/constants/UserData').UserRoleName;
   userAvatar = "default-profile1.png";
   userData!: any;
   userEmployee!: EncargadoComplejo;

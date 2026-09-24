@@ -1,3 +1,4 @@
+import { UserRoleName, UserRoles } from 'src/app/core/constants/UserData';
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 import { FormGroup, FormBuilder, Validators, AbstractControl, ValidationErrors, ValidatorFn, ReactiveFormsModule, FormsModule, FormControl } from '@angular/forms';
 import { format, startOfDay, isBefore, addDays, isValid } from 'date-fns';
@@ -64,7 +65,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   @Input() reservationsList: Reserva[] = [];
   @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
   @Input() canActivate: string[] = [];
-  @Input() userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente'; 
+  @Input() userRole: UserRoleName = UserRoles.CONTRIBUYENTE; 
   
   @Output() reservationCompleted = new EventEmitter<Reserva>();
   @Output() goBack = new EventEmitter<void>();
@@ -2673,6 +2674,5 @@ getPaidReservationDescription(): string {
     return this.reservationForm ? this.reservationForm.hasError('anticipationRequired') : false;
   }
 }
-
 
 

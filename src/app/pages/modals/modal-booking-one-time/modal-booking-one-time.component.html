@@ -1,4 +1,21 @@
-<div class="modal-content" *ngIf="accion === 'consult'">
+<ng-template #ruatConsultationFeedback let-result>
+  <div class="alert py-2 px-3 mb-0 d-flex align-items-start gap-2 gamq-ruat-feedback"
+       role="status"
+       [ngClass]="'alert-' + (result.type === 'error' ? 'danger' : result.type)">
+    <i class="fs-5 flex-shrink-0" aria-hidden="true" [ngClass]="{
+      'ri-checkbox-circle-fill': result.type === 'success',
+      'ri-error-warning-fill': result.type === 'warning',
+      'ri-close-circle-fill': result.type === 'error',
+      'ri-information-fill': result.type === 'info'
+    }"></i>
+    <div>
+      <div class="small fw-semibold ruat-message">{{ result.text }}</div>
+      <div *ngIf="result.detalleLocal" class="small mt-1">Sistema local: {{ result.detalleLocal }}</div>
+    </div>
+  </div>
+</ng-template>
+
+<div class="modal-content gamq-ruat-consultation" *ngIf="accion === 'consult'">
   <div class="modal-header border-bottom py-2 px-3">
     <div class="d-flex w-100 align-items-center justify-content-between">
       <div class="d-flex align-items-center">
@@ -9,10 +26,10 @@
         </div>
         <div class="ms-2">
           <h5 class="modal-title mb-0">Consulta RUAT</h5>
-          <small class="text-muted">{{ consultationResult ? 1 : 0 }} resultado(s) procesado(s)</small>
+          <small class="text-muted">{{ consultationResults.length }} resultado(s) procesado(s)</small>
         </div>
       </div>
-      <button type="button" class="btn-close" (click)="onCloseModal()"></button>
+      <button type="button" [disabled]="isConsultingRuat" class="btn-close" aria-label="Cerrar" (click)="onCloseModal()"></button>
     </div>
   </div>
 
@@ -22,40 +39,48 @@
       <div class="text-muted small mt-2">Consultando pago en RUAT...</div>
     </div>
 
-    <ng-container *ngIf="consultationResult">
+    <section class="ruat-consultation-result" *ngFor="let consultationResult of consultationResults" aria-label="Resultado de consulta RUAT">
       <div class="card border shadow-none mb-2">
         <div class="card-header bg-light py-2 px-3">
           <h6 class="mb-0 text-primary">
-            <i class="ri-information-line me-1"></i>Información de Reserva
+            <i class="ri-information-line me-1"></i>Información de Reserva · {{ consultationResult.reservaDto?.numeroReserva || 'Sin número registrado' }}
           </h6>
         </div>
         <div class="card-body py-2 px-3">
           <div class="row g-2">
+            <div class="col-12 col-sm-6">
+              <small class="text-muted d-block">Contribuyente responsable</small>
+              <strong class="small">{{ consultationResult.reservaDto?.contribuyenteDto?.nombreCompleto || consultationResult.reservaDto?.contribuyenteDto?.nombre || 'No registrado' }}</strong>
+            </div>
+            <div class="col-12 col-sm-6">
+              <small class="text-muted d-block">Documento</small>
+              <strong class="small">{{ consultationResult.reservaDto?.contribuyenteDto?.tipoDocumento || '' }} {{ consultationResult.reservaDto?.contribuyenteDto?.numeroDocumento || 'N/A' }}</strong>
+            </div>
             <div class="col-6">
               <small class="text-muted d-block">Complejo</small>
-              <strong class="small">{{ row.reservaDto?.campoDeportivoDto?.complejoDto?.nombre || 'N/A' }}</strong>
+              <strong class="small">{{ consultationResult.reservaDto?.campoDeportivoDto?.complejoDto?.nombre || 'N/A' }}</strong>
             </div>
             <div class="col-6">
               <small class="text-muted d-block">Campo Deportivo</small>
-              <strong class="small">{{ row.reservaDto?.campoDeportivoDto?.nombre || 'N/A' }}</strong>
+              <strong class="small">{{ consultationResult.reservaDto?.campoDeportivoDto?.nombre || 'N/A' }}</strong>
             </div>
             <div class="col-6">
               <small class="text-muted d-block">Número de Tasa</small>
-              <strong class="small">{{ row.reservaDto?.numeroTasa || 'N/A' }}</strong>
+              <strong class="small">{{ consultationResult.reservaDto?.numeroTasa || 'N/A' }}</strong>
             </div>
             <div class="col-6">
               <small class="text-muted d-block">Estado Reserva</small>
-              <span class="badge" [ngClass]="getStatusBadgeClass(row.reservaDto?.estadoReserva)">
-                {{ row.reservaDto?.estadoReserva || 'N/A' }}
+              <span class="badge" [ngClass]="getStatusBadgeClass(consultationResult.reservaDto?.estadoReserva)">
+                {{ consultationResult.reservaDto?.estadoReserva || 'N/A' }}
               </span>
             </div>
             <div class="col-6">
               <small class="text-muted d-block">Fecha de Uso</small>
-              <strong class="small">{{ row.fechaUso | date:'dd/MM/yyyy' }}</strong>
+              <strong class="small">{{ consultationResult.reservaDto?.reservaPuntualDto?.fechaUso | date:'dd/MM/yyyy' }}</strong>
             </div>
             <div class="col-6">
               <small class="text-muted d-block">Horario</small>
-              <strong class="small">{{ row.horaInicio }} – {{ row.horaFin }}</strong>
+              <strong class="small">{{ consultationResult.reservaDto?.reservaPuntualDto?.horaInicio }} – {{ consultationResult.reservaDto?.reservaPuntualDto?.horaFin }}</strong>
             </div>
           </div>
         </div>
@@ -79,17 +104,8 @@
         </div>
       </div>
 
-      <div class="alert mb-0 py-2 px-3 d-flex align-items-start gap-2"
-           [ngClass]="'alert-' + (consultationResult.type === 'error' ? 'danger' : consultationResult.type)">
-        <i class="fs-5 ri-checkbox-circle-fill"></i>
-        <div>
-          <div class="small fw-semibold">{{ consultationResult.text }}</div>
-          <div *ngIf="consultationResult.type === 'success' && consultationResult.pagoData" class="small mt-1">
-            <i class="ri-check-double-line me-1"></i>El pago fue confirmado por RUAT.
-          </div>
-        </div>
-      </div>
-    </ng-container>
+      <ng-container *ngTemplateOutlet="ruatConsultationFeedback; context: { $implicit: consultationResult }"></ng-container>
+    </section>
   </div>
 
   <div class="modal-footer border-top py-2">
@@ -521,6 +537,9 @@
           </div>
 
           <div class="card-body py-2 px-3">
+            <div *ngIf="consultationResult" class="mb-2">
+              <ng-container *ngTemplateOutlet="ruatConsultationFeedback; context: { $implicit: consultationResult }"></ng-container>
+            </div>
             <div *ngIf="row.reservaDto?.pagosDtoList?.length; else noPaymentsState">
               <div class="table-responsive">
                 <table class="table table-sm align-middle mb-2">
@@ -761,8 +780,6 @@
   </div>
 </div>
 
-
-
 <ng-container *ngIf="accion === 'annularModal'">
   <div class="modal-content">
     <div class="modal-header">
@@ -789,7 +806,7 @@
               [class.is-invalid]="motivoCtrl.invalid && motivoCtrl.touched">
               <option value="">Seleccione un motivo</option>
               <option value="A SOLICITUD DEL CONTRIBUYENTE">A solicitud del contribuyente</option>
-              <option value="NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO">No se efectuó el pago en el día de registro</option>
+              <option value="NO SE EFECTUO EL PAGO EN EL DIA DE REGISTRO">No se efectuó el pago en el día del registro</option>
               <option value="REGISTRO DE DATOS INCONSISTENTES">Registro de datos inconsistentes</option>
             </select>
             <div *ngIf="motivoCtrl.invalid && motivoCtrl.touched" class="invalid-feedback">

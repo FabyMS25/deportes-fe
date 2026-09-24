@@ -138,7 +138,7 @@ export class TicketComponent implements OnChanges {
       this.errorMessage = 'No hay datos de reserva para descargar.';
       return;
     }
-    const filename = `ticket_${this.reservationData.numeroReserva || this.reservationData.uuid}.pdf`;
+    const filename = `ticket_${this.reservationData.numeroReserva || 'reserva'}.pdf`;
     let observable;
     if (this.reservationData.tipoReserva === 'periodo') {
       observable = this.reportsService.getTicketByPeriodo(this.reservationData.uuid);

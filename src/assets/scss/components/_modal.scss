@@ -69,6 +69,26 @@
     }
 }
 
+// Keep each selected reservation and its RUAT response visually grouped.
+.gamq-ruat-consultation {
+    .modal-body {
+        max-height: 65vh;
+        overflow-y: auto;
+        overflow-wrap: anywhere;
+    }
+
+    .ruat-consultation-result + .ruat-consultation-result {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--#{$prefix}border-color);
+    }
+}
+
+.gamq-ruat-feedback {
+    overflow-wrap: anywhere;
+    .ruat-message { white-space: pre-wrap; }
+}
+
 // Reservation detail headers contain more controls than ordinary modals.
 // Keep them on a single, aligned row and let only the title consume flexible
 // space. This prevents the rate/actions from dropping under the title.

@@ -1,3 +1,4 @@
+import { UserRoleName, UserRoles } from 'src/app/core/constants/UserData';
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
@@ -44,7 +45,7 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   @Input() dataTariff!: Tarifa;
   @Input() reservationsList: Reserva[] = [];
   @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
-  @Input() userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
+  @Input() userRole: UserRoleName = UserRoles.CONTRIBUYENTE;
   @Output() scheduleCompleted = new EventEmitter<ReservaRecurrente>();
 
   readonly MAX_SLOTS = MAX_SLOTS;

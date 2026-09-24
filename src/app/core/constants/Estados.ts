@@ -1,10 +1,13 @@
+import { TipoOrganizacion } from './Features';
+import type { Reserva } from '../models/reserva.model';
+
 // Estados de Reserva (estadoReserva)
 export enum EstadoReserva { 
   SOLICITADA = 'SOLICITADA',       // Requested, pending approval --> initial state when compljo is restricted and needs admin approval
   PENDIENTE = 'PENDIENTE',         // waiting for payment/confirmation -> initial state after creation
   PAGADA = 'PAGADA',               // Payment verified in RUAT (ready to use)
   EN_CURSO = 'EN_CURSO',           // Currently active during scheduled time -> updated by system after start time
-  COMPLETADA = 'COMPLETADA',       // Successfully completed --> updated by system after end time in puntual and after last date end in recurrent
+  COMPLETADA = 'COMPLETADA',       // Completed by dates, except free school recurrent bases: manual closure with ACTUALIZAR.
   CANCELADA = 'CANCELADA',         // Cancelled reservation when paymet not completed so first check if is paid and then check timing -> updated by user/admin or system if not paid in time or in the deadline time and when esReservaGratuita is true then not cancelled automatically but only with user
   EXPIRADA = 'EXPIRADA',           // Didn't complete payment in time stipulated  -> updated by system after payment deadline // Payment deadline passed after approval (post-RUAT)
   NO_SHOW = 'NO_SHOW'              // User didn't show up for reservation -> updated by user
@@ -96,6 +99,16 @@ const VALIDATION_STATUS_DESCRIPTIONS: Record<EstadoValidacion, string> = {
 
 
 export const StatusUtils = {
+  esRecurrenteGratuitaDeEscuela(reserva?: Reserva): boolean {
+    return reserva?.tipoReserva === 'recurrente' && reserva.esReservaGratuita === true &&
+      reserva.organizacionDto?.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL;
+  },
+
+  puedeCompletarReservaEscuela(reserva?: Reserva): boolean {
+    return this.esRecurrenteGratuitaDeEscuela(reserva) && reserva?.estadoValidacion === EstadoValidacion.APROBADA &&
+      [EstadoReserva.PENDIENTE, EstadoReserva.PAGADA, EstadoReserva.EN_CURSO].includes(reserva.estadoReserva);
+  },
+
   getReservationStatusOptions(): { value: string; label: string }[] {
     return Object.values(EstadoReserva).map(status => ({
       value: status,

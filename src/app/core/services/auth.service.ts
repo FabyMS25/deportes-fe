@@ -5,7 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { logout, logoutSuccess } from 'src/app/store/Authentication/authentication.actions';
 import { TokenStorageService } from './token-storage.service';
 
-import { UserRol } from 'src/app/core/constants/UserData';
+import { UserRole, UserRoleName, UserRoles } from 'src/app/core/constants/UserData';
 import { firstValueFrom, of, Subject } from 'rxjs';
 import { SystemConfigurationService } from './api/system-configuration.service';
 import { ConfiguracionSistema } from '../models/configuracionSistema.model';
@@ -277,14 +277,14 @@ export class AuthenticationService {
   isAdmin(): boolean {
     return this.storageService.getUser()?.admin === true;
   }
-  getUserRole(): 'Contribuyente' | 'Admin' | 'Encargado' {
+  getUserRole(): UserRoleName {
     if (this.isTaxpayer()) {
-      return 'Contribuyente';
+      return UserRoles.CONTRIBUYENTE;
     } else { 
       if (this.isAdmin()) {
-        return 'Admin';
+        return UserRoles.ADMIN;
       }
-      return 'Encargado';
+      return UserRoles.ENCARGADO;
     }
   }
   getDashboardRoute(): string {
@@ -315,11 +315,11 @@ export class AuthenticationService {
     let avatar="default-profile1.png";
     let role;
     if(this.isTaxpayer()){
-      role = UserRol.find(item => item.tipo == 2);//CLIENT
+      role = UserRole.find(item => item.tipo == 2);//CLIENT
     }else if (this.isAdmin()) {
-      role = UserRol.find(item => item.tipo === 0);//ADMINISTRADOR
+      role = UserRole.find(item => item.tipo === 0);//ADMINISTRADOR
     } else {
-      role = UserRol.find(item => item.tipo == 1);//STAFF
+      role = UserRole.find(item => item.tipo == 1);//STAFF
     }
     if (role !== undefined) {
       avatar = role.avatarF;

@@ -31,9 +31,29 @@ export type ReservationType = 'por_hora' | 'por_persona' | 'por_evento' |
                               'mensualidad' |'por_sesion'| 
                               'por_club';
 
+export enum FiltroOrganizacionReserva {
+  CON_ORGANIZACION = 'CON_ORGANIZACION',
+  SIN_ORGANIZACION = 'SIN_ORGANIZACION'
+}
+
 export enum TipoOrganizacion {
   ASOCIACION = 'ASOCIACION',
   CLUB = 'CLUB',
   ESCUELA_MUNICIPAL = 'ESCUELA_MUNICIPAL',
   ORGANIZACION = 'ORGANIZACION'
 }
+
+export const TipoOrganizacionLabels: Record<TipoOrganizacion, string> = {
+  [TipoOrganizacion.ASOCIACION]: 'Asociación',
+  [TipoOrganizacion.CLUB]: 'Club',
+  [TipoOrganizacion.ESCUELA_MUNICIPAL]: 'Escuela Municipal',
+  [TipoOrganizacion.ORGANIZACION]: 'Organización'
+};
+export const TipoOrganizacionOptions = Object.values(TipoOrganizacion).map(value => ({
+  value, label: TipoOrganizacionLabels[value]
+}));
+export const OrganizacionReservaOptions = [
+  { value: FiltroOrganizacionReserva.CON_ORGANIZACION, label: 'Con organización (cualquier tipo)' },
+  { value: FiltroOrganizacionReserva.SIN_ORGANIZACION, label: 'Sin organización' },
+  ...TipoOrganizacionOptions
+];

@@ -18,5 +18,4 @@ export const GlobalComponent = {
         email: 'gamqtdi@gmail.com',
         address: 'Mercado Martín Cárdenas, Planta Baja, Quillacollo'
     },
-
 }

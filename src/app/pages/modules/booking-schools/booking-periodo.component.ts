@@ -1,3 +1,4 @@
+import { UserRoleName, UserRoles } from 'src/app/core/constants/UserData';
 import { Router } from '@angular/router';
 import { Subject, firstValueFrom, takeUntil } from 'rxjs';
 import { Component, OnInit, OnDestroy } from '@angular/core';
@@ -9,7 +10,7 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
 import { PagoService } from 'src/app/core/services/api/pago.service';
-import { ReservaFilters, ReservaService } from 'src/app/core/services/api/reserva.service';
+import { ReservaFilters, ReservaService, showReservationRevision } from 'src/app/core/services/api/reserva.service';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
 import { EstudianteEscuelaService } from 'src/app/core/services/api/estudianteEscuela.service';
 import { EstadoReserva, EstadoValidacion, EstadoPago, EstadoUsuario, EstadoRuat, EstadoActual, StatusUtils} from 'src/app/core/constants/Estados';
@@ -31,9 +32,13 @@ import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component
   styleUrl: './booking-periodo.component.scss'
 })
 export class BookingPeriodoComponent implements OnInit, OnDestroy {
+  // Cancels the previous GET when filters/page change or the view is destroyed.
   private readonly cancelListRequest = new Subject<void>();
+  // UI request ordering only, not a version of the reservation or a state calculation.
   private requestVersion = 0;
+  // Refreshes the list with the same GET; all state review remains in the backend.
   private refreshTimer?: ReturnType<typeof setInterval>;
+  // Debounces typing so each keystroke does not send another GET.
   private searchTimer?: ReturnType<typeof setTimeout>;
   private readonly statusChecks = new Map<string, Promise<Reserva>>();
   breadCrumbItems: BreadCrumbItem[] =[];
@@ -45,7 +50,7 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
   currentPage = 1;
   pageSize = 5;
 
-  userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
+  userRole: UserRoleName = UserRoles.CONTRIBUYENTE;
   userData!: any;
   contribuyente!: Contribuyente;
 
@@ -192,17 +197,9 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
       { name: 'Número Tasa', prop: 'numeroTasa', nowrap: true, visible: true},
       { name: 'Estado Mensualidad', prop: 'estadoReserva', sortable: true, tag: true, visible: true },
       { name: 'Estado Pago', prop: 'pagosDtoList[0].estadoPago', tag: true, visible: true },
-      { name: 'Observaciones', prop: 'observaciones', visible: false },
       { name: 'Fecha Creación', prop: 'fechaCreacion', date: true, visible: false },
     ];
-    const sortableColumns = new Set([
-      'numeroReserva', 'contribuyenteDto.nombreCompleto', 'organizacionDto.nombre',
-      'montoTotal', 'numeroTasa', 'estadoReserva', 'fechaCreacion'
-    ]);
-    this.itemsList = this.itemsList.map(column => ({
-      ...column,
-      sortable: sortableColumns.has(column.prop)
-    }));
+    this.itemsList = this.itemsList.map(column => ({ ...column, sortable: true }));
 
     const savedViewMode = localStorage.getItem('dataTableViewMode');
     if (savedViewMode === 'table' || savedViewMode === 'cards') {
@@ -250,50 +247,41 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
     localStorage.setItem('dataTableViewMode', this.viewMode);
   }
 
-  onPageChange(page: number): void {
+onPageChange(page: number): void {
     this.currentPage = page;
-    this.getReservations();
+    this.getReservations(false);
   }
-  onPageSizeChange(size: number): void {
+onPageSizeChange(size: number): void {
     this.pageSize = size;
     this.currentPage = 1;
-    this.getReservations();
+    this.getReservations(false);
   }
 
-  onSortChange(event: { column: string; direction: 'asc' | 'desc' }): void {
-    const sortBy: Record<string, string> = {
-      numeroReserva: 'numeroReserva',
-      'contribuyenteDto.nombreCompleto': 'contribuyente',
-      'organizacionDto.nombre': 'organizacion',
-      montoTotal: 'montoTotal',
-      numeroTasa: 'numeroTasa',
-      estadoReserva: 'estadoReserva',
-      fechaCreacion: 'fechaCreacion'
-    };
-    const resolvedSort = sortBy[event.column];
-    if (!resolvedSort) return;
+onSortChange(event: { column: string; direction: 'asc' | 'desc' }): void {
+    if (!this.itemsList.some(column => column.prop === event.column && column.sortable)) return;
+    const resolvedSort = event.column;
     this.filters = {
       ...this.filters,
       sortBy: resolvedSort,
       sortDirection: event.direction
     };
     this.currentPage = 1;
-    void this.getReservations();
+    void this.getReservations(false);
   }
-  onNavChange(changeEvent: NgbNavChangeEvent) {
+onNavChange(changeEvent: NgbNavChangeEvent) {
     this.filters.estadoReserva = '';
     this.filters.tab = changeEvent.nextId;
     this.currentPage = 1;
-    this.getReservations();
+    this.getReservations(false);
   }
   onReservationStatusChange(): void {
     this.filters.tab = 0;
     this.applyFilters();
   }
 
-  applyFilters() {
+applyFilters() {
     this.currentPage = 1;
-    this.getReservations();
+    this.getReservations(false);
   }
 
   applyPeriodoFilters(): void {
@@ -308,7 +296,7 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
   
-  clearFilters() {
+clearFilters() {
     clearTimeout(this.searchTimer);
     this.selectedMesFiltro = undefined;
     this.selectedAnioFiltro = undefined;
@@ -324,7 +312,7 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
     };
     
     this.currentPage = 1;
-    this.getReservations();
+    this.getReservations(true);
   }
 
   private generatePeriodYears(): void {
@@ -373,15 +361,6 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
 
   getReservationDetails(reserva: Reserva | any): ReservaPeriodo[] {
     return reserva?.reservasPeriodoDtoList || [];
-  }
-
-  private getReservationForPeriodExport(item: any): Reserva {
-    return item?.reservaDto || item;
-  }
-
-  private getReservaPeriodoDetails(item: any): any[] {
-    const reserva = this.getReservationForPeriodExport(item);
-    return reserva?.reservasPeriodoDtoList?.length ? reserva.reservasPeriodoDtoList : [item];
   }
 
   getFirstDetalle(reserva: Reserva | any): ReservaPeriodo | undefined {
@@ -506,15 +485,6 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
           org.uuid === student.organizacionDto?.uuid))
     );
   }
-
-  private parseRuatPaymentDate(fechaPago: string): Date | null {
-    if (!fechaPago || !/^\d{2}\/\d{2}\/\d{4}$/.test(fechaPago)) {
-      return null;
-    }
-    const [day, month, year] = fechaPago.split('/').map(Number);
-    return new Date(year, month - 1, day, 12, 0, 0, 0);
-  }
-
   /* NAVIGATIONS & MODALS */
   public showTicket(data: any) {
     const modalRef = this.modalService.open(TicketComponent, { 
@@ -533,244 +503,259 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
       backdrop: 'static',
       size: size
     });
-    modalRef.componentInstance.row = data;
+    modalRef.componentInstance.selectedRows = Array.isArray(data) ? [...data] : [data];
+    modalRef.componentInstance.row = Array.isArray(data) ? data[0] : data;
     modalRef.componentInstance.accion = accion;
     modalRef.componentInstance.canActivate = this.canActivate;
     modalRef.componentInstance.emitList.subscribe(() => {
       this.getReservations();
     });
   }
-  /* BUSINESS LOGIC */
-  private async refreshReservationStatuses(list: Reserva[], version: number): Promise<void> {
-    for (const reserva of list) {
-      if (version !== this.requestVersion) return;
-      const key = reserva.uuid;
-      if (!key) continue;
-      let check = this.statusChecks.get(key);
-      if (!check) {
-        check = this.checkAndUpdateSingleReservationStatus(reserva);
-        this.statusChecks.set(key, check);
-      }
-      let updated: Reserva;
-      try {
-        updated = await check;
-      } finally {
-        if (this.statusChecks.get(key) === check) this.statusChecks.delete(key);
-      }
-      if (version !== this.requestVersion) return;
-      const content = this.reservasList.content.map((item: Reserva) =>
-        item.uuid === key ? updated : item);
-      this.reservasList = { ...this.reservasList, content: this.enrichReservationsForDisplay(content) };
-      this.temp = this.reservasList.content;
-      this.csvExportItems = this.reservasList.content;
-    }
-  }
-  private async checkAndUpdateSingleReservationStatus(
-    reserva: Reserva
-  ): Promise<Reserva> {
+  
+  // private async refreshReservationStatuses(list: Reserva[], version: number): Promise<void> {
+  //   for (const reserva of list) {
+  //     if (version !== this.requestVersion) return;
+  //     const key = reserva.uuid;
+  //     if (!key) continue;
+  //     let check = this.statusChecks.get(key);
+  //     if (!check) {
+  //       check = this.checkAndUpdateSingleReservationStatus(reserva);
+  //       this.statusChecks.set(key, check);
+  //     }
+  //     let updated: Reserva;
+  //     try {
+  //       updated = await check;
+  //     } finally {
+  //       if (this.statusChecks.get(key) === check) this.statusChecks.delete(key);
+  //     }
+  //     if (version !== this.requestVersion) return;
+  //     const content = this.reservasList.content.map((item: Reserva) =>
+  //       item.uuid === key ? updated : item);
+  //     this.reservasList = { ...this.reservasList, content: this.enrichReservationsForDisplay(content) };
+  //     this.temp = this.reservasList.content;
+  //     this.csvExportItems = this.reservasList.content;
+  //   }
+  // }
+  // private async checkAndUpdateSingleReservationStatus(
+  //   reserva: Reserva
+  // ): Promise<Reserva> {
 
-    const terminalStates = [
-      EstadoReserva.COMPLETADA,
-      EstadoReserva.NO_SHOW,
-      EstadoReserva.CANCELADA,
-      EstadoReserva.EXPIRADA
-    ];
+  //   const terminalStates = [
+  //     EstadoReserva.COMPLETADA,
+  //     EstadoReserva.NO_SHOW,
+  //     EstadoReserva.CANCELADA,
+  //     EstadoReserva.EXPIRADA
+  //   ];
 
-    if (terminalStates.includes(reserva.estadoReserva)) {
-      return reserva;
-    }
+  //   if (terminalStates.includes(reserva.estadoReserva)) {
+  //     return reserva;
+  //   }
 
-    try {
+  //   try {
 
-      if (reserva.estadoReserva === EstadoReserva.PENDIENTE) {
+  //     if (reserva.estadoReserva === EstadoReserva.PENDIENTE) {
 
-        const consultResult = await this.consultData(reserva, { silent: true });
+  //       const consultResult = await this.consultData(reserva, { silent: true });
 
-        if (consultResult.consultationSuccessful && consultResult.hasPayment) {
+  //       if (consultResult.consultationSuccessful && consultResult.hasPayment) {
 
-          return await this.updateReservation(reserva, {
-            estadoReserva: EstadoReserva.PAGADA,
-            fechaActualizacion: new Date()
-          });
+  //         return await this.updateReservation(reserva, {
+  //           estadoReserva: EstadoReserva.PAGADA,
+  //           fechaActualizacion: new Date()
+  //         });
 
-        }
+  //       }
 
-        return reserva;
-      }
+  //       return reserva;
+  //     }
 
-      if (
-        reserva.estadoReserva === EstadoReserva.PAGADA &&
-        this.isUsageDatePassed(reserva)
-      ) {
+  //     if (
+  //       reserva.estadoReserva === EstadoReserva.PAGADA &&
+  //       this.isUsageDatePassed(reserva)
+  //     ) {
 
-        return await this.updateReservation(reserva, {
-          estadoReserva: EstadoReserva.COMPLETADA,
-          fechaActualizacion: new Date()
-        });
+  //       return await this.updateReservation(reserva, {
+  //         estadoReserva: EstadoReserva.COMPLETADA,
+  //         fechaActualizacion: new Date()
+  //       });
 
-      }
+  //     }
 
-      return reserva;
+  //     return reserva;
 
-    } catch {
-      return reserva;
-    }
-  }
-  private isUsageDatePassed(reserva: Reserva): boolean {
+  //   } catch {
+  //     return reserva;
+  //   }
+  // }
+  // private isUsageDatePassed(reserva: Reserva): boolean {
 
-    const periodo = reserva.reservasPeriodoDtoList?.[0];
+  //   const periodo = reserva.reservasPeriodoDtoList?.[0];
 
-    if (!periodo) {
-      return false;
-    }
+  //   if (!periodo) {
+  //     return false;
+  //   }
 
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth() + 1;
-    if (periodo.año < currentYear) {
-      return true;
-    }
-    if (periodo.año === currentYear && periodo.mes < currentMonth) {
-      return true;
-    }
-    return false;
-  }
-
+  //   const currentDate = new Date();
+  //   const currentYear = currentDate.getFullYear();
+  //   const currentMonth = currentDate.getMonth() + 1;
+  //   if (periodo.año < currentYear) {
+  //     return true;
+  //   }
+  //   if (periodo.año === currentYear && periodo.mes < currentMonth) {
+  //     return true;
+  //   }
+  //   return false;
+  // }
   /* API RUAT Services */
-  private async consultData(
-    item: Reserva,
-    options: { silent?: boolean } = {}
-  ): Promise<any> {
-    try {
-      const nroTasa = item.numeroTasa;
-      if (!nroTasa) {
-        return {
-          item,
-          text: 'No hay número de tasa asociado',
-          type: 'warning',
-          hasPayment: false,
-          consultationSuccessful: false,
-          errorCode: 'NO_TASA'
-        };
-      }
-      const resp: any = await this.ruatService.checkFeePayment(nroTasa).toPromise();
-      if (!this.ruatService.canContinue(resp)) {
-        return {
-          item,
-          text: this.ruatService.getResponseMessage(resp, 'No se puede continuar con el flujo'),
-          type: 'warning',
-          hasPayment: false,
-          consultationSuccessful: true,
-          ruatResponse: resp,
-          errorCode: 'RUAT_FLOW_STOPPED'
-        };
-      }
-      const pagoTasa = this.ruatService.getResponseData(resp)?.pagoTasa;
-      if (!pagoTasa) {
-        return {
-          item,
-          text: this.ruatService.getResponseMessage(resp, 'No se encontraron datos de pago'),
-          type: 'info',
-          hasPayment: false,
-          consultationSuccessful: true,
-          ruatResponse: resp,
-          errorCode: 'PAYMENT_NOT_FOUND'
-        };
-      }
-      const text = this.ruatService.getResponseMessage(resp, 'La tasa se encuentra pagada');
-      try {
-        const fechaPagoLocal = this.parseRuatPaymentDate(pagoTasa.fechaPago);
-        if (!fechaPagoLocal) {
-          return {
-            item,
-            text: 'RUAT devolvió una fecha de pago inválida. No se registró el pago.',
-            type: 'error',
-            hasPayment: false,
-            consultationSuccessful: false,
-            ruatResponse: resp,
-            errorCode: 'INVALID_RESPONSE'
-          };
-        }
-        const existingPayment = item.pagosDtoList?.find(pago =>
-          pago.folio === pagoTasa.folio && pago.numeroTasa === pagoTasa.numeroTasa
-        );
-        if (!existingPayment) {
-          const nuevoPago: Pago = {
-            numeroTasa: pagoTasa.numeroTasa,
-            tipoTasa: 'TO',
-            folio: pagoTasa.folio,
-            formaPago: pagoTasa.formaPago,
-            fechaPago: fechaPagoLocal,
-            entidadFinanciera: pagoTasa.entidadFinanciera,
-            montoPagado: parseFloat(pagoTasa.montoPago) || 0,
-            observaciones: pagoTasa.observacion,
-            estadoPago: EstadoPago.PAGADO,
-            ultimaConsulta: new Date(),
-            respuestaCompletaRuat: JSON.stringify(resp),
-            reservaDto: item
-          };
-          await this.pagoService.save(nuevoPago).toPromise();
-        }
-        return {
-          item,
-          text,
-          type: 'success',
-          hasPayment: true,
-          pagoData: pagoTasa,
-          consultationSuccessful: true,
-          ruatResponse: resp
-        };
-      } catch (error) {
-        return {
-          item,
-          text: 'El pago fue encontrado en RUAT, pero no pudo registrarse en el sistema.',
-          type: 'error',
-          hasPayment: false,
-          consultationSuccessful: false,
-          ruatResponse: resp,
-          errorCode: 'PAYMENT_SAVE_ERROR'
-        };
-      }
-    } catch (error) {
-      return {
-        item,
-        text: this.ruatService.getResponseMessage(error, 'Error al realizar la consulta al RUAT'),
-        type: 'error',
-        hasPayment: false,
-        consultationSuccessful: false,
-        ruatResponse: error,
-        errorCode: 'RUAT_EXCEPTION'
-      };
-    }
-  }
+  // private async consultData(
+  //   item: Reserva,
+  //   options: { silent?: boolean } = {}
+  // ): Promise<any> {
+  //   try {
+  //     const nroTasa = item.numeroTasa;
+  //     if (!nroTasa) {
+  //       return {
+  //         item,
+  //         text: 'No hay número de tasa asociado',
+  //         type: 'warning',
+  //         hasPayment: false,
+  //         consultationSuccessful: false,
+  //         errorCode: 'NO_TASA'
+  //       };
+  //     }
+  //     const resp: any = await this.ruatService.checkFeePayment(nroTasa).toPromise();
+  //     if (!this.ruatService.canContinue(resp)) {
+  //       return {
+  //         item,
+  //         text: this.ruatService.getResponseMessage(resp, 'No se puede continuar con el flujo'),
+  //         type: 'warning',
+  //         hasPayment: false,
+  //         consultationSuccessful: true,
+  //         ruatResponse: resp,
+  //         errorCode: 'RUAT_FLOW_STOPPED'
+  //       };
+  //     }
+  //     const pagoTasa = this.ruatService.getResponseData(resp)?.pagoTasa;
+  //     if (!pagoTasa) {
+  //       return {
+  //         item,
+  //         text: this.ruatService.getResponseMessage(resp, 'No se encontraron datos de pago'),
+  //         type: 'info',
+  //         hasPayment: false,
+  //         consultationSuccessful: true,
+  //         ruatResponse: resp,
+  //         errorCode: 'PAYMENT_NOT_FOUND'
+  //       };
+  //     }
+  //     const text = this.ruatService.getResponseMessage(resp, 'La tasa se encuentra pagada');
+  //     try {
+  //       const fechaPagoLocal = this.parseRuatPaymentDate(pagoTasa.fechaPago);
+  //       if (!fechaPagoLocal) {
+  //         return {
+  //           item,
+  //           text: 'RUAT devolvió una fecha de pago inválida. No se registró el pago.',
+  //           type: 'error',
+  //           hasPayment: false,
+  //           consultationSuccessful: false,
+  //           ruatResponse: resp,
+  //           errorCode: 'INVALID_RESPONSE'
+  //         };
+  //       }
+  //       const existingPayment = item.pagosDtoList?.find(pago =>
+  //         pago.folio === pagoTasa.folio && pago.numeroTasa === pagoTasa.numeroTasa
+  //       );
+  //       if (!existingPayment) {
+  //         const nuevoPago: Pago = {
+  //           numeroTasa: pagoTasa.numeroTasa,
+  //           tipoTasa: 'TO',
+  //           folio: pagoTasa.folio,
+  //           formaPago: pagoTasa.formaPago,
+  //           fechaPago: fechaPagoLocal,
+  //           entidadFinanciera: pagoTasa.entidadFinanciera,
+  //           montoPagado: parseFloat(pagoTasa.montoPago) || 0,
+  //           observaciones: pagoTasa.observacion,
+  //           estadoPago: EstadoPago.PAGADO,
+  //           ultimaConsulta: new Date(),
+  //           respuestaCompletaRuat: JSON.stringify(resp),
+  //           reservaDto: item
+  //         };
+  //         await this.pagoService.save(nuevoPago).toPromise();
+  //       }
+  //       return {
+  //         item,
+  //         text,
+  //         type: 'success',
+  //         hasPayment: true,
+  //         pagoData: pagoTasa,
+  //         consultationSuccessful: true,
+  //         ruatResponse: resp
+  //       };
+  //     } catch (error) {
+  //       return {
+  //         item,
+  //         text: 'El pago fue encontrado en RUAT, pero no pudo registrarse en el sistema.',
+  //         type: 'error',
+  //         hasPayment: false,
+  //         consultationSuccessful: false,
+  //         ruatResponse: resp,
+  //         errorCode: 'PAYMENT_SAVE_ERROR'
+  //       };
+  //     }
+  //   } catch (error) {
+  //     return {
+  //       item,
+  //       text: this.ruatService.getResponseMessage(error, 'Error al realizar la consulta al RUAT'),
+  //       type: 'error',
+  //       hasPayment: false,
+  //       consultationSuccessful: false,
+  //       ruatResponse: error,
+  //       errorCode: 'RUAT_EXCEPTION'
+  //     };
+  //   }
+  // }
 
   /* API Services */
-  
-  private async getReservations() {
+  private revisionEnCurso?: Promise<any>;
+  private revisionesPendientes: any[] = [];
+
+  private async getReservations(revisarEstados = true) {
     clearTimeout(this.searchTimer);
     const version = ++this.requestVersion;
-    this.cancelListRequest.next();
     this.loading = true;
     try {
-      const data = await firstValueFrom(this.reservaService.getAll(
-        this.currentPage - 1, this.pageSize, this.filters
-      ).pipe(takeUntil(this.cancelListRequest)));
+      // Do not cancel/repeat a full review when the user pages or filters while it runs.
+      if (this.revisionEnCurso) {
+        await this.revisionEnCurso;
+        if (version !== this.requestVersion) return;
+        revisarEstados = false;
+      }
+      this.cancelListRequest.next();
+      const request = firstValueFrom(this.reservaService.getAll(this.currentPage - 1, this.pageSize,
+        { ...this.filters, revisarEstados }).pipe(takeUntil(this.cancelListRequest)));
+      if (revisarEstados) this.revisionEnCurso = request;
+      let data: any;
+      try {
+        data = await request;
+        // Keep the review even if a newer page/filter request supersedes these rows.
+        // A later read-only request must not discard changes already committed by the server.
+        if (data?.revision) this.revisionesPendientes.push(data.revision);
+      }
+      finally { if (this.revisionEnCurso === request) this.revisionEnCurso = undefined; }
       if (version !== this.requestVersion) return;
-      const list = this.enrichReservationsForDisplay(
-        Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : []
-      );
+      if (!data) throw new Error('Respuesta inválida del servidor');
+      const list = this.enrichReservationsForDisplay(Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : []);
       this.reservasList = { ...data, content: list };
       this.temp = list;
       this.csvExportItems = list;
       this.loading = false;
-      void this.refreshReservationStatuses(list, version);
+      for (const revision of this.revisionesPendientes.splice(0)) {
+        await showReservationRevision(revision);
+      }
     } catch (error: any) {
       if (version !== this.requestVersion) return;
       this.handleError(error, 'Error al obtener las mensualidades');
-      this.reservasList = {
-        content: [], totalElements: 0, totalPages: 0, first: true, last: true,
-        pageable: { pageNumber: 0, pageSize: this.pageSize }
-      };
+      this.reservasList = { content: [], totalElements: 0, totalPages: 0, first: true, last: true,
+        pageable: { pageNumber: 0, pageSize: this.pageSize } };
       this.temp = [];
       this.csvExportItems = [];
     } finally {
@@ -781,7 +766,7 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
   readonly loadExportItems = async (): Promise<Reserva[]> => {
     try {
       const data = await firstValueFrom(this.reservaService.getAll(
-        0, Math.max(1, this.reservasList.totalElements), this.filters
+        0, Math.max(1, this.reservasList.totalElements), { ...this.filters, revisarEstados: false }
       ));
       const list = Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
       return this.enrichReservationsForDisplay(list);
@@ -791,32 +776,32 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
     }
   };
 
-  private async updateReservation(
-    reserva: Reserva,
-    updates: Partial<Reserva>
-  ): Promise<Reserva> {
+  // private async updateReservation(
+  //   reserva: Reserva,
+  //   updates: Partial<Reserva>
+  // ): Promise<Reserva> {
 
-    const updatedReserva: Reserva = {
-      ...reserva,
-      ...updates,
-      fechaActualizacion: new Date()
-    };
+  //   const updatedReserva: Reserva = {
+  //     ...reserva,
+  //     ...updates,
+  //     fechaActualizacion: new Date()
+  //   };
 
-    try {
+  //   try {
 
-      const response: any = await this.reservaService.update(updatedReserva).toPromise();
-      if (!response || response.estadoReserva !== updates.estadoReserva) {
-        throw new Error('El backend no confirmó el cambio de estado de la reserva');
-      }
-      return response;
+  //     const response: any = await this.reservaService.update(updatedReserva).toPromise();
+  //     if (!response || response.estadoReserva !== updates.estadoReserva) {
+  //       throw new Error('El backend no confirmó el cambio de estado de la reserva');
+  //     }
+  //     return response;
 
-    } catch (error) {
-      console.error('No se pudo actualizar el estado de la mensualidad después de consultar RUAT', error);
-      return reserva;
+  //   } catch (error) {
+  //     console.error('No se pudo actualizar el estado de la mensualidad después de consultar RUAT', error);
+  //     return reserva;
 
-    }
+  //   }
 
-  }
+  // }
 
   private loadSchools() {
     this.organizacionesService.getAll().subscribe({
@@ -824,7 +809,6 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
         this.escuelasList = data.content || data;
       },
       error: (error) => {
-        console.error('Error loading organizations:', error);
         Swal.fire({ text: 'Error al obtener las organizaciones', icon: 'error', confirmButtonColor: '#299cdb' });
       }
     });

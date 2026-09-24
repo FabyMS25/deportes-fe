@@ -42,7 +42,6 @@ export class SystemConfigurationsComponent implements OnInit {
     { header: 'Nivel de edición', value: item => item.modificablePorUsuario ? 'Estándar' : 'Protegida' },
     { header: 'Estado', value: item => item.activo ? 'Activo' : 'Inactivo' },
     { header: 'Aplica A', value: item => item.aplicaA || '-' },
-    { header: 'Referencia UUID', value: item => item.referenciaUuid || '-' },
     { header: 'Fecha Creación', value: item => item.fechaCreacion || '-' },
   ];
 

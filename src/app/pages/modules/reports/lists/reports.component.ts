@@ -36,7 +36,15 @@ export class ListReportComponent implements OnInit {
   escuelita: string = 'TODO';
   estudiante: string = 'TODO';
   matricula: string = '';
+
+  vistaMensual: string = 'detalle';
+  contribuyente: string = '';
   
+  vistaMensualOptions = [
+    { value: 'detalle', label: 'Detalle general' },
+    { value: 'estudiante', label: 'Por estudiante' },
+    { value: 'resumen', label: 'Resumen por escuela' }
+  ];
   statusOptions = [
     { value: 'TODO', label: 'Todos los estados' },
     ...StatusUtils.getReservationStatusOptions()
@@ -167,14 +175,53 @@ export class ListReportComponent implements OnInit {
   }
 
   private generateMensualesReport(fechaIni: string, fechaFin: string) {
-    const shouldUseStudentReport = this.shouldUseStudentMonthlyReport();    
-    if (shouldUseStudentReport) {
-      this.generateStudentMonthlyReport(fechaIni, fechaFin);
-    } else {
-      this.generateGeneralMonthlyReport(fechaIni, fechaFin);
+    switch (this.vistaMensual) {
+      case 'estudiante':
+        this.generateStudentMonthlyReport(fechaIni, fechaFin);
+        break;
+      case 'resumen':
+        this.generateMensualResumen(fechaIni, fechaFin);
+        break;
+      case 'detalle':
+      default:
+        this.generateGeneralMonthlyReport(fechaIni, fechaFin);
+        break;
     }
   }
 
+  private generateMensualResumen(fechaIni: string, fechaFin: string) {
+    const contribuyenteParam =
+      this.contribuyente.trim() || 'TODO';
+    this.reportsService.getMensualResumen(
+      fechaIni,
+      fechaFin,
+      this.status,
+      this.escuelita,
+      contribuyenteParam
+    ).subscribe(
+      (data: ArrayBuffer) => {
+        this.displayPDF(data);
+        this.showLoading = false;
+      },
+      (error) => {
+        console.error(
+          'Error generating resumen mensual report:',
+          error
+        );
+        this.showLoading = false;
+        alert(
+          'Error al generar el reporte simple de mensualidades'
+        );
+      }
+    );
+  }
+getVistaMensualLabel(): string {
+  const option = this.vistaMensualOptions.find(
+    opt => opt.value === this.vistaMensual
+  );
+
+  return option ? option.label : this.vistaMensual;
+}
   private generateGeneralMonthlyReport(fechaIni: string, fechaFin: string) {
     this.reportsService.getMonthlyReport(
       fechaIni, 

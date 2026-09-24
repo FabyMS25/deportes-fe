@@ -9,7 +9,7 @@ import { UserService } from 'src/app/core/services/api-users/users.service';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
 import { EncargadoService } from 'src/app/core/services/api/encargado.service';
 import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
-import { UserRol } from 'src/app/core/constants/UserData';
+import { UserRole } from 'src/app/core/constants/UserData';
 
 @Component({
   selector: 'app-modal-employee',
@@ -196,7 +196,7 @@ export class ModalEmployeeComponent {
   private getSuggestedAvatar(user: any): string {
     const type = user.permisoDtos?.find((menu: any) => 
       menu.modulo === 'DEPORTESAPP' && menu.nombreMenu === 'Administracion') ? 0 : 1;    
-    const foundItem = UserRol.find(item => item.tipo === type);
+    const foundItem = UserRole.find(item => item.tipo === type);
     if (foundItem) {
       const gender = user.designacionFuncionarioDto?.personaDto?.sexo;
       return gender === 'F' ? foundItem.avatarF : foundItem.avatarM;

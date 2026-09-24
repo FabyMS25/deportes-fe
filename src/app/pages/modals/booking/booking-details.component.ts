@@ -1,3 +1,4 @@
+import { UserRoleName, UserRoles } from 'src/app/core/constants/UserData';
 import { Component, OnInit, ViewChild, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -81,7 +82,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   currentWeekEnd: Date = new Date();  
   globalAdmin?: AdminDeportesInfo;
 
-  userRole: 'Contribuyente' | 'Representante' | 'Encargado' | 'Admin' = 'Contribuyente';
+  userRole: UserRoleName = UserRoles.CONTRIBUYENTE;
   canActivate: string[] = [];
   isLoading = false;
   reservationsList: Reserva[] = [];

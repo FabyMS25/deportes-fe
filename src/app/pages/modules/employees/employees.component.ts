@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { UserService } from 'src/app/core/services/api-users/users.service';
-import { UserRol } from 'src/app/core/constants/UserData';
+import { UserRole } from 'src/app/core/constants/UserData';
 import { EncargadoService } from 'src/app/core/services/api/encargado.service';
 import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
 import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
@@ -29,7 +29,7 @@ export class EmployeesComponent implements OnInit {
 
   submitted = false;
 
-  userRol = UserRol;
+  userRol = UserRole;
   userList: any;
   employeesList: EncargadoComplejo[] = [];
   funcionarioSelected!: any;
@@ -44,7 +44,6 @@ export class EmployeesComponent implements OnInit {
     { header: 'Hora Entrada', value: item => item.horaEntrada || '-' },
     { header: 'Hora Salida', value: item => item.horaSalida || '-' },
     { header: 'Complejo', value: item => item.complejoDto?.nombre || '-' },
-    { header: 'User UUID', value: item => item.userUuid || '-' },
   ];
 
   @ViewChild('viewModel') viewModel!: ElementRef;

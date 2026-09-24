@@ -8,9 +8,10 @@
         [csvColumns]="CSV_COLUMNS"
         [SelectedItems]="selectedItems"
         [newShow]="canCreateMonthlyPayment"
-        [consultShow]="false"
+        [consultShow]="selectedItems.length > 0 && canActivate.includes('ACTUALIZAR')"
         [exportShow]="canActivate.includes('VER')"
         (createEmitter)="createNewMonthlyPayment()"
+        (consultEmitter)="openModal(selectedItems,'consult','md')"
     ></app-data-header>
     <div class="card rounded-2">
         <div class="card-header border border-dashed border-end-0 border-start-0">
@@ -145,7 +146,6 @@
           </div>
         </div>
         <div class="card-body">
-            <div>
             <app-data-table
                 [loading]="loading"
                 [itemsList]="itemsList"
@@ -175,7 +175,6 @@
                 (selectedItemEmitter)="getSelectedItems($event)" 
                 [viewMode]="viewMode">
             </app-data-table>
-            </div>
         </div>
     </div>
 </div>

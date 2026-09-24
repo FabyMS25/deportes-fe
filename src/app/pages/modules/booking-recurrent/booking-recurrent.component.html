@@ -4,13 +4,14 @@
     <app-data-header
         [breadcrumbItems]="breadCrumbItems"
         [csvItems]="csvExportItems"
+        [loadExportItems]="loadExportItems"
         [csvColumns]="CSV_COLUMNS"
         [SelectedItems]="selectedItems"
         [newShow]="canActivate.includes('CREAR')"
-        [consultShow]="selectedItems.length > 0"
+        [consultShow]="selectedItems.length > 0 && canActivate.includes('ACTUALIZAR')"
         [exportShow]="canActivate.includes('VER')"
         (createEmitter)="addReservation()"
-        (consultEmitter)="openModal(selectedItems[0],'consult','md')"
+        (consultEmitter)="openModal(selectedItems,'consult','md')"
     ></app-data-header>
     <div class="card rounded-2">
         <div class="card-header border border-dashed border-end-0 border-start-0">
@@ -57,12 +58,6 @@
                         </select>
                     </div>
                     <div class="col-6 col-sm-3 col-lg-2">
-                        <select class="form-control" name="tipoBeneficiario" [(ngModel)]="filters.tipoBeneficiario" (ngModelChange)="applyFilters()">
-                            <option value="">Beneficiario</option>
-                            <option *ngFor="let option of tipoBeneficiarioOptions" [value]="option.value">{{ option.label }}</option>
-                        </select>
-                    </div>
-                    <div class="col-6 col-sm-3 col-lg-2">
                         <select class="form-control" name="tipoContribuyente" [(ngModel)]="filters.tipoContribuyente" (ngModelChange)="applyFilters()">
                             <option value="">Tipo contribuyente</option>
                             <option *ngFor="let option of tipoContribuyenteOptions" [value]="option.value">{{ option.label }}</option>
@@ -70,7 +65,7 @@
                     </div>
                     <div class="col-6 col-sm-3 col-lg-2">
                         <select class="form-control" name="tipoOrganizacion" [(ngModel)]="filters.tipoOrganizacion" (ngModelChange)="applyFilters()">
-                            <option value="">Tipo organización</option>
+                            <option value="">Organización: todas</option>
                             <option *ngFor="let option of tipoOrganizacionOptions" [value]="option.value">{{ option.label }}</option>
                         </select>
                     </div>
@@ -186,13 +181,15 @@
                   show: canActivate.includes('VER'),
                   validate: canActivate.includes('VALIDAR'),
                   consult: canActivate.includes('ACTUALIZAR'),
-                    records: canActivate.includes('GENERAR TICKET'),
+                  records: canActivate.includes('GENERAR TICKET'),
+                  check: canActivate.includes('ACTUALIZAR') ? 'Completar' : '',
                   process: canActivate.includes('ACTUALIZAR') ? 'No Show' : '',
-                  close: canActivate.includes('ANULAR')?'Eliminar':'',}"
+                  close: canActivate.includes('ANULAR')?'Anular':'',}"
                 (showItemEmitter)="openModal($event,'show','lg')"
                 (consultItemEmitter)="openModal($event,'consult','md')"
                 (validateItemEmitter)="openModal($event,'validarModal','')"
                 (closeItemEmitter)="openModal($event,'annularModal','')"
+                (checkItemEmitter)="openModal($event,'completeModal','md')"
                 (processItemEmitter)="openModal($event,'noShowModal','')"
                 (recordsEmitter)="showTicket($event)"
                 [multiCheck]="canActivate.includes('CREAR')"

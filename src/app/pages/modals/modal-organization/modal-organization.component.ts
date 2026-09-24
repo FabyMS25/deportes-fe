@@ -11,7 +11,7 @@ import { EstudianteEscuela } from 'src/app/core/models/EstudianteEscuela.model';
 import { EstudianteEscuelaService } from 'src/app/core/services/api/estudianteEscuela.service';
 import { ModalStudentComponent } from '../modal-student/modal-student.component';
 import { CommonModule } from '@angular/common';
-import { TipoOrganizacion } from 'src/app/core/constants/Features';
+import { TipoOrganizacion, TipoOrganizacionOptions } from 'src/app/core/constants/Features';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 
 @Component({
@@ -63,12 +63,7 @@ export class ModalOrganizationComponent implements OnInit {
   submitted = false;
   showLoading = false;
 
-  tiposOrganizacion = [
-    { value: TipoOrganizacion.ASOCIACION, label: 'Asociación' },
-    { value: TipoOrganizacion.CLUB, label: 'Club' },
-    { value: TipoOrganizacion.ESCUELA_MUNICIPAL, label: 'Escuela Municipal' },
-    { value: TipoOrganizacion.ORGANIZACION, label: 'Organización' }
-  ];
+  tiposOrganizacion = TipoOrganizacionOptions;
 
   constructor(
     private modalService: NgbModal,
@@ -412,4 +407,3 @@ export class ModalOrganizationComponent implements OnInit {
     });
   }
 }
-

@@ -6,12 +6,13 @@ import { ReservaRecurrente } from '../../models/reservaRecurrente.model';
 import { apiDelete, apiGet, apiPost, apiPut } from '../apiResponses';
 
 export interface ReservaRecurrenteFilters {
+  revisarEstados?: boolean;
   tab?: number;
   searchTerm?: string;
   estadoReserva?: string;
   estadoValidacion?: string;
   categoria?: string;
-  tipoBeneficiario?: string;
+  conOrganizacion?: boolean;
   tipoContribuyente?: string;
   tipoOrganizacion?: string;
   sortBy?: string;

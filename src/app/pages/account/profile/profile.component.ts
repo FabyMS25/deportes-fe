@@ -21,7 +21,7 @@ import { UserCivilStatus, UserDocType } from 'src/app/core/constants/UserData';
 export class ProfileComponent {
 
   CityAcronym=CityAcronym;
-  userRole!: 'Contribuyente' | 'Admin' | 'Encargado';
+  userRole!: import('src/app/core/constants/UserData').UserRoleName;
   userAvatar = "default-profile1.png";
   userData!:any;
   userEmployee!: EncargadoComplejo;
