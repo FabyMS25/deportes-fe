@@ -184,7 +184,7 @@
                   records: canActivate.includes('GENERAR TICKET'),
                   check: canActivate.includes('ACTUALIZAR') ? 'Completar' : '',
                   process: canActivate.includes('ACTUALIZAR') ? 'No Show' : '',
-                  close: canActivate.includes('ANULAR')?'Anular':'',}"
+                  closeForRow: closeActionLabel,}"
                 (showItemEmitter)="openModal($event,'show','lg')"
                 (consultItemEmitter)="openModal($event,'consult','md')"
                 (validateItemEmitter)="openModal($event,'validarModal','')"

@@ -635,7 +635,7 @@
               [class.is-invalid]="isFieldInvalid('aceptaTerminos')">
             <label class="form-check-label small" for="terminos" style="cursor: pointer;">
               <i class="ri-shield-check-line text-primary me-1"></i>
-              {{ 'Acepto los' | translate }} <a href="#" class="text-primary fw-semibold">{{ 'términos y condiciones' | translate }}</a> {{ 'y autorizo al GAMQ a generar la tasa municipal correspondiente.' | translate }}
+              {{ 'Acepto los' | translate }} <a href="/public/terms-condition" (click)="openTerms($event)" aria-label="Leer Términos y Condiciones de Uso" class="text-primary fw-semibold">{{ 'términos y condiciones' | translate }}</a> {{ 'y autorizo al GAMQ a generar la tasa municipal correspondiente.' | translate }}
               <span class="text-danger fw-bold">*</span>
             </label>
             <div *ngIf="getFieldError('aceptaTerminos')" class="invalid-feedback d-block">

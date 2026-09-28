@@ -187,7 +187,12 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
     );
   }
 
+  get closeAction() {
+    return StatusUtils.reservationCloseAction(this.row, this.canActivate);
+  }
+
   openDeleteModal(content: any): void {
+    if (!this.closeAction) return;
     this.motivo = '';
     this.observation = '';
     this.modalService.open(content, { centered: true, size: 'md', backdrop: 'static' });
@@ -203,7 +208,7 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
 
   annularData(formValues: any): void {
     const reserva = this.row;
-    if (!formValues || !reserva || this.isLoading || !this.canActivate?.includes('ANULAR')) return;
+    if (!formValues?.motivo?.trim() || !reserva || this.isLoading || this.closeAction?.kind !== 'annul') return;
     if (!reserva.numeroTasa?.trim() || reserva.estadoReserva === EstadoReserva.SOLICITADA) {
       this.notify('No corresponde anular una solicitud o mensualidad sin tasa. La solicitud requiere rechazo administrativo.', 'warning');
       return;
@@ -215,6 +220,14 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
         const confirmada = resultado.reservaDto?.uuid === reserva.uuid
           && resultado.reservaDto?.estadoReserva === EstadoReserva.CANCELADA;
         const mensaje = this.ruatService.getResponseMessage(resultado.respuestaRuat, '');
+        if (resultado.ruat === 'PAGO_CONFIRMADO' && resultado.resultado === 'ACTUALIZADA'
+            && resultado.reservaDto?.uuid === reserva.uuid) {
+          this.row = resultado.reservaDto;
+          this.notify(mensaje || resultado.detalleLocal || 'Pago confirmado; no se anuló la tasa.', 'info');
+          this.emitList.emit();
+          this.onCloseModal();
+          return;
+        }
         if (!confirmada) {
           this.notify(mensaje || resultado.detalleLocal || 'No se confirmó la cancelación local.', 'error');
           return;

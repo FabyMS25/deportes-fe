@@ -166,7 +166,7 @@
                     show: canActivate.includes('VER'),
                     consult: canActivate.includes('ACTUALIZAR'),
                     records: canActivate.includes('GENERAR TICKET'),
-                    close: canActivate.includes('ANULAR')?'Anular':'',}"
+                    closeForRow: closeActionLabel,}"
                 (showItemEmitter)="openModal($event,'show','lg')"
                 (consultItemEmitter)="openModal($event,'consult','md')"
                 (closeItemEmitter)="openModal($event,'annularModal','')"

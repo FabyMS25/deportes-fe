@@ -14,12 +14,12 @@ const routes: Routes = [
   {
     path: 'privacy-policy-in',
     component: ExtraPagesComponent,
-    data: { pageType: 'privacyPolicy', title: 'Política de Privacidad' }
+    data: { pageType: 'privacyPolicy', title: 'Política de Privacidad', requiredPermission: 'CAN_ACCESS' }
   },
   {
     path: 'terms-condition-in',
     component: ExtraPagesComponent,
-    data: { pageType: 'termsConditions', title: 'Términos & Condiciones de Uso' }
+    data: { pageType: 'termsConditions', title: 'Términos y Condiciones de Uso', requiredPermission: 'CAN_ACCESS' }
   },
   {
     path: 'sitemap',

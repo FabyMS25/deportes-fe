@@ -9,7 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 export class TermsConditionComponent implements OnInit {
 
   year: number = new Date().getFullYear();
-  title = 'Terminos & Condiciones de Uso';
+  title = 'Términos y Condiciones de Uso';
   contentType: string='';
 
   constructor(private route: ActivatedRoute) { }

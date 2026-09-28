@@ -49,6 +49,9 @@ export class BookingOneTimeComponent implements OnInit {
   userRole: UserRoleName = UserRoles.CONTRIBUYENTE;
   userData!:any;
   contribuyente!: Contribuyente;
+  readonly closeActionLabel = (row: any): string =>
+    StatusUtils.reservationCloseAction(row?.reservaDto || row, this.canActivate)?.label || '';
+
   estadoReservaOptions = StatusUtils.getReservationStatusOptions();
   estadoValidacionOptions = StatusUtils.getEstadoValidacionOptions();
   tipoContribuyenteOptions = [

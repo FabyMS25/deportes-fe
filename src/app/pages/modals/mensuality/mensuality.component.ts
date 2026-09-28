@@ -1,3 +1,6 @@
+import { inject as injectTermsModal } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TermsConditionsComponent } from 'src/app/shared/extraspages/terms-conditions/terms-conditions.component';
 import { UserRoleName, UserRoles } from 'src/app/core/constants/UserData';
 
 import { Component, HostListener, inject, EventEmitter, Input, Output, OnInit } from '@angular/core';
@@ -59,6 +62,14 @@ type MensualityCatalogs = {
   styleUrls: ['./mensuality.component.scss']
 })
 export class MensualityComponent implements OnInit {
+  private readonly termsModal = injectTermsModal(NgbModal);
+
+  openTerms(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.termsModal.open(TermsConditionsComponent, { size: 'lg', scrollable: true });
+  }
+
   @Input() row!: Reserva;
 
   @Input() canActivate: any[] = [];
@@ -218,6 +229,7 @@ export class MensualityComponent implements OnInit {
   private initializeForm(): void {
     this.reservationForm = this.formBuilder.group({
       escuela: ['', Validators.required],
+      aceptaTerminos: [false, Validators.requiredTrue],
       reservaRecurrente: ['', Validators.required],
       contribuyente: ['', Validators.required],
       observaciones: ['']
@@ -448,6 +460,11 @@ export class MensualityComponent implements OnInit {
 
   async onSubmit(): Promise<void> {
     if (this.isLoading) return;
+    if (this.reservationForm.get('aceptaTerminos')?.value !== true) {
+      this.reservationForm.get('aceptaTerminos')?.markAsTouched();
+      this.handleError('Aceptación requerida', 'Debe leer y aceptar los Términos y Condiciones de Uso antes de generar el cobro.');
+      return;
+    }
     if (this.reservationForm.invalid) {
       Swal.fire({
         title: 'Formulario incompleto',

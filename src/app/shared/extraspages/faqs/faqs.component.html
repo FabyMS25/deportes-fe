@@ -11,6 +11,7 @@
                 contactarnos o enviarnos un correo electrónico. ¡Te responderemos a la brevedad!                
               </p>
               <div class="hstack flex-wrap gap-2">
+                <a routerLink="/public/terms-condition" class="btn btn-light rounded-pill">Términos y condiciones</a>
                 <button type="button" class="btn btn-primary btn-label rounded-pill" (click)="sendEmail()">
                     <i class="ri-mail-line label-icon align-middle rounded-pill fs-16 me-2"></i> Envíanos un correo
                 </button>
@@ -97,6 +98,8 @@
                     <li>Ingrese personas si la tarifa es por persona.</li>
                     <li>Revise disponibilidad, conflictos, anticipación y duración máxima.</li>
                     <li>Confirme el costo y genere la reserva o solicitud.</li>
+                    <li>Si aparece como Solicitada, espere la aprobación. Cuando se emita el cobro, revise su número y la fecha límite y pague por los canales habilitados.</li>
+                    <li>Con el pago confirmado, verá Pagada antes del uso, En curso durante el horario y Completada al terminar.</li>
                   </ol>
                   <div class="flow-note">
                     <strong>Importante:</strong> en eventos se controla la duración máxima configurada; si se excede, el sistema explica el motivo antes de continuar.
@@ -120,6 +123,8 @@
                     <li>Personalice fechas si necesita cambiar, excluir o mover sesiones.</li>
                     <li>Revise la lista de sesiones programadas.</li>
                     <li>Confirme el total de sesiones, conceptos y costo final.</li>
+                    <li>Espere la aprobación si se requiere. Si corresponde pagar, utilice el número de cobro y el plazo de esta reserva.</li>
+                    <li>Con el pago confirmado, el estado cambia según las fechas de uso. Las reservas gratuitas de escuelas tienen la excepción explicada debajo.</li>
                   </ol>
                   <div class="flow-note flow-note--success">
                     <strong>Tip:</strong> los colores del calendario diferencian patrón global, fecha personalizada, día personalizado, exclusiones y conflictos.
@@ -132,17 +137,17 @@
                   <div class="flow-card__header flow-card__header--warning">
                     <i class="ri-bank-card-line"></i>
                     <div>
-                      <h6 class="mb-0">Reservas por periodo</h6>
+                      <h6 class="mb-0">Mensualidades de escuelas</h6>
                       <small>Pagos de mensualidades</small>
                     </div>
                   </div>
                   <ol class="flow-steps">
-                    <li>Seleccione el periodo o mes de pago.</li>
-                    <li>Busque o seleccione el estudiante/participante.</li>
-                    <li>Revise la escuela, organización o actividad relacionada.</li>
-                    <li>Verifique si ya existe mensualidad para ese periodo.</li>
-                    <li>Genere la mensualidad y el pago correspondiente.</li>
-                    <li>Registre o actualice el estado del pago.</li>
+                    <li>Seleccione la escuela, la reserva que organiza sus horarios y el entrenador.</li>
+                    <li>Revise el contribuyente responsable del pago.</li>
+                    <li>Seleccione estudiantes y meses dentro del período permitido.</li>
+                    <li>Revise duplicados, detalles e importe total.</li>
+                    <li>Confirme: se emite el cobro y se registra la mensualidad.</li>
+                    <li>Pague por los canales habilitados. Cuando RUAT confirme el pago, la mensualidad aparecerá como Pagada.</li>
                   </ol>
                   <div class="flow-note flow-note--warning">
                     <strong>Uso principal:</strong> este flujo no reserva una hora puntual; registra y controla pagos mensuales por periodo.
@@ -155,7 +160,7 @@
               <div>
                 <i class="ri-shield-user-line text-primary me-1"></i>
                 <strong>Permisos:</strong>
-                Administradores y encargados pueden registrar reservas directas. Contribuyentes o representantes pueden terminar en solicitud si el campo requiere aprobación o si la funcionalidad directa no está habilitada.
+                Las acciones dependen de los permisos asignados y de las condiciones del campo. Una solicitud requiere validación; tener un rol determinado no concede por sí solo todos los permisos.
               </div>
             </div>
           </div>
@@ -163,9 +168,80 @@
       </div>
     </div>
 
-    <div class="row justify-content-evenly mb-4">
-      @for (category of faqCategory; track $index) {
-      <div class="col-lg-4">
+    <div class="card"><section class="card-body p-4" aria-label="Guía de reservas, mensualidades y pagos">
+  <h4>Plazos, revisión de pagos y casos especiales</h4>
+  <p>El sistema llama <strong>tasa</strong> al cobro municipal que debe pagar por una reserva o mensualidad. RUAT es el servicio que permite emitirlo y comprobar si fue pagado.
+    El <strong>ticket</strong> identifica ese cobro; recibirlo no significa que ya haya pagado. Conserve su comprobante de pago.</p>
+  <h5>1. Solicitar y obtener la aprobación</h5>
+  <p>Si el trámite requiere aprobación, aparece como <strong>Solicitada</strong>. Todavía no se ha emitido un cobro para pagar.
+    El personal autorizado puede aprobarlo o rechazarlo indicando el motivo. Si se aprueba y requiere pago, se emite el cobro correspondiente y se completa el registro.
+    Una reserva gratuita no genera un cobro.</p>
+  <p>Una fecha estimada que aparezca en la solicitud no provoca una anulación en RUAT.
+    Si corresponde anulación automática, el plazo de pago se recalcula al aprobar la reserva, una vez emitido el cobro,
+    y no desde el día en que se envió la solicitud.</p>
+  <h5>2. Casos especiales de escuelas y mensualidades</h5>
+  <p><strong>Excepción de escuelas municipales:</strong> la reserva recurrente gratuita que sirve de base a una escuela
+    no se completa automáticamente por fecha. El personal autorizado puede marcarla como Completada cuando corresponda.
+    Una vez completada, deja de ofrecerse para registrar nuevas mensualidades. Esto no paga ni anula mensualidades existentes.</p>
+  <p>Las mensualidades representan pagos de estudiantes, no ocupación de una cancha.
+    <strong>No tienen anulación automática por plazo, ni fecha límite de pago para esa anulación, ni pasan a COMPLETADA por terminar el mes.</strong>
+    Los registros anteriores que ya figuran como finalizados o cancelados no se reabren automáticamente.</p>
+  <h5>3. Plazo de pago</h5>
+  <p>El tiempo para pagar puede variar según el tipo de reserva y las condiciones vigentes al registrarla. Consulte siempre la fecha y hora límite indicadas en su reserva, en horario de Bolivia.</p>
+  <ng-container>
+  <p>Estos plazos son los cargados al iniciar su sesión. No reemplazan la fecha límite que ya tiene una reserva registrada ni son plazos para solicitar devoluciones.</p>
+  <p *ngIf="deadlinesUnavailable" class="alert alert-info">Puede leer esta guía sin iniciar sesión.
+    No hay plazos disponibles para mostrar en esta sesión.
+    Revise la fecha límite guardada en su reserva o consulte al encargado; no se muestra un valor supuesto.</p>
+  <div class="table-responsive" *ngIf="!deadlinesUnavailable">
+    <table class="table table-bordered">
+      <thead><tr><th>Tipo de reserva</th><th>Tiempo para pagar</th></tr></thead>
+      <tbody><tr *ngFor="let item of deadlineTypes"><td>{{ item.label }}</td><td>{{ deadlineText(item.key) }}</td></tr></tbody>
+    </table>
+  </div>
+  </ng-container>
+  <p><strong>Para una reserva ya registrada, respete su fecha y hora límite</strong>; no suponga que tiene el mismo plazo que otra reserva anterior.</p>
+  <p>El plazo de anulación solo se aplica cuando ya se emitió un cobro y la reserva tiene habilitada la opción
+    <strong>“Anulación automática por falta de pago”</strong>. Las gratuitas y las mensualidades no se anulan por falta de pago.
+    Si la anulación automática está deshabilitada, el pago igualmente puede ser consultado y actualizado.</p>
+  <h5>4. Orden de la revisión automática</h5>
+  <ol>
+    <li>Para una reserva pendiente de pago, primero se comprueba en RUAT si el cobro ya fue pagado, incluso si no tiene anulación automática.</li>
+    <li>Si RUAT confirma el pago de ese cobro, se registra el pago. Las puntuales y recurrentes pasan a Pagada, En curso o Completada según su uso; las mensualidades pasan a Pagada.</li>
+    <li>Si la respuesta indica que no hay pago, solo se solicita anulación cuando corresponde, está habilitada y ya pasó la fecha límite.</li>
+    <li>La reserva pasa a EXPIRADA únicamente después de que RUAT confirme la anulación. El vencimiento por sí solo no confirma que la tasa fue anulada.</li>
+  </ol>
+  <p>El pago se comprueba al abrir o actualizar las listas. El cambio puede no verse inmediatamente después de pagar ni en el instante exacto del vencimiento.</p>
+  <p>Mientras la lista permanece abierta, se realiza otra revisión cada cinco minutos.
+    Se revisan los registros que lo necesitan entre los que usted puede consultar, no solamente las filas de la primera página.
+    Cambiar de página, ordenar o filtrar no solicita por sí solo otra revisión.
+    No se garantiza que el cambio ocurra en el segundo exacto del vencimiento.</p>
+  <p>Si RUAT no responde o no confirma la operación requerida, se conserva el estado afectado y la lista sigue disponible;
+    el resumen puede indicar una revisión incompleta. Una respuesta válida de “sin pagos” no es una falla de conexión.
+    Los mensajes de RUAT se muestran sin reemplazar su significado. Un problema con una tasa no significa que toda la lista haya fallado.</p>
+  <p>Las reservas PAGADA o EN_CURSO pueden actualizarse por las fechas de uso sin anular su cobro.
+    La revisión no reactiva reservas canceladas, expiradas, completadas o marcadas como inasistencia (“No Show”).</p>
+  <h5>5. Acciones manuales y significado de los estados</h5>
+  <ul>
+    <li><strong>Rechazar solicitud:</strong> el personal autorizado no aprueba el pedido e indica el motivo. Como todavía no se emitió un cobro, no hay nada que anular en RUAT.</li>
+    <li><strong>Anular tasa y reserva:</strong> se solicita anular el cobro de una reserva pendiente, indicando el motivo. La cancelación se registra cuando RUAT confirma la anulación.</li>
+    <li><strong>Cancelar reserva:</strong> se cancela una reserva gratuita aprobada; no interviene un cobro.</li>
+    <li><strong>Cambiar horario:</strong> para puntuales pendientes que cumplan las validaciones de fecha y disponibilidad; conserva la duración y no modifica el importe de la tasa.</li>
+    <li><strong>Completar / No Show:</strong> registran finalización de uso o inasistencia cuando el tipo y estado lo permiten; no son anulaciones de tasa.</li>
+  </ul>
+  <p><strong>APROBADA</strong> describe la validación administrativa y no significa pagada.
+    <strong>PAGADO</strong> describe el pago; <strong>COMPLETADA</strong>, la finalización del uso.
+    <strong>EXPIRADA</strong> indica vencimiento con anulación confirmada; <strong>CANCELADA</strong>, cancelación o rechazo procesado.
+    Estas acciones requieren autorización del personal responsable y dependen de la situación de la reserva; no todos los usuarios pueden realizarlas.</p>
+  <p>Después de emitir una tasa no se permite cambiar libremente los importes ni los datos que determinan el cobro.
+    Consulte al encargado para cualquier corrección. Una anulación no equivale a un reembolso.
+    Si una operación fue confirmada en RUAT pero el sistema informa un problema al guardar, no solicite otro cobro para repetirla:
+    conserve el número de tasa y comunique el mensaje al encargado para verificar lo ocurrido.</p>
+</section></div>
+
+    <div class="row g-4 mb-4">
+      @for (category of faqCategory; track category.title; let categoryIndex = $index) {
+      <div class="col-12 col-lg-6">
         <div class="mt-3">
           <div class="d-flex align-items-center mb-2">
             <div class="flex-shrink-0 me-1">
@@ -176,12 +252,10 @@
             </div>
           </div>
 
-          <div ngbAccordion activeIds="static-1" [closeOthers]="true">
-            @for (faq of category.faqs; track $index) {
-            <div ngbAccordionItem id="static-1">
-              <div ngbAccordionHeader class="accordion-header border-0 bg-transparent" data-bs-toggle="collapse"
-                data-bs-target="#gen-ques-collapseOne" aria-expanded="false" aria-controls="gen-ques-collapseOne"
-                id="gen-ques-headingOne">
+          <div ngbAccordion [closeOthers]="true">
+            @for (faq of category.faqs; track faq.question; let questionIndex = $index) {
+            <div [ngbAccordionItem]="'faq-' + categoryIndex + '-' + questionIndex">
+              <div ngbAccordionHeader class="accordion-header border-0 bg-transparent">
                 <button ngbAccordionButton>{{faq.question}}  </button>
               </div>
               <div ngbAccordionCollapse>

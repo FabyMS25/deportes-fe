@@ -1,28 +1,28 @@
 import { CommonModule, Location } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { Component, Input, Optional } from '@angular/core';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-terms-conditions',
   templateUrl: './terms-conditions.component.html',
   styleUrls: ['./terms-conditions.component.scss'],
   standalone: true,
-  imports: [
-    FormsModule,
-    CommonModule,
-    NgbModule,
-  ],
+  imports: [CommonModule, RouterLink]
 })
-export class TermsConditionsComponent implements OnInit {
-
-  @Input() buttons: boolean = true; 
-
-  constructor(private location: Location) {}
-
-  ngOnInit(): void {}
-
-  goBack() {
-    this.location.back();
+export class TermsConditionsComponent {
+  @Input() buttons = true;
+  returnUnavailable = false;
+  constructor(private location: Location, @Optional() private activeModal: NgbActiveModal) {}
+  goBack(): void {
+    if (this.activeModal) {
+      this.activeModal.close();
+      return;
+    }
+    if (window.history.length > 1) {
+      this.location.back();
+      return;
+    }
+    this.returnUnavailable = true;
   }
 }

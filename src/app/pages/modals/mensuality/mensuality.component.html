@@ -157,6 +157,18 @@
         </div>
         <label class="form-label mb-1">Observaciones</label>
         <textarea class="form-control" formControlName="observaciones" rows="2" placeholder="Observaciones adicionales..."></textarea>
+        <div class="mt-3 p-3 border rounded">
+          <p class="small mb-2">Al confirmar se generará un cobro por los estudiantes y meses seleccionados, a nombre del responsable indicado.
+            Revise los datos y el importe total. Recibir el número de cobro no significa que ya esté pagado.</p>
+          <div class="form-check">
+            <input id="mensualidad-acepta-terminos" type="checkbox" class="form-check-input" formControlName="aceptaTerminos"
+              [class.is-invalid]="reservationForm.get('aceptaTerminos')?.touched && reservationForm.get('aceptaTerminos')?.invalid">
+            <label for="mensualidad-acepta-terminos" class="form-check-label">He leído y acepto los Términos y Condiciones de Uso
+              y autorizo la emisión del cobro municipal correspondiente. *</label>
+            <div class="invalid-feedback">Debe aceptar los términos para continuar.</div>
+          </div>
+          <a href="/public/terms-condition" (click)="openTerms($event)" class="small">Leer Términos y Condiciones de Uso</a>
+        </div>
   </form>
   <div class="registration-footer d-flex flex-wrap align-items-center p-3 border-top">
     <div class="me-auto" aria-live="polite">

@@ -99,6 +99,24 @@ const VALIDATION_STATUS_DESCRIPTIONS: Record<EstadoValidacion, string> = {
 
 
 export const StatusUtils = {
+  reservationCloseAction(reserva: Reserva | undefined, permissions: readonly string[] = []): { kind: 'reject' | 'annul' | 'cancel'; label: string } | null {
+    if (!reserva) return null;
+    const hasTax = !!reserva.numeroTasa?.trim();
+    if (reserva.estadoReserva === EstadoReserva.SOLICITADA) {
+      return reserva.tipoReserva !== 'periodo' && !hasTax &&
+        reserva.estadoValidacion === EstadoValidacion.PENDIENTE && permissions.includes('VALIDAR')
+        ? { kind: 'reject', label: 'Rechazar solicitud' } : null;
+    }
+    if (!permissions.includes('ANULAR') || reserva.estadoValidacion !== EstadoValidacion.APROBADA) return null;
+    if (reserva.estadoReserva === EstadoReserva.PENDIENTE && hasTax) {
+      return { kind: 'annul', label: 'Anular tasa y reserva' };
+    }
+    if (reserva.tipoReserva !== 'periodo' && reserva.esReservaGratuita && !hasTax &&
+        [EstadoReserva.PENDIENTE, EstadoReserva.PAGADA, EstadoReserva.EN_CURSO].includes(reserva.estadoReserva as EstadoReserva)) {
+      return { kind: 'cancel', label: 'Cancelar reserva' };
+    }
+    return null;
+  },
   esRecurrenteGratuitaDeEscuela(reserva?: Reserva): boolean {
     return reserva?.tipoReserva === 'recurrente' && reserva.esReservaGratuita === true &&
       reserva.organizacionDto?.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL;

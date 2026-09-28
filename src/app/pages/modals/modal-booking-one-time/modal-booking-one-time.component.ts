@@ -408,7 +408,12 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
     });
   }
 
+  get closeAction() {
+    return StatusUtils.reservationCloseAction(this.row?.reservaDto, this.canActivate);
+  }
+
   openDeleteModal(content: any) {
+    if (!this.closeAction) return;
     this.accion = content;
     this.motivo = '';
     this.observation = '';
@@ -493,7 +498,13 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   }
 
   annularData(formValues: any) {
-    if (this.showLoading || !this.canActivate?.includes('ANULAR')) return;
+    if (this.showLoading || !this.closeAction || !formValues?.motivo?.trim()) return;
+    if (this.closeAction.kind === 'reject') {
+      if (!this.row?.reservaDto?.uuid) return;
+      this.showLoading = true;
+      this.rejectReserva(this.row.reservaDto.uuid, formValues.motivo.trim());
+      return;
+    }
     if (!formValues || !this.row?.reservaDto) {
       this.notify('No se pudo obtener los datos de la reserva', 'error');
       return;
@@ -640,9 +651,11 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   private rejectReserva(reservaUuid: any, motivoRechazo: string = '') {
     const aprobadoPor = this.userData.nombreCompleto || this.userData.fullName;
     this.reservaService.rejectReservation(reservaUuid, motivoRechazo, aprobadoPor).subscribe({
-      next: async () => {
+      next: async (updated) => {
         this.showLoading = false;
-        this.openTicketModal();
+        this.row.reservaDto = updated;
+        this.emitList.emit();
+        this.onCloseModal();
         this.notify('Reserva rechazada exitosamente y notificación enviada al contribuyente', 'success');
       },
       error: (error) => {
@@ -758,8 +771,8 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
         }
         this.row = { ...this.row, reservaDto: resultado.reservaDto };
         Swal.fire({
-          title: 'Reserva Anulada!',
-          text: 'La reserva gratuita ha sido anulada exitosamente.',
+          title: 'Reserva cancelada',
+          text: 'La reserva gratuita ha sido cancelada exitosamente.',
           icon: 'success',
           confirmButtonColor: '#299cdb',
           timer: 5000,
@@ -770,7 +783,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
       },
       error: () => {
         this.showLoading = false;
-        this.notify('Error al anular la reserva gratuita localmente', 'error');
+        this.notify('Error al cancelar la reserva gratuita localmente', 'error');
       }
     });
   }
@@ -788,6 +801,14 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
         const confirmada = resultado.reservaDto?.uuid === reserva.uuid
           && resultado.reservaDto?.estadoReserva === EstadoReserva.CANCELADA;
         const mensaje = this.ruatService.getResponseMessage(resultado.respuestaRuat, '');
+        if (resultado.ruat === 'PAGO_CONFIRMADO' && resultado.resultado === 'ACTUALIZADA'
+            && resultado.reservaDto?.uuid === reserva.uuid) {
+          this.row = { ...this.row, reservaDto: resultado.reservaDto };
+          this.notify(mensaje || resultado.detalleLocal || 'Pago confirmado; no se anuló la tasa.', 'info');
+          this.emitList.emit();
+          this.modalService.dismissAll('close click');
+          return;
+        }
         if (!confirmada) {
           this.notify(mensaje || resultado.detalleLocal || 'No se confirmó la cancelación local.', 'error');
           return;

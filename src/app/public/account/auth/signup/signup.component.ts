@@ -1,3 +1,6 @@
+import { inject as injectTermsModal } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TermsConditionsComponent } from 'src/app/shared/extraspages/terms-conditions/terms-conditions.component';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AbstractControl, FormGroup, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
@@ -21,6 +24,14 @@ import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 })
 
 export class SignupComponent implements OnInit {
+  private readonly termsModal = injectTermsModal(NgbModal);
+
+  openTerms(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.termsModal.open(TermsConditionsComponent, { size: 'lg', scrollable: true });
+  }
+
   SignupForm!: UntypedFormGroup;
   submitted = false;
   passwordField!: boolean;

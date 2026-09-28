@@ -242,16 +242,6 @@ export class RuatRequestsService {
     return this.ruatPost(`${apiUrl}/creartasa`, requestData);
   }
 
-  cancelTasa(data: any): Observable<any> {
-    const requestData = {
-      'anular': {
-        'numeroTasa': data.numeroTasa,
-        'motivoTasa': data.motivo,
-        'observacion': data.observacion
-      }
-    };
-    return this.ruatPost(`${apiUrl}/anulartasa`, requestData);
-  }
   
   checkFeePayment(nroTasa: string): Observable<any> {
     const requestData = {

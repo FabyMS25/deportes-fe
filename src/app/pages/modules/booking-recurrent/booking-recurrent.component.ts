@@ -47,6 +47,9 @@ export class BookingRecurrentComponent implements OnInit {
   loading: boolean = true;
   reservasList: any;
   categoryList: Categoria[] = [];
+  readonly closeActionLabel = (row: any): string =>
+    StatusUtils.reservationCloseAction(row?.reservaDto || row, this.canActivate)?.label || '';
+
   estadoReservaOptions = StatusUtils.getReservationStatusOptions();
   estadoValidacionOptions = StatusUtils.getEstadoValidacionOptions();
   tipoContribuyenteOptions = [

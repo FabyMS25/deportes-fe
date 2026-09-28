@@ -180,7 +180,7 @@
                     consult: canActivate.includes('ACTUALIZAR'),
                     records: canActivate.includes('GENERAR TICKET'),
                     process: canActivate.includes('ACTUALIZAR') ? 'No Show' : '',
-                    close: canActivate.includes('ANULAR')?'Anular':'',}"
+                    closeForRow: closeActionLabel,}"
                 (showItemEmitter)="openModal($event,'show','lg')"
                 (editItemEmitter)="openModal($event,'edit','lg')"
                 (consultItemEmitter)="openModal($event,'consult','md')"

@@ -7,6 +7,11 @@ import { LayoutComponent } from './layouts/layout.component';
 
 const routes: Routes = [
   {
+    path: 'public',
+    loadChildren: () => import('./public/extrapages/extraspages.module')
+      .then(module => module.ExtraspagesModule)
+  },
+  {
     path: '',
     component: LayoutComponent,
     canActivate: [AuthGuard],
@@ -40,11 +45,6 @@ const routes: Routes = [
     canActivate: [NoAuthGuard],
     loadChildren: () => import('./public/account/account.module')
       .then(module => module.AccountModule)
-  },
-  {
-    path: 'public',
-    loadChildren: () => import('./public/extrapages/extraspages.module')
-      .then(module => module.ExtraspagesModule)
   },
   { path: '**', redirectTo: '' }
 ];

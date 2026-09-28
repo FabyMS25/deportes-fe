@@ -54,6 +54,9 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
   userData!: any;
   contribuyente!: Contribuyente;
 
+  readonly closeActionLabel = (row: any): string =>
+    StatusUtils.reservationCloseAction(row?.reservaDto || row, this.canActivate)?.label || '';
+
   estadoReservaOptions = StatusUtils.getReservationStatusOptions();
 
   loading = true;

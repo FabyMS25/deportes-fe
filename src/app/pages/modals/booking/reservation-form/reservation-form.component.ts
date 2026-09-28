@@ -1,3 +1,6 @@
+import { inject as injectTermsModal } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TermsConditionsComponent } from 'src/app/shared/extraspages/terms-conditions/terms-conditions.component';
 import { UserRoleName, UserRoles } from 'src/app/core/constants/UserData';
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 import { FormGroup, FormBuilder, Validators, AbstractControl, ValidationErrors, ValidatorFn, ReactiveFormsModule, FormsModule, FormControl } from '@angular/forms';
@@ -53,7 +56,14 @@ interface PuntualSchedule {
   templateUrl: './reservation-form.component.html',
   styleUrls: ['./reservation-form.component.scss']
 })
-export class ReservationFormComponent implements OnInit, OnDestroy { 
+export class ReservationFormComponent implements OnInit, OnDestroy {
+  private readonly termsModal = injectTermsModal(NgbModal);
+
+  openTerms(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.termsModal.open(TermsConditionsComponent, { size: 'lg', scrollable: true });
+  }
   @Input() bookingType!: BookingType;
   @Input() actionType?:'book' | 'request' | 'none';
   @Input() dataComplejo!: ComplejoDeportivo;
@@ -2674,5 +2684,3 @@ getPaidReservationDescription(): string {
     return this.reservationForm ? this.reservationForm.hasError('anticipationRequired') : false;
   }
 }
-
-

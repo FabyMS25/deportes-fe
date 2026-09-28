@@ -170,10 +170,10 @@
             <i class="ri-file-list-3-line me-1"></i>Ticket
           </button>
 
-          <button *ngIf="canCancelReservation()"
+          <button *ngIf="closeAction"
                   class="btn btn-soft-danger btn-sm"
                   (click)="openDeleteModal(annularModal)">
-            <i class="ri-close-line me-1"></i>Anular
+            <i class="ri-close-line me-1"></i>{{ closeAction.label }}
           </button>
         </div>
 
@@ -507,10 +507,10 @@
         </lord-icon>
 
         <div class="mt-2 fs-15 mx-4 mx-sm-5">
-          <h4>Estas seguro de Anular el Registro ?</h4>
+          <h4>{{ closeAction?.label }}</h4>
           <p class="text-muted mx-4 mb-0">
             Esta acción no podrá ser revertida, la reserva "<strong>{{ row.numeroReserva }}</strong>"
-            sera anulada en RUAT y en el sistema de reservas municipal.
+            {{ closeAction?.kind === 'reject' ? 'será rechazada administrativamente, sin operaciones en RUAT.' : closeAction?.kind === 'cancel' ? 'será cancelada localmente; no tiene tasa que anular en RUAT.' : 'será cancelada solamente después de que RUAT confirme la anulación de la tasa.' }}
           </p>
         </div>
       </div>
@@ -540,17 +540,17 @@
             <label for="observation" class="form-label">Observación *</label>
             <input type="text"
                    class="form-control"
-                   placeholder="Mínimo 10 caracteres"
+                   placeholder="Mínimo 11 caracteres"
                    name="observation"
                    [(ngModel)]="observation"
                    required
-                   minlength="10"
+                   minlength="11"
                    #observationCtrl="ngModel"
                    [class.is-invalid]="observationCtrl.invalid && observationCtrl.touched">
 
             <div *ngIf="observationCtrl.invalid && observationCtrl.touched" class="invalid-feedback">
               <div *ngIf="observationCtrl.errors?.['required']">La observación es requerida.</div>
-              <div *ngIf="observationCtrl.errors?.['minlength']">Mínimo 10 caracteres.</div>
+              <div *ngIf="observationCtrl.errors?.['minlength']">Mínimo 11 caracteres.</div>
             </div>
           </div>
 
@@ -575,10 +575,10 @@
                 [disabled]="annulForm.invalid || isLoading"
                 (click)="annularData(annulForm.value)">
           <span *ngIf="!isLoading">
-            <i class="ri-delete-bin-line me-1 align-middle"></i> Sí, Anular
+            <i class="ri-delete-bin-line me-1 align-middle"></i> {{ closeAction?.label }}
           </span>
           <span *ngIf="isLoading">
-            <span class="spinner-border spinner-border-sm me-2"></span>Anulando...
+            <span class="spinner-border spinner-border-sm me-2"></span>Procesando...
           </span>
         </button>
       </div>
