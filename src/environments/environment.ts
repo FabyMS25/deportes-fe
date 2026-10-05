@@ -1,7 +1,7 @@
 export const environment = {
   production: false,
 
-  backendUrl: '/api',
+  backendUrl: 'http://localhost:8085/api',
   assetsUrl: 'https://deportes.quillacollo.gob.bo',
 
   EmailJS: {

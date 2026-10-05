@@ -170,7 +170,6 @@ export class TicketComponent implements OnChanges {
     } else {
       observable = this.reportsService.getTicketReservaPuntual(this.reservationData.uuid);
     }
-
     this.reportsService.downloadPdf(observable, filename);
   }
 
@@ -273,37 +272,13 @@ export class TicketComponent implements OnChanges {
   }
 
   private generateTicketUrl(reserva: any): string {
-    const baseUrl = environment.backendUrl;
-    let endpoint = '';
-    if (reserva.tipoReserva === 'periodo') {
-      endpoint = '/reporte/ticket-mensual';
-    } else if (reserva.tipoReserva === 'puntual') {
-      switch (reserva.tarifaDto?.tipoCobro) {
-        case 'por_evento':
-          endpoint = '/reporte/ticket-reser-ev';
-          break;
-        case 'por_persona':
-          endpoint = '/reporte/ticket-reser-per';
-          break;
-        default:
-          endpoint = '/reporte/ticket-reservap';
-      }
-    } else {
-      switch (reserva.tarifaDto?.tipoCobro) {
-        case 'por_sesion':
-          endpoint = '/reporte/ticket-recuses';
-          break;
-        case 'mensualidad':
-          endpoint = '/reporte/ticket-recumes';
-          break;
-        case 'por_persona':
-          endpoint = '/reporte/ticket-recuper';
-          break;
-        default:
-          endpoint = '/reporte/ticket-recuses';
-      }
+    if (!reserva.publicId) {
+      throw new Error('La reserva no tiene un enlace público de ticket disponible.');
     }
-    return `${baseUrl}${endpoint}?uuid=${reserva.uuid}`;
+    const apiBaseUrl = new URL(environment.backendUrl, window.location.origin)
+      .toString()
+      .replace(/\/$/, '');
+    return `${apiBaseUrl}/reporte/public/ticket/${encodeURIComponent(reserva.publicId)}`;
   }
 
   private getScheduleInformation(reserva: any): any {

@@ -12,6 +12,7 @@ import { Tarifa } from "./tarifa.model";
 import { Pago } from "./pago.model";
 export interface Reserva{
   uuid?: string;
+  publicId?: string;
   estado?:boolean;
   fechaCreacion:Date;
   fechaActualizacion?:Date;

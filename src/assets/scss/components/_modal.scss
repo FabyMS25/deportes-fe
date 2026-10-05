@@ -176,44 +176,53 @@
     }
 }
 
-// Component-based ng-bootstrap modals render their component host and, in this
-// project, an additional .modal-content/form layer inside Bootstrap's content.
-// Carry the scrollable flex layout through those wrappers so only the body
-// scrolls and the header/footer remain visible.
+// Component-based ng-bootstrap modals add a component host between Bootstrap's
+// dialog and the modal markup. Preserve the scrollable layout through that host
+// and common form/card wrappers so actions remain visible on short screens.
 .modal-dialog-scrollable {
-	> .modal-content {
-		overflow: hidden;
+    > .modal-content {
+        overflow: hidden;
 
-		> :not(.modal-header):not(.modal-body):not(.modal-footer) {
-			display: flex;
-			flex: 1 1 auto;
-			flex-direction: column;
-			min-height: 0;
-			overflow: hidden;
+        > :not(.modal-header):not(.modal-body):not(.modal-footer) {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
 
-			> .modal-content {
-				display: flex;
-				flex: 1 1 auto;
-				flex-direction: column;
-				min-height: 0;
-				max-height: 100%;
-				overflow: hidden;
+            > .modal-content,
+            > form,
+            > .card {
+                display: flex;
+                flex: 1 1 auto;
+                flex-direction: column;
+                min-height: 0;
+                max-height: 100%;
+                overflow: hidden;
+            }
 
-				> form {
-					display: flex;
-					flex: 1 1 auto;
-					flex-direction: column;
-					min-height: 0;
-					overflow: hidden;
-				}
-			}
-		}
-	}
+            > .modal-content > form {
+                display: flex;
+                flex: 1 1 auto;
+                flex-direction: column;
+                min-height: 0;
+                overflow: hidden;
+            }
 
-	.modal-body {
-		min-height: 0;
-		overflow-y: auto;
-	}
+            > .card > .card-body {
+                min-height: 0;
+                overflow-y: auto;
+                overscroll-behavior: contain;
+            }
+        }
+    }
+
+    .modal-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
 }
 
 .modal {
