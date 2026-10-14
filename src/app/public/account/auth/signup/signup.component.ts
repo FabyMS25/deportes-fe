@@ -62,9 +62,15 @@ export class SignupComponent implements OnInit {
       const exist = params['userExist'];
       this.ruatData = this.userDataService.getTemporaryUserData();
       
-      if (exist && this.ruatData) {
+      if (exist === 'true' && this.ruatData) {
         this.formDataSet(this.ruatData);
-        this.userDataService.setTemporaryUserData(null);
+      } else if (exist === 'false' && this.ruatData) {
+        this.SignupForm.get('numeroDocumento')?.setAsyncValidators(this.identityNumberValidator.bind(this));
+        this.SignupForm.patchValue({
+          tipoDocumento: this.ruatData.tipoDocumento,
+          numeroDocumento: this.ruatData.numeroDocumento,
+          expedido: this.ruatData.expedido,
+        });
       }
     });
   }

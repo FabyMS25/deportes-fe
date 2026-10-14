@@ -1,5 +1,4 @@
 export interface MenuItem {
-  uuid?: string;
   estado?: boolean;
   modulo?: string;
   codigo?:string;

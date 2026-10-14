@@ -917,8 +917,11 @@ export class ModalTaxpayerComponent implements OnInit {
         this.notify(this.ruatService.getResponseMessage(ruatResp, 'No se encontraron datos en RUAT. Puede continuar con registro manual'), 'info');
         this.fillFormManually();
       }
-    } catch {
-      this.notify('Error al consultar RUAT. Puede continuar con registro manual', 'warning');
+    } catch (error) {
+      this.notify(
+        this.ruatService.getResponseMessage(error, 'Error al consultar RUAT. Puede continuar con registro manual'),
+        'warning'
+      );
       this.fillFormManually();
     } finally {
       this.searchingRuat = false;
@@ -997,8 +1000,8 @@ export class ModalTaxpayerComponent implements OnInit {
       } else {
         this.notify(this.ruatService.getResponseMessage(ruatResp, 'No se pudo verificar en RUAT'), 'error');
       }
-    } catch {
-      this.notify('Error al verificar en RUAT', 'error');
+    } catch (error) {
+      this.notify(this.ruatService.getResponseMessage(error, 'Error al verificar en RUAT'), 'error');
     } finally {
       this.submitted = false;
     }
@@ -1353,17 +1356,19 @@ export class ModalTaxpayerComponent implements OnInit {
     const rawMessage = typeof rawPayload === 'string'
       ? rawPayload
       : rawPayload?.mensaje || rawPayload?.message || error?.message || '';
-    const normalized = String(rawMessage).toLowerCase();
+    const isRuatResponse = rawPayload !== null && typeof rawPayload === 'object' &&
+      Object.prototype.hasOwnProperty.call(rawPayload, 'continuarFlujo') &&
+      Object.prototype.hasOwnProperty.call(rawPayload, 'mensaje');
+
+    if (isRuatResponse) {
+      return this.ruatService.getResponseMessage(error, '') || 'RUAT rechazó la solicitud sin devolver un mensaje.';
+    }
 
     if (
-      error?.status === 422 ||
-      error?.error?.status === 'UNPROCESSABLE_ENTITY' ||
-      error?.status === 'UNPROCESSABLE_ENTITY' ||
-      normalized.includes('constraintviolationexception') ||
-      normalized.includes('constraint') ||
-      normalized.includes('duplicate') ||
-      normalized.includes('unique') ||
-      normalized.includes('could not execute statement')
+      rawPayload?.code === 'RESOURCE_ALREADY_EXISTS' ||
+      rawPayload?.status === 'DUPLICATE_ENTITY' ||
+      error?.error?.status === 'DUPLICATE_ENTITY' ||
+      error?.status === 'DUPLICATE_ENTITY'
     ) {
       const existingMessage = this.getExistingContribuyenteMessage(datos);
       return existingMessage || 'Ya existe un contribuyente registrado con esos datos. Revise el documento, NIT, correo o usuario antes de guardar.';

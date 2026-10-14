@@ -15,6 +15,8 @@ import { permissionActions, hasMenuRoute } from '../helpers/menu-permissions';
 import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';
 
+const PERMISSION_VERSION = 3;
+
 interface DeportesLoginResponse {
   token: string;
   user: any;
@@ -380,7 +382,7 @@ export class AuthenticationService {
     if (!token) return;
     try {
       const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-      if (payload.permissionVersion !== 2) {
+      if (payload.permissionVersion !== PERMISSION_VERSION) {
         void this.handleExpiredSession();
         return;
       }

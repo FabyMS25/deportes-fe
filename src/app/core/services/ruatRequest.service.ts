@@ -97,14 +97,7 @@ export class RuatRequestsService {
     const payload = this.getResponsePayload(response);
     if (['ruat-be', 'deportes-be'].includes(String(payload?.detalle?.origen).toLowerCase())) return false;
     const data = payload?.datos ?? payload;
-    // These are payment-query results, not permission to continue a create/annul operation.
-    const unpaidMessages = [
-      'No Existe el registro de la tasa y otro ingreso.',
-      'La Tasa y Otro Ingreso no tiene pagos realizados.'
-    ];
-    const message = payload?.mensaje ?? data?.mensaje;
     return String(payload?.continuarFlujo).toLowerCase() === 'false' &&
-      typeof message === 'string' && unpaidMessages.includes(message.trim()) &&
       !!data && Object.prototype.hasOwnProperty.call(data, 'pagoTasa') && data.pagoTasa === null;
   }
 
@@ -165,12 +158,14 @@ export class RuatRequestsService {
     return this.firstText(
       payload?.mensaje,
       data?.mensaje,
+      payload?.message,
+      data?.message,
       payload?.mensajeConfirmacion,
       data?.mensajeConfirmacion,
       data?.observacion,
       payload?.observacion,
-      response?.mensaje,
-      response?.message,
+      response instanceof HttpErrorResponse ? undefined : response?.mensaje,
+      response instanceof HttpErrorResponse ? undefined : response?.message,
       fallback
     );
   }
@@ -178,7 +173,7 @@ export class RuatRequestsService {
   private firstText(...values: any[]): string {
     for (const value of values) {
       if (typeof value === 'string' && value.trim()) {
-        return value;
+        return value.trim();
       }
       if (Array.isArray(value)) {
         const nested = this.firstText(...value);

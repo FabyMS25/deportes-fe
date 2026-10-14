@@ -14,7 +14,7 @@ import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 @Component({
   selector: 'app-signup-check',
   templateUrl: './signup-check.component.html',
-  styleUrl: './signup-check.component.scss'
+  styleUrls: ['./signup-check.component.scss']
 })
 export class SignupCheckComponent {
 
@@ -44,8 +44,7 @@ export class SignupCheckComponent {
 
   get f() { return this.SignupForm.controls; }
   
-  /**
-   * Form submit
+  /**  Form submit
    */
   async onSubmit() {
     this.submitted = true;  
@@ -105,27 +104,65 @@ export class SignupCheckComponent {
                   this.notify(this.translate.instant('SIGNUP_CHECK.ALREADY_REGISTERED'), 'error');
                 } else {
                   this.userDataService.setTemporaryUserData(this.ruatData);
-                  this.notify(this.translate.instant('SIGNUP_CHECK.RUAT_DATA_FOUND'), 'success');
+                  const message = this.ruatService.getResponseMessage(response, '');
+                  if (message) {
+                    this.notify(message, 'success');
+                  }
                   this.router.navigate(['/auth/signup'], { queryParams: { userExist: true } });
                 }
               })
               .catch(error => {
                 console.error('Error in searchUsers:', error);
               });
+          } else if (this.hasRejectedFlowFlag(response)) {
+            this.continueManualRegistration(data, response);
           } else {
-            this.notify(`${this.ruatService.getResponseMessage(response, this.translate.instant('SIGNUP_CHECK.NO_RUAT_DATA'))} ${this.translate.instant('SIGNUP_CHECK.CONTINUE_REGISTRATION')}`, 'success');
-            this.router.navigate(['/auth/signup'], { queryParams: { userExist: false } });          
+            const message = this.ruatService.getResponseMessage(response, '');
+            if (message) {
+              this.notify(message, 'error');
+            }
           }
       },
       error: (error: any) => {
-        this.notify(
-          this.ruatService.getResponseMessage(
-            error,
-            this.translate.instant('SIGNUP_CHECK.RUAT_UNAVAILABLE')
-          ),
-          'error'
-        );
+        const payload = this.ruatService.getResponsePayload(error);
+        const responseOrigin = String(
+          error?.headers?.get('X-Response-Origin') ?? payload?.detalle?.origen ?? ''
+        ).toLowerCase();
+        const ruatNotFound =
+          error?.status === 404 &&
+          responseOrigin !== 'deportes-be' &&
+          this.hasRejectedFlowFlag(payload) &&
+          typeof payload?.mensaje === 'string' &&
+          Object.prototype.hasOwnProperty.call(payload, 'codigoContribuyente') &&
+          Object.prototype.hasOwnProperty.call(payload, 'contribuyente');
+
+        if (ruatNotFound) {
+          this.continueManualRegistration(data, error);
+          return;
+        }
+
+        const message = this.ruatService.getResponseMessage(error, '');
+        if (message) {
+          this.notify(message, 'error');
+        } else if (error?.status === 0) {
+          this.notify(this.translate.instant('SIGNUP_CHECK.RUAT_UNAVAILABLE'), 'error');
+        }
       }
     });
+  }
+
+  private continueManualRegistration(data: any, response: any): void {
+    const message = this.ruatService.getResponseMessage(response, '');
+    if (message) {
+      this.notify(message, 'info');
+    }
+    this.userDataService.setTemporaryUserData(data);
+    this.router.navigate(['/auth/signup'], { queryParams: { userExist: false } });
+  }
+
+  private hasRejectedFlowFlag(response: any): boolean {
+    const payload = this.ruatService.getResponsePayload(response);
+    return payload?.continuarFlujo === false ||
+      String(payload?.continuarFlujo).toLowerCase() === 'false';
   }
 }
