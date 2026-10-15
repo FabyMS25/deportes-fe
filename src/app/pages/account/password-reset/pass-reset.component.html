@@ -36,7 +36,8 @@
                 <div class="form-group row m-2">
                     <label class="col-lg-5 col-form-label">Nueva Contraseña: </label>
                     <div class="col-lg-7 position-relative">
-                        <input [type]="passwordField ? 'text' : 'password'" class="form-control pe-5" 
+                        <input [type]="passwordField ? 'text' : 'password'" class="form-control pe-5"
+                            [attr.maxlength]="userRole === 'Contribuyente' ? 72 : null"
                             placeholder="Ingrese nueva contraseña" formControlName="password"
                             [ngClass]="{ 'is-invalid': submitted && f['password'].errors }">
                         <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted" type="button"
@@ -48,8 +49,9 @@
                                 @if(f['password'].errors['required']){
                                     <span>Escriba su nueva contraseña</span>
                                 }
-                                @if(f['password'].errors['minlength']){
-                                    <span>La contraseña debe tener al menos 6 caracteres</span>
+                                @if(f['password'].errors['minlength'] || f['password'].errors['pattern']){
+                                    <span *ngIf="userRole === 'Contribuyente'">Use al menos 8 caracteres, una mayúscula, una minúscula y un número.</span>
+                                    <span *ngIf="userRole !== 'Contribuyente'">La contraseña debe tener al menos 6 caracteres</span>
                                 }
                             </div>
                         }

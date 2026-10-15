@@ -23,7 +23,6 @@ export class LoginComponent implements OnInit {
   
   isCheckingConnection: boolean = false;
   errorMessage = '';
-  errorType?: string;
 
   constructor(
     private router: Router,
@@ -60,7 +59,6 @@ export class LoginComponent implements OnInit {
     this.isCheckingConnection = false;
     if (!result.success) {
       this.errorMessage = result.message || this.translate.instant('LOGIN_UI.FAILED');
-      this.errorType = result.errorType;
       this.loginForm.patchValue({ password: '' });
       return;
     }

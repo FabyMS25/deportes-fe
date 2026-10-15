@@ -47,6 +47,12 @@ export class ContribuyentesService {
   update(data: Contribuyente): Observable<Contribuyente> {
     return apiPut<Contribuyente>(this.http, this.apiUrl, data, 'actualizar contribuyente');
   }
+
+  changePassword(uuid: string, currentPassword: string, newPassword: string): Observable<string> {
+    return apiPost<string>(this.http, `${this.apiUrl}/change-password`,
+      { uuid, currentPassword, newPassword }, 'cambiar contraseña de contribuyente');
+  }
+
   delete(uuid: string): Observable<string> {
     return apiDelete<string>(this.http, `${this.apiUrl}/${uuid}`, `anular contribuyente (${uuid})`);
   }

@@ -140,8 +140,9 @@
                                     <div class="col-lg-6">
                                         <div class="mb-3">
                                             <label for="email" class="form-label">Email:</label>
-                                            <input type="email" class="form-control" formControlName="email"
+                                            <input type="email" class="form-control" formControlName="email" readonly
                                                 placeholder="Ingresa tu Correo Electrónico" [ngClass]="{'is-invalid': form['email'].touched && form['email'].invalid}">
+                                            <small class="text-muted">Para cambiar este correo, solicite una actualización con verificación a administración.</small>
                                             <div class="invalid-feedback" *ngIf="form['email'].touched && form['email'].invalid">
                                                 Ingrese un correo electrónico válido.
                                             </div>

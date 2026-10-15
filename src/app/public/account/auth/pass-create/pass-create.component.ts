@@ -2,8 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MustMatch } from './must-match';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
-import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { PassResetsService } from 'src/app/core/services/api/pass-resets.service';
 import Swal from 'sweetalert2';
 
@@ -28,23 +26,23 @@ export class PassCreateComponent implements OnInit {
       private formBuilder: UntypedFormBuilder, 
       private route: ActivatedRoute,
       private router: Router,
-      private userService: ContribuyentesService,
-      private passResetService: PassResetsService
+       private passResetService: PassResetsService
     ) { }
  
     async ngOnInit() {    
       
       this.passresetForm = this.formBuilder.group({
-        password: ['', [Validators.required]],
+         password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(72), Validators.pattern('(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}')]],
         cpassword: ['', [Validators.required]]       
        }, {
          validator: MustMatch('password', 'cpassword')
        });
 
        
-      this.route.queryParams.subscribe(params => {
-        this.token = params['token']; 
-      });
+       this.token = this.route.snapshot.queryParamMap.get('token');
+       if (this.token) {
+         void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+       }
       if (this.token) {
         try {
           const valid = await this.validateToken(this.token); 
@@ -118,64 +116,42 @@ export class PassCreateComponent implements OnInit {
    /**
     * Form submit
     */
-   async onSubmit() {
-    this.submitted = true;  
-    try {
-      const password = this.f['password'].value;  
-      if (this.passresetForm.valid && this.token) {
-        const user = await this.getUser(this.token);  
-        if (user) {
-          user.password = password
-          this.resetPassword(user)          
-        } else {
-          this.passresetForm.setErrors({ NoUser: true });
-        }
-      } else {
-        this.passresetForm.markAllAsTouched();
-      }
-    } catch (error:any) {
-      this.passresetForm.setErrors({ serverError: true });
-    }
+    onSubmit() {
+     this.submitted = true;
+     const password = this.f['password'].value;
+     if (this.passresetForm.valid && this.token) {
+       this.resetPassword(this.token, password);
+     } else {
+       this.passresetForm.markAllAsTouched();
+     }
   }
 
 
 
   private async validateToken(token: string): Promise<boolean> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this.passResetService.validateToken(token).subscribe({
-        next: () => resolve(true),
-        error: (error) => {
+        next: (valid) => resolve(valid === true),
+        error: () => {
           resolve(false);
         }
       });
     });
   }
 
-  private resetPassword(data: Contribuyente) {   
-    this.userService.update(data).subscribe({
-      next: () => {
-          this.notify("Su contraseña se ha restablecido correctamente. Por favor inicie sesión con su nueva", 'success');
+  private resetPassword(token: string, password: string) {
+    this.passResetService.completePasswordReset(token, password).subscribe({
+      next: (message) => {
           this.router.navigate(['/auth/login']).then(() => {
-            this.notify("Su contraseña se ha restablecido correctamente. Por favor inicie sesión con su nueva", 'success');
+            this.notify(message, 'success');
           });
       },
       error: (err) => {
-        this.notify("Ocurrio un error al restablecer su contraseña. ", 'error');
+        this.notify(err?.message || "El enlace no es válido o venció. Solicite uno nuevo.", 'error');
       }
     });
   }
   
-  private async getUser(token: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      this.passResetService.getUserByToken(token).subscribe({
-        next: (data:any) => resolve(data),
-        error: (error) => {
-          resolve(null);
-        }
-      });
-    });
-  }
-
    /**
    * Password Hide/Show
    */

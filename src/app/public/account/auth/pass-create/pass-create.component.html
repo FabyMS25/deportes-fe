@@ -40,7 +40,7 @@
                                     <div class="mb-3">
                                         <label class="form-label" for="password-input">Contraseña</label>
                                         <div class="position-relative auth-pass-inputgroup">
-                                            <input [type]="passwordField ? 'text' : 'password'" class="form-control pe-5 password-input" placeholder="Ingresar contraseña" id="password-input" aria-describedby="passwordInput" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" required formControlName="password"
+                                            <input [type]="passwordField ? 'text' : 'password'" class="form-control pe-5 password-input" placeholder="Ingresar contraseña" id="password-input" aria-describedby="passwordInput" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" maxlength="72" required formControlName="password"
                                             [ngClass]="{ 'is-invalid': submitted && f['password'].errors }">
                                             <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button"
                                                 id="password-addon"><i class="ri-eye-fill align-middle" [ngClass]="{'mdi-eye-off-outline': !passwordField, 'mdi-eye-outline': passwordField
@@ -49,6 +49,9 @@
                                             <div class="invalid-feedback">
                                                 @if(f['password'].errors['required']){
                                                     <span>Escriba su contraseña</span>
+                                                }
+                                                @if(f['password'].errors['minlength'] || f['password'].errors['pattern']){
+                                                    <span>Use al menos 8 caracteres, una mayúscula, una minúscula y un número.</span>
                                                 }
                                             </div>
                                             }

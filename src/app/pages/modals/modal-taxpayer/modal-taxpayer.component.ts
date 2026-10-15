@@ -706,10 +706,13 @@ export class ModalTaxpayerComponent implements OnInit {
   }
 
   private disableRuatVerifiedFields(): void {
-    ['tipoContribuyente', 'nombre', 'primerApellido', 'segundoApellido',
+    ['tipoContribuyente', 'nombre', 'primerApellido',
      'tipoDocumento', 'numeroDocumento', 'expedido'].forEach((f) =>
       this.editForm.get(f)?.disable()
     );
+    const segundoApellido = this.editForm.get('segundoApellido');
+    if (String(segundoApellido?.value || '').trim()) segundoApellido?.disable();
+    else segundoApellido?.enable();
   }
 
   async saveData(): Promise<void> {
@@ -940,7 +943,7 @@ export class ModalTaxpayerComponent implements OnInit {
       estadoUsuario: EstadoUsuario.ACTIVO,
       nombre: client.nombre,
       primerApellido: client.primerApellido,
-      segundoApellido: client.segundoApellido,
+      segundoApellido: String(client.segundoApellido || '').trim(),
       fechaNacimiento: this.toDateInputValue(client.fechaNacimiento),
       genero: this.getUserGender(client.genero),
       estadoCivil: this.getCivilStatusCode(client.estadoCivil),

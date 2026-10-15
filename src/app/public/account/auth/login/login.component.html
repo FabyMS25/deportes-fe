@@ -104,32 +104,9 @@
                                 </div>
                                 <!-- Login Errors -->
                                 <div *ngIf="errorMessage" class="alert alert-danger">
-
                                   <i class="ri-error-warning-line me-2"></i>
                                   {{ errorMessage }}
                                 </div>
-                                  <div *ngIf="errorType === 'NO_MODULE'">
-                                    <i class="ri-lock-line me-2"></i>
-                                    {{ 'LOGIN_UI.NO_MODULE' | translate }}
-                                  </div>
-                                  <div *ngIf="errorType === 'NO_PERMISSIONS'">
-                                    <i class="ri-lock-line me-2"></i>
-                                    {{ 'LOGIN_UI.NO_PERMISSIONS' | translate }} 
-                                  </div>
-                                  <div *ngIf="errorType === 'NO_ASSIGNATION'">
-                                    <i class="ri-lock-line me-2"></i>
-                                    {{ 'LOGIN_UI.NO_ASSIGNATION' | translate }}
-                                  </div>
-
-                                  <div *ngIf="errorType === 'CONFIG_ERROR'">
-                                    <i class="ri-settings-3-line me-2"></i>
-                                    {{ errorMessage }}
-                                  </div>
-
-                                  <div *ngIf="errorType === 'BACKEND'">
-                                    <i class="ri-wifi-off-line me-2"></i>
-                                    {{ 'LOGIN_UI.UNAVAILABLE' | translate }}
-                                  </div>
                                 
                                 <div class="mt-4">
                                   <button 

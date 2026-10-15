@@ -62,7 +62,6 @@
                                             formControlName="segundoApellido"
                                             [ngClass]="{ 'is-invalid': submitted && f['segundoApellido'].errors }" />
                                         <div *ngIf="submitted && f['segundoApellido'].errors" class="invalid-feedback">
-                                            <span *ngIf="f['segundoApellido'].errors?.['minlength']">Mínimo 1 caracter</span>
                                             <span *ngIf="f['segundoApellido'].errors?.['maxlength']">Máximo 100 caracteres</span>
                                         </div>
                                     </div>

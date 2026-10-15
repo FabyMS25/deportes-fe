@@ -148,23 +148,23 @@ export class SettingsComponent implements OnInit {
     
     if (this.userRole === 'Contribuyente') {
       if (this.personaForm.valid) {
-        const expedidoValue = this.personaForm.value.expedido;
+        const formValue = this.personaForm.getRawValue();
         const persona: Contribuyente = {
           ...this.userContribuyente,
-          uuid: this.personaForm.value.uuid,
-          nombre: this.personaForm.value.nombre,
-          primerApellido: this.personaForm.value.primerApellido,
-          segundoApellido: this.personaForm.value.segundoApellido,
-          numeroDocumento: this.personaForm.value.numeroDocumento,
-          expedido: this.personaForm.value.expedido,
-          genero: this.personaForm.value.genero,
-          telefono: this.personaForm.value.telefono,
-          email: this.personaForm.value.email,
-          direccion: this.personaForm.value.direccion,
+          uuid: formValue.uuid,
+          nombre: formValue.nombre,
+          primerApellido: formValue.primerApellido,
+          segundoApellido: formValue.segundoApellido,
+          numeroDocumento: formValue.numeroDocumento,
+          expedido: formValue.expedido,
+          genero: formValue.genero,
+          telefono: formValue.telefono,
+          email: formValue.email,
+          direccion: formValue.direccion,
           nombreCompleto: [
-            this.personaForm.value.nombre,
-            this.personaForm.value.primerApellido,
-            this.personaForm.value.segundoApellido
+            formValue.nombre,
+            formValue.primerApellido,
+            formValue.segundoApellido
           ].filter(Boolean).join(' '),
         }
 

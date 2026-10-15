@@ -8,7 +8,6 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { UserService } from 'src/app/core/services/api-users/users.service';
 import { TokenStorageService } from 'src/app/core/services/token-storage.service';
 import { ContribuyentesService } from 'src/app/core/services/api/contribuyentes.service';
-import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { MustMatch } from 'src/app/public/account/auth/pass-create/must-match';
 
 interface PasswordUserContext {
@@ -47,10 +46,16 @@ export class PassResetComponent {
   }
 
   private initForm() {
+    const isTaxpayer = this.userRole === 'Contribuyente';
+    const passwordValidators = isTaxpayer
+      ? [Validators.required, Validators.minLength(8), Validators.maxLength(72), Validators.pattern('(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}')]
+      : [Validators.required, Validators.minLength(6)];
     this.passwordForm = this.formBuilder.group({
       user: [this.userRole],
-      currentPassword: ['', [Validators.required], [this.validateCurrentPassword.bind(this)]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      currentPassword: isTaxpayer
+        ? ['', [Validators.required]]
+        : ['', [Validators.required], [this.validateCurrentPassword.bind(this)]],
+      password: ['', passwordValidators],
       cpassword: ['', [Validators.required]]       
     }, {
       validator: MustMatch('password', 'cpassword')
@@ -68,25 +73,17 @@ export class PassResetComponent {
         if(!this.userData){
           resolve(null);          
         }
-        if(this.userRole === 'Contribuyente'){
-          if(this.userData.password !== control.value){
-            resolve({ invalidPassword: true });
-          } else {
-            resolve(null);
-          }
-        } else {
-          const username = this.getUsername();
-          if (!username) {
-            resolve({ invalidPassword: true });
-            return;
-          }
+        const username = this.getUsername();
+        if (!username) {
+          resolve({ invalidPassword: true });
+          return;
+        }
 
-          const valid = await this.loginEmpleado(username, control.value);
-          if (!valid) {
-            resolve({ invalidPassword: true });
-          } else {
-            resolve(null);
-          }
+        const valid = await this.loginEmpleado(username, control.value);
+        if (!valid) {
+          resolve({ invalidPassword: true });
+        } else {
+          resolve(null);
         }
       }, 500); 
     });
@@ -99,7 +96,7 @@ export class PassResetComponent {
       const newPassword = this.f['password'].value;  
       
       if(this.userRole === 'Contribuyente'){
-        this.updateTaxpayerPassword(newPassword);
+        this.updateTaxpayerPassword(this.f['currentPassword'].value, newPassword);
       } else {
         this.updateEmployeePassword(newPassword);
       }    
@@ -112,37 +109,23 @@ export class PassResetComponent {
   /**
    * Update Contribuyente Password
    */
-  private updateTaxpayerPassword(newPassword: string): void {
-    const updateData: Partial<Contribuyente> = {
-      ...this.userData,
-      password: newPassword,
-    };
-    this.userService.update(updateData as Contribuyente).subscribe({
-      next: (response: any) => {
-        this.notify('success', "Su contraseña se ha restablecido correctamente.");
-        this.updateLocalStoragePassword(newPassword);          
+  private updateTaxpayerPassword(currentPassword: string, newPassword: string): void {
+    const uuid = String(this.userData?.uuid || '').trim();
+    if (!uuid) {
+      this.notify('error', 'No se pudo identificar el contribuyente');
+      return;
+    }
+
+    this.userService.changePassword(uuid, currentPassword, newPassword).subscribe({
+      next: (message) => {
+        this.notify('success', message);
         this.initForm();
         this.modalService.dismissAll();
       },
       error: (err) => {
-        this.notify('error', 'Ocurrió un error inesperado al cambiar la contraseña');
+        this.notify('error', err?.message || 'No se pudo actualizar la contraseña');
       }
     });
-  }
-
-  private updateLocalStoragePassword(newPassword: string): void {
-    try {
-      const currentUser = this.authService.currentUser();
-      if (currentUser && currentUser.uuid === this.userData.uuid) {
-        const updatedUser = {
-          ...currentUser,
-          password: newPassword
-        };
-        this.storageService.saveUserData(updatedUser);
-      }
-    } catch (error) {
-      console.warn('Could not update local storage password:', error);
-    }
   }
 
   private updateEmployeePassword(password: string): void {

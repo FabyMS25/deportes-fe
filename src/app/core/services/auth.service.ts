@@ -30,7 +30,6 @@ interface DeportesLoginResponse {
 
 export interface LoginResult {
   success: boolean;
-  errorType?: 'BAD_CREDENTIALS' |'NO_MODULE' | 'NO_PERMISSIONS' | 'NO_ASSIGNATION'|'BACKEND' | 'CONFIG_ERROR';
   message?: string;
   redirect?: string;
   restrictions?: string;
@@ -100,7 +99,6 @@ export class AuthenticationService {
         this.storageService.signOut();
         return {
           success: false,
-          errorType: 'CONFIG_ERROR',
           message: configResult.errorMessage
         };
       }
@@ -125,11 +123,25 @@ export class AuthenticationService {
         redirect: taxpayer ? '/inicio/taxpayer' : loginResponse.admin ? '/inicio' : '/inicio/employee'
       };
     } catch (error: any) {
-      const code = error?.error?.code;
+      const response = error?.error;
+      const responseMessage = typeof response === 'string' ? response : response?.message;
+      const translatedByCode: Record<string, string> = {
+        BAD_CREDENTIALS: 'LOGIN_UI.BAD_CREDENTIALS',
+        NO_MODULE: 'LOGIN_UI.NO_MODULE',
+        NO_PERMISSIONS: 'LOGIN_UI.NO_PERMISSIONS',
+        NO_ASSIGNATION: 'LOGIN_UI.NO_ASSIGNATION',
+        ACCOUNT_DISABLED: 'LOGIN_UI.ACCOUNT_DISABLED',
+        USUARIOS_UNAVAILABLE: 'LOGIN_UI.USUARIOS_UNAVAILABLE',
+        CONTRIBUYENTES_UNAVAILABLE: 'LOGIN_UI.CONTRIBUYENTES_UNAVAILABLE'
+      };
+      const codeMessage = response?.code ? translatedByCode[response.code] : undefined;
       return {
         success: false,
-        errorType: code || (error?.status === 0 ? 'BACKEND' : 'BAD_CREDENTIALS'),
-        message: error?.error?.message || this.translate.instant(error?.status === 0 ? 'LOGIN_UI.UNAVAILABLE' : 'LOGIN_UI.FAILED')
+        message: codeMessage
+          ? this.translate.instant(codeMessage)
+          : responseMessage || this.translate.instant(
+          error?.status === 0 ? 'LOGIN_UI.UNAVAILABLE' : 'LOGIN_UI.FAILED'
+        )
       };
     }
   }
@@ -235,6 +247,9 @@ export class AuthenticationService {
    */
   logout() {
     if (this.expirationTimer) clearTimeout(this.expirationTimer);
+    if (this.storageService.getToken()) {
+      this.http.post(`${environment.backendUrl}/auth/logout`, {}).subscribe({ error: () => undefined });
+    }
     this.storageService.signOut();
     this.currentUserSubject = null;
     this.router.navigate(['/auth/login']);

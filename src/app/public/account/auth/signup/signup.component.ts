@@ -93,7 +93,7 @@ export class SignupComponent implements OnInit {
 
       nombre: ['', [Validators.required,Validators.minLength(1),Validators.maxLength(250)]],
       primerApellido: ['', [Validators.required,Validators.minLength(1),Validators.maxLength(100)]],
-      segundoApellido: ['', [Validators.minLength(1),Validators.maxLength(100)]],      
+      segundoApellido: ['', [Validators.maxLength(100)]],
       estadoCivil: [''],
       fechaNacimiento: ['', [Validators.required]],
       genero: ['', [Validators.required]],
@@ -131,6 +131,7 @@ export class SignupComponent implements OnInit {
     }
       this.SignupForm.patchValue({
         ...data.contribuyente,
+        segundoApellido: String(client.segundoApellido || '').trim(),
         codigoContribuyente: data.codigoContribuyente, 
         estadoRuat: EstadoRuat.ACTIVO,
         estadoUsuario: EstadoUsuario.ACTIVO,
@@ -143,7 +144,11 @@ export class SignupComponent implements OnInit {
       });
       this.SignupForm.get('nombre')?.disable();
       this.SignupForm.get('primerApellido')?.disable();
-      this.SignupForm.get('segundoApellido')?.disable();
+      if (String(client.segundoApellido || '').trim()) {
+        this.SignupForm.get('segundoApellido')?.disable();
+      } else {
+        this.SignupForm.get('segundoApellido')?.enable();
+      }
       this.SignupForm.get('fechaNacimiento')?.disable();
       this.SignupForm.get('genero')?.disable();
       this.SignupForm.get('estadoCivil')?.disable();
@@ -170,6 +175,7 @@ export class SignupComponent implements OnInit {
     await this.waitForAsyncValidation();
     if (this.SignupForm.valid) {
       const formData = this.SignupForm.getRawValue();
+      formData.segundoApellido = String(formData.segundoApellido || '').trim() || null;
       formData.verificationCode = this.generateCode();
       this.userDataService.setTemporaryUserData(formData);    
       this.sendEmail(formData, '')
