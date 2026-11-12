@@ -1,23 +1,19 @@
 export enum CategoriaConfiguracion {
   RUAT = 'RUAT',
-  FUNCIONALIDADES = 'FUNCIONALIDADES',
-  ANTICIPACION = 'ANTICIPACION',
-  DURACION = 'DURACION',
-  PAGOS = 'PAGOS',
+  DATOS_REFERENCIA = 'DATOS_REFERENCIA',
+  POLITICAS_PAGO = 'POLITICAS_PAGO',
+  PERMISSIONS = 'PERMISSIONS',
+  REGLAS_RESERVA = 'REGLAS_RESERVA',
 
   TIMEOUTS = 'TIMEOUTS',
   LIMITES = 'LIMITES',
-  NOTIFICACIONES = 'NOTIFICACIONES',
-  
-  INSTITUCIONAL = 'INSTITUCIONAL'
+  NOTIFICACIONES = 'NOTIFICACIONES'
 }
 
 export enum AplicaAConfiguracion {
   GLOBAL = 'global',
   CONTRIBUYENTE = 'contribuyente',
-  ORGANIZACION = 'organizacion',
-  COMPLEJO = 'complejo',
-  CAMPO_DEPORTIVO = 'campo_deportivo'
+  REPRESENTANTE = 'representante'
 }
 
 // Unidades de medida para valores numéricos
@@ -35,16 +31,24 @@ export enum UnidadMedida {
 }
 
 export enum ClaveConfiguracion {
+  /* Institucional */
+  ADMIN_DEPORTES = 'ADMIN_DEPORTES',
   /* Integración RUAT */
   SERVICIO_MUNICIPAL_RUAT = 'SERVICIO_MUNICIPAL_RUAT',
   CODIGO_USUARIO_RUAT = 'CODIGO_USUARIO_RUAT',
-  /* Banderas de Funcionalidad */
+  /* Constants Variables*/
+  BORDEROUX_PORCENTAJES = 'BORDEROUX_PORCENTAJES',
+
+  /* Banderas de Permissions -> for contribuyentes or representantes only */
   HABILITAR_RESERVAS_EVENTOS = 'HABILITAR_RESERVAS_EVENTOS',
   HABILITAR_RESERVAS_ORGANIZACIONES = 'HABILITAR_RESERVAS_ORGANIZACIONES',
   HABILITAR_RESERVAS_RECURRENTES = 'HABILITAR_RESERVAS_RECURRENTES',
   HABILITAR_SOLICITUD_RESERVAS_EVENTOS = 'HABILITAR_SOLICITUD_RESERVAS_EVENTOS',
   HABILITAR_SOLICITUD_RESERVAS_ORGANIZACIONES = 'HABILITAR_SOLICITUD_RESERVAS_ORGANIZACIONES',
   HABILITAR_SOLICITUD_RESERVAS_RECURRENTES = 'HABILITAR_SOLICITUD_RESERVAS_RECURRENTES',
+  HABILITAR_RESERVAS_PERIODO_ESCUELAS = 'HABILITAR_RESERVAS_PERIODO_ESCUELAS',
+  HABILITAR_RESERVAS_BORDEROUX = 'HABILITAR_RESERVAS_BORDEROUX',
+  HABILITAR_GESTION_ESTUDIANTES = 'HABILITAR_GESTION_ESTUDIANTES',
   /* Anticipaciones */
   HORAS_ANTICIPACION_RESERVAS_PUNTUALES = 'HORAS_ANTICIPACION_RESERVAS_PUNTUALES',
   HORAS_ANTICIPACION_RECURRENTES = 'HORAS_ANTICIPACION_RECURRENTES',
@@ -56,7 +60,6 @@ export enum ClaveConfiguracion {
   DURACION_MAXIMA_PUNTUALES = 'DURACION_MAXIMA_PUNTUALES',
   DURACION_MAXIMA_EVENTOS = 'DURACION_MAXIMA_EVENTOS',
   DURACION_MAXIMA_RECURRENTES = 'DURACION_MAXIMA_RECURRENTES',
-  /*  */
   /* Pagos */
   HORAS_VALIDACION_PAGO = 'HORAS_VALIDACION_PAGO',
   HORAS_VALIDACION_PAGO_EVENTOS = 'HORAS_VALIDACION_PAGO_EVENTOS',
@@ -75,9 +78,6 @@ export enum ClaveConfiguracion {
   HORAS_ANTICIPACION_RECORDATORIO_PAGO = 'HORAS_ANTICIPACION_RECORDATORIO_PAGO',
   MINUTOS_ANTICIPACION_CHECKIN = 'MINUTOS_ANTICIPACION_CHECKIN',
   NOTIFICAR_CAMBIO_HORARIO = 'NOTIFICAR_CAMBIO_HORARIO',
-
-  /* Institucional */
-  ADMIN_DEPORTES = 'ADMIN_DEPORTES',
 }
 
 // Tipos de valores que pueden almacenar las configuraciones
@@ -97,22 +97,19 @@ export enum EstadoControlConfiguracion {
 
 // Mapeo de labels para mostrar en la interfaz
 export const LabelsConfiguracion = {
-  [CategoriaConfiguracion.PAGOS]: 'Pagos',
-  [CategoriaConfiguracion.ANTICIPACION]: 'Anticipación',
-  [CategoriaConfiguracion.DURACION]: 'Duración',
-  [CategoriaConfiguracion.TIMEOUTS]: 'Timeouts',
   [CategoriaConfiguracion.RUAT]: 'RUAT',
+  [CategoriaConfiguracion.DATOS_REFERENCIA]: 'Datos de referencia',
+  [CategoriaConfiguracion.POLITICAS_PAGO]: 'Políticas de pago',
   [CategoriaConfiguracion.LIMITES]: 'Límites',
+  [CategoriaConfiguracion.PERMISSIONS]: 'Permisos',
   [CategoriaConfiguracion.NOTIFICACIONES]: 'Notificaciones',
-  [CategoriaConfiguracion.INSTITUCIONAL]: 'Institucional',
-  [CategoriaConfiguracion.FUNCIONALIDADES]: 'Funcionalidades',
+  [CategoriaConfiguracion.REGLAS_RESERVA]: 'Reglas de reserva',
+  [CategoriaConfiguracion.TIMEOUTS]: 'Timeouts',
 
   // Ámbito de Aplicación
   [AplicaAConfiguracion.GLOBAL]: 'Global',
-  [AplicaAConfiguracion.CAMPO_DEPORTIVO]: 'Campo Deportivo',
-  [AplicaAConfiguracion.COMPLEJO]: 'Complejo',
   [AplicaAConfiguracion.CONTRIBUYENTE]: 'Contribuyente',
-  [AplicaAConfiguracion.ORGANIZACION]: 'Organización',
+  [AplicaAConfiguracion.REPRESENTANTE]: 'Representante',
 
   // Unidades de Medida
   [UnidadMedida.HORAS]: 'Horas',
@@ -151,10 +148,8 @@ export function getConfigurationLabel(valor: string, tipo: 'categoria' | 'aplica
   if (enumObj && LabelsConfiguracion[valor as keyof typeof LabelsConfiguracion]) {
     return LabelsConfiguracion[valor as keyof typeof LabelsConfiguracion];
   }
-  
   return valor;
 }
-
 
 export interface AdminDeportesConfig {
   name: string;

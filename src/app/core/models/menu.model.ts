@@ -9,6 +9,10 @@ export interface MenuItem {
   icono?: string;
   ruta?: string;
   permissionRoute?: string;
+  /** Resolved taxpayer capability; it is not a raw system configuration. */
+  organizationReservation?: 'DIRECT' | 'REQUEST';
+  /** Authorization entry nested under its navigable module, never rendered. */
+  permissionOnly?: boolean;
   permisoHijoListDto: MenuItem[];
   permisoPadreDto?: any;
   subNivel?:boolean;

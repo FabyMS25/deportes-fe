@@ -5,6 +5,7 @@ import { Contribuyente } from "./contribuyente.model";
 import { Organizacion } from "./organizacion.model";
 import { ReservaAuditoria } from "./reservaAuditoria.model";
 import { ReservaPeriodo } from "./reservaPeriodo.model";
+import { ReservaBorderouxActividad } from "./reservaBorderoux.model";
 import { ReservaPuntual } from "./reservaPuntual.model";
 import { ReservaRecurrente } from "./reservaRecurrente.model";
 import { ReservaTarifaDetalle } from "./reservaTarifaDetalle.model";
@@ -22,7 +23,7 @@ export interface Reserva{
   autorizadoPor?: string;
 
   clasificadorRuatId:string;
-  tipoReserva:BookingType; //puntual / recurente / periodo 
+  tipoReserva:BookingType; //puntual / recurente / periodo / borderoux
   fechaReserva:Date ;
   numeroReserva:string;
   numeroTasa?:string;
@@ -46,6 +47,7 @@ export interface Reserva{
   reservaPuntualDto?:ReservaPuntual;
   reservaRecurrenteDto?:ReservaRecurrente;  
   reservasPeriodoDtoList?: ReservaPeriodo[];
+  borderouxActividadesDtoList?: ReservaBorderouxActividad[];
 
   pagosDtoList?:Pago[];
   auditoriasDtoList?: ReservaAuditoria[];

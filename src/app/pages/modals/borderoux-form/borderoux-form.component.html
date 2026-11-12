@@ -1,0 +1,209 @@
+<div class="modal-header">
+  <div>
+    <h5 class="modal-title mb-1">
+      {{ soloLectura ? 'Liquidación Borderoux' : 'Nueva liquidación Borderoux' }}
+    </h5>
+    <small class="text-muted">
+      Registro posterior a la actividad. El porcentaje se aplica sobre el total de boletas vendidas.
+    </small>
+  </div>
+  <button type="button" class="btn-close" aria-label="Cerrar" (click)="activeModal.dismiss()"></button>
+</div>
+
+<div class="modal-body">
+  <div class="card mb-3">
+    <div class="card-header bg-light py-2 px-3">
+      <h6 class="mb-0">Datos de la liquidación</h6>
+    </div>
+    <div class="card-body py-2 px-3">
+      <div class="row g-2">
+        <div class="col-md-6">
+          <label class="form-label mb-1">Organización *</label>
+          <ng-container *ngIf="!soloLectura; else organizacionLectura">
+            <select class="form-select" [ngModel]="organizacionUuid"
+                    (ngModelChange)="onOrganizacionChange($event)">
+              <option value="">Seleccione una organización</option>
+              <option *ngFor="let org of escuelasList" [value]="org.uuid">
+                {{ org.nombre }} · {{ org.tipoOrganizacion }}
+              </option>
+            </select>
+          </ng-container>
+          <ng-template #organizacionLectura>
+            <div class="form-control bg-light">
+              {{ organizacionSeleccionada?.nombre || reserva?.organizacionDto?.nombre || '-' }}
+            </div>
+          </ng-template>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label mb-1">Contribuyente responsable *</label>
+          <ng-container *ngIf="!soloLectura && !esContribuyente; else responsableLectura">
+            <select class="form-select" [(ngModel)]="responsableUuid"
+                    [disabled]="!organizacionUuid || !representantesDisponibles.length">
+              <option value="">Seleccione un representante</option>
+              <option *ngFor="let rep of representantesDisponibles" [value]="rep.uuid">
+                {{ rep.nombreCompleto || rep.nombre }} · {{ rep.numeroDocumento || rep.codigoContribuyente }}
+              </option>
+            </select>
+            <small class="text-muted" *ngIf="organizacionUuid && !representantesDisponibles.length">
+              La organización no tiene representantes registrados. Registre uno antes de continuar.
+            </small>
+          </ng-container>
+          <ng-template #responsableLectura>
+            <div class="form-control bg-light">{{ responsableNombre || '-' }}</div>
+          </ng-template>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label mb-1">Porcentaje Borderoux *</label>
+          <div class="input-group">
+            <input type="number" class="form-control" min="0.01" max="100" step="0.01"
+                   [(ngModel)]="porcentaje" [disabled]="soloLectura"
+                   placeholder="Porcentaje a liquidar">
+            <span class="input-group-text">%</span>
+          </div>
+          <div class="d-flex flex-wrap gap-2 mt-2" *ngIf="!soloLectura && presets?.length">
+            <button type="button" class="btn btn-sm"
+                    *ngFor="let preset of presets"
+                    [class.btn-primary]="porcentaje === preset.porcentaje"
+                    [class.btn-outline-primary]="porcentaje !== preset.porcentaje"
+                    (click)="seleccionarPorcentaje(preset)">
+              {{ preset.etiqueta }} · {{ preset.porcentaje }}%
+            </button>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label mb-1">Resumen</label>
+          <div class="border rounded p-2 bg-light">
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Actividades</span>
+              <strong>{{ actividades.length }}</strong>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Total boletas</span>
+              <strong>{{ formatearMonto(totalBoletasLiquidacion) }} Bs.</strong>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Monto Borderoux</span>
+              <strong>{{ formatearMonto(totalLiquidacion) }} Bs.</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h6 class="mb-0">Actividades y talonarios</h6>
+    <button type="button" class="btn btn-soft-primary btn-sm" *ngIf="!soloLectura" (click)="agregarActividad()">
+      <i class="ri-add-line me-1"></i>Agregar actividad
+    </button>
+  </div>
+
+  <div class="card mb-3" *ngFor="let actividad of actividades; let ai = index">
+    <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">Actividad {{ ai + 1 }}</h6>
+      <button type="button" class="btn btn-link text-danger btn-sm p-0" *ngIf="!soloLectura"
+              (click)="quitarActividad(ai)">
+        <i class="ri-delete-bin-line me-1"></i>Quitar
+      </button>
+    </div>
+    <div class="card-body py-2 px-3">
+      <div class="row g-2">
+        <div class="col-md-3">
+          <label class="form-label mb-1">Fecha de actividad *</label>
+          <input type="date" class="form-control" [(ngModel)]="actividad.fechaActividad"
+                 [disabled]="soloLectura">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label mb-1">Campo deportivo *</label>
+          <select class="form-select" [(ngModel)]="actividad.campoUuid" [disabled]="soloLectura">
+            <option value="">Seleccione un campo</option>
+            <option *ngFor="let campo of camposList" [value]="campo.uuid">
+              {{ campo.nombre }}<ng-container *ngIf="campo.complejoDto?.nombre"> · {{ campo.complejoDto.nombre }}</ng-container>
+            </option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label mb-1">Categoría</label>
+          <select class="form-select" [(ngModel)]="actividad.categoriaUuid" [disabled]="soloLectura">
+            <option value="">Sin categoría</option>
+            <option *ngFor="let categoria of categoriasList" [value]="categoria.uuid">
+              {{ categoria.nombre }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label mb-1">Observaciones</label>
+          <input type="text" class="form-control" [(ngModel)]="actividad.observaciones"
+                 [disabled]="soloLectura" placeholder="Opcional">
+        </div>
+      </div>
+
+      <div class="table-responsive mt-2">
+        <table class="table table-sm align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th style="min-width: 120px;">Precio boleta (Bs.)</th>
+              <th style="min-width: 100px;">Nro. inicial</th>
+              <th style="min-width: 100px;">Nro. final</th>
+              <th class="text-end">Cantidad</th>
+              <th class="text-end">Total boletas</th>
+              <th class="text-end">Monto Borderoux</th>
+              <th *ngIf="!soloLectura"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let talonario of actividad.talonarios; let ti = index">
+              <td>
+                <input type="number" class="form-control form-control-sm" min="0" step="0.01"
+                       [(ngModel)]="talonario.precioBoleta" [disabled]="soloLectura">
+              </td>
+              <td>
+                <input type="number" class="form-control form-control-sm" min="0" step="1"
+                       [(ngModel)]="talonario.numeroInicial" [disabled]="soloLectura">
+              </td>
+              <td>
+                <input type="number" class="form-control form-control-sm" min="0" step="1"
+                       [(ngModel)]="talonario.numeroFinal" [disabled]="soloLectura">
+              </td>
+              <td class="text-end">{{ cantidad(talonario) }}</td>
+              <td class="text-end">{{ formatearMonto(totalBoletas(talonario)) }}</td>
+              <td class="text-end fw-semibold">{{ formatearMonto(montoBorderoux(talonario)) }}</td>
+              <td *ngIf="!soloLectura" class="text-end">
+                <button type="button" class="btn btn-link text-danger btn-sm p-0"
+                        title="Quitar talonario" (click)="quitarTalonario(actividad, ti)">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-2">
+        <button type="button" class="btn btn-outline-primary btn-sm" *ngIf="!soloLectura"
+                (click)="agregarTalonario(actividad)">
+          <i class="ri-add-line me-1"></i>Agregar talonario
+        </button>
+        <span class="fw-semibold">Subtotal actividad: {{ formatearMonto(subtotalActividad(actividad)) }} Bs.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-info d-flex justify-content-between align-items-center mb-0">
+    <span class="fw-semibold">Total a liquidar</span>
+    <span class="fs-5 fw-bold">{{ formatearMonto(totalLiquidacion) }} Bs.</span>
+  </div>
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-light" [disabled]="isLoading" (click)="activeModal.dismiss()">
+    {{ soloLectura ? 'Cerrar' : 'Cancelar' }}
+  </button>
+  <button type="button" class="btn btn-primary" *ngIf="!soloLectura"
+          [disabled]="isLoading || !puedeGuardar" (click)="guardar()">
+    {{ isLoading ? 'Registrando...' : 'Registrar liquidación' }}
+  </button>
+</div>

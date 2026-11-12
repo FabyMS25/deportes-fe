@@ -26,7 +26,7 @@ export enum TipoExcepcion {
   MANTENIMIENTO = 'mantenimiento',
   EVENTO_MUNICIPAL = 'evento_municipal'
 }
-export type BookingType = 'puntual' | 'recurrente' | 'periodo';
+export type BookingType = 'puntual' | 'recurrente' | 'periodo'| 'borderoux';
 export type ReservationType = 'por_hora' | 'por_persona' | 'por_evento' | 
                               'mensualidad' |'por_sesion'| 
                               'por_club';

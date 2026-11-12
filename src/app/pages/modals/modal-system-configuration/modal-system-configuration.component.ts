@@ -49,11 +49,8 @@ export class SystemConfigurationModalComponent implements OnInit {
   readonly TipoValorConfiguracion = TipoValorConfiguracion;
   readonly ClaveConfiguracion = ClaveConfiguracion;
   readonly CategoriaConfiguracion = CategoriaConfiguracion;
-  private readonly ambitosConReferencia: AplicaAConfiguracion[] = [
-    AplicaAConfiguracion.CAMPO_DEPORTIVO,
-    AplicaAConfiguracion.COMPLEJO,
-    AplicaAConfiguracion.ORGANIZACION
-  ];
+  // No hay ámbitos con referencia por entidad: solo global/contribuyente/representante.
+  private readonly ambitosConReferencia: AplicaAConfiguracion[] = [];
 
   mostrarUnidadMedida = false;
   mostrarReferenciaUuid = false;

@@ -16,6 +16,7 @@ import { EstudianteEscuelaService } from 'src/app/core/services/api/estudianteEs
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
 
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
+import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { Reserva } from 'src/app/core/models/reserva.model';
 import { ReservaPeriodo } from 'src/app/core/models/reservaPeriodo.model';
 
@@ -460,6 +461,15 @@ export class MensualityComponent implements OnInit {
 
   async onSubmit(): Promise<void> {
     if (this.isLoading) return;
+    if (this.userRole === 'Contribuyente' &&
+      (this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_PERIODO_ESCUELAS]?.valorBoolean !== true ||
+        !(this.userData?.organizacionesRepresentadas?.length))) {
+      this.handleError(
+        'Funcionalidad deshabilitada',
+        'El registro de mensualidades requiere que su usuario represente al menos una organización.'
+      );
+      return;
+    }
     if (this.reservationForm.get('aceptaTerminos')?.value !== true) {
       this.reservationForm.get('aceptaTerminos')?.markAsTouched();
       this.handleError('Aceptación requerida', 'Debe leer y aceptar los Términos y Condiciones de Uso antes de generar el cobro.');

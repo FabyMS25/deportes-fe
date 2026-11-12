@@ -1,0 +1,16 @@
+:host {
+  display: block;
+}
+
+.card-header h6 {
+  font-size: 0.9rem;
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+}
+
+.table input.form-control-sm {
+  min-width: 80px;
+}

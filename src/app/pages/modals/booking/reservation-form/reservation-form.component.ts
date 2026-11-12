@@ -127,22 +127,22 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   ) {}
 
   get enableSolicitudOrganizationReservation(): boolean {
-    return this.isInternalUser || this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_ORGANIZACIONES]?.valorBoolean === true;
+    return this.authenticationService.reservationOrganizationMode() === 'REQUEST';
   }
   get enableOrganizationReservation(): boolean {
-    return this.isInternalUser || this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_ORGANIZACIONES]?.valorBoolean === true;
+    return this.authenticationService.reservationOrganizationMode() === 'DIRECT';
   }
   get enableSolicitudEventsBooking(): boolean{
-    return this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_EVENTOS]?.valorBoolean ?? false;
+    return this.canActivate.includes('CREAR-SOLICITUD-EVENTOS');
   }
   get enableEventsBooking(): boolean {
-    return this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_EVENTOS]?.valorBoolean ?? false;
+    return this.canActivate.includes('CREAR-EVENTOS');
   }
   get enableSolicitudRecurrentBooking(): boolean | undefined{
-    return this.isInternalUser || this.systemConfigs[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_RECURRENTES]?.valorBoolean === true;
+    return this.canActivate.includes('CREAR-SOLICITUD');
   }
   get enableRecurrentBooking(): boolean | undefined{
-    return this.isInternalUser || this.systemConfigs[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean === true;
+    return this.canActivate.includes('CREAR');
   }
   get validHours(): number {
     return obtenerHorasValidacionPago(
@@ -426,7 +426,12 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
   }
 
-  private generateReservationNumber(): void {
+  /**
+   * Pide al backend el siguiente número de la tabla `prefijos_consecutivos`
+   * (contador + 1) SIN consumirlo. Es una previsualización: el número se
+   * reserva de verdad recién cuando la reserva se guarda.
+   */
+  private generateReservationNumber(attempt = 0): void {
     this.reservaService.previewReservationNumber(this.bookingType).subscribe({
       next: (response: any) => {
         this.numeroReserva = response;        
@@ -440,21 +445,21 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
           }
         }
       },
-      error: (error) => {
-        this.generateFallbackReservationNumber();
+      error: () => {
+        // Nunca se inventa un número: el formato [PREB]-NNNN/YY lo valida el
+        // backend y un número fabricado siempre sería rechazado.
+        if (attempt < 2) {
+          this.generateReservationNumber(attempt + 1);
+          return;
+        }
+        this.numeroReserva = '';
+        this.reservationForm?.patchValue({ numeroReserva: '' });
+        this.handleError(
+          'Número de reserva no disponible',
+          'No se pudo obtener el consecutivo de reserva. Intente nuevamente en unos segundos.'
+        );
       }
     });
-  }
-
-  private generateFallbackReservationNumber(): void {
-    const timestamp = new Date().getTime().toString().slice(-6);
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    const prefix = this.bookingType === 'puntual' ? 'P' : 'R';
-    this.numeroReserva = `${prefix}-${timestamp}-${random}`;
-    
-    if (this.reservationForm) {
-      this.reservationForm.patchValue({ numeroReserva: this.numeroReserva });
-    }
   }
   private reservationNumberFormatValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
@@ -532,6 +537,20 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     const selectedOrganization = formValue?.organizacionDto;    
     const isOrganizationReservation = !!formValue?.esParaOrganizacion && !!selectedOrganization;
     if (this.isInternalUser) {
+      this.requiresValidation = false;
+      return;
+    }
+    // A direct capability explicitly overrides the field's normal approval
+    // path. The request capability is evaluated below and remains pending.
+    if (isOrganizationReservation && this.enableOrganizationReservation) {
+      this.requiresValidation = false;
+      return;
+    }
+    if (this.bookingType === 'recurrente' && this.enableRecurrentBooking) {
+      this.requiresValidation = false;
+      return;
+    }
+    if (this.selectedTariff?.tipoCobro === 'por_evento' && this.enableEventsBooking) {
       this.requiresValidation = false;
       return;
     }
@@ -1972,6 +1991,7 @@ private prepareReservationData(): Reserva {
     this.reservaService.create(reservaPayload).subscribe({
       next: (response: any) => {
         const savedReserva = response;
+        this.bindSavedReservationNumber(savedReserva);
         if (savedReserva.tarifaDetallesDtoList?.length) {
           this.isSubmitting = false;
           this.submitted = false;
@@ -1999,6 +2019,20 @@ private prepareReservationData(): Reserva {
         this.handleError('Error al guardar la reserva', error);
       }
     });
+  }
+
+  /**
+   * Una vez creada la reserva, el número que se muestra debe ser el que el
+   * backend persistió (reserva.numeroReserva), no la previsualización pedida
+   * al abrir el formulario.
+   */
+  private bindSavedReservationNumber(reserva: Reserva): void {
+    const numeroGuardado = reserva?.numeroReserva;
+    if (!numeroGuardado) {
+      return;
+    }
+    this.numeroReserva = numeroGuardado;
+    this.reservationForm?.patchValue({ numeroReserva: numeroGuardado });
   }
 
   private saveReservaTarifaDetalles(reserva: Reserva, detalles: ReservaTarifaDetalle[]) {

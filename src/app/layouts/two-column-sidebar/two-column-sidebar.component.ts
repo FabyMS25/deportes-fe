@@ -236,7 +236,9 @@ export class TwoColumnSidebarComponent implements OnInit {
    * @param item menuItem
    */
   hasItems(item: MenuItem) {
-    return item.permisoHijoListDto !== undefined ? item.permisoHijoListDto.length > 0 : false;
+    return item.permisoHijoListDto !== undefined
+      ? item.permisoHijoListDto.some(child => !child.permissionOnly)
+      : false;
   }
 
   /**
@@ -248,8 +250,8 @@ export class TwoColumnSidebarComponent implements OnInit {
   }
   
   getSubMenu(menuItems:any[]):any[]{
-    const commonItems = menuItems.filter(item1 => this.menuItems.some(item2 => item1.nombreMenu === item2.nombreMenu));
-    const uniqueMenuItemsMap = commonItems.reduce((map, item) => {
+    const visibleItems = menuItems.filter(item => !item.permissionOnly);
+    const uniqueMenuItemsMap = visibleItems.reduce((map, item) => {
       if (!map.has(item.nombreMenu)) {
         map.set(item.nombreMenu, item);
       }

@@ -289,7 +289,12 @@ export class StudentsComponent implements OnInit {
         estadoEstudiante: (hasActive ? 'ACTIVO' : 'INACTIVO') as 'ACTIVO' | 'INACTIVO',
         puedeGestionar: ordered.some(item => item.puedeGestionar)
       };
-    }).sort((a, b) => String(a.nombreCompleto ?? '').localeCompare(String(b.nombreCompleto ?? ''), 'es'));
+    }).sort((a, b) => {
+      const fechaA = a.fechaCreacion ? new Date(a.fechaCreacion).getTime() : 0;
+      const fechaB = b.fechaCreacion ? new Date(b.fechaCreacion).getTime() : 0;
+      if (fechaA !== fechaB) return fechaB - fechaA;
+      return String(a.nombreCompleto ?? '').localeCompare(String(b.nombreCompleto ?? ''), 'es');
+    });
   }
 
   private uniqueStudents(items: EstudianteEscuela[]): EstudianteEscuela[] {

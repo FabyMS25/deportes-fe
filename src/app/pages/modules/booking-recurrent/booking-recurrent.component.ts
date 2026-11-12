@@ -121,11 +121,9 @@ export class BookingRecurrentComponent implements OnInit {
 
 
   systemConfigList: { [key: string]: ConfiguracionSistema } = {};
-  get enableSolicitudRecurrentBooking(): boolean | undefined{
-    return this.systemConfigList[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
-  }
-  get enableRecurrentBooking(): boolean | undefined{
-    return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
+  get canCreate(): boolean {
+    return this.canActivate.includes('CREAR')
+      || this.canActivate.includes('CREAR-SOLICITUD');
   }
   constructor(
       private authService: AuthenticationService,      
@@ -193,12 +191,6 @@ export class BookingRecurrentComponent implements OnInit {
     const currentUser = this.authService.currentUser();
     if (this.authService.getUserRole() === 'Contribuyente') {
       this.contribuyente = currentUser ;
-      if(!this.enableRecurrentBooking && !this.enableSolicitudRecurrentBooking){        
-        const index = this.canActivate.indexOf('CREAR');
-        if (index > -1) {
-          this.canActivate.splice(index, 1);
-        }
-      }
       if (this.contribuyente.estadoUsuario !== EstadoUsuario.ACTIVO) {
         this.canActivate = ["VER"];
       }

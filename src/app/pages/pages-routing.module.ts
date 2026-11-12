@@ -7,6 +7,7 @@ import { BookingDetailsComponent } from './modals/booking/booking-details.compon
 import { BookingOneTimeComponent } from './modules/booking-one-time/booking-one-time.component';
 import { BookingRecurrentComponent } from './modules/booking-recurrent/booking-recurrent.component';
 import { BookingPeriodoComponent } from './modules/booking-schools/booking-periodo.component';
+import { BookingBorderouxComponent } from './modules/booking-borderoux/booking-borderoux.component';
 import { CategoriesComponent } from './modules/categories/categories.component';
 import { ClasificadoresRuatComponent } from './modules/clasificadores-ruat/clasificadores-ruat.component';
 import { EmployeesComponent } from './modules/employees/employees.component';
@@ -20,11 +21,11 @@ import { StudentsComponent } from './modules/students/students.component';
 import { TicketComponent } from './modules/reports/ticket/ticket.component';
 
 import { MensualityComponent } from './modals/mensuality/mensuality.component';
-import { monthlyRegistrationAccess, leaveMonthlyRegistration } from './modals/mensuality/mensuality.guards';
+import { leaveMonthlyRegistration } from './modals/mensuality/mensuality.guards';
 
 const routes: Routes = [
-  { path: 'profile/profile', component: ProfileComponent, data: { requiredPermission: 'CAN_ACCESS' } },
-  { path: 'profile/profile-setting', component: SettingsComponent, data: { requiredPermission: 'CAN_ACCESS' } },
+  { path: 'profile/profile', component: ProfileComponent },
+  { path: 'profile/profile-setting', component: SettingsComponent },
     
     { path: 'taxpayers', component: TaxpayersComponent },
     { path: 'students', component: StudentsComponent },
@@ -40,9 +41,10 @@ const routes: Routes = [
   { path: 'reservations/one-time', component: BookingOneTimeComponent },
   { path: 'reservations/recurrent', component: BookingRecurrentComponent },
   { path: 'reservations/schools', component: BookingPeriodoComponent },
+  { path: 'reservations/borderoux', component: BookingBorderouxComponent },
   { path: 'reservations/details', component: BookingDetailsComponent },
   { path: 'reservations/schools/new', component: MensualityComponent,
-    canActivate: [monthlyRegistrationAccess], canDeactivate: [leaveMonthlyRegistration] },
+    canDeactivate: [leaveMonthlyRegistration] },
   { path: 'reservations/ticket', component: TicketComponent }
 
 ];

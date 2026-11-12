@@ -67,10 +67,10 @@ export class MapDashboardComponent implements OnInit {
 
     systemConfigList: { [key: string]: ConfiguracionSistema } = {};
     get enableSolicitudRecurrentBooking(): boolean | undefined{
-        return this.systemConfigList[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
+        return this.authService.hasPermission('/reservations/recurrent').includes('CREAR-SOLICITUD');
     }
     get enableRecurrentBooking(): boolean | undefined{
-        return this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean ?? false;
+        return this.authService.hasPermission('/reservations/recurrent').includes('CREAR');
     }
 
     constructor(

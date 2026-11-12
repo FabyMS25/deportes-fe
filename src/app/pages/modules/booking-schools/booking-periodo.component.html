@@ -74,6 +74,13 @@
                     </button>
                 </div>
             </div>
+            <div class="row g-2 mt-1" *ngIf="puedeAccederBorderoux">
+                <div class="col-auto">
+                    <button class="btn btn-soft-primary btn-sm" type="button" (click)="goToBorderoux()">
+                        <i class="ri-government-line me-1"></i>Liquidaciones Borderoux
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="card-header p-0">
             <div class="row g-2">

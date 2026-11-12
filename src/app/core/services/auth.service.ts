@@ -7,11 +7,9 @@ import { TokenStorageService } from './token-storage.service';
 
 import { UserRole, UserRoleName, UserRoles } from 'src/app/core/constants/UserData';
 import { firstValueFrom, of, Subject } from 'rxjs';
-import { SystemConfigurationService } from './api/system-configuration.service';
 import { ConfiguracionSistema } from '../models/configuracionSistema.model';
-import { AplicaAConfiguracion, CategoriaConfiguracion } from '../constants/Configurations';
 import { MenuItem } from '../models/menu.model';
-import { permissionActions, hasMenuRoute } from '../helpers/menu-permissions';
+import { permissionActions, hasMenuRoute, resolveMenuRoute } from '../helpers/menu-permissions';
 import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';
 
@@ -24,6 +22,7 @@ interface DeportesLoginResponse {
   staff: any;
   admin: boolean;
   userType: 'STAFF' | 'TAXPAYER';
+  configurations: ConfiguracionSistema[];
   ruatStatus: boolean;
   ruatMessage: string;
 }
@@ -60,7 +59,6 @@ export class AuthenticationService {
     private translate: TranslateService,
     private http: HttpClient, 
     private router: Router,
-    private systemConfigsService: SystemConfigurationService,
     private storageService: TokenStorageService,
   ) {
     this.currentUserSubject = storageService.getUser()
@@ -94,17 +92,10 @@ export class AuthenticationService {
         admin: loginResponse.admin
       };
       const menu = this.sortMenuItemsRecursive(loginResponse.menu || []);
-      const configResult = await this.loadSystemConfigs(taxpayer, loginResponse.token);
-      if (!configResult.configsStatus) {
-        this.storageService.signOut();
-        return {
-          success: false,
-          message: configResult.errorMessage
-        };
-      }
+      const configs = this.mapLoginConfigurations(loginResponse.configurations || []);
       this.storageService.saveAuthData({
         menu,
-        configs: configResult.configs || {},
+        configs,
         user,
         staff: loginResponse.staff,
         token: loginResponse.token
@@ -145,101 +136,25 @@ export class AuthenticationService {
       };
     }
   }
-  public async loadSystemConfigs(
-    isContribuyente: boolean,
-    token?: string
-  ): Promise<{
-    configsStatus: boolean;
-    configs?: { [key: string]: ConfiguracionSistema };
-    errorType?: 'BACKEND' | 'CORS' | 'INVALID_RESPONSE' | 'UNKNOWN';
-    errorMessage?: string;
-  }> {    
+  /**
+   * Authentication already contains a server-filtered configuration snapshot.
+   * In particular, PERMISSIONS are represented exclusively by the menu and
+   * never stored in the browser's configuration map.
+   */
+  private mapLoginConfigurations(configurations: ConfiguracionSistema[]): { [key: string]: ConfiguracionSistema } {
     this.systemStatus = {
-      backend: false,
-      configurations: false,
+      backend: true,
+      configurations: true,
       message: ''
     };
-    try {
-      const configResponse = await firstValueFrom(
-        this.systemConfigsService.getAll(token)
-      );
-      if (!configResponse) {
-        this.systemStatus.message = this.translate.instant('LOGIN_UI.CONFIG_UNAVAILABLE');
-        return {
-          configsStatus: false,
-          errorType: 'BACKEND',
-          errorMessage: this.systemStatus.message
-        };
-      }
-      if (!Array.isArray(configResponse)) {
-        this.systemStatus.message = this.translate.instant('LOGIN_UI.CONFIG_INVALID');
-        return {
-          configsStatus: false,
-          errorType: 'INVALID_RESPONSE',
-          errorMessage: this.systemStatus.message
-        };
-      }
-      const configsMap = this.resolveAudienceConfigurations(configResponse, isContribuyente);
-      this.systemConfigList = configsMap;
-      this.systemStatus.backend = true;
-      this.systemStatus.configurations = true;
-      return { configsStatus: true, configs: configsMap };
-    } catch (error: any) {
-      if (error?.status === 0) {
-        this.systemStatus.message = this.translate.instant('LOGIN_UI.UNAVAILABLE');
-        return {
-          configsStatus: false,
-          errorType: 'CORS',
-          errorMessage: this.systemStatus.message
-        };
-      }
-      this.systemStatus.message = error?.error?.message || this.translate.instant('LOGIN_UI.CONFIG_UNAVAILABLE');
-      return {
-        configsStatus: false,
-        errorType: 'UNKNOWN',
-        errorMessage: this.systemStatus.message
-      };
-    }
-  }
-
-  /**
-   * Resolves only audience-level settings during login. Entity scopes need the
-   * selected reservation context and must never overwrite a global setting here.
-   */
-  private resolveAudienceConfigurations(
-    configs: ConfiguracionSistema[],
-    isContribuyente: boolean
-  ): { [key: string]: ConfiguracionSistema } {
     const resolved: { [key: string]: ConfiguracionSistema } = {};
-    const priority = (config: ConfiguracionSistema): number => {
-      if (isContribuyente && config.aplicaA === AplicaAConfiguracion.CONTRIBUYENTE) return 2;
-      if (!config.aplicaA || config.aplicaA === AplicaAConfiguracion.GLOBAL) return 1;
-      return 0;
-    };
-
-    configs
-      .filter(config => config.activo === true && config.categoria !== CategoriaConfiguracion.RUAT)
-      .filter(config => priority(config) > 0)
-      .sort((a, b) => priority(a) - priority(b))
+    (Array.isArray(configurations) ? configurations : [])
+      .filter(config => config.activo === true)
       .forEach(config => {
         resolved[config.clave] = config;
       });
-
+    this.systemConfigList = resolved;
     return resolved;
-  }
-
-  private isBackendError(error: any): boolean {
-    return (
-      error.status === 0 ||
-      error.status === 504 ||
-      error.status === 502 ||
-      error.name === 'HttpErrorResponse' ||
-      (error.error && error.error instanceof ProgressEvent) ||
-      error.message?.includes('CORS') ||
-      error.message?.includes('Network') ||
-      error.message?.includes('Failed to fetch') ||
-      error.message?.includes('Http failure')
-    );
   }
 
   /*
@@ -262,8 +177,31 @@ export class AuthenticationService {
   hasPermission(resourceRoute: string): string[] {
     return permissionActions(this.storageService.getMenu(), resourceRoute);
   }
+  /**
+   * The ordinary CREAR action for Reservas Puntuales is universal for
+   * taxpayers. Organization use is a separate, server-resolved context.
+   */
+  reservationOrganizationMode(): 'DIRECT' | 'REQUEST' | undefined {
+    return this.findMenuItemByPermissionRoute(this.storageService.getMenu(), '/reservations/one-time')
+      ?.organizationReservation;
+  }
   hasRoutePermission(route: string): boolean {
     return hasMenuRoute(this.storageService.getMenu(), route);
+  }
+
+  private findMenuItemByPermissionRoute(menu: MenuItem[], permissionRoute: string): MenuItem | undefined {
+    for (const item of menu || []) {
+      if (item.permissionRoute === permissionRoute || item.ruta === permissionRoute) {
+        return item;
+      }
+      const nested = this.findMenuItemByPermissionRoute(item.permisoHijoListDto || [], permissionRoute);
+      if (nested) return nested;
+    }
+    return undefined;
+  }
+  /** Single route-access check: the longest menu route that covers the URL. */
+  canAccessRoute(url: string): boolean {
+    return !!resolveMenuRoute(this.storageService.getMenu(), url);
   }
 
   public tokenUser(): any {

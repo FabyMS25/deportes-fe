@@ -29,7 +29,6 @@ const routes: Routes = [
       },
       {
         path: 'pages',
-        data: { requiredPermission: 'CAN_ACCESS' },
         loadChildren: () => import('./pages/extrapages/extraspages.module')
           .then(module => module.ExtraspagesModule)
       },

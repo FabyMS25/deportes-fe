@@ -103,16 +103,16 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
 
   systemConfigList: { [key: string]: ConfiguracionSistema } = {};
   get enableRecurrentBooking(): boolean {
-    return this.isInternalUser || this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_RECURRENTES]?.valorBoolean === true;
+    return this.canActivate.includes('CREAR');
   }
   get enableSolicitudRecurrentBooking(): boolean {
-    return this.isInternalUser || this.systemConfigList[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_RECURRENTES]?.valorBoolean === true;
+    return this.canActivate.includes('CREAR-SOLICITUD');
   }
   get enableOrganizationReservation(): boolean {
-    return this.isInternalUser || this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_ORGANIZACIONES]?.valorBoolean === true;
+    return this.authenticationService.reservationOrganizationMode() === 'DIRECT';
   }
   get enableSolicitudOrganizationReservation(): boolean {
-    return this.isInternalUser || this.systemConfigList[ClaveConfiguracion.HABILITAR_SOLICITUD_RESERVAS_ORGANIZACIONES]?.valorBoolean === true;
+    return this.authenticationService.reservationOrganizationMode() === 'REQUEST';
   }
   get HorasValidacionPago(): number | undefined {
     return obtenerHorasValidacionPago(
@@ -222,11 +222,8 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     const currentUser = this.authenticationService.currentUser()   
     if (this.userRole === 'Contribuyente') {
         this.bookingState.contribuyente = currentUser;        
-        if (this.enableOrganizationReservation || this.enableSolicitudOrganizationReservation) {
-          this.userRole = !!this.bookingState.contribuyente?.organizacionesRepresentadas && 
-                            this.bookingState.contribuyente?.organizacionesRepresentadas?.length 
-                              ? 'Representante' : 'Contribuyente';
-        }
+        this.userRole = !!this.bookingState.contribuyente?.organizacionesRepresentadas?.length
+          ? 'Representante' : 'Contribuyente';
         if (!this.bookingType) {
           this.bookingType = 'puntual';
         }

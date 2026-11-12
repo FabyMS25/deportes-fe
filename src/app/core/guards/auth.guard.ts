@@ -8,10 +8,27 @@ import {
   UrlTree
 } from "@angular/router";
 
+import { normalizeRoute } from "../helpers/menu-permissions";
 import { AuthenticationService } from "../services/auth.service";
 
+/**
+ * Single route-access guard.
+ *
+ * It authenticates the session and authorizes the navigation against the
+ * server-signed menu. Routes do not declare their own permission: the required
+ * route is resolved from the URL with the longest menu-route match, so child
+ * and parameterized pages inherit their module's permission.
+ */
 @Injectable({ providedIn: "root" })
 export class AuthGuard implements CanActivate, CanActivateChild {
+  /** Pages available to any authenticated user because they are not modules. */
+  private static readonly AUTHENTICATED_ONLY = ["/profile", "/pages"];
+
+  /** Legacy menu routes still accepted for a module. */
+  private static readonly ROUTE_ALIASES: Record<string, string[]> = {
+    "/reservations/borderoux": ["/reservations/schools"]
+  };
+
   constructor(
     private router: Router,
     private authenticationService: AuthenticationService
@@ -21,19 +38,22 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): boolean | UrlTree {
-    const currentUser = this.authenticationService.currentUser();
-    if (!currentUser) {
+    if (!this.authenticationService.currentUser()) {
       this.authenticationService.logout();
       return false;
     }
-    if (state.url === "/" || state.url === "") {
+
+    const url = normalizeRoute(state.url);
+    if (!url || url === "/") {
       return this.router.parseUrl(this.authenticationService.getDashboardRoute());
     }
-    const hasPermission = this.checkPermissions(route, state);
-    if (!hasPermission) {
-      return this.router.parseUrl(this.authenticationService.getDashboardRoute());
+
+    if (this.canAccess(url)) {
+      return true;
     }
-    return hasPermission;
+
+    const dashboard = normalizeRoute(this.authenticationService.getDashboardRoute());
+    return dashboard === url ? false : this.router.parseUrl(dashboard);
   }
 
   canActivateChild(
@@ -43,39 +63,14 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     return this.canActivate(childRoute, state);
   }
 
-  private checkPermissions(
-    route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot
-  ): boolean {
-    if (state.url === "/" || state.url === "") {
+  private canAccess(url: string): boolean {
+    if (AuthGuard.AUTHENTICATED_ONLY.some(prefix => url === prefix || url.startsWith(`${prefix}/`))) {
       return true;
     }
-
-    if (state.url.startsWith("/profile/")) {
+    if (this.authenticationService.canAccessRoute(url)) {
       return true;
     }
-
-    let currentRoute: ActivatedRouteSnapshot | null = route;
-    while (currentRoute.firstChild) {
-      currentRoute = currentRoute.firstChild;
-    }
-
-    const requiredPermission =
-      currentRoute.data["requiredPermission"] || currentRoute.data["permission"];
-
-    if (requiredPermission) {
-      return (
-        requiredPermission === "CAN_ACCESS" ||
-        this.authenticationService.hasRoutePermission(requiredPermission)
-      );
-    }
-
-    if (currentRoute.params && Object.keys(currentRoute.params).length > 0) {
-      const urlWithoutQuery = state.url.split("?")[0];
-      return this.authenticationService.hasRoutePermission(urlWithoutQuery);
-    }
-
-    const baseUrl = state.url.split("?")[0].split("/").slice(0, 3).join("/");
-    return this.authenticationService.hasRoutePermission(baseUrl);
+    return (AuthGuard.ROUTE_ALIASES[url] || [])
+      .some(alias => this.authenticationService.canAccessRoute(alias));
   }
 }

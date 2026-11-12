@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Reserva } from '../../models/reserva.model';
+import { ClasificadorRuat } from '../../models/clasificadorRuat.model';
 import { BookingType } from '../../constants/Features';
 import { EstadoReserva } from '../../constants/Estados';
 import Swal from 'sweetalert2';
@@ -163,6 +164,14 @@ export class ReservaService {
   create(data: Reserva): Observable<Reserva> {
     const creadoPor = data.creadoPor || this.currentUserUuid();
     return apiPost<Reserva>(this.http, this.apiUrl, { ...data, creadoPor }, 'crear reserva');
+  }
+
+  getClasificadorBorderoux(): Observable<ClasificadorRuat> {
+    return apiGet<ClasificadorRuat>(
+      this.http,
+      `${this.apiUrl}/borderoux/clasificador`,
+      'obtener clasificador RUAT de liquidaciones Borderoux'
+    );
   }
 
   update(data: Reserva): Observable<Reserva> {

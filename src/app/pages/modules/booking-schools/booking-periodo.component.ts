@@ -15,6 +15,7 @@ import { OrganizacionService } from 'src/app/core/services/api/organizacion.serv
 import { EstudianteEscuelaService } from 'src/app/core/services/api/estudianteEscuela.service';
 import { EstadoReserva, EstadoValidacion, EstadoPago, EstadoUsuario, EstadoRuat, EstadoActual, StatusUtils} from 'src/app/core/constants/Estados';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
+import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { obtenerHorasValidacionPago } from 'src/app/core/utils/configuracion-sistema.util';
 import { EstudianteEscuela } from 'src/app/core/models/EstudianteEscuela.model';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
@@ -439,9 +440,7 @@ clearFilters() {
   }
 
   get canCreateMonthlyPayment(): boolean {
-    return this.canActivate.includes('CREAR') ||
-      (this.authService.getUserRole() === 'Contribuyente' &&
-        this.contribuyente?.estadoUsuario === EstadoUsuario.ACTIVO);
+    return this.canActivate.includes('CREAR');
   }
 
   get emptyStateMessage(): string {
@@ -451,7 +450,25 @@ clearFilters() {
     return `No hay mensualidades registradas para ${this.getPeriodoDisplay(this.filters.periodoFiltro)}.`;
   }
 
+  get puedeAccederBorderoux(): boolean {
+    return this.authService.hasRoutePermission('/reservations/borderoux');
+  }
+
+  public goToBorderoux(): void {
+    void this.router.navigate(['/reservations/borderoux']);
+  }
+
   public createNewMonthlyPayment(): void {
+    if (!this.canCreateMonthlyPayment) {
+      Swal.fire({
+        title: 'Funcionalidad deshabilitada',
+        text: 'El registro de mensualidades no está habilitado para su usuario.',
+        icon: 'warning',
+        confirmButtonText: 'Entendido'
+      });
+      return;
+    }
+
     if (this.authService.getUserRole() === 'Contribuyente' && !this.hasMonthlyRegistrationContext()) {
       Swal.fire({
         title: 'No puede registrar mensualidades',

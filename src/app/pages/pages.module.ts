@@ -40,6 +40,7 @@ import { StudentsComponent } from './modules/students/students.component';
 import { BookingOneTimeComponent } from './modules/booking-one-time/booking-one-time.component';
 import { BookingRecurrentComponent } from './modules/booking-recurrent/booking-recurrent.component';
 import { BookingPeriodoComponent } from './modules/booking-schools/booking-periodo.component';
+import { BookingBorderouxComponent } from './modules/booking-borderoux/booking-borderoux.component';
 import { BookingDetailsComponent } from './modals/booking/booking-details.component';
 import { ComplejoSelectionComponent } from './modals/booking/complejo-selection/complejo-selection.component';
 import { CampoSelectionComponent } from './modals/booking/campo-selection/campo-selection.component';
@@ -70,6 +71,7 @@ import { PagesRoutingModule } from './pages-routing.module';
     BookingOneTimeComponent,
     BookingRecurrentComponent,
     BookingPeriodoComponent,
+    BookingBorderouxComponent,
     BookingDetailsComponent,
   ],
   imports: [
