@@ -554,20 +554,6 @@
                       {{ getPaidReservationDescription() }}
                     </small>
                   </div>
-                  <div class="mb-2" *ngIf="showFreeReservationOption && selectedContribuyente?.esDeportistaElite && !selectedOrganization?.permiteReservasGratuitas">
-                    <div class="form-check form-switch mb-0">
-                      <input 
-                        class="form-check-input" 
-                        type="checkbox" 
-                        [checked]="isFreeReservation"
-                        (change)="toggleFreeReservation()"
-                        id="freeReservationToggle">
-                      <label class="form-check-label small fw-semibold" for="freeReservationToggle">
-                        <i class="ri-gift-line me-1"></i>
-                        {{ 'Utilizar beneficio de deportista elite (reserva gratuita)' | translate }}
-                      </label>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>

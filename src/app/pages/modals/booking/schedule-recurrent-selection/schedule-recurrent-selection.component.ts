@@ -90,6 +90,7 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   systemConfigList: { [key: string]: ConfiguracionSistema } = {};
   calculatedTariff: number = 0;
   tariffDetails: string[] = [];
+  tariffQuoteLines: any[] = [];
   showTariffBreakdown: boolean = false;
 
   get anticipationHours(): number | undefined {
@@ -617,6 +618,7 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   private resetCalculatedTariff(): void {
     this.calculatedTariff = 0;
     this.tariffDetails = [];
+    this.tariffQuoteLines = [];
   }
 
   private getScheduleShapeError(): string | null {
@@ -635,6 +637,45 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     }
 
     return null;
+  }
+
+  /** Validates every dated recurrent slot against the field calendar, including exceptions. */
+  private getFieldCalendarError(): string | null {
+    for (const { date, slots } of this.getScheduledDates()) {
+      const periods = this.getOperatingPeriodsForDate(date);
+      for (const slot of slots) {
+        if (!periods.some(period =>
+          slot.horaInicio >= period.horaInicio && slot.horaFin <= period.horaFin)) {
+          return `El horario ${slot.horaInicio}-${slot.horaFin} del ${this.formatDateKey(date)} está fuera del horario de atención del campo`;
+        }
+      }
+    }
+    return null;
+  }
+
+  private getOperatingPeriodsForDate(date: Date): TimeSlot[] {
+    const dateKey = this.formatDateKey(date);
+    const exceptions = (this.dataField?.horariosExcepcionesDtoList || [])
+      .filter(exception => exception.fecha?.split('T')[0] === dateKey);
+    if (exceptions.length) {
+      return exceptions
+        .filter(exception => exception.tipoExcepcion === 'horario_especial'
+          && !!exception.horaApertura && !!exception.horaCierre)
+        .map(exception => ({
+          horaInicio: exception.horaApertura!.slice(0, 5),
+          horaFin: exception.horaCierre!.slice(0, 5)
+        }));
+    }
+
+    const dayName = this.getDayName(date.getDay());
+    const isWeekday = date.getDay() >= 1 && date.getDay() <= 5;
+    return (this.dataField?.horariosFijosDtoList || [])
+      .filter(schedule => schedule.abierto && !!schedule.horaApertura && !!schedule.horaCierre)
+      .filter(schedule => schedule.dia === dayName || (schedule.dia === 'lunes_viernes' && isWeekday))
+      .map(schedule => ({
+        horaInicio: schedule.horaApertura!.slice(0, 5),
+        horaFin: schedule.horaCierre!.slice(0, 5)
+      }));
   }
 
   private getCantidadPersonasError(): string | null {
@@ -763,6 +804,7 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
   calculateTariff(): void {
     this.calculatedTariff = 0;
     this.tariffDetails    = [];
+    this.tariffQuoteLines = [];
     if (!this.dataTariff) return;
     if (this.getScheduleShapeError() || !this.diasSemana.some(d => d.selected)) return;
 
@@ -791,6 +833,14 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
         break;
       }
     }
+    const baseQuantity = ['mensualidad', 'por_club'].includes(this.dataTariff.tipoCobro)
+      ? billingMonths : this.calculateHoursWithinTariffRange();
+    this.tariffQuoteLines.push({
+      tipoLinea: 'BASE', nombreConcepto: this.dataTariff.descripcion || this.dataTariff.tipoCobro,
+      tipoCobro: this.dataTariff.tipoCobro, tipoCalculo: this.dataTariff.tipoCobro,
+      cantidad: baseQuantity, precioUnitario: this.dataTariff.precioBase,
+      subtotal: this.calculatedTariff, reglaAplicada: this.dataTariff.tipoCobro
+    });
     this.calculateAdditionalConcepts(totalHours, billingMonths);
   }
 
@@ -819,7 +869,18 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
           conceptDetail = `${concepto.concepto}: Bs. ${conceptAmount.toFixed(2)}`;
           break;
       }
-      if (conceptAmount > 0) { this.calculatedTariff += conceptAmount; conceptTotal += conceptAmount; this.tariffDetails.push(conceptDetail); }
+      if (conceptAmount > 0) {
+        const cantidad = concepto.tipo === 'porcentaje' ? Number(concepto.valor || 0)
+          : ['por_hora', 'por_sesion'].includes(concepto.tipo) ? this.calculateApplicableHoursForConcepto(concepto)
+          : concepto.tipo === 'mensualidad' ? totalMonths : 1;
+        this.tariffQuoteLines.push({
+          tipoLinea: 'CONCEPTO', nombreConcepto: concepto.concepto,
+          tipoCobro: this.dataTariff.tipoCobro, tipoCalculo: concepto.tipo,
+          cantidad, precioUnitario: Number(concepto.valor || 0), subtotal: conceptAmount,
+          reglaAplicada: concepto.tipo, tarifaConceptoUuid: concepto.uuid
+        });
+        this.calculatedTariff += conceptAmount; conceptTotal += conceptAmount; this.tariffDetails.push(conceptDetail);
+      }
     });
     if (conceptTotal > 0) this.tariffDetails.push(`Total conceptos adicionales: Bs. ${conceptTotal.toFixed(2)}`);
   }
@@ -982,6 +1043,8 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
     if (this.parseDateFromInput(this.fechaFin) <= this.parseDateFromInput(this.fechaInicio)) {
       this.errorMessage = 'La fecha de fin debe ser posterior al inicio'; return false;
     }
+    const fieldCalendarError = this.getFieldCalendarError();
+    if (fieldCalendarError) { this.errorMessage = fieldCalendarError; return false; }
     const anticipationError = this.getAnticipationError();
     if (anticipationError) {
       this.errorMessage = anticipationError;
@@ -1018,7 +1081,8 @@ export class ScheduleRecurrentSelectionComponent implements OnInit {
       diasSemana:         selectedDays.map(d => d.dia).join(','),
       cantidadPersonas:   this.cantidadPersonas || undefined,
       calculatedPrice:    this.calculatedTariff,
-      priceDetails:       [...this.tariffDetails]
+      priceDetails:       [...this.tariffDetails],
+      tariffQuoteLines:   this.tariffQuoteLines.map(line => ({ ...line }))
     };
 
     this.scheduleCompleted.emit(scheduleData);
@@ -1163,6 +1227,7 @@ private timeToMinutes(time: string): number {
       !this.reservationConflicts.length &&
       !this.getCantidadPersonasError() &&
       !this.getScheduleShapeError() &&
+      !this.getFieldCalendarError() &&
       this.getBillableSessionCount() > 0;
   }
   get overriddenDatesCount(): number    { return Object.keys(this.dateSpecificSlots).length; }

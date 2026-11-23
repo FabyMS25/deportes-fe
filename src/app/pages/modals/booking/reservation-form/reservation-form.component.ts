@@ -39,6 +39,18 @@ interface PuntualSchedule {
   cantidadPersonas?: number;
   calculatedPrice?: number;
   priceDetails?: string[];
+  tariffQuoteLines?: TariffQuoteLine[];
+}
+interface TariffQuoteLine {
+  tipoLinea: 'BASE' | 'CONCEPTO';
+  nombreConcepto?: string;
+  tipoCobro?: string;
+  tipoCalculo?: string;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
+  reglaAplicada?: string;
+  tarifaConceptoUuid?: string;
 }
 @Component({
   selector: 'app-reservation-form',
@@ -294,16 +306,16 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
     const formValue = this.reservationForm?.getRawValue();
     const selectedOrganization = formValue?.organizacionDto || this.selectedOrganization;
-    const isOrganizationFreeEligible = selectedOrganization?.permiteReservasGratuitas || 
-                                    (selectedOrganization?.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL && 
-                                      selectedOrganization?.permiteReservasGratuitas);
-    const isEliteAthlete = this.selectedContribuyente?.esDeportistaElite;
+    const isOrganizationFreeEligible = selectedOrganization?.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL
+      && selectedOrganization?.permiteReservasGratuitas === true;
+    const isEliteAthlete = this.selectedContribuyente?.esDeportistaElite === true;
     this.showFreeReservationOption = isOrganizationFreeEligible || isEliteAthlete;    
     if (this.showFreeReservationOption) {
       if (isOrganizationFreeEligible) {
         this.isFreeReservation = true;
         this.setFreeReservationReason(selectedOrganization);
       } else if (isEliteAthlete && !selectedOrganization) {
+        this.isFreeReservation = true;
         this.freeReservationReason = 'DEPORTISTA_ELITE';
       } else if (isEliteAthlete && selectedOrganization && !isOrganizationFreeEligible) {
         this.isFreeReservation = false;
@@ -973,8 +985,9 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }  
     const scheduleCalculation = this.getScheduleCalculation();
     if (scheduleCalculation) {
-      const tarifaDetalles = this.buildReservaTarifaDetalles(false);
-      this.calculatedPrice = this.calculateTotalFromTarifaDetalles(tarifaDetalles);
+      // Step 3 is the single quote calculation. The final form only displays
+      // and carries that result forward; it must not calculate a second total.
+      this.calculatedPrice = scheduleCalculation.total;
       this.priceDetails = scheduleCalculation.details;
       this.reservationForm.patchValue({
         montoTotal: this.calculatedPrice,
@@ -1061,7 +1074,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
   }
 
-  private getScheduleCalculation(): { total: number; details: string[] } | null {
+  private getScheduleCalculation(): { total: number; details: string[]; lines: TariffQuoteLine[] } | null {
     const source = this.bookingType === 'puntual' ? this.selectedSchedule : this.recurrentSchedule;
     const total = Number(source?.calculatedPrice);
 
@@ -1071,7 +1084,8 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
 
     return {
       total,
-      details: Array.isArray(source.priceDetails) ? [...source.priceDetails] : []
+      details: Array.isArray(source.priceDetails) ? [...source.priceDetails] : [],
+      lines: Array.isArray(source.tariffQuoteLines) ? source.tariffQuoteLines.map((line: TariffQuoteLine) => ({ ...line })) : []
     };
   }
 
@@ -1699,7 +1713,9 @@ private prepareReservationData(): Reserva {
   }
   
   const tarifaDetalles = this.buildReservaTarifaDetalles(isFreeReservation);
-  const montoTotal = isFreeReservation ? 0 : this.calculateTotalFromTarifaDetalles(tarifaDetalles);
+  const scheduleQuote = this.getScheduleCalculation();
+  const montoTotal = isFreeReservation ? 0
+    : scheduleQuote ? scheduleQuote.total : this.calculateTotalFromTarifaDetalles(tarifaDetalles);
   const reserva: Reserva = {
     esReservaGratuita: isFreeReservation,
     motivoGratuidad: isFreeReservation ? this.freeReservationReason : undefined,
@@ -1768,6 +1784,25 @@ private prepareReservationData(): Reserva {
 
   private buildReservaTarifaDetalles(isFreeReservation: boolean): ReservaTarifaDetalle[] {
     if (!this.selectedTariff) return [];
+
+    const quoteLines = this.getScheduleCalculation()?.lines || [];
+    if (quoteLines.length > 0) {
+      return quoteLines.map(line => ({
+        tipoLinea: line.tipoLinea,
+        nombreConcepto: line.nombreConcepto,
+        tipoCobro: line.tipoCobro,
+        tipoCalculo: line.tipoCalculo,
+        cantidad: line.cantidad,
+        precioUnitario: isFreeReservation ? 0 : line.precioUnitario,
+        subtotal: isFreeReservation ? 0 : line.subtotal,
+        reglaAplicada: line.reglaAplicada,
+        datosSnapshot: this.buildTarifaDetalleSnapshot({ tipo: line.tipoLinea, source: 'STEP_3_QUOTE' }),
+        tarifaDto: this.selectedTariff,
+        tarifaConceptoDto: line.tarifaConceptoUuid
+          ? this.selectedTariff.conceptosDtos?.find((concepto: any) => concepto.uuid === line.tarifaConceptoUuid)
+          : undefined
+      }));
+    }
 
     const formValue = this.reservationForm.getRawValue();
     const baseQuantity = this.getBaseQuantityValue(formValue);
@@ -2320,22 +2355,6 @@ getPaidReservationDescription(): string {
     });
     this.checkFreeReservationEligibility();
     this.calculatePrice();
-  }
-
-  toggleFreeReservation(): void {
-    const formValue = this.reservationForm?.getRawValue();
-    const selectedOrganization = formValue?.organizacionDto;
-    const canToggle = this.selectedContribuyente?.esDeportistaElite && 
-                    (!selectedOrganization || selectedOrganization?.permiteReservasGratuitas);    
-    if (canToggle) {
-      this.isFreeReservation = !this.isFreeReservation;
-      this.reservationForm.patchValue({
-        esReservaGratuita: this.isFreeReservation,
-        motivoGratuidad: this.isFreeReservation ? 'DEPORTISTA_ELITE' : ''
-      });
-      this.refreshPaymentPolicyControls();
-      this.calculatePrice();
-    }
   }
 
   private loadContribuyentes(): void {

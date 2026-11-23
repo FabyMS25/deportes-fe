@@ -107,6 +107,7 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
     cantidadPersonas?: number;
     calculatedPrice: number;
     priceDetails: string[];
+    tariffQuoteLines: any[];
   }>();
   currentWeekStart: Date = new Date();
   currentWeekEnd: Date = new Date();
@@ -467,7 +468,8 @@ export class ScheduleSelectionComponent implements OnInit, OnChanges, OnDestroy 
       end: endTime,
       cantidadPersonas: this.cantidadPersonas || undefined,
       calculatedPrice: this.calculatedTariff,
-      priceDetails: [...this.tariffDetails]
+      priceDetails: [...this.tariffDetails],
+      tariffQuoteLines: this.tariffQuoteLines.map(line => ({ ...line }))
     });
   }
   isFormValid(): boolean {
@@ -1554,10 +1556,12 @@ private getRecurrentRangesForDate(
 
 calculatedTariff: number = 0;
 tariffDetails: string[] = [];
+tariffQuoteLines: any[] = [];
 showTariffBreakdown: boolean = false;
 calculateTariff(): void {
   this.calculatedTariff = 0;
   this.tariffDetails = [];
+  this.tariffQuoteLines = [];
   if (!this.dataTariff) return;
   
   const montoBase = this.dataTariff.precioBase || 0;
@@ -1608,6 +1612,14 @@ calculateTariff(): void {
       this.tariffDetails.push(`Tarifa base: Bs. ${montoBase.toFixed(2)}`);
       break;
   }
+  const baseQuantity = this.dataTariff.tipoCobro === 'por_hora' ? durationInHours
+    : this.dataTariff.tipoCobro === 'por_persona' ? (this.cantidadPersonas || 1) : 1;
+  this.tariffQuoteLines.push({
+    tipoLinea: 'BASE', nombreConcepto: this.dataTariff.descripcion || this.dataTariff.tipoCobro,
+    tipoCobro: this.dataTariff.tipoCobro, tipoCalculo: this.dataTariff.tipoCobro,
+    cantidad: baseQuantity, precioUnitario: montoBase, subtotal: total,
+    reglaAplicada: this.dataTariff.tipoCobro
+  });
   const conceptosActivos = this.dataTariff.conceptosDtos?.filter((c: any) => c.activo) || [];
 
   for (const concepto of conceptosActivos) {
@@ -1617,6 +1629,15 @@ calculateTariff(): void {
 
     if (conceptoMonto > 0) {
       this.tariffDetails.push(this.getScheduleConceptoDetail(concepto, conceptoMonto, baseForConcepto, durationInHours));
+      this.tariffQuoteLines.push({
+        tipoLinea: 'CONCEPTO', nombreConcepto: concepto.concepto,
+        tipoCobro: this.dataTariff.tipoCobro, tipoCalculo: concepto.tipo,
+        cantidad: concepto.tipo === 'porcentaje' ? Number(concepto.valor || 0)
+          : concepto.tipo === 'por_hora' ? this.getDurationForScheduleConcepto(concepto, durationInHours) : 1,
+        precioUnitario: Number(concepto.valor || 0), subtotal: conceptoMonto,
+        reglaAplicada: this.getConceptoTimeRangeDisplay(concepto) || concepto.tipo,
+        tarifaConceptoUuid: concepto.uuid
+      });
     }
   }
 

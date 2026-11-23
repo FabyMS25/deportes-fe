@@ -6,9 +6,7 @@ import { Tarifa } from 'src/app/core/models/tarifa.model';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { trigger, transition, animate } from '@angular/animations';
-import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { BookingType } from 'src/app/core/constants/Features';
-import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { obtenerLabelTipoCobro } from 'src/app/core/constants/TipoCobro';
 interface CampoWithTariff {
   campo: CampoDeportivo;
@@ -45,7 +43,6 @@ export class CampoSelectionComponent implements OnInit {
   @Input() userRole: UserRoleName = UserRoles.CONTRIBUYENTE;
   @Input() canActivate: string[] = [];
   @Input() actionType: 'book' | 'request' = 'book';
-  @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
   @Output() campoSelected = new EventEmitter<{ actionType: 'book' | 'request'; field: CampoDeportivo; tariff: Tarifa; }>();
   @Output() goBack = new EventEmitter<void>();
 
@@ -109,9 +106,50 @@ export class CampoSelectionComponent implements OnInit {
   }
 
   getTarifaPermission(campo: CampoDeportivo, tarifa: Tarifa): TarifaPermission {
-    return this.actionType === 'request'
+    let resolvedActionType: 'book' | 'request' = this.actionType;
+
+    if (this.isExternalUser() && campo.requiereAprobacion) {
+      resolvedActionType = 'request';
+    }
+
+    const specialPermission = this.getSpecialTariffPermission(tarifa);
+    if (specialPermission) {
+      const hasDirectPermission = this.canActivate.includes(specialPermission.direct);
+      const hasRequestPermission = this.canActivate.includes(specialPermission.request);
+      if (!hasDirectPermission && !hasRequestPermission) {
+        return { canBook: false, canRequest: false, message: specialPermission.unavailableMessage, actionType: 'none' };
+      }
+      if (resolvedActionType === 'book' && !hasDirectPermission && hasRequestPermission) {
+        resolvedActionType = 'request';
+      }
+    }
+
+    return resolvedActionType === 'request'
       ? { canBook: false, canRequest: true, message: 'Solicitud de reserva - será validada por administrador', actionType: 'request' }
       : { canBook: true, canRequest: false, message: 'Reserva directa disponible', actionType: 'book' };
+  }
+
+  private isExternalUser(): boolean {
+    return this.userRole === UserRoles.CONTRIBUYENTE || this.userRole === UserRoles.REPRESENTANTE;
+  }
+
+  private getSpecialTariffPermission(tarifa: Tarifa): { direct: string; request: string; unavailableMessage: string; } | undefined {
+    switch (tarifa.tipoCobro?.toLowerCase()) {
+      case 'por_evento':
+        return {
+          direct: 'CREAR-EVENTO',
+          request: 'CREAR-SOLICITUD-EVENTO',
+          unavailableMessage: 'No tiene permiso para reservar con esta tarifa de evento'
+        };
+      case 'por_club':
+        return {
+          direct: 'CREAR-PARA-ORGANIZACIONES',
+          request: 'CREAR-SOLICITUD-PARA-ORGANIZACIONES',
+          unavailableMessage: 'No tiene permiso para reservar con esta tarifa de club'
+        };
+      default:
+        return undefined;
+    }
   }
 
   toggleCampoExpansion(item: CampoWithTariff): void {
