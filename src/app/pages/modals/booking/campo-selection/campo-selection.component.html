@@ -61,9 +61,10 @@
   </div>
   <div class="text-center py-2" *ngIf="!this.isLoading && this.filteredCampos.length === 0">
     <i class="ri-football-line display-4 text-muted opacity-25 mb-3"></i>
-    <h6 class="mb-2">No hay campos disponibles</h6>
+    <h6 class="mb-2">No hay campos disponibles para este tipo de reserva</h6>
     <p class="text-muted small mb-3">
-      No se encontraron campos con los filtros seleccionados.
+      No se encontraron campos activos con tarifas vigentes compatibles con
+      {{ bookingType === 'puntual' ? 'reservas puntuales (por hora, por persona o por evento)' : 'reservas recurrentes (por sesión, mensualidad o por club)' }}.
     </p>
     <button class="btn btn-sm btn-primary" (click)="back()">
       <i class="ri-arrow-left-line me-1"></i>

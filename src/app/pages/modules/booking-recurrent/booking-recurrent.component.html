@@ -7,7 +7,7 @@
         [loadExportItems]="loadExportItems"
         [csvColumns]="CSV_COLUMNS"
         [SelectedItems]="selectedItems"
-        [newShow]="canCreate"
+        [newShow]="canActivate.includes('CREAR') || canActivate.includes('CREAR-SOLICITUD')"
         [consultShow]="selectedItems.length > 0 && canActivate.includes('CONSULTAR')"
         [exportShow]="canActivate.includes('VER')"
         (createEmitter)="addReservation()"
@@ -192,7 +192,7 @@
                 (checkItemEmitter)="openModal($event,'completeModal','md')"
                 (processItemEmitter)="openModal($event,'noShowModal','')"
                 (recordsEmitter)="showTicket($event)"
-                [multiCheck]="canCreate"
+                [multiCheck]="canActivate.includes('CREAR') || canActivate.includes('CREAR-SOLICITUD')"
                 (selectedItemEmitter)="getSelectedItems($event)" 
                 [viewMode]="viewMode">
             </app-data-table>

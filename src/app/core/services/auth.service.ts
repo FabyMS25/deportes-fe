@@ -291,7 +291,6 @@ export class AuthenticationService {
     if (!this.isTaxpayer()) {
       return true;
     }
-
     const user: any = this.storageService.getUser() ?? this.currentUserSubject;
     return user?.estadoUsuario === 'ACTIVO' && user?.estaSancionado !== true;
   }

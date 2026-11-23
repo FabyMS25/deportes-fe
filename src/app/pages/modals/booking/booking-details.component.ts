@@ -55,7 +55,7 @@ interface BookingState {
   contribuyente?: Contribuyente;
   complejo?: ComplejoDeportivo;
   campo?: CampoDeportivo;
-  actionType?:'book' | 'request' | 'none';
+  actionType?: 'book' | 'request';
   tarifa?: Tarifa;
   puntualSchedule?: PuntualSchedule;
   recurrentSchedule?: RecurrentSchedule;
@@ -102,18 +102,6 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   slidesConfig = {infinite: true, slidesToShow: 4, slidesToScroll: 1, autoplay: true};
 
   systemConfigList: { [key: string]: ConfiguracionSistema } = {};
-  get enableRecurrentBooking(): boolean {
-    return this.canActivate.includes('CREAR');
-  }
-  get enableSolicitudRecurrentBooking(): boolean {
-    return this.canActivate.includes('CREAR-SOLICITUD');
-  }
-  get enableOrganizationReservation(): boolean {
-    return this.canActivate.includes('CREAR-PARA-ORGANIZACIONES');
-  }
-  get enableSolicitudOrganizationReservation(): boolean {
-    return this.canActivate.includes('CREAR-SOLICITUD-PARA-ORGANIZACIONES');
-  }
   get HorasValidacionPago(): number | undefined {
     return obtenerHorasValidacionPago(
       this.systemConfigList,
@@ -246,6 +234,14 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
 
   private async initializeFromNavigation(): Promise<void> {
     const navigationData = history.state;    
+    const actionType = navigationData.actionType === 'request' ? 'request'
+      : navigationData.actionType === 'book' ? 'book' : undefined;
+    if (!actionType) {
+      this.showNotification('El tipo de acción de reserva es requerido', 'warning');
+      await this.router.navigate(['/reservations/one-time']);
+      return;
+    }
+    this.bookingState.actionType = actionType;
     if (navigationData.data && navigationData.tipoReserva) {
       this.bookingState.complejo = navigationData.data;      
       this.setBookingType(navigationData.tipoReserva);
@@ -277,7 +273,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
   }
 
   private setBookingType(tipoReserva: 'puntual' | 'recurrente'): void {
-    if (tipoReserva === 'recurrente' && !this.enableRecurrentBooking && !this.enableSolicitudRecurrentBooking) {
+    if (tipoReserva === 'recurrente' && !this.canActivate.includes('CREAR') && !this.canActivate.includes('CREAR-SOLICITUD')) {
       this.showNotification(
         'Las reservas recurrentes no están habilitadas en este momento',
         'warning'
@@ -353,7 +349,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     this.bookingStep = BookingStep.CAMPO_SELECTION;
     this.cdRef.detectChanges();
   }
-  async onCampoSelected(selection: { actionType:'book' | 'request' | 'none' ;field: CampoDeportivo; tariff: Tarifa }): Promise<void> {
+  async onCampoSelected(selection: { actionType: 'book' | 'request'; field: CampoDeportivo; tariff: Tarifa }): Promise<void> {
     if (!selection?.field || !selection?.tariff) {
       this.showNotification('Datos de selección inválidos', 'error');
       return;

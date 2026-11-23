@@ -126,23 +126,8 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     private conflictService: ReservationConflictService
   ) {}
 
-  get enableSolicitudOrganizationReservation(): boolean {
-    return this.canActivate.includes('CREAR-SOLICITUD-PARA-ORGANIZACIONES');
-  }
-  get enableOrganizationReservation(): boolean {
-    return this.canActivate.includes('CREAR-PARA-ORGANIZACIONES');
-  }
-  get enableSolicitudEventsBooking(): boolean{
-    return this.canActivate.includes('CREAR-SOLICITUD-EVENTO');
-  }
-  get enableEventsBooking(): boolean {
-    return this.canActivate.includes('CREAR-EVENTO');
-  }
-  get enableSolicitudRecurrentBooking(): boolean | undefined{
-    return this.canActivate.includes('CREAR-SOLICITUD');
-  }
-  get enableRecurrentBooking(): boolean | undefined{
-    return this.canActivate.includes('CREAR');
+  get requiresOrganizationForTariff(): boolean {
+    return this.bookingType === 'recurrente' && this.selectedTariff?.tipoCobro === 'por_club';
   }
   get validHours(): number {
     return obtenerHorasValidacionPago(
@@ -244,6 +229,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       this.calculateValidationRequirement();
       this.calculatePrice();
       this.checkFreeReservationEligibility();
+      this.checkOrganizationToggleEligibility();
     }
   }
 
@@ -267,6 +253,20 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
 
   private checkOrganizationToggleEligibility(): void {
     const canUseOrganization = this.canClientUseOrganizationReservation();
+    if (this.requiresOrganizationForTariff && canUseOrganization) {
+      this.showOrganizationToggle = true;
+      this.reservationForm?.patchValue({ esParaOrganizacion: true }, { emitEvent: false });
+      if (this.selectedContribuyente?.organizacionesRepresentadas?.length) {
+        this.organizationsList = this.selectedContribuyente.organizacionesRepresentadas;
+      }
+      return;
+    }
+    if (this.requiresOrganizationForTariff && !canUseOrganization && !this.isInternalUser) {
+      this.showOrganizationToggle = false;
+      this.selectedOrganization = undefined;
+      this.reservationForm?.patchValue({ esParaOrganizacion: false, organizacionDto: null }, { emitEvent: false });
+      return;
+    }
     if (this.isInternalUser) {
       this.showOrganizationToggle = true;
       this.organizationsList = this.selectedContribuyente?.organizacionesRepresentadas || []
@@ -540,26 +540,33 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       this.requiresValidation = false;
       return;
     }
-    // A direct capability explicitly overrides the field's normal approval
-    // path. The request capability is evaluated below and remains pending.
-    if (isOrganizationReservation && this.enableOrganizationReservation) {
-      this.requiresValidation = false;
-      return;
-    }
-    if (isOrganizationReservation && this.enableSolicitudOrganizationReservation) {
+    // An action already classified as a request must remain a request.
+    if (this.actionType === 'request') {
       this.requiresValidation = true;
       return;
     }
-    if (this.bookingType === 'recurrente' && this.enableRecurrentBooking) {
-      this.requiresValidation = false;
-      return;
-    }
-    if (this.selectedTariff?.tipoCobro === 'por_evento' && this.enableEventsBooking) {
-      this.requiresValidation = false;
-      return;
-    }
+
+    // Field approval is authoritative for contributors, including events
+    // and organization reservations.
     if (this.dataField.requiereAprobacion) {
       this.requiresValidation = true;
+      return;
+    }
+
+    if (isOrganizationReservation && this.canActivate.includes('CREAR-PARA-ORGANIZACIONES')) {
+      this.requiresValidation = false;
+      return;
+    }
+    if (isOrganizationReservation && this.canActivate.includes('CREAR-SOLICITUD-PARA-ORGANIZACIONES')) {
+      this.requiresValidation = true;
+      return;
+    }
+    if (this.bookingType === 'recurrente' && this.canActivate.includes('CREAR')) {
+      this.requiresValidation = false;
+      return;
+    }
+    if (this.selectedTariff?.tipoCobro === 'por_evento' && this.canActivate.includes('CREAR-EVENTO')) {
+      this.requiresValidation = false;
       return;
     }
     if (this.isFreeReservation && this.showFreeReservationOption) {
@@ -831,16 +838,16 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
 
   private canClientUseRecurrentBooking(): boolean {
     if (this.actionType === 'book') {
-      return this.enableRecurrentBooking === true;
+      return this.canActivate.includes('CREAR');
     }
     if (this.actionType === 'request') {
-      return this.enableSolicitudRecurrentBooking === true;
+      return this.canActivate.includes('CREAR-SOLICITUD');
     }
-    return this.enableRecurrentBooking === true || this.enableSolicitudRecurrentBooking === true;
+    return this.canActivate.includes('CREAR') || this.canActivate.includes('CREAR-SOLICITUD');
   }
 
   private canClientUseOrganizationReservation(): boolean {
-    return this.enableOrganizationReservation === true || this.enableSolicitudOrganizationReservation === true;
+    return this.canActivate.includes('CREAR-PARA-ORGANIZACIONES') || this.canActivate.includes('CREAR-SOLICITUD-PARA-ORGANIZACIONES');
   }
 
   private entityValidator(control: AbstractControl): ValidationErrors | null {
@@ -854,6 +861,9 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
     }
     if (esParaOrganizacion && !organizacionDto) {
       errors['organizacionRequired'] = 'Debe seleccionar una organización';
+    }
+    if (this.requiresOrganizationForTariff && !organizacionDto) {
+      errors['organizacionRequired'] = 'Esta tarifa requiere seleccionar una organización';
     }
     if (esParaOrganizacion && !this.isInternalUser && !this.canClientUseOrganizationReservation()) {
       errors['organizacionNotAllowed'] = 'Las reservas para organizaciones no están habilitadas';
@@ -2475,18 +2485,19 @@ getPaidReservationDescription(): string {
 
   get organizationReservationNotice(): string | null {
     if (this.isInternalUser || !this.selectedContribuyente?.organizacionesRepresentadas?.length) return null;
-    if (this.enableOrganizationReservation) return null;
-    if (this.enableSolicitudOrganizationReservation) {
+    if (this.canActivate.includes('CREAR-PARA-ORGANIZACIONES')) return null;
+    if (this.canActivate.includes('CREAR-SOLICITUD-PARA-ORGANIZACIONES')) {
       return 'Puede reservar para una organización únicamente como solicitud; requerirá validación administrativa.';
     }
     return 'No tiene permiso para realizar reservas para organizaciones.';
   }
 
   private get effectiveActionType(): 'book' | 'request' | 'none' | undefined {
+    if (this.actionType === 'request') return 'request';
     const formValue = this.reservationForm?.getRawValue();
     if (!this.isInternalUser && formValue?.esParaOrganizacion && formValue?.organizacionDto) {
-      if (this.enableOrganizationReservation) return 'book';
-      if (this.enableSolicitudOrganizationReservation) return 'request';
+      if (this.canActivate.includes('CREAR-PARA-ORGANIZACIONES')) return 'book';
+      if (this.canActivate.includes('CREAR-SOLICITUD-PARA-ORGANIZACIONES')) return 'request';
     }
     return this.actionType;
   }

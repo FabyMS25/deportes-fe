@@ -92,6 +92,10 @@ export class CalendarDashboardComponent implements OnInit {
     this.calendarOptions = {
       ...this.calendarOptions,
       selectable: this.authService.canCurrentUserCreateReservations()
+        && (this.authService.hasPermission('/reservations/one-time').includes('CREAR')
+          || this.authService.hasPermission('/reservations/one-time').includes('CREAR-SOLICITUD')
+          || this.authService.hasPermission('/reservations/recurrent').includes('CREAR')
+          || this.authService.hasPermission('/reservations/recurrent').includes('CREAR-SOLICITUD'))
     };
     const pendingLoginEvent = this.authService.consumeLoginEvent();
     if (pendingLoginEvent) {

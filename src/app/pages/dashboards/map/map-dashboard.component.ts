@@ -66,13 +66,6 @@ export class MapDashboardComponent implements OnInit {
     userLocationMarker: any;
 
     systemConfigList: { [key: string]: ConfiguracionSistema } = {};
-    get enableSolicitudRecurrentBooking(): boolean | undefined{
-        return this.authService.hasPermission('/reservations/recurrent').includes('CREAR-SOLICITUD');
-    }
-    get enableRecurrentBooking(): boolean | undefined{
-        return this.authService.hasPermission('/reservations/recurrent').includes('CREAR');
-    }
-
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -165,7 +158,6 @@ export class MapDashboardComponent implements OnInit {
             "<span style='color: blue'>Todos los Complejos</span>": this.mainList,
             ...filteredMarkers,
         };
-        (window as any).handleButtonClick = this.handleButtonClick.bind(this);
     }
     private setMarkers() {
         let listMarkers: any[] = []
@@ -179,7 +171,6 @@ export class MapDashboardComponent implements OnInit {
             "<span style='color: blue'>Todos los Complejos</span>": this.mainList,
             ...filteredMarkers,
         };
-        (window as any).handleButtonClick = this.handleButtonClick.bind(this);
         this.configDefaultMap();
     }
     private configDefaultMap() {
@@ -603,6 +594,10 @@ export class MapDashboardComponent implements OnInit {
         const camposInfo = this.getCamposInfo(element);
         const priceRange = this.getPriceRange(element); 
         const uniqueCategories = this.getAvailableDisciplines(element); 
+        const punctualPermissions = this.authService.hasPermission('/reservations/one-time');
+        const recurrentPermissions = this.authService.hasPermission('/reservations/recurrent');
+        const canEnterPunctual = punctualPermissions.includes('CREAR') || punctualPermissions.includes('CREAR-SOLICITUD');
+        const canEnterRecurrent = recurrentPermissions.includes('CREAR') || recurrentPermissions.includes('CREAR-SOLICITUD');
         popupContent.innerHTML = `
             <div class="map-popup-content" style="min-width: 320px;">
                 <div class="d-flex justify-content-between align-items-start mb-2">
@@ -672,12 +667,12 @@ export class MapDashboardComponent implements OnInit {
                         <small class="text-muted"><i class="ri-information-line"></i> ${element.observaciones}</small>
                     </div>
                 ` : ''}
-                ${element.estadoActual.toLowerCase() === 'activo' && this.authService.canCurrentUserCreateReservations() ? `
+                ${element.estadoActual.toLowerCase() === 'activo' && this.authService.canCurrentUserCreateReservations() && (canEnterPunctual || canEnterRecurrent) ? `
                     <div class="mt-3 d-flex gap-1">
-                        <button class="btn btn-primary btn-sm w-100 mb-2 btn-reserva-puntual">
+                        ${canEnterPunctual ? `<button class="btn btn-primary btn-sm w-100 mb-2 btn-reserva-puntual">
                             <i class="ri-calendar-check-line"></i>Reserva Puntual
-                        </button>                        
-                        ${this.userRole !== 'Contribuyente' || (this.enableRecurrentBooking || this.enableSolicitudRecurrentBooking) ? `
+                        </button>` : ''}
+                        ${canEnterRecurrent ? `
                             <button class="btn btn-success btn-sm w-100 mb-2 btn-reserva-recurrente">
                                 <i class="ri-repeat-line"></i>Reserva Recurrente
                             </button>
@@ -962,16 +957,19 @@ export class MapDashboardComponent implements OnInit {
         });
     }
     
-    handleButtonClick(data: any): void {
-        if (!this.ensureReservationAllowed()) return;
-        this.router.navigate(['/reservations/details'], { state: { data: data } });
-    }
     public goToReservation(complejo: ComplejoDeportivo | null, bookingType: string) {
         if (!this.ensureReservationAllowed()) return;
+        const permissions = this.authService.hasPermission(
+            bookingType === 'recurrente' ? '/reservations/recurrent' : '/reservations/one-time'
+        );
+        const actionType = permissions.includes('CREAR') ? 'book'
+            : permissions.includes('CREAR-SOLICITUD') ? 'request' : undefined;
+        if (!actionType) return;
         this.router.navigate(['/reservations/details'], { 
             state: { 
                 data: complejo,
-                tipoReserva: bookingType
+                tipoReserva: bookingType,
+                actionType
             } 
         });
     }

@@ -121,10 +121,6 @@ export class BookingRecurrentComponent implements OnInit {
 
 
   systemConfigList: { [key: string]: ConfiguracionSistema } = {};
-  get canCreate(): boolean {
-    return this.canActivate.includes('CREAR')
-      || this.canActivate.includes('CREAR-SOLICITUD');
-  }
   constructor(
       private authService: AuthenticationService,      
       public paginationService: PaginationService,
@@ -301,9 +297,13 @@ clearFilters() {
 
   /* NAVIGATIONS & MODALS */
   public addReservation() {
+    const actionType = this.canActivate.includes('CREAR') ? 'book'
+      : this.canActivate.includes('CREAR-SOLICITUD') ? 'request' : undefined;
+    if (!actionType) return;
     this.router.navigate(['/reservations/details'], { 
       state: { 
-        tipoReserva: 'recurrente'
+        tipoReserva: 'recurrente',
+        actionType
       } 
     });
   }

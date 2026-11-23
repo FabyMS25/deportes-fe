@@ -29,7 +29,10 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   currentSection = 'hero';
   readonly currentYear = new Date().getFullYear();
-  readonly ruatQrUrl = 'https://www.ruat.gob.bo/pagosqr/InicioBusquedaTasa.jsf';
+  // Official RUAT search route for tasas y otros ingresos. The former
+  // /pagosqr/InicioBusquedaTasa.jsf endpoint intermittently redirects to
+  // RUAT's own ErrorAplicacion page.
+  readonly ruatQrUrl = 'https://www.ruat.gob.bo/tasas/consultadeuda/InicioBusquedaTasa.jsf';
   private readonly previousTheme = document.documentElement.getAttribute('data-bs-theme');
 
   /* ---------- Catálogo público (datos reales) ---------- */
@@ -189,7 +192,6 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     private readonly sanitizer: DomSanitizer,
     private readonly auth: AuthenticationService
   ) {
-    // URL constante y de confianza (portal oficial de RUAT)
     this.ruatSafeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.ruatQrUrl);
   }
 
