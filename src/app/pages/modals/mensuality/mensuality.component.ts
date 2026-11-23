@@ -15,8 +15,6 @@ import { ReservaService } from 'src/app/core/services/api/reserva.service';
 import { EstudianteEscuelaService } from 'src/app/core/services/api/estudianteEscuela.service';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
 
-import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
-import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { Reserva } from 'src/app/core/models/reserva.model';
 import { ReservaPeriodo } from 'src/app/core/models/reservaPeriodo.model';
 
@@ -85,8 +83,6 @@ export class MensualityComponent implements OnInit {
 
   isLoading = false;
 
-  systemConfigList: { [key: string]: ConfiguracionSistema } = {};
-
   catalogs: MensualityCatalogs = {
     organizations: [],
     schools: [],
@@ -153,7 +149,6 @@ export class MensualityComponent implements OnInit {
     this.userRole = this.authService.getUserRole();
     this.userData = this.authService.currentUser();
     if (this.userRole !== 'Contribuyente') this.userData = this.userData.designacion.personaDto;
-    this.getConfigsSystem();
     this.getOrganizations();
     this.loadAllPeriodRegistrations();
     if (this.userRole === 'Contribuyente' || !this.estudiantes.length) this.getStudents();
@@ -461,9 +456,7 @@ export class MensualityComponent implements OnInit {
 
   async onSubmit(): Promise<void> {
     if (this.isLoading) return;
-    if (this.userRole === 'Contribuyente' &&
-      (this.systemConfigList[ClaveConfiguracion.HABILITAR_RESERVAS_PERIODO_ESCUELAS]?.valorBoolean !== true ||
-        !(this.userData?.organizacionesRepresentadas?.length))) {
+    if (this.userRole === 'Contribuyente' && !this.canActivate.includes('CREAR')) {
       this.handleError(
         'Funcionalidad deshabilitada',
         'El registro de mensualidades requiere que su usuario represente al menos una organización.'
@@ -1009,10 +1002,6 @@ export class MensualityComponent implements OnInit {
     }
 
     return true;
-  }
-
-  private getConfigsSystem(): void {
-    this.systemConfigList = this.authService.getAllConfigs() || {};
   }
 
   private getConfiguredEntrenador(): string | undefined {

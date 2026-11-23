@@ -8,7 +8,7 @@
         [csvColumns]="CSV_COLUMNS"
         [SelectedItems]="selectedItems"
         [newShow]="canCreate"
-        [consultShow]="selectedItems.length > 0 && canActivate.includes('ACTUALIZAR')"
+        [consultShow]="selectedItems.length > 0 && canActivate.includes('CONSULTAR')"
         [exportShow]="canActivate.includes('VER')"
         (createEmitter)="addReservation()"
         (consultEmitter)="openModal(selectedItems,'consult','md')"
@@ -179,11 +179,11 @@
                 (sortChange)="onSortChange($event)"
                 [actions]="{
                   show: canActivate.includes('VER'),
-                  validate: canActivate.includes('VALIDAR'),
-                  consult: canActivate.includes('ACTUALIZAR'),
+                  consult: canActivate.includes('CONSULTAR'),
                   records: canActivate.includes('GENERAR TICKET'),
-                  check: canActivate.includes('ACTUALIZAR') ? 'Completar' : '',
-                  process: canActivate.includes('ACTUALIZAR') ? 'No Show' : '',
+                  validate: canActivate.includes('VALIDAR'),
+                  check: canActivate.includes('REGISTRAR-COMPLETADO') ? 'Completar' : '',
+                  process: canActivate.includes('REGISTRAR-NO-SHOW') ? 'No Show' : '',
                   closeForRow: closeActionLabel,}"
                 (showItemEmitter)="openModal($event,'show','lg')"
                 (consultItemEmitter)="openModal($event,'consult','md')"

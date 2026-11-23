@@ -23,6 +23,14 @@ export class FacilitiesService {
     return apiGet<ComplejoDeportivo[]>(this.http, this.apiUrl, 'obtener complejos');
   }
 
+  getPublicWithSportsFields(): Observable<ComplejoDeportivo[]> {
+    return apiGet<ComplejoDeportivo[]>(
+      this.http,
+      `${this.apiUrl}/public`,
+      'obtener complejos públicos'
+    );
+  }
+
   getByUuid(uuid:string):Observable<ComplejoDeportivo>{
     return apiGet<ComplejoDeportivo>(this.http, `${this.apiUrl}/${uuid}`, `obtener complejo (${uuid})`);
   }

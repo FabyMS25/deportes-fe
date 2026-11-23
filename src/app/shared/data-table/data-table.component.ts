@@ -203,10 +203,12 @@ export class DataTableComponent implements OnChanges {
       case 'Desbloquear':
         return data.estadoUsuario === statusData.EstadoUsuario.BLOQUEADO;
       case 'Dar de baja':
-        return data?.puedeGestionar !== false && this.getRowRelationships(data).some(item => item?.activo === true);
+        // The signed menu decided that this action exists. Whether a specific
+        // enrollment can be closed is explained by the handler and enforced by
+        // the server, so the button must not disappear with the row state.
+        return data?.puedeGestionar !== false;
       case 'Habilitar':
-        return data?.puedeGestionar !== false
-          && this.getRowRelationships(data).some(item => item?.activo === false && item?.reactivacionBloqueada !== true);
+        return data?.puedeGestionar !== false;
       case 'Desvincular tutor':
         return data?.puedeGestionar !== false
           && this.getRowRelationships(data).some(item => item?.activo === true && !!item?.contribuyenteDto);

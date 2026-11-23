@@ -39,7 +39,7 @@ export enum ClaveConfiguracion {
   /* Constants Variables*/
   BORDEROUX_PORCENTAJES = 'BORDEROUX_PORCENTAJES',
 
-  /* Banderas de Permissions -> for contribuyentes or representantes only */
+  /* Banderas PERMISSIONS: las resuelve el backend al iniciar sesión; nunca se almacenan para el contribuyente. */
   HABILITAR_RESERVAS_EVENTOS = 'HABILITAR_RESERVAS_EVENTOS',
   HABILITAR_RESERVAS_ORGANIZACIONES = 'HABILITAR_RESERVAS_ORGANIZACIONES',
   HABILITAR_RESERVAS_RECURRENTES = 'HABILITAR_RESERVAS_RECURRENTES',

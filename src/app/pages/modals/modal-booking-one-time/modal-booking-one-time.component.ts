@@ -530,7 +530,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
 
   canMarkNoShow(): boolean {
     const estado = this.row?.reservaDto?.estadoReserva;
-    return this.canActivate?.includes('ACTUALIZAR') &&
+    return this.canActivate?.includes('REGISTRAR-NO-SHOW') &&
       (estado === EstadoReserva.PAGADA || estado === EstadoReserva.EN_CURSO);
   }
 
@@ -600,7 +600,7 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
 
   canConsultPayment(): boolean {
     return !!this.row?.reservaDto?.numeroTasa &&
-      this.canActivate?.includes('ACTUALIZAR') &&
+      this.canActivate?.includes('CONSULTAR') &&
       this.row.reservaDto.estadoReserva !== EstadoReserva.CANCELADA;
   }
 

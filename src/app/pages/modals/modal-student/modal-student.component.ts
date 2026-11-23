@@ -224,7 +224,10 @@ export class ModalStudentComponent implements OnInit, OnDestroy {
   }
 
   onExistingStudentChange(estudianteUuid: string | null): void {
-    const selected = this.estudiantesExistentes.find(item => item.estudianteUuid === estudianteUuid);
+    // Search results are intentionally not the main visible student list:
+    // they are the full catalogue available only while creating a relation.
+    const selected = this.studentSearchResults.find(item => item.estudianteUuid === estudianteUuid)
+      || this.estudiantesExistentes.find(item => item.estudianteUuid === estudianteUuid);
     this.selectedExistingStudent = !!selected;
     const personalControls = [
       this.form.controls.nombreCompleto,

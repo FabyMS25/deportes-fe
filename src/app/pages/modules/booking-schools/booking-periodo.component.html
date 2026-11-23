@@ -8,7 +8,7 @@
         [csvColumns]="CSV_COLUMNS"
         [SelectedItems]="selectedItems"
         [newShow]="canCreateMonthlyPayment"
-        [consultShow]="selectedItems.length > 0 && canActivate.includes('ACTUALIZAR')"
+        [consultShow]="selectedItems.length > 0 && canActivate.includes('CONSULTAR')"
         [exportShow]="canActivate.includes('VER')"
         (createEmitter)="createNewMonthlyPayment()"
         (consultEmitter)="openModal(selectedItems,'consult','md')"
@@ -171,7 +171,7 @@
                 (sortChange)="onSortChange($event)"
                 [actions]="{
                     show: canActivate.includes('VER'),
-                    consult: canActivate.includes('ACTUALIZAR'),
+                    consult: canActivate.includes('CONSULTAR'),
                     records: canActivate.includes('GENERAR TICKET'),
                     closeForRow: closeActionLabel,}"
                 (showItemEmitter)="openModal($event,'show','lg')"

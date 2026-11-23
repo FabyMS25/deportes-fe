@@ -351,18 +351,29 @@
           </ng-container>
           <hr *ngIf="bookingState.campo && bookingState.tarifa">
           <div class="summary-item mb-2" *ngIf="bookingState.tarifa">
-            <div class="d-flex align-items-start">
-              <i class="ri-price-tag-3-line text-warning fs-6 mt-1"></i>
-              <div class="ms-2 flex-grow-1">
-                  <div class="fw-medium small">{{ bookingState.tarifa.descripcion || ('Tarifa estándar' | translate) }}</div>
-                <div class="h6 text-success mb-0">
-                  {{ bookingState.tarifa.precioBase | currency:'BOB':'symbol-narrow':'1.2-2' }}
-                  <small class="text-muted">/{{ bookingState.tarifa.tipoCobro }}</small>
-                </div>
-                <small class="text-muted d-block" *ngIf="bookingState.tarifa.desde && bookingState.tarifa.hasta">
-                  <small class="text-muted">{{ bookingType }} -></small>
-                  {{ 'Validez:' | translate }} {{ bookingState.tarifa.desde.slice(0,5) }} - {{ bookingState.tarifa.hasta.slice(0,5) }}
-                </small>
+            <div class="d-flex justify-content-between align-items-center gap-1">
+              <span class="fw-medium small text-truncate" [title]="bookingState.tarifa.descripcion || ('Tarifa estándar' | translate)">
+                <i class="ri-price-tag-3-line text-warning me-1"></i>
+                {{ bookingState.tarifa.descripcion || ('Tarifa estándar' | translate) }}
+              </span>
+              <span class="h6 text-success mb-0 text-nowrap">
+                {{ bookingState.tarifa.precioBase | currency:'BOB':'symbol-narrow':'1.2-2' }}
+              </span>
+            </div>
+            <div class="d-flex flex-wrap gap-1 small text-muted">
+              <span><i class="ri-money-dollar-circle-line me-1"></i>{{ getTariffDescription(bookingState.tarifa) }}</span>
+              <span *ngIf="bookingState.tarifa.desde || bookingState.tarifa.hasta">
+                <i class="ri-time-line me-1"></i>{{ getTariffInterval(bookingState.tarifa.desde, bookingState.tarifa.hasta) }}
+              </span>
+            </div>
+            <div class="mt-1 small" *ngIf="getActiveTariffConcepts(bookingState.tarifa).length > 0">
+              <div class="d-flex align-items-center gap-1 text-muted text-nowrap overflow-hidden"
+                   *ngFor="let concepto of getActiveTariffConcepts(bookingState.tarifa)"
+                   [title]="concepto.concepto || 'Concepto adicional'">
+                <span class="fw-medium text-body text-truncate">{{ concepto.concepto || 'Concepto adicional' }}</span>
+                <span>{{ getTariffConceptType(concepto.tipo) }}</span>
+                <span *ngIf="getTariffConceptValue(concepto)">{{ getTariffConceptValue(concepto) }}</span>
+                <span *ngIf="concepto.desde || concepto.hasta">{{ getTariffInterval(concepto.desde, concepto.hasta) }}</span>
               </div>
             </div>
           </div>

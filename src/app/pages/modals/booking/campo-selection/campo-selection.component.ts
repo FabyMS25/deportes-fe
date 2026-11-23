@@ -46,10 +46,10 @@ export class CampoSelectionComponent implements OnInit {
   @Input() canActivate: string[] = [];
   @Input() systemConfigs: { [key: string]: ConfiguracionSistema } = {};
   get enableSolicitudEventsBooking(): boolean {
-    return this.canActivate.includes('CREAR-SOLICITUD-EVENTOS');
+    return this.canActivate.includes('CREAR-SOLICITUD-EVENTO');
   }
   get enableEventsBooking(): boolean {
-    return this.canActivate.includes('CREAR-EVENTOS');
+    return this.canActivate.includes('CREAR-EVENTO');
   }
   get enableSolicitudRecurrentBooking(): boolean {
     return this.canActivate.includes('CREAR-SOLICITUD');
@@ -317,6 +317,47 @@ export class CampoSelectionComponent implements OnInit {
 
   getTipoCobro(tipo: string): string {
     return obtenerLabelTipoCobro(tipo);
+  }
+
+  getTarifaConceptos(tarifa: Tarifa): any[] {
+    return (tarifa.conceptosDtos || []).filter(concepto => concepto?.activo !== false);
+  }
+
+  getConceptoTipoLabel(tipo?: string): string {
+    const labels: Record<string, string> = {
+      porcentaje: 'Porcentaje',
+      por_hora: 'Por hora',
+      fijo: 'Monto fijo',
+      adicional: 'Adicional'
+    };
+    return tipo ? (labels[tipo] || tipo.replace(/_/g, ' ')) : 'Adicional';
+  }
+
+  getConceptoValueLabel(concepto: any): string {
+    if (concepto?.valor === null || concepto?.valor === undefined || concepto.valor === '') return '';
+    const numericValue = Number(concepto.valor);
+    const value = Number.isFinite(numericValue) ? numericValue.toFixed(2) : String(concepto.valor);
+    return `${value}${concepto.tipo === 'porcentaje' ? '%' : ' Bs'}`;
+  }
+
+  getTimeLabel(value?: string): string {
+    if (!value) return '';
+    const parts = String(value).split(':');
+    return parts.length >= 2
+      ? `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`
+      : String(value);
+  }
+
+  getConceptoIntervalLabel(concepto: any): string {
+    if (!concepto?.desde && !concepto?.hasta) return '';
+    return `${this.getTimeLabel(concepto.desde) || '00:00'} – ${this.getTimeLabel(concepto.hasta) || '23:59'}`;
+  }
+
+  getTarifaDateLabel(value?: Date | string): string {
+    if (!value) return '';
+    const raw = String(value).split('T')[0];
+    const parts = raw.split('-');
+    return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : raw;
   }
 
   public getAvailableDisciplines(campo: CampoDeportivo): string[] {        

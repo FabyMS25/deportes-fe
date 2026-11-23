@@ -214,7 +214,7 @@
                     </div>
                   </div>
                   <div class="tarifa-price">
-                        <span class="amount">{{ tarifa.precioBase | number:'1.2-2' }} Bs</span>
+                        <span class="amount">{{ tarifa.precioBase | number:'1.2-2' }}</span>
                         <span class="currency">Bs</span>
                   </div>
                 </div>
@@ -261,6 +261,22 @@
                       </span>
                     </div>
                   </div>
+                </div>
+                <div class="tarifa-concepts" *ngIf="getTarifaConceptos(tarifa).length > 0">
+                  <p class="text-muted mb-1 small"><i class="ri-list-check-2 me-1"></i>Conceptos adicionales</p>
+                  <div class="concept-row mb-1" *ngFor="let concepto of getTarifaConceptos(tarifa)">
+                    <span class="concept-name fw-semibold"
+                          [title]="concepto.concepto || 'Concepto adicional'">
+                      {{ concepto.concepto || 'Concepto adicional' }}
+                    </span>
+                    <span class="badge bg-light-subtle text-body">{{ getConceptoTipoLabel(concepto.tipo) }}</span>
+                    <span class="concept-detail concept-value" *ngIf="getConceptoValueLabel(concepto)"><i class="ri-money-dollar-circle-line me-1"></i>{{ getConceptoValueLabel(concepto) }}</span>
+                    <span class="concept-detail concept-hours" *ngIf="concepto.desde || concepto.hasta"><i class="ri-time-line me-1"></i>{{ getConceptoIntervalLabel(concepto) }}</span>
+                  </div>
+                </div>
+                <div class="tarifa-extra small text-muted" *ngIf="tarifa.fechaInicio || tarifa.fechaFin || tarifa.observaciones">
+                  <div *ngIf="tarifa.fechaInicio || tarifa.fechaFin"><i class="ri-calendar-line me-1"></i>Vigencia: {{ getTarifaDateLabel(tarifa.fechaInicio) || 'Sin inicio' }} - {{ getTarifaDateLabel(tarifa.fechaFin) || 'Sin fin' }}</div>
+                  <div *ngIf="tarifa.observaciones" class="mt-1"><i class="ri-information-line me-1"></i>{{ tarifa.observaciones }}</div>
                 </div>
                 <div class="card-footer tarifa-action">
                   <span>{{ getTarifaActionText(item.campo, tarifa) }}</span>
@@ -425,7 +441,7 @@
                     </div>
                   </div>
                   <div class="tarifa-price">
-                        <span class="amount">{{ tarifa.precioBase | number:'1.2-2' }} Bs</span>
+                        <span class="amount">{{ tarifa.precioBase | number:'1.2-2' }}</span>
                         <span class="currency">Bs</span>
                   </div>
                 </div>
@@ -472,6 +488,22 @@
                       </span>
                     </div>
                   </div>
+                </div>
+                <div class="tarifa-concepts" *ngIf="getTarifaConceptos(tarifa).length > 0">
+                  <p class="text-muted mb-1 small"><i class="ri-list-check-2 me-1"></i>Conceptos adicionales</p>
+                  <div class="concept-row mb-1" *ngFor="let concepto of getTarifaConceptos(tarifa)">
+                    <span class="concept-name fw-semibold"
+                          [title]="concepto.concepto || 'Concepto adicional'">
+                      {{ concepto.concepto || 'Concepto adicional' }}
+                    </span>
+                    <span class="badge bg-light-subtle text-body">{{ getConceptoTipoLabel(concepto.tipo) }}</span>
+                    <span class="concept-detail concept-value" *ngIf="getConceptoValueLabel(concepto)"><i class="ri-money-dollar-circle-line me-1"></i>{{ getConceptoValueLabel(concepto) }}</span>
+                    <span class="concept-detail concept-hours" *ngIf="concepto.desde || concepto.hasta"><i class="ri-time-line me-1"></i>{{ getConceptoIntervalLabel(concepto) }}</span>
+                  </div>
+                </div>
+                <div class="tarifa-extra small text-muted" *ngIf="tarifa.fechaInicio || tarifa.fechaFin || tarifa.observaciones">
+                  <div *ngIf="tarifa.fechaInicio || tarifa.fechaFin"><i class="ri-calendar-line me-1"></i>Vigencia: {{ getTarifaDateLabel(tarifa.fechaInicio) || 'Sin inicio' }} - {{ getTarifaDateLabel(tarifa.fechaFin) || 'Sin fin' }}</div>
+                  <div *ngIf="tarifa.observaciones" class="mt-1"><i class="ri-information-line me-1"></i>{{ tarifa.observaciones }}</div>
                 </div>
                 <div class="card-footer tarifa-action">
                   <span>{{ getTarifaActionText(item.campo, tarifa) }}</span>

@@ -138,7 +138,10 @@
 }
 
 .bg-overlay-pattern {
-    background-image: url("../../images/landing/bg-pattern.png");
+    // The legacy landing background asset was removed. Keep the overlay
+    // self-contained so the global stylesheet does not depend on a missing file.
+    background-image: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.22), transparent 38%),
+        radial-gradient(circle at 80% 70%, rgba(13, 110, 253, 0.16), transparent 42%);
     background-color: transparent;
     background-position: center;
     background-size: cover;

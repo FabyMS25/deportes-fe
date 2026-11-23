@@ -14,6 +14,9 @@ import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';
 
 const PERMISSION_VERSION = 3;
+const CLIENT_CONFIGURATION_CATEGORIES = new Set([
+  'DATOS_REFERENCIA', 'REGLAS_RESERVA', 'POLITICAS_PAGO', 'LIMITES', 'TIMEOUTS'
+]);
 
 interface DeportesLoginResponse {
   token: string;
@@ -62,7 +65,11 @@ export class AuthenticationService {
     private storageService: TokenStorageService,
   ) {
     this.currentUserSubject = storageService.getUser()
-    this.systemConfigList = this.storageService.getConfigs() || {};
+    this.systemConfigList = this.sanitizeClientConfigurations(
+      Object.values(this.storageService.getConfigs() || {})
+    );
+    // Removes PERMISSIONS/NOTIFICACIONES/RUAT values left by an older session.
+    this.storageService.saveConfigs(this.systemConfigList);
     this.scheduleExpiration();
   }
 
@@ -147,13 +154,20 @@ export class AuthenticationService {
       configurations: true,
       message: ''
     };
+    const resolved = this.sanitizeClientConfigurations(configurations);
+    this.systemConfigList = resolved;
+    return resolved;
+  }
+
+  private sanitizeClientConfigurations(configurations: ConfiguracionSistema[]): { [key: string]: ConfiguracionSistema } {
     const resolved: { [key: string]: ConfiguracionSistema } = {};
     (Array.isArray(configurations) ? configurations : [])
-      .filter(config => config.activo === true)
+      // Defense in depth: a stale/misconfigured API response cannot put
+      // permissions, notifications or RUAT data into browser storage.
+      .filter(config => config.activo === true && CLIENT_CONFIGURATION_CATEGORIES.has(config.categoria))
       .forEach(config => {
         resolved[config.clave] = config;
       });
-    this.systemConfigList = resolved;
     return resolved;
   }
 
@@ -177,27 +191,8 @@ export class AuthenticationService {
   hasPermission(resourceRoute: string): string[] {
     return permissionActions(this.storageService.getMenu(), resourceRoute);
   }
-  /**
-   * The ordinary CREAR action for Reservas Puntuales is universal for
-   * taxpayers. Organization use is a separate, server-resolved context.
-   */
-  reservationOrganizationMode(): 'DIRECT' | 'REQUEST' | undefined {
-    return this.findMenuItemByPermissionRoute(this.storageService.getMenu(), '/reservations/one-time')
-      ?.organizationReservation;
-  }
   hasRoutePermission(route: string): boolean {
     return hasMenuRoute(this.storageService.getMenu(), route);
-  }
-
-  private findMenuItemByPermissionRoute(menu: MenuItem[], permissionRoute: string): MenuItem | undefined {
-    for (const item of menu || []) {
-      if (item.permissionRoute === permissionRoute || item.ruta === permissionRoute) {
-        return item;
-      }
-      const nested = this.findMenuItemByPermissionRoute(item.permisoHijoListDto || [], permissionRoute);
-      if (nested) return nested;
-    }
-    return undefined;
   }
   /** Single route-access check: the longest menu route that covers the URL. */
   canAccessRoute(url: string): boolean {

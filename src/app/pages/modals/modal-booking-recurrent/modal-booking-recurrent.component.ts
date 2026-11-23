@@ -259,7 +259,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
 
   canMarkNoShow(): boolean {
     const estado = this.row?.reservaDto?.estadoReserva;
-    return this.canActivate?.includes('ACTUALIZAR') && !StatusUtils.esRecurrenteGratuitaDeEscuela(this.row?.reservaDto) &&
+    return this.canActivate?.includes('REGISTRAR-NO-SHOW') && !StatusUtils.esRecurrenteGratuitaDeEscuela(this.row?.reservaDto) &&
       (estado === EstadoReserva.PAGADA || estado === EstadoReserva.EN_CURSO);
   }
 
@@ -308,7 +308,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
       confirmButtonColor: '#299cdb',
       cancelButtonColor: '#6c757d'
     }).then((result) => {
-      if (result.isConfirmed && !this.showLoading && this.canActivate.includes('ACTUALIZAR')) {
+      if (result.isConfirmed && !this.showLoading && this.canActivate.includes('REGISTRAR-COMPLETADO')) {
         this.showLoading = true;
         this.reservaService.completeUsage(this.row.reservaDto!.uuid!).toPromise().then(updated => {
           if (!updated || updated.uuid !== this.row.reservaDto?.uuid || updated.estadoReserva !== EstadoReserva.COMPLETADA) {
@@ -332,7 +332,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
   }
 
   canCompleteSchoolReservation(): boolean {
-    return this.canActivate?.includes('ACTUALIZAR') && StatusUtils.puedeCompletarReservaEscuela(this.row?.reservaDto);
+    return this.canActivate?.includes('REGISTRAR-COMPLETADO') && StatusUtils.puedeCompletarReservaEscuela(this.row?.reservaDto);
   }
 
   async completeSchoolReservation(): Promise<void> {
@@ -356,7 +356,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
 
   canConsultPayment(): boolean {
     return !!this.row?.reservaDto?.numeroTasa &&
-      this.canActivate?.includes('ACTUALIZAR') &&
+      this.canActivate?.includes('CONSULTAR') &&
       this.row.reservaDto.estadoReserva !== EstadoReserva.CANCELADA;
   }
 
@@ -649,7 +649,7 @@ export class BookingRecurrentModalComponent implements OnInit, AfterViewInit {
   canConsultReservation(): boolean {
     const estado = this.row?.reservaDto?.estadoReserva;
     return (estado === EstadoReserva.SOLICITADA || estado === EstadoReserva.PENDIENTE) && 
-           this.canActivate.includes('ACTUALIZAR');
+           this.canActivate.includes('CONSULTAR');
   }
 
 

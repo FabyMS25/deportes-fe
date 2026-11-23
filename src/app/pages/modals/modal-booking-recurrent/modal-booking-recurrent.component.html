@@ -159,7 +159,7 @@
           </button>
 
           <button
-            *ngIf="canCompleteSchoolReservation() || (canActivate.includes('ACTUALIZAR') && !StatusUtils.esRecurrenteGratuitaDeEscuela(row.reservaDto) && row.reservaDto?.estadoReserva === EstadoReserva.PAGADA)"
+            *ngIf="canCompleteSchoolReservation() || (canActivate.includes('REGISTRAR-COMPLETADO') && !StatusUtils.esRecurrenteGratuitaDeEscuela(row.reservaDto) && row.reservaDto?.estadoReserva === EstadoReserva.PAGADA)"
             class="btn btn-soft-success btn-sm"
             (click)="confirmUsage()">
             <i class="ri-check-double-line me-1"></i>{{ canCompleteSchoolReservation() ? 'Completar reserva base' : 'Confirmar uso' }}

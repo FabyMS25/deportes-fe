@@ -36,6 +36,15 @@ export class SystemConfigurationService {
     return apiGet<ConfiguracionSistema>(this.http, `${this.apiUrl}/clave/${clave}`, `obtener configuración (${clave})`);
   }
 
+  /** Only for explicitly exposed institutional reference values. */
+  getPublicReferenceByClave(clave: string): Observable<ConfiguracionSistema> {
+    return apiGet<ConfiguracionSistema>(
+      this.http,
+      `${this.apiUrl}/public/clave/${clave}`,
+      `obtener dato de referencia público (${clave})`
+    );
+  }
+
   getByCategoria(categoria: string): Observable<ConfiguracionSistema[]> {
     return apiGet<ConfiguracionSistema[]>(this.http, `${this.apiUrl}/categoria/${categoria}`, `obtener configuraciones por categoría (${categoria})`);
   }

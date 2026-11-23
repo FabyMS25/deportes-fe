@@ -17,7 +17,7 @@ import { EncargadoComplejo } from 'src/app/core/models/encargadoComplejo.model';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { BookingType } from 'src/app/core/constants/Features';
 import { ScheduleStateService } from './schedule-state.service';
-import { EstadoActual } from 'src/app/core/constants/Estados';
+import { EstadoActual, EstadoValidacion } from 'src/app/core/constants/Estados';
 import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { ReservationConflictService } from './reservation-conflict.service';
@@ -109,10 +109,10 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     return this.canActivate.includes('CREAR-SOLICITUD');
   }
   get enableOrganizationReservation(): boolean {
-    return this.authenticationService.reservationOrganizationMode() === 'DIRECT';
+    return this.canActivate.includes('CREAR-PARA-ORGANIZACIONES');
   }
   get enableSolicitudOrganizationReservation(): boolean {
-    return this.authenticationService.reservationOrganizationMode() === 'REQUEST';
+    return this.canActivate.includes('CREAR-SOLICITUD-PARA-ORGANIZACIONES');
   }
   get HorasValidacionPago(): number | undefined {
     return obtenerHorasValidacionPago(
@@ -439,7 +439,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.configuracionSistemaService.getByClave(ClaveConfiguracion.ADMIN_DEPORTES)
+    this.configuracionSistemaService.getPublicReferenceByClave(ClaveConfiguracion.ADMIN_DEPORTES)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
@@ -551,7 +551,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
     const paymentDeadlineMessage = paymentHours > 1 
       ? `${paymentHours} horas` 
       : `${paymentHours} hora`;
-    const requiresApproval = this.isRequestFlow;
+    const requiresApproval = reservaData.estadoValidacion === EstadoValidacion.PENDIENTE;
     const title = requiresApproval 
       ? '¡Solicitud de Reserva Enviada!' 
       : '¡Reserva Creada Exitosamente!';
@@ -603,6 +603,38 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
 
   getTariffDescription(tarifa: Tarifa): string {
     return obtenerDescripcionTipoCobro(tarifa.tipoCobro);
+  }
+
+  getActiveTariffConcepts(tarifa: Tarifa): any[] {
+    return (tarifa.conceptosDtos || []).filter(concepto => concepto?.activo !== false);
+  }
+
+  getTariffConceptType(type?: string): string {
+    const labels: Record<string, string> = {
+      porcentaje: 'Porcentaje',
+      por_hora: 'Por hora',
+      fijo: 'Monto fijo',
+      adicional: 'Adicional'
+    };
+    return type ? (labels[type] || type.replace(/_/g, ' ')) : 'Adicional';
+  }
+
+  getTariffConceptValue(concepto: any): string {
+    if (concepto?.valor === null || concepto?.valor === undefined || concepto.valor === '') return '';
+    const value = Number(concepto.valor);
+    const display = Number.isFinite(value) ? value.toFixed(2) : String(concepto.valor);
+    return `${display}${concepto.tipo === 'porcentaje' ? '%' : ' Bs'}`;
+  }
+
+  getTariffTime(value?: string): string {
+    if (!value) return '';
+    const parts = String(value).split(':');
+    return parts.length >= 2 ? `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}` : String(value);
+  }
+
+  getTariffInterval(desde?: string, hasta?: string): string {
+    if (!desde && !hasta) return '';
+    return `${this.getTariffTime(desde) || '00:00'}–${this.getTariffTime(hasta) || '23:59'}`;
   }
 
   next(): void {

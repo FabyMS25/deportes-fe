@@ -52,6 +52,10 @@ export class TokenStorageService {
   public saveUserData(user: LoginResponse): void {
     sessionStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
   }
+  /** Replaces the cached UI configuration snapshot after it has been filtered by AuthenticationService. */
+  public saveConfigs(configs: { [key: string]: ConfiguracionSistema }): void {
+    sessionStorage.setItem(STORAGE_KEYS.CONFIGS, JSON.stringify(configs));
+  }
   public saveToken(token: string): void {
     sessionStorage.setItem(STORAGE_KEYS.TOKEN, token);
   }

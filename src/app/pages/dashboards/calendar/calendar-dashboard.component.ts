@@ -15,7 +15,8 @@ import { ToastService } from '../admin/toast-service';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { SportsFieldsService } from 'src/app/core/services/api/sports-fields.service';
 import { FacilitiesService } from 'src/app/core/services/api/facilities.service';
-import { EstadoReserva, StatusUtils } from 'src/app/core/constants/Estados';
+import { EstadoReserva } from 'src/app/core/constants/Estados';
+import { TipoOrganizacion } from 'src/app/core/constants/Features';
 import { ReservaService } from 'src/app/core/services/api/reserva.service';
 
 import { ComplejoDeportivo } from 'src/app/core/models/complejoDeportivo.model';
@@ -58,8 +59,8 @@ export class CalendarDashboardComponent implements OnInit {
   masterSelected: any = false;
   showFilters: boolean = false;
   filterArray: any = [
-    { name: 'reserva-puntual', label: 'Puntuales', checked: true, color: '#10b981' },
-    { name: 'reserva-recurrente', label: 'Recurrentes', checked: true, color: '#3b82f6' },
+    { name: 'reserva-puntual', label: 'Puntuales', checked: true, color: '#3b82f6' },
+    { name: 'reserva-recurrente', label: 'Recurrentes', checked: true, color: '#10b981' },
     { name: 'reserva-escuela', label: 'Escuelas', checked: false, color: '#f59e0b' },
     { name: 'excepcion', label: 'Excepciones', checked: true, color: '#ef4444' }
   ];
@@ -185,15 +186,13 @@ export class CalendarDashboardComponent implements OnInit {
           const endTime = this.formatTime(horaSalida);
           const campoNombre = evt.campoDeportivoDto?.nombre || 'Campo';
           const complejoNombre = evt.campoDeportivoDto?.complejoDto?.nombre || 'Complejo';
-          const statusColor = this.getStatusThemeColor(evt.estadoReserva);
-
           return {
             id: `puntual-${evt.uuid}`,
             title: `${startTime}-${endTime} | ${complejoNombre} -${campoNombre}`,
             start: `${fechaBase.split('T')[0]}T${horaEntrada}`,
             end: `${fechaBase.split('T')[0]}T${horaSalida}`,
-            backgroundColor: statusColor,
-            borderColor: statusColor,
+            backgroundColor: this.getReservationTypeColor('reserva-puntual'),
+            borderColor: this.getReservationTypeColor('reserva-puntual'),
             textColor: '#fff',
             extendedProps: {
               type: 'reserva-puntual',
@@ -356,7 +355,10 @@ export class CalendarDashboardComponent implements OnInit {
       const complejoNombre = reserva.campoDeportivoDto?.complejoDto?.nombre || 'Complejo';
       const contribuyenteNombre = reserva.contribuyenteDto?.nombreCompleto || 
                                 reserva.contribuyenteDto?.nombre || 'Cliente';
-      const statusColor = this.getStatusThemeColor(reserva.estadoReserva);
+      const reservationType = this.isSchoolReservation(reserva)
+        ? 'reserva-escuela'
+        : 'reserva-recurrente';
+      const reservationColor = this.getReservationTypeColor(reservationType);
       for (let monthIndex = 0; monthIndex < horario3D.length; monthIndex++) {
         const monthMatrix = horario3D[monthIndex] as any[];
         let targetYear = startYear;
@@ -395,11 +397,11 @@ export class CalendarDashboardComponent implements OnInit {
               title: `${startTime}-${endTime} | ${campoNombre}`,
               start: `${dateStr}T${horaInicio}`,
               end: `${dateStr}T${horaFin}`,
-              backgroundColor: statusColor,
-              borderColor: statusColor,
+              backgroundColor: reservationColor,
+              borderColor: reservationColor,
               textColor: '#fff',
               extendedProps: {
-                type: this.isSchoolReservation(reserva) ? 'reserva-escuela' : 'reserva-recurrente',
+                type: reservationType,
                 row: reserva,
                 description: contribuyenteNombre,
                 complejo: complejoNombre,
@@ -413,12 +415,6 @@ export class CalendarDashboardComponent implements OnInit {
       }
     });
     return events;
-  }
-
-  private getStatusThemeColor(status: string): string {
-    const colorName = StatusUtils.getStatusColor(status);
-    const cssValue = getComputedStyle(document.documentElement).getPropertyValue(`--vz-${colorName}`);
-    return cssValue ? cssValue.trim() : colorName;
   }
 
   calendarOptions: CalendarOptions = {
@@ -601,10 +597,16 @@ export class CalendarDashboardComponent implements OnInit {
   }
 
   private isSchoolReservation(reserva: any): boolean {
-    return !!(
-      reserva?.organizacionDto?.uuid ||
-      reserva?.organizacionDto?.idOrganizacion
-    );
+    return reserva?.organizacionDto?.tipoOrganizacion === TipoOrganizacion.ESCUELA_MUNICIPAL;
+  }
+
+  private getReservationTypeColor(type: 'reserva-puntual' | 'reserva-recurrente' | 'reserva-escuela'): string {
+    const colors = {
+      'reserva-puntual': '#3b82f6',
+      'reserva-recurrente': '#10b981',
+      'reserva-escuela': '#f59e0b'
+    };
+    return colors[type];
   }
 
   private applyResponsiveCalendarOptions(): void {

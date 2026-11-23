@@ -1,0 +1,826 @@
+<div class="layout-wrapper landing dp">
+  <nav class="navbar navbar-expand-lg navbar-landing navbar-light fixed-top" id="navbar" (window:scroll)="windowScroll()">
+    <div class="container">
+      <a class="navbar-brand" routerLink="">
+        <img src="assets/icons/logos/logo-dark.png" class="card-logo card-logo-dark" alt="Deportes GAMQ" height="65">
+        <img src="assets/icons/logos/logo-light.png" class="card-logo card-logo-light" alt="Deportes GAMQ" height="65">
+      </a>
+      <button class="navbar-toggler py-0 fs-20 text-body" type="button" data-bs-toggle="collapse"
+        data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+        aria-expanded="false" aria-label="Abrir menú de navegación">
+        <i class="mdi mdi-menu"></i>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mx-auto mt-2 mt-lg-0" id="navbar-example" aria-label="Secciones">
+          <li class="nav-item"><button type="button" class="nav-link" [class.active]="currentSection === 'hero'" (click)="scrollTo('hero')">Inicio</button></li>
+          <li class="nav-item"><button type="button" class="nav-link" [class.active]="currentSection === 'complejos'" (click)="scrollTo('complejos')">Complejos</button></li>
+          <li class="nav-item"><button type="button" class="nav-link" [class.active]="currentSection === 'features'" (click)="scrollTo('features')">Funciones</button></li>
+          <li class="nav-item dropdown" (click)="$event.stopPropagation()">
+            <button type="button" class="nav-link dropdown-toggle" [class.active]="guideActive" [attr.aria-expanded]="guidesOpen" aria-haspopup="true" (click)="guidesOpen = !guidesOpen">Guías</button>
+            <ul class="dropdown-menu dp-dd" [class.show]="guidesOpen">
+              @if (!isLoggedIn) {
+                <li><button type="button" class="dropdown-item" (click)="goGuide('register')"><i class="ri-user-add-line me-2 text-primary"></i>Crear mi cuenta</button></li>
+              }
+              <li><button type="button" class="dropdown-item" (click)="goGuide('flow')"><i class="ri-calendar-check-line me-2 text-primary"></i>Cómo reservar</button></li>
+              <li><button type="button" class="dropdown-item" (click)="goGuide('qr-guide')"><i class="ri-qr-code-line me-2 text-primary"></i>Pagar con QR</button></li>
+              <li><button type="button" class="dropdown-item" (click)="goGuide('tickets')"><i class="ri-ticket-2-line me-2 text-primary"></i>Mi ticket</button></li>
+            </ul>
+          </li>
+          <li class="nav-item"><button type="button" class="nav-link" [class.active]="currentSection === 'faq'" (click)="scrollTo('faq')">Preguntas</button></li>
+        </ul>
+        <div class="d-flex flex-wrap gap-2 mt-2 mt-lg-0">
+          @if (isLoggedIn) {
+            <a [routerLink]="entryLink" class="btn btn-dp"><i class="ri-dashboard-line align-middle me-1"></i> Ir a mi panel</a>
+          } @else {
+            <a routerLink="/auth/login" class="btn dp-nav-login"><i class="ri-login-circle-line align-middle me-1"></i> Ingresar</a>
+            <a routerLink="/auth/signup-check" class="btn btn-dp"><i class="ri-user-add-line align-middle me-1"></i> Registrarme</a>
+          }
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- HERO: estadio + ticket interactivo -->
+    <section class="dp-hero" id="hero" (mousemove)="onHeroMove($event)">
+      <img src="assets/images/fields/img.png" alt="" class="dp-hero__img" aria-hidden="true">
+      <div class="dp-hero__shade" aria-hidden="true"></div>
+      <svg class="dp-hero__pitch" viewBox="0 0 600 400" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+        <g fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="20" y="20" width="560" height="360" rx="6"/>
+          <line x1="300" y1="20" x2="300" y2="380"/>
+          <circle cx="300" cy="200" r="60"/>
+          <rect x="20" y="120" width="90" height="160"/>
+          <rect x="490" y="120" width="90" height="160"/>
+        </g>
+      </svg>
+      <span class="dp-hero__spot" aria-hidden="true"></span>
+
+      <div class="container position-relative">
+        <div class="row align-items-center gy-5">
+          <div class="col-lg-6" data-reveal>
+            <div class="d-flex align-items-center gap-3 mb-4">
+              <img src="assets/icons/logos/logo-gold.png" alt="Reservas Municipales Quillacollo" height="84" class="dp-float">
+              <div>
+                <span class="dp-kicker d-block">Reservas municipales</span>
+                <span class="text-white-50 fs-13">Gobierno Autónomo Municipal de Quillacollo</span>
+              </div>
+            </div>
+            <h1 class="dp-hero__title mb-4">Tu cancha, tu horario, <span class="dp-gold-text">tu reserva.</span></h1>
+            <p class="dp-hero__lead mb-4">
+              Consulta los complejos y campos deportivos de Quillacollo, reserva tu horario, paga con RUAT en cualquier banco o con código QR y obtén tu ticket.
+            </p>
+            <div class="d-flex flex-wrap gap-2 mb-4">
+              @if (isLoggedIn) {
+                <a [routerLink]="entryLink" class="btn btn-dp btn-lg">Ir a mi panel <i class="ri-arrow-right-line align-middle ms-1"></i></a>
+                <button type="button" class="btn btn-lg btn-outline-light" (click)="scrollTo('flow')"><i class="ri-play-circle-line align-middle me-1"></i> Cómo funciona</button>
+              } @else {
+                <a routerLink="/auth/login" class="btn btn-dp btn-lg">Reservar ahora <i class="ri-arrow-right-line align-middle ms-1"></i></a>
+                <a routerLink="/auth/signup-check" class="btn btn-lg btn-outline-light"><i class="ri-user-add-line align-middle me-1"></i> Crear mi cuenta</a>
+              }
+            </div>
+            <div class="d-flex flex-wrap gap-4 text-white-50 fs-13">
+              <span><i class="ri-secure-payment-line text-warning align-middle me-1"></i> Pagos confirmados con RUAT</span>
+              <span><i class="ri-ticket-2-line text-warning align-middle me-1"></i> Ticket al confirmar el pago</span>
+            </div>
+          </div>
+
+          <!-- Ticket / simulador -->
+          <div class="col-lg-6" data-reveal style="--d:.15s">
+            <div class="dp-stub">
+              <div class="dp-stub__top">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                  <span class="dp-stub__label"><i class="ri-ticket-2-fill me-1"></i> Prueba tu reserva</span>
+                  <span class="badge bg-secondary-subtle text-secondary fs-11">Horarios de demostración</span>
+                </div>
+
+                @if (loadingCampos) {
+                  <div class="text-muted fs-13 py-4 text-center"><span class="spinner-border spinner-border-sm me-2"></span> Cargando campos deportivos...</div>
+                } @else if (camposLoadError) {
+                  <div class="alert alert-warning fs-13 mb-3">No se pudo cargar el catálogo de campos. Intenta de nuevo más tarde.</div>
+                } @else if (!complejos.length) {
+                  <div class="text-muted fs-13 py-4 text-center">No hay campos deportivos disponibles por el momento.</div>
+                } @else {
+                  @if (complejo; as cx) {
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                      <img [src]="cx.photo" (error)="onPhotoError(cx)" alt="" class="dp-thumb">
+                      <div class="overflow-hidden"><strong class="d-block text-truncate">{{ cx.name }}</strong><small class="text-muted">{{ cx.campos.length }} {{ cx.campos.length === 1 ? 'campo' : 'campos' }} · {{ cx.categories.slice(0, 2).join(', ') }}</small></div>
+                    </div>
+                  }
+                  <div class="row g-2 mb-3">
+                    <div class="col-sm-6">
+                      <label class="dp-field-label" for="dp-complejo">Complejo</label>
+                      <select id="dp-complejo" class="form-select form-select-sm" (change)="onComplejo($event)">
+                        @for (c of complejos; track c.name; let i = $index) { <option [value]="i" [selected]="i === selectedComplejo">{{ c.name }}</option> }
+                      </select>
+                    </div>
+                    <div class="col-sm-6">
+                      <label class="dp-field-label" for="dp-campo">Campo</label>
+                      <select id="dp-campo" class="form-select form-select-sm" (change)="onCampo($event)">
+                        @for (c of campos; track c.name; let i = $index) { <option [value]="i" [selected]="i === selectedCampo">{{ c.name }} · {{ c.sport }}</option> }
+                      </select>
+                    </div>
+                  </div>
+
+                  <span class="dp-field-label">Día</span>
+                  <div class="d-flex flex-wrap gap-2 mb-3">
+                    @for (d of days; track d.day; let i = $index) {
+                      <button type="button" class="btn btn-sm lh-sm" [class.btn-dp]="selectedDay === i" [class.btn-soft-secondary]="selectedDay !== i" (click)="pickDay(i)">
+                        <span class="d-block fs-11 text-uppercase">{{ d.label }}</span>{{ d.day }}
+                      </button>
+                    }
+                  </div>
+
+                  <span class="dp-field-label">Horario</span>
+                  <div class="row g-2">
+                    @for (h of hours; track h) {
+                      <div class="col-3">
+                        <button type="button" class="btn btn-sm w-100"
+                          [class.btn-success]="selected.has(h)"
+                          [class.btn-soft-success]="!selected.has(h) && !isBusy(h)"
+                          [class.btn-soft-danger]="isBusy(h)"
+                          [disabled]="isBusy(h)" (click)="toggleSlot(h)">{{ hourLabel(h) }}</button>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="dp-stub__bottom" aria-live="polite">
+                @if (selectedSlots.length && complejo) {
+                  <div class="flex-grow-1">
+                    <small class="text-muted d-block">{{ complejo.name }} · {{ campos[selectedCampo].name }}</small>
+                    <strong class="d-block">{{ days[selectedDay].label }} {{ days[selectedDay].day }} · {{ selectedText }}</strong>
+                    <small class="text-success"><i class="ri-checkbox-circle-fill align-middle"></i> {{ selectedSlots.length }} {{ selectedSlots.length === 1 ? 'hora' : 'horas' }} seleccionadas</small>
+                  </div>
+                  <a [routerLink]="entryLink" class="btn btn-leaf flex-shrink-0">Reservar <i class="ri-arrow-right-line align-middle"></i></a>
+                } @else {
+                  <div class="flex-grow-1 text-muted fs-13"><i class="ri-cursor-line align-middle me-1"></i> Elige uno o más horarios disponibles</div>
+                  <span class="dp-barcode" aria-hidden="true"></span>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CIFRAS REALES DEL CATÁLOGO (widget app-stat) -->
+    <div class="container dp-stats">
+      @if (hasData) {
+        <div class="row g-3">
+          <div class="col-sm-6 col-xl-3" data-reveal>
+            <app-stat title="Complejos deportivos" [value]="complejos.length" iconClass="ri-building-2-line" variant="success" [showTrend]="false" caption="Con campos habilitados"></app-stat>
+          </div>
+          <div class="col-sm-6 col-xl-3" data-reveal style="--d:.08s">
+            <app-stat title="Campos deportivos" [value]="camposCount" iconClass="ri-football-line" variant="primary" [showTrend]="false" caption="Listos para reservar"></app-stat>
+          </div>
+          <div class="col-sm-6 col-xl-3" data-reveal style="--d:.16s">
+            <app-stat title="Disciplinas y categorías" [value]="categoriesCount" iconClass="ri-medal-line" variant="warning" [showTrend]="false" caption="Según el catálogo"></app-stat>
+          </div>
+          <div class="col-sm-6 col-xl-3" data-reveal style="--d:.24s">
+            <app-stat title="Tipos de reserva" [value]="3" iconClass="ri-calendar-check-line" variant="secondary" [showTrend]="false" caption="Puntual, recurrente y mensualidad"></app-stat>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- COMPLEJOS (datos reales) -->
+    <section class="section p-3" id="complejos">
+      <div class="container">
+        <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4" data-reveal>
+          <div>
+            <span class="dp-kicker dp-kicker--dark d-block mb-2">Escenarios</span>
+            <h2 class="dp-title mb-0">Elige dónde <span class="dp-green-text">quieres jugar</span></h2>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-icon btn-soft-secondary" (click)="scrollRail(-1)" aria-label="Anterior"><i class="ri-arrow-left-s-line"></i></button>
+            <button type="button" class="btn btn-icon btn-soft-secondary" (click)="scrollRail(1)" aria-label="Siguiente"><i class="ri-arrow-right-s-line"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dp-rail" id="dp-rail" tabindex="0" aria-label="Complejos deportivos">
+        @if (loadingCampos) {
+          <p class="text-muted ps-4">Cargando complejos...</p>
+        } @else if (camposLoadError) {
+          <p class="text-muted ps-4">No se pudo cargar el catálogo de complejos por el momento.</p>
+        } @else if (!complejos.length) {
+          <p class="text-muted ps-4">Aún no hay complejos con campos habilitados.</p>
+        } @else {
+          @for (c of complejos; track c.name; let i = $index) {
+            <article class="dp-venue">
+              <img [src]="c.photo" (error)="onPhotoError(c)" alt="" class="dp-venue__img" loading="lazy">
+              <div class="dp-venue__shade"></div>
+              <div class="dp-venue__body">
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                  @for (s of c.categories.slice(0, 3); track s) { <span class="badge bg-white bg-opacity-25 text-white fs-11">{{ s }}</span> }
+                </div>
+                <h5 class="text-white mb-1">{{ c.name }}</h5>
+                <p class="text-white-50 fs-13 mb-3">{{ c.campos.length }} {{ c.campos.length === 1 ? 'campo' : 'campos' }} deportivos</p>
+                <button type="button" class="btn btn-dp btn-sm" (click)="chooseComplejo(i)">Reservar aquí <i class="ri-arrow-right-up-line align-middle"></i></button>
+              </div>
+            </article>
+          }
+        }
+      </div>
+    </section>
+
+    <!-- FUNCIONES: panel interactivo -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="text-center mb-5" data-reveal>
+          <span class="dp-kicker dp-kicker--dark d-block mb-2">Dentro del sistema</span>
+          <h2 class="dp-title mb-3">Todo el ciclo de la reserva, <span class="dp-green-text">en un solo lugar</span></h2>
+          <p class="text-muted ff-secondary mb-0">Toca una función para ver cómo se ve en el sistema.</p>
+        </div>
+
+        <div class="row g-4 align-items-stretch" data-reveal>
+          <div class="col-lg-5">
+            <div class="vstack gap-2" role="tablist" aria-label="Funciones del sistema">
+              @for (f of features; track f.id; let i = $index) {
+                <button type="button" role="tab" class="dp-tab" [class.is-active]="activeFeature === i" [attr.aria-selected]="activeFeature === i" (click)="activeFeature = i">
+                  <span class="dp-tab__icon"><i class="{{ f.icon }}"></i></span>
+                  <span class="text-start">
+                    <strong class="d-block">{{ f.title }}</strong>
+                    <small class="d-block">{{ f.text }}</small>
+                  </span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="dp-win h-100">
+              <div class="dp-win__bar">
+                <span></span><span></span><span></span>
+                <small>{{ features[activeFeature].title }} · vista ilustrativa</small>
+                <em class="ms-auto">{{ features[activeFeature].who }}</em>
+              </div>
+
+              <div class="dp-win__body dp-fade" [attr.data-feature]="features[activeFeature].id">
+                @switch (features[activeFeature].id) {
+                  @case ('mapa') {
+                    <div class="dp-map">
+                      <img src="assets/images/fields/img-1.png" alt="" loading="lazy">
+                      <span class="dp-pin" style="left:22%;top:58%"><i class="ri-map-pin-2-fill"></i></span>
+                      <span class="dp-pin" style="left:62%;top:30%;--p:.6s"><i class="ri-map-pin-2-fill"></i></span>
+                      <span class="dp-pin" style="left:72%;top:66%;--p:1.2s"><i class="ri-map-pin-2-fill"></i></span>
+                      <div class="dp-map__card">
+                        @if (complejo) { <img [src]="complejo.photo" (error)="onPhotoError(complejo)" alt="" class="dp-thumb dp-thumb--wide mb-2"> }
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                          <strong>{{ complejo?.name || 'Nombre del complejo' }}</strong>
+                          <span class="badge bg-success-subtle text-success">Activo</span>
+                        </div>
+                        <small class="text-muted d-block mb-2"><i class="ri-football-line align-middle"></i> {{ camposCount ? campos.length : 0 }} campos · horarios y tarifas</small>
+                        <div class="d-flex gap-2"><span class="btn btn-sm btn-leaf disabled">Reserva puntual</span><span class="btn btn-sm btn-success disabled">Recurrente</span></div>
+                      </div>
+                    </div>
+                  }
+                  @case ('calendario') {
+                    <div class="p-3">
+                      <div class="dp-cal">
+                        @for (h of calHeader; track h) { <div class="dp-cal__h">{{ h }}</div> }
+                        @for (c of calCells; track c.n) {
+                          <div class="dp-cal__d"><span>{{ c.n }}</span>
+                            @for (e of c.ev; track e.t) { <i class="{{ e.c }}">{{ e.t }}</i> }
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                  @case ('reservas') {
+                    <div class="p-4">
+                      <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="badge bg-primary-subtle text-primary">Puntual</span>
+                        <span class="badge bg-success-subtle text-success">Recurrente</span>
+                        <span class="badge bg-secondary-subtle text-secondary">Rango de fechas</span>
+                        <span class="badge bg-secondary-subtle text-secondary">Días de uso</span>
+                        <span class="badge bg-secondary-subtle text-secondary">Sesiones</span>
+                      </div>
+                      <ul class="list-unstyled vstack gap-2 mb-4">
+                        @for (r of ['Complejo y campo', 'Fecha y horario', 'Beneficiario', 'Tarifa compatible']; track r) {
+                          <li class="d-flex justify-content-between align-items-center border-bottom pb-2"><span class="text-muted fs-13">{{ r }}</span><span class="dp-skel"></span></li>
+                        }
+                      </ul>
+                      <div class="d-flex flex-wrap align-items-center gap-2 fs-12">
+                        <span class="badge bg-secondary-subtle text-secondary">SOLICITADA</span><i class="ri-arrow-right-s-line text-muted"></i>
+                        <span class="badge bg-warning-subtle text-warning">PENDIENTE</span><i class="ri-arrow-right-s-line text-muted"></i>
+                        <span class="badge bg-success-subtle text-success">PAGADA</span>
+                      </div>
+                    </div>
+                  }
+                  @case ('escuelas') {
+                    <div class="p-4">
+                      @for (s of [['E', 'Estudiante', 'Escuela municipal', 'PAGADA', 'success'], ['M', 'Estudiante', 'Escuela municipal', 'PENDIENTE', 'warning'], ['A', 'Estudiante', 'Escuela municipal', 'PAGADA', 'success']]; track $index) {
+                        <div class="d-flex align-items-center gap-3 py-3 border-bottom">
+                          <div class="avatar-sm flex-shrink-0"><span class="avatar-title rounded-circle bg-primary-subtle text-primary">{{ s[0] }}</span></div>
+                          <div class="flex-grow-1"><strong class="d-block fs-14">{{ s[1] }}</strong><small class="text-muted">{{ s[2] }} · mensualidad por período</small></div>
+                          <span class="badge bg-{{ s[4] }}-subtle text-{{ s[4] }}">{{ s[3] }}</span>
+                        </div>
+                      }
+                      <p class="text-muted fs-12 mt-3 mb-0"><i class="ri-shield-user-line align-middle me-1"></i> Solo estudiantes activos con relación vigente.</p>
+                    </div>
+                  }
+                  @default {
+                    <div class="p-4">
+                      <div class="dp-bars mb-4">
+                        @for (b of bars; track $index) { <i [style.--h]="b + '%'"></i> }
+                      </div>
+                      <div class="row g-2 text-center">
+                        @for (r of ['Ingresos', 'Puntuales', 'Recurrentes', 'Mensuales']; track r) {
+                          <div class="col-6 col-md-3"><div class="border rounded p-2 fs-12 text-muted"><i class="ri-file-chart-line text-primary d-block fs-18"></i>{{ r }}</div></div>
+                        }
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Públicos -->
+        <div class="row g-3 mt-4">
+          @for (a of audiences; track a.label; let i = $index) {
+            <div class="col-md-4" data-reveal [style.--d]="i * 0.1 + 's'">
+              <div class="card card-animate h-100 mb-0 dp-aud">
+                <div class="card-body p-4">
+                  <div class="avatar-sm icon-effect mb-3"><div class="avatar-title bg-transparent text-primary rounded-circle"><i class="{{ a.icon }} fs-32"></i></div></div>
+                  <h6 class="text-uppercase text-muted fs-12 mb-1">{{ a.label }}</h6>
+                  <h5 class="mb-3">{{ a.title }}</h5>
+                  <ul class="list-unstyled vstack gap-2 mb-0">
+                    @for (it of a.items; track it) { <li class="d-flex gap-2 text-muted fs-14"><i class="ri-checkbox-circle-fill text-success"></i><span>{{ it }}</span></li> }
+                  </ul>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- REGISTRO DE CONTRIBUYENTES -->
+    @if (!isLoggedIn) {
+    <section class="section bg-light" id="register">
+      <div class="container">
+        <div class="text-center mb-5" data-reveal>
+          <span class="dp-kicker dp-kicker--dark d-block mb-2">Crea tu cuenta</span>
+          <h2 class="dp-title mb-3">Regístrate tú mismo en <span class="dp-green-text">cuatro pasos</span></h2>
+          <p class="text-muted ff-secondary mb-0">Cualquier contribuyente puede crear su cuenta, sin trámites presenciales. Ten a mano tu documento y un correo al que tengas acceso.</p>
+        </div>
+
+        <div class="row g-4 align-items-stretch" data-reveal>
+          <div class="col-lg-5">
+            <div class="vstack gap-2 mb-3" role="tablist" aria-label="Pasos del registro">
+              @for (s of regSteps; track s.title; let i = $index) {
+                <button type="button" role="tab" class="dp-tab" [class.is-active]="regStep === i" [attr.aria-selected]="regStep === i" (click)="goReg(i)">
+                  <span class="dp-tab__icon"><i class="{{ regStep > i ? 'ri-check-line' : s.icon }}"></i></span>
+                  <span class="text-start"><strong class="d-block">{{ i + 1 }}. {{ s.title }}</strong><small class="d-block">{{ s.text }}</small></span>
+                </button>
+              }
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-soft-secondary" [disabled]="regStep === 0" (click)="goReg(regStep - 1)"><i class="ri-arrow-left-line align-middle"></i> Anterior</button>
+              <button type="button" class="btn btn-leaf" [disabled]="regStep === regSteps.length - 1" (click)="goReg(regStep + 1)">Siguiente <i class="ri-arrow-right-line align-middle"></i></button>
+              <a routerLink="/auth/signup-check" class="btn btn-dp ms-lg-auto"><i class="ri-user-add-line align-middle me-1"></i> Crear mi cuenta</a>
+            </div>
+            <p class="text-muted fs-13 mt-3 mb-0"><i class="ri-information-line align-middle me-1"></i> ¿Ya tienes cuenta? <a routerLink="/auth/login" class="fw-semibold">Inicia sesión</a>. El sistema controla duplicados por documento, NIT y correo.</p>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="dp-win h-100">
+              <div class="dp-win__bar"><span></span><span></span><span></span><small>Sistema de Reservas GAMQ · {{ regSteps[regStep].screen }} · vista ilustrativa</small></div>
+              <div class="dp-reg dp-fade" [attr.data-step]="regStep">
+                @switch (regStep) {
+                  @case (0) {
+                    <h5 class="text-center text-primary mb-1">Verificar datos</h5>
+                    <p class="text-center text-muted fs-13 mb-3">Antes de continuar, verifique sus datos en el Gobierno Municipal.</p>
+                    <div class="row g-2 mb-1">
+                      <div class="col-sm-4"><label class="dp-field-label">Tipo de documento *</label><div class="form-select form-select-sm text-muted">Seleccione una opción</div></div>
+                      <div class="col-sm-4"><label class="dp-field-label">Número de documento *</label><div class="form-control form-control-sm text-muted dp-focus">12345678-1C</div></div>
+                      <div class="col-sm-4"><label class="dp-field-label">Expedido</label><div class="form-select form-select-sm text-muted">Seleccione una opción</div></div>
+                    </div>
+                    <p class="text-muted fs-12 mb-3">Si corresponde, agregue el complemento al número de documento, por ejemplo: 12345678-1C.</p>
+                    <div class="btn btn-secondary w-100 disabled">Verificar datos y continuar</div>
+                  }
+                  @case (1) {
+                    <h5 class="text-center text-primary mb-1">Crear cuenta nueva</h5>
+                    <p class="text-center text-muted fs-13 mb-3">Registro de contribuyente</p>
+                    <div class="row g-2 mb-2">
+                      <div class="col-12"><label class="dp-field-label">Nombre(s) *</label><div class="form-control form-control-sm text-muted">Ingresar Nombre</div></div>
+                      <div class="col-6"><label class="dp-field-label">Primer apellido *</label><div class="form-control form-control-sm text-muted">Primer Apellido</div></div>
+                      <div class="col-6"><label class="dp-field-label">Segundo apellido</label><div class="form-control form-control-sm text-muted">Segundo Apellido</div></div>
+                      <div class="col-4"><label class="dp-field-label">Fecha de nacimiento *</label><div class="form-control form-control-sm text-muted">dd / mm / aaaa</div></div>
+                      <div class="col-4"><label class="dp-field-label">Género</label><div class="form-select form-select-sm text-muted">Seleccionar</div></div>
+                      <div class="col-4"><label class="dp-field-label">Estado civil</label><div class="form-select form-select-sm text-muted">Seleccionar</div></div>
+                      <div class="col-4"><label class="dp-field-label">Tipo documento *</label><div class="form-select form-select-sm">CÉDULA DE IDENTIDAD</div></div>
+                      <div class="col-4"><label class="dp-field-label">Nro documento *</label><div class="form-control form-control-sm">12345678-1C</div></div>
+                      <div class="col-4"><label class="dp-field-label">Expedido</label><div class="form-select form-select-sm">COCHABAMBA</div></div>
+                      <div class="col-6"><label class="dp-field-label">NIT</label><div class="form-control form-control-sm text-muted">Ingresar NIT</div></div>
+                      <div class="col-6"><label class="dp-field-label">Celular *</label><div class="form-control form-control-sm text-muted dp-focus">Ingresar Celular</div></div>
+                      <div class="col-12"><label class="dp-field-label">Email *</label><div class="form-control form-control-sm text-muted dp-focus">Ingrese un correo válido</div><small class="text-muted fs-11">Asegúrese de tener acceso al correo: se le enviará el código de confirmación.</small></div>
+                      <div class="col-12"><label class="dp-field-label">Dirección</label><div class="form-control form-control-sm text-muted">Ingresar Dirección</div></div>
+                    </div>
+                    <p class="text-muted fs-12 mb-2"><i class="ri-checkbox-circle-line text-success align-middle me-1"></i> Al registrarte, aceptas los Términos y Condiciones de Uso y las Políticas de Seguridad.</p>
+                    <div class="btn btn-secondary w-100 disabled">Crear Cuenta</div>
+                  }
+                  @case (2) {
+                    <div class="text-center py-2">
+                      <div class="avatar-lg mx-auto mb-3"><div class="avatar-title bg-primary-subtle text-primary rounded-circle display-6"><i class="ri-mail-line"></i></div></div>
+                      <h5 class="mb-1">Verifique su correo electrónico</h5>
+                      <p class="text-muted fs-13 mb-3">Ingrese los 4 dígitos enviados a su correo.</p>
+                      <div class="d-flex justify-content-center gap-2 mb-3"><span class="dp-code dp-focus">4</span><span class="dp-code dp-focus">8</span><span class="dp-code dp-focus">1</span><span class="dp-code dp-focus">6</span></div>
+                      <div class="btn btn-secondary w-100 disabled mb-3">Confirmar</div>
+                      <p class="text-muted fs-13 mb-0">¿No recibió el código? <u class="text-primary">Reenviar</u> o <u class="text-primary">Volver al registro</u></p>
+                    </div>
+                  }
+                  @default {
+                    <div class="text-center py-4">
+                      <div class="avatar-lg mx-auto mb-3"><div class="avatar-title bg-success-subtle text-success rounded-circle display-6"><i class="ri-checkbox-circle-line"></i></div></div>
+                      <h5 class="mb-2">¡Tu cuenta está lista!</h5>
+                      <p class="text-muted mb-4">Inicia sesión, revisa el mapa de complejos y haz tu primera reserva.</p>
+                      <div class="d-flex flex-wrap justify-content-center gap-2">
+                        <a routerLink="/auth/login" class="btn btn-leaf"><i class="ri-login-circle-line align-middle me-1"></i> Iniciar sesión</a>
+                        <button type="button" class="btn btn-soft-success" (click)="scrollTo('flow')">Ver cómo reservar</button>
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    }
+
+    <!-- CÓMO RESERVAR -->
+    <section class="dp-flow" id="flow">
+      <img src="assets/images/fields/img.png" alt="" class="dp-flow__img" aria-hidden="true" loading="lazy">
+      <div class="dp-flow__shade" aria-hidden="true"></div>
+      <div class="container position-relative">
+        <div class="row gy-5">
+          <div class="col-lg-4">
+            <div class="dp-flow__sticky" data-reveal>
+              <span class="dp-kicker d-block mb-2">Cómo reservar</span>
+              <h2 class="text-white fw-bold lh-sm mb-3">Del campo al ticket en <span class="dp-gold-text">seis pasos</span></h2>
+              <p class="text-white-50 mb-4">Cada reserva pasa por controles claros: disponibilidad, validación cuando corresponde, pago con RUAT y ticket.</p>
+              <div class="d-flex flex-wrap gap-2 fs-12">
+                <span class="badge bg-white bg-opacity-10 text-white">SOLICITADA</span>
+                <span class="badge bg-warning-subtle text-warning">PENDIENTE</span>
+                <span class="badge bg-success-subtle text-success">PAGADA</span>
+                <span class="badge bg-info-subtle text-info">EN CURSO</span>
+                <span class="badge bg-primary-subtle text-primary">COMPLETADA</span>
+                <span class="badge bg-danger-subtle text-danger">CANCELADA</span>
+                <span class="badge bg-white bg-opacity-10 text-white">EXPIRADA</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-8">
+            <ol class="dp-steps list-unstyled mb-0">
+              @for (s of steps; track s.title; let i = $index) {
+                <li class="dp-step" data-reveal [style.--d]="(i % 2) * 0.08 + 's'">
+                  <span class="dp-step__n">0{{ i + 1 }}</span>
+                  <div class="dp-step__body">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
+                      <h5 class="text-white mb-0"><i class="{{ s.icon }} text-warning me-2 align-middle"></i>{{ s.title }}</h5>
+                      <span class="badge bg-{{ s.color }}-subtle text-{{ s.color }} fs-11">{{ s.state }}</span>
+                    </div>
+                    <p class="text-white-50 mb-0">{{ s.text }}</p>
+                  </div>
+                </li>
+              }
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGOS -->
+    <section class="section" id="payment">
+      <div class="container">
+        <div class="text-center mb-5" data-reveal>
+          <span class="dp-kicker dp-kicker--dark d-block mb-2">Pagos con RUAT</span>
+          <h2 class="dp-title mb-3">Dos formas de pagar tu <span class="dp-green-text">tasa</span></h2>
+          <p class="text-muted ff-secondary mb-0">El sistema genera la tasa de tu reserva y confirma el pago consultando RUAT.</p>
+        </div>
+
+        <div class="row g-4 mb-5">
+          <div class="col-lg-6" data-reveal>
+            <div class="card card-animate h-100 mb-0"><div class="card-body p-4">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="avatar-sm icon-effect"><div class="avatar-title bg-transparent text-primary rounded-circle"><i class="ri-bank-line fs-32"></i></div></div>
+                <h5 class="mb-0">En cualquier banco</h5>
+              </div>
+              <ol class="list-unstyled vstack gap-2 mb-0 text-muted">
+                <li class="d-flex gap-2"><i class="ri-checkbox-circle-fill text-success"></i> Registra tu reserva y anota el número de tasa.</li>
+                <li class="d-flex gap-2"><i class="ri-checkbox-circle-fill text-success"></i> Acude a un banco habilitado para cobros de RUAT.</li>
+                <li class="d-flex gap-2"><i class="ri-checkbox-circle-fill text-success"></i> Indica el número de tasa y paga dentro del plazo de tu reserva.</li>
+                <li class="d-flex gap-2"><i class="ri-checkbox-circle-fill text-success"></i> Conserva tu comprobante; el sistema consulta el pago y habilita el ticket.</li>
+              </ol>
+            </div></div>
+          </div>
+          <div class="col-lg-6" data-reveal style="--d:.1s">
+            <div class="card card-animate h-100 mb-0"><div class="card-body p-4">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="avatar-sm icon-effect"><div class="avatar-title bg-transparent text-primary rounded-circle"><i class="ri-qr-code-line fs-32"></i></div></div>
+                <h5 class="mb-0">Con código QR, desde tu celular</h5>
+              </div>
+              <p class="text-muted">Busca tu tasa en el portal de Pagos QR de RUAT, genera el código y págalo con la app de tu banco, sin filas.</p>
+              <button type="button" class="btn btn-leaf" (click)="scrollTo('qr-guide')">Ver la guía paso a paso <i class="ri-arrow-down-line align-middle ms-1"></i></button>
+            </div></div>
+          </div>
+        </div>
+
+        <!-- Guía interactiva del pago por QR -->
+        <div id="qr-guide" class="row g-4 align-items-stretch" data-reveal>
+          <div class="col-lg-5">
+            <span class="dp-kicker dp-kicker--dark d-block mb-2">Guía de pago por QR</span>
+            <h3 class="dp-title mb-3">Genera tu QR en <span class="dp-green-text">cinco pasos</span></h3>
+            <div class="vstack gap-2 mb-3" role="tablist" aria-label="Pasos del pago por QR">
+              @for (s of qrSteps; track s.title; let i = $index) {
+                <button type="button" role="tab" class="dp-tab" [class.is-active]="qrStep === i" [attr.aria-selected]="qrStep === i" (click)="goQr(i); qrTab = 'guia'">
+                  <span class="dp-tab__icon"><i class="{{ qrStep > i ? 'ri-check-line' : s.icon }}"></i></span>
+                  <span class="text-start"><strong class="d-block">{{ i + 1 }}. {{ s.title }}</strong><small class="d-block">{{ s.text }}</small></span>
+                </button>
+              }
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-soft-secondary" [disabled]="qrStep === 0" (click)="goQr(qrStep - 1)"><i class="ri-arrow-left-line align-middle"></i> Anterior</button>
+              <button type="button" class="btn btn-leaf" [disabled]="qrStep === qrSteps.length - 1" (click)="goQr(qrStep + 1)">Siguiente <i class="ri-arrow-right-line align-middle"></i></button>
+            </div>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="dp-win h-100">
+              <div class="dp-win__bar">
+                <span></span><span></span><span></span>
+                <small>ruat.gob.bo/pagosqr · {{ qrTab === 'guia' ? 'guía ilustrativa' : 'portal oficial' }}</small>
+              </div>
+
+              <div class="btn-group w-100 p-2 bg-light" role="group" aria-label="Vista">
+                <button type="button" class="btn btn-sm" [class.btn-leaf]="qrTab === 'guia'" [class.btn-soft-success]="qrTab !== 'guia'" (click)="qrTab = 'guia'"><i class="ri-compass-3-line align-middle me-1"></i> Guía interactiva</button>
+                <button type="button" class="btn btn-sm" [class.btn-leaf]="qrTab === 'portal'" [class.btn-soft-success]="qrTab !== 'portal'" (click)="qrTab = 'portal'"><i class="ri-window-line align-middle me-1"></i> Portal RUAT aquí</button>
+              </div>
+
+              @if (qrTab === 'guia') {
+                <div class="px-3 pt-3">
+                  <label class="dp-field-label" for="dp-tasa">Prueba escribiendo tu N° de tasa (solo se muestra aquí, no se guarda)</label>
+                  <input id="dp-tasa" type="text" inputmode="numeric" class="form-control form-control-sm" placeholder="Ej.: 12345" [value]="tasaDemo" (input)="onTasaInput($event)">
+                </div>
+
+                <div class="dp-ruat dp-fade" [attr.data-step]="qrStep">
+                  @if (qrStep === 0) {
+                    <div class="dp-ruat__home">
+                      <div class="dp-ruat__tile dp-focus"><span class="dp-ruat__circle"><i class="ri-qr-code-line"></i></span>Pagos QR</div>
+                      <i class="ri-arrow-right-line fs-24"></i>
+                      <div class="dp-ruat__tile dp-focus"><span class="dp-ruat__circle"><i class="ri-store-2-line"></i></span>Tasas y Otros Ingresos</div>
+                    </div>
+                  } @else if (qrStep < 4) {
+                    <div class="dp-ruat__title">PAGO QR<small class="d-block">BÚSQUEDA GENERAL</small></div>
+                    <div class="dp-ruat__band"></div>
+                    <div class="dp-ruat__form">
+                      <label>Criterio *</label>
+                      <div class="dp-ruat__input dp-ruat__select">TASA Y OTRO INGRESO/VALORADOS</div>
+
+                      <label>Tasa Y Otro Ingreso/valorados *</label>
+                      <div class="dp-ruat__input" [class.dp-focus]="qrStep === 1" [class.is-ph]="!tasaDemo && qrStep === 1">{{ tasaDemo || (qrStep === 1 ? 'N° de tasa de tu reserva' : '00000') }}</div>
+
+                      <label>Gobierno Municipal *</label>
+                      <div class="dp-ruat__input dp-ruat__select" [class.dp-focus]="qrStep === 2" [class.is-ph]="qrStep < 2">{{ qrStep >= 2 ? 'QUILLACOLLO' : 'Seleccione un valor' }}</div>
+
+                      <label>Verificación de Caracteres *</label>
+                      <div [class.dp-focus]="qrStep === 3">
+                        <span class="dp-ruat__captcha">FVU4</span> <small class="text-info ms-2"><i class="ri-refresh-line"></i> Actualizar</small>
+                        <div class="dp-ruat__input mt-2" style="max-width:120px">{{ qrStep >= 3 ? 'FVU4' : '' }}</div>
+                      </div>
+                    </div>
+                    <div class="text-center pb-3"><span class="dp-ruat__btn" [class.dp-focus]="qrStep === 3"><i class="ri-search-line"></i> Buscar</span></div>
+                  } @else {
+                    <div class="dp-ruat__result">
+                      <p class="fw-bold mb-2">Código QR generado <span class="badge bg-warning-subtle text-warning ms-1">Ejemplo ilustrativo</span></p>
+                      <svg viewBox="-1 -1 23 23" class="dp-qr" role="img" aria-label="Ejemplo ilustrativo de código QR">
+                        <rect x="-1" y="-1" width="23" height="23" fill="#fff"/>
+                        @for (c of qrCells; track $index) { <rect [attr.x]="c.x" [attr.y]="c.y" width="1" height="1" fill="#111"/> }
+                      </svg>
+                      <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+                        <span class="badge bg-success-subtle text-success fs-12"><i class="ri-time-line align-middle"></i> Generar hasta 21:30 hrs</span>
+                        <span class="badge bg-primary-subtle text-primary fs-12"><i class="ri-smartphone-line align-middle"></i> Pagar hasta 22:00 hrs</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+                <p class="text-muted fs-12 px-3 pb-3 mb-0"><i class="ri-information-line align-middle me-1"></i> Réplica ilustrativa del portal. Los horarios son los publicados por RUAT; confírmalos en el portal.</p>
+              } @else {
+                <div class="p-3">
+                  <div class="alert alert-info fs-13 mb-3">
+                    Aquí puedes cargar el portal oficial de RUAT. Si ves la página en blanco o un error, el navegador o RUAT no permiten mostrarla dentro de otra página: ábrela en una pestaña nueva.
+                  </div>
+                  @if (!loadRuat) {
+                    <div class="text-center py-5">
+                      <button type="button" class="btn btn-leaf" (click)="loadRuat = true"><i class="ri-window-line align-middle me-1"></i> Cargar el portal de RUAT aquí</button>
+                    </div>
+                  } @else {
+                    <iframe class="dp-frame" [src]="ruatSafeUrl" title="Portal de Pagos QR de RUAT" loading="lazy" referrerpolicy="no-referrer"></iframe>
+                  }
+                  <a [href]="ruatQrUrl" target="_blank" rel="noopener noreferrer" class="btn btn-dp w-100 mt-3"><i class="ri-external-link-line align-middle me-1"></i> Abrir en una pestaña nueva</a>
+                </div>
+              }
+
+              @if (qrTab === 'guia') {
+                <div class="px-3 pb-3"><a [href]="ruatQrUrl" target="_blank" rel="noopener noreferrer" class="btn btn-dp w-100"><i class="ri-external-link-line align-middle me-1"></i> Ir al portal de Pago QR de RUAT</a></div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TICKETS (formato oficial) -->
+    <section class="section bg-light" id="tickets">
+      <div class="container">
+        <div class="text-center mb-5" data-reveal>
+          <span class="dp-kicker dp-kicker--dark d-block mb-2">Tu comprobante</span>
+          <h2 class="dp-title mb-3">Así es el <span class="dp-green-text">ticket de tu reserva</span></h2>
+          <p class="text-muted ff-secondary mb-0">Cada tipo de reserva genera su propio ticket, que se habilita al confirmarse el pago.</p>
+        </div>
+
+        <div class="row g-4 align-items-start">
+          <div class="col-lg-4" data-reveal>
+            <div class="vstack gap-2 mb-4" role="tablist" aria-label="Tipos de ticket">
+              @for (tk of ticketTypes; track tk.id) {
+                <button type="button" role="tab" class="dp-tab" [class.is-active]="ticketType === tk.id" [attr.aria-selected]="ticketType === tk.id" (click)="ticketType = tk.id">
+                  <span class="dp-tab__icon"><i class="{{ tk.icon }}"></i></span>
+                  <span class="text-start"><strong class="d-block">{{ tk.title }}</strong><small class="d-block">{{ tk.text }}</small></span>
+                </button>
+              }
+            </div>
+
+            <div class="card mb-0"><div class="card-body">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="fw-semibold">Estado del pago</span>
+                <span class="badge fs-12" [class.bg-warning-subtle]="!paid" [class.text-warning]="!paid" [class.bg-success-subtle]="paid" [class.text-success]="paid">{{ paid ? 'PAGADA' : 'PENDIENTE' }}</span>
+              </div>
+              <p class="text-muted fs-13 mb-3"><i class="ri-lock-line align-middle me-1"></i> {{ paid ? 'Pago confirmado en RUAT: el ticket queda disponible.' : 'El ticket se habilita solo con el pago confirmado.' }}</p>
+              @if (!paid) {
+                <button type="button" class="btn btn-leaf w-100" (click)="paid = true"><i class="ri-secure-payment-line align-middle me-1"></i> Simular pago confirmado en RUAT</button>
+              } @else {
+                <button type="button" class="btn btn-soft-secondary w-100" (click)="paid = false"><i class="ri-restart-line align-middle me-1"></i> Reiniciar demostración</button>
+              }
+            </div></div>
+          </div>
+
+          <div class="col-lg-8" data-reveal style="--d:.1s">
+            <div class="dp-paper-wrap">
+              <div class="dp-paper dp-fade" [attr.data-type]="ticketType">
+                <div class="dp-paper__head">
+                  <img src="assets/icons/logos/logo-dark-gamq.png" alt="Gobierno Autónomo Municipal de Quillacollo">
+                  <div class="flex-grow-1 text-center">
+                    <h6>GOBIERNO AUTÓNOMO MUNICIPAL DE QUILLACOLLO</h6>
+                    <strong>SECRETARÍA MUNICIPAL DE DESARROLLO INTEGRAL - UNIDAD DE DEPORTES</strong>
+                    <small class="d-block">SISTEMA DE GESTIÓN DE RESERVAS DE CAMPOS DEPORTIVOS</small>
+                  </div>
+                </div>
+
+                <h4 class="dp-paper__title"><span>{{ ticketTitle }}</span></h4>
+
+                <div class="dp-paper__body" [class.dp-ticket--locked]="!paid">
+                  <div class="dp-paper__rule">
+                    <span><b>Autorización N°:</b> {{ ticketType === 'puntual' ? 'P' : ticketType === 'recurrente' ? 'R' : 'E' }}-0000/{{ currentYear % 100 }}</span>
+                    <span>Quillacollo, {{ today }}</span>
+                  </div>
+
+                  <div class="dp-paper__box">
+                    <span><b>SOLICITANTE:</b> NOMBRE DEL CONTRIBUYENTE</span><span><b>CI/NIT:</b> 0000000</span>
+                    <span><b>CEL. REF.:</b> 00000000</span><span><b>TASA N°:</b> {{ tasaDemo || '00000' }}</span>
+                    <span class="dp-paper__full"><b>LUGAR Y FECHA DE RESERVA:</b> Quillacollo, dd/mm/aaaa</span>
+                  </div>
+
+                  <p class="dp-paper__law">En beneficio del deporte boliviano y amparados bajo la Ley Nacional del Deporte N° 804, artículos 3, 4, 5 y 51.</p>
+
+                  @switch (ticketType) {
+                    @case ('puntual') {
+                      <p>Tengo a bien autorizar el uso del siguiente escenario deportivo: <b>COMPLEJO - Campo deportivo</b>, ubicado en <i>dirección del complejo, Quillacollo, Cochabamba, Bolivia.</i></p>
+                      <div class="dp-paper__scroll"><table>
+                        <thead><tr><th>Fecha uso</th><th>Escenario deportivo</th><th>Ingreso</th><th>Salida</th><th>Precio por hora</th><th>Total Bs.</th><th>Estado</th></tr></thead>
+                        <tbody><tr><td>dd/mm/aaaa</td><td>COMPLEJO -<br>Campo deportivo</td><td>20:00</td><td>22:00</td><td>00 x 2</td><td>000,00</td><td><b>{{ paid ? 'PAGADA' : 'PENDIENTE' }}</b></td></tr></tbody>
+                      </table></div>
+                      <h6 class="dp-paper__h">DETALLE TARIFARIO</h6>
+                      <p class="dp-paper__small">Tarifa (por_hora): 2.00 x 00.00 Bs. = 000.00 Bs. - Duración en horas</p>
+                      <h6 class="dp-paper__h">OBSERVACIONES</h6>
+                      <p class="dp-paper__small">Reserva de Cancha Deportiva GAMQ</p>
+                    }
+                    @case ('recurrente') {
+                      <p>Tengo a bien autorizar el uso del siguiente escenario deportivo: <b>COMPLEJO - Campo deportivo</b>, ubicado en <i>dirección del complejo, Quillacollo, Cochabamba, Bolivia.</i></p>
+                      <div class="dp-paper__scroll"><table>
+                        <thead><tr><th>Escenario deportivo</th><th>Fecha inicio</th><th>Fecha fin</th><th>Precio</th><th>Sesiones</th><th>Total Bs.</th><th>Estado</th></tr></thead>
+                        <tbody><tr><td>COMPLEJO -<br>Campo deportivo</td><td>01/mm/aaaa</td><td>30/mm/aaaa</td><td>00.00</td><td>0</td><td>000,00</td><td><b>{{ paid ? 'PAGADA' : 'PENDIENTE' }}</b></td></tr></tbody>
+                      </table></div>
+                      <h6 class="dp-paper__h text-center fs-12">HORARIOS PROGRAMADOS</h6>
+                      <p class="dp-paper__small">Mes aaaa<br>Mar: 01/mm 16:00 - 19:00 · 08/mm 16:00 - 19:00 · 15/mm 16:00 - 19:00<br>Jue: 03/mm 16:00 - 19:00 · 10/mm 16:00 - 19:00 · 17/mm 16:00 - 19:00</p>
+                      <p class="dp-paper__small">Resumen:<br>0 sesiones | 3 hora(s) por sesión | 0 hora(s) totales<br>Días programados: Martes, Jueves</p>
+                      <h6 class="dp-paper__h">DETALLE TARIFARIO</h6>
+                      <p class="dp-paper__small">Tarifa Mensual por hora (por_sesion): 00.00 x 00.00 Bs. = 000.00 Bs. - Horas cobrables</p>
+                      <h6 class="dp-paper__h">OBSERVACIONES</h6>
+                      <p class="dp-paper__small">Reserva de Cancha Deportiva GAMQ</p>
+                    }
+                    @default {
+                      <p>Tengo a bien autorizar el pago de mensualidad de la escuela municipal <b>ESCUELA MUNICIPAL DE (DISCIPLINA)</b>, correspondiente a los estudiantes y períodos detallados a continuación, para el escenario deportivo <b>COMPLEJO - Área deportiva</b>.</p>
+                      <div class="dp-paper__scroll"><table>
+                        <thead><tr><th>Estudiante</th><th>Matrícula</th><th>Disciplina / Entrenador</th><th>Período</th><th>Mensualidad</th><th>Estado</th></tr></thead>
+                        <tbody><tr><td>Nombre del estudiante</td><td>aaaa-000000</td><td><b>DISCIPLINA</b><br>Prof.: ENTRENADOR</td><td>mes aaaa</td><td>00.00 Bs.</td><td>{{ paid ? 'PAGADA' : 'PENDIENTE' }}</td></tr></tbody>
+                      </table></div>
+                      <div class="dp-paper__total"><b>ESCUELA MUNICIPAL DE</b><span>COMPLEJO - Área deportiva</span><b>TOTAL: 00.00</b></div>
+                      <h6 class="dp-paper__h">DETALLE TARIFARIO</h6>
+                      <p class="dp-paper__small">Detalle tarifario de la mensualidad.</p>
+                      <p class="dp-paper__small">Este documento acredita el registro de las mensualidades detalladas para la escuela municipal dentro del Sistema de Gestión de Reservas de Campos Deportivos del Gobierno Autónomo Municipal de Quillacollo.</p>
+                    }
+                  }
+
+                  @if (ticketType !== 'mensualidad') {
+                    <h6 class="dp-paper__h">CONDICIONES DE USO</h6>
+                    <p class="dp-paper__tiny">{{ conditions }}</p>
+                  }
+
+                  <div class="dp-paper__sign">
+                    <div>RESPONSABLE DE DEPORTES</div>
+                    <div>CONTRIBUYENTE<small class="d-block fw-normal">NOMBRE DEL CONTRIBUYENTE</small></div>
+                  </div>
+                </div>
+
+                <div class="dp-paper__foot">Documento generado electrónicamente - Página 1</div>
+
+                @if (!paid) {
+                  <div class="dp-paper__lock"><i class="ri-lock-2-line"></i><strong>Se habilita al confirmar el pago</strong><small>Vista ilustrativa con datos de ejemplo</small></div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PREGUNTAS -->
+    <section class="section pt-0" id="faq">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+            <div class="text-center mb-5" data-reveal>
+              <span class="dp-kicker dp-kicker--dark d-block mb-2">Preguntas frecuentes</span>
+              <h2 class="dp-title mb-0">Lo que conviene saber <span class="dp-green-text">antes de reservar</span></h2>
+            </div>
+            <div class="accordion" data-reveal>
+              @for (f of faqs; track f.q; let i = $index) {
+                <div class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button type="button" class="accordion-button" [class.collapsed]="openFaq !== i" [attr.aria-expanded]="openFaq === i" (click)="toggleFaq(i)">{{ f.q }}</button>
+                  </h2>
+                  <div class="accordion-collapse collapse" [class.show]="openFaq === i">
+                    <div class="accordion-body text-muted ff-secondary">{{ f.a }}</div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="dp-cta">
+      <div class="container position-relative">
+        <div class="row align-items-center gy-4">
+          <div class="col-md-auto text-center"><img src="assets/icons/logos/logo-emblem-gg.png" alt="" height="110" class="dp-float"></div>
+          <div class="col-md">
+            <h3 class="text-white fw-bold mb-1">¿Listo para reservar tu campo?</h3>
+            <p class="text-white-50 mb-0">{{ isLoggedIn ? 'Entra a tu panel, consulta la disponibilidad y paga con RUAT.' : 'Crea tu cuenta en minutos, consulta la disponibilidad y paga con RUAT.' }}</p>
+          </div>
+          <div class="col-md-auto d-flex flex-wrap gap-2">
+            @if (isLoggedIn) {
+              <a [routerLink]="entryLink" class="btn btn-dp btn-lg">Ir a mi panel <i class="ri-arrow-right-line align-middle ms-1"></i></a>
+            } @else {
+              <a routerLink="/auth/signup-check" class="btn btn-dp btn-lg"><i class="ri-user-add-line align-middle me-1"></i> Crear mi cuenta</a>
+              <a routerLink="/auth/login" class="btn btn-lg btn-outline-light">Ingresar</a>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="custom-footer bg-dark py-4 position-relative">
+    <div class="container d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <strong class="text-white">DeportesApp · Reservas municipales</strong>
+        <p class="fs-13 mb-0 mt-1">Sistema municipal de reservas de campos deportivos.</p>
+        <p class="fs-13 mb-0 mt-1">© {{ currentYear }} Gobierno Autónomo Municipal de Quillacollo</p>
+      </div>
+      <a [routerLink]="entryLink" class="btn btn-outline-light">{{ isLoggedIn ? 'Ir a mi panel' : 'Ingresar' }} <i class="ri-arrow-right-line align-middle ms-1"></i></a>
+    </div>
+  </footer>
+
+  <button (click)="topFunction()" class="btn btn-dp btn-icon landing-back-top" id="back-to-top" aria-label="Volver al inicio"><i class="ri-arrow-up-line"></i></button>
+</div>

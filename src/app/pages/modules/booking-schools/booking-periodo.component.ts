@@ -73,66 +73,35 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
   estudiantesList: EstudianteEscuela[] = [];
   selectedItems: Reserva[] = [];
   readonly CSV_COLUMNS: CsvColumn<Reserva>[] = [
-    { header: 'Estudiante',
-      value: item => this.getStudentsSummary(item)
+    { header: 'Estudiante', value: item => this.getStudentsSummary(item)
     },
-    { header: 'Matrícula',
-      value: item => this.getMatriculasResumen(item)
+    { header: 'Matrícula', value: item => this.getMatriculasResumen(item)
     },
-    { header: 'Escuela',
-      value: item => item.organizacionDto?.nombre ?? ''
+    { header: 'Escuela', value: item => item.organizacionDto?.nombre ?? ''},
+    { header: 'Período', value: item => this.getPeriodosResumen(item)
     },
-    { header: 'Período',
-      value: item => this.getPeriodosResumen(item)
-    },
-    { header: 'Disciplina',
-      value: item => item.organizacionDto?.disciplina ??
-        item.reservasPeriodoDtoList?.[0]?.disciplina ?? ''
-    },
-    { header: 'Entrenador',
-      value: item => item.reservasPeriodoDtoList?.[0]?.entrenador ??
-        item.organizacionDto?.entrenador ?? ''
-    },
-    { header: 'Mes',
-      value: item => item.reservasPeriodoDtoList?.[0]?.mes ?? ''
-    },
-    { header: 'Año',
-      value: item => item.reservasPeriodoDtoList?.[0]?.año ?? ''
-    },
-    { header: 'Monto Total',
-      value: item => item.montoTotal ?? ''
-    },
-    { header: 'Estado Validación',
-      value: item => item.estadoValidacion ?? ''
-    },
-    { header: 'Estado Reserva',
-      value: item => item.estadoReserva ?? ''
-    },
-    { header: 'Número Reserva',
-      value: item => item.numeroReserva ?? ''
-    },
-    { header: 'Número Tasa',
-      value: item => item.numeroTasa ?? ''
-    },
-    { header: 'Fecha Creación',
-      value: item => item.fechaCreacion
+    { header: 'Disciplina', value: item => item.organizacionDto?.disciplina ??
+        item.reservasPeriodoDtoList?.[0]?.disciplina ?? ''},
+    { header: 'Entrenador', value: item => item.reservasPeriodoDtoList?.[0]?.entrenador ??
+        item.organizacionDto?.entrenador ?? ''},
+    { header: 'Mes', value: item => item.reservasPeriodoDtoList?.[0]?.mes ?? ''},
+    { header: 'Año', value: item => item.reservasPeriodoDtoList?.[0]?.año ?? ''},
+    { header: 'Monto Total', value: item => item.montoTotal ?? ''},
+    { header: 'Estado Validación', value: item => item.estadoValidacion ?? ''},
+    { header: 'Estado Reserva', value: item => item.estadoReserva ?? ''},
+    { header: 'Número Reserva', value: item => item.numeroReserva ?? ''},
+    { header: 'Número Tasa', value: item => item.numeroTasa ?? ''},
+    { header: 'Fecha Creación', value: item => item.fechaCreacion
           ? new Date(item.fechaCreacion).toLocaleDateString()
-          : ''
-    },
-    { header: 'Fecha Pago',
-      value: item => item.pagosDtoList?.[0]?.fechaPago
+          : ''},
+    { header: 'Fecha Pago', value: item => item.pagosDtoList?.[0]?.fechaPago
           ? new Date(
               item.pagosDtoList[0].fechaPago
             ).toLocaleDateString()
-          : ''
-    },
-    { header: 'Complejo',
-      value: item => item.campoDeportivoDto
-          ?.complejoDto?.nombre ?? ''
-    },
-    { header: 'Campo Deportivo',
-      value: item => item.campoDeportivoDto?.nombre ?? ''
-    }
+          : ''},
+    { header: 'Complejo', value: item => item.campoDeportivoDto
+          ?.complejoDto?.nombre ?? ''},
+    { header: 'Campo Deportivo', value: item => item.campoDeportivoDto?.nombre ?? ''}
   ];
   csvExportItems: Reserva[] = [];
   searchResults: any;
@@ -795,33 +764,6 @@ clearFilters() {
       return [];
     }
   };
-
-  // private async updateReservation(
-  //   reserva: Reserva,
-  //   updates: Partial<Reserva>
-  // ): Promise<Reserva> {
-
-  //   const updatedReserva: Reserva = {
-  //     ...reserva,
-  //     ...updates,
-  //     fechaActualizacion: new Date()
-  //   };
-
-  //   try {
-
-  //     const response: any = await this.reservaService.update(updatedReserva).toPromise();
-  //     if (!response || response.estadoReserva !== updates.estadoReserva) {
-  //       throw new Error('El backend no confirmó el cambio de estado de la reserva');
-  //     }
-  //     return response;
-
-  //   } catch (error) {
-  //     console.error('No se pudo actualizar el estado de la mensualidad después de consultar RUAT', error);
-  //     return reserva;
-
-  //   }
-
-  // }
 
   private loadSchools() {
     this.organizacionesService.getAll().subscribe({

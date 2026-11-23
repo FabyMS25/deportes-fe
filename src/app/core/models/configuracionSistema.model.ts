@@ -7,7 +7,7 @@ export interface ConfiguracionSistema {
   fechaActualizacion?: Date;
   
   // Identification
-  clave: ClaveConfiguracion;              // Unique key identifier
+  clave: ClaveConfiguracion;              // Identifier; it may repeat in different scopes
   categoria: CategoriaConfiguracion;          // Group related configs
   
   // Values (flexible storage)
