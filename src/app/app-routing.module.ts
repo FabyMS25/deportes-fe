@@ -7,11 +7,6 @@ import { LayoutComponent } from './layouts/layout.component';
 
 const routes: Routes = [
   {
-    path: '',
-    loadComponent: () => import('./public/landing/landing.component')
-      .then(component => component.LandingComponent)
-  },
-  {
     path: 'public',
     loadChildren: () => import('./public/extrapages/extraspages.module')
       .then(module => module.ExtraspagesModule)

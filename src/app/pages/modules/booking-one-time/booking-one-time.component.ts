@@ -8,17 +8,13 @@ import Swal from 'sweetalert2';
 
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
-import { PagoService } from 'src/app/core/services/api/pago.service';
 import { ReservaPuntualFilters, ReservaPuntualService } from 'src/app/core/services/api/reserva-puntual.service';
-import { ReservaService, showReservationRevision } from 'src/app/core/services/api/reserva.service';
-import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
-import { EstadoReserva, EstadoValidacion, EstadoPago, EstadoUsuario, EstadoRuat, EstadoActual, StatusUtils, TipoBeneficiarioReserva, TipoContribuyenteReserva} from 'src/app/core/constants/Estados';
+import { showReservationRevision } from 'src/app/core/services/api/reserva.service';
+import { EstadoUsuario, StatusUtils, TipoContribuyenteReserva} from 'src/app/core/constants/Estados';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
 import { Categoria } from 'src/app/core/models/categoria.model';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { ReservaPuntual } from 'src/app/core/models/reservaPuntual.model';
-import { Reserva } from 'src/app/core/models/reserva.model';
-import { Pago } from 'src/app/core/models/pago.model';
 import { TicketComponent } from '../reports/ticket/ticket.component';
 import { BookingOneTimeModalComponent } from '../../modals/modal-booking-one-time/modal-booking-one-time.component';
 import { AuthenticationService } from 'src/app/core/services/auth.service';
@@ -37,32 +33,48 @@ export class BookingOneTimeComponent implements OnInit {
   breadCrumbItems: BreadCrumbItem[] =[];
   viewMode: 'table' | 'cards' = 'table';
   canActivate: string[];
-  itemsList: any[] = [];
+  columnsList: any[] = [];
   temp: any[] = [];
+  loading: boolean = true;
   serverSidePagination: boolean = true;
   currentPage: number = 1;
   pageSize: number = 5;
-  
-  loading: boolean = true;
-  reservasList: any;
-  categoryList: Categoria[] = [];
+  sortBy = 'fechaActualizacion';
+  sortDirection: 'asc' | 'desc' = 'desc';
+
   userRole: UserRoleName = UserRoles.CONTRIBUYENTE;
   userData!:any;
   contribuyente!: Contribuyente;
+  systemConfigList: { [key: string]: ConfiguracionSistema } = {};
+    
+  reservasList: any;
+  categoryList: Categoria[] = [];
   readonly closeActionLabel = (row: any): string =>
     StatusUtils.reservationCloseAction(row?.reservaDto || row, this.canActivate)?.label || '';
 
   estadoReservaOptions = StatusUtils.getReservationStatusOptions();
   estadoValidacionOptions = StatusUtils.getEstadoValidacionOptions();
+  tipoOrganizacionOptions = OrganizacionReservaOptions;
   tipoContribuyenteOptions = [
     { value: TipoContribuyenteReserva.NATURAL, label: 'Persona natural' },
     { value: TipoContribuyenteReserva.JURIDICA, label: 'Persona jurídica' }
   ];
-  tipoOrganizacionOptions = OrganizacionReservaOptions;
-  sortBy = 'fechaUso';
-  sortDirection: 'asc' | 'desc' = 'desc';
 
+  filters = {
+    searchTerm: '',
+    estadoReserva: '',
+    estadoValidacion: '',
+    categoria: '',
+    tipoContribuyente: '',
+    tipoOrganizacion: '',
+    fromDate: null as Date | null,
+    toDate: null as Date | null,
+    tab: 0
+  };
+  dateRange: { from: Date, to: Date } | null = null;
+  searchResults: any;
   selectedItems: ReservaPuntual[] = [];
+  csvExportItems: ReservaPuntual[] = [];
   readonly CSV_COLUMNS: CsvColumn<ReservaPuntual>[] = [
     { header: 'Complejo', value: i => i.reservaDto?.campoDeportivoDto?.complejoDto?.nombre || '-' },
     { header: 'Campo Deportivo', value: i => i.reservaDto?.campoDeportivoDto?.nombre || '-' },
@@ -99,23 +111,8 @@ export class BookingOneTimeComponent implements OnInit {
     { header: 'Nombre Organización', value: i => i.reservaDto?.organizacionDto?.nombre || '-' },
     { header: 'Fecha Creación', value: i => i.reservaDto?.fechaCreacion ? new Date(i.reservaDto.fechaCreacion).toLocaleDateString() : '-' },
   ];
-  csvExportItems: ReservaPuntual[] = [];
-  searchResults: any;
 
-  dateRange: { from: Date, to: Date } | null = null;
-  filters = {
-    searchTerm: '',
-    estadoReserva: '',
-    estadoValidacion: '',
-    categoria: '',
-    tipoContribuyente: '',
-    tipoOrganizacion: '',
-    fromDate: null as Date | null,
-    toDate: null as Date | null,
-    tab: 0
-  };
 
-  systemConfigList: { [key: string]: ConfiguracionSistema } = {};
   constructor(
     private authService: AuthenticationService,
     public paginationService: PaginationService,
@@ -133,7 +130,7 @@ export class BookingOneTimeComponent implements OnInit {
       { label: 'Reservas' },
       { label: 'Reservas Puntuales', active: true }
     ];
-    this.itemsList = [
+    this.columnsList = [
       { name: 'Número Reserva', prop: 'reservaDto.numeroReserva', nowrap: true, visible: false, sortable: true },
       { name: 'Contribuyente', prop: 'reservaDto.contribuyenteDto.nombreCompleto', visible: !this.contribuyente, sortable: true },
       { name: 'Complejo', prop: 'reservaDto.campoDeportivoDto.complejoDto.nombre', visible: true, sortable: true },
@@ -166,8 +163,9 @@ export class BookingOneTimeComponent implements OnInit {
       { name: 'Observaciones', prop: 'observaciones', visible: false },
 
       { name: 'Fecha Creación', prop: 'reservaDto.fechaCreacion', date: true, visible: false },
+      { name: 'Fecha Actualización', prop: 'reservaDto.fechaActualizacion', date: true, visible: false }
     ];
-    this.itemsList = this.itemsList.map(column => ({ ...column, sortable: true }));
+    this.columnsList = this.columnsList.map(column => ({ ...column, sortable: true }));
     const savedViewMode = localStorage.getItem('dataTableViewMode');
     if (savedViewMode === 'table' || savedViewMode === 'cards') {
       this.viewMode = savedViewMode;
@@ -190,7 +188,17 @@ export class BookingOneTimeComponent implements OnInit {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
   
+  ngOnDestroy(): void {
+    clearTimeout(this.searchTimer);
+    clearInterval(this.refreshTimer);
+    ++this.listRequestVersion;
+  }
+
   /* UI HANDLERS */
+  onSearchChange(): void {
+    clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => this.applyFilters(), 300);
+  }
   getSelectedItems(items: any) {
     this.selectedItems = items;
   }
@@ -201,39 +209,29 @@ export class BookingOneTimeComponent implements OnInit {
     this.viewMode = this.viewMode === 'table' ? 'cards' : 'table';
     localStorage.setItem('dataTableViewMode', this.viewMode);
   }
-onPageChange(page: number): void {
+  onPageChange(page: number): void {
     this.currentPage = page
     this.getPuntualReservations(false);
   }
 
-onSortChange(sort: { column: string; direction: 'asc' | 'desc' }): void {
-    if (!this.itemsList.some(column => column.prop === sort.column && column.sortable)) return;
+  onSortChange(sort: { column: string; direction: 'asc' | 'desc' }): void {
+    if (!this.columnsList.some(column => column.prop === sort.column && column.sortable)) return;
     this.sortBy = sort.column;
     this.sortDirection = sort.direction;
     this.currentPage = 1;
     this.getPuntualReservations(false);
   }
-onPageSizeChange(size: number): void {
+  onPageSizeChange(size: number): void {
     this.pageSize = size;
     this.currentPage = 1;
     this.getPuntualReservations(false);
   }
 
-onNavChange(changeEvent: NgbNavChangeEvent) {
+  onNavChange(changeEvent: NgbNavChangeEvent) {
     this.filters.estadoReserva = '';
     this.filters.tab = changeEvent.nextId;
     this.currentPage = 1;
     this.getPuntualReservations(false);
-  }
-  ngOnDestroy(): void {
-    clearTimeout(this.searchTimer);
-    clearInterval(this.refreshTimer);
-    ++this.listRequestVersion;
-  }
-
-  onSearchChange(): void {
-    clearTimeout(this.searchTimer);
-    this.searchTimer = setTimeout(() => this.applyFilters(), 300);
   }
 
   onReservationStatusChange(): void {
@@ -241,11 +239,11 @@ onNavChange(changeEvent: NgbNavChangeEvent) {
     this.applyFilters();
   }
 
-applyFilters() {
+  applyFilters() {
     this.currentPage = 1;
     this.getPuntualReservations(false);
   }
-clearFilters() {
+  clearFilters() {
     clearTimeout(this.searchTimer);
     this.filters = {
       searchTerm: '',
@@ -262,6 +260,7 @@ clearFilters() {
     this.currentPage = 1;
     this.getPuntualReservations(true);
   }
+
   onDateRangeChange(value: { from: Date, to: Date } | null): void {
       this.dateRange = value;
       if (value) {
@@ -275,16 +274,6 @@ clearFilters() {
   }
 
   /* NAVIGATIONS & MODALS */
-  public showTicket(data: ReservaPuntual) {
-    const modalRef = this.modalService.open(TicketComponent, { 
-      size: 'lg',
-      windowClass: 'ticket-modal'
-    });
-    modalRef.componentInstance.bookingType = 'puntual'
-    modalRef.componentInstance.reservationData = data.reservaDto;
-    modalRef.componentInstance.showAsModal = true;
-    modalRef.componentInstance.autoLoad = true;
-  }
   public addReservation() {
     this.router.navigate(['/reservations/details'], {
       state: {
@@ -306,6 +295,16 @@ clearFilters() {
       this.getPuntualReservations();
     });
   }
+  public showTicket(data: ReservaPuntual) {
+    const modalRef = this.modalService.open(TicketComponent, { 
+      size: 'lg',
+      windowClass: 'ticket-modal'
+    });
+    modalRef.componentInstance.bookingType = 'puntual'
+    modalRef.componentInstance.reservationData = data.reservaDto;
+    modalRef.componentInstance.showAsModal = true;
+    modalRef.componentInstance.autoLoad = true;
+  }
   
   private revisionEnCurso?: Promise<any>;
   private revisionesPendientes: any[] = [];
@@ -326,8 +325,6 @@ clearFilters() {
       let data: any;
       try {
         data = await request;
-        // Keep the review even if a newer page/filter request supersedes these rows.
-        // A later read-only request must not discard changes already committed by the server.
         if (data?.revision) this.revisionesPendientes.push(data.revision);
       }
       finally { if (this.revisionEnCurso === request) this.revisionEnCurso = undefined; }

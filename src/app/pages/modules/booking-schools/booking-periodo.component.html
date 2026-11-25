@@ -7,7 +7,7 @@
         [loadExportItems]="loadExportItems"
         [csvColumns]="CSV_COLUMNS"
         [SelectedItems]="selectedItems"
-        [newShow]="canCreateMonthlyPayment"
+        [newShow]="canActivate.includes('CREAR')"
         [consultShow]="selectedItems.length > 0 && canActivate.includes('CONSULTAR')"
         [exportShow]="canActivate.includes('VER')"
         (createEmitter)="createNewMonthlyPayment()"
@@ -74,13 +74,6 @@
                     </button>
                 </div>
             </div>
-            <div class="row g-2 mt-1" *ngIf="puedeAccederBorderoux">
-                <div class="col-auto">
-                    <button class="btn btn-soft-primary btn-sm" type="button" (click)="goToBorderoux()">
-                        <i class="ri-government-line me-1"></i>Liquidaciones Borderoux
-                    </button>
-                </div>
-            </div>
         </div>
         <div class="card-header p-0">
             <div class="row g-2">
@@ -135,7 +128,7 @@
                             <i class="ri-settings-4-line"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
-                            @for (column of itemsList; track column) {
+                            @for (column of columnsList; track column) {
                                 <li class="dropdown-item p-1">
                                 <div class="form-check form-check-outline form-check-primary">
                                     <input class="form-check-input" type="checkbox" [id]="'formCheck' + column.prop"
@@ -155,16 +148,16 @@
         <div class="card-body">
             <app-data-table
                 [loading]="loading"
-                [itemsList]="itemsList"
-                [allcontent]="reservasList"
+                [itemsList]="columnsList"
+                [allcontent]="mensualitiesList"
                 [serverSidePagination]="true"
                 [paginationInfo]="{
                     pageNumber: currentPage - 1,
                     pageSize: pageSize,
-                    totalElements: reservasList?.totalElements,
-                    totalPages: reservasList?.totalPages ,
-                    first: reservasList?.first,
-                    last: reservasList?.last
+                    totalElements: mensualitiesList?.totalElements,
+                    totalPages: mensualitiesList?.totalPages ,
+                    first: mensualitiesList?.first,
+                    last: mensualitiesList?.last
                 }"
                 (pageChange)="onPageChange($event)"
                 (pageSizeChange)="onPageSizeChange($event)"
@@ -173,12 +166,13 @@
                     show: canActivate.includes('VER'),
                     consult: canActivate.includes('CONSULTAR'),
                     records: canActivate.includes('GENERAR TICKET'),
-                    closeForRow: closeActionLabel,}"
+                    closeForRow: closeActionLabel}"
                 (showItemEmitter)="openModal($event,'show','lg')"
                 (consultItemEmitter)="openModal($event,'consult','md')"
                 (closeItemEmitter)="openModal($event,'annularModal','')"
                 (recordsEmitter)="showTicket($event)"
                 [multiCheck]="canActivate.includes('CREAR')"
+                [emptyMessage]="emptyStateMessage"
                 (selectedItemEmitter)="getSelectedItems($event)" 
                 [viewMode]="viewMode">
             </app-data-table>

@@ -97,7 +97,6 @@ const VALIDATION_STATUS_DESCRIPTIONS: Record<EstadoValidacion, string> = {
   [EstadoValidacion.VENCIDA]: 'El plazo de validación venció'
 };
 
-
 export const StatusUtils = {
   reservationCloseAction(reserva: Reserva | undefined, permissions: readonly string[] = []): { kind: 'reject' | 'annul' | 'cancel'; label: string } | null {
     if (!reserva) return null;
@@ -109,7 +108,7 @@ export const StatusUtils = {
     }
     if (!permissions.includes('ANULAR') || reserva.estadoValidacion !== EstadoValidacion.APROBADA) return null;
     if (reserva.estadoReserva === EstadoReserva.PENDIENTE && hasTax) {
-      return { kind: 'annul', label: 'Anular tasa y reserva' };
+      return { kind: 'annul', label: 'Anular' };
     }
     if (reserva.tipoReserva !== 'periodo' && reserva.esReservaGratuita && !hasTax &&
         [EstadoReserva.PENDIENTE, EstadoReserva.PAGADA, EstadoReserva.EN_CURSO].includes(reserva.estadoReserva as EstadoReserva)) {

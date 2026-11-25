@@ -594,9 +594,6 @@
                 {{ 'Anulación automática por falta de pago' | translate }}
               </label>
             </div>
-            <small class="text-muted" *ngIf="!isAutomaticCancellationDisabled && paymentDeadlineDisplay">
-              {{ 'Vence aprox.:' | translate }} {{ paymentDeadlineDisplay }}
-            </small>
           </div>
           <div class="mt-2" *ngIf="isAutomaticCancellationDisabled">
             <label class="form-label mb-0 small text-muted">
@@ -640,10 +637,10 @@
             <div class="small">
               <strong class="d-block mb-1">{{ 'Información Importante:' | translate }}</strong>
               <ul class="mb-0 ps-3">
-                <li>{{ 'Al confirmar se generará la tasa municipal de la reserva' | translate }}</li>
-                <li *ngIf="!isAutomaticCancellationDisabled">{{ 'El pago debe realizarse dentro de' | translate }} <strong>{{ validHours }} {{ 'horas' | translate }}</strong> {{ 'para evitar la anulación automática' | translate }}</li>
+                <li *ngIf="requiresValidation">{{ 'Al aprobar la solicitud se generará la tasa municipal y se establecerá el plazo de pago' | translate }}</li>
+                <li *ngIf="!requiresValidation">{{ 'Al confirmar se generará la tasa municipal y se establecerá el plazo de pago' | translate }}</li>
+                <li *ngIf="!isAutomaticCancellationDisabled">{{ 'El pago debe realizarse dentro de' | translate }} <strong>{{ validHours }} {{ 'horas' | translate }}</strong> {{ requiresValidation ? ('desde la aprobación' | translate) : ('desde la creación de la reserva' | translate) }} {{ 'para evitar la anulación automática' | translate }}</li>
                 <li *ngIf="isAutomaticCancellationDisabled">{{ 'La anulación automática por falta de pago quedará desactivada; el pago deberá tener seguimiento administrativo' | translate }}</li>
-                <li *ngIf="!isAutomaticCancellationDisabled && paymentDeadlineDisplay">{{ 'Vencimiento estimado del plazo:' | translate }} <strong>{{ paymentDeadlineDisplay }}</strong></li>
                 <li *ngIf="anticipationTimeDisplay">{{ 'Las reservas requieren' | translate }} <strong>{{ anticipationTimeDisplay }}</strong> {{ 'de anticipación mínima' | translate }}</li>
               </ul>
             </div>

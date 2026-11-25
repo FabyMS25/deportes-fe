@@ -21,7 +21,6 @@ import { StudentsComponent } from './modules/students/students.component';
 import { TicketComponent } from './modules/reports/ticket/ticket.component';
 
 import { MensualityComponent } from './modals/mensuality/mensuality.component';
-import { leaveMonthlyRegistration } from './modals/mensuality/mensuality.guards';
 
 const routes: Routes = [
   { path: 'profile/profile', component: ProfileComponent },
@@ -43,8 +42,7 @@ const routes: Routes = [
   { path: 'reservations/schools', component: BookingPeriodoComponent },
   { path: 'reservations/borderoux', component: BookingBorderouxComponent },
   { path: 'reservations/details', component: BookingDetailsComponent },
-  { path: 'reservations/schools/new', component: MensualityComponent,
-    canDeactivate: [leaveMonthlyRegistration] },
+  { path: 'reservations/schools/new', component: MensualityComponent },
   { path: 'reservations/ticket', component: TicketComponent }
 
 ];

@@ -3,7 +3,6 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Reserva } from '../../models/reserva.model';
-import { ClasificadorRuat } from '../../models/clasificadorRuat.model';
 import { BookingType } from '../../constants/Features';
 import { EstadoReserva } from '../../constants/Estados';
 import Swal from 'sweetalert2';
@@ -13,8 +12,8 @@ import { AuthenticationService } from '../auth.service';
 export interface ReservaFilters {
   revisarEstados?: boolean;
   tab?: number;
-  searchTerm?: string; // to search on nombre of Contribuyente, nombre of Organization, nombre Campo deportivo, nro tasa, nro de reserva, motivo de rechazo , motivo de gratuitidad como ESCUELA_MUNICIPAL , 
-  typeReserva?:string;//periodo|puntual|recurrente
+  searchTerm?: string;  
+  typeReserva?:string;//periodo|puntual|recurrente|borderoux
   estadoReserva?: string;
   estadoValidacion?: string;
   esReservaGratuita?:boolean;
@@ -108,8 +107,9 @@ export class ReservaService {
     return apiGet<Reserva[]>(this.http, `${this.apiUrl}/activas/campo/${uuidCampo}`, `obtener reservas activas por campo (${uuidCampo})`, { params });
   }
 
-  approveReservation(uuid: String, aprobadoPor: string): Observable<Reserva> {
+  approveReservation(uuid: String, aprobadoPor: string, observacion = ''): Observable<Reserva> {
     let params = new HttpParams().set('aprobadoPor', this.currentUserUuid() || aprobadoPor);
+    if (observacion.trim()) params = params.set('observacion', observacion.trim());
     return apiPut<Reserva>(this.http, `${this.apiUrl}/${uuid}/aprobar`, null, `aprobar reserva (${uuid})`, { params });
   }
 
@@ -164,14 +164,6 @@ export class ReservaService {
   create(data: Reserva): Observable<Reserva> {
     const creadoPor = data.creadoPor || this.currentUserUuid();
     return apiPost<Reserva>(this.http, this.apiUrl, { ...data, creadoPor }, 'crear reserva');
-  }
-
-  getClasificadorBorderoux(): Observable<ClasificadorRuat> {
-    return apiGet<ClasificadorRuat>(
-      this.http,
-      `${this.apiUrl}/borderoux/clasificador`,
-      'obtener clasificador RUAT de liquidaciones Borderoux'
-    );
   }
 
   update(data: Reserva): Observable<Reserva> {

@@ -154,16 +154,6 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
   get isAutomaticCancellationDisabled(): boolean {
     return this.reservationForm?.get('cancelacionAutomatica')?.value === false;
   }
-  get paymentDeadlineDisplay(): string {
-    const date = this.parseDateTimeLocal(this.reservationForm?.get('fechaLimitePago')?.value);
-    return date ? date.toLocaleString('es-BO', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }) : '';
-  }
   get anticipationHours(): number | undefined{
     if (this.isInternalUser) {
       return undefined;
@@ -399,7 +389,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
       cantidadSesiones: [{ value: this.recurrentSchedule?.cantidadSesiones || 0, disabled: true }],
       duracionSesionHoras: [{ value: this.recurrentSchedule?.duracionSesionHoras || 0, disabled: true }],
       montoTotal: [{ value: 0, disabled: true }, [Validators.required, Validators.min(0)]],
-      fechaLimitePago: [{ value: this.formatDateTimeLocal(this.getDefaultPaymentDeadline()), disabled: true }],
+      fechaLimitePago: [{ value: '', disabled: true }],
       cancelacionAutomatica: [true],
       motivoCancelacionAutomatica: [{ value: '', disabled: true }],
       categoria: [{ value: this.getTarifaCategories(), disabled: true }],
@@ -735,7 +725,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
 
     if (!this.canEditAutomaticCancellation) {
       this.reservationForm.patchValue({
-        fechaLimitePago: this.formatDateTimeLocal(this.getDefaultPaymentDeadline()),
+        fechaLimitePago: '',
         cancelacionAutomatica: true,
         motivoCancelacionAutomatica: ''
       }, { emitEvent: false });
@@ -751,7 +741,7 @@ export class ReservationFormComponent implements OnInit, OnDestroy {
 
     if (cancelacionAutomatica) {
       this.reservationForm.patchValue({
-        fechaLimitePago: this.formatDateTimeLocal(this.getDefaultPaymentDeadline()),
+        fechaLimitePago: '',
         motivoCancelacionAutomatica: ''
       }, { emitEvent: false });
       motivoControl?.disable({ emitEvent: false });
@@ -1698,11 +1688,7 @@ private prepareReservationData(): Reserva {
     : this.canEditAutomaticCancellation
       ? formValue.cancelacionAutomatica !== false
       : true;
-  const fechaLimitePago = isFreeReservation
-    ? undefined
-    : cancelacionAutomatica
-      ? this.getDefaultPaymentDeadline()
-      : undefined;
+  const fechaLimitePago = undefined;
   
   if (isFreeReservation || !this.requiresValidation || this.userRole === 'Admin' || this.userRole === 'Encargado') {
     estadoValidacion = EstadoValidacion.APROBADA;
@@ -2705,21 +2691,6 @@ getPaidReservationDescription(): string {
     if (hrs === 0) return `${mins} min`;
     if (mins === 0) return `${hrs} ${hrs === 1 ? 'hora' : 'horas'}`;
     return `${hrs}h ${mins}m`;
-  }
-
-  private getDefaultPaymentDeadline(): Date {
-    return new Date(Date.now() + this.validHours * 60 * 60 * 1000);
-  }
-
-  private formatDateTimeLocal(date: Date): string {
-    const pad = (value: number) => String(value).padStart(2, '0');
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-  }
-
-  private parseDateTimeLocal(value: Date | string | null | undefined): Date | undefined {
-    if (!value) return undefined;
-    const date = value instanceof Date ? value : new Date(value);
-    return isNaN(date.getTime()) ? undefined : date;
   }
 
   private getCurrentUserUuid(): string | undefined {

@@ -1,23 +1,21 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { Subject, firstValueFrom, takeUntil } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { NgbModal, NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { PaginationService } from 'src/app/core/services/pagination.service';
-import { ReservaFilters, ReservaService } from 'src/app/core/services/api/reserva.service';
+import { ReservaBorderouxFilters, ReservaBorderouxService } from 'src/app/core/services/api/reserva-borderoux.service';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
 import { SportsFieldsService } from 'src/app/core/services/api/sports-fields.service';
 import { CategoriasService } from 'src/app/core/services/api/categorias.service';
 import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
-import { EstadoReserva, EstadoUsuario, StatusUtils } from 'src/app/core/constants/Estados';
+import { EstadoReserva, StatusUtils } from 'src/app/core/constants/Estados';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { Organizacion } from 'src/app/core/models/organizacion.model';
 import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { Categoria } from 'src/app/core/models/categoria.model';
-import { Reserva } from 'src/app/core/models/reserva.model';
-import { BorderouxPorcentajePreset } from 'src/app/core/models/reservaBorderoux.model';
+import { BorderouxPorcentajePreset, ReservaBorderoux } from 'src/app/core/models/reservaBorderoux.model';
 import { CsvColumn } from 'src/app/shared/data-header/data-header.component';
 import { ColumnDefinition } from 'src/app/shared/data-table/data-table.component';
 import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component';
@@ -29,26 +27,23 @@ import { BorderouxFormComponent } from '../../modals/borderoux-form/borderoux-fo
   styleUrls: ['./booking-borderoux.component.scss']
 })
 export class BookingBorderouxComponent implements OnInit, OnDestroy {
-  private readonly cancelListRequest = new Subject<void>();
-  private requestVersion = 0;
+  private listRequestVersion = 0;
+  private searchTimer?: ReturnType<typeof setTimeout>;
 
   breadCrumbItems: BreadCrumbItem[] = [];
-  canActivate: string[] = [];
-  itemsList: ColumnDefinition[] = [];
   viewMode: 'table' | 'cards' = 'table';
+  canActivate: string[] = [];
+  columnsList: ColumnDefinition[] = [];
   serverSidePagination = true;
   currentPage = 1;
   pageSize = 5;
   loading = true;
+  sortBy = 'fechaCreacion';
+  sortDirection: 'asc' | 'desc' = 'desc';
 
   contribuyente!: Contribuyente;
-  escuelasList: Organizacion[] = [];
-  camposList: CampoDeportivo[] = [];
-  categoriasList: Categoria[] = [];
-
-  selectedItems: Reserva[] = [];
-  csvExportItems: Reserva[] = [];
-  reservasList: any = {
+    
+  borderouxList: any = {
     content: [],
     totalElements: 0,
     totalPages: 0,
@@ -56,19 +51,23 @@ export class BookingBorderouxComponent implements OnInit, OnDestroy {
     last: true,
     pageable: { pageNumber: 0, pageSize: 5 }
   };
+  categoriasList: Categoria[] = [];
+  escuelasList: Organizacion[] = [];
+  camposList: CampoDeportivo[] = [];
 
   estadoReservaOptions = StatusUtils.getReservationStatusOptions();
   EstadoReserva = EstadoReserva;
 
-  filters: ReservaFilters = {
+  filters: ReservaBorderouxFilters = {
     tab: 0,
     searchTerm: '',
-    typeReserva: 'borderoux',
     estadoReserva: '',
     organization: ''
   };
 
-  readonly CSV_COLUMNS: CsvColumn<Reserva>[] = [
+  selectedItems: ReservaBorderoux[] = [];
+  csvExportItems: ReservaBorderoux[] = [];
+  readonly CSV_COLUMNS: CsvColumn<ReservaBorderoux>[] = [
     { header: 'Número Reserva', value: item => item.numeroReserva ?? '' },
     { header: 'Organización', value: item => item.organizacionDto?.nombre ?? '' },
     { header: 'Contribuyente', value: item => item.contribuyenteDto?.nombreCompleto ?? '' },
@@ -83,40 +82,38 @@ export class BookingBorderouxComponent implements OnInit, OnDestroy {
   ];
 
   constructor(
-    private router: Router,
     private authService: AuthenticationService,
     public paginationService: PaginationService,
     public modalService: NgbModal,
-    private reservaService: ReservaService,
+    private reservaBorderouxService: ReservaBorderouxService,
     private organizacionesService: OrganizacionService,
     private sportsFieldsService: SportsFieldsService,
     private categoriasService: CategoriasService
   ) {
-    this.canActivate = [...new Set([
-      ...this.authService.hasPermission('/reservations/borderoux'),
-      ...this.authService.hasPermission('/reservations/schools')
-    ])];
+    this.canActivate = this.authService.hasPermission('/reservations/borderoux');
   }
 
   ngOnInit(): void {
     this.breadCrumbItems = [
+      { label: '' },
       { label: 'Liquidaciones Borderoux', active: true }
     ];
 
-    this.itemsList = [
-      { name: 'Número Reserva', prop: 'numeroReserva', sortable: true, visible: true, nowrap: true },
+    this.columnsList = [
+      { name: 'Número', prop: 'numeroReserva', sortable: true, visible: true, nowrap: true },
       { name: 'Organización', prop: 'organizacionDto.nombre', sortable: true, visible: true },
       { name: 'Contribuyente', prop: 'contribuyenteDto.nombreCompleto', sortable: true, visible: true },
       {
         name: 'Porcentaje Borderoux',
-        // Derived from the activities; the percentage is not stored on reservas.
         prop: 'porcentajeReserva',
+        sortable: false,
         visible: true,
-        value: row => this.porcentajeReserva(row as Reserva)
+        value: row => this.porcentajeReserva(row as ReservaBorderoux)
       },
       {
         name: 'Actividades',
         prop: 'actividadesCount',
+        sortable: false,
         number: true,
         visible: true,
         value: row => (row as any)?.borderouxActividadesDtoList?.length || 0
@@ -126,37 +123,35 @@ export class BookingBorderouxComponent implements OnInit, OnDestroy {
       { name: 'Estado Liquidación', prop: 'estadoReserva', sortable: true, tag: true, visible: true },
       { name: 'Fecha Creación', prop: 'fechaCreacion', sortable: true, date: true, visible: false }
     ];
-
     const savedViewMode = localStorage.getItem('dataTableViewMode');
     if (savedViewMode === 'table' || savedViewMode === 'cards') {
       this.viewMode = savedViewMode;
     }
-
-    if (this.esContribuyente) {
-      this.contribuyente = this.authService.currentUser();
+    const currentUser = this.authService.currentUser();
+    if (this.authService.getUserRole() === 'Contribuyente') {
+      this.contribuyente = currentUser;
     }
 
     this.loadOrganizations();
     this.loadFields();
     this.loadCategorias();
-    void this.getReservations(true);
+    void this.getBorderoux();
   }
 
   ngOnDestroy(): void {
-    ++this.requestVersion;
-    this.cancelListRequest.next();
-    this.cancelListRequest.complete();
+    clearTimeout(this.searchTimer);
+    ++this.listRequestVersion;
   }
 
   get esContribuyente(): boolean {
     return this.authService.getUserRole() === 'Contribuyente';
   }
 
-  trackByColumn = (_: number, column: ColumnDefinition): string => column.prop || column.name;
-
   get canCreate(): boolean {
     return this.canActivate.includes('CREAR');
   }
+
+  trackByColumn = (_: number, column: ColumnDefinition): string => column.prop || column.name;
 
   get porcentajes(): BorderouxPorcentajePreset[] {
     const config = this.authService.getAllConfigs()?.[ClaveConfiguracion.BORDEROUX_PORCENTAJES];
@@ -178,12 +173,9 @@ export class BookingBorderouxComponent implements OnInit, OnDestroy {
     }
   }
 
-  get emptyStateMessage(): string {
-    return 'No hay liquidaciones Borderoux registradas.';
-  }
-
   onSearchChange(): void {
-    this.applyFilters();
+    clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => this.applyFilters(), 300);
   }
 
   getSelectedItems(items: any): void {
@@ -197,51 +189,48 @@ export class BookingBorderouxComponent implements OnInit, OnDestroy {
 
   onPageChange(page: number): void {
     this.currentPage = page;
-    void this.getReservations(false);
+    void this.getBorderoux();
   }
 
   onPageSizeChange(size: number): void {
     this.pageSize = size;
     this.currentPage = 1;
-    void this.getReservations(false);
+    void this.getBorderoux();
   }
 
   onSortChange(event: { column: string; direction: 'asc' | 'desc' }): void {
-    if (!this.itemsList.some(column => column.prop === event.column && column.sortable)) return;
-    this.filters = { ...this.filters, sortBy: event.column, sortDirection: event.direction };
+    if (!this.columnsList.some(column => column.prop === event.column && column.sortable)) return;
+    this.sortBy = event.column;
+    this.sortDirection = event.direction;
     this.currentPage = 1;
-    void this.getReservations(false);
+    void this.getBorderoux();
   }
 
   onNavChange(changeEvent: NgbNavChangeEvent): void {
     this.filters.estadoReserva = '';
     this.filters.tab = changeEvent.nextId;
     this.currentPage = 1;
-    void this.getReservations(false);
+    void this.getBorderoux();
   }
 
   applyFilters(): void {
     this.currentPage = 1;
-    void this.getReservations(false);
+    void this.getBorderoux();
   }
 
   clearFilters(): void {
+    clearTimeout(this.searchTimer);
     this.filters = {
       tab: 0,
       searchTerm: '',
-      typeReserva: 'borderoux',
       estadoReserva: '',
       organization: ''
     };
     this.currentPage = 1;
-    void this.getReservations(true);
+    void this.getBorderoux();
   }
 
-  goToSchools(): void {
-    void this.router.navigate(['/reservations/schools']);
-  }
-
-  openForm(row?: Reserva): void {
+  openForm(row?: ReservaBorderoux): void {
     if (!row && !this.canCreate) {
       Swal.fire({
         title: 'Funcionalidad deshabilitada',
@@ -267,29 +256,27 @@ export class BookingBorderouxComponent implements OnInit, OnDestroy {
 
     modalRef.result
       .then(saved => {
-        if (saved) void this.getReservations(false);
+        if (saved) void this.getBorderoux();
       })
       .catch(() => {});
   }
 
-  private async getReservations(revisarEstados = true): Promise<void> {
-    const version = ++this.requestVersion;
+  private async getBorderoux(): Promise<void> {
+    const version = ++this.listRequestVersion;
     this.loading = true;
-    this.cancelListRequest.next();
     try {
       const data = await firstValueFrom(
-        this.reservaService.getAll(this.currentPage - 1, this.pageSize,
-          { ...this.filters, revisarEstados }).pipe(takeUntil(this.cancelListRequest))
+        this.reservaBorderouxService.getAll(this.currentPage - 1, this.pageSize, this.getPaginationFilters())
       );
-      if (version !== this.requestVersion) return;
+      if (version !== this.listRequestVersion) return;
       const list = Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
-      this.reservasList = { ...data, content: list };
+      this.borderouxList = { ...data, content: list };
       this.csvExportItems = list;
       this.loading = false;
     } catch (error: any) {
-      if (version !== this.requestVersion) return;
+      if (version !== this.listRequestVersion) return;
       this.handleError(error, 'Error al obtener las liquidaciones Borderoux');
-      this.reservasList = {
+      this.borderouxList = {
         content: [],
         totalElements: 0,
         totalPages: 0,
@@ -299,16 +286,16 @@ export class BookingBorderouxComponent implements OnInit, OnDestroy {
       };
       this.csvExportItems = [];
     } finally {
-      if (version === this.requestVersion) this.loading = false;
+      if (version === this.listRequestVersion) this.loading = false;
     }
   }
 
-  readonly loadExportItems = async (): Promise<Reserva[]> => {
+  readonly loadExportItems = async (): Promise<ReservaBorderoux[]> => {
     try {
-      const data = await firstValueFrom(this.reservaService.getAll(
+      const data = await firstValueFrom(this.reservaBorderouxService.getAll(
         0,
-        Math.max(1, this.reservasList.totalElements),
-        { ...this.filters, revisarEstados: false }
+        Math.max(1, this.borderouxList.totalElements),
+        this.getPaginationFilters()
       ));
       return Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
     } catch (error) {
@@ -316,6 +303,14 @@ export class BookingBorderouxComponent implements OnInit, OnDestroy {
       return [];
     }
   };
+
+  private getPaginationFilters(): ReservaBorderouxFilters {
+    return {
+      ...this.filters,
+      sortBy: this.sortBy,
+      sortDirection: this.sortDirection
+    };
+  }
 
   private loadOrganizations(): void {
     this.organizacionesService.getAll().subscribe({
@@ -365,7 +360,7 @@ export class BookingBorderouxComponent implements OnInit, OnDestroy {
     });
   }
 
-  private porcentajeReserva(item: Reserva): string {
+  private porcentajeReserva(item: ReservaBorderoux): string {
     const valores = (item.borderouxActividadesDtoList || [])
       .map(actividad => actividad.porcentajeAplicado)
       .filter((valor): valor is number => valor !== null && valor !== undefined)

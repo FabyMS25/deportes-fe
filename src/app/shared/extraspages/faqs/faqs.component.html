@@ -176,9 +176,8 @@
   <p>Si el trámite requiere aprobación, aparece como <strong>Solicitada</strong>. Todavía no se ha emitido un cobro para pagar.
     El personal autorizado puede aprobarlo o rechazarlo indicando el motivo. Si se aprueba y requiere pago, se emite el cobro correspondiente y se completa el registro.
     Una reserva gratuita no genera un cobro.</p>
-  <p>Una fecha estimada que aparezca en la solicitud no provoca una anulación en RUAT.
-    Si corresponde anulación automática, el plazo de pago se recalcula al aprobar la reserva, una vez emitido el cobro,
-    y no desde el día en que se envió la solicitud.</p>
+  <p>El plazo de pago se calcula en el servidor. Para una reserva creada directamente como pendiente de pago,
+    comienza al crearla; para una solicitud, comienza al aprobarla y emitir el cobro.</p>
   <h5>2. Casos especiales de escuelas y mensualidades</h5>
   <p><strong>Excepción de escuelas municipales:</strong> la reserva recurrente gratuita que sirve de base a una escuela
     no se completa automáticamente por fecha. El personal autorizado puede marcarla como Completada cuando corresponda.
@@ -224,7 +223,7 @@
   <h5>5. Acciones manuales y significado de los estados</h5>
   <ul>
     <li><strong>Rechazar solicitud:</strong> el personal autorizado no aprueba el pedido e indica el motivo. Como todavía no se emitió un cobro, no hay nada que anular en RUAT.</li>
-    <li><strong>Anular tasa y reserva:</strong> se solicita anular el cobro de una reserva pendiente, indicando el motivo. La cancelación se registra cuando RUAT confirma la anulación.</li>
+    <li><strong>Anular:</strong> se solicita anular el cobro de una reserva pendiente, indicando el motivo. La cancelación se registra cuando RUAT confirma la anulación.</li>
     <li><strong>Cancelar reserva:</strong> se cancela una reserva gratuita aprobada; no interviene un cobro.</li>
     <li><strong>Cambiar horario:</strong> para puntuales pendientes que cumplan las validaciones de fecha y disponibilidad; conserva la duración y no modifica el importe de la tasa.</li>
     <li><strong>Completar / No Show:</strong> registran finalización de uso o inasistencia cuando el tipo y estado lo permiten; no son anulaciones de tasa.</li>

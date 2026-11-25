@@ -10,19 +10,18 @@ import { AuthenticationService } from 'src/app/core/services/auth.service';
 import { PaginationService } from 'src/app/core/services/pagination.service';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
 import { PagoService } from 'src/app/core/services/api/pago.service';
-import { ReservaFilters, ReservaService, showReservationRevision } from 'src/app/core/services/api/reserva.service';
+import { showReservationRevision } from 'src/app/core/services/api/reserva.service';
+import { ReservaPeriodReservationFilters, ReservaPeriodoService } from 'src/app/core/services/api/reserva-periodo.service';
 import { OrganizacionService } from 'src/app/core/services/api/organizacion.service';
 import { EstudianteEscuelaService } from 'src/app/core/services/api/estudianteEscuela.service';
 import { EstadoReserva, EstadoValidacion, EstadoPago, EstadoUsuario, EstadoRuat, EstadoActual, StatusUtils} from 'src/app/core/constants/Estados';
 import { ConfiguracionSistema } from 'src/app/core/models/configuracionSistema.model';
-import { ClaveConfiguracion } from 'src/app/core/constants/Configurations';
 import { obtenerHorasValidacionPago } from 'src/app/core/utils/configuracion-sistema.util';
 import { EstudianteEscuela } from 'src/app/core/models/EstudianteEscuela.model';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
 import { Organizacion } from 'src/app/core/models/organizacion.model';
 import { ReservaPeriodo } from 'src/app/core/models/reservaPeriodo.model';
 import { Reserva } from 'src/app/core/models/reserva.model';
-import { Pago } from 'src/app/core/models/pago.model';
 import { TicketComponent } from '../reports/ticket/ticket.component';
 import { BookingPeriodoModalComponent } from '../../modals/modal-booking-school/modal-booking-school.component';
 import { CsvColumn } from 'src/app/shared/data-header/data-header.component';
@@ -33,35 +32,28 @@ import { BreadCrumbItem } from 'src/app/shared/breadcrumbs/breadcrumbs.component
   styleUrl: './booking-periodo.component.scss'
 })
 export class BookingPeriodoComponent implements OnInit, OnDestroy {
-  // Cancels the previous GET when filters/page change or the view is destroyed.
-  private readonly cancelListRequest = new Subject<void>();
-  // UI request ordering only, not a version of the reservation or a state calculation.
-  private requestVersion = 0;
-  // Refreshes the list with the same GET; all state review remains in the backend.
   private refreshTimer?: ReturnType<typeof setInterval>;
-  // Debounces typing so each keystroke does not send another GET.
   private searchTimer?: ReturnType<typeof setTimeout>;
+  private listRequestVersion = 0;
   private readonly statusChecks = new Map<string, Promise<Reserva>>();
   breadCrumbItems: BreadCrumbItem[] =[];
   viewMode: 'table' | 'cards' = 'table';
   canActivate: string[];
-  itemsList: any[] = [];
+  columnsList: any[] = [];
   temp: any[] = [];
+  loading = true;
   serverSidePagination = true;
   currentPage = 1;
   pageSize = 5;
+  sortBy = 'fechaCreacion';
+  sortDirection: 'asc' | 'desc' = 'desc';
 
   userRole: UserRoleName = UserRoles.CONTRIBUYENTE;
   userData!: any;
   contribuyente!: Contribuyente;
-
-  readonly closeActionLabel = (row: any): string =>
-    StatusUtils.reservationCloseAction(row?.reservaDto || row, this.canActivate)?.label || '';
-
-  estadoReservaOptions = StatusUtils.getReservationStatusOptions();
-
-  loading = true;
-  reservasList: any = {
+  systemConfigList: { [key: string]: ConfiguracionSistema } = {};
+ 
+  mensualitiesList: any = {
     content: [],
     totalElements: 0,
     totalPages: 0,
@@ -71,7 +63,14 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
   };
   escuelasList: Organizacion[] = [];
   estudiantesList: EstudianteEscuela[] = [];
+  readonly closeActionLabel = (row: any): string =>
+    StatusUtils.reservationCloseAction(row?.reservaDto || row, this.canActivate)?.label || '';
+
+  estadoReservaOptions = StatusUtils.getReservationStatusOptions();
+
   selectedItems: Reserva[] = [];
+  csvExportItems: Reserva[] = [];
+  searchResults: any;
   readonly CSV_COLUMNS: CsvColumn<Reserva>[] = [
     { header: 'Estudiante', value: item => this.getStudentsSummary(item)
     },
@@ -103,8 +102,6 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
           ?.complejoDto?.nombre ?? ''},
     { header: 'Campo Deportivo', value: item => item.campoDeportivoDto?.nombre ?? ''}
   ];
-  csvExportItems: Reserva[] = [];
-  searchResults: any;
   periodMonths = [
     { value: 1, label: 'Enero' },
     { value: 2, label: 'Febrero' },
@@ -122,32 +119,22 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
   periodYears: number[] = [];
   selectedMesFiltro?: number;
   selectedAnioFiltro?: number;
-  
-  filters: ReservaFilters = {
+  filters: ReservaPeriodReservationFilters = {
     tab: 0,
     searchTerm: '',
-    typeReserva: 'periodo',
     estadoReserva: '',
     estadoValidacion: '',
-    esReservaGratuita: undefined,
     organization: '',
     periodoFiltro: undefined
   };
-  
-  systemConfigList: { [key: string]: ConfiguracionSistema } = {};
-  get HorasValidacionPago(): number | undefined {
-    return obtenerHorasValidacionPago(this.systemConfigList, 'recurrente', undefined);
-  }
 
   constructor(
-    private router: Router,
     private authService: AuthenticationService,
     public paginationService: PaginationService,
+    private router: Router,
     public modalService: NgbModal,
     public formBuilder: UntypedFormBuilder,
-    private reservaService: ReservaService,
-    private ruatService: RuatRequestsService,
-    private pagoService: PagoService,
+    private reservaPeriodoService: ReservaPeriodoService,
     private organizacionesService: OrganizacionService,
     private estuduanteService: EstudianteEscuelaService,
   ) {
@@ -156,9 +143,10 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     this.breadCrumbItems = [
+      { label: '' },
       { label: 'Mensualidades de Escuelas Municipales', active: true }
     ];
-    this.itemsList = [
+    this.columnsList = [
       { name: 'Número Reserva', prop: 'numeroReserva', nowrap: true, visible: true},
       { name: 'Contribuyente', prop: 'contribuyenteDto.nombreCompleto', sortable: true, visible: !this.contribuyente },
       { name: 'Complejo', prop: 'campoDeportivoDto.complejoDto.nombre', visible: false, },
@@ -172,8 +160,7 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
       { name: 'Estado Pago', prop: 'pagosDtoList[0].estadoPago', tag: true, visible: true },
       { name: 'Fecha Creación', prop: 'fechaCreacion', date: true, visible: false },
     ];
-    this.itemsList = this.itemsList.map(column => ({ ...column, sortable: true }));
-
+    this.columnsList = this.columnsList.map(column => ({ ...column, sortable: true }));
     const savedViewMode = localStorage.getItem('dataTableViewMode');
     if (savedViewMode === 'table' || savedViewMode === 'cards') {
       this.viewMode = savedViewMode;
@@ -189,21 +176,21 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
       this.userData = currentUser.designacion.personaDto;
     }
     this.generatePeriodYears();
-    this.loadSchools();
-    this.loadStudents();
-    void this.getReservations();
+    await this.loadSchools();
+    await this.loadStudents();
+    await this.getMensualitiesList();
     this.refreshTimer = setInterval(() => {
-      if (!this.loading) void this.getReservations();
+      if (!this.loading) void this.getMensualitiesList();
     }, 5 * 60 * 1000);
   }
+
   ngOnDestroy(): void {
-    ++this.requestVersion;
-    this.cancelListRequest.next();
-    this.cancelListRequest.complete();
     clearInterval(this.refreshTimer);
     clearTimeout(this.searchTimer);
+    ++this.listRequestVersion;
   }
 
+  /* UI HANDLERS */
   onSearchChange(): void {
     clearTimeout(this.searchTimer);
     this.searchTimer = setTimeout(() => this.applyFilters(), 300);
@@ -220,18 +207,18 @@ export class BookingPeriodoComponent implements OnInit, OnDestroy {
     localStorage.setItem('dataTableViewMode', this.viewMode);
   }
 
-onPageChange(page: number): void {
+  onPageChange(page: number): void {
     this.currentPage = page;
-    this.getReservations(false);
+    this.getMensualitiesList(false);
   }
-onPageSizeChange(size: number): void {
+  onPageSizeChange(size: number): void {
     this.pageSize = size;
     this.currentPage = 1;
-    this.getReservations(false);
+    this.getMensualitiesList(false);
   }
 
-onSortChange(event: { column: string; direction: 'asc' | 'desc' }): void {
-    if (!this.itemsList.some(column => column.prop === event.column && column.sortable)) return;
+  onSortChange(event: { column: string; direction: 'asc' | 'desc' }): void {
+    if (!this.columnsList.some(column => column.prop === event.column && column.sortable)) return;
     const resolvedSort = event.column;
     this.filters = {
       ...this.filters,
@@ -239,22 +226,37 @@ onSortChange(event: { column: string; direction: 'asc' | 'desc' }): void {
       sortDirection: event.direction
     };
     this.currentPage = 1;
-    void this.getReservations(false);
+    void this.getMensualitiesList(false);
   }
-onNavChange(changeEvent: NgbNavChangeEvent) {
+  onNavChange(changeEvent: NgbNavChangeEvent) {
     this.filters.estadoReserva = '';
     this.filters.tab = changeEvent.nextId;
     this.currentPage = 1;
-    this.getReservations(false);
+    this.getMensualitiesList(false);
   }
   onReservationStatusChange(): void {
     this.filters.tab = 0;
     this.applyFilters();
   }
 
-applyFilters() {
+  applyFilters() {
     this.currentPage = 1;
-    this.getReservations(false);
+    this.getMensualitiesList(false);
+  }
+  clearFilters() {
+    clearTimeout(this.searchTimer);
+    this.selectedMesFiltro = undefined;
+    this.selectedAnioFiltro = undefined;
+    this.filters = {
+      tab: 0,
+      searchTerm: '',
+      estadoReserva: '',
+      estadoValidacion: '',
+      organization: '',
+      periodoFiltro: undefined
+    };
+    this.currentPage = 1;
+    this.getMensualitiesList(true);
   }
 
   applyPeriodoFilters(): void {
@@ -269,25 +271,6 @@ applyFilters() {
     this.applyFilters();
   }
   
-clearFilters() {
-    clearTimeout(this.searchTimer);
-    this.selectedMesFiltro = undefined;
-    this.selectedAnioFiltro = undefined;
-    this.filters = {
-      tab: 0,
-      searchTerm: '',
-      typeReserva: 'periodo',
-      estadoReserva: '',
-      estadoValidacion: '',
-      esReservaGratuita: undefined,
-      organization: '',
-      periodoFiltro: undefined
-    };
-    
-    this.currentPage = 1;
-    this.getReservations(true);
-  }
-
   private generatePeriodYears(): void {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
@@ -404,14 +387,6 @@ clearFilters() {
       return !!this.filters.periodoFiltro;
   }
 
-  get hasResultsForPeriodo(): boolean {
-    return (this.reservasList?.content?.length || 0) > 0;
-  }
-
-  get canCreateMonthlyPayment(): boolean {
-    return this.canActivate.includes('CREAR');
-  }
-
   get emptyStateMessage(): string {
     if (!this.filters.periodoFiltro) {
       return 'No hay mensualidades registradas.';
@@ -419,16 +394,19 @@ clearFilters() {
     return `No hay mensualidades registradas para ${this.getPeriodoDisplay(this.filters.periodoFiltro)}.`;
   }
 
-  get puedeAccederBorderoux(): boolean {
-    return this.authService.hasRoutePermission('/reservations/borderoux');
-  }
 
-  public goToBorderoux(): void {
-    void this.router.navigate(['/reservations/borderoux']);
+  private hasMonthlyRegistrationContext(): boolean {
+    const userUuid = this.contribuyente?.uuid;
+    return !!userUuid && this.estudiantesList.some(student =>
+      student.activo !== false && (student.contribuyenteDto?.uuid === userUuid ||
+        student.organizacionDto?.representantesDto?.some(rep => rep.contribuyenteDto?.uuid === userUuid) ||
+        (this.contribuyente?.organizacionesRepresentadas || []).some(org =>
+          org.uuid === student.organizacionDto?.uuid))
+    );
   }
-
+  /* NAVIGATIONS & MODALS */
   public createNewMonthlyPayment(): void {
-    if (!this.canCreateMonthlyPayment) {
+    if (!this.canActivate.includes('CREAR')) {
       Swal.fire({
         title: 'Funcionalidad deshabilitada',
         text: 'El registro de mensualidades no está habilitado para su usuario.',
@@ -437,7 +415,6 @@ clearFilters() {
       });
       return;
     }
-
     if (this.authService.getUserRole() === 'Contribuyente' && !this.hasMonthlyRegistrationContext()) {
       Swal.fire({
         title: 'No puede registrar mensualidades',
@@ -464,28 +441,6 @@ clearFilters() {
       }
     });
   }
-
-  private hasMonthlyRegistrationContext(): boolean {
-    const userUuid = this.contribuyente?.uuid;
-    return !!userUuid && this.estudiantesList.some(student =>
-      student.activo !== false && (student.contribuyenteDto?.uuid === userUuid ||
-        student.organizacionDto?.representantesDto?.some(rep => rep.contribuyenteDto?.uuid === userUuid) ||
-        (this.contribuyente?.organizacionesRepresentadas || []).some(org =>
-          org.uuid === student.organizacionDto?.uuid))
-    );
-  }
-  /* NAVIGATIONS & MODALS */
-  public showTicket(data: any) {
-    const modalRef = this.modalService.open(TicketComponent, { 
-      size: 'lg',
-      windowClass: 'ticket-modal'
-    });
-    modalRef.componentInstance.bookingType = 'periodo'
-    modalRef.componentInstance.reservationData = data?.reservaDto || data;
-    modalRef.componentInstance.showAsModal = true;
-    modalRef.componentInstance.autoLoad = true;
-  }
-  
   public openModal(data: any | undefined, accion: string, size: string) {
     if (!accion) { this.createNewMonthlyPayment(); return; }
     const modalRef = this.modalService.open(BookingPeriodoModalComponent, {
@@ -497,243 +452,48 @@ clearFilters() {
     modalRef.componentInstance.accion = accion;
     modalRef.componentInstance.canActivate = this.canActivate;
     modalRef.componentInstance.emitList.subscribe(() => {
-      this.getReservations();
+      this.getMensualitiesList();
     });
   }
+  public showTicket(data: any) {
+    const modalRef = this.modalService.open(TicketComponent, { 
+      size: 'lg',
+      windowClass: 'ticket-modal'
+    });
+    modalRef.componentInstance.bookingType = 'periodo'
+    modalRef.componentInstance.reservationData = data?.reservaDto || data;
+    modalRef.componentInstance.showAsModal = true;
+    modalRef.componentInstance.autoLoad = true;
+  }
   
-  // private async refreshReservationStatuses(list: Reserva[], version: number): Promise<void> {
-  //   for (const reserva of list) {
-  //     if (version !== this.requestVersion) return;
-  //     const key = reserva.uuid;
-  //     if (!key) continue;
-  //     let check = this.statusChecks.get(key);
-  //     if (!check) {
-  //       check = this.checkAndUpdateSingleReservationStatus(reserva);
-  //       this.statusChecks.set(key, check);
-  //     }
-  //     let updated: Reserva;
-  //     try {
-  //       updated = await check;
-  //     } finally {
-  //       if (this.statusChecks.get(key) === check) this.statusChecks.delete(key);
-  //     }
-  //     if (version !== this.requestVersion) return;
-  //     const content = this.reservasList.content.map((item: Reserva) =>
-  //       item.uuid === key ? updated : item);
-  //     this.reservasList = { ...this.reservasList, content: this.enrichReservationsForDisplay(content) };
-  //     this.temp = this.reservasList.content;
-  //     this.csvExportItems = this.reservasList.content;
-  //   }
-  // }
-  // private async checkAndUpdateSingleReservationStatus(
-  //   reserva: Reserva
-  // ): Promise<Reserva> {
-
-  //   const terminalStates = [
-  //     EstadoReserva.COMPLETADA,
-  //     EstadoReserva.NO_SHOW,
-  //     EstadoReserva.CANCELADA,
-  //     EstadoReserva.EXPIRADA
-  //   ];
-
-  //   if (terminalStates.includes(reserva.estadoReserva)) {
-  //     return reserva;
-  //   }
-
-  //   try {
-
-  //     if (reserva.estadoReserva === EstadoReserva.PENDIENTE) {
-
-  //       const consultResult = await this.consultData(reserva, { silent: true });
-
-  //       if (consultResult.consultationSuccessful && consultResult.hasPayment) {
-
-  //         return await this.updateReservation(reserva, {
-  //           estadoReserva: EstadoReserva.PAGADA,
-  //           fechaActualizacion: new Date()
-  //         });
-
-  //       }
-
-  //       return reserva;
-  //     }
-
-  //     if (
-  //       reserva.estadoReserva === EstadoReserva.PAGADA &&
-  //       this.isUsageDatePassed(reserva)
-  //     ) {
-
-  //       return await this.updateReservation(reserva, {
-  //         estadoReserva: EstadoReserva.COMPLETADA,
-  //         fechaActualizacion: new Date()
-  //       });
-
-  //     }
-
-  //     return reserva;
-
-  //   } catch {
-  //     return reserva;
-  //   }
-  // }
-  // private isUsageDatePassed(reserva: Reserva): boolean {
-
-  //   const periodo = reserva.reservasPeriodoDtoList?.[0];
-
-  //   if (!periodo) {
-  //     return false;
-  //   }
-
-  //   const currentDate = new Date();
-  //   const currentYear = currentDate.getFullYear();
-  //   const currentMonth = currentDate.getMonth() + 1;
-  //   if (periodo.año < currentYear) {
-  //     return true;
-  //   }
-  //   if (periodo.año === currentYear && periodo.mes < currentMonth) {
-  //     return true;
-  //   }
-  //   return false;
-  // }
-  /* API RUAT Services */
-  // private async consultData(
-  //   item: Reserva,
-  //   options: { silent?: boolean } = {}
-  // ): Promise<any> {
-  //   try {
-  //     const nroTasa = item.numeroTasa;
-  //     if (!nroTasa) {
-  //       return {
-  //         item,
-  //         text: 'No hay número de tasa asociado',
-  //         type: 'warning',
-  //         hasPayment: false,
-  //         consultationSuccessful: false,
-  //         errorCode: 'NO_TASA'
-  //       };
-  //     }
-  //     const resp: any = await this.ruatService.checkFeePayment(nroTasa).toPromise();
-  //     if (!this.ruatService.canContinue(resp)) {
-  //       return {
-  //         item,
-  //         text: this.ruatService.getResponseMessage(resp, 'No se puede continuar con el flujo'),
-  //         type: 'warning',
-  //         hasPayment: false,
-  //         consultationSuccessful: true,
-  //         ruatResponse: resp,
-  //         errorCode: 'RUAT_FLOW_STOPPED'
-  //       };
-  //     }
-  //     const pagoTasa = this.ruatService.getResponseData(resp)?.pagoTasa;
-  //     if (!pagoTasa) {
-  //       return {
-  //         item,
-  //         text: this.ruatService.getResponseMessage(resp, 'No se encontraron datos de pago'),
-  //         type: 'info',
-  //         hasPayment: false,
-  //         consultationSuccessful: true,
-  //         ruatResponse: resp,
-  //         errorCode: 'PAYMENT_NOT_FOUND'
-  //       };
-  //     }
-  //     const text = this.ruatService.getResponseMessage(resp, 'La tasa se encuentra pagada');
-  //     try {
-  //       const fechaPagoLocal = this.parseRuatPaymentDate(pagoTasa.fechaPago);
-  //       if (!fechaPagoLocal) {
-  //         return {
-  //           item,
-  //           text: 'RUAT devolvió una fecha de pago inválida. No se registró el pago.',
-  //           type: 'error',
-  //           hasPayment: false,
-  //           consultationSuccessful: false,
-  //           ruatResponse: resp,
-  //           errorCode: 'INVALID_RESPONSE'
-  //         };
-  //       }
-  //       const existingPayment = item.pagosDtoList?.find(pago =>
-  //         pago.folio === pagoTasa.folio && pago.numeroTasa === pagoTasa.numeroTasa
-  //       );
-  //       if (!existingPayment) {
-  //         const nuevoPago: Pago = {
-  //           numeroTasa: pagoTasa.numeroTasa,
-  //           tipoTasa: 'TO',
-  //           folio: pagoTasa.folio,
-  //           formaPago: pagoTasa.formaPago,
-  //           fechaPago: fechaPagoLocal,
-  //           entidadFinanciera: pagoTasa.entidadFinanciera,
-  //           montoPagado: parseFloat(pagoTasa.montoPago) || 0,
-  //           observaciones: pagoTasa.observacion,
-  //           estadoPago: EstadoPago.PAGADO,
-  //           ultimaConsulta: new Date(),
-  //           respuestaCompletaRuat: JSON.stringify(resp),
-  //           reservaDto: item
-  //         };
-  //         await this.pagoService.save(nuevoPago).toPromise();
-  //       }
-  //       return {
-  //         item,
-  //         text,
-  //         type: 'success',
-  //         hasPayment: true,
-  //         pagoData: pagoTasa,
-  //         consultationSuccessful: true,
-  //         ruatResponse: resp
-  //       };
-  //     } catch (error) {
-  //       return {
-  //         item,
-  //         text: 'El pago fue encontrado en RUAT, pero no pudo registrarse en el sistema.',
-  //         type: 'error',
-  //         hasPayment: false,
-  //         consultationSuccessful: false,
-  //         ruatResponse: resp,
-  //         errorCode: 'PAYMENT_SAVE_ERROR'
-  //       };
-  //     }
-  //   } catch (error) {
-  //     return {
-  //       item,
-  //       text: this.ruatService.getResponseMessage(error, 'Error al realizar la consulta al RUAT'),
-  //       type: 'error',
-  //       hasPayment: false,
-  //       consultationSuccessful: false,
-  //       ruatResponse: error,
-  //       errorCode: 'RUAT_EXCEPTION'
-  //     };
-  //   }
-  // }
-
+  
   /* API Services */
   private revisionEnCurso?: Promise<any>;
   private revisionesPendientes: any[] = [];
 
-  private async getReservations(revisarEstados = true) {
+  private async getMensualitiesList(revisarEstados = true) {
     clearTimeout(this.searchTimer);
-    const version = ++this.requestVersion;
+    const version = ++this.listRequestVersion;
     this.loading = true;
     try {
-      // Do not cancel/repeat a full review when the user pages or filters while it runs.
       if (this.revisionEnCurso) {
         await this.revisionEnCurso;
-        if (version !== this.requestVersion) return;
+        if (version !== this.listRequestVersion) return;
         revisarEstados = false;
       }
-      this.cancelListRequest.next();
-      const request = firstValueFrom(this.reservaService.getAll(this.currentPage - 1, this.pageSize,
-        { ...this.filters, revisarEstados }).pipe(takeUntil(this.cancelListRequest)));
+      const request = firstValueFrom(this.reservaPeriodoService.getReservationList(this.currentPage - 1, this.pageSize,
+        { ...this.getPaginationFilters(), revisarEstados }));
       if (revisarEstados) this.revisionEnCurso = request;
       let data: any;
       try {
         data = await request;
-        // Keep the review even if a newer page/filter request supersedes these rows.
-        // A later read-only request must not discard changes already committed by the server.
         if (data?.revision) this.revisionesPendientes.push(data.revision);
       }
       finally { if (this.revisionEnCurso === request) this.revisionEnCurso = undefined; }
-      if (version !== this.requestVersion) return;
+      if (version !== this.listRequestVersion) return;
       if (!data) throw new Error('Respuesta inválida del servidor');
       const list = this.enrichReservationsForDisplay(Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : []);
-      this.reservasList = { ...data, content: list };
+      this.mensualitiesList = { ...data, content: list };
       this.temp = list;
       this.csvExportItems = list;
       this.loading = false;
@@ -741,21 +501,35 @@ clearFilters() {
         await showReservationRevision(revision);
       }
     } catch (error: any) {
-      if (version !== this.requestVersion) return;
+      if (version !== this.listRequestVersion) return;
       this.handleError(error, 'Error al obtener las mensualidades');
-      this.reservasList = { content: [], totalElements: 0, totalPages: 0, first: true, last: true,
+      this.mensualitiesList = { content: [], totalElements: 0, totalPages: 0, first: true, last: true,
         pageable: { pageNumber: 0, pageSize: this.pageSize } };
       this.temp = [];
       this.csvExportItems = [];
     } finally {
-      if (version === this.requestVersion) this.loading = false;
+      if (version === this.listRequestVersion) this.loading = false;
     }
+  }
+
+  private getPaginationFilters(): ReservaPeriodReservationFilters {
+    return {
+      tab: this.filters.tab,
+      searchTerm: this.filters.searchTerm,
+      estadoReserva: this.filters.estadoReserva,
+      estadoValidacion: this.filters.estadoValidacion,
+      organization: this.filters.organization,
+      periodoFiltro: this.filters.periodoFiltro,
+      sortBy: this.sortBy,
+      sortDirection: this.sortDirection
+    };
   }
 
   readonly loadExportItems = async (): Promise<Reserva[]> => {
     try {
-      const data = await firstValueFrom(this.reservaService.getAll(
-        0, Math.max(1, this.reservasList.totalElements), { ...this.filters, revisarEstados: false }
+      const data = await firstValueFrom(this.reservaPeriodoService.getReservationList(
+        0, Math.max(1, this.mensualitiesList.totalElements),
+        { ...this.getPaginationFilters(), revisarEstados: false }
       ));
       const list = Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
       return this.enrichReservationsForDisplay(list);

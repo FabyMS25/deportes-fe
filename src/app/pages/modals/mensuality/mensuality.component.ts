@@ -3,7 +3,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TermsConditionsComponent } from 'src/app/shared/extraspages/terms-conditions/terms-conditions.component';
 import { UserRoleName, UserRoles } from 'src/app/core/constants/UserData';
 
-import { Component, HostListener, inject, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import Swal from 'sweetalert2';
@@ -32,7 +32,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 type PeriodOption = { mes: number; año: number; label: string };
 
 type MensualitySelection = {
-  student?: EstudianteEscuela;
   students: EstudianteEscuela[];
   payer?: Contribuyente;
   detailKeys: Set<string>;
@@ -40,7 +39,6 @@ type MensualitySelection = {
   school?: Organizacion;
   entrenador?: string;
   baseReservation?: Reserva;
-  existingReservationPeriod?: ReservaPeriodo;
   month?: number;
   year?: number;
 };
@@ -69,17 +67,11 @@ export class MensualityComponent implements OnInit {
     this.termsModal.open(TermsConditionsComponent, { size: 'lg', scrollable: true });
   }
 
-  @Input() row!: Reserva;
+  canActivate: string[] = [];
 
-  @Input() canActivate: any[] = [];
+  estudiantes: EstudianteEscuela[] = [];
 
-  @Input() estudiantes: EstudianteEscuela[] = [];
-
-  @Input() defaultPeriodo?: { mesFiltro?: number; anioFiltro?: number };
-
-  @Output() emitList = new EventEmitter();
-
-  @Output() reservaGenerada = new EventEmitter<Reserva>();
+  defaultPeriodo?: { mesFiltro?: number; anioFiltro?: number };
 
   isLoading = false;
 
@@ -93,7 +85,6 @@ export class MensualityComponent implements OnInit {
   };
 
   selection: MensualitySelection = {
-    student: undefined,
     students: [],
     payer: undefined,
     detailKeys: new Set<string>(),
@@ -101,7 +92,6 @@ export class MensualityComponent implements OnInit {
     school: undefined,
     entrenador: undefined,
     baseReservation: undefined,
-    existingReservationPeriod: undefined,
     month: undefined,
     year: undefined
   };
@@ -111,12 +101,6 @@ export class MensualityComponent implements OnInit {
   userData!: any;
 
   userRole: UserRoleName = UserRoles.CONTRIBUYENTE;
-
-  reservaBaseFilter: 'todas' | 'en_curso' | 'pagadas' | 'pendientes' | 'activas' = 'activas';
-
-  hideCoveredReservations = false;
-
-  years: number[] = [];
 
   months = [
     { value: 1, name: 'Enero' },
@@ -145,7 +129,6 @@ export class MensualityComponent implements OnInit {
 
   ngOnInit(): void {
     this.initializePageContext();
-    this.reservaGenerada.subscribe(() => this.completed = true);
     this.userRole = this.authService.getUserRole();
     this.userData = this.authService.currentUser();
     if (this.userRole !== 'Contribuyente') this.userData = this.userData.designacion.personaDto;
@@ -154,7 +137,6 @@ export class MensualityComponent implements OnInit {
     if (this.userRole === 'Contribuyente' || !this.estudiantes.length) this.getStudents();
     this.initializeForm();
     this.syncDefaultContribuyente();
-    this.initializeYears();
   }
 
   get form() {
@@ -232,13 +214,6 @@ export class MensualityComponent implements OnInit {
     });
   }
 
-  private initializeYears(): void {
-    const currentYear = new Date().getFullYear();
-    for (let i = currentYear - 1; i <= currentYear + 1; i++) {
-      this.years.push(i);
-    }
-  }
-
   onEscuelaChange(event: Event): void {
     const escuelaUuid = (event.target as HTMLSelectElement).value;
     const escuela = this.catalogs.schools.find(e => e.uuid === escuelaUuid);
@@ -252,7 +227,6 @@ export class MensualityComponent implements OnInit {
     this.selection.entrenador = this.getDefaultEntrenador();
     this.reservationForm.patchValue({ escuela: escuela.uuid });
     this.selection.baseReservation = undefined;
-    this.selection.existingReservationPeriod = undefined;
     this.catalogs.periods = [];
     this.selection.students = [];
     this.selection.detailKeys.clear();
@@ -281,7 +255,7 @@ export class MensualityComponent implements OnInit {
       if (this.selection.school?.uuid !== schoolUuid) return;
       // The fresh response is authoritative; embedded school data may still show a closed base as open.
       this.catalogs.recurrentReservations = reservations;
-      this.applyReservaBaseFilters();
+      this.catalogs.filteredRecurrentReservations = reservations;
       this.autoSelectBestReservaBase();
     };
 
@@ -320,43 +294,6 @@ export class MensualityComponent implements OnInit {
       page++;
       if (page >= response.totalPages || response.content.length === 0) return reservations;
     }
-  }
-
-  applyReservaBaseFilters(): void {
-    let list = this.catalogs.recurrentReservations.filter(reserva => this.isAvailableBaseReservation(reserva));
-
-    switch (this.reservaBaseFilter) {
-      case 'en_curso':
-        list = list.filter(r =>
-          this.isDateWithinReserva(this.getReferenceDateForReservationFilter(), r)
-        );
-        break;
-      case 'pagadas':
-        list = list.filter(
-          r =>
-            r.estadoReserva === EstadoReserva.PAGADA
-        );
-        break;
-      case 'pendientes':
-        list = list.filter(r => r.estadoReserva === EstadoReserva.PENDIENTE);
-        break;
-      case 'activas':
-        list = list.filter(
-          r =>
-            r.estadoReserva !== EstadoReserva.CANCELADA &&
-            r.estadoReserva !== EstadoReserva.EXPIRADA &&
-            r.estadoReserva !== EstadoReserva.NO_SHOW
-        );
-        break;
-      default:
-        break;
-    }
-
-    if (this.hideCoveredReservations) {
-      list = list.filter(r => !this.isReservaFullyCoveredForStudent(r));
-    }
-
-    this.catalogs.filteredRecurrentReservations = list;
   }
 
   private isAvailableBaseReservation(reserva?: Reserva): boolean {
@@ -456,10 +393,10 @@ export class MensualityComponent implements OnInit {
 
   async onSubmit(): Promise<void> {
     if (this.isLoading) return;
-    if (this.userRole === 'Contribuyente' && !this.canActivate.includes('CREAR')) {
+    if (!this.canActivate.includes('CREAR')) {
       this.handleError(
         'Funcionalidad deshabilitada',
-        'El registro de mensualidades requiere que su usuario represente al menos una organización.'
+        'Su usuario no tiene permiso para registrar mensualidades.'
       );
       return;
     }
@@ -537,6 +474,10 @@ export class MensualityComponent implements OnInit {
         throw new Error('La reserva base ya no está disponible para registrar mensualidades. Vuelva a seleccionar una reserva.');
       }
       this.selection.baseReservation = baseActual;
+      await this.refreshPeriodRegistrations();
+      if (this.hasSelectedRegisteredPeriod()) {
+        throw new Error('Una o más mensualidades seleccionadas ya fueron registradas. Revise los períodos disponibles e intente nuevamente.');
+      }
       const configurationErrors = this.validateMensualidadTariffConfiguration();
       if (configurationErrors.length > 0) throw new Error(configurationErrors.join('\n'));
       const reservaData = this.prepareReservaPeriodoData();
@@ -544,12 +485,11 @@ export class MensualityComponent implements OnInit {
 
       reservaData.numeroTasa = numeroTasa;
 
-      const reservaGuardada = await this.saveReservaPeriodo(reservaData);
+      await this.saveReservaPeriodo(reservaData);
 
       this.isLoading = false;
       this.notify('Mensualidad registrada correctamente.', 'success');
-      this.emitList.emit();
-      this.reservaGenerada.emit(reservaGuardada);
+      this.completed = true;
       this.onCloseModal();
     } catch (error: any) {
       this.isLoading = false;
@@ -661,6 +601,23 @@ export class MensualityComponent implements OnInit {
         this.catalogs.periodRegistrations = [];
       }
     });
+  }
+
+  /** Reload immediately before RUAT so stale browser data cannot create a known duplicate. */
+  private async refreshPeriodRegistrations(): Promise<void> {
+    const response: any = await this.reservaPeriodoService.getAllWithoutPagination().toPromise();
+    if (!Array.isArray(response)) {
+      throw new Error('No se pudo verificar las mensualidades ya registradas. Intente nuevamente.');
+    }
+    this.catalogs.periodRegistrations = response;
+  }
+
+  private hasSelectedRegisteredPeriod(): boolean {
+    return this.selection.students.some(estudiante =>
+      this.catalogs.periods.some(periodo =>
+        this.isPeriodoSelected(estudiante, periodo) && this.isPeriodoRegistrado(estudiante, periodo)
+      )
+    );
   }
 
   private prepareReservaPeriodoData(): any {
@@ -965,45 +922,6 @@ export class MensualityComponent implements OnInit {
     return date >= inicio && date <= fin;
   }
 
-  private isReservaFullyCoveredForStudent(reserva: Reserva): boolean {
-    if (!this.selection.school || !this.selection.student || !this.catalogs.periodRegistrations.length) {
-      return false;
-    }
-
-    const recurrente = reserva.reservaRecurrenteDto;
-    if (!recurrente?.fechaInicio || !recurrente?.fechaFin) {
-      return false;
-    }
-
-    const paidSet = new Set(
-      this.catalogs.periodRegistrations
-        .filter(
-          m =>
-            m.estudianteEscuelaDto?.uuid === this.selection.student?.uuid &&
-            m.reservaDto?.organizacionDto?.uuid === this.selection.school?.uuid &&
-            (m.reservaDto?.estadoReserva === EstadoReserva.PAGADA ||
-              m.reservaDto?.estadoReserva === EstadoReserva.COMPLETADA)
-        )
-        .map(m => `${m.año}-${String(m.mes).padStart(2, '0')}`)
-    );
-
-    let current = this.parseLocalDate(recurrente.fechaInicio);
-    current = new Date(current.getFullYear(), current.getMonth(), 1);
-
-    const endDate = this.parseLocalDate(recurrente.fechaFin);
-    const end = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
-
-    while (current <= end) {
-      const key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
-      if (!paidSet.has(key)) {
-        return false;
-      }
-      current.setMonth(current.getMonth() + 1);
-    }
-
-    return true;
-  }
-
   private getConfiguredEntrenador(): string | undefined {
     return this.selection.baseReservation?.organizacionDto?.entrenador?.trim() ||
       this.selection.school?.entrenador?.trim();
@@ -1138,7 +1056,7 @@ export class MensualityComponent implements OnInit {
     });
   }
 
-  onCloseModal(): void { this.backToList(); }
+  onCloseModal(): void { void this.backToList(); }
 
   private notify(message: string, type: any): void {
     Swal.fire({
@@ -1181,13 +1099,12 @@ export class MensualityComponent implements OnInit {
       this.selection.students.length > 0 || this.selection.detailKeys.size > 0);
   }
 
-  backToList(): void {
-    if (!this.isLoading) void this.pageRouter.navigate(['/reservations/schools']);
-  }
-
-  async canLeave(): Promise<boolean> {
-    if (this.isLoading) return false;
-    if (!this.hasPendingChanges) return true;
+  async backToList(): Promise<void> {
+    if (this.isLoading) return;
+    if (!this.hasPendingChanges) {
+      await this.pageRouter.navigate(['/reservations/schools']);
+      return;
+    }
     const result = await Swal.fire({
       title: '¿Salir del registro?',
       text: 'Se perderán la selección de estudiantes, los meses y los datos que aún no registró.',
@@ -1195,14 +1112,8 @@ export class MensualityComponent implements OnInit {
       confirmButtonText: 'Salir sin registrar', cancelButtonText: 'Continuar registro',
       focusCancel: true
     });
-    return result.isConfirmed;
-  }
-
-  @HostListener('window:beforeunload', ['$event'])
-  beforeUnload(event: BeforeUnloadEvent): void {
-    if (this.isLoading || this.hasPendingChanges) {
-      event.preventDefault();
-      event.returnValue = '';
+    if (result.isConfirmed) {
+      await this.pageRouter.navigate(['/reservations/schools']);
     }
   }
 

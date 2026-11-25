@@ -38,7 +38,7 @@ export class BookingRecurrentComponent implements OnInit {
   breadCrumbItems: BreadCrumbItem[] =[];
   viewMode: 'table' | 'cards' = 'table';
   canActivate: string[];
-  itemsList: any[] = [];
+  columnsList: any[] = [];
   temp: any[] = [];
   serverSidePagination: boolean = true;
   currentPage: number = 1;
@@ -141,7 +141,7 @@ export class BookingRecurrentComponent implements OnInit {
       { label: 'Reservas' },
       { label: 'Reservas Recurrentes', active: true }
     ];
-    this.itemsList = [
+    this.columnsList = [
       { name: 'Número Reserva', prop: 'reservaDto.numeroReserva', nowrap: true, visible: false, sortable: true },
       { name: 'Contribuyente', prop: 'reservaDto.contribuyenteDto.nombreCompleto', visible: !this.contribuyente, sortable: true },
       { name: 'Complejo', prop: 'reservaDto.campoDeportivoDto.complejoDto.nombre', visible: true, sortable: true },
@@ -178,7 +178,7 @@ export class BookingRecurrentComponent implements OnInit {
       { name: 'Fecha Creación', prop: 'reservaDto.fechaCreacion', date: true, visible: false },
       { name: 'Activo', prop: 'activo', tag: true, visible: false },
     ];
-    this.itemsList = this.itemsList.map(column => ({ ...column, sortable: true }));
+    this.columnsList = this.columnsList.map(column => ({ ...column, sortable: true }));
     const savedViewMode = localStorage.getItem('dataTableViewMode');
     if (savedViewMode === 'table' || savedViewMode === 'cards') {
       this.viewMode = savedViewMode;
@@ -217,7 +217,7 @@ onPageChange(page: number): void {
   }
 
 onSortChange(sort: { column: string; direction: 'asc' | 'desc' }): void {
-    if (!this.itemsList.some(column => column.prop === sort.column && column.sortable)) return;
+    if (!this.columnsList.some(column => column.prop === sort.column && column.sortable)) return;
     this.sortBy = sort.column;
     this.sortDirection = sort.direction;
     this.currentPage = 1;

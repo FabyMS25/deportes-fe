@@ -228,6 +228,34 @@ Acciones: `VER`, `CREAR`, `ACTUALIZAR`, `ANULAR` y `GENERAR TICKET`.
 
 Un tutor sin estudiantes activos a cargo no puede registrar mensualidades. Un representante solo puede trabajar con escuelas que representa. La reserva base puede pertenecer a otra persona si la relación estudiante–escuela autoriza al pagador.
 
+## Liquidaciones Borderoux
+
+Ruta: `/reservations/borderoux`. Una liquidación Borderoux es un registro financiero **posterior a la actividad**: declara el porcentaje municipal que corresponde sobre las entradas efectivamente vendidas por una organización. No crea, modifica ni valida una reserva de horario.
+
+### Operación y disponibilidad del campo
+
+La única referencia temporal de la liquidación es la `fechaActividad`. No se solicitan horas de inicio o cierre, ni se relaciona la liquidación con una reserva, porque la Unidad de Deportes controla esos aspectos por su procedimiento operativo independiente.
+
+Cuando una actividad vaya a ocupar un campo, la Unidad de Deportes debe registrar previamente una excepción del campo para esa fecha, usando el tipo `evento_municipal` cuando corresponda. Esa excepción es el control que evita que el campo aparezca disponible para otros usuarios; la liquidación Borderoux no reemplaza dicho control ni intenta reconstruirlo días después.
+
+### Declaración y cálculo
+
+Una liquidación puede contener varias actividades, cada una con fecha, campo y varios talonarios. Para cada talonario se registra opcionalmente su serie, precio de boleta, número inicial, número final y cantidad de boletas anuladas.
+
+```text
+boletas del rango = número final - número inicial + 1
+boletas vendidas = boletas del rango - boletas anuladas
+venta bruta = boletas vendidas × precio de boleta
+Borderoux del talonario = venta bruta × porcentaje / 100
+preliquidación = suma de los Borderoux de todos los talonarios y actividades
+```
+
+El porcentaje es único para toda la liquidación, pues normalmente depende del tipo de organización. Personal interno puede escribir un porcentaje excepcional. Un contribuyente con permiso `CREAR` solo puede elegir porcentajes habilitados en `BORDEROUX_PORCENTAJES` para el tipo de su organización; el backend debe aplicar la misma regla.
+
+Los importes monetarios se conservan con dos decimales. No se redondea el total a números enteros ni se altera manualmente: el total final es la suma exacta de los importes monetarios guardados por talonario. Esta regla debe mantenerse igual en frontend, backend y reportes.
+
+Al confirmar la liquidación se genera una sola tasa RUAT por el total Borderoux y se conserva el número de tasa para su posterior consulta de pago. El backend es la fuente definitiva para recalcular rangos, anuladas, venta bruta, porcentaje y total; nunca debe confiar en totales enviados por el navegador.
+
 ## 10. RUAT y pagos
 
 RUAT nunca se consume directamente desde el navegador con credenciales municipales. El frontend llama a `deportes-be`, que expone una capa protegida para estas operaciones:

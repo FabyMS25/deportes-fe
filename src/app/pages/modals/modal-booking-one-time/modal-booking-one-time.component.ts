@@ -30,6 +30,7 @@ import { CityAcronym } from 'src/app/core/constants/Places';
 import { EstadoReserva, EstadoValidacion, EstadoPago, StatusUtils } from 'src/app/core/constants/Estados';
 import { BookingDetailModalComponent } from '../booking-detail-modal/booking-detail-modal.component';
 import { obtenerLabelTipoCobro } from 'src/app/core/constants/TipoCobro';
+import { obtenerHorasValidacionPago } from 'src/app/core/utils/configuracion-sistema.util';
 
 @Component({
   selector: 'app-booking-one-time-modal',
@@ -60,6 +61,10 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
   today: Date = new Date();
 
   systemConfigList: ConfiguracionSistema[] = [];
+  get paymentDeadlineHours(): number {
+    const configs = Object.fromEntries(this.systemConfigList.map(config => [config.clave, config]));
+    return obtenerHorasValidacionPago(configs, 'puntual', this.row?.reservaDto?.tarifaDto?.tipoCobro);
+  }
   EstadoReserva = EstadoReserva;
   EstadoPago = EstadoPago;
   EstadoValidacion = EstadoValidacion;
@@ -684,7 +689,9 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
 
       const aprobadoPor = this.userData.nombreCompleto || this.userData.fullName;
 
-      const reservaAprobada = await this.approveReservaAfterRuat(reservaConTasa.uuid!, aprobadoPor);
+      const reservaAprobada = await this.approveReservaAfterRuat(
+        reservaConTasa.uuid!, aprobadoPor, observaciones
+      );
       this.row = { ...this.row, reservaDto: reservaAprobada };
 
       this.showLoading = false;
@@ -748,9 +755,11 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
       });
     });
   }
-  private approveReservaAfterRuat(reservaUuid: string, aprobadoPor: string): Promise<Reserva> {
+  private approveReservaAfterRuat(
+    reservaUuid: string, aprobadoPor: string, observaciones = ''
+  ): Promise<Reserva> {
     return new Promise((resolve, reject) => {
-      this.reservaService.approveReservation(reservaUuid, aprobadoPor).subscribe({
+      this.reservaService.approveReservation(reservaUuid, aprobadoPor, observaciones).subscribe({
         next: (resp: any) => resolve(resp),
         error: (error) => reject(new Error(error?.error?.message || error?.message || 'Error al aprobar la reserva'))
       });
@@ -790,6 +799,33 @@ export class BookingOneTimeModalComponent implements OnInit, OnChanges, AfterVie
 
   private cancelPaidReservation(reserva: Reserva, formValues: any) {
     if (this.showLoading || !this.canActivate?.includes('ANULAR')) return;
+    if (!reserva.numeroTasa?.trim() || reserva.estadoReserva === EstadoReserva.SOLICITADA) {
+      this.notify('No corresponde anular una solicitud o reserva sin tasa. La solicitud requiere rechazo administrativo.', 'warning');
+      return;
+    }
+    this.showLoading = true;
+    this.ruatService.cancelTasa({
+      numeroTasa: reserva.numeroTasa,
+      motivo: formValues.motivo,
+      observacion: formValues.observation
+    }).subscribe({
+      next: (respuestaRuat) => {
+        if (!this.ruatService.canContinue(respuestaRuat)) {
+          this.showLoading = false;
+          this.notify(this.ruatService.getResponseMessage(respuestaRuat, 'RUAT no confirmÃ³ la anulaciÃ³n de la tasa.'), 'error');
+          return;
+        }
+        this.finalizePaidReservationCancellation(reserva, formValues);
+      },
+      error: (error) => {
+        this.showLoading = false;
+        this.notify(this.ruatService.getResponseMessage(error, 'RUAT no confirmÃ³ la anulaciÃ³n de la tasa.'), 'error');
+      }
+    });
+  }
+
+  private finalizePaidReservationCancellation(reserva: Reserva, formValues: any) {
+    if (!this.canActivate?.includes('ANULAR')) return;
     if (!reserva.numeroTasa?.trim() || reserva.estadoReserva === EstadoReserva.SOLICITADA) {
       this.notify('No corresponde anular una solicitud o reserva sin tasa. La solicitud requiere rechazo administrativo.', 'warning');
       return;

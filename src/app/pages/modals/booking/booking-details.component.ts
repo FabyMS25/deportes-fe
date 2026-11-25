@@ -559,7 +559,7 @@ export class BookingDetailsComponent implements OnInit, OnDestroy {
           <ul class="mb-0 mt-1 small">
             <li>Será revisada por el administrador del complejo</li>
             <li>Recibirá una notificación por correo electrónico</li>
-            <li>Una vez aprobada, tendrá ${paymentDeadlineMessage} para realizar el pago</li>
+            <li>Al aprobarse se emitirá el cobro y se establecerá el plazo de pago</li>
           </ul>
         </div>
       </div>

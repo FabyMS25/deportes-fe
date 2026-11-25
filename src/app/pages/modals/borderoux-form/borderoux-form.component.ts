@@ -6,21 +6,22 @@ import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 
 import { AuthenticationService } from 'src/app/core/services/auth.service';
-import { ReservaService } from 'src/app/core/services/api/reserva.service';
+import { ReservaBorderouxService } from 'src/app/core/services/api/reserva-borderoux.service';
 import { RuatRequestsService } from 'src/app/core/services/ruatRequest.service';
-import { Reserva } from 'src/app/core/models/reserva.model';
 import { Organizacion } from 'src/app/core/models/organizacion.model';
 import { CampoDeportivo } from 'src/app/core/models/campoDeportivo.model';
 import { Categoria } from 'src/app/core/models/categoria.model';
 import { ClasificadorRuat } from 'src/app/core/models/clasificadorRuat.model';
 import { Contribuyente } from 'src/app/core/models/contribuyente.model';
-import { BorderouxPorcentajePreset } from 'src/app/core/models/reservaBorderoux.model';
+import { BorderouxPorcentajePreset, ReservaBorderoux } from 'src/app/core/models/reservaBorderoux.model';
 import { EstadoReserva, EstadoValidacion } from 'src/app/core/constants/Estados';
 
 interface TalonarioForm {
+  serieTalonario: string;
   precioBoleta: number | null;
   numeroInicial: number | null;
   numeroFinal: number | null;
+  cantidadAnuladas: number | null;
 }
 
 interface ActividadForm {
@@ -40,7 +41,7 @@ interface ActividadForm {
 })
 export class BorderouxFormComponent implements OnInit {
   @Input() mode: 'create' | 'view' = 'create';
-  @Input() reserva?: Reserva;
+  @Input() reserva?: ReservaBorderoux;
   @Input() escuelasList: Organizacion[] = [];
   @Input() camposList: CampoDeportivo[] = [];
   @Input() categoriasList: Categoria[] = [];
@@ -57,7 +58,7 @@ export class BorderouxFormComponent implements OnInit {
   constructor(
     public activeModal: NgbActiveModal,
     private authService: AuthenticationService,
-    private reservaService: ReservaService,
+    private reservaBorderouxService: ReservaBorderouxService,
     private ruatService: RuatRequestsService
   ) {}
 
@@ -113,6 +114,17 @@ export class BorderouxFormComponent implements OnInit {
     return this.representantesDisponibles.find(rep => rep.uuid === this.responsableUuid);
   }
 
+  /** Internal staff can enter an exceptional rate; taxpayers select a configured rate. */
+  get puedeEditarPorcentaje(): boolean {
+    return !this.esContribuyente;
+  }
+
+  get porcentajesDisponibles(): BorderouxPorcentajePreset[] {
+    if (!this.esContribuyente) return this.presets;
+    const tipo = this.organizacionSeleccionada?.tipoOrganizacion;
+    return this.presets.filter(preset => !preset.tipoOrganizacion || preset.tipoOrganizacion === tipo);
+  }
+
   onOrganizacionChange(uuid: string): void {
     this.organizacionUuid = uuid;
     const org = this.organizacionSeleccionada;
@@ -148,7 +160,7 @@ export class BorderouxFormComponent implements OnInit {
   }
 
   nuevoTalonario(): TalonarioForm {
-    return { precioBoleta: null, numeroInicial: null, numeroFinal: null };
+    return { serieTalonario: '', precioBoleta: null, numeroInicial: null, numeroFinal: null, cantidadAnuladas: 0 };
   }
 
   agregarActividad(): void {
@@ -186,10 +198,16 @@ export class BorderouxFormComponent implements OnInit {
     return final - inicial + 1;
   }
 
+  cantidadVendida(talonario: TalonarioForm): number {
+    const anuladas = Number(talonario.cantidadAnuladas);
+    if (!Number.isInteger(anuladas) || anuladas < 0) return 0;
+    return Math.max(0, this.cantidad(talonario) - anuladas);
+  }
+
   totalBoletas(talonario: TalonarioForm): number {
     const precio = Number(talonario.precioBoleta);
     if (!Number.isFinite(precio) || precio < 0) return 0;
-    return this.redondear(precio * this.cantidad(talonario));
+    return this.redondear(precio * this.cantidadVendida(talonario));
   }
 
   montoBorderoux(talonario: TalonarioForm): number {
@@ -216,6 +234,11 @@ export class BorderouxFormComponent implements OnInit {
     return this.redondear(
       this.actividades.reduce((total, actividad) => total + this.subtotalActividad(actividad), 0)
     );
+  }
+
+  get cantidadVendidaLiquidacion(): number {
+    return this.actividades.reduce((total, actividad) =>
+      total + actividad.talonarios.reduce((suma, talonario) => suma + this.cantidadVendida(talonario), 0), 0);
   }
 
   get puedeGuardar(): boolean {
@@ -284,6 +307,9 @@ export class BorderouxFormComponent implements OnInit {
     if (!Number.isFinite(porcentaje) || porcentaje <= 0 || porcentaje > 100) {
       return 'El porcentaje Borderoux debe ser mayor a 0 y menor o igual a 100.';
     }
+    if (this.esContribuyente && !this.porcentajesDisponibles.some(item => Number(item.porcentaje) === porcentaje)) {
+      return 'Seleccione uno de los porcentajes Borderoux habilitados para su organización.';
+    }
     if (!this.actividades.length) {
       return 'Registre al menos una actividad.';
     }
@@ -304,12 +330,19 @@ export class BorderouxFormComponent implements OnInit {
         const precio = Number(talonario.precioBoleta);
         const inicial = Number(talonario.numeroInicial);
         const final = Number(talonario.numeroFinal);
+        const anuladas = Number(talonario.cantidadAnuladas);
         if (!Number.isFinite(precio) || talonario.precioBoleta === null || precio < 0) {
           return `El precio de boleta del talonario ${j + 1} de la actividad ${i + 1} es requerido y no puede ser negativo.`;
         }
         if (!Number.isFinite(inicial) || talonario.numeroInicial === null || inicial < 0
             || !Number.isFinite(final) || talonario.numeroFinal === null || final < 0) {
           return `El rango del talonario ${j + 1} de la actividad ${i + 1} es requerido.`;
+        }
+        if (!Number.isInteger(anuladas) || talonario.cantidadAnuladas === null || anuladas < 0) {
+          return `Las boletas anuladas del talonario ${j + 1} de la actividad ${i + 1} deben ser un entero igual o mayor a cero.`;
+        }
+        if (anuladas > this.cantidad(talonario)) {
+          return `Las boletas anuladas del talonario ${j + 1} de la actividad ${i + 1} no pueden superar el rango declarado.`;
         }
         if (final < inicial) {
           return `El número final del talonario ${j + 1} de la actividad ${i + 1} no puede ser menor al inicial.`;
@@ -319,23 +352,13 @@ export class BorderouxFormComponent implements OnInit {
     return null;
   }
 
-  private construirPayload(numeroTasa: string, clasificadorRuatId?: string): any {
-    const ahora = new Date().toISOString();
+  private construirPayload(numeroTasa: string, clasificadorRuatId?: string): ReservaBorderoux {
     return {
-      fechaCreacion: ahora,
-      fechaReserva: ahora,
       estadoValidacion: EstadoValidacion.APROBADA,
       estadoReserva: EstadoReserva.PENDIENTE,
-      tipoReserva: 'borderoux',
-      cancelacionAutomatica: false,
-      fechaLimitePago: null,
       numeroTasa,
       clasificadorRuatId: clasificadorRuatId || null,
       montoTotal: this.totalLiquidacion,
-      esReservaGratuita: false,
-      motivoGratuidad: null,
-      campoDeportivoDto: null,
-      tarifaDto: null,
       organizacionDto: { uuid: this.organizacionUuid },
       contribuyenteDto: { uuid: this.responsableUuid },
       borderouxActividadesDtoList: this.actividades.map(actividad => ({
@@ -347,7 +370,9 @@ export class BorderouxFormComponent implements OnInit {
         talonariosDtoList: actividad.talonarios.map(talonario => ({
           precioBoleta: Number(talonario.precioBoleta),
           numeroInicial: Number(talonario.numeroInicial),
-          numeroFinal: Number(talonario.numeroFinal)
+          numeroFinal: Number(talonario.numeroFinal),
+          serieTalonario: talonario.serieTalonario?.trim() || null,
+          cantidadAnuladas: Number(talonario.cantidadAnuladas)
         }))
       }))
     };
@@ -365,7 +390,7 @@ export class BorderouxFormComponent implements OnInit {
     }
     try {
       this.clasificadorBorderoux = await firstValueFrom(
-        this.reservaService.getClasificadorBorderoux()
+        this.reservaBorderouxService.getClasificador()
       );
     } catch (error: any) {
       throw new Error(
@@ -430,9 +455,9 @@ export class BorderouxFormComponent implements OnInit {
     });
   }
 
-  private saveReserva(payload: any): Promise<Reserva> {
+  private saveReserva(payload: ReservaBorderoux): Promise<ReservaBorderoux> {
     return new Promise((resolve, reject) => {
-      this.reservaService.create(payload).subscribe({
+      this.reservaBorderouxService.create(payload).subscribe({
         next: (reserva) => resolve(reserva),
         error: (error) => reject(new Error(
           error?.error?.message ||
@@ -455,9 +480,11 @@ export class BorderouxFormComponent implements OnInit {
       categoriaUuid: actividad.categoriaDeportivaDto?.uuid || '',
       observaciones: actividad.observaciones || '',
       talonarios: (actividad.talonariosDtoList || []).map(talonario => ({
+        serieTalonario: talonario.serieTalonario || '',
         precioBoleta: talonario.precioBoleta,
         numeroInicial: talonario.numeroInicial,
-        numeroFinal: talonario.numeroFinal
+        numeroFinal: talonario.numeroFinal,
+        cantidadAnuladas: talonario.cantidadAnuladas ?? 0
       }))
     }));
     if (!this.actividades.length) {

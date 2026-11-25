@@ -214,6 +214,34 @@ export class BookingPeriodoModalComponent implements OnInit, AfterViewInit {
       return;
     }
     this.isLoading = true;
+    this.ruatService.cancelTasa({
+      numeroTasa: reserva.numeroTasa,
+      motivo: formValues.motivo,
+      observacion: formValues.observation
+    }).subscribe({
+      next: (respuestaRuat) => {
+        if (!this.ruatService.canContinue(respuestaRuat)) {
+          this.isLoading = false;
+          this.notify(this.ruatService.getResponseMessage(respuestaRuat, 'RUAT no confirmÃ³ la anulaciÃ³n de la tasa.'), 'error');
+          return;
+        }
+        this.finalizePaidReservationCancellation(formValues);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this.notify(this.ruatService.getResponseMessage(error, 'RUAT no confirmÃ³ la anulaciÃ³n de la tasa.'), 'error');
+      }
+    });
+  }
+
+  private finalizePaidReservationCancellation(formValues: any): void {
+    const reserva = this.row;
+    if (!formValues?.motivo?.trim() || !reserva || this.closeAction?.kind !== 'annul') return;
+    if (!reserva.numeroTasa?.trim() || reserva.estadoReserva === EstadoReserva.SOLICITADA) {
+      this.notify('No corresponde anular una solicitud o mensualidad sin tasa. La solicitud requiere rechazo administrativo.', 'warning');
+      return;
+    }
+    this.isLoading = true;
     this.reservaService.cancelReservation(reserva.uuid!, formValues.motivo, formValues.observation).subscribe({
       next: (resultado) => {
         this.isLoading = false;

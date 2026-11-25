@@ -139,7 +139,7 @@
                             <i class="ri-settings-4-line"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton1" ngbDropdownMenu>
-                            @for (column of itemsList; track column) {
+                            @for (column of columnsList; track column) {
                                 <li class="dropdown-item p-1">
                                 <div class="form-check form-check-outline form-check-primary">
                                     <input class="form-check-input" type="checkbox" [id]="'formCheck' + column.prop"
@@ -159,7 +159,7 @@
         <div class="card-body">
             <app-data-table
                 [loading]="loading"
-                [itemsList]="itemsList"
+                [itemsList]="columnsList"
                 [allcontent]="reservasList"
                 [serverSidePagination]="true"
                 [paginationInfo]="{
